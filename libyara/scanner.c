@@ -164,6 +164,7 @@ YR_API int yr_scanner_create(
     YR_RULES* rules,
     YR_SCANNER** scanner)
 {
+  YR_RULE* rule;
   YR_EXTERNAL_VARIABLE* external;
   YR_INTERNAL_VARIABLE* internal;
   YR_SCANNER* new_scanner;
@@ -176,6 +177,21 @@ YR_API int yr_scanner_create(
   FAIL_ON_ERROR_WITH_CLEANUP(
       yr_hash_table_create(64, &new_scanner->objects_table),
       yr_free(new_scanner));
+
+  rule = rules->rules_list_head;
+  while(!RULE_IS_NULL(rule)) {
+    FAIL_ON_ERROR_WITH_CLEANUP(
+        yr_hash_table_create(10, &rule->internal_variables_table),
+        //CLEANUP
+        for(YR_RULE* r=rules->rules_list_head; r<rule; r++)
+        {
+          yr_hash_table_destroy(r->internal_variables_table, NULL);
+        };
+        yr_free(new_scanner->objects_table);
+        yr_free(new_scanner));
+
+    rule++;
+  }
 
   new_scanner->rules = rules;
   new_scanner->entry_point = YR_UNDEFINED;
@@ -275,6 +291,7 @@ YR_API void yr_scanner_destroy(
 {
   RE_FIBER* fiber;
   RE_FIBER* next_fiber;
+  YR_RULE* rule;
 
   fiber = scanner->re_fiber_pool.fibers.head;
 
@@ -290,6 +307,15 @@ YR_API void yr_scanner_destroy(
     yr_hash_table_destroy(
         scanner->objects_table,
         (YR_HASH_TABLE_FREE_VALUE_FUNC) yr_object_destroy);
+  }
+
+  rule = (YR_RULE*)scanner->rules->rules_list_head;
+  while(!RULE_IS_NULL(rule)) {
+    yr_hash_table_destroy(
+        rule->internal_variables_table,
+        (YR_HASH_TABLE_FREE_VALUE_FUNC)yr_object_destroy);
+
+    rule++;
   }
 
   #ifdef YR_PROFILING_ENABLED

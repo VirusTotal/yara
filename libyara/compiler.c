@@ -301,6 +301,8 @@ YR_API int yr_compiler_create(
 YR_API void yr_compiler_destroy(
     YR_COMPILER* compiler)
 {
+  YR_RULE* rule;
+
   yr_arena_release(compiler->arena);
 
   if (compiler->automaton != NULL)
@@ -321,6 +323,15 @@ YR_API void yr_compiler_destroy(
   yr_hash_table_destroy(
       compiler->objects_table,
       (YR_HASH_TABLE_FREE_VALUE_FUNC) yr_object_destroy);
+
+  rule = compiler->rules->rules_list_head;
+  while(!RULE_IS_NULL(rule)) {
+    yr_hash_table_destroy(
+        rule->internal_variables_table,
+        (YR_HASH_TABLE_FREE_VALUE_FUNC) yr_object_destroy);
+
+    rule++;
+  }
 
   if (compiler->atoms_config.free_quality_table)
     yr_free(compiler->atoms_config.quality_table);

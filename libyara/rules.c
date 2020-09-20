@@ -559,7 +559,6 @@ YR_API int yr_rules_destroy(
     YR_RULES* rules)
 {
   YR_EXTERNAL_VARIABLE* external = rules->externals_list_head;
-  YR_RULE* rule = rules->rules_list_head;
 
   while (!EXTERNAL_VARIABLE_IS_NULL(external))
   {
@@ -567,15 +566,6 @@ YR_API int yr_rules_destroy(
       yr_free(external->value.s);
 
     external++;
-  }
-
-  while(!RULE_IS_NULL(rule))
-  {
-    yr_hash_table_destroy(
-        rule->internal_variables_table,
-        (YR_HASH_TABLE_FREE_VALUE_FUNC)yr_object_destroy);
-
-    rule++;
   }
 
   yr_arena_release(rules->arena);
