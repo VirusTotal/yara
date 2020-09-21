@@ -271,6 +271,9 @@ YR_API int yr_compiler_create(
     result = yr_hash_table_create(1000, &new_compiler->objects_table);
 
   if (result == ERROR_SUCCESS)
+    result = yr_hash_table_create(10, &new_compiler->current_internal_variables_table);
+
+  if (result == ERROR_SUCCESS)
     result = yr_hash_table_create(10000, &new_compiler->strings_table);
 
   if (result == ERROR_SUCCESS)
@@ -320,6 +323,10 @@ YR_API void yr_compiler_destroy(
 
   yr_hash_table_destroy(
       compiler->objects_table,
+      (YR_HASH_TABLE_FREE_VALUE_FUNC) yr_object_destroy);
+
+  yr_hash_table_destroy(
+      compiler->current_internal_variables_table,
       (YR_HASH_TABLE_FREE_VALUE_FUNC) yr_object_destroy);
 
   if (compiler->atoms_config.free_quality_table)
@@ -702,6 +709,7 @@ static int _yr_compiler_compile_rules(
 {
   YR_RULE null_rule;
   YR_EXTERNAL_VARIABLE null_external;
+  YR_INTERNAL_VARIABLE null_internal;
 
   uint8_t halt = OP_HALT;
 
@@ -733,6 +741,17 @@ static int _yr_compiler_compile_rules(
       YR_EXTERNAL_VARIABLES_TABLE,
       &null_external,
       sizeof(YR_EXTERNAL_VARIABLE),
+      NULL));
+
+  // Write a null internal indicating the end.
+  memset(&null_internal, 0xFA, sizeof(YR_INTERNAL_VARIABLE));
+  null_internal.type = OBJECT_TYPE_UNDEFINED;
+
+  FAIL_ON_ERROR(yr_arena_write_data(
+      compiler->arena,
+      YR_INTERNAL_VARIABLES_TABLE,
+      &null_internal,
+      sizeof(YR_INTERNAL_VARIABLE),
       NULL));
 
   // Write Aho-Corasick automaton to arena.

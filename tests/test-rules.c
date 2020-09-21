@@ -985,6 +985,102 @@ static void test_strings()
       }", "tests/data/base64");
 }
 
+static void test_internal_variables() {
+  asert_true_rule(
+      "rule test {\n\
+        variables:\n\
+          var = 2+2\n\
+        condition:\n\
+          var == 4\n\
+      }");
+  assert_false_rule(
+      "rule test {\n\
+        variables:\n\
+          var = 2+2\n\
+        condition:\n\
+          var < 4 or var > 4\n\
+      }");
+  asert_true_rule(
+      "rule test {\n\
+        variables:\n\
+          var = true\n\
+        condition:\n\
+          var\n\
+      }");
+  assert_false_rule(
+      "rule test{\n\
+        variables:\n\
+          var = false\n\
+        condition:\n\
+          var\n\
+      }");
+  assert_true_rule(
+      "rule test {\n\
+        variables:\n\
+          var = 1==1\n\
+        condition:\n\
+          var\n\
+      }");
+  assert_true_rule(
+      "rule test {\n\
+        variables:\n\
+          var = 2.5\n\
+        condition:\n\
+          var > 2.49 and var < 2.51\n\
+      }");
+  assert_false_rule(
+      "rule test {\n\
+        variables:\n\
+          var = 2.5\n\
+        condition:\n\
+          var < 2.49 or var > 2.51\n\
+      }");
+  assert_true_rule(
+      "rule test {\n\
+        variables:\n\
+          var = \"test\"\n\
+        condition:\n\
+          var == \"test\"\n\
+      }");
+  assert_false_rule(
+      "rule test {\n\
+        variables:\n\
+          var = \"test\"\n\
+        condition:\n\
+          var != \"test\"\n\
+      }");
+  assert_true_rule(
+      "rule test {\n\
+        variables:\n\
+          var1 = 1\n\
+          var2 = 0\n\
+        condition:\n\
+          var1 == 1 and var2 == 0\n\
+      }");
+  assert_false_rule(
+      "rule test {\n\
+        variables:\n\
+          var1 = 1\n\
+          var2 = 0\n\
+        condition:\n\
+          var1 != 1 or var2 != 0\n\
+      }");
+  assert_error(
+      "rule test {\n\
+        variables:\n\
+          var = true\n\
+          var = false\n\
+        condition:\n\
+          var\n\
+      }",
+      ERROR_DUPLICATED_IDENTIFIER_ERROR);
+  assert_error(
+      "rule test {\n\
+        condition:\n\
+          var\n\
+      }",
+      ERROR_UNDEFINED_IDENTIFIER);
+}
 
 static void test_wildcard_strings()
 {
@@ -2821,6 +2917,7 @@ int main(int argc, char** argv)
   test_syntax();
   test_anonymous_strings();
   test_strings();
+  test_internal_variables();
   test_wildcard_strings();
   test_hex_strings();
   test_count();

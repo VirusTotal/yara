@@ -166,6 +166,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 %token _GLOBAL_                                        "<global>"
 %token _META_                                          "<meta>"
 %token <string> _STRINGS_                              "<strings>"
+%token _VARIABLES_                                     "<variables>"
 %token _CONDITION_                                     "<condition>"
 %token <c_string> _IDENTIFIER_                         "identifier"
 %token <c_string> _STRING_IDENTIFIER_                  "string identifier"
@@ -228,6 +229,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 %right _NOT_ '~' UNARY_MINUS
 
 %type <rule>   rule
+
+%type <expression> variables
+%type <expression> variable_declaration
+%type <expression> variable_declarations
 
 %type <string> strings
 %type <string> string_declaration
@@ -343,7 +348,7 @@ rule
         fail_if_error(yr_parser_reduce_rule_declaration_phase_1(
             yyscanner, (int32_t) $1, $3, &$<rule>$));
       }
-      tags '{' meta strings
+      tags '{' meta strings variables
       {
         YR_RULE* rule = (YR_RULE*) yr_arena_ref_to_ptr(
             compiler->arena, &$<rule>4);
@@ -406,6 +411,16 @@ strings
       }
     ;
 
+variables
+    : /* empty */
+      {
+        $$.type = EXPRESSION_TYPE_UNKNOWN;
+      }
+    | _VARIABLES_ ':' variable_declarations
+      {
+        $$ = $3;
+      }
+    ;
 
 condition
     : _CONDITION_ ':' boolean_expression
@@ -577,6 +592,104 @@ meta_declaration
       }
     ;
 
+variable_declarations
+    : variable_declaration                          { $$ = $1; }
+    | variable_declarations variable_declaration    { $$ = $1; }
+    ;
+
+variable_declaration
+    : _IDENTIFIER_ '='
+      {
+        compiler->current_line = yyget_lineno(yyscanner);
+      }
+      expression
+      {
+        YR_INTERNAL_VARIABLE* int_var;
+        YR_ARENA_REF int_ref;
+        YR_ARENA_REF identifier_ref;
+        uint8_t obj_type;
+
+        // Check for duplicated identifier in scope with external variables
+        YR_OBJECT* object = (YR_OBJECT*)yr_hash_table_lookup(
+            compiler->objects_table,
+            $1,
+            NULL);
+        
+        if(object != NULL) {
+            yywarning(yyscanner,
+                "External variable overrides definition of internal variable \"%s\".",
+                $1);
+            yr_parser_emit(yyscanner, OP_POP, NULL);
+        } else {
+          // Check for duplicated identifier in local rule scope
+          object = (YR_OBJECT*)yr_hash_table_lookup(
+              compiler->current_internal_variables_table,
+              $1,
+              NULL);
+
+          if(object != NULL) {
+              fail_with_error(ERROR_DUPLICATED_IDENTIFIER);
+          }
+        
+          yr_arena_allocate_struct(
+              compiler->arena,
+              YR_INTERNAL_VARIABLES_TABLE,
+              sizeof(YR_INTERNAL_VARIABLE),
+              &int_ref,
+              offsetof(YR_INTERNAL_VARIABLE, identifier),
+              EOL);
+
+          int_var = yr_arena_ref_to_ptr(compiler->arena, &int_ref);
+        
+          _yr_compiler_store_string(
+              compiler,
+              $1,
+              &identifier_ref);
+
+          switch($4.type) {
+            case EXPRESSION_TYPE_BOOLEAN:
+            case EXPRESSION_TYPE_INTEGER:
+              obj_type = OBJECT_TYPE_INTEGER;
+              break;
+            case EXPRESSION_TYPE_FLOAT:
+              obj_type = OBJECT_TYPE_FLOAT;
+              break;
+            case EXPRESSION_TYPE_STRING:
+              obj_type = OBJECT_TYPE_STRING;
+              break;
+            default: assert(false);
+          }
+
+          int_var->identifier = yr_arena_ref_to_ptr(
+              compiler->arena, &identifier_ref);
+          int_var->rule_idx = compiler->current_rule_idx;
+          int_var->type = obj_type;
+
+          yr_object_create(
+              int_var->type,
+              int_var->identifier,
+              NULL,
+              &object);
+
+          FAIL_ON_ERROR_WITH_CLEANUP(yr_hash_table_add(
+              compiler->current_internal_variables_table,
+              $1,
+              NULL,
+              (void*) object),
+              yr_object_destroy(object));
+
+          // Pop value on stack to variable
+          yr_parser_emit_with_arg_reloc(
+              yyscanner,
+              OP_OBJ_STORE,
+              (void*)int_var->identifier,
+              NULL,
+              NULL);
+        }
+
+        yr_free($1);
+      }
+    ;
 
 string_declarations
     : string_declaration                      { $$ = $1; }
@@ -887,11 +1000,18 @@ identifier
         }
         else
         {
+          // Search for identifier in current rule scope.          
+          YR_OBJECT* object = yr_hash_table_lookup(
+            compiler->current_internal_variables_table,
+            $1,
+            NULL);
+
           // Search for identifier within the global namespace, where the
           // externals variables reside.
-
-          YR_OBJECT* object = (YR_OBJECT*) yr_hash_table_lookup(
-              compiler->objects_table, $1, NULL);
+          if (object == NULL) {
+            object = (YR_OBJECT*) yr_hash_table_lookup(
+                compiler->objects_table, $1, NULL);
+          }
 
           YR_NAMESPACE* ns = (YR_NAMESPACE*) yr_arena_get_ptr(
               compiler->arena,

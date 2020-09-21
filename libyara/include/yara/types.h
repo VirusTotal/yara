@@ -185,6 +185,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define EXTERNAL_VARIABLE_IS_NULL(x) \
     ((x) != NULL ? (x)->type == EXTERNAL_VARIABLE_TYPE_NULL : true)
 
+#define INTERNAL_VARIABLE_IS_NULL(x) \
+    ((x) != NULL ? (x)->type == OBJECT_TYPE_UNDEFINED : true)
 
 typedef struct RE RE;
 typedef struct RE_AST RE_AST;
@@ -212,6 +214,7 @@ typedef struct YR_RULES_STATS YR_RULES_STATS;
 typedef struct YR_PROFILING_INFO YR_PROFILING_INFO;
 typedef struct YR_RULE_PROFILING_INFO YR_RULE_PROFILING_INFO;
 typedef struct YR_EXTERNAL_VARIABLE YR_EXTERNAL_VARIABLE;
+typedef struct YR_INTERNAL_VARIABLE YR_INTERNAL_VARIABLE;
 typedef struct YR_MATCH YR_MATCH;
 typedef struct YR_SCAN_CONTEXT YR_SCAN_CONTEXT;
 
@@ -353,6 +356,13 @@ struct YR_EXTERNAL_VARIABLE
   DECLARE_REFERENCE(const char*, identifier);
 };
 
+struct YR_INTERNAL_VARIABLE
+{
+  int32_t   type;
+  uint32_t  rule_idx;
+
+  DECLARE_REFERENCE(const char*, identifier);
+};
 
 struct YR_AC_MATCH
 {
@@ -574,6 +584,7 @@ struct YR_RULES
   YR_RULE* rules_list_head;
   YR_STRING* strings_list_head;
   YR_EXTERNAL_VARIABLE* externals_list_head;
+  YR_INTERNAL_VARIABLE* internals_list_head;
 
   YR_AC_TRANSITION* ac_transition_table;
   YR_AC_MATCH* ac_match_pool;
@@ -730,6 +741,9 @@ struct YR_SCAN_CONTEXT
   // Pointer to a table mapping identifiers to YR_OBJECT structures. This table
   // contains entries for external variables and modules.
   YR_HASH_TABLE* objects_table;
+
+  // Array of hashmaps that map identifiers to each rule's internal variables
+  YR_HASH_TABLE** internal_variable_tables;
 
   // Notebook used for storing YR_MATCH structures associated to the matches
   // found.

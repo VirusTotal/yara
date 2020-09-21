@@ -899,12 +899,53 @@ int yr_execute_code(
         #endif
 
         r1.o = (YR_OBJECT*) yr_hash_table_lookup(
-            context->objects_table,
+            context->internal_variable_tables[current_rule_idx],
             identifier,
             NULL);
 
+        if(r1.o == NULL)
+            r1.o = (YR_OBJECT*) yr_hash_table_lookup(
+                context->objects_table,
+                identifier,
+                NULL);
+
         assert(r1.o != NULL);
         push(r1);
+        break;
+
+      case OP_OBJ_STORE:
+        identifier = *(char**)(ip);
+        ip += sizeof(uint64_t);
+        
+        #if YR_PARANOID_EXEC
+        ensure_within_rules_arena(identifier);
+        #endif
+
+        pop(r1);
+        
+        YR_OBJECT* obj = (YR_OBJECT*) yr_hash_table_lookup(
+                context->internal_variable_tables[current_rule_idx],
+                identifier,
+                NULL);
+
+        assert(obj != NULL);
+        
+        switch(obj->type) {
+            case OBJECT_TYPE_INTEGER:
+                yr_object_set_integer(r1.i, obj, NULL);
+                break;
+            case OBJECT_TYPE_FLOAT:
+                yr_object_set_float(r1.d, obj, NULL);
+                break;
+            case OBJECT_TYPE_STRING:
+                yr_object_set_string(
+                    r1.ss->c_string,
+                    strlen(r1.ss->c_string),
+                    obj,
+                    NULL);
+                break;
+            default: assert(false);
+        }
         break;
 
       case OP_OBJ_FIELD:

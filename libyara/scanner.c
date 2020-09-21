@@ -165,6 +165,7 @@ YR_API int yr_scanner_create(
     YR_SCANNER** scanner)
 {
   YR_EXTERNAL_VARIABLE* external;
+  YR_INTERNAL_VARIABLE* internal;
   YR_SCANNER* new_scanner;
 
   new_scanner = (YR_SCANNER*) yr_calloc(1, sizeof(YR_SCANNER));
@@ -175,6 +176,28 @@ YR_API int yr_scanner_create(
   FAIL_ON_ERROR_WITH_CLEANUP(
       yr_hash_table_create(64, &new_scanner->objects_table),
       yr_free(new_scanner));
+
+  new_scanner->internal_variable_tables = yr_malloc(sizeof(YR_HASH_TABLE*)*rules->num_rules);
+
+  if(new_scanner->internal_variable_tables == NULL) {
+    yr_hash_table_destroy(new_scanner->objects_table, (YR_HASH_TABLE_FREE_VALUE_FUNC) yr_object_destroy);
+    yr_free(new_scanner);
+
+    return ERROR_INSUFFICIENT_MEMORY;
+  }
+
+  for(uint32_t rule_idx=0; rule_idx<rules->num_rules; rule_idx++) {
+    FAIL_ON_ERROR_WITH_CLEANUP(
+        yr_hash_table_create(10, &new_scanner->internal_variable_tables[rule_idx]),
+        //CLEANUP
+        for(uint32_t cleanup_rule_idx = 0; cleanup_rule_idx<rule_idx; cleanup_rule_idx++)
+        {
+          yr_hash_table_destroy(new_scanner->internal_variable_tables[cleanup_rule_idx], (YR_HASH_TABLE_FREE_VALUE_FUNC) yr_object_destroy);
+        };
+        yr_free(new_scanner->internal_variable_tables);
+        yr_free(new_scanner->objects_table);
+        yr_free(new_scanner));
+  }
 
   new_scanner->rules = rules;
   new_scanner->entry_point = YR_UNDEFINED;
@@ -234,8 +257,37 @@ YR_API int yr_scanner_create(
     external++;
   }
 
-  *scanner = new_scanner;
+  internal = rules->internals_list_head;
 
+  while (!INTERNAL_VARIABLE_IS_NULL(internal))
+  {
+    YR_OBJECT* object;
+
+    FAIL_ON_ERROR_WITH_CLEANUP(
+        yr_object_create(
+            internal->type,
+            internal->identifier,
+            NULL,
+            &object),
+        // cleanup
+        yr_scanner_destroy(new_scanner));
+
+    FAIL_ON_ERROR_WITH_CLEANUP(
+        yr_hash_table_add(
+            new_scanner->internal_variable_tables[internal->rule_idx],
+            internal->identifier,
+            NULL,
+            (void*) object),
+        // cleanup
+        yr_object_destroy(object);
+        yr_scanner_destroy(new_scanner));
+
+    yr_object_set_canary(object, new_scanner->canary);
+    internal++;
+  }
+
+  *scanner = new_scanner;
+  
   return ERROR_SUCCESS;
 }
 
@@ -261,6 +313,16 @@ YR_API void yr_scanner_destroy(
         scanner->objects_table,
         (YR_HASH_TABLE_FREE_VALUE_FUNC) yr_object_destroy);
   }
+
+  if(scanner->internal_variable_tables != NULL) {
+    for(uint32_t rule_idx=0; rule_idx<scanner->rules->num_rules; rule_idx++) {
+      yr_hash_table_destroy(
+        scanner->internal_variable_tables[rule_idx],
+        (YR_HASH_TABLE_FREE_VALUE_FUNC)yr_object_destroy);
+    }
+  }
+
+  yr_free(scanner->internal_variable_tables);
 
   #ifdef YR_PROFILING_ENABLED
   yr_free(scanner->profiling_info);

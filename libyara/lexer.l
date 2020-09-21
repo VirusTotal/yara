@@ -175,6 +175,7 @@ octdigit      [0-7]
 "global"                { return _GLOBAL_;      }
 "rule"                  { return _RULE_;        }
 "meta"                  { return _META_;        }
+"variables"             { return _VARIABLES_;   }
 "strings"               { return _STRINGS_;     }
 "ascii"                 { return _ASCII_;       }
 "wide"                  { return _WIDE_;        }
