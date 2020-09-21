@@ -1072,12 +1072,14 @@ static void test_internal_variables() {
           var = false\n\
         condition:\n\
           var\n\
-      }");
+      }",
+      ERROR_DUPLICATED_IDENTIFIER_ERROR);
   assert_error(
       "rule test {\n\
         condition:\n\
           var\n\
-      }");
+      }",
+      ERROR_UNDEFINED_IDENTIFIER);
 }
 
 static void test_wildcard_strings()
