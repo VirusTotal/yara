@@ -246,6 +246,7 @@ typedef struct _YR_COMPILER
   YR_HASH_TABLE*    rules_table;
   YR_HASH_TABLE*    objects_table;
   YR_HASH_TABLE*    strings_table;
+  YR_HASH_TABLE*    current_internal_variables_table;
 
   // Hash table that contains all the strings that has been written to the
   // YR_SZ_POOL buffer in the compiler's arena. Values in the hash table are

@@ -899,7 +899,7 @@ int yr_execute_code(
         #endif
 
         r1.o = (YR_OBJECT*) yr_hash_table_lookup(
-            current_rule->internal_variables_table,
+            context->internal_variable_tables[current_rule_idx],
             identifier,
             NULL);
 
@@ -924,7 +924,7 @@ int yr_execute_code(
         pop(r1);
         
         YR_OBJECT* obj = (YR_OBJECT*) yr_hash_table_lookup(
-                current_rule->internal_variables_table,
+                context->internal_variable_tables[current_rule_idx],
                 identifier,
                 NULL);
 

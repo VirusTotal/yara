@@ -609,9 +609,6 @@ variable_declaration
         YR_ARENA_REF identifier_ref;
         uint8_t obj_type;
 
-        YR_RULE* rule = _yr_compiler_get_rule_by_idx(compiler,
-                            compiler->current_rule_idx);
-
         // Check for duplicated identifier in scope with external variables
         YR_OBJECT* object = (YR_OBJECT*)yr_hash_table_lookup(
             compiler->objects_table,
@@ -626,7 +623,7 @@ variable_declaration
         } else {
           // Check for duplicated identifier in local rule scope
           object = (YR_OBJECT*)yr_hash_table_lookup(
-              rule->internal_variables_table,
+              compiler->current_internal_variables_table,
               $1,
               NULL);
 
@@ -640,7 +637,6 @@ variable_declaration
               sizeof(YR_INTERNAL_VARIABLE),
               &int_ref,
               offsetof(YR_INTERNAL_VARIABLE, identifier),
-              offsetof(YR_INTERNAL_VARIABLE, rule),
               EOL);
 
           int_var = yr_arena_ref_to_ptr(compiler->arena, &int_ref);
@@ -666,7 +662,7 @@ variable_declaration
 
           int_var->identifier = yr_arena_ref_to_ptr(
               compiler->arena, &identifier_ref);
-          int_var->rule = rule;
+          int_var->rule_idx = compiler->current_rule_idx;
           int_var->type = obj_type;
 
           yr_object_create(
@@ -676,7 +672,7 @@ variable_declaration
               &object);
 
           FAIL_ON_ERROR_WITH_CLEANUP(yr_hash_table_add(
-              rule->internal_variables_table,
+              compiler->current_internal_variables_table,
               $1,
               NULL,
               (void*) object),
@@ -1004,15 +1000,14 @@ identifier
         }
         else
         {
+          // Search for identifier in current rule scope.          
+          YR_OBJECT* object = yr_hash_table_lookup(
+            compiler->current_internal_variables_table,
+            $1,
+            NULL);
+
           // Search for identifier within the global namespace, where the
           // externals variables reside.
-
-          YR_OBJECT* object;
-
-          YR_RULE* rule = _yr_compiler_get_rule_by_idx(compiler, compiler->current_rule_idx);
-          
-          object = yr_hash_table_lookup(rule->internal_variables_table, $1, NULL);
-    
           if (object == NULL) {
             object = (YR_OBJECT*) yr_hash_table_lookup(
                 compiler->objects_table, $1, NULL);

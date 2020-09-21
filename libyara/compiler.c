@@ -271,6 +271,9 @@ YR_API int yr_compiler_create(
     result = yr_hash_table_create(1000, &new_compiler->objects_table);
 
   if (result == ERROR_SUCCESS)
+    result = yr_hash_table_create(10, &new_compiler->current_internal_variables_table);
+
+  if (result == ERROR_SUCCESS)
     result = yr_hash_table_create(10000, &new_compiler->strings_table);
 
   if (result == ERROR_SUCCESS)
@@ -301,12 +304,14 @@ YR_API int yr_compiler_create(
 YR_API void yr_compiler_destroy(
     YR_COMPILER* compiler)
 {
-  YR_RULE* rule;
-
   yr_arena_release(compiler->arena);
 
   if (compiler->automaton != NULL)
     yr_ac_automaton_destroy(compiler->automaton);
+
+  yr_hash_table_destroy(
+      compiler->rules_table,
+      NULL);
 
   yr_hash_table_destroy(
       compiler->strings_table,
@@ -320,18 +325,9 @@ YR_API void yr_compiler_destroy(
       compiler->objects_table,
       (YR_HASH_TABLE_FREE_VALUE_FUNC) yr_object_destroy);
 
-  rule = compiler->rules->rules_list_head;
-  while(!RULE_IS_NULL(rule)) {
-    yr_hash_table_destroy(
-        rule->internal_variables_table,
-        (YR_HASH_TABLE_FREE_VALUE_FUNC) yr_object_destroy);
-
-    rule++;
-  }
-
   yr_hash_table_destroy(
-      compiler->rules_table,
-      NULL);
+      compiler->current_internal_variables_table,
+      (YR_HASH_TABLE_FREE_VALUE_FUNC) yr_object_destroy);
 
   if (compiler->atoms_config.free_quality_table)
     yr_free(compiler->atoms_config.quality_table);

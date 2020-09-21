@@ -327,8 +327,6 @@ struct YR_RULE
   // Number of atoms generated for this rule.
   int32_t num_atoms;
 
-  YR_HASH_TABLE* internal_variables_table;
-
   DECLARE_REFERENCE(const char*, identifier);
   DECLARE_REFERENCE(const char*, tags);
   DECLARE_REFERENCE(YR_META*, metas);
@@ -360,10 +358,10 @@ struct YR_EXTERNAL_VARIABLE
 
 struct YR_INTERNAL_VARIABLE
 {
-  int32_t type;
+  int32_t   type;
+  uint32_t  rule_idx;
 
   DECLARE_REFERENCE(const char*, identifier);
-  DECLARE_REFERENCE(YR_RULE*, rule);
 };
 
 struct YR_AC_MATCH
@@ -743,6 +741,9 @@ struct YR_SCAN_CONTEXT
   // Pointer to a table mapping identifiers to YR_OBJECT structures. This table
   // contains entries for external variables and modules.
   YR_HASH_TABLE* objects_table;
+
+  // Array of hashmaps that map identifiers to each rule's internal variables
+  YR_HASH_TABLE** internal_variable_tables;
 
   // Notebook used for storing YR_MATCH structures associated to the matches
   // found.
