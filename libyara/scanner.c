@@ -319,8 +319,6 @@ YR_API void yr_scanner_destroy(
       yr_hash_table_destroy(
         scanner->internal_variable_tables[rule_idx],
         (YR_HASH_TABLE_FREE_VALUE_FUNC)yr_object_destroy);
-
-      rule_idx++;
     }
   }
 
