@@ -73,6 +73,13 @@ static struct yr_config_var
 uint8_t yr_lowercase[256];
 uint8_t yr_altercase[256];
 
+#if 0 == YR_DEBUG_VERBOSITY
+
+#else
+
+uint64_t yr_debug_verbosity = YR_DEBUG_VERBOSITY;
+
+#endif
 
 #if defined(HAVE_LIBCRYPTO) && OPENSSL_VERSION_NUMBER < 0x10100000L
 

@@ -48,6 +48,9 @@ static int _yr_scanner_scan_mem_block(
     const uint8_t* block_data,
     YR_MEMORY_BLOCK* block)
 {
+  YR_DEBUG_FPRINTF(2, stderr, "+ %s(block_data=%p block->base=0x%lx block->size=%'lu) {}\n",
+    __FUNCTION__, block_data, block->base, block->size);
+
   YR_RULES* rules = scanner->rules;
   YR_AC_TRANSITION* transition_table = rules->ac_transition_table;
   uint32_t* match_table = rules->ac_match_table;
@@ -66,6 +69,13 @@ static int _yr_scanner_scan_mem_block(
       if (yr_stopwatch_elapsed_ns(&scanner->stopwatch) > scanner->timeout)
         return ERROR_SCAN_TIMEOUT;
     }
+
+    #if 2 == YR_DEBUG_VERBOSITY
+    if (0 != state)
+      YR_DEBUG_FPRINTF(2, stderr, "- match_table[state=%u]=%'u i=%'ld "
+        "block_data=%p block->base=0x%lx // %s()\n",
+        state, match_table[state], i, block_data, block->base, __FUNCTION__);
+    #endif
 
     if (match_table[state] != 0)
     {
@@ -92,7 +102,6 @@ static int _yr_scanner_scan_mem_block(
         match = match->next;
       }
     }
-
 
     index = block_data[i++] + 1;
     transition = transition_table[state + index];
@@ -164,6 +173,8 @@ YR_API int yr_scanner_create(
     YR_RULES* rules,
     YR_SCANNER** scanner)
 {
+  YR_DEBUG_FPRINTF(2, stderr, "+ %s() {}\n", __FUNCTION__);
+
   YR_EXTERNAL_VARIABLE* external;
   YR_SCANNER* new_scanner;
 
@@ -244,6 +255,8 @@ YR_API int yr_scanner_create(
 YR_API void yr_scanner_destroy(
     YR_SCANNER* scanner)
 {
+  YR_DEBUG_FPRINTF(2, stderr, "+ %s() {}\n", __FUNCTION__);
+
   RE_FIBER* fiber;
   RE_FIBER* next_fiber;
 
@@ -384,6 +397,8 @@ YR_API int yr_scanner_scan_mem_blocks(
     YR_SCANNER* scanner,
     YR_MEMORY_BLOCK_ITERATOR* iterator)
 {
+  YR_DEBUG_FPRINTF(2, stderr, "+ %s() {}\n", __FUNCTION__);
+
   YR_RULES* rules;
   YR_RULE* rule;
   YR_MEMORY_BLOCK* block;
@@ -549,11 +564,13 @@ static const uint8_t* _yr_fetch_block_data(
 }
 
 
-YR_API int yr_scanner_scan_mem(
+YR_API int _yr_scanner_scan_mem(
     YR_SCANNER* scanner,
     const uint8_t* buffer,
     size_t buffer_size)
 {
+  YR_DEBUG_FPRINTF(2, stderr, "+ %s(buffer=%p buffer_size=%'ld) {}\n", __FUNCTION__, buffer, buffer_size);
+
   YR_MEMORY_BLOCK block;
   YR_MEMORY_BLOCK_ITERATOR iterator;
 
@@ -570,6 +587,12 @@ YR_API int yr_scanner_scan_mem(
 
   return yr_scanner_scan_mem_blocks(scanner, &iterator);
 }
+
+
+YR_API int (*yr_scanner_scan_mem)(
+    YR_SCANNER* scanner,
+    const uint8_t* buffer,
+    size_t buffer_size) = &_yr_scanner_scan_mem;
 
 
 YR_API int yr_scanner_scan_file(

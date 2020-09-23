@@ -30,6 +30,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <assert.h>
 #include <stdlib.h>
 #include <ctype.h>
+#include <stdio.h>
 
 #include <yara/globals.h>
 #include <yara/limits.h>
@@ -64,6 +65,7 @@ static int _yr_scan_xor_compare(
     uint8_t* string,
     size_t string_length)
 {
+  int result = 0;
   const uint8_t* s1 = data;
   const uint8_t* s2 = string;
   uint8_t k = 0;
@@ -71,7 +73,7 @@ static int _yr_scan_xor_compare(
   size_t i = 0;
 
   if (data_size < string_length)
-    return 0;
+    goto _exit;
 
   // Calculate the xor key to compare with. *s1 is the start of the string we
   // matched on and *s2 is the "plaintext" string, so *s1 ^ *s2 is the key to
@@ -81,7 +83,14 @@ static int _yr_scan_xor_compare(
   while (i < string_length && *s1++ == ((*s2++) ^ k))
     i++;
 
-  return (int) ((i == string_length) ? i : 0);
+  result = (int) ((i == string_length) ? i : 0);
+
+  _exit:;
+
+  YR_DEBUG_FPRINTF(2, stderr, "+ %s(data_size=%'lu string_length=%'ld) {} = %d\n",
+    __FUNCTION__, data_size, string_length, result);
+
+  return result;
 }
 
 static int _yr_scan_xor_wcompare(
@@ -163,13 +172,14 @@ static int _yr_scan_wcompare(
     uint8_t* string,
     size_t string_length)
 {
+  int result = 0;
   const uint8_t* s1 = data;
   const uint8_t* s2 = string;
 
   size_t i = 0;
 
   if (data_size < string_length * 2)
-    return 0;
+    goto _exit;
 
   while (i < string_length && *s1 == *s2 && *(s1 + 1) == 0x00)
   {
@@ -178,7 +188,14 @@ static int _yr_scan_wcompare(
     i++;
   }
 
-  return (int) ((i == string_length) ? i * 2 : 0);
+  result = (int) ((i == string_length) ? i * 2 : 0);
+
+  _exit:;
+
+  YR_DEBUG_FPRINTF(2, stderr, "+ %s(data_size=%'lu string_length=%'ld) {} = %d\n",
+    __FUNCTION__, data_size, string_length, result);
+
+  return result;
 }
 
 
@@ -188,13 +205,14 @@ static int _yr_scan_wicompare(
     uint8_t* string,
     size_t string_length)
 {
+  int result = 0;
   const uint8_t* s1 = data;
   const uint8_t* s2 = string;
 
   size_t i = 0;
 
   if (data_size < string_length * 2)
-    return 0;
+    goto _exit;
 
   while (i < string_length &&
          yr_lowercase[*s1] == yr_lowercase[*s2] &&
@@ -205,7 +223,14 @@ static int _yr_scan_wicompare(
     i++;
   }
 
-  return (int) ((i == string_length) ? i * 2 : 0);
+  result = (int) ((i == string_length) ? i * 2 : 0);
+
+  _exit:;
+
+  YR_DEBUG_FPRINTF(2, stderr, "+ %s(data_size=%'lu string_length=%'ld) {} = %d\n",
+    __FUNCTION__, data_size, string_length, result);
+
+  return result;
 }
 
 
@@ -248,14 +273,23 @@ static int _yr_scan_add_match_to_list(
     YR_MATCHES* matches_list,
     int replace_if_exists)
 {
+  int result = ERROR_SUCCESS;
+
+  #if YR_DEBUG_VERBOSITY > 0
+  int32_t count_orig = matches_list->count;
+  #endif
+
   YR_MATCH* insertion_point = matches_list->tail;
 
   if (matches_list->count == YR_MAX_STRING_MATCHES)
-    return ERROR_TOO_MANY_MATCHES;
+  {
+    result = ERROR_TOO_MANY_MATCHES;
+    goto _exit;
+  }
 
   while (insertion_point != NULL)
   {
-    if (match->offset == insertion_point->offset)
+    if ((match->base + match->offset) == (insertion_point->base + insertion_point->offset))
     {
       if (replace_if_exists)
       {
@@ -264,10 +298,10 @@ static int _yr_scan_add_match_to_list(
         insertion_point->data = match->data;
       }
 
-      return ERROR_SUCCESS;
+      goto _exit; // return ERROR_SUCCESS
     }
 
-    if (match->offset > insertion_point->offset)
+    if ((match->base + match->offset) > (insertion_point->base + insertion_point->offset))
       break;
 
     insertion_point = insertion_point->prev;
@@ -293,7 +327,14 @@ static int _yr_scan_add_match_to_list(
   else
     matches_list->tail = match;
 
-  return ERROR_SUCCESS;
+  _exit:;
+
+  YR_DEBUG_FPRINTF(2, stderr, "+ %s(replace_if_exists=%d) {} = %d // "
+    "match->base=0x%lx match->offset=%'lu matches_list->count=%'u += %'u\n",
+    __FUNCTION__, replace_if_exists, result, match->base, match->offset, count_orig,
+    matches_list->count - count_orig);
+
+  return result;
 }
 
 
@@ -341,6 +382,10 @@ static int _yr_scan_verify_chained_string_match(
     uint64_t match_offset,
     int32_t match_length)
 {
+  YR_DEBUG_FPRINTF(2, stderr, "+ %s"
+    "(match_data=%p match_base=%lx match_offset=0x%'lu match_length=%'d) {}\n",
+    __FUNCTION__, match_data, match_base, match_offset, match_length);
+
   YR_STRING* string;
   YR_MATCH* match;
   YR_MATCH* next_match;
@@ -567,6 +612,19 @@ static int _yr_scan_match_callback(
 
   size_t match_offset = match_data - callback_args->data;
 
+  YR_DEBUG_FPRINTF(2, stderr, "+ %s(match_data=%p match_length=%'d) { // "
+    "match_offset=%'ld args->data=%p args->string.length=%'u "
+    "args->data_base=0x%lx args->data_size=%'lu args->forward_matches=%'u\n",
+    __FUNCTION__,
+    match_data,
+    match_length,
+    match_offset,
+    callback_args->data,
+    callback_args->string->length,
+    callback_args->data_base,
+    callback_args->data_size,
+    callback_args->forward_matches);
+
   // total match length is the sum of backward and forward matches.
   match_length += callback_args->forward_matches;
 
@@ -580,22 +638,23 @@ static int _yr_scan_match_callback(
       if (match_offset >= 2 &&
           *(match_data - 1) == 0 &&
           isalnum(*(match_data - 2)))
-        return ERROR_SUCCESS;
+        goto _exit; // return ERROR_SUCCESS;
+
 
       if (match_offset + match_length + 1 < callback_args->data_size &&
           *(match_data + match_length + 1) == 0 &&
           isalnum(*(match_data + match_length)))
-        return ERROR_SUCCESS;
+        goto _exit; // return ERROR_SUCCESS;
     }
     else
     {
       if (match_offset >= 1 &&
           isalnum(*(match_data - 1)))
-        return ERROR_SUCCESS;
+        goto _exit; // return ERROR_SUCCESS;
 
       if (match_offset + match_length < callback_args->data_size &&
           isalnum(*(match_data + match_length)))
-        return ERROR_SUCCESS;
+        goto _exit; // return ERROR_SUCCESS;
     }
   }
 
@@ -621,7 +680,10 @@ static int _yr_scan_match_callback(
         callback_args->context->matches_notebook, sizeof(YR_MATCH));
 
     if (new_match == NULL)
-      return ERROR_INSUFFICIENT_MEMORY;
+    {
+      result = ERROR_INSUFFICIENT_MEMORY;
+      goto _exit;
+    }
 
     new_match->data_length = yr_min(match_length, max_match_data);
 
@@ -631,7 +693,10 @@ static int _yr_scan_match_callback(
           callback_args->context->matches_notebook, new_match->data_length);
 
       if (new_match->data == NULL)
-        return ERROR_INSUFFICIENT_MEMORY;
+      {
+        result = ERROR_INSUFFICIENT_MEMORY;
+        goto _exit;
+      }
 
       memcpy(
           (void*) new_match->data,
@@ -659,6 +724,10 @@ static int _yr_scan_match_callback(
     }
   }
 
+  _exit:;
+
+  YR_DEBUG_FPRINTF(2, stderr, "} // %s() = %d\n", __FUNCTION__, result);
+
   return result;
 }
 
@@ -683,6 +752,9 @@ static int _yr_scan_verify_re_match(
     uint64_t data_base,
     size_t offset)
 {
+  YR_DEBUG_FPRINTF(2, stderr, "+ %s(data=%p data_size=%'lu data_base=0x%lx offset=%'ld) {}\n",
+    __FUNCTION__, data, data_size, data_base, offset);
+
   CALLBACK_ARGS callback_args;
   RE_EXEC_FUNC exec;
 
@@ -774,7 +846,6 @@ static int _yr_scan_verify_re_match(
   return ERROR_SUCCESS;
 }
 
-
 static int _yr_scan_verify_literal_match(
     YR_SCAN_CONTEXT* context,
     YR_AC_MATCH* ac_match,
@@ -783,6 +854,9 @@ static int _yr_scan_verify_literal_match(
     uint64_t data_base,
     size_t offset)
 {
+  YR_DEBUG_FPRINTF(2, stderr, "+ %s(data=%p data_size=%'lu data_base=0x%lx offset=%'ld) {}\n",
+    __FUNCTION__, data, data_size, data_base, offset);
+
   int flags = 0;
   int forward_matches = 0;
 
@@ -888,6 +962,9 @@ int yr_scan_verify_match(
     uint64_t data_base,
     size_t offset)
 {
+  YR_DEBUG_FPRINTF(2, stderr, "+ %s(data=%p data_size=%'lu data_base=0x%lx offset=%'ld)\n",
+    __FUNCTION__, data, data_size, data_base, offset);
+
   YR_STRING* string = ac_match->string;
 
   int result;
