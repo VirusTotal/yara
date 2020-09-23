@@ -35,6 +35,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <fcntl.h>
 
 #include <yara.h>
+#include <yara/proc.h>
+#include <yara/globals.h>
 #include "util.h"
 
 //
@@ -46,6 +48,165 @@ char compile_error[1024];
 
 // Number of warnings produced by the last call to compile_rule
 int warnings;
+
+uint64_t yr_test_mem_block_size = 0;
+uint64_t yr_test_mem_block_size_overlap = 0;
+uint64_t yr_test_count_get_block = 0;
+
+
+static YR_MEMORY_BLOCK* _yr_test_single_block_get_first_block(
+    YR_MEMORY_BLOCK_ITERATOR* iterator)
+{
+  yr_test_count_get_block ++;
+  return (YR_MEMORY_BLOCK*) iterator->context;
+}
+
+
+static YR_MEMORY_BLOCK* _yr_test_single_block_get_next_block(
+    YR_MEMORY_BLOCK_ITERATOR* iterator)
+{
+  yr_test_count_get_block ++;
+  return NULL;
+}
+
+
+static const uint8_t* _yr_test_single_block_fetch_block_data(
+    YR_MEMORY_BLOCK* block)
+{
+  return (const uint8_t*) block->context;
+}
+
+
+static YR_MEMORY_BLOCK* _yr_test_multi_block_get_next_block(
+    YR_MEMORY_BLOCK_ITERATOR* iterator)
+{
+  YR_PROC_ITERATOR_CTX* context = (YR_PROC_ITERATOR_CTX*) iterator->context;
+
+  YR_MEMORY_BLOCK* result;
+  uint64_t overlap;
+
+  yr_test_count_get_block ++;
+
+  if (0 == context->current_block.size) {
+    overlap = 0;
+    context->current_block.size =
+      (context->buffer_size < yr_test_mem_block_size) ?
+       context->buffer_size :
+       yr_test_mem_block_size;
+    result = &context->current_block;
+  }
+  else {
+    overlap = yr_test_mem_block_size_overlap;
+    context->current_block.base +=
+      (0 == context->current_block.base) ?
+       0 :
+       overlap;
+    context->current_block.base +=
+      (context->current_block.base < context->buffer_size) ?
+       yr_test_mem_block_size :
+       0;
+    result = (context->current_block.base < context->buffer_size) ?
+             &context->current_block : NULL;
+    context->current_block.size =
+      ((context->buffer_size - context->current_block.base) < yr_test_mem_block_size) ?
+        context->buffer_size - context->current_block.base + overlap :
+        yr_test_mem_block_size + overlap;
+    context->current_block.base -= overlap;
+  }
+
+  YR_DEBUG_FPRINTF(2, stderr, "+ %s() {} = %p // "
+    ".base=(0x%lx or %'lu) of (0x%lx or %'lu) .size=%'lu, both including %'lu block overlap%s\n",
+    __FUNCTION__, result,
+    context->current_block.base,
+    context->current_block.base,
+    context->buffer_size,
+    context->buffer_size,
+    context->current_block.size,
+    overlap, overlap ? "" : " (note: 1st block overlap always 0)");
+
+  return result;
+}
+
+
+static YR_MEMORY_BLOCK* _yr_test_multi_block_get_first_block(
+    YR_MEMORY_BLOCK_ITERATOR* iterator)
+{
+  YR_DEBUG_FPRINTF(2, stderr, "+ %s() {} // "
+    "wrapping _yr_test_multi_block_get_next_block()\n", __FUNCTION__);
+
+  yr_test_count_get_block ++;
+
+  YR_PROC_ITERATOR_CTX* context = (YR_PROC_ITERATOR_CTX*) iterator->context;
+  context->current_block.base = 0;
+  context->current_block.size = 0;
+  return _yr_test_multi_block_get_next_block(iterator);
+}
+
+
+static const uint8_t* _yr_test_multi_block_fetch_block_data(
+    YR_MEMORY_BLOCK* block)
+{
+  YR_PROC_ITERATOR_CTX* context = (YR_PROC_ITERATOR_CTX*) block->context;
+
+  #if YR_DEBUG_VERBOSITY > 0
+  uint64_t overlap = context->current_block.base > 0 ? yr_test_mem_block_size_overlap : 0;
+  #endif
+  YR_DEBUG_FPRINTF(2, stderr, "+ %s() {} = %p = %p + 0x%lx base including %'lu overlap%s\n",
+    __FUNCTION__,
+    context->buffer + context->current_block.base - overlap,
+    context->buffer,
+    context->current_block.base,
+    overlap, overlap ? "" : " (note: 1st block overlap always 0)");
+
+  return context->buffer + context->current_block.base;
+}
+
+
+YR_API int _yr_test_single_or_multi_block_scan_mem(
+    YR_SCANNER* scanner,
+    const uint8_t* buffer,
+    size_t buffer_size)
+{
+  YR_MEMORY_BLOCK block;
+  YR_MEMORY_BLOCK_ITERATOR iterator;
+  YR_PROC_ITERATOR_CTX context;
+
+  scanner->file_size = buffer_size;
+
+  if (yr_test_mem_block_size)
+  {
+    YR_DEBUG_FPRINTF(2, stderr, "+ %s(buffer=%p buffer_size=%'lu) {} // "
+      "yr_test_mem_block_size=%'lu\n",
+       __FUNCTION__,
+       buffer,
+       buffer_size,
+       yr_test_mem_block_size);
+
+    context.buffer = buffer;
+    context.buffer_size = buffer_size;
+    context.current_block.base = 0;
+    context.current_block.size = 0;
+    context.current_block.context = &context;
+    context.current_block.fetch_data = _yr_test_multi_block_fetch_block_data;
+
+    iterator.context = &context;
+    iterator.first = _yr_test_multi_block_get_first_block;
+    iterator.next = _yr_test_multi_block_get_next_block;
+  }
+  else
+  {
+    block.size = buffer_size;
+    block.base = 0;
+    block.fetch_data = _yr_test_single_block_fetch_block_data;
+    block.context = (void*) buffer;
+
+    iterator.context = &block;
+    iterator.first = _yr_test_single_block_get_first_block;
+    iterator.next = _yr_test_single_block_get_next_block;
+  }
+
+  return yr_scanner_scan_mem_blocks(scanner, &iterator);
+}
 
 
 //

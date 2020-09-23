@@ -209,6 +209,8 @@ YR_API int yr_rules_scan_mem(
     void* user_data,
     int timeout)
 {
+  YR_DEBUG_FPRINTF(2, stderr, "+ %s(buffer=%p buffer_size=%'ld timeout=%'d) {}\n", __FUNCTION__, buffer, buffer_size, timeout);
+
   YR_SCANNER* scanner;
   int result;
 
@@ -294,6 +296,8 @@ YR_API int yr_rules_scan_proc(
     void* user_data,
     int timeout)
 {
+  YR_DEBUG_FPRINTF(2, stderr, "+ %s(pid=%'d timeout=%'d) {}\n", __FUNCTION__, pid, timeout);
+
   YR_MEMORY_BLOCK_ITERATOR iterator;
 
   int result = yr_process_open_iterator(
