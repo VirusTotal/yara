@@ -108,6 +108,7 @@ cc_test(
         "data/tiny-overlay",
         "data/weird_rich",
         "data/mtxex.dll",
+        "data/mtxex_modified_rsrc_rva.dll",
     ],
     deps = [
         ":util",
