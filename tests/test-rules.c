@@ -2737,19 +2737,23 @@ void test_process_scan()
 
   switch (rc1) {
   case ERROR_SUCCESS:
-    if (counters.rules_matching == 0)
+    if (counters.rules_matching != 1)
     {
-      fputs("Found no matches for rule that should match\n", stderr);
+      fprintf(stderr,
+          "Expecting one rule matching in test_process_scan, found %d\n",
+          counters.rules_matching);
       exit(EXIT_FAILURE);
     }
-    if (counters.rules_not_matching > 0)
+    if (counters.rules_not_matching != 1)
     {
-      fputs("Found matches for rule that should not match\n", stderr);
+      fprintf(stderr,
+          "Expecting one rule not matching in test_process_scan, found %d\n",
+          counters.rules_not_matching);
       exit(EXIT_FAILURE);
     }
     break;
   case ERROR_COULD_NOT_ATTACH_TO_PROCESS:
-    fputs("Could not attach to process, ignoring this error\n", stderr);
+    fprintf(stderr, "Could not attach to process, ignoring this error\n");
     break;
   default:
     fprintf(stderr, "yr_rules_scan_proc: Got unexpected error %d\n", rc1);
