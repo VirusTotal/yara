@@ -198,6 +198,11 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 %token _THEM_                                          "<them>"
 %token _MATCHES_                                       "<matches>"
 %token _CONTAINS_                                      "<contains>"
+%token _STARTSWITH_                                    "<startswith>"
+%token _ENDSWITH_                                      "<endswith>"
+%token _ICONTAINS_                                     "<icontains>"
+%token _ISTARTSWITH_                                   "<istartswith>"
+%token _IENDSWITH_                                     "<iendswith>"
 %token _IMPORT_                                        "<import>"
 %token _TRUE_                                          "<true>"
 %token _FALSE_                                         "<false"
@@ -217,7 +222,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // in the list. Operators that appear in the same line have the same precedence.
 %left _OR_
 %left _AND_
-%left _EQ_ _NEQ_ _CONTAINS_ _MATCHES_
+%left _EQ_ _NEQ_ _CONTAINS_ _ICONTAINS_ _STARTSWITH_ _ENDSWITH_ _ISTARTSWITH_ _IENDSWITH_ _MATCHES_
 %left _LT_ _LE_ _GT_ _GE_
 %left '|'
 %left '^'
@@ -675,7 +680,7 @@ string_modifiers
         {
           if ($$.alphabet != NULL)
           {
-            if (sized_string_cmp($$.alphabet, $2.alphabet) != 0)
+            if (ss_compare($$.alphabet, $2.alphabet) != 0)
             {
               yr_compiler_set_error_extra_info(
                   compiler, "can not specify multiple alphabets");
@@ -778,7 +783,7 @@ string_modifier
     | _BASE64_
       {
         $$.flags = STRING_FLAGS_BASE64;
-        $$.alphabet = sized_string_new(DEFAULT_BASE64_ALPHABET);
+        $$.alphabet = ss_new(DEFAULT_BASE64_ALPHABET);
       }
     | _BASE64_ '(' _TEXT_STRING_ ')'
       {
@@ -800,7 +805,7 @@ string_modifier
     | _BASE64_WIDE_
       {
         $$.flags = STRING_FLAGS_BASE64_WIDE;
-        $$.alphabet = sized_string_new(DEFAULT_BASE64_ALPHABET);
+        $$.alphabet = ss_new(DEFAULT_BASE64_ALPHABET);
       }
     | _BASE64_WIDE_ '(' _TEXT_STRING_ ')'
       {
@@ -1305,6 +1310,56 @@ expression
 
         fail_if_error(yr_parser_emit(
             yyscanner, OP_CONTAINS, NULL));
+
+        $$.type = EXPRESSION_TYPE_BOOLEAN;
+      }
+    | primary_expression _ICONTAINS_ primary_expression
+      {
+        check_type($1, EXPRESSION_TYPE_STRING, "icontains");
+        check_type($3, EXPRESSION_TYPE_STRING, "icontains");
+
+        fail_if_error(yr_parser_emit(
+            yyscanner, OP_ICONTAINS, NULL));
+
+        $$.type = EXPRESSION_TYPE_BOOLEAN;
+      }
+    | primary_expression _STARTSWITH_ primary_expression
+      {
+        check_type($1, EXPRESSION_TYPE_STRING, "startswith");
+        check_type($3, EXPRESSION_TYPE_STRING, "startswith");
+
+        fail_if_error(yr_parser_emit(
+            yyscanner, OP_STARTSWITH, NULL));
+
+        $$.type = EXPRESSION_TYPE_BOOLEAN;
+      }
+    | primary_expression _ISTARTSWITH_ primary_expression
+      {
+        check_type($1, EXPRESSION_TYPE_STRING, "istartswith");
+        check_type($3, EXPRESSION_TYPE_STRING, "istartswith");
+
+        fail_if_error(yr_parser_emit(
+            yyscanner, OP_ISTARTSWITH, NULL));
+
+        $$.type = EXPRESSION_TYPE_BOOLEAN;
+      }
+    | primary_expression _ENDSWITH_ primary_expression
+      {
+        check_type($1, EXPRESSION_TYPE_STRING, "endswith");
+        check_type($3, EXPRESSION_TYPE_STRING, "endswith");
+
+        fail_if_error(yr_parser_emit(
+            yyscanner, OP_ENDSWITH, NULL));
+
+        $$.type = EXPRESSION_TYPE_BOOLEAN;
+      }
+    | primary_expression _IENDSWITH_ primary_expression
+      {
+        check_type($1, EXPRESSION_TYPE_STRING, "iendswith");
+        check_type($3, EXPRESSION_TYPE_STRING, "iendswith");
+
+        fail_if_error(yr_parser_emit(
+            yyscanner, OP_IENDSWITH, NULL));
 
         $$.type = EXPRESSION_TYPE_BOOLEAN;
       }

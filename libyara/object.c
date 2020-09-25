@@ -589,7 +589,7 @@ int yr_object_copy(
     case OBJECT_TYPE_STRING:
 
       if (object->value.ss != NULL)
-        copy->value.ss = sized_string_dup(object->value.ss);
+        copy->value.ss = ss_dup(object->value.ss);
       else
         copy->value.ss = NULL;
 
@@ -883,7 +883,7 @@ int yr_object_dict_set_item(
 
   item->parent = object;
 
-  dict->items->objects[dict->items->used].key = sized_string_new(key);
+  dict->items->objects[dict->items->used].key = ss_new(key);
   dict->items->objects[dict->items->used].obj = item;
 
   dict->items->used++;
