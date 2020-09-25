@@ -8,9 +8,9 @@ CodeMirror.defineMode("yara", function(config) {
       for (var i = 0; i < words.length; ++i) obj[words[i]] = true;
       return obj;
     }
-    var keywords = words("all and any ascii at base64 base64wide condition contains entrypoint filesize for " +
-                         "fullword global import in include int16 int32 int8 matches meta " +
-                         "nocase not of or private rule strings them uint16 uint32 " +
+    var keywords = words("all and any ascii at base64 base64wide condition contains endswith entrypoint filesize for " +
+                         "fullword global icontains iendswith import in include int16 int32 int8 istartswith matches meta " +
+                         "nocase not of or private rule startswith strings them uint16 uint32 " +
                          "uint8 wide xor");
 
     var atoms = {"true": true, "false": true};

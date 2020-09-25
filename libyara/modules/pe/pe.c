@@ -1978,7 +1978,7 @@ define_function(exports)
     if (function_name == NULL)
       continue;
 
-    if (sized_string_cmp_nocase(function_name, search_name) == 0)
+    if (ss_icompare(function_name, search_name) == 0)
     {
       return_integer(1);
     }
@@ -2080,7 +2080,7 @@ define_function(exports_index_name)
     if (function_name == NULL)
       continue;
 
-    if (sized_string_cmp_nocase(function_name, search_name) == 0)
+    if (ss_icompare(function_name, search_name) == 0)
     {
       return_integer(i);
     }

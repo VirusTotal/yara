@@ -33,7 +33,8 @@ keywords are reserved and cannot be used as an identifier:
      - base64
      - base64wide
      - condition
-   * - contains
+     - contains
+   * - endswith
      - entrypoint
      - false
      - filesize
@@ -41,7 +42,9 @@ keywords are reserved and cannot be used as an identifier:
      - fullword
      - global
      - import
-   * - in
+     - icontains
+   * - iendswith
+     - in
      - include
      - int16
      - int16be
@@ -49,7 +52,8 @@ keywords are reserved and cannot be used as an identifier:
      - int32be
      - int8
      - int8be
-   * - matches
+   * - istartswith
+     - matches
      - meta
      - nocase
      - not
@@ -57,15 +61,16 @@ keywords are reserved and cannot be used as an identifier:
      - or
      - private
      - rule
-   * - strings
+   * - startswith
+     - strings
      - them
      - true
      - uint16
      - uint16be
      - uint32
      - uint32be
-     - uint8
-   * - uint8be
+   * - uint8
+     - uint8be
      - wide
      - xor
      -
@@ -316,8 +321,6 @@ Wide-character strings
 
 The ``wide`` modifier can be used to search for strings encoded with two bytes
 per character, something typical in many executable binaries.
-
-
 
 For example, if the string "Borland" appears encoded as two bytes per
 character (i.e. ``B\x00o\x00r\x00l\x00a\x00n\x00d\x00``), then the following rule will match:
@@ -731,9 +734,9 @@ Conditions
 Conditions are nothing more than Boolean expressions as those that can be found
 in all programming languages, for example in an *if* statement. They can contain
 the typical Boolean operators ``and``, ``or``, and ``not``, and relational operators
-``>=``, ``<=``, ``<``, ``>``, ``==`` and ``!=``. Also, the arithmetic operators (``+``, ``-``, ``*``, ``\``, ``%``)
-and bitwise operators (``&``, ``|``, ``<<``, ``>>``, ``~``, ``^``) can be used on numerical
-expressions.
+``>=``, ``<=``, ``<``, ``>``, ``==`` and ``!=``. Also, the arithmetic operators
+(``+``, ``-``, ``*``, ``\``, ``%``) and bitwise operators
+(``&``, ``|``, ``<<``, ``>>``, ``~``, ``^``) can be used on numerical expressions.
 
 Integers are always 64-bits long, even the results of functions like `uint8`,
 `uint16` and `uint32` are promoted to 64-bits. This is something you must take
@@ -746,59 +749,69 @@ on a higher row in the list are grouped prior operators listed in rows further
 below it. Operators within the same row have the same precedence, if they appear
 together in a expression the associativity determines how they are grouped.
 
-==========  ========  =========================================  =============
-Precedence  Operator  Description                                Associativity
-==========  ========  =========================================  =============
-1           []        Array subscripting                         Left-to-right
+==========  ===========  =========================================  =============
+Precedence  Operator     Description                                Associativity
+==========  ===========  =========================================  =============
+1           []           Array subscripting                         Left-to-right
 
-            .         Structure member access
-----------  --------  -----------------------------------------  -------------
-2           `-`       Unary minus                                Right-to-left
+            .            Structure member access
+----------  -----------  -----------------------------------------  -------------
+2           `-`          Unary minus                                Right-to-left
 
-            `~`       Bitwise not
-----------  --------  -----------------------------------------  -------------
-3           `*`       Multiplication                             Left-to-right
+            `~`          Bitwise not
+----------  -----------  -----------------------------------------  -------------
+3           `*`          Multiplication                             Left-to-right
 
-            \\        Division
+            \\           Division
 
-            %         Remainder
-----------  --------  -----------------------------------------  -------------
-4           `+`       Addition                                   Left-to-right
+            %            Remainder
+----------  -----------  -----------------------------------------  -------------
+4           `+`          Addition                                   Left-to-right
 
-            `-`       Subtraction
-----------  --------  -----------------------------------------  -------------
-5           `<<`      Bitwise left shift                         Left-to-right
+            `-`          Subtraction
+----------  -----------  -----------------------------------------  -------------
+5           `<<`         Bitwise left shift                         Left-to-right
 
-            `>>`      Bitwise right shift
-----------  --------  -----------------------------------------  -------------
-6           &         Bitwise AND                                Left-to-right
-----------  --------  -----------------------------------------  -------------
-7           ^         Bitwise XOR                                Left-to-right
-----------  --------  -----------------------------------------  -------------
-8           `|`       Bitwise OR                                 Left-to-right
-----------  --------  -----------------------------------------  -------------
-9           <         Less than                                  Left-to-right
+            `>>`         Bitwise right shift
+----------  -----------  -----------------------------------------  -------------
+6           &            Bitwise AND                                Left-to-right
+----------  -----------  -----------------------------------------  -------------
+7           ^            Bitwise XOR                                Left-to-right
+----------  -----------  -----------------------------------------  -------------
+8           `|`          Bitwise OR                                 Left-to-right
+----------  -----------  -----------------------------------------  -------------
+9           <            Less than                                  Left-to-right
 
-            <=        Less than or equal to
+            <=           Less than or equal to
 
-            >         Greater than
+            >            Greater than
 
-            >=        Greater than or equal to
-----------  --------  -----------------------------------------  -------------
-10          ==        Equal to                                   Left-to-right
+            >=           Greater than or equal to
+----------  -----------  -----------------------------------------  -------------
+10          ==           Equal to                                   Left-to-right
 
-            !=        Not equal to
+            !=           Not equal to
 
-            contains  String contains substring
+            contains     String contains substring
 
-            matches   String matches regular expression
-----------  --------  -----------------------------------------  -------------
-11          not       Logical NOT                                Right-to-left
-----------  --------  -----------------------------------------  -------------
-12          and       Logical AND                                Left-to-right
-----------  --------  -----------------------------------------  -------------
-13          or        Logical OR                                 Left-to-right
-==========  ========  =========================================  =============
+            icontains    Like contains but case-insensitive
+
+            startswith   String starts with substring
+
+            istartswith  Like startswith but case-insensitive
+
+            endswith     String ends with substring
+
+            iendswith    Like endswith but case-insensitive
+
+            matches      String matches regular expression
+----------  -----------  -----------------------------------------  -------------
+11          not          Logical NOT                                Right-to-left
+----------  -----------  -----------------------------------------  -------------
+12          and          Logical AND                                Left-to-right
+----------  -----------  -----------------------------------------  -------------
+13          or           Logical OR                                 Left-to-right
+==========  ===========  =========================================  =============
 
 
 String identifiers can be also used within a condition, acting as Boolean
@@ -1113,6 +1126,7 @@ The keywords ``any`` and ``all`` can be used as well.
     any of ($a,$b,$c) // any of $a, $b or $c
     1 of ($*)         // same that "any of them"
 
+
 Applying the same condition to many strings
 -------------------------------------------
 
@@ -1158,6 +1172,7 @@ occurrences, the first offset, and the length of each string respectively.
 
     for all of them : ( # > 3 )
     for all of ($a*) : ( @ > @b )
+
 
 Using anonymous strings with ``of`` and ``for..of``
 ---------------------------------------------------
@@ -1539,20 +1554,38 @@ For example:
             bool_ext_var or filesize < int_ext_var
     }
 
-External variables of type string can be used with the operators: ``contains``
-and ``matches``. The ``contains`` operator returns true if the string contains
-the specified substring. The ``matches`` operator returns true if the string
-matches the given regular expression.
+External variables of type string can be used with the operators: ``contains``,
+``startswith``, ``endswith`` and their case-insensitive counterparts: ``icontains``,
+``istartswith`` and ``iendswith`. They can be used also with the ``matches``
+operator, which returns true if the string matches a given regular expression.
 
 .. code-block:: yara
 
-    rule ExternalVariableExample3
+    rule ContainsExample
     {
         condition:
             string_ext_var contains "text"
     }
 
-    rule ExternalVariableExample4
+    rule CaseInsensitiveContainsExample
+    {
+        condition:
+            string_ext_var icontains "text"
+    }
+
+    rule StartsWithExample
+    {
+        condition:
+            string_ext_var startswith "prefix"
+    }
+
+    rule EndsWithExample
+    {
+        condition:
+            string_ext_var endswith "suffix"
+    }
+
+    rule MatchesExample
     {
         condition:
             string_ext_var matches /[a-z]+/
@@ -1579,6 +1612,7 @@ Keep in mind that every external variable used in your rules must be defined
 at run-time, either by using the ``-d`` option of the command-line tool, or by
 providing the ``externals`` parameter to the appropriate method in
 ``yara-python``.
+
 
 Including files
 ===============
