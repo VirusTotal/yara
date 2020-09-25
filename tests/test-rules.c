@@ -2691,22 +2691,27 @@ void test_process_scan()
 
   if (pid == 0)
   {
-    /* The string should appear somewhere in the shell's process space. */
+    // The string should appear somewhere in the shell's process space.
     if (execl("/bin/sh", "/bin/sh", "-c", "VAR='Hello, world!'; sleep 5; true", NULL) == -1)
       exit(1);
   }
   assert(pid > 0);
 
-  /* Give child process time to initialize */
+  // Give child process time to initialize.
   sleep(1);
 
   status = compile_rule("\
-    rule test {\
+    rule should_match {\
       strings:\
         $a = { 48 65 6c 6c 6f 2c 20 77 6f 72 6c 64 21 }\
       condition:\
         all of them\
-    }", &rules);
+    } \
+    rule should_not_match { \
+      condition: \
+        filesize < 100000000 \
+    }",
+    &rules);
 
   if (status != ERROR_SUCCESS)
   {
@@ -2734,7 +2739,12 @@ void test_process_scan()
   case ERROR_SUCCESS:
     if (counters.rules_matching == 0)
     {
-      fputs("Found no matches\n", stderr);
+      fputs("Found no matches for rule that should match\n", stderr);
+      exit(EXIT_FAILURE);
+    }
+    if (counters.rules_not_matching > 0)
+    {
+      fputs("Found matches for rule that should not match\n", stderr);
       exit(EXIT_FAILURE);
     }
     break;
