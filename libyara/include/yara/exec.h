@@ -81,7 +81,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define OP_SWAPUNDEF               36
 #define OP_FILESIZE                37
 #define OP_ENTRYPOINT              38
-#define OP_CONTAINS                39
+// Unused opcode                   39
 #define OP_MATCHES                 40
 #define OP_IMPORT                  41
 #define OP_LOOKUP_DICT             42
@@ -102,11 +102,16 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define OP_ITER_START_INT_ENUM     57
 #define OP_JZ                      58
 #define OP_JZ_P                    59
-
 #define OP_PUSH_8                  60
 #define OP_PUSH_16                 61
 #define OP_PUSH_32                 62
 #define OP_PUSH_U                  63
+#define OP_CONTAINS                64
+#define OP_STARTSWITH              65
+#define OP_ENDSWITH                66
+#define OP_ICONTAINS               67
+#define OP_ISTARTSWITH             68
+#define OP_IENDSWITH               69
 
 #define _OP_EQ            0
 #define _OP_NEQ           1

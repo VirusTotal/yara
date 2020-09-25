@@ -41,6 +41,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <yara/object.h>
 #include <yara/modules.h>
 #include <yara/re.h>
+#include <yara/sizedstr.h>
 #include <yara/strutils.h>
 #include <yara/utils.h>
 #include <yara/mem.h>
@@ -1338,23 +1339,6 @@ int yr_execute_code(
         push(r1);
         break;
 
-      case OP_CONTAINS:
-        pop(r2);
-        pop(r1);
-
-        if (is_undef(r1) || is_undef(r2))
-        {
-          r1.i = false;
-        }
-        else
-        {
-          r1.i = memmem(r1.ss->c_string, r1.ss->length,
-                        r2.ss->c_string, r2.ss->length) != NULL;
-        }
-
-        push(r1);
-        break;
-
       case OP_IMPORT:
         memcpy(&r1.i, ip, sizeof(uint64_t));
         ip += sizeof(uint64_t);
@@ -1655,23 +1639,65 @@ int yr_execute_code(
           switch(opcode)
           {
             case OP_STR_EQ:
-              r1.i = (sized_string_cmp(r1.ss, r2.ss) == 0);
+              r1.i = (ss_compare(r1.ss, r2.ss) == 0);
               break;
             case OP_STR_NEQ:
-              r1.i = (sized_string_cmp(r1.ss, r2.ss) != 0);
+              r1.i = (ss_compare(r1.ss, r2.ss) != 0);
               break;
             case OP_STR_LT:
-              r1.i = (sized_string_cmp(r1.ss, r2.ss) < 0);
+              r1.i = (ss_compare(r1.ss, r2.ss) < 0);
               break;
             case OP_STR_LE:
-              r1.i = (sized_string_cmp(r1.ss, r2.ss) <= 0);
+              r1.i = (ss_compare(r1.ss, r2.ss) <= 0);
               break;
             case OP_STR_GT:
-              r1.i = (sized_string_cmp(r1.ss, r2.ss) > 0);
+              r1.i = (ss_compare(r1.ss, r2.ss) > 0);
               break;
             case OP_STR_GE:
-              r1.i = (sized_string_cmp(r1.ss, r2.ss) >= 0);
+              r1.i = (ss_compare(r1.ss, r2.ss) >= 0);
               break;
+          }
+        }
+
+        push(r1);
+        break;
+
+      case OP_CONTAINS:
+      case OP_ICONTAINS:
+      case OP_STARTSWITH:
+      case OP_ISTARTSWITH:
+      case OP_ENDSWITH:
+      case OP_IENDSWITH:
+
+        pop(r2);
+        pop(r1);
+
+        if (is_undef(r1) || is_undef(r2))
+        {
+          r1.i = false;
+        }
+        else
+        {
+          switch(opcode)
+          {
+          case OP_CONTAINS:
+            r1.i = ss_contains(r1.ss, r2.ss);
+            break;
+          case OP_ICONTAINS:
+            r1.i = ss_icontains(r1.ss, r2.ss);
+            break;
+          case OP_STARTSWITH:
+            r1.i = ss_startswith(r1.ss, r2.ss);
+            break;
+          case OP_ISTARTSWITH:
+            r1.i = ss_istartswith(r1.ss, r2.ss);
+            break;
+          case OP_ENDSWITH:
+            r1.i = ss_endswith(r1.ss, r2.ss);
+            break;
+          case OP_IENDSWITH:
+            r1.i = ss_iendswith(r1.ss, r2.ss);
+            break;
           }
         }
 

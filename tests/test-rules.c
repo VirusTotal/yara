@@ -350,6 +350,90 @@ static void test_bitwise_operators()
 }
 
 
+static void test_string_operators()
+{
+  assert_true_rule(
+      "rule test { condition: \"foobarbaz\" contains \"bar\" }",
+      NULL);
+
+  assert_true_rule(
+      "rule test { condition: \"foobarbaz\" contains \"foo\" }",
+      NULL);
+
+  assert_true_rule(
+      "rule test { condition: \"foobarbaz\" contains \"baz\" }",
+      NULL);
+
+  assert_true_rule(
+      "rule test { condition: \"foobarbaz\" icontains \"BAR\" }",
+      NULL);
+
+  assert_true_rule(
+      "rule test { condition: \"foobarbaz\" icontains \"BaR\" }",
+      NULL);
+
+  assert_true_rule(
+      "rule test { condition: \"FooBarBaz\" icontains \"bar\" }",
+      NULL);
+
+  assert_true_rule(
+      "rule test { condition: \"FooBarBaz\" icontains \"baz\" }",
+      NULL);
+
+  assert_true_rule(
+      "rule test { condition: \"FooBarBaz\" icontains \"FOO\" }",
+      NULL);
+
+  assert_true_rule(
+      "rule test { condition: \"foobarbaz\" contains \"foo\" }",
+      NULL);
+
+  assert_true_rule(
+      "rule test { condition: \"foobarbaz\" contains \"baz\" }",
+      NULL);
+
+  assert_false_rule(
+      "rule test { condition: \"foobarbaz\" contains \"baq\" }",
+      NULL);
+
+  assert_false_rule(
+      "rule test { condition: \"foo\" contains \"foob\" }",
+      NULL);
+
+  assert_true_rule(
+      "rule test { condition: \"foobarbaz\" startswith \"foo\" }",
+      NULL);
+
+  assert_true_rule(
+      "rule test { condition: \"foobarbaz\" istartswith \"Foo\" }",
+      NULL);
+
+  assert_true_rule(
+      "rule test { condition: \"FooBarBaz\" istartswith \"fOO\" }",
+      NULL);
+
+  assert_false_rule(
+      "rule test { condition: \"foobarbaz\" startswith \"fob\" }",
+      NULL);
+
+  assert_true_rule(
+      "rule test { condition: \"foobarbaz\" endswith \"baz\" }",
+      NULL);
+
+  assert_true_rule(
+      "rule test { condition: \"foobarbaz\" iendswith \"baZ\" }",
+      NULL);
+
+  assert_true_rule(
+      "rule test { condition: \"foobarbaz\" iendswith \"BaZ\" }",
+      NULL);
+
+  assert_false_rule(
+      "rule test { condition: \"foobarbaz\" endswith \"ba\" }",
+      NULL);
+}
+
+
 static void test_syntax()
 {
   assert_error(
@@ -2817,6 +2901,7 @@ int main(int argc, char** argv)
   test_comparison_operators();
   test_arithmetic_operators();
   test_bitwise_operators();
+  test_string_operators();
   test_matches_operator();
   test_syntax();
   test_anonymous_strings();

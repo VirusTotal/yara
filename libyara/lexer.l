@@ -200,6 +200,11 @@ octdigit      [0-7]
 "filesize"              { return _FILESIZE_;    }
 "matches"               { return _MATCHES_;     }
 "contains"              { return _CONTAINS_;    }
+"startswith"            { return _STARTSWITH_;  }
+"endswith"              { return _ENDSWITH_;    }
+"icontains"             { return _ICONTAINS_;   }
+"istartswith"           { return _ISTARTSWITH_; }
+"iendswith"             { return _IENDSWITH_;   }
 "import"                { return _IMPORT_;      }
 
 
