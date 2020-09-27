@@ -59,9 +59,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define YYMALLOC yr_malloc
 #define YYFREE yr_free
 
-#define FOR_EXPRESSION_ALL 1
-#define FOR_EXPRESSION_ANY 2
-
 #define fail_with_error(e) \
     { \
       compiler->last_error = e; \
@@ -1720,6 +1717,155 @@ expression
 
         $$.type = EXPRESSION_TYPE_BOOLEAN;
       }
+    | for_expression _OF_ '['
+      {
+        // var_frane + 0   => number of items evaluating to true
+        // var_frame + 1   => number of evaluated items
+        // var_frame + 2   => storage for variable depending on loop type
+        //                    - ANY: contains required number of items for evaluation
+        //                    - ALL: contains value of latest evaluated item in array    
+
+        // all of [ expr1, expr2, .. ]
+        //
+        // 1       PUSH UNDEF  ; "all"
+        // 2       CLEAR_M 0   ; clear <expr> result accumulator
+        // 3       CLEAR_M 1   ; clear loop iteration counter
+        // 4       <expr1>     ; here goes the code for first array item expr,
+        //                       its result will be at the  top of the stack
+        // 5       SET_M 3     ; save result of expr1 evaluation
+        // 6       ADD_M 0     ; add boolean_expression result to accumulator
+        // 7       INCR_M 1    ; increment loop iteration counter
+        // 8       PUSH_M 3    ; true/false result of exp1 resolution
+        // 9  .----JFALSE_P    ; jump to end if (minimum <= accumulator);
+        //    |                  short circuit evaluation
+        //    |    <expr2>     ; second array item code
+        //    |    ...         ; same operations as for expr1
+        //    | .--JFALSE_P
+        //    | |  expr3 etc.  ; rest of array item expressions, operations
+        //    | |                 and jumps
+        // 10 `-+->SWAPUNDEF 1 ; if X is all, swap primary expression on stack for
+        //                        number of iterations, otherwise don't do anything
+        // 11      PUSH_M 0    ; push the boolean_expression accumulator
+        // 12      INT_LE      ; compare boolean_expression accumulator to X
+
+
+        // X of [ expr1, expr2, .. ]
+        //
+        // 1       PUSH X      ;
+        // 2       CLEAR_M 0   ; clear <expr> result accumulator
+        // 3       CLEAR_M 1   ; clear loop iteration counter
+        // 4       <expr1>     ; here goes the code for first array item expr,
+        //                       its result will be at the  top of the stack
+        // 5       ADD_M 0     ; add boolean_expression result to accumulator
+        // 6       INCR_M 1    ; increment loop iteration counter
+        // 7       PUSH_M 2    ; primary expression minimum
+        // 8       PUSH_M 0    ; boolean_expression accumulator
+        // 9  .----JLE_P       ; jump to end if (minimum <= accumulator);
+        //    |                  short circuit evaluation
+        //    |    <expr2>     ; second array item code
+        //    |    ...         ; same operations as for expr1
+        //    | .--JLE_P
+        //    | |  expr3 etc.  ; rest of array item expressions, operations
+        //    | |                 and jumps
+        // 10 `-+->SWAPUNDEF 1 ; if X is all, swap primary expression on stack for
+        //                        number of iterations, otherwise don't do anything
+        // 11      PUSH_M 0    ; push the boolean_expression accumulator
+        // 12      INT_LE      ; compare boolean_expression accumulator to X
+
+        int result = ERROR_SUCCESS;
+        YR_FIXUP* fixup;
+        int var_frame;
+
+        if (compiler->loop_index + 1 == YR_MAX_LOOP_NESTING)
+          result = ERROR_LOOP_NESTING_LIMIT_EXCEEDED;  
+
+        fail_if_error(result);
+        
+        compiler->loop_index++;
+        
+        var_frame = _yr_compiler_get_var_frame(compiler);        
+
+        // "any" loops require us to store the required number of matches for
+        // later comparisons, but "all" loops do not. The OP_SWAPUNDEF after the
+        // array evaluation  ensures we will compare the right value
+        if ($1 == YR_LOOP_TYPE_ANY)
+        {
+          yr_parser_emit_with_arg(
+            yyscanner, OP_SET_M, var_frame + 2, NULL, NULL);
+        }
+
+        // Clear counter for number of expressions evaluating
+        // to true.
+        yr_parser_emit_with_arg(
+            yyscanner, OP_CLEAR_M, var_frame, NULL, NULL);
+
+        // Clear iterations counter
+        yr_parser_emit_with_arg(
+            yyscanner, OP_CLEAR_M, var_frame + 1, NULL, NULL);
+
+        // End of list marker for short circuiting jumps from inside of array items
+        // that will point at the end of array.
+        fixup = (YR_FIXUP*) yr_malloc(sizeof(YR_FIXUP));
+
+        if (fixup == NULL)
+            fail_if_error(ERROR_INSUFFICIENT_MEMORY);
+
+        fixup->ref = YR_ARENA_NULL_REF;
+        fixup->next = compiler->fixup_stack_head;
+        compiler->fixup_stack_head = fixup;
+
+        compiler->loop_for_of_var_index = var_frame;
+        // flag used to indicate when to quit evaluation early based on loop type,
+        // YR_LOOP_TYPE_ALL is 1, ANY is 2
+        compiler->loop[compiler->loop_index].type = $1;
+        compiler->loop[compiler->loop_index].vars_count = 0;
+        compiler->loop[compiler->loop_index].vars_internal_count = \
+            YR_INTERNAL_LOOP_VARS;
+      }
+      bool_array_expression ']'
+      {
+
+        int var_frame;
+        YR_ARENA_REF swap_ref;
+        YR_FIXUP* fixup;
+
+        compiler->loop_for_of_var_index = -1;
+
+        var_frame = _yr_compiler_get_var_frame(compiler);
+
+        // At this point the quantifier (any, all, 1, 2,..)
+        // is at the top of the stack. Check if the quantifier
+        // is undefined (meaning "all") and replace it with the
+        // iterations counter in that case.
+        yr_parser_emit_with_arg(
+            yyscanner, OP_SWAPUNDEF, var_frame + 1, &swap_ref, NULL);
+
+        bool fixup_complete = false;
+        while(compiler->fixup_stack_head != NULL && fixup_complete == false) {
+          // set jump destination for short circuiting expr array evaluation
+          fixup = compiler->fixup_stack_head;
+          // check for null reference
+          if(!YR_ARENA_IS_NULL_REF(fixup->ref)) {
+            int32_t* jmp_offset_addr = (int32_t*) yr_arena_ref_to_ptr(compiler->arena, &fixup->ref);
+            *jmp_offset_addr = swap_ref.offset - fixup->ref.offset + 1;
+          } else {
+            fixup_complete = true;
+          }
+          compiler->fixup_stack_head = fixup->next;
+          yr_free(fixup);
+        }
+
+        // Compare the quantifier with the number of
+        // expressions evaluating to true.
+        yr_parser_emit_with_arg(
+            yyscanner, OP_PUSH_M, var_frame, NULL, NULL);
+
+        yr_parser_emit(yyscanner, OP_INT_LE, NULL);
+        
+        loop_vars_cleanup(compiler->loop_index);
+        compiler->loop_index--;
+        $$.type = EXPRESSION_TYPE_BOOLEAN;
+      }
     | _NOT_ boolean_expression
       {
         yr_parser_emit(yyscanner, OP_NOT, NULL);
@@ -2137,17 +2283,17 @@ string_enumeration_item
 for_expression
     : primary_expression
       {
-        $$ = FOR_EXPRESSION_ANY;
+        $$ = YR_LOOP_TYPE_ANY;
       }
     | _ALL_
       {
         yr_parser_emit_push_const(yyscanner, YR_UNDEFINED);
-        $$ = FOR_EXPRESSION_ALL;
+        $$ = YR_LOOP_TYPE_ALL;
       }
     | _ANY_
       {
         yr_parser_emit_push_const(yyscanner, 1);
-        $$ = FOR_EXPRESSION_ANY;
+        $$ = YR_LOOP_TYPE_ANY;
       }
     ;
 
@@ -2591,5 +2737,112 @@ primary_expression
         $$ = $1;
       }
     ;
+
+bool_array_expression
+    : boolean_expression
+      {
+        int var_frame = _yr_compiler_get_var_frame(compiler);
+        YR_ARENA_REF jmp_destination_addr;
+        YR_FIXUP* fixup;
+
+        // ADD instruction will pop the latest evaluated expression bool value out of stack.
+        // This is an issue if we are using the ALL keyword, where the first false value
+        // automatically ends evaluation. That means we need to save the evaluated value
+        // so that we don't loose access to it when it is popped after ADD.
+        if(compiler->loop[compiler->loop_index].type == YR_LOOP_TYPE_ALL) {
+          yr_parser_emit_with_arg(
+                  yyscanner, OP_SET_M, var_frame + 2, NULL, NULL);
+        }
+
+        // Update sum of evaluated bool expressions, which is effectively a number of expressions evaluated to true
+        yr_parser_emit_with_arg(
+              yyscanner, OP_ADD_M, var_frame, NULL, NULL);
+        // Update sum of evaluated expressions
+        yr_parser_emit_with_arg(
+              yyscanner, OP_INCR_M, var_frame + 1, NULL, NULL);
+
+        // Short circuiting mechanisms for ALL and ANY scenarios
+        if(compiler->loop[compiler->loop_index].type == YR_LOOP_TYPE_ALL) {
+          // Push back the value of latest evaluated item in array
+          yr_parser_emit_with_arg(
+                  yyscanner, OP_PUSH_M, var_frame + 2, NULL, NULL);
+          // End evaluation if latest item is false
+          yr_parser_emit_with_arg_int32(
+                  yyscanner, OP_JFALSE_P, 0, NULL, &jmp_destination_addr);
+        } else if(compiler->loop[compiler->loop_index].type == YR_LOOP_TYPE_ANY){
+          // Minimal number of items we want to be evaluated to true
+          yr_parser_emit_with_arg(
+                  yyscanner, OP_PUSH_M, var_frame + 2, NULL, NULL);
+          // Number of items evaluated to true so far
+          yr_parser_emit_with_arg(
+                  yyscanner, OP_PUSH_M, var_frame, NULL, NULL);
+          // End evaluation if targeted number of items evaluated to true is achieved
+          yr_parser_emit_with_arg_int32(
+                  yyscanner, OP_JLE_P, 0, NULL, &jmp_destination_addr);
+        }
+
+        fixup = (YR_FIXUP*) yr_malloc(sizeof(YR_FIXUP));
+
+        if (fixup == NULL)
+            fail_if_error(ERROR_INSUFFICIENT_MEMORY);
+
+        // Save jump address for later fixup, it will be used for jumping out of array evaluation
+        fixup->ref = jmp_destination_addr;
+        fixup->next = compiler->fixup_stack_head;
+        compiler->fixup_stack_head = fixup;
+      }
+    | bool_array_expression ',' boolean_expression
+      {
+        int var_frame = _yr_compiler_get_var_frame(compiler);
+        YR_ARENA_REF jmp_destination_addr;
+        YR_FIXUP* fixup;
+
+        // ADD instruction will pop the latest evaluated expression bool value out of stack.
+        // This is an issue if we are using the ALL keyword, where the first false value
+        // automatically ends evaluation. That means we need to save the evaluated value
+        // so that we don't loose access to it when it is popped after ADD.
+        if(compiler->loop[compiler->loop_index].type == YR_LOOP_TYPE_ALL) {
+          yr_parser_emit_with_arg(
+                  yyscanner, OP_SET_M, var_frame + 2, NULL, NULL);
+        }
+
+        // Update sum of evaluated bool expressions, which is effectively a number of expressions evaluated to true
+        yr_parser_emit_with_arg(
+              yyscanner, OP_ADD_M, var_frame, NULL, NULL);
+        // Update sum of evaluated expressions
+        yr_parser_emit_with_arg(
+              yyscanner, OP_INCR_M, var_frame + 1, NULL, NULL);
+
+        // Short circuiting mechanisms for ALL and ANY scenarios
+        if(compiler->loop[compiler->loop_index].type == YR_LOOP_TYPE_ALL) {
+          // Push back the value of latest evaluated item in array
+          yr_parser_emit_with_arg(
+                  yyscanner, OP_PUSH_M, var_frame + 2, NULL, NULL);
+          // End evaluation if latest item is false
+          yr_parser_emit_with_arg_int32(
+                  yyscanner, OP_JFALSE_P, 0, NULL, &jmp_destination_addr);
+        } else if(compiler->loop[compiler->loop_index].type == YR_LOOP_TYPE_ANY){
+          // Minimal number of items we want to be evaluated to true
+          yr_parser_emit_with_arg(
+                  yyscanner, OP_PUSH_M, var_frame + 2, NULL, NULL);
+          // Number of items evaluated to true so far
+          yr_parser_emit_with_arg(
+                  yyscanner, OP_PUSH_M, var_frame, NULL, NULL);
+          // End evaluation if targeted number of items evaluated to true is achieved
+          yr_parser_emit_with_arg_int32(
+                  yyscanner, OP_JLE_P, 0, NULL, &jmp_destination_addr);
+        }
+
+        fixup = (YR_FIXUP*) yr_malloc(sizeof(YR_FIXUP));
+
+        if (fixup == NULL)
+            fail_if_error(ERROR_INSUFFICIENT_MEMORY);
+
+        // Save jump address for later fixup, it will be used for jumping out of array evaluation
+        fixup->ref = jmp_destination_addr;
+        fixup->next = compiler->fixup_stack_head;
+        compiler->fixup_stack_head = fixup;
+      }
+  ;
 
 %%
