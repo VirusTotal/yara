@@ -198,6 +198,11 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 %token _THEM_                                          "<them>"
 %token _MATCHES_                                       "<matches>"
 %token _CONTAINS_                                      "<contains>"
+%token _STARTSWITH_                                    "<startswith>"
+%token _ENDSWITH_                                      "<endswith>"
+%token _ICONTAINS_                                     "<icontains>"
+%token _ISTARTSWITH_                                   "<istartswith>"
+%token _IENDSWITH_                                     "<iendswith>"
 %token _IMPORT_                                        "<import>"
 %token _TRUE_                                          "<true>"
 %token _FALSE_                                         "<false"
@@ -217,7 +222,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // in the list. Operators that appear in the same line have the same precedence.
 %left _OR_
 %left _AND_
-%left _EQ_ _NEQ_ _CONTAINS_ _MATCHES_
+%left _EQ_ _NEQ_ _CONTAINS_ _ICONTAINS_ _STARTSWITH_ _ENDSWITH_ _ISTARTSWITH_ _IENDSWITH_ _MATCHES_
 %left _LT_ _LE_ _GT_ _GE_
 %left '|'
 %left '^'
@@ -474,10 +479,10 @@ tag_list
         char* tag = (char*) yr_arena_ref_to_ptr(
             compiler->arena, &$<tag>$);
 
-	// Search for duplicated tags. Tags are written one after
-	// the other, with zeroes in between (i.e: tag1/0tag2/0tag3)
-	// that's why can use tag < new_tag as the condition for the
-	// loop.
+        // Search for duplicated tags. Tags are written one after
+        // the other, with zeroes in between (i.e: tag1/0tag2/0tag3)
+        // that's why can use tag < new_tag as the condition for the
+        // loop.
         while (tag < new_tag)
         {
           if (strcmp(tag, new_tag) == 0)
@@ -675,7 +680,7 @@ string_modifiers
         {
           if ($$.alphabet != NULL)
           {
-            if (sized_string_cmp($$.alphabet, $2.alphabet) != 0)
+            if (ss_compare($$.alphabet, $2.alphabet) != 0)
             {
               yr_compiler_set_error_extra_info(
                   compiler, "can not specify multiple alphabets");
@@ -778,7 +783,7 @@ string_modifier
     | _BASE64_
       {
         $$.flags = STRING_FLAGS_BASE64;
-        $$.alphabet = sized_string_new(DEFAULT_BASE64_ALPHABET);
+        $$.alphabet = ss_new(DEFAULT_BASE64_ALPHABET);
       }
     | _BASE64_ '(' _TEXT_STRING_ ')'
       {
@@ -800,7 +805,7 @@ string_modifier
     | _BASE64_WIDE_
       {
         $$.flags = STRING_FLAGS_BASE64_WIDE;
-        $$.alphabet = sized_string_new(DEFAULT_BASE64_ALPHABET);
+        $$.alphabet = ss_new(DEFAULT_BASE64_ALPHABET);
       }
     | _BASE64_WIDE_ '(' _TEXT_STRING_ ')'
       {
@@ -909,8 +914,8 @@ identifier
           {
             YR_ARENA_REF ref;
 
-            result = yr_arena_write_string(
-                compiler->arena, YR_SZ_POOL, $1, &ref);
+            result = _yr_compiler_store_string(
+                compiler, $1, &ref);
 
             if (result == ERROR_SUCCESS)
               result = yr_parser_emit_with_arg_reloc(
@@ -973,8 +978,8 @@ identifier
           {
             YR_ARENA_REF ref;
 
-            result = yr_arena_write_string(
-                compiler->arena, YR_SZ_POOL, $3, &ref);
+            result = _yr_compiler_store_string(
+                compiler, $3, &ref);
 
             if (result == ERROR_SUCCESS)
               result = yr_parser_emit_with_arg_reloc(
@@ -1081,8 +1086,8 @@ identifier
               compiler, object_as_function($1.value.object), $3);
 
           if (result == ERROR_SUCCESS)
-            result = yr_arena_write_string(
-                compiler->arena, YR_SZ_POOL, $3, &ref);
+            result = _yr_compiler_store_string(
+                compiler, $3, &ref);
 
           if (result == ERROR_SUCCESS)
             result = yr_parser_emit_with_arg_reloc(
@@ -1276,15 +1281,13 @@ boolean_expression
 expression
     : _TRUE_
       {
-        fail_if_error(yr_parser_emit_with_arg(
-            yyscanner, OP_PUSH, 1, NULL, NULL));
+        fail_if_error(yr_parser_emit_push_const(yyscanner, 1));
 
         $$.type = EXPRESSION_TYPE_BOOLEAN;
       }
     | _FALSE_
       {
-        fail_if_error(yr_parser_emit_with_arg(
-            yyscanner, OP_PUSH, 0, NULL, NULL));
+        fail_if_error(yr_parser_emit_push_const(yyscanner, 0));
 
         $$.type = EXPRESSION_TYPE_BOOLEAN;
       }
@@ -1307,6 +1310,56 @@ expression
 
         fail_if_error(yr_parser_emit(
             yyscanner, OP_CONTAINS, NULL));
+
+        $$.type = EXPRESSION_TYPE_BOOLEAN;
+      }
+    | primary_expression _ICONTAINS_ primary_expression
+      {
+        check_type($1, EXPRESSION_TYPE_STRING, "icontains");
+        check_type($3, EXPRESSION_TYPE_STRING, "icontains");
+
+        fail_if_error(yr_parser_emit(
+            yyscanner, OP_ICONTAINS, NULL));
+
+        $$.type = EXPRESSION_TYPE_BOOLEAN;
+      }
+    | primary_expression _STARTSWITH_ primary_expression
+      {
+        check_type($1, EXPRESSION_TYPE_STRING, "startswith");
+        check_type($3, EXPRESSION_TYPE_STRING, "startswith");
+
+        fail_if_error(yr_parser_emit(
+            yyscanner, OP_STARTSWITH, NULL));
+
+        $$.type = EXPRESSION_TYPE_BOOLEAN;
+      }
+    | primary_expression _ISTARTSWITH_ primary_expression
+      {
+        check_type($1, EXPRESSION_TYPE_STRING, "istartswith");
+        check_type($3, EXPRESSION_TYPE_STRING, "istartswith");
+
+        fail_if_error(yr_parser_emit(
+            yyscanner, OP_ISTARTSWITH, NULL));
+
+        $$.type = EXPRESSION_TYPE_BOOLEAN;
+      }
+    | primary_expression _ENDSWITH_ primary_expression
+      {
+        check_type($1, EXPRESSION_TYPE_STRING, "endswith");
+        check_type($3, EXPRESSION_TYPE_STRING, "endswith");
+
+        fail_if_error(yr_parser_emit(
+            yyscanner, OP_ENDSWITH, NULL));
+
+        $$.type = EXPRESSION_TYPE_BOOLEAN;
+      }
+    | primary_expression _IENDSWITH_ primary_expression
+      {
+        check_type($1, EXPRESSION_TYPE_STRING, "iendswith");
+        check_type($3, EXPRESSION_TYPE_STRING, "iendswith");
+
+        fail_if_error(yr_parser_emit(
+            yyscanner, OP_IENDSWITH, NULL));
 
         $$.type = EXPRESSION_TYPE_BOOLEAN;
       }
@@ -2024,8 +2077,7 @@ integer_set
     : '(' integer_enumeration ')'
       {
         // $2 contains the number of integers in the enumeration
-        fail_if_error(yr_parser_emit_with_arg(
-            yyscanner, OP_PUSH, $2, NULL, NULL));
+        fail_if_error(yr_parser_emit_push_const(yyscanner, $2));
 
         fail_if_error(yr_parser_emit(
             yyscanner, OP_ITER_START_INT_ENUM, NULL));
@@ -2100,13 +2152,12 @@ string_set
     : '('
       {
         // Push end-of-list marker
-        yr_parser_emit_with_arg(yyscanner, OP_PUSH, YR_UNDEFINED, NULL, NULL);
+        yr_parser_emit_push_const(yyscanner, YR_UNDEFINED);
       }
       string_enumeration ')'
     | _THEM_
       {
-        fail_if_error(yr_parser_emit_with_arg(
-            yyscanner, OP_PUSH, YR_UNDEFINED, NULL, NULL));
+        fail_if_error(yr_parser_emit_push_const(yyscanner, YR_UNDEFINED));
 
         fail_if_error(yr_parser_emit_pushes_for_strings(
             yyscanner, "$*"));
@@ -2145,12 +2196,12 @@ for_expression
       }
     | _ALL_
       {
-        yr_parser_emit_with_arg(yyscanner, OP_PUSH, YR_UNDEFINED, NULL, NULL);
+        yr_parser_emit_push_const(yyscanner, YR_UNDEFINED);
         $$ = FOR_EXPRESSION_ALL;
       }
     | _ANY_
       {
-        yr_parser_emit_with_arg(yyscanner, OP_PUSH, 1, NULL, NULL);
+        yr_parser_emit_push_const(yyscanner, 1);
         $$ = FOR_EXPRESSION_ANY;
       }
     ;
@@ -2197,8 +2248,7 @@ primary_expression
       }
     | _NUMBER_
       {
-        fail_if_error(yr_parser_emit_with_arg(
-            yyscanner, OP_PUSH, $1, NULL, NULL));
+        fail_if_error(yr_parser_emit_push_const(yyscanner, $1));
 
         $$.type = EXPRESSION_TYPE_INTEGER;
         $$.value.integer = $1;
@@ -2214,9 +2264,8 @@ primary_expression
       {
         YR_ARENA_REF ref;
 
-        int result = yr_arena_write_data(
-            compiler->arena,
-            YR_SZ_POOL,
+        int result = _yr_compiler_store_data(
+            compiler,
             $1,
             $1->length + sizeof(SIZED_STRING),
             &ref);
@@ -2262,8 +2311,7 @@ primary_expression
       }
     | _STRING_OFFSET_
       {
-        int result = yr_parser_emit_with_arg(
-            yyscanner, OP_PUSH, 1, NULL, NULL);
+        int result = yr_parser_emit_push_const(yyscanner, 1);
 
         if (result == ERROR_SUCCESS)
           result = yr_parser_reduce_string_identifier(
@@ -2290,8 +2338,7 @@ primary_expression
       }
     | _STRING_LENGTH_
       {
-        int result = yr_parser_emit_with_arg(
-            yyscanner, OP_PUSH, 1, NULL, NULL);
+        int result = yr_parser_emit_push_const(yyscanner, 1);
 
         if (result == ERROR_SUCCESS)
           result = yr_parser_reduce_string_identifier(

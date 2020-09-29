@@ -350,6 +350,90 @@ static void test_bitwise_operators()
 }
 
 
+static void test_string_operators()
+{
+  assert_true_rule(
+      "rule test { condition: \"foobarbaz\" contains \"bar\" }",
+      NULL);
+
+  assert_true_rule(
+      "rule test { condition: \"foobarbaz\" contains \"foo\" }",
+      NULL);
+
+  assert_true_rule(
+      "rule test { condition: \"foobarbaz\" contains \"baz\" }",
+      NULL);
+
+  assert_true_rule(
+      "rule test { condition: \"foobarbaz\" icontains \"BAR\" }",
+      NULL);
+
+  assert_true_rule(
+      "rule test { condition: \"foobarbaz\" icontains \"BaR\" }",
+      NULL);
+
+  assert_true_rule(
+      "rule test { condition: \"FooBarBaz\" icontains \"bar\" }",
+      NULL);
+
+  assert_true_rule(
+      "rule test { condition: \"FooBarBaz\" icontains \"baz\" }",
+      NULL);
+
+  assert_true_rule(
+      "rule test { condition: \"FooBarBaz\" icontains \"FOO\" }",
+      NULL);
+
+  assert_true_rule(
+      "rule test { condition: \"foobarbaz\" contains \"foo\" }",
+      NULL);
+
+  assert_true_rule(
+      "rule test { condition: \"foobarbaz\" contains \"baz\" }",
+      NULL);
+
+  assert_false_rule(
+      "rule test { condition: \"foobarbaz\" contains \"baq\" }",
+      NULL);
+
+  assert_false_rule(
+      "rule test { condition: \"foo\" contains \"foob\" }",
+      NULL);
+
+  assert_true_rule(
+      "rule test { condition: \"foobarbaz\" startswith \"foo\" }",
+      NULL);
+
+  assert_true_rule(
+      "rule test { condition: \"foobarbaz\" istartswith \"Foo\" }",
+      NULL);
+
+  assert_true_rule(
+      "rule test { condition: \"FooBarBaz\" istartswith \"fOO\" }",
+      NULL);
+
+  assert_false_rule(
+      "rule test { condition: \"foobarbaz\" startswith \"fob\" }",
+      NULL);
+
+  assert_true_rule(
+      "rule test { condition: \"foobarbaz\" endswith \"baz\" }",
+      NULL);
+
+  assert_true_rule(
+      "rule test { condition: \"foobarbaz\" iendswith \"baZ\" }",
+      NULL);
+
+  assert_true_rule(
+      "rule test { condition: \"foobarbaz\" iendswith \"BaZ\" }",
+      NULL);
+
+  assert_false_rule(
+      "rule test { condition: \"foobarbaz\" endswith \"ba\" }",
+      NULL);
+}
+
+
 static void test_syntax()
 {
   assert_error(
@@ -375,6 +459,11 @@ static void test_syntax()
   assert_error(
       "rule test { strings: $a = {01 02 03 04} xor condition: $a }",
       ERROR_SYNTAX_ERROR);
+
+  // Test case for issue #1295
+  assert_error(
+      "rule test rule test",
+      ERROR_DUPLICATED_IDENTIFIER);
 }
 
 
@@ -518,6 +607,10 @@ static void test_strings()
   assert_true_rule_blob(
       "rule test { strings: $a = \"abc\" wide fullword condition: $a }",
       "x\001a\0b\0c\0");
+
+  assert_true_rule(
+      "rule test { strings: $a = \"\\t\\r\\n\\\"\\\\\" condition: $a }",
+      "\t\r\n\"\\");
 
   assert_true_rule(
       "rule test {\n\
@@ -2598,22 +2691,27 @@ void test_process_scan()
 
   if (pid == 0)
   {
-    /* The string should appear somewhere in the shell's process space. */
+    // The string should appear somewhere in the shell's process space.
     if (execl("/bin/sh", "/bin/sh", "-c", "VAR='Hello, world!'; sleep 5; true", NULL) == -1)
       exit(1);
   }
   assert(pid > 0);
 
-  /* Give child process time to initialize */
+  // Give child process time to initialize.
   sleep(1);
 
   status = compile_rule("\
-    rule test {\
+    rule should_match {\
       strings:\
         $a = { 48 65 6c 6c 6f 2c 20 77 6f 72 6c 64 21 }\
       condition:\
         all of them\
-    }", &rules);
+    } \
+    rule should_not_match { \
+      condition: \
+        filesize < 100000000 \
+    }",
+    &rules);
 
   if (status != ERROR_SUCCESS)
   {
@@ -2639,14 +2737,23 @@ void test_process_scan()
 
   switch (rc1) {
   case ERROR_SUCCESS:
-    if (counters.rules_matching == 0)
+    if (counters.rules_matching != 1)
     {
-      fputs("Found no matches\n", stderr);
+      fprintf(stderr,
+          "Expecting one rule matching in test_process_scan, found %d\n",
+          counters.rules_matching);
+      exit(EXIT_FAILURE);
+    }
+    if (counters.rules_not_matching != 1)
+    {
+      fprintf(stderr,
+          "Expecting one rule not matching in test_process_scan, found %d\n",
+          counters.rules_not_matching);
       exit(EXIT_FAILURE);
     }
     break;
   case ERROR_COULD_NOT_ATTACH_TO_PROCESS:
-    fputs("Could not attach to process, ignoring this error\n", stderr);
+    fprintf(stderr, "Could not attach to process, ignoring this error\n");
     break;
   default:
     fprintf(stderr, "yr_rules_scan_proc: Got unexpected error %d\n", rc1);
@@ -2808,6 +2915,7 @@ int main(int argc, char** argv)
   test_comparison_operators();
   test_arithmetic_operators();
   test_bitwise_operators();
+  test_string_operators();
   test_matches_operator();
   test_syntax();
   test_anonymous_strings();

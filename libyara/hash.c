@@ -367,9 +367,38 @@ YR_API int yr_hash_table_add(
 }
 
 
-YR_API uint32_t yr_hash_table_add_uint32(
+YR_API int yr_hash_table_add_uint32(
     YR_HASH_TABLE* table,
     const char* key,
+    const char* ns,
+    uint32_t value)
+{
+  return yr_hash_table_add_uint32_raw_key(
+      table,
+      (void*) key,
+      strlen(key),
+      ns,
+      value);
+}
+
+
+YR_API uint32_t yr_hash_table_lookup_uint32(
+    YR_HASH_TABLE* table,
+    const char* key,
+    const char* ns)
+{
+  return yr_hash_table_lookup_uint32_raw_key(
+      table,
+      (void*) key,
+      strlen(key),
+      ns);
+}
+
+
+YR_API int yr_hash_table_add_uint32_raw_key(
+    YR_HASH_TABLE* table,
+    const void* key,
+    size_t key_length,
     const char* ns,
     uint32_t value)
 {
@@ -380,17 +409,18 @@ YR_API uint32_t yr_hash_table_add_uint32(
   // Add +1 to the value in order to avoid putting a NULL pointer in the
   // hash table once the integer is casted to a pointer. This is undone
   // by yr_hash_table_lookup_uint32.
-  return yr_hash_table_add(
-      table, key, ns, (void*) (size_t) (value + 1));
+  return yr_hash_table_add_raw_key(
+      table, key, key_length, ns, (void*) (size_t) (value + 1));
 }
 
 
-YR_API uint32_t yr_hash_table_lookup_uint32(
+YR_API uint32_t yr_hash_table_lookup_uint32_raw_key(
     YR_HASH_TABLE* table,
-    const char* key,
+    const void* key,
+    size_t key_length,
     const char* ns)
 {
-  void* ptr = yr_hash_table_lookup(table, key, ns);
+  void* ptr = yr_hash_table_lookup_raw_key(table, key, key_length, ns);
 
   if (ptr == NULL)
     return UINT32_MAX;

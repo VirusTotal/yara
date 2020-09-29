@@ -117,7 +117,6 @@ int yr_atoms_heuristic_quality(
 
   int quality = 0;
   int unique_bytes = 0;
-  int masked_nibbles = 0;
   int i;
 
   assert(atom->length <= YR_MAX_ATOM_LENGTH);
@@ -129,15 +128,13 @@ int yr_atoms_heuristic_quality(
     switch (atom->mask[i])
     {
       case 0x00:
-        masked_nibbles += 2;
+        quality -= 6;
         break;
       case 0x0F:
-        masked_nibbles += 1;
-        quality += 4;
+        quality += 1;
         break;
       case 0xF0:
-        masked_nibbles += 1;
-        quality += 4;
+        quality += 1;
         break;
       case 0xFF:
         switch (atom->bytes[i])
@@ -179,8 +176,6 @@ int yr_atoms_heuristic_quality(
   {
     quality -= 10 * atom->length;
   }
-
-  quality -= masked_nibbles * 3;
 
   return YR_MAX_ATOM_QUALITY - 20 * YR_MAX_ATOM_LENGTH + quality;
 }

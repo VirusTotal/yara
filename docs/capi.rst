@@ -390,7 +390,6 @@ Data structures
 
     One of the following metadata types:
 
-      ``META_TYPE_NULL``
       ``META_TYPE_INTEGER``
       ``META_TYPE_STRING``
       ``META_TYPE_BOOLEAN``

@@ -44,8 +44,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #endif
 
 #if OPENSSL_VERSION_NUMBER < 0x10100000L
-#define X509_getm_notBefore X509_get_notBefore
-#define X509_getm_notAfter X509_get_notAfter
+#define X509_get0_notBefore X509_get_notBefore
+#define X509_get0_notAfter X509_get_notAfter
 #endif
 #endif
 
@@ -291,7 +291,7 @@ static void pe_parse_debug_directory(
   int i, dcount;
   size_t pdb_path_len;
   char* pdb_path = NULL;
-  
+
   data_dir = pe_get_directory_entry(
       pe, IMAGE_DIRECTORY_ENTRY_DEBUG);
 
@@ -319,16 +319,16 @@ static void pe_parse_debug_directory(
   {
     debug_dir = (PIMAGE_DEBUG_DIRECTORY) \
         (pe->data + debug_dir_offset + i * sizeof(IMAGE_DEBUG_DIRECTORY));
-    
+
     if (!struct_fits_in_pe(pe, debug_dir, IMAGE_DEBUG_DIRECTORY))
       break;
-  
+
     if (yr_le32toh(debug_dir->Type) != IMAGE_DEBUG_TYPE_CODEVIEW)
       continue;
-    
+
     if (yr_le32toh(debug_dir->AddressOfRawData) == 0)
       continue;
-    
+
     pcv_hdr_offset = pe_rva_to_offset(
         pe, yr_le32toh(debug_dir->AddressOfRawData));
 
@@ -343,14 +343,14 @@ static void pe_parse_debug_directory(
     if (yr_le32toh(cv_hdr->dwSignature) == CVINFO_PDB20_CVSIGNATURE)
     {
       PCV_INFO_PDB20 pdb20 = (PCV_INFO_PDB20) cv_hdr;
-      
+
       if (struct_fits_in_pe(pe, pdb20, CV_INFO_PDB20))
         pdb_path = (char*) (pdb20->PdbFileName);
     }
     else if (yr_le32toh(cv_hdr->dwSignature) == CVINFO_PDB70_CVSIGNATURE)
     {
       PCV_INFO_PDB70 pdb70 = (PCV_INFO_PDB70) cv_hdr;
-      
+
       if (struct_fits_in_pe(pe, pdb70, CV_INFO_PDB70))
         pdb_path = (char*) (pdb70->PdbFileName);
     }
@@ -367,7 +367,7 @@ static void pe_parse_debug_directory(
       }
     }
   }
-  
+
   return;
 }
 
@@ -707,13 +707,16 @@ static int pe_collect_resources(
 {
   DWORD length;
 
+  set_integer(
+        yr_le32toh(rsrc_data->OffsetToData),
+        pe->object,
+        "resources[%i].rva",
+        pe->resources);
+
   int64_t offset = pe_rva_to_offset(pe, yr_le32toh(rsrc_data->OffsetToData));
 
   if (offset < 0)
-    return RESOURCE_CALLBACK_CONTINUE;
-
-  if (!fits_in_pe(pe, pe->data + offset, yr_le32toh(rsrc_data->Size)))
-    return RESOURCE_CALLBACK_CONTINUE;
+    offset = YR_UNDEFINED;
 
   set_integer(
         offset,
@@ -1433,10 +1436,10 @@ void _parse_pkcs7(
       }
     }
 
-    date_time = ASN1_get_time_t(X509_get_notBefore(cert));
+    date_time = ASN1_get_time_t(X509_get0_notBefore(cert));
     set_integer(date_time, pe->object, "signatures[%i].not_before", *counter);
 
-    date_time = ASN1_get_time_t(X509_get_notAfter(cert));
+    date_time = ASN1_get_time_t(X509_get0_notAfter(cert));
     set_integer(date_time, pe->object, "signatures[%i].not_after", *counter);
 
     (*counter)++;
@@ -1975,7 +1978,7 @@ define_function(exports)
     if (function_name == NULL)
       continue;
 
-    if (sized_string_cmp_nocase(function_name, search_name) == 0)
+    if (ss_icompare(function_name, search_name) == 0)
     {
       return_integer(1);
     }
@@ -2077,7 +2080,7 @@ define_function(exports_index_name)
     if (function_name == NULL)
       continue;
 
-    if (sized_string_cmp_nocase(function_name, search_name) == 0)
+    if (ss_icompare(function_name, search_name) == 0)
     {
       return_integer(i);
     }
@@ -2937,6 +2940,7 @@ begin_declarations;
   end_struct("resource_version");
 
   begin_struct_array("resources");
+    declare_integer("rva");
     declare_integer("offset");
     declare_integer("length");
     declare_integer("type");
@@ -3368,7 +3372,7 @@ int module_load(
         pe_parse_header(pe, block->base, context->flags);
         pe_parse_rich_signature(pe, block->base);
         pe_parse_debug_directory(pe);
-        
+
         #if defined(HAVE_LIBCRYPTO) && !defined(BORINGSSL)
         pe_parse_certificates(pe);
         #endif

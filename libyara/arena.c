@@ -335,7 +335,7 @@ int yr_arena_allocate_zeroed_memory(
 //
 // Args:
 //    [in]  YR_ARENA* arena     - Pointer to the arena.
-//    [in]  uint32_t buffer_id   - Buffer number.
+//    [in]  uint32_t buffer_id  - Buffer number.
 //    [in]  size_t size         - Size of the region to be allocated.
 //    [out] YR_ARENA_REF* ref   - Pointer to a reference that will point to the
 //                                newly allocated structure when the function
@@ -668,11 +668,14 @@ int yr_arena_save_stream(
 
     YR_ARENA_REF ref;
 
+    #if !defined(NDEBUG)
     int found = yr_arena_ptr_to_ref(arena, *reloc_ptr, &ref);
-
     // yr_arena_ptr_to_ref returns 0 if the relocatable pointer is pointing
     // outside the arena, this should not happen.
     assert(found);
+    #else
+    yr_arena_ptr_to_ref(arena, *reloc_ptr, &ref);
+    #endif
 
     // Replace the relocatable pointer with a reference that holds information
     // about the buffer and offset where the relocatable pointer is pointing to.

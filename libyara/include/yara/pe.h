@@ -67,9 +67,6 @@ typedef int32_t   LONG;
 typedef uint32_t  ULONG;
 typedef uint64_t  ULONGLONG;
 
-
-#define FIELD_OFFSET(type, field)    ((size_t)&(((type *)0)->field))
-
 #ifndef _MAC
 
 #define IMAGE_DOS_SIGNATURE                 0x5A4D      // MZ
@@ -317,8 +314,8 @@ typedef struct _IMAGE_NT_HEADERS64 {
 // the same either way.
 
 #define IMAGE_FIRST_SECTION( ntheader ) ((PIMAGE_SECTION_HEADER) \
-    ((BYTE*)ntheader + \
-     FIELD_OFFSET( IMAGE_NT_HEADERS32, OptionalHeader ) + \
+    ((BYTE*) ntheader + \
+     offsetof(IMAGE_NT_HEADERS32, OptionalHeader) + \
      yr_le16toh(((PIMAGE_NT_HEADERS32)(ntheader))->FileHeader.SizeOfOptionalHeader) \
     ))
 

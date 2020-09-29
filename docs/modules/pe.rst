@@ -32,6 +32,12 @@ write more expressive and targeted rules. Let's see some examples:
             pe.characteristics & pe.DLL
     }
 
+    rule is_pe
+    {
+        condition:
+            pe.is_pe
+    }
+
 Reference
 ---------
 
@@ -602,9 +608,14 @@ Reference
     Individual resources can be accessed by using the [] operator. Each
     resource object has the following attributes:
 
+    .. c:member:: rva
+
+        The RVA of the resource data.
+
     .. c:member:: offset
 
-        Offset for the resource data.
+        Offset for the resource data. This can be undefined if the RVA is
+        invalid.
 
     .. c:member:: length
 
@@ -819,7 +830,7 @@ Reference
 
     Path of the PDB file for this PE if present.
 
-    * Example: pe.pdb_path == "D:\\workspace\\2018_R9_RelBld\\target\\checkout\\custprof\\Release\\custprof.pdb"
+    *Example: pe.pdb_path == "D:\\workspace\\2018_R9_RelBld\\target\\checkout\\custprof\\Release\\custprof.pdb"*
 
 .. c:function:: exports(function_name)
 
@@ -1019,6 +1030,14 @@ Reference
 
     *Example: pe.section_index(pe.entry_point)*
 
+.. c:function:: is_pe()
+
+    .. versionadded:: 3.8.0
+
+    Return true if the file is a PE.
+
+    *Example: pe.is_pe()*
+       
 .. c:function:: is_dll()
 
     .. versionadded:: 3.5.0

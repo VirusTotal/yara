@@ -155,11 +155,13 @@ static SIZED_STRING* _yr_base64_get_base64_substring(
   start = encoded_str->c_string + leading;
 
   memcpy(new_str->c_string, start, length);
+
   new_str->length = length;
+  new_str->c_string[length] = '\0';
 
   if (wide)
   {
-    final_str = sized_string_convert_to_wide(new_str);
+    final_str = ss_convert_to_wide(new_str);
     yr_free(new_str);
   }
   else
@@ -419,7 +421,7 @@ int yr_base64_ast_from_string(
 
   if (modifier.flags & STRING_FLAGS_WIDE)
   {
-    wide_str = sized_string_convert_to_wide(in_str);
+    wide_str = ss_convert_to_wide(in_str);
 
     if (modifier.flags & STRING_FLAGS_BASE64)
     {

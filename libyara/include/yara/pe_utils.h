@@ -102,7 +102,7 @@ char *ord_lookup(
 
 #if HAVE_LIBCRYPTO
 #include <openssl/asn1.h>
-time_t ASN1_get_time_t(ASN1_TIME* time);
+time_t ASN1_get_time_t(const ASN1_TIME* time);
 #endif
 
 #endif

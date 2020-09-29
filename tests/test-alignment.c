@@ -116,7 +116,7 @@ int main (int argc, char **argv)
   CHECK_OFFSET(YR_AC_MATCH, 24, next);
   CHECK_OFFSET(YR_AC_MATCH, 32, backtrack);
 
-  CHECK_SIZE(SIZED_STRING, 12);
+  CHECK_SIZE(SIZED_STRING, 9);
   CHECK_OFFSET(SIZED_STRING, 4, flags);
   CHECK_OFFSET(SIZED_STRING, 8, c_string);
 

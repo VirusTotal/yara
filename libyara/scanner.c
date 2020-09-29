@@ -178,6 +178,7 @@ YR_API int yr_scanner_create(
 
   new_scanner->rules = rules;
   new_scanner->entry_point = YR_UNDEFINED;
+  new_scanner->file_size = YR_UNDEFINED;
   new_scanner->canary = rand();
 
   // By default report both matching and non-matching rules.
@@ -288,9 +289,9 @@ YR_API void yr_scanner_set_timeout(
     YR_SCANNER* scanner,
     int timeout)
 {
-  scanner->timeout = timeout * 1000000000L;  // convert timeout to nanoseconds.
+  // Convert timeout from seconds to nanoseconds.
+  scanner->timeout = timeout * 1000000000ULL;
 }
-
 
 YR_API void yr_scanner_set_flags(
     YR_SCANNER* scanner,
@@ -404,8 +405,6 @@ YR_API int yr_scanner_scan_mem_blocks(
 
   if (block == NULL)
     return ERROR_SUCCESS;
-
-  scanner->file_size = block->size;
 
   // Create the notebook that will hold the YR_MATCH structures representing
   // each match found. This notebook will also contain snippets of the matching
@@ -557,6 +556,8 @@ YR_API int yr_scanner_scan_mem(
 {
   YR_MEMORY_BLOCK block;
   YR_MEMORY_BLOCK_ITERATOR iterator;
+
+  scanner->file_size = buffer_size;
 
   block.size = buffer_size;
   block.base = 0;

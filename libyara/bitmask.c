@@ -35,7 +35,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 // yr_bitmask_find_non_colliding_offset
 //
-// Finds the smaller offset within bitmask A where bitmask B can be accommodated
+// Find the smallest offset within bitmask A where bitmask B can be accommodated
 // without bit collisions. A collision occurs when both bitmasks have a bit set
 // to 1 at the same offset. This function assumes that the first bit in B is 1
 // and do optimizations that rely on that.

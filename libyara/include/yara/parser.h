@@ -72,6 +72,11 @@ int yr_parser_emit_with_arg_reloc(
     YR_ARENA_REF* argument_ref);
 
 
+int yr_parser_emit_push_const(
+    yyscan_t yyscanner,
+    uint64_t argument);
+
+
 int yr_parser_check_types(
     YR_COMPILER* compiler,
     YR_OBJECT_FUNCTION* function,

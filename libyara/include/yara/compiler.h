@@ -211,7 +211,7 @@ typedef struct _YR_COMPILER
   // parsing a rule.
   uint32_t current_rule_idx;
 
-  //
+  // Index of the rule that comes next during parsing.
   uint32_t next_rule_idx;
 
   // Index of the string being compiled in the array of YR_STRING structures
@@ -242,6 +242,13 @@ typedef struct _YR_COMPILER
   YR_HASH_TABLE*    rules_table;
   YR_HASH_TABLE*    objects_table;
   YR_HASH_TABLE*    strings_table;
+
+  // Hash table that contains all the strings that has been written to the
+  // YR_SZ_POOL buffer in the compiler's arena. Values in the hash table are
+  // the offset within the YR_SZ_POOL where the string resides. This allows to
+  // know is some string has already been written in order to reuse instead of
+  // writting it again.
+  YR_HASH_TABLE*    sz_table;
 
   YR_FIXUP*         fixup_stack_head;
 
@@ -310,6 +317,19 @@ const char* _yr_compiler_default_include_callback(
 
 YR_RULE* _yr_compiler_get_rule_by_idx(
     YR_COMPILER* compiler, uint32_t rule_idx);
+
+
+int _yr_compiler_store_string(
+    YR_COMPILER* compiler,
+    const char* string,
+    YR_ARENA_REF* ref);
+
+
+int _yr_compiler_store_data(
+    YR_COMPILER* compiler,
+    const void* data,
+    size_t data_length,
+    YR_ARENA_REF* ref);
 
 
 YR_API int yr_compiler_create(

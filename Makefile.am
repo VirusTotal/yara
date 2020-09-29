@@ -22,10 +22,22 @@ ACLOCAL_AMFLAGS=-I m4
 
 bin_PROGRAMS = yara yarac
 
-yara_SOURCES = args.c args.h common.h threading.c threading.h yara.c
+yara_SOURCES = \
+  cli/args.c \
+  cli/args.h \
+  cli/common.h \
+  cli/threading.c \
+  cli/threading.h \
+  cli/yara.c
+
 yara_LDADD = -Llibyara/.libs -lyara
 
-yarac_SOURCES = args.c args.h common.h yarac.c
+yarac_SOURCES = \
+   cli/args.c \
+   cli/args.h \
+   cli/common.h \
+   cli/yarac.c
+
 yarac_LDADD = -Llibyara/.libs -lyara
 
 test_alignment_SOURCES = tests/test-alignment.c

@@ -194,6 +194,7 @@ BLOB_PARSE_RESULT dotnet_parse_blob_entry(
   {
     // Return a 0 size as an error.
     result.size = 0;
+    return result;
   }
 
   // There is an additional terminal byte which is 0x01 under certain
