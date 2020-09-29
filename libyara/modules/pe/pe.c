@@ -2452,7 +2452,7 @@ define_function(locale)
   for (i = 0; i < n; i++)
   {
     uint64_t rsrc_language = get_integer(
-        module, "resources[%" PRIi32 "].language",  (int32_t)i);
+        module, "resources[%i].language",  (int32_t)i);
 
     if ((rsrc_language & 0xFFFF) == locale)
       return_integer(1);
@@ -2483,7 +2483,7 @@ define_function(language)
   for (i = 0; i < n; i++)
   {
     uint64_t rsrc_language = get_integer(
-        module, "resources[%" PRIi32 "].language", (int32_t)i);
+        module, "resources[%i].language", (int32_t)i);
 
     if ((rsrc_language & 0xFF) == language)
       return_integer(1);
