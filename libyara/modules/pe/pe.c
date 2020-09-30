@@ -1448,12 +1448,16 @@ void _parse_pkcs7(
   // See if there is a nested signature, which is apparently an authenticode
   // specific feature. See https://github.com/VirusTotal/yara/issues/515.
   signer_info = sk_PKCS7_SIGNER_INFO_value(pkcs7->d.sign->signer_info, 0);
+
   if (signer_info != NULL)
   {
     attrs = PKCS7_get_attributes(signer_info);
+
     idx = X509at_get_attr_by_NID(
         attrs, OBJ_txt2nid(SPC_NESTED_SIGNATURE_OBJID), -1);
+
     xa = X509at_get_attr(attrs, idx);
+
     for (j = 0; j < MAX_PE_CERTS; j++)
     {
       nested = X509_ATTRIBUTE_get0_type(xa, j);
@@ -1553,11 +1557,14 @@ static void pe_parse_certificates(
 
     cert_p = win_cert->Certificate;
     end = (uintptr_t)((uint8_t*) win_cert) + yr_le32toh(win_cert->Length);
+
     while ((uintptr_t) cert_p < end && counter < MAX_PE_CERTS)
     {
-      pkcs7 = d2i_PKCS7(NULL, &cert_p, (yr_le32toh( (uint32_t)((uintptr_t)end - (uintptr_t)cert_p)) ));
+      pkcs7 = d2i_PKCS7(NULL, &cert_p, (uint32_t)(end - (uintptr_t) cert_p));
+
       if (pkcs7 == NULL)
         break;
+
       _parse_pkcs7(pe, pkcs7, &counter);
       PKCS7_free(pkcs7);
       pkcs7 = NULL;
