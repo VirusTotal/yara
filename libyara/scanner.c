@@ -564,12 +564,13 @@ static const uint8_t* _yr_fetch_block_data(
 }
 
 
-static int _yr_scanner_scan_mem(
+static int __yr_scanner_scan_mem(
     YR_SCANNER* scanner,
     const uint8_t* buffer,
     size_t buffer_size)
 {
-  YR_DEBUG_FPRINTF(2, stderr, "+ %s(buffer=%p buffer_size=%'ld) {}\n", __FUNCTION__, buffer, buffer_size);
+  YR_DEBUG_FPRINTF(2, stderr, "+ %s(buffer=%p buffer_size=%'ld) {}\n",
+    __FUNCTION__, buffer, buffer_size);
 
   YR_MEMORY_BLOCK block;
   YR_MEMORY_BLOCK_ITERATOR iterator;
@@ -589,10 +590,22 @@ static int _yr_scanner_scan_mem(
 }
 
 
-YR_API int (*yr_scanner_scan_mem)(
+//
+// Tests may override this default with their own iterator, e.g. for testing multiple blocks.
+//
+YR_API int (*_yr_scanner_scan_mem)(
     YR_SCANNER* scanner,
     const uint8_t* buffer,
-    size_t buffer_size) = &_yr_scanner_scan_mem;
+    size_t buffer_size) = &__yr_scanner_scan_mem;
+
+
+YR_API int yr_scanner_scan_mem(
+    YR_SCANNER* scanner,
+    const uint8_t* buffer,
+    size_t buffer_size)
+{
+    return _yr_scanner_scan_mem(scanner, buffer, buffer_size);
+}
 
 
 YR_API int yr_scanner_scan_file(
