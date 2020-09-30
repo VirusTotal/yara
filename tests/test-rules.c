@@ -2988,7 +2988,7 @@ int main(int argc, char** argv)
   yr_debug_verbosity = getenv("YR_DEBUG_VERBOSITY") ? atoi(getenv("YR_DEBUG_VERBOSITY")) : 0;
   #endif
 
-  yr_scanner_scan_mem = &_yr_test_single_or_multi_block_scan_mem;
+  _yr_scanner_scan_mem = &_yr_test_single_or_multi_block_scan_mem;
 
   uint64_t last_yr_test_count_get_block;
   for (int i = 1; i <= 2; i ++)
