@@ -564,7 +564,7 @@ static const uint8_t* _yr_fetch_block_data(
 }
 
 
-YR_API int _yr_scanner_scan_mem(
+static int _yr_scanner_scan_mem(
     YR_SCANNER* scanner,
     const uint8_t* buffer,
     size_t buffer_size)
