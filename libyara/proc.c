@@ -39,7 +39,7 @@ YR_API int yr_process_open_iterator(
     int pid,
     YR_MEMORY_BLOCK_ITERATOR* iterator)
 {
-  YR_DEBUG_FPRINTF(2, stderr, "+ %s(pid=%d) {}\n", __FUNCTION__, pid);
+  YR_DEBUG_FPRINTF(2, stderr, "+ %s(pid=%d)\n", __FUNCTION__, pid);
 
   YR_PROC_ITERATOR_CTX* context = (YR_PROC_ITERATOR_CTX*) \
       yr_malloc(sizeof(YR_PROC_ITERATOR_CTX));
@@ -70,7 +70,7 @@ YR_API int yr_process_open_iterator(
 YR_API int yr_process_close_iterator(
     YR_MEMORY_BLOCK_ITERATOR* iterator)
 {
-  YR_DEBUG_FPRINTF(2, stderr, "+ %s() {}\n", __FUNCTION__);
+  YR_DEBUG_FPRINTF(2, stderr, "+ %s()\n", __FUNCTION__);
 
   YR_PROC_ITERATOR_CTX* context = (YR_PROC_ITERATOR_CTX*) iterator->context;
 
