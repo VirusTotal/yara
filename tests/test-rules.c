@@ -2978,9 +2978,7 @@ void test_performance_warnings()
 
 int main(int argc, char** argv)
 {
-  char *top_srcdir = getenv("TOP_SRCDIR");
-  if (top_srcdir)
-    chdir(top_srcdir);
+  chdir_if_env_top_srcdir();
 
   yr_initialize();
 
