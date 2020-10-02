@@ -87,8 +87,9 @@ static int _yr_scan_xor_compare(
 
   _exit:;
 
-  YR_DEBUG_FPRINTF(2, stderr, "+ %s(data_size=%'lu string_length=%'ld) {} = %d\n",
-    __FUNCTION__, data_size, string_length, result);
+  YR_DEBUG_FPRINTF(2, stderr,
+      "+ %s(data_size=%zu string_length=%zu) {} = %d\n",
+      __FUNCTION__, data_size, string_length, result);
 
   return result;
 }
@@ -192,8 +193,9 @@ static int _yr_scan_wcompare(
 
   _exit:;
 
-  YR_DEBUG_FPRINTF(2, stderr, "+ %s(data_size=%'lu string_length=%'ld) {} = %d\n",
-    __FUNCTION__, data_size, string_length, result);
+  YR_DEBUG_FPRINTF(2, stderr,
+      "+ %s(data_size=%zu string_length=%zu) {} = %d\n",
+      __FUNCTION__, data_size, string_length, result);
 
   return result;
 }
@@ -227,8 +229,9 @@ static int _yr_scan_wicompare(
 
   _exit:;
 
-  YR_DEBUG_FPRINTF(2, stderr, "+ %s(data_size=%'lu string_length=%'ld) {} = %d\n",
-    __FUNCTION__, data_size, string_length, result);
+  YR_DEBUG_FPRINTF(2, stderr,
+      "+ %s(data_size=%zu string_length=%zu) {} = %d\n",
+      __FUNCTION__, data_size, string_length, result);
 
   return result;
 }
@@ -329,10 +332,18 @@ static int _yr_scan_add_match_to_list(
 
   _exit:;
 
-  YR_DEBUG_FPRINTF(2, stderr, "+ %s(replace_if_exists=%d) {} = %d // "
-    "match->base=0x%lx match->offset=%'lu matches_list->count=%'u += %'u\n",
-    __FUNCTION__, replace_if_exists, result, match->base, match->offset, count_orig,
-    matches_list->count - count_orig);
+  YR_DEBUG_FPRINTF(2, stderr,
+      "+ %s(replace_if_exists=%d) {} = %d //"
+      " match->base=0x%" PRIx64
+      " match->offset=%" PRIi64
+      " matches_list->count=%u += %u\n",
+      __FUNCTION__,
+      replace_if_exists,
+      result,
+      match->base,
+      match->offset,
+      count_orig,
+      matches_list->count - count_orig);
 
   return result;
 }
@@ -382,9 +393,14 @@ static int _yr_scan_verify_chained_string_match(
     uint64_t match_offset,
     int32_t match_length)
 {
-  YR_DEBUG_FPRINTF(2, stderr, "+ %s"
-    "(match_data=%p match_base=%lx match_offset=0x%'lu match_length=%'d) {}\n",
-    __FUNCTION__, match_data, match_base, match_offset, match_length);
+  YR_DEBUG_FPRINTF(2, stderr,
+      "+ %s (match_data=%p match_base=%" PRIx64
+      " match_offset=0x%" PRIx64 " match_length=%'d) {} \n",
+      __FUNCTION__,
+      match_data,
+      match_base,
+      match_offset,
+      match_length);
 
   YR_STRING* string;
   YR_MATCH* match;
@@ -612,18 +628,21 @@ static int _yr_scan_match_callback(
 
   size_t match_offset = match_data - callback_args->data;
 
-  YR_DEBUG_FPRINTF(2, stderr, "+ %s(match_data=%p match_length=%'d) { // "
-    "match_offset=%'ld args->data=%p args->string.length=%'u "
-    "args->data_base=0x%lx args->data_size=%'lu args->forward_matches=%'u\n",
-    __FUNCTION__,
-    match_data,
-    match_length,
-    match_offset,
-    callback_args->data,
-    callback_args->string->length,
-    callback_args->data_base,
-    callback_args->data_size,
-    callback_args->forward_matches);
+  YR_DEBUG_FPRINTF(2, stderr,
+      "+ %s(match_data=%p match_length=%d) { //"
+      " match_offset=%ld args->data=%p args->string.length=%u"
+      " args->data_base=0x%" PRIx64
+      " args->data_size=%zu"
+      " args->forward_matches=%'u\n",
+      __FUNCTION__,
+      match_data,
+      match_length,
+      match_offset,
+      callback_args->data,
+      callback_args->string->length,
+      callback_args->data_base,
+      callback_args->data_size,
+      callback_args->forward_matches);
 
   // total match length is the sum of backward and forward matches.
   match_length += callback_args->forward_matches;
@@ -726,7 +745,7 @@ static int _yr_scan_match_callback(
 
   _exit:;
 
-  YR_DEBUG_FPRINTF(2, stderr, "} // %s() = %d\n", __FUNCTION__, result);
+  YR_DEBUG_FPRINTF(2, stderr, "} // %s() {} = %d\n", __FUNCTION__, result);
 
   return result;
 }
@@ -752,8 +771,9 @@ static int _yr_scan_verify_re_match(
     uint64_t data_base,
     size_t offset)
 {
-  YR_DEBUG_FPRINTF(2, stderr, "+ %s(data=%p data_size=%'lu data_base=0x%lx offset=%'ld) {}\n",
-    __FUNCTION__, data, data_size, data_base, offset);
+  YR_DEBUG_FPRINTF(2, stderr,
+      "+ %s(data=%p data_size=%zu data_base=0x%" PRIx64 " offset=%zu) {}\n",
+      __FUNCTION__, data, data_size, data_base, offset);
 
   CALLBACK_ARGS callback_args;
   RE_EXEC_FUNC exec;
@@ -854,8 +874,9 @@ static int _yr_scan_verify_literal_match(
     uint64_t data_base,
     size_t offset)
 {
-  YR_DEBUG_FPRINTF(2, stderr, "+ %s(data=%p data_size=%'lu data_base=0x%lx offset=%'ld) {}\n",
-    __FUNCTION__, data, data_size, data_base, offset);
+  YR_DEBUG_FPRINTF(2, stderr,
+      "+ %s(data=%p data_size=%zu data_base=0x%" PRIx64 " offset=%zu) {}\n",
+      __FUNCTION__, data, data_size, data_base, offset);
 
   int flags = 0;
   int forward_matches = 0;
@@ -962,8 +983,9 @@ int yr_scan_verify_match(
     uint64_t data_base,
     size_t offset)
 {
-  YR_DEBUG_FPRINTF(2, stderr, "+ %s(data=%p data_size=%'lu data_base=0x%lx offset=%'ld)\n",
-    __FUNCTION__, data, data_size, data_base, offset);
+  YR_DEBUG_FPRINTF(2, stderr,
+      "+ %s(data=%p data_size=%zu data_base=0x%" PRIx64 " offset=%zu) {}\n",
+      __FUNCTION__, data, data_size, data_base, offset);
 
   YR_STRING* string = ac_match->string;
 

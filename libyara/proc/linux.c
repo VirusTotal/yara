@@ -164,13 +164,14 @@ YR_API YR_MEMORY_BLOCK* yr_process_get_next_memory_block(
     context->current_block.base = begin;
     context->current_block.size = end - begin;
 
-    YR_DEBUG_FPRINTF(2, stderr, "+ %s() {} // .base=0x%lx .size=%'lu\n",
-      __FUNCTION__, context->current_block.base, context->current_block.size);
+    YR_DEBUG_FPRINTF(2, stderr,
+        "+ %s() {} // .base=0x%" PRIx64 " .size=%lu\n",
+        __FUNCTION__, context->current_block.base, context->current_block.size);
 
     return &context->current_block;
   }
 
-  YR_DEBUG_FPRINTF(2, stderr, "+ %s() {} = NULL\n", __FUNCTION__);
+  YR_DEBUG_FPRINTF(2, stderr, "+ %s() = NULL\n", __FUNCTION__);
 
   return NULL;
 }
@@ -179,7 +180,7 @@ YR_API YR_MEMORY_BLOCK* yr_process_get_next_memory_block(
 YR_API YR_MEMORY_BLOCK* yr_process_get_first_memory_block(
     YR_MEMORY_BLOCK_ITERATOR* iterator)
 {
-  YR_DEBUG_FPRINTF(2, stderr, "+ %s() {}\n", __FUNCTION__);
+  YR_DEBUG_FPRINTF(2, stderr, "+ %s() {} \n", __FUNCTION__);
 
   YR_PROC_ITERATOR_CTX* context = (YR_PROC_ITERATOR_CTX*) iterator->context;
   YR_PROC_INFO* proc_info = (YR_PROC_INFO*) context->proc_info;
