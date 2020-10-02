@@ -49,7 +49,7 @@ static int _yr_scanner_scan_mem_block(
     YR_MEMORY_BLOCK* block)
 {
   YR_DEBUG_FPRINTF(2, stderr,
-      "+ %s(block_data=%p block->base=0x%" PRIx64 " block->size=%zu)\n",
+      "+ %s(block_data=%p block->base=0x%" PRIx64 " block->size=%zu) {}\n",
       __FUNCTION__, block_data, block->base, block->size);
 
   YR_RULES* rules = scanner->rules;
@@ -75,7 +75,7 @@ static int _yr_scanner_scan_mem_block(
     if (0 != state)
       YR_DEBUG_FPRINTF(2, stderr,
           "- match_table[state=%u]=%'u i=%'ld "
-          "block_data=%p block->base=0x%" PRIx64 " // %s()\n",
+          "block_data=%p block->base=0x%" PRIx64 " // %s() {}\n",
           state, match_table[state], i, block_data, block->base, __FUNCTION__);
     #endif
 
@@ -175,7 +175,7 @@ YR_API int yr_scanner_create(
     YR_RULES* rules,
     YR_SCANNER** scanner)
 {
-  YR_DEBUG_FPRINTF(2, stderr, "+ %s()\n", __FUNCTION__);
+  YR_DEBUG_FPRINTF(2, stderr, "+ %s() {} \n", __FUNCTION__);
 
   YR_EXTERNAL_VARIABLE* external;
   YR_SCANNER* new_scanner;
@@ -257,7 +257,7 @@ YR_API int yr_scanner_create(
 YR_API void yr_scanner_destroy(
     YR_SCANNER* scanner)
 {
-  YR_DEBUG_FPRINTF(2, stderr, "+ %s()\n", __FUNCTION__);
+  YR_DEBUG_FPRINTF(2, stderr, "+ %s() {} \n", __FUNCTION__);
 
   RE_FIBER* fiber;
   RE_FIBER* next_fiber;
@@ -399,7 +399,7 @@ YR_API int yr_scanner_scan_mem_blocks(
     YR_SCANNER* scanner,
     YR_MEMORY_BLOCK_ITERATOR* iterator)
 {
-  YR_DEBUG_FPRINTF(2, stderr, "+ %s()\n", __FUNCTION__);
+  YR_DEBUG_FPRINTF(2, stderr, "+ %s() {} \n", __FUNCTION__);
 
   YR_RULES* rules;
   YR_RULE* rule;

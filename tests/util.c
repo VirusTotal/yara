@@ -133,7 +133,7 @@ static YR_MEMORY_BLOCK* _yr_test_multi_block_get_first_block(
     YR_MEMORY_BLOCK_ITERATOR* iterator)
 {
   YR_DEBUG_FPRINTF(2, stderr,
-      "+ %s() // wrapping _yr_test_multi_block_get_next_block()\n",
+      "+ %s() {} // wrapping _yr_test_multi_block_get_next_block()\n",
       __FUNCTION__);
 
   yr_test_count_get_block ++;
@@ -155,7 +155,7 @@ static const uint8_t* _yr_test_multi_block_fetch_block_data(
       yr_test_mem_block_size_overlap : 0;
   #endif
   YR_DEBUG_FPRINTF(2, stderr,
-      "+ %s() = %p = %p + 0x%" PRIx64
+      "+ %s() {} = %p = %p + 0x%" PRIx64
       " base including %" PRId64
       " overlap%s\n",
       __FUNCTION__,
@@ -182,7 +182,8 @@ YR_API int _yr_test_single_or_multi_block_scan_mem(
   if (yr_test_mem_block_size)
   {
     YR_DEBUG_FPRINTF(2, stderr,
-      "+ %s(buffer=%p buffer_size=%zu) // yr_test_mem_block_size=%" PRId64 "\n",
+      "+ %s(buffer=%p buffer_size=%zu) {}"
+      " // yr_test_mem_block_size=%" PRId64 "\n",
        __FUNCTION__,
        buffer,
        buffer_size,
