@@ -31,6 +31,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <yara/mem.h>
 #include <yara/modules.h>
+#include <yara/globals.h>
 
 #define MODULE_NAME hash
 
@@ -116,11 +117,16 @@ static char* get_from_cache(
   key.offset = offset;
   key.length = length;
 
-  return (char*) yr_hash_table_lookup_raw_key(
+  char* result = (char*) yr_hash_table_lookup_raw_key(
       hash_table,
       &key,
       sizeof(key),
       ns);
+
+  YR_DEBUG_FPRINTF(2, stderr, "+ %s(offset=%" PRIi64 " length=%" PRIi64 ") {} = %p\n",
+      __FUNCTION__, offset, length, result);
+
+  return result;
 }
 
 
@@ -142,12 +148,17 @@ static int add_to_cache(
   if (copy == NULL)
     return ERROR_INSUFFICIENT_MEMORY;
 
-  return yr_hash_table_add_raw_key(
+  int result = yr_hash_table_add_raw_key(
       hash_table,
       &key,
       sizeof(key),
       ns,
       (void*) copy);
+
+  YR_DEBUG_FPRINTF(2, stderr, "+ %s(offset=%" PRIi64 " length=%" PRIi64 " digest=%s) {} = %d\n",
+      __FUNCTION__, offset, length, digest, result);
+
+  return result;
 }
 
 
@@ -164,6 +175,9 @@ define_function(string_md5)
   yr_md5_final(digest, &md5_context);
 
   digest_to_ascii(digest, digest_ascii, YR_MD5_LEN);
+
+  YR_DEBUG_FPRINTF(2, stderr, "+ %s() {} = 0x%s // s->length=%u\n",
+      __FUNCTION__, digest_ascii, s->length);
 
   return_string(digest_ascii);
 }
@@ -183,6 +197,9 @@ define_function(string_sha256)
 
   digest_to_ascii(digest, digest_ascii, YR_SHA256_LEN);
 
+  YR_DEBUG_FPRINTF(2, stderr, "+ %s() {} = 0x%s // s->length=%u\n",
+      __FUNCTION__, digest_ascii, s->length);
+
   return_string(digest_ascii);
 }
 
@@ -201,6 +218,9 @@ define_function(string_sha1)
 
   digest_to_ascii(digest, digest_ascii, YR_SHA1_LEN);
 
+  YR_DEBUG_FPRINTF(2, stderr, "+ %s() {} = 0x%s // s->length=%u\n",
+      __FUNCTION__, digest_ascii, s->length);
+
   return_string(digest_ascii);
 }
 
@@ -214,6 +234,9 @@ define_function(string_checksum32)
 
   for (i = 0; i < s->length; i++)
     checksum += (uint8_t)(s->c_string[i]);
+
+  YR_DEBUG_FPRINTF(2, stderr, "+ %s() {} = 0x%x // s->length=%u\n",
+      __FUNCTION__, checksum, s->length);
 
   return_integer(checksum);
 }
@@ -239,19 +262,31 @@ define_function(data_md5)
   int64_t offset = arg_offset;
   int64_t length = arg_length;
 
+  YR_DEBUG_FPRINTF(2, stderr, "+ %s(offset=%" PRIi64 " length=%" PRIi64 ") {\n",
+      __FUNCTION__, offset, length);
+
   if (block == NULL)
+  {
+    YR_DEBUG_FPRINTF(2, stderr, "} // %s() = YR_UNDEFINED // block == NULL\n", __FUNCTION__);
     return_string(YR_UNDEFINED);
+  }
 
   yr_md5_init(&md5_context);
 
   if (offset < 0 || length < 0 || offset < block->base)
+  {
+    YR_DEBUG_FPRINTF(2, stderr, "} // %s() = YR_UNDEFINED // bad offset / length\n", __FUNCTION__);
     return_string(YR_UNDEFINED);
+  }
 
   cached_ascii_digest = get_from_cache(
       module(), "md5", arg_offset, arg_length);
 
   if (cached_ascii_digest != NULL)
+  {
+    YR_DEBUG_FPRINTF(2, stderr, "} // %s() = %s (cached)\n", __FUNCTION__, cached_ascii_digest);
     return_string(cached_ascii_digest);
+  }
 
   foreach_memory_block(iterator, block)
   {
@@ -284,6 +319,7 @@ define_function(data_md5)
       // range contains gaps of undefined data the checksum is
       // undefined.
 
+      YR_DEBUG_FPRINTF(2, stderr, "} // %s() = YR_UNDEFINED // past_first_block\n", __FUNCTION__);
       return_string(YR_UNDEFINED);
     }
 
@@ -292,7 +328,10 @@ define_function(data_md5)
   }
 
   if (!past_first_block)
+  {
+    YR_DEBUG_FPRINTF(2, stderr, "} // %s() = YR_UNDEFINED // !past_first_block\n", __FUNCTION__);
     return_string(YR_UNDEFINED);
+  }
 
   yr_md5_final(digest, &md5_context);
 
@@ -301,6 +340,7 @@ define_function(data_md5)
   FAIL_ON_ERROR(
       add_to_cache(module(), "md5", arg_offset, arg_length, digest_ascii));
 
+  YR_DEBUG_FPRINTF(2, stderr, "} // %s() = 0x%s\n", __FUNCTION__, digest_ascii);
   return_string(digest_ascii);
 }
 
@@ -325,19 +365,31 @@ define_function(data_sha1)
   YR_MEMORY_BLOCK* block = first_memory_block(context);
   YR_MEMORY_BLOCK_ITERATOR* iterator = context->iterator;
 
+  YR_DEBUG_FPRINTF(2, stderr, "+ %s(offset=%" PRIi64 " length=%" PRIi64 ") {\n",
+      __FUNCTION__, offset, length);
+
   if (block == NULL)
+  {
+    YR_DEBUG_FPRINTF(2, stderr, "} // %s() = YR_UNDEFINED // block == NULL\n", __FUNCTION__);
     return_string(YR_UNDEFINED);
+  }
 
   yr_sha1_init(&sha_context);
 
   if (offset < 0 || length < 0 || offset < block->base)
+  {
+    YR_DEBUG_FPRINTF(2, stderr, "} // %s() = YR_UNDEFINED // bad offset / length\n", __FUNCTION__);
     return_string(YR_UNDEFINED);
+  }
 
   cached_ascii_digest = get_from_cache(
       module(), "sha1", arg_offset, arg_length);
 
   if (cached_ascii_digest != NULL)
+  {
+    YR_DEBUG_FPRINTF(2, stderr, "} // %s() = %s (cached)\n", __FUNCTION__, cached_ascii_digest);
     return_string(cached_ascii_digest);
+  }
 
   foreach_memory_block(iterator, block)
   {
@@ -369,6 +421,7 @@ define_function(data_sha1)
       // range contains gaps of undefined data the checksum is
       // undefined.
 
+      YR_DEBUG_FPRINTF(2, stderr, "} // %s() = YR_UNDEFINED // past_first_block\n", __FUNCTION__);
       return_string(YR_UNDEFINED);
     }
 
@@ -377,7 +430,10 @@ define_function(data_sha1)
   }
 
   if (!past_first_block)
+  {
+    YR_DEBUG_FPRINTF(2, stderr, "} // %s() = YR_UNDEFINED // !past_first_block\n", __FUNCTION__);
     return_string(YR_UNDEFINED);
+  }
 
   yr_sha1_final(digest, &sha_context);
 
@@ -386,6 +442,7 @@ define_function(data_sha1)
   FAIL_ON_ERROR(
       add_to_cache(module(), "sha1", arg_offset, arg_length, digest_ascii));
 
+  YR_DEBUG_FPRINTF(2, stderr, "} // %s() = 0x%s\n", __FUNCTION__, digest_ascii);
   return_string(digest_ascii);
 }
 
@@ -410,19 +467,31 @@ define_function(data_sha256)
   YR_MEMORY_BLOCK* block = first_memory_block(context);
   YR_MEMORY_BLOCK_ITERATOR* iterator = context->iterator;
 
+  YR_DEBUG_FPRINTF(2, stderr, "+ %s(offset=%" PRIi64 " length=%" PRIi64 ") {\n",
+      __FUNCTION__, offset, length);
+
   if (block == NULL)
+  {
+    YR_DEBUG_FPRINTF(2, stderr, "} // %s() = YR_UNDEFINED // block == NULL\n", __FUNCTION__);
     return_string(YR_UNDEFINED);
+  }
 
   yr_sha256_init(&sha256_context);
 
   if (offset < 0 || length < 0 || offset < block->base)
+  {
+    YR_DEBUG_FPRINTF(2, stderr, "} // %s() = YR_UNDEFINED // bad offset / length\n", __FUNCTION__);
     return_string(YR_UNDEFINED);
+  }
 
   cached_ascii_digest = get_from_cache(
       module(), "sha256", arg_offset, arg_length);
 
   if (cached_ascii_digest != NULL)
+  {
+    YR_DEBUG_FPRINTF(2, stderr, "} // %s() = %s (cached)\n", __FUNCTION__, cached_ascii_digest);
     return_string(cached_ascii_digest);
+  }
 
   foreach_memory_block(iterator, block)
   {
@@ -453,6 +522,7 @@ define_function(data_sha256)
       // range contains gaps of undefined data the checksum is
       // undefined.
 
+      YR_DEBUG_FPRINTF(2, stderr, "} // %s() = YR_UNDEFINED // past_first_block\n", __FUNCTION__);
       return_string(YR_UNDEFINED);
     }
 
@@ -461,7 +531,10 @@ define_function(data_sha256)
   }
 
   if (!past_first_block)
+  {
+    YR_DEBUG_FPRINTF(2, stderr, "} // %s() = YR_UNDEFINED // !past_first_block\n", __FUNCTION__);
     return_string(YR_UNDEFINED);
+  }
 
   yr_sha256_final(digest, &sha256_context);
 
@@ -470,6 +543,7 @@ define_function(data_sha256)
   FAIL_ON_ERROR(
       add_to_cache(module(), "sha256", arg_offset, arg_length, digest_ascii));
 
+  YR_DEBUG_FPRINTF(2, stderr, "} // %s() = 0x%s\n", __FUNCTION__, digest_ascii);
   return_string(digest_ascii);
 }
 
@@ -478,6 +552,9 @@ define_function(data_checksum32)
 {
   int64_t offset = integer_argument(1);   // offset where to start
   int64_t length = integer_argument(2);   // length of bytes we want hash on
+
+  YR_DEBUG_FPRINTF(2, stderr, "+ %s(offset=%" PRIi64 " length=%" PRIi64 ") {\n",
+      __FUNCTION__, offset, length);
 
   YR_SCAN_CONTEXT* context = scan_context();
   YR_MEMORY_BLOCK* block = first_memory_block(context);
@@ -533,6 +610,7 @@ define_function(data_checksum32)
   if (!past_first_block)
     return_integer(YR_UNDEFINED);
 
+  YR_DEBUG_FPRINTF(2, stderr, "} // %s() = 0x%x\n", __FUNCTION__, checksum);
   return_integer(checksum);
 }
 
@@ -545,6 +623,9 @@ define_function(string_crc32)
 
   for (i = 0; i < s->length; i++)
     checksum = crc32_tab[(checksum ^ (uint8_t)s->c_string[i]) & 0xFF] ^ (checksum >> 8);
+
+  YR_DEBUG_FPRINTF(2, stderr, "+ %s() {} = 0x%x // s->length=%u\n",
+      __FUNCTION__, checksum ^ 0xFFFFFFFF, s->length);
 
   return_integer(checksum ^ 0xFFFFFFFF);
 }
@@ -559,6 +640,9 @@ define_function(data_crc32)
   YR_SCAN_CONTEXT* context = scan_context();
   YR_MEMORY_BLOCK* block = first_memory_block(context);
   YR_MEMORY_BLOCK_ITERATOR* iterator = context->iterator;
+
+  YR_DEBUG_FPRINTF(2, stderr, "+ %s(offset=%" PRIi64 " length=%" PRIi64 ") {\n",
+      __FUNCTION__, offset, length);
 
   int past_first_block = false;
 
@@ -609,6 +693,7 @@ define_function(data_crc32)
   if (!past_first_block)
     return_integer(YR_UNDEFINED);
 
+  YR_DEBUG_FPRINTF(2, stderr, "} // %s() = 0x%x\n", __FUNCTION__, checksum ^ 0xFFFFFFFF);
   return_integer(checksum ^ 0xFFFFFFFF);
 }
 
@@ -637,6 +722,8 @@ end_declarations;
 int module_initialize(
     YR_MODULE* module)
 {
+  YR_DEBUG_FPRINTF(2, stderr, "+ %s() {}\n", __FUNCTION__);
+
   return ERROR_SUCCESS;
 }
 
@@ -644,6 +731,8 @@ int module_initialize(
 int module_finalize(
     YR_MODULE* module)
 {
+  YR_DEBUG_FPRINTF(2, stderr, "+ %s() {}\n", __FUNCTION__);
+
   return ERROR_SUCCESS;
 }
 
@@ -654,6 +743,8 @@ int module_load(
     void* module_data,
     size_t module_data_size)
 {
+  YR_DEBUG_FPRINTF(2, stderr, "+ %s() {}\n", __FUNCTION__);
+
   YR_HASH_TABLE* hash_table;
 
   FAIL_ON_ERROR(yr_hash_table_create(17, &hash_table));
@@ -667,6 +758,8 @@ int module_load(
 int module_unload(
     YR_OBJECT* module_object)
 {
+  YR_DEBUG_FPRINTF(2, stderr, "+ %s() {}\n", __FUNCTION__);
+
   YR_HASH_TABLE* hash_table = (YR_HASH_TABLE*) module_object->data;
 
   if (hash_table != NULL)
