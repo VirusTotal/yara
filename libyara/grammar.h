@@ -174,7 +174,7 @@ extern int yara_yydebug;
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 union YYSTYPE
 {
-#line 302 "grammar.y"
+#line 305 "grammar.y"
 
   YR_EXPRESSION   expression;
   SIZED_STRING*   sized_string;

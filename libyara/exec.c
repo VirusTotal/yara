@@ -944,7 +944,11 @@ int yr_execute_code(
                     obj,
                     NULL);
                 break;
-            default: assert(false);
+            case OBJECT_TYPE_STRUCTURE:
+                yr_object_set_object(r1.o, obj, NULL);
+                break;
+            default:
+                assert(false);
         }
         break;
 
@@ -998,7 +1002,12 @@ int yr_execute_code(
             else
               r1.ss = r1.o->value.ss;
             break;
-
+          case OBJECT_TYPE_STRUCTURE:
+          case OBJECT_TYPE_DICTIONARY:
+          case OBJECT_TYPE_ARRAY:
+          case OBJECT_TYPE_FUNCTION:
+            // do nothing
+            break;
           default:
             assert(false);
         }

@@ -1130,6 +1130,43 @@ int yr_object_set_string(
   return ERROR_SUCCESS;
 }
 
+int yr_object_set_object(
+    YR_OBJECT* value,
+    YR_OBJECT* object,
+    const char* field,
+    ...)
+{
+  YR_OBJECT* custom_obj;
+  YR_OBJECT* copy;
+
+  va_list args;
+  va_start(args, field);
+
+  if (field != NULL)
+    custom_obj = _yr_object_lookup(object, OBJECT_CREATE, field, args);
+  else
+    custom_obj = object;
+
+  va_end(args);
+
+  if (custom_obj == NULL)
+  {
+    if (field != NULL)
+      return ERROR_INSUFFICIENT_MEMORY;
+    else
+      return ERROR_INVALID_ARGUMENT;
+  }
+
+  assert(custom_obj->type == value->type);
+
+  yr_object_copy(value, &copy);
+  custom_obj->value.o = copy->value.o;
+
+  yr_free((void*)copy->identifier);
+  yr_free((void*)copy);
+
+  return ERROR_SUCCESS;
+}
 
 YR_OBJECT* yr_object_get_root(
     YR_OBJECT* object)

@@ -154,6 +154,12 @@ int yr_object_set_string(
     ...) YR_PRINTF_LIKE(4, 5);
 
 
+int yr_object_set_object(
+    YR_OBJECT* value,
+    YR_OBJECT* object,
+    const char* field,
+    ...) YR_PRINTF_LIKE(3,4);
+
 int yr_object_array_length(
     YR_OBJECT* object);
 

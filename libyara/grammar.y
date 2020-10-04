@@ -261,8 +261,11 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 %type <integer> rule_modifiers
 
 %type <expression> primary_expression
+%type <expression> nonprimary_expression
+%type <expression> complex_expression
 %type <expression> boolean_expression
 %type <expression> expression
+%type <expression> object
 %type <expression> identifier
 %type <expression> regexp
 
@@ -602,12 +605,11 @@ variable_declaration
       {
         compiler->current_line = yyget_lineno(yyscanner);
       }
-      expression
+      object
       {
         YR_INTERNAL_VARIABLE* int_var;
         YR_ARENA_REF int_ref;
         YR_ARENA_REF identifier_ref;
-        uint8_t obj_type;
 
         // Check for duplicated identifier in scope with external variables
         YR_OBJECT* object = (YR_OBJECT*)yr_hash_table_lookup(
@@ -646,30 +648,35 @@ variable_declaration
               $1,
               &identifier_ref);
 
-          switch($4.type) {
-            case EXPRESSION_TYPE_BOOLEAN:
-            case EXPRESSION_TYPE_INTEGER:
-              obj_type = OBJECT_TYPE_INTEGER;
-              break;
-            case EXPRESSION_TYPE_FLOAT:
-              obj_type = OBJECT_TYPE_FLOAT;
-              break;
-            case EXPRESSION_TYPE_STRING:
-              obj_type = OBJECT_TYPE_STRING;
-              break;
-            default: assert(false);
-          }
-
           int_var->identifier = yr_arena_ref_to_ptr(
               compiler->arena, &identifier_ref);
           int_var->rule_idx = compiler->current_rule_idx;
-          int_var->type = obj_type;
+          
+          switch($4.type) {
+            case EXPRESSION_TYPE_BOOLEAN:
+            case EXPRESSION_TYPE_INTEGER:
+              int_var->type = OBJECT_TYPE_INTEGER;
+              break;
+            case EXPRESSION_TYPE_FLOAT:
+              int_var->type = OBJECT_TYPE_FLOAT;
+              break;
+            case EXPRESSION_TYPE_STRING:
+              int_var->type = OBJECT_TYPE_STRING;
+              break;
+            case EXPRESSION_TYPE_OBJECT:
+              int_var->type = $4.value.object->type;
+              break;
+          }
 
-          yr_object_create(
+          if($4.type == EXPRESSION_TYPE_OBJECT) {
+            yr_object_copy($4.value.object, &object);
+          } else {
+            yr_object_create(
               int_var->type,
               int_var->identifier,
               NULL,
               &object);
+          }
 
           FAIL_ON_ERROR_WITH_CLEANUP(yr_hash_table_add(
               compiler->current_internal_variables_table,
@@ -1006,9 +1013,9 @@ identifier
             $1,
             NULL);
 
-          // Search for identifier within the global namespace, where the
-          // externals variables reside.
           if (object == NULL) {
+            // Search for identifier within the global namespace, where the
+            // externals variables reside.
             object = (YR_OBJECT*) yr_hash_table_lookup(
                 compiler->objects_table, $1, NULL);
           }
@@ -1393,7 +1400,7 @@ boolean_expression
       }
     ;
 
-expression
+complex_expression
     : _TRUE_
       {
         fail_if_error(yr_parser_emit_push_const(yyscanner, 1));
@@ -1977,10 +1984,6 @@ expression
 
         $$.type = EXPRESSION_TYPE_BOOLEAN;
       }
-    | primary_expression
-      {
-        $$ = $1;
-      }
     |'(' expression ')'
       {
         $$ = $2;
@@ -2271,9 +2274,47 @@ for_expression
       }
     ;
 
-
 primary_expression
-    : '(' primary_expression ')'
+    : nonprimary_expression
+      {
+        int result = ERROR_SUCCESS;
+
+        if ($1.type == EXPRESSION_TYPE_OBJECT)
+        {
+          result = yr_parser_emit(
+              yyscanner, OP_OBJ_VALUE, NULL);
+
+          switch($1.value.object->type)
+          {
+            case OBJECT_TYPE_INTEGER:
+            case OBJECT_TYPE_FLOAT:
+            case OBJECT_TYPE_STRING:
+              $$ = $1;
+              break;
+            default:
+              // In a primary expression any identifier that corresponds to an
+              // object must be of type integer, float or string. If "foobar" is
+              // either a function, structure, dictionary or array you can not
+              // use it as:
+              //   condition: foobar
+              yr_compiler_set_error_extra_info_fmt(
+                  compiler,
+                  "wrong usage of identifier \"%s\"",
+                  expression_identifier($1));
+
+              result = ERROR_WRONG_TYPE;
+          }
+        }
+        else
+        {
+          $$ = $1;
+        }
+
+        fail_if_error(result);
+      }
+
+nonprimary_expression
+    : '(' nonprimary_expression ')'
       {
         $$ = $2;
       }
@@ -2438,12 +2479,11 @@ primary_expression
               $$.type = EXPRESSION_TYPE_STRING;
               $$.value.sized_string_ref = YR_ARENA_NULL_REF;
               break;
+            case OBJECT_TYPE_STRUCTURE:
+              $$.type = EXPRESSION_TYPE_OBJECT;
+              $$.value.object = $1.value.object;
+              break;
             default:
-              // In a primary expression any identifier that corresponds to an
-              // object must be of type integer, float or string. If "foobar" is
-              // either a function, structure, dictionary or array you can not
-              // use it as:
-              //   condition: foobar
               yr_compiler_set_error_extra_info_fmt(
                   compiler,
                   "wrong usage of identifier \"%s\"",
@@ -2707,6 +2747,28 @@ primary_expression
         fail_if_error(result);
       }
     | regexp
+      {
+        $$ = $1;
+      }
+    ;
+
+expression
+    : complex_expression
+      {
+        $$ = $1;
+      }
+    | primary_expression
+      {
+        $$ = $1;
+      }
+    ;
+
+object
+    : complex_expression
+      {
+        $$ = $1;
+      }
+    | nonprimary_expression
       {
         $$ = $1;
       }
