@@ -799,9 +799,7 @@ void test_issue_920()
 
 int main(int argc, char** argv)
 {
-  char *top_srcdir = getenv("TOP_SRCDIR");
-  if (top_srcdir)
-    chdir(top_srcdir);
+  chdir_if_env_top_srcdir();
 
   test_disabled_rules();
   test_file_descriptor();
