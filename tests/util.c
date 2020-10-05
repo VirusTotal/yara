@@ -216,6 +216,17 @@ YR_API int _yr_test_single_or_multi_block_scan_mem(
 }
 
 
+void chdir_if_env_top_srcdir(void)
+{
+  char *top_srcdir = getenv("TOP_SRCDIR");
+  if (top_srcdir)
+  {
+    int result = chdir(top_srcdir);
+    assert_true_expr(0 == result);
+  }
+}
+
+
 //
 // A YR_CALLBACK_FUNC that counts the number of matching and non-matching rules
 // during a scan. user_data must point to a COUNTERS structure.

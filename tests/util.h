@@ -52,6 +52,8 @@ extern YR_API int _yr_test_single_or_multi_block_scan_mem(
     const uint8_t* buffer,
     size_t buffer_size);
 
+extern void chdir_if_env_top_srcdir(void);
+
 struct COUNTERS
 {
   int rules_matching;
