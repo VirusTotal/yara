@@ -76,7 +76,7 @@ for:
       APPVEYOR_REPO_TAG: true        # deploy on tag push only
 
   test_script:
-  - cmd: c:/projects/yara/windows/vs2015/Release/test-alignment.exe
+  - cmd: c:/projects/yara/windows/vs2015/%CONFIGURATION%/test-alignment.exe
 
 -
   matrix:
@@ -92,7 +92,7 @@ for:
     verbosity: minimal
 
   test_script:
-  - cmd: c:/projects/yara/windows/vs2015/Debug/test-alignment.exe
+  - cmd: c:/projects/yara/windows/vs2015/%CONFIGURATION%/test-alignment.exe
 
 
 # Uncomment the lines below for enabling Remote Desktop in the Appveyor. This
