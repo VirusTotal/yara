@@ -250,7 +250,11 @@ struct YR_NAMESPACE
 
   // Index of this namespace in the array of YR_NAMESPACE structures stored
   // in YR_NAMESPACES_TABLE.
-  uint32_t idx;
+  //
+  // YR_ALIGN(8) forces the idx field to be treated as a 8-bytes field
+  // and therefore the struct's size is 16 bytes. This is necessary only for
+  // 32-bits versions of YARA compiled with Visual Studio. See: #1358.
+  YR_ALIGN(8) uint32_t idx;
 };
 
 
@@ -369,7 +373,11 @@ struct YR_AC_MATCH
   // position in the input is 6 (the "b" after the "r"), but the match is at
   // position 3. The backtrack field indicates how many bytes the scanner has
   // to go back to find the point where the match actually start.
-  uint16_t backtrack;
+  //
+  // YR_ALIGN(8) forces the backtrack field to be treated as a 8-bytes field
+  // and therefore the struct's size is 40 bytes. This is necessary only for
+  // 32-bits versions of YARA compiled with Visual Studio. See: #1358.
+  YR_ALIGN(8) uint16_t backtrack;
 };
 
 #pragma pack(pop)
