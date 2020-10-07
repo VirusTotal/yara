@@ -41,15 +41,15 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <unistd.h>
 #endif
 
-#include <yara/libyara.h>
-#include <yara/utils.h>
 #include <yara/compiler.h>
-#include <yara/exec.h>
 #include <yara/error.h>
+#include <yara/exec.h>
+#include <yara/lexer.h>
+#include <yara/libyara.h>
 #include <yara/mem.h>
 #include <yara/object.h>
-#include <yara/lexer.h>
 #include <yara/strutils.h>
+#include <yara/utils.h>
 
 
 static void _yr_compiler_default_include_free(
@@ -58,7 +58,7 @@ static void _yr_compiler_default_include_free(
 {
   if (callback_result_ptr != NULL)
   {
-    yr_free((void*)callback_result_ptr);
+    yr_free((void*) callback_result_ptr);
   }
 }
 
@@ -69,56 +69,56 @@ const char* _yr_compiler_default_include_callback(
     const char* calling_rule_namespace,
     void* user_data)
 {
-  #ifndef _MSC_VER
+#ifndef _MSC_VER
   struct stat stbuf;
-  #endif
+#endif
 
   char* file_buffer;
 
-  #ifdef _MSC_VER
+#ifdef _MSC_VER
   long file_size;
-  #else
+#else
   off_t file_size;
-  #endif
+#endif
 
   int fd = -1;
 
-  #if defined(_MSC_VER)
+#if defined(_MSC_VER)
   _sopen_s(&fd, include_name, _O_RDONLY | _O_BINARY, _SH_DENYWR, _S_IREAD);
-  #elif defined(_WIN32) || defined(__CYGWIN__)
+#elif defined(_WIN32) || defined(__CYGWIN__)
   fd = open(include_name, O_RDONLY | O_BINARY);
-  #else
+#else
   fd = open(include_name, O_RDONLY);
-  #endif
+#endif
 
   if (fd == -1)
     return NULL;
 
-  #ifdef _MSC_VER
+#ifdef _MSC_VER
   file_size = _filelength(fd);
   if (file_size == -1)
   {
     _close(fd);
     return NULL;
   }
-  #else
+#else
   if ((fstat(fd, &stbuf) != 0) || (!S_ISREG(stbuf.st_mode)))
   {
     close(fd);
     return NULL;
   }
   file_size = stbuf.st_size;
-  #endif
+#endif
 
   file_buffer = (char*) yr_malloc((size_t) file_size + 1);
 
   if (file_buffer == NULL)
   {
-    #ifdef _MSC_VER
+#ifdef _MSC_VER
     _close(fd);
-    #else
+#else
     close(fd);
-    #endif
+#endif
 
     return NULL;
   }
@@ -127,11 +127,11 @@ const char* _yr_compiler_default_include_callback(
   {
     yr_free(file_buffer);
 
-    #ifdef _MSC_VER
+#ifdef _MSC_VER
     _close(fd);
-    #else
+#else
     close(fd);
-    #endif
+#endif
 
     return NULL;
   }
@@ -140,11 +140,11 @@ const char* _yr_compiler_default_include_callback(
     file_buffer[file_size] = '\0';
   }
 
-  #ifdef _MSC_VER
+#ifdef _MSC_VER
   _close(fd);
-  #else
+#else
   close(fd);
-  #endif
+#endif
 
   return file_buffer;
 }
@@ -158,8 +158,7 @@ const char* _yr_compiler_default_include_callback(
 // limited scope where you can be sure that no other rule is being written
 // during the pointer's lifetime.
 //
-YR_RULE* _yr_compiler_get_rule_by_idx(
-    YR_COMPILER* compiler, uint32_t rule_idx)
+YR_RULE* _yr_compiler_get_rule_by_idx(YR_COMPILER* compiler, uint32_t rule_idx)
 {
   return (YR_RULE*) yr_arena_get_ptr(
       compiler->arena, YR_RULES_TABLE, rule_idx * sizeof(YR_RULE));
@@ -188,18 +187,10 @@ int _yr_compiler_store_data(
     // the reference's offset in the hash table. Storing the buffer number
     // is not necessary, it's always YR_SZ_POOL.
     FAIL_ON_ERROR(yr_arena_write_data(
-        compiler->arena,
-        YR_SZ_POOL,
-        data,
-        data_length,
-        ref));
+        compiler->arena, YR_SZ_POOL, data, data_length, ref));
 
     FAIL_ON_ERROR(yr_hash_table_add_uint32_raw_key(
-        compiler->sz_table,
-        data,
-        data_length,
-        NULL,
-        ref->offset));
+        compiler->sz_table, data, data_length, NULL, ref->offset));
   }
   else
   {
@@ -223,13 +214,12 @@ int _yr_compiler_store_string(
   return _yr_compiler_store_data(
       compiler,
       (void*) string,
-      strlen(string) + 1, // include the null terminator
+      strlen(string) + 1,  // include the null terminator
       ref);
 }
 
 
-YR_API int yr_compiler_create(
-    YR_COMPILER** compiler)
+YR_API int yr_compiler_create(YR_COMPILER** compiler)
 {
   int result;
   YR_COMPILER* new_compiler;
@@ -262,7 +252,7 @@ YR_API int yr_compiler_create(
   new_compiler->loop_for_of_var_index = -1;
 
   new_compiler->atoms_config.get_atom_quality = yr_atoms_heuristic_quality;
-  new_compiler->atoms_config.quality_warning_threshold = \
+  new_compiler->atoms_config.quality_warning_threshold =
       YR_ATOM_QUALITY_WARNING_THRESHOLD;
 
   result = yr_hash_table_create(5000, &new_compiler->rules_table);
@@ -277,13 +267,11 @@ YR_API int yr_compiler_create(
     result = yr_hash_table_create(10000, &new_compiler->sz_table);
 
   if (result == ERROR_SUCCESS)
-    result = yr_arena_create(
-        YR_NUM_SECTIONS, 1048576, &new_compiler->arena);
+    result = yr_arena_create(YR_NUM_SECTIONS, 1048576, &new_compiler->arena);
 
   if (result == ERROR_SUCCESS)
     result = yr_ac_automaton_create(
-        new_compiler->arena,
-        &new_compiler->automaton);
+        new_compiler->arena, &new_compiler->automaton);
 
   if (result == ERROR_SUCCESS)
   {
@@ -298,25 +286,18 @@ YR_API int yr_compiler_create(
 }
 
 
-YR_API void yr_compiler_destroy(
-    YR_COMPILER* compiler)
+YR_API void yr_compiler_destroy(YR_COMPILER* compiler)
 {
   yr_arena_release(compiler->arena);
 
   if (compiler->automaton != NULL)
     yr_ac_automaton_destroy(compiler->automaton);
 
-  yr_hash_table_destroy(
-      compiler->rules_table,
-      NULL);
+  yr_hash_table_destroy(compiler->rules_table, NULL);
 
-  yr_hash_table_destroy(
-      compiler->strings_table,
-      NULL);
+  yr_hash_table_destroy(compiler->strings_table, NULL);
 
-  yr_hash_table_destroy(
-      compiler->sz_table,
-      NULL);
+  yr_hash_table_destroy(compiler->sz_table, NULL);
 
   yr_hash_table_destroy(
       compiler->objects_table,
@@ -413,8 +394,7 @@ YR_API void yr_compiler_set_atom_quality_table(
   compiler->atoms_config.quality_warning_threshold = warning_threshold;
   compiler->atoms_config.get_atom_quality = yr_atoms_table_quality;
   compiler->atoms_config.quality_table_entries = entries;
-  compiler->atoms_config.quality_table = \
-      (YR_ATOM_QUALITY_TABLE_ENTRY*) table;
+  compiler->atoms_config.quality_table = (YR_ATOM_QUALITY_TABLE_ENTRY*) table;
 }
 
 //
@@ -476,9 +456,7 @@ YR_API int yr_compiler_load_atom_quality_table(
 }
 
 
-int _yr_compiler_push_file_name(
-    YR_COMPILER* compiler,
-    const char* file_name)
+int _yr_compiler_push_file_name(YR_COMPILER* compiler, const char* file_name)
 {
   char* str;
   int i;
@@ -504,8 +482,7 @@ int _yr_compiler_push_file_name(
 }
 
 
-void _yr_compiler_pop_file_name(
-    YR_COMPILER* compiler)
+void _yr_compiler_pop_file_name(YR_COMPILER* compiler)
 {
   if (compiler->file_name_stack_ptr > 0)
   {
@@ -516,8 +493,7 @@ void _yr_compiler_pop_file_name(
 }
 
 
-int _yr_compiler_get_var_frame(
-    YR_COMPILER* compiler)
+int _yr_compiler_get_var_frame(YR_COMPILER* compiler)
 {
   int i, result = 0;
 
@@ -531,8 +507,7 @@ int _yr_compiler_get_var_frame(
 }
 
 
-YR_API char* yr_compiler_get_current_file_name(
-    YR_COMPILER* compiler)
+YR_API char* yr_compiler_get_current_file_name(YR_COMPILER* compiler)
 {
   if (compiler->file_name_stack_ptr > 0)
   {
@@ -578,10 +553,7 @@ static int _yr_compiler_set_namespace(
 
     ns = (YR_NAMESPACE*) yr_arena_ref_to_ptr(compiler->arena, &ref);
 
-    FAIL_ON_ERROR(_yr_compiler_store_string(
-        compiler,
-        namespace_,
-        &ref));
+    FAIL_ON_ERROR(_yr_compiler_store_string(compiler, namespace_, &ref));
 
     ns->name = (const char*) yr_arena_ref_to_ptr(compiler->arena, &ref);
     ns->idx = compiler->num_namespaces;
@@ -697,8 +669,7 @@ YR_API int yr_compiler_add_string(
 }
 
 
-static int _yr_compiler_compile_rules(
-    YR_COMPILER* compiler)
+static int _yr_compiler_compile_rules(YR_COMPILER* compiler)
 {
   YR_RULE null_rule;
   YR_EXTERNAL_VARIABLE null_external;
@@ -707,22 +678,14 @@ static int _yr_compiler_compile_rules(
 
   // Write halt instruction at the end of code.
   FAIL_ON_ERROR(yr_arena_write_data(
-      compiler->arena,
-      YR_CODE_SECTION,
-      &halt,
-      sizeof(uint8_t),
-      NULL));
+      compiler->arena, YR_CODE_SECTION, &halt, sizeof(uint8_t), NULL));
 
   // Write a null rule indicating the end.
   memset(&null_rule, 0xFA, sizeof(YR_RULE));
   null_rule.flags = RULE_FLAGS_NULL;
 
   FAIL_ON_ERROR(yr_arena_write_data(
-    compiler->arena,
-    YR_RULES_TABLE,
-    &null_rule,
-    sizeof(YR_RULE),
-    NULL));
+      compiler->arena, YR_RULES_TABLE, &null_rule, sizeof(YR_RULE), NULL));
 
   // Write a null external indicating the end.
   memset(&null_external, 0xFA, sizeof(YR_EXTERNAL_VARIABLE));
@@ -736,18 +699,12 @@ static int _yr_compiler_compile_rules(
       NULL));
 
   // Write Aho-Corasick automaton to arena.
-  FAIL_ON_ERROR(yr_ac_compile(
-      compiler->automaton,
-      compiler->arena));
+  FAIL_ON_ERROR(yr_ac_compile(compiler->automaton, compiler->arena));
 
   YR_ARENA_REF ref;
 
   FAIL_ON_ERROR(yr_arena_allocate_struct(
-      compiler->arena,
-      YR_SUMMARY_SECTION,
-      sizeof(YR_SUMMARY),
-      &ref,
-      EOL));
+      compiler->arena, YR_SUMMARY_SECTION, sizeof(YR_SUMMARY), &ref, EOL));
 
   YR_SUMMARY* summary = (YR_SUMMARY*) yr_arena_ref_to_ptr(
       compiler->arena, &ref);
@@ -760,9 +717,7 @@ static int _yr_compiler_compile_rules(
 }
 
 
-YR_API int yr_compiler_get_rules(
-    YR_COMPILER* compiler,
-    YR_RULES** rules)
+YR_API int yr_compiler_get_rules(YR_COMPILER* compiler, YR_RULES** rules)
 {
   // Don't allow calls to yr_compiler_get_rules() if a previous call to
   // yr_compiler_add_XXXX failed.
@@ -771,7 +726,7 @@ YR_API int yr_compiler_get_rules(
   *rules = NULL;
 
   if (compiler->rules == NULL)
-     FAIL_ON_ERROR(_yr_compiler_compile_rules(compiler));
+    FAIL_ON_ERROR(_yr_compiler_compile_rules(compiler));
 
   *rules = compiler->rules;
 
@@ -789,9 +744,7 @@ static int _yr_compiler_define_variable(
     return ERROR_INVALID_ARGUMENT;
 
   object = (YR_OBJECT*) yr_hash_table_lookup(
-      compiler->objects_table,
-      external->identifier,
-      NULL);
+      compiler->objects_table, external->identifier, NULL);
 
   if (object != NULL)
     return ERROR_DUPLICATED_EXTERNAL_VARIABLE;
@@ -807,16 +760,12 @@ static int _yr_compiler_define_variable(
       offsetof(YR_EXTERNAL_VARIABLE, identifier),
       EOL));
 
-  ext = (YR_EXTERNAL_VARIABLE*) yr_arena_ref_to_ptr(
-      compiler->arena, &ext_ref);
+  ext = (YR_EXTERNAL_VARIABLE*) yr_arena_ref_to_ptr(compiler->arena, &ext_ref);
 
-  FAIL_ON_ERROR(_yr_compiler_store_string(
-      compiler,
-      external->identifier,
-      &ref));
+  FAIL_ON_ERROR(
+      _yr_compiler_store_string(compiler, external->identifier, &ref));
 
-  ext->identifier = (const char*) yr_arena_ref_to_ptr(
-      compiler->arena, &ref);
+  ext->identifier = (const char*) yr_arena_ref_to_ptr(compiler->arena, &ref);
 
   ext->type = external->type;
   ext->value = external->value;
@@ -826,10 +775,7 @@ static int _yr_compiler_define_variable(
     if (external->value.s == NULL)
       return ERROR_INVALID_ARGUMENT;
 
-    FAIL_ON_ERROR(_yr_compiler_store_string(
-        compiler,
-        external->value.s,
-        &ref));
+    FAIL_ON_ERROR(_yr_compiler_store_string(compiler, external->value.s, &ref));
 
     FAIL_ON_ERROR(yr_arena_make_ptr_relocatable(
         compiler->arena,
@@ -837,20 +783,14 @@ static int _yr_compiler_define_variable(
         ext_ref.offset + offsetof(YR_EXTERNAL_VARIABLE, value.s),
         EOL));
 
-    ext->value.s = (char*) yr_arena_ref_to_ptr(
-        compiler->arena, &ref);
+    ext->value.s = (char*) yr_arena_ref_to_ptr(compiler->arena, &ref);
   }
 
-  FAIL_ON_ERROR(yr_object_from_external_variable(
-      external,
-      &object));
+  FAIL_ON_ERROR(yr_object_from_external_variable(external, &object));
 
-  FAIL_ON_ERROR_WITH_CLEANUP(yr_hash_table_add(
-      compiler->objects_table,
-      external->identifier,
-      NULL,
-      (void*) object),
-      // cleanup
+  FAIL_ON_ERROR_WITH_CLEANUP(
+      yr_hash_table_add(
+          compiler->objects_table, external->identifier, NULL, (void*) object),
       yr_object_destroy(object));
 
   return ERROR_SUCCESS;
@@ -868,8 +808,7 @@ YR_API int yr_compiler_define_integer_variable(
   external.identifier = identifier;
   external.value.i = value;
 
-  FAIL_ON_ERROR(_yr_compiler_define_variable(
-      compiler, &external));
+  FAIL_ON_ERROR(_yr_compiler_define_variable(compiler, &external));
 
   return ERROR_SUCCESS;
 }
@@ -886,8 +825,7 @@ YR_API int yr_compiler_define_boolean_variable(
   external.identifier = identifier;
   external.value.i = value;
 
-  FAIL_ON_ERROR(_yr_compiler_define_variable(
-      compiler, &external));
+  FAIL_ON_ERROR(_yr_compiler_define_variable(compiler, &external));
 
   return ERROR_SUCCESS;
 }
@@ -904,8 +842,7 @@ YR_API int yr_compiler_define_float_variable(
   external.identifier = identifier;
   external.value.f = value;
 
-  FAIL_ON_ERROR(_yr_compiler_define_variable(
-      compiler, &external));
+  FAIL_ON_ERROR(_yr_compiler_define_variable(compiler, &external));
 
   return ERROR_SUCCESS;
 }
@@ -922,8 +859,7 @@ YR_API int yr_compiler_define_string_variable(
   external.identifier = identifier;
   external.value.s = (char*) value;
 
-  FAIL_ON_ERROR(_yr_compiler_define_variable(
-      compiler, &external));
+  FAIL_ON_ERROR(_yr_compiler_define_variable(compiler, &external));
 
   return ERROR_SUCCESS;
 }
@@ -936,231 +872,194 @@ YR_API char* yr_compiler_get_error_message(
 {
   uint32_t max_strings_per_rule;
 
-  switch(compiler->last_error)
+  switch (compiler->last_error)
   {
-    case ERROR_INSUFFICIENT_MEMORY:
-      snprintf(buffer, buffer_size, "not enough memory");
-      break;
-    case ERROR_DUPLICATED_IDENTIFIER:
-      snprintf(
-          buffer,
-          buffer_size,
-          "duplicated identifier \"%s\"",
-          compiler->last_error_extra_info);
-      break;
-    case ERROR_DUPLICATED_STRING_IDENTIFIER:
-      snprintf(
-          buffer,
-          buffer_size,
-          "duplicated string identifier \"%s\"",
-          compiler->last_error_extra_info);
-      break;
-    case ERROR_DUPLICATED_TAG_IDENTIFIER:
-      snprintf(
-          buffer,
-          buffer_size,
-          "duplicated tag identifier \"%s\"",
-          compiler->last_error_extra_info);
-      break;
-    case ERROR_DUPLICATED_META_IDENTIFIER:
-      snprintf(
-          buffer,
-          buffer_size,
-          "duplicated metadata identifier \"%s\"",
-          compiler->last_error_extra_info);
-      break;
-    case ERROR_DUPLICATED_LOOP_IDENTIFIER:
-      snprintf(
-          buffer,
-          buffer_size,
-          "duplicated loop identifier \"%s\"",
-          compiler->last_error_extra_info);
-      break;
-    case ERROR_UNDEFINED_STRING:
-      snprintf(
-          buffer,
-          buffer_size,
-          "undefined string \"%s\"",
-          compiler->last_error_extra_info);
-      break;
-    case ERROR_UNDEFINED_IDENTIFIER:
-      snprintf(
-          buffer,
-          buffer_size,
-          "undefined identifier \"%s\"",
-          compiler->last_error_extra_info);
-      break;
-    case ERROR_UNREFERENCED_STRING:
-      snprintf(
-          buffer,
-          buffer_size,
-          "unreferenced string \"%s\"",
-          compiler->last_error_extra_info);
-      break;
-    case ERROR_EMPTY_STRING:
-      snprintf(
-          buffer,
-          buffer_size,
-          "empty string \"%s\"",
-          compiler->last_error_extra_info);
-      break;
-    case ERROR_NOT_A_STRUCTURE:
-      snprintf(
-          buffer,
-          buffer_size,
-          "\"%s\" is not a structure",
-          compiler->last_error_extra_info);
-      break;
-    case ERROR_NOT_INDEXABLE:
-      snprintf(
-          buffer,
-          buffer_size,
-          "\"%s\" is not an array or dictionary",
-          compiler->last_error_extra_info);
-      break;
-    case ERROR_NOT_A_FUNCTION:
-      snprintf(
-          buffer,
-          buffer_size,
-          "\"%s\" is not a function",
-          compiler->last_error_extra_info);
-      break;
-    case ERROR_INVALID_FIELD_NAME:
-      snprintf(
-          buffer,
-          buffer_size,
-          "invalid field name \"%s\"",
-          compiler->last_error_extra_info);
-      break;
-    case ERROR_MISPLACED_ANONYMOUS_STRING:
-      snprintf(
-          buffer,
-          buffer_size,
-          "wrong use of anonymous string");
-      break;
-    case ERROR_INCLUDES_CIRCULAR_REFERENCE:
-      snprintf(
-          buffer,
-          buffer_size,
-          "include circular reference");
-      break;
-    case ERROR_INCLUDE_DEPTH_EXCEEDED:
-      snprintf(buffer,
-          buffer_size,
-          "too many levels of included rules");
-      break;
-    case ERROR_LOOP_NESTING_LIMIT_EXCEEDED:
-      snprintf(buffer,
-          buffer_size,
-          "loop nesting limit exceeded");
-      break;
-    case ERROR_NESTED_FOR_OF_LOOP:
-      snprintf(buffer,
-          buffer_size,
-          "'for <quantifier> of <string set>' loops can't be nested");
-      break;
-    case ERROR_UNKNOWN_MODULE:
-      snprintf(
-          buffer,
-          buffer_size,
-          "unknown module \"%s\"",
-          compiler->last_error_extra_info);
-      break;
-    case ERROR_INVALID_MODULE_NAME:
-      snprintf(
-          buffer,
-          buffer_size,
-          "invalid module name \"%s\"",
-          compiler->last_error_extra_info);
-      break;
-    case ERROR_DUPLICATED_STRUCTURE_MEMBER:
-      snprintf(buffer,
-          buffer_size,
-          "duplicated structure member");
-      break;
-    case ERROR_WRONG_ARGUMENTS:
-      snprintf(
-          buffer,
-          buffer_size,
-          "wrong arguments for function \"%s\"",
-          compiler->last_error_extra_info);
-      break;
-    case ERROR_WRONG_RETURN_TYPE:
-      snprintf(buffer,
-          buffer_size,
-          "wrong return type for overloaded function");
-      break;
-    case ERROR_INVALID_HEX_STRING:
-    case ERROR_INVALID_REGULAR_EXPRESSION:
-    case ERROR_SYNTAX_ERROR:
-    case ERROR_WRONG_TYPE:
-      snprintf(
-          buffer,
-          buffer_size,
-          "%s",
-          compiler->last_error_extra_info);
-      break;
-    case ERROR_INTERNAL_FATAL_ERROR:
-      snprintf(
-          buffer,
-          buffer_size,
-          "internal fatal error");
-      break;
-    case ERROR_DIVISION_BY_ZERO:
-      snprintf(
-          buffer,
-          buffer_size,
-          "division by zero");
-      break;
-    case ERROR_REGULAR_EXPRESSION_TOO_LARGE:
-      snprintf(
-          buffer,
-          buffer_size,
-          "regular expression is too large");
-      break;
-    case ERROR_REGULAR_EXPRESSION_TOO_COMPLEX:
-      snprintf(
-          buffer,
-          buffer_size,
-          "regular expression is too complex");
-      break;
-    case ERROR_TOO_MANY_STRINGS:
-       yr_get_configuration(
-          YR_CONFIG_MAX_STRINGS_PER_RULE,
-          &max_strings_per_rule);
-       snprintf(
-          buffer,
-          buffer_size,
-          "too many strings in rule \"%s\" (limit: %d)",
-          compiler->last_error_extra_info,
-          max_strings_per_rule);
-      break;
-    case ERROR_INTEGER_OVERFLOW:
-      snprintf(
-          buffer,
-          buffer_size,
-          "integer overflow in \"%s\"",
-          compiler->last_error_extra_info);
-      break;
-    case ERROR_COULD_NOT_READ_FILE:
-      snprintf(
-          buffer,
-          buffer_size,
-          "could not read file");
-      break;
-    case ERROR_INVALID_MODIFIER:
-      snprintf(
-          buffer,
-          buffer_size,
-          "invalid modifier combination \"%s\"",
-          compiler->last_error_extra_info);
-      break;
-    case ERROR_DUPLICATED_MODIFIER:
-      snprintf(
-          buffer,
-          buffer_size,
-          "duplicated modifier");
-      break;
+  case ERROR_INSUFFICIENT_MEMORY:
+    snprintf(buffer, buffer_size, "not enough memory");
+    break;
+  case ERROR_DUPLICATED_IDENTIFIER:
+    snprintf(
+        buffer,
+        buffer_size,
+        "duplicated identifier \"%s\"",
+        compiler->last_error_extra_info);
+    break;
+  case ERROR_DUPLICATED_STRING_IDENTIFIER:
+    snprintf(
+        buffer,
+        buffer_size,
+        "duplicated string identifier \"%s\"",
+        compiler->last_error_extra_info);
+    break;
+  case ERROR_DUPLICATED_TAG_IDENTIFIER:
+    snprintf(
+        buffer,
+        buffer_size,
+        "duplicated tag identifier \"%s\"",
+        compiler->last_error_extra_info);
+    break;
+  case ERROR_DUPLICATED_META_IDENTIFIER:
+    snprintf(
+        buffer,
+        buffer_size,
+        "duplicated metadata identifier \"%s\"",
+        compiler->last_error_extra_info);
+    break;
+  case ERROR_DUPLICATED_LOOP_IDENTIFIER:
+    snprintf(
+        buffer,
+        buffer_size,
+        "duplicated loop identifier \"%s\"",
+        compiler->last_error_extra_info);
+    break;
+  case ERROR_UNDEFINED_STRING:
+    snprintf(
+        buffer,
+        buffer_size,
+        "undefined string \"%s\"",
+        compiler->last_error_extra_info);
+    break;
+  case ERROR_UNDEFINED_IDENTIFIER:
+    snprintf(
+        buffer,
+        buffer_size,
+        "undefined identifier \"%s\"",
+        compiler->last_error_extra_info);
+    break;
+  case ERROR_UNREFERENCED_STRING:
+    snprintf(
+        buffer,
+        buffer_size,
+        "unreferenced string \"%s\"",
+        compiler->last_error_extra_info);
+    break;
+  case ERROR_EMPTY_STRING:
+    snprintf(
+        buffer,
+        buffer_size,
+        "empty string \"%s\"",
+        compiler->last_error_extra_info);
+    break;
+  case ERROR_NOT_A_STRUCTURE:
+    snprintf(
+        buffer,
+        buffer_size,
+        "\"%s\" is not a structure",
+        compiler->last_error_extra_info);
+    break;
+  case ERROR_NOT_INDEXABLE:
+    snprintf(
+        buffer,
+        buffer_size,
+        "\"%s\" is not an array or dictionary",
+        compiler->last_error_extra_info);
+    break;
+  case ERROR_NOT_A_FUNCTION:
+    snprintf(
+        buffer,
+        buffer_size,
+        "\"%s\" is not a function",
+        compiler->last_error_extra_info);
+    break;
+  case ERROR_INVALID_FIELD_NAME:
+    snprintf(
+        buffer,
+        buffer_size,
+        "invalid field name \"%s\"",
+        compiler->last_error_extra_info);
+    break;
+  case ERROR_MISPLACED_ANONYMOUS_STRING:
+    snprintf(buffer, buffer_size, "wrong use of anonymous string");
+    break;
+  case ERROR_INCLUDES_CIRCULAR_REFERENCE:
+    snprintf(buffer, buffer_size, "include circular reference");
+    break;
+  case ERROR_INCLUDE_DEPTH_EXCEEDED:
+    snprintf(buffer, buffer_size, "too many levels of included rules");
+    break;
+  case ERROR_LOOP_NESTING_LIMIT_EXCEEDED:
+    snprintf(buffer, buffer_size, "loop nesting limit exceeded");
+    break;
+  case ERROR_NESTED_FOR_OF_LOOP:
+    snprintf(
+        buffer,
+        buffer_size,
+        "'for <quantifier> of <string set>' loops can't be nested");
+    break;
+  case ERROR_UNKNOWN_MODULE:
+    snprintf(
+        buffer,
+        buffer_size,
+        "unknown module \"%s\"",
+        compiler->last_error_extra_info);
+    break;
+  case ERROR_INVALID_MODULE_NAME:
+    snprintf(
+        buffer,
+        buffer_size,
+        "invalid module name \"%s\"",
+        compiler->last_error_extra_info);
+    break;
+  case ERROR_DUPLICATED_STRUCTURE_MEMBER:
+    snprintf(buffer, buffer_size, "duplicated structure member");
+    break;
+  case ERROR_WRONG_ARGUMENTS:
+    snprintf(
+        buffer,
+        buffer_size,
+        "wrong arguments for function \"%s\"",
+        compiler->last_error_extra_info);
+    break;
+  case ERROR_WRONG_RETURN_TYPE:
+    snprintf(buffer, buffer_size, "wrong return type for overloaded function");
+    break;
+  case ERROR_INVALID_HEX_STRING:
+  case ERROR_INVALID_REGULAR_EXPRESSION:
+  case ERROR_SYNTAX_ERROR:
+  case ERROR_WRONG_TYPE:
+    snprintf(buffer, buffer_size, "%s", compiler->last_error_extra_info);
+    break;
+  case ERROR_INTERNAL_FATAL_ERROR:
+    snprintf(buffer, buffer_size, "internal fatal error");
+    break;
+  case ERROR_DIVISION_BY_ZERO:
+    snprintf(buffer, buffer_size, "division by zero");
+    break;
+  case ERROR_REGULAR_EXPRESSION_TOO_LARGE:
+    snprintf(buffer, buffer_size, "regular expression is too large");
+    break;
+  case ERROR_REGULAR_EXPRESSION_TOO_COMPLEX:
+    snprintf(buffer, buffer_size, "regular expression is too complex");
+    break;
+  case ERROR_TOO_MANY_STRINGS:
+    yr_get_configuration(YR_CONFIG_MAX_STRINGS_PER_RULE, &max_strings_per_rule);
+    snprintf(
+        buffer,
+        buffer_size,
+        "too many strings in rule \"%s\" (limit: %d)",
+        compiler->last_error_extra_info,
+        max_strings_per_rule);
+    break;
+  case ERROR_INTEGER_OVERFLOW:
+    snprintf(
+        buffer,
+        buffer_size,
+        "integer overflow in \"%s\"",
+        compiler->last_error_extra_info);
+    break;
+  case ERROR_COULD_NOT_READ_FILE:
+    snprintf(buffer, buffer_size, "could not read file");
+    break;
+  case ERROR_INVALID_MODIFIER:
+    snprintf(
+        buffer,
+        buffer_size,
+        "invalid modifier combination \"%s\"",
+        compiler->last_error_extra_info);
+    break;
+  case ERROR_DUPLICATED_MODIFIER:
+    snprintf(buffer, buffer_size, "duplicated modifier");
+    break;
   }
 
   return buffer;

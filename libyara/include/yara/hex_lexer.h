@@ -43,15 +43,15 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #undef YY_DECL
 #undef LEX_ENV
 
-#define yyparse         hex_yyparse
-#define yylex           hex_yylex
-#define yyerror         hex_yyerror
-#define yyfatal         hex_yyfatal
-#define yychar          hex_yychar
-#define yydebug         hex_yydebug
-#define yynerrs         hex_yynerrs
-#define yyget_extra     hex_yyget_extra
-#define yyget_lineno    hex_yyget_lineno
+#define yyparse      hex_yyparse
+#define yylex        hex_yylex
+#define yyerror      hex_yyerror
+#define yyfatal      hex_yyfatal
+#define yychar       hex_yychar
+#define yydebug      hex_yydebug
+#define yynerrs      hex_yynerrs
+#define yyget_extra  hex_yyget_extra
+#define yyget_lineno hex_yyget_lineno
 
 
 #ifndef YY_TYPEDEF_YY_SCANNER_T
@@ -79,36 +79,32 @@ typedef struct _HEX_LEX_ENVIRONMENT
 // own function instead of the one provided by default.
 #define YY_FATAL_ERROR(msg) hex_yyfatal(yyscanner, msg)
 
-#define LEX_ENV  ((HEX_LEX_ENVIRONMENT*) lex_env)
+#define LEX_ENV ((HEX_LEX_ENVIRONMENT*) lex_env)
 
 #include <hex_grammar.h>
 
-#define YY_DECL int hex_yylex \
-    (YYSTYPE * yylval_param , yyscan_t yyscanner, HEX_LEX_ENVIRONMENT* lex_env)
+#define YY_DECL  \
+  int hex_yylex( \
+      YYSTYPE* yylval_param, yyscan_t yyscanner, HEX_LEX_ENVIRONMENT* lex_env)
 
 
-YY_EXTRA_TYPE yyget_extra(
-    yyscan_t yyscanner);
+YY_EXTRA_TYPE yyget_extra(yyscan_t yyscanner);
 
 int yylex(
     YYSTYPE* yylval_param,
     yyscan_t yyscanner,
     HEX_LEX_ENVIRONMENT* lex_env);
 
-int yyparse(
-    void *yyscanner,
-    HEX_LEX_ENVIRONMENT *lex_env);
+int yyparse(void* yyscanner, HEX_LEX_ENVIRONMENT* lex_env);
 
 void yyerror(
     yyscan_t yyscanner,
     HEX_LEX_ENVIRONMENT* lex_env,
-    const char *error_message);
+    const char* error_message);
 
-void yyfatal(
-    yyscan_t yyscanner,
-    const char *error_message);
+void yyfatal(yyscan_t yyscanner, const char* error_message);
 
 int yr_parse_hex_string(
-  const char* hex_string,
-  RE_AST** re_ast,
-  RE_ERROR* error);
+    const char* hex_string,
+    RE_AST** re_ast,
+    RE_ERROR* error);

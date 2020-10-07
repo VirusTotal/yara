@@ -56,11 +56,7 @@ typedef struct _YR_STREAM
 } YR_STREAM;
 
 
-size_t yr_stream_read(
-    void* ptr,
-    size_t size,
-    size_t count,
-    YR_STREAM* stream);
+size_t yr_stream_read(void* ptr, size_t size, size_t count, YR_STREAM* stream);
 
 
 size_t yr_stream_write(

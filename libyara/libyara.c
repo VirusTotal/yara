@@ -31,15 +31,14 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <jemalloc/jemalloc.h>
 #endif
 
-#include <string.h>
-#include <stdio.h>
 #include <ctype.h>
-
-#include <yara/globals.h>
+#include <stdio.h>
+#include <string.h>
 #include <yara/error.h>
-#include <yara/re.h>
-#include <yara/modules.h>
+#include <yara/globals.h>
 #include <yara/mem.h>
+#include <yara/modules.h>
+#include <yara/re.h>
 #include <yara/threading.h>
 
 #include "crypto.h"
@@ -59,10 +58,10 @@ static struct yr_config_var
 {
   union
   {
-    size_t   sz;
+    size_t sz;
     uint32_t ui32;
     uint64_t ui64;
-    char*    str;
+    char *str;
   };
 
 } yr_cfgs[YR_CONFIG_LAST];
@@ -96,11 +95,7 @@ static void _thread_id(CRYPTO_THREADID *id)
 }
 
 
-static void _locking_function(
-    int mode,
-    int n,
-    const char *file,
-    int line)
+static void _locking_function(int mode, int n, const char *file, int line)
 {
   if (mode & CRYPTO_LOCK)
     yr_mutex_lock(&openssl_locks[n]);
@@ -150,40 +145,40 @@ YR_API int yr_initialize(void)
   FAIL_ON_ERROR(yr_thread_storage_create(&yr_yyfatal_trampoline_tls));
   FAIL_ON_ERROR(yr_thread_storage_create(&yr_trycatch_trampoline_tls));
 
-  #if defined HAVE_LIBCRYPTO && OPENSSL_VERSION_NUMBER < 0x10100000L
+#if defined HAVE_LIBCRYPTO && OPENSSL_VERSION_NUMBER < 0x10100000L
 
-  openssl_locks = (YR_MUTEX*) OPENSSL_malloc(
+  openssl_locks = (YR_MUTEX *) OPENSSL_malloc(
       CRYPTO_num_locks() * sizeof(YR_MUTEX));
 
-  for (i = 0; i < CRYPTO_num_locks(); i++)
-    yr_mutex_create(&openssl_locks[i]);
+  for (i = 0; i < CRYPTO_num_locks(); i++) yr_mutex_create(&openssl_locks[i]);
 
   CRYPTO_THREADID_set_callback(_thread_id);
   CRYPTO_set_locking_callback(_locking_function);
 
-  #elif defined(HAVE_WINCRYPT_H)
+#elif defined(HAVE_WINCRYPT_H)
 
-  if (!CryptAcquireContext(&yr_cryptprov, NULL, NULL, PROV_RSA_AES, CRYPT_VERIFYCONTEXT)) {
+  if (!CryptAcquireContext(
+          &yr_cryptprov, NULL, NULL, PROV_RSA_AES, CRYPT_VERIFYCONTEXT))
+  {
     return ERROR_INTERNAL_FATAL_ERROR;
   }
 
-  #elif defined(HAVE_COMMON_CRYPTO)
+#elif defined(HAVE_COMMON_CRYPTO)
 
   ...
 
-  #endif
+#endif
 
   FAIL_ON_ERROR(yr_modules_initialize());
 
   // Initialize default configuration options
-  FAIL_ON_ERROR(yr_set_configuration(
-      YR_CONFIG_STACK_SIZE, &def_stack_size));
+  FAIL_ON_ERROR(yr_set_configuration(YR_CONFIG_STACK_SIZE, &def_stack_size));
 
   FAIL_ON_ERROR(yr_set_configuration(
       YR_CONFIG_MAX_STRINGS_PER_RULE, &def_max_strings_per_rule));
 
-  FAIL_ON_ERROR(yr_set_configuration(
-      YR_CONFIG_MAX_MATCH_DATA, &def_max_match_data));
+  FAIL_ON_ERROR(
+      yr_set_configuration(YR_CONFIG_MAX_MATCH_DATA, &def_max_match_data));
 
   return ERROR_SUCCESS;
 }
@@ -197,9 +192,9 @@ YR_API int yr_initialize(void)
 
 YR_API int yr_finalize(void)
 {
-  #if defined HAVE_LIBCRYPTO && OPENSSL_VERSION_NUMBER < 0x10100000L
+#if defined HAVE_LIBCRYPTO && OPENSSL_VERSION_NUMBER < 0x10100000L
   int i;
-  #endif
+#endif
 
   // yr_finalize shouldn't be called without calling yr_initialize first
 
@@ -211,34 +206,32 @@ YR_API int yr_finalize(void)
   if (init_count > 0)
     return ERROR_SUCCESS;
 
-  #if defined HAVE_LIBCRYPTO && OPENSSL_VERSION_NUMBER < 0x10100000L
+#if defined HAVE_LIBCRYPTO && OPENSSL_VERSION_NUMBER < 0x10100000L
 
-  for (i = 0; i < CRYPTO_num_locks(); i ++)
-    yr_mutex_destroy(&openssl_locks[i]);
+  for (i = 0; i < CRYPTO_num_locks(); i++) yr_mutex_destroy(&openssl_locks[i]);
 
   OPENSSL_free(openssl_locks);
   CRYPTO_THREADID_set_callback(NULL);
   CRYPTO_set_locking_callback(NULL);
 
-  #elif defined(HAVE_WINCRYPT_H)
+#elif defined(HAVE_WINCRYPT_H)
 
   CryptReleaseContext(yr_cryptprov, 0);
 
-  #endif
+#endif
 
   FAIL_ON_ERROR(yr_thread_storage_destroy(&yr_yyfatal_trampoline_tls));
   FAIL_ON_ERROR(yr_thread_storage_destroy(&yr_trycatch_trampoline_tls));
   FAIL_ON_ERROR(yr_modules_finalize());
   FAIL_ON_ERROR(yr_heap_free());
 
-  #if defined(JEMALLOC)
+#if defined(JEMALLOC)
   malloc_stats_print(NULL, NULL, NULL);
   mallctl("prof.dump", NULL, NULL, NULL, 0);
-  #endif
+#endif
 
   return ERROR_SUCCESS;
 }
-
 
 
 //
@@ -261,46 +254,42 @@ YR_API int yr_finalize(void)
 // Returns:
 //    An error code.
 
-YR_API int yr_set_configuration(
-    YR_CONFIG_NAME name,
-    void *src)
+YR_API int yr_set_configuration(YR_CONFIG_NAME name, void *src)
 {
   if (src == NULL)
     return ERROR_INTERNAL_FATAL_ERROR;
 
   switch (name)
-  { // lump all the cases using same types together in one cascade
-    case YR_CONFIG_STACK_SIZE:
-    case YR_CONFIG_MAX_STRINGS_PER_RULE:
-    case YR_CONFIG_MAX_MATCH_DATA:
-      yr_cfgs[name].ui32 = *(uint32_t*) src;
-      break;
+  {  // lump all the cases using same types together in one cascade
+  case YR_CONFIG_STACK_SIZE:
+  case YR_CONFIG_MAX_STRINGS_PER_RULE:
+  case YR_CONFIG_MAX_MATCH_DATA:
+    yr_cfgs[name].ui32 = *(uint32_t *) src;
+    break;
 
-    default:
-      return ERROR_INTERNAL_FATAL_ERROR;
+  default:
+    return ERROR_INTERNAL_FATAL_ERROR;
   }
 
   return ERROR_SUCCESS;
 }
 
 
-YR_API int yr_get_configuration(
-    YR_CONFIG_NAME name,
-    void *dest)
+YR_API int yr_get_configuration(YR_CONFIG_NAME name, void *dest)
 {
   if (dest == NULL)
     return ERROR_INTERNAL_FATAL_ERROR;
 
   switch (name)
-  { // lump all the cases using same types together in one cascade
-    case YR_CONFIG_STACK_SIZE:
-    case YR_CONFIG_MAX_STRINGS_PER_RULE:
-    case YR_CONFIG_MAX_MATCH_DATA:
-      *(uint32_t*) dest = yr_cfgs[name].ui32;
-      break;
+  {  // lump all the cases using same types together in one cascade
+  case YR_CONFIG_STACK_SIZE:
+  case YR_CONFIG_MAX_STRINGS_PER_RULE:
+  case YR_CONFIG_MAX_MATCH_DATA:
+    *(uint32_t *) dest = yr_cfgs[name].ui32;
+    break;
 
-    default:
-      return ERROR_INTERNAL_FATAL_ERROR;
+  default:
+    return ERROR_INTERNAL_FATAL_ERROR;
   }
 
   return ERROR_SUCCESS;

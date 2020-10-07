@@ -27,25 +27,21 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include <assert.h>
-#include <string.h>
-#include <stdlib.h>
-
-#include <yara.h>
-
 #include "args.h"
 
-#define args_is_long_arg(arg)  \
-    (arg[0] == '-' && arg[1] == '-' && arg[2] != '\0')
+#include <assert.h>
+#include <stdlib.h>
+#include <string.h>
+#include <yara.h>
+
+#define args_is_long_arg(arg) (arg[0] == '-' && arg[1] == '-' && arg[2] != '\0')
 
 
-#define args_is_short_arg(arg)  \
-    (arg[0] == '-' && arg[1] != '-' && arg[1] != '\0')
+#define args_is_short_arg(arg) \
+  (arg[0] == '-' && arg[1] != '-' && arg[1] != '\0')
 
 
-args_option_t* args_get_short_option(
-    args_option_t *options,
-    const char opt)
+args_option_t* args_get_short_option(args_option_t* options, const char opt)
 {
   while (options->type != ARGS_OPT_END)
   {
@@ -59,11 +55,9 @@ args_option_t* args_get_short_option(
 }
 
 
-args_option_t* args_get_long_option(
-    args_option_t *options,
-    const char* arg)
+args_option_t* args_get_long_option(args_option_t* options, const char* arg)
 {
-  arg += 2; // skip starting --
+  arg += 2;  // skip starting --
 
   while (options->type != ARGS_OPT_END)
   {
@@ -90,52 +84,52 @@ args_error_type_t args_parse_option(
     const char* opt_arg,
     int* opt_arg_was_used)
 {
-  char *endptr = NULL;
+  char* endptr = NULL;
 
   if (opt_arg_was_used != NULL)
-      *opt_arg_was_used = 0;
+    *opt_arg_was_used = 0;
 
   if (opt->count == opt->max_count)
     return ARGS_ERROR_TOO_MANY;
 
   switch (opt->type)
   {
-    case ARGS_OPT_BOOLEAN:
-      *(bool*) opt->value = !(*(bool*) opt->value);
-      break;
+  case ARGS_OPT_BOOLEAN:
+    *(bool*) opt->value = !(*(bool*) opt->value);
+    break;
 
-    case ARGS_OPT_INTEGER:
+  case ARGS_OPT_INTEGER:
 
-      if (opt_arg == NULL)
-        return ARGS_ERROR_REQUIRED_INTEGER_ARG;
+    if (opt_arg == NULL)
+      return ARGS_ERROR_REQUIRED_INTEGER_ARG;
 
-      *(int*) opt->value = strtol(opt_arg, &endptr, 0);
+    *(int*) opt->value = strtol(opt_arg, &endptr, 0);
 
-      if (*endptr != '\0')
-        return ARGS_ERROR_REQUIRED_INTEGER_ARG;
+    if (*endptr != '\0')
+      return ARGS_ERROR_REQUIRED_INTEGER_ARG;
 
-      if (opt_arg_was_used != NULL)
-        *opt_arg_was_used = 1;
+    if (opt_arg_was_used != NULL)
+      *opt_arg_was_used = 1;
 
-      break;
+    break;
 
-    case ARGS_OPT_STRING:
+  case ARGS_OPT_STRING:
 
-      if (opt_arg == NULL)
-        return ARGS_ERROR_REQUIRED_STRING_ARG;
+    if (opt_arg == NULL)
+      return ARGS_ERROR_REQUIRED_STRING_ARG;
 
-      if (opt->max_count > 1)
-        ((const char**)opt->value)[opt->count] = opt_arg;
-      else
-        *(const char**) opt->value = opt_arg;
+    if (opt->max_count > 1)
+      ((const char**) opt->value)[opt->count] = opt_arg;
+    else
+      *(const char**) opt->value = opt_arg;
 
-      if (opt_arg_was_used != NULL)
-        *opt_arg_was_used = 1;
+    if (opt_arg_was_used != NULL)
+      *opt_arg_was_used = 1;
 
-      break;
+    break;
 
-    default:
-      assert(0);
+  default:
+    assert(0);
   }
 
   opt->count++;
@@ -144,37 +138,32 @@ args_error_type_t args_parse_option(
 }
 
 
-void args_print_error(
-    args_error_type_t error,
-    const char* option)
+void args_print_error(args_error_type_t error, const char* option)
 {
-  switch(error)
+  switch (error)
   {
-    case ARGS_ERROR_UNKNOWN_OPT:
-      fprintf(stderr, "unknown option `%s`\n", option);
-      break;
-    case ARGS_ERROR_TOO_MANY:
-      fprintf(stderr, "too many `%s` options\n", option);
-      break;
-    case ARGS_ERROR_REQUIRED_INTEGER_ARG:
-      fprintf(stderr, "option `%s` requires an integer argument\n", option);
-      break;
-    case ARGS_ERROR_REQUIRED_STRING_ARG:
-      fprintf(stderr, "option `%s` requires a string argument\n", option);
-      break;
-    case ARGS_ERROR_UNEXPECTED_ARG:
-      fprintf(stderr, "option `%s` doesn't expect an argument\n", option);
-      break;
-    default:
-      return;
+  case ARGS_ERROR_UNKNOWN_OPT:
+    fprintf(stderr, "unknown option `%s`\n", option);
+    break;
+  case ARGS_ERROR_TOO_MANY:
+    fprintf(stderr, "too many `%s` options\n", option);
+    break;
+  case ARGS_ERROR_REQUIRED_INTEGER_ARG:
+    fprintf(stderr, "option `%s` requires an integer argument\n", option);
+    break;
+  case ARGS_ERROR_REQUIRED_STRING_ARG:
+    fprintf(stderr, "option `%s` requires a string argument\n", option);
+    break;
+  case ARGS_ERROR_UNEXPECTED_ARG:
+    fprintf(stderr, "option `%s` doesn't expect an argument\n", option);
+    break;
+  default:
+    return;
   }
 }
 
 
-int args_parse(
-    args_option_t *options,
-    int argc,
-    const char **argv)
+int args_parse(args_option_t* options, int argc, const char** argv)
 {
   args_error_type_t error = ARGS_ERROR_OK;
 
@@ -257,9 +246,7 @@ int args_parse(
 }
 
 
-void args_print_usage(
-    args_option_t *options,
-    int help_alignment)
+void args_print_usage(args_option_t* options, int help_alignment)
 {
   char buffer[128];
 
@@ -278,8 +265,7 @@ void args_print_usage(
     if (options->long_name != NULL)
       len += sprintf(buffer + len, "--%s", options->long_name);
 
-    if (options->type == ARGS_OPT_STRING ||
-       options->type == ARGS_OPT_INTEGER)
+    if (options->type == ARGS_OPT_STRING || options->type == ARGS_OPT_INTEGER)
     {
       len += sprintf(
           buffer + len,

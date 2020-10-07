@@ -28,10 +28,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 
-#include <yara/integers.h>
-#include <yara/stack.h>
-#include <yara/mem.h>
 #include <yara/error.h>
+#include <yara/integers.h>
+#include <yara/mem.h>
+#include <yara/stack.h>
 
 
 //
@@ -43,10 +43,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // more objects are pushed.
 //
 
-int yr_stack_create(
-    int initial_capacity,
-    int item_size,
-    YR_STACK** stack)
+int yr_stack_create(int initial_capacity, int item_size, YR_STACK** stack)
 {
   *stack = (YR_STACK*) yr_malloc(sizeof(YR_STACK));
 
@@ -75,8 +72,7 @@ int yr_stack_create(
 // Destroys a stack and deallocates all its resources.
 //
 
-void yr_stack_destroy(
-    YR_STACK* stack)
+void yr_stack_destroy(YR_STACK* stack)
 {
   yr_free(stack->items);
   yr_free(stack);
@@ -91,9 +87,7 @@ void yr_stack_destroy(
 // ERROR_INSUFFICIENT_MEMORY.
 //
 
-int yr_stack_push(
-    YR_STACK* stack,
-    void* item)
+int yr_stack_push(YR_STACK* stack, void* item)
 {
   if (stack->top == stack->capacity)
   {
@@ -127,9 +121,7 @@ int yr_stack_push(
 // was already empty.
 //
 
-int yr_stack_pop(
-    YR_STACK* stack,
-    void* item)
+int yr_stack_pop(YR_STACK* stack, void* item)
 {
   if (stack->top == 0)  // Return 0 if stack is empty.
     return 0;

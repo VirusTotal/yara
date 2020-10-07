@@ -29,10 +29,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #ifndef _WIN32
 
-#include <sys/stat.h>
 #include <dirent.h>
-#include <unistd.h>
+#include <sys/stat.h>
 #include <time.h>
+#include <unistd.h>
 
 #else
 
@@ -40,10 +40,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #endif
 
+#include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <ctype.h>
 #include <yara.h>
 
 #include "args.h"
@@ -54,7 +54,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define MAX_PATH 256
 #endif
 
-#define MAX_ARGS_EXT_VAR   32
+#define MAX_ARGS_EXT_VAR 32
 
 
 typedef struct COMPILER_RESULTS
@@ -75,33 +75,40 @@ static int max_strings_per_rule = DEFAULT_MAX_STRINGS_PER_RULE;
 
 
 #define USAGE_STRING \
-    "Usage: yarac [OPTION]... [NAMESPACE:]SOURCE_FILE... OUTPUT_FILE"
+  "Usage: yarac [OPTION]... [NAMESPACE:]SOURCE_FILE... OUTPUT_FILE"
 
-args_option_t options[] =
-{
-  OPT_STRING(0, "atom-quality-table", &atom_quality_table,
-      "path to a file with the atom quality table", "FILE"),
+args_option_t options[] = {
+    OPT_STRING(
+        0,
+        "atom-quality-table",
+        &atom_quality_table,
+        "path to a file with the atom quality table",
+        "FILE"),
 
-  OPT_STRING_MULTI('d', "define", &ext_vars, MAX_ARGS_EXT_VAR,
-      "define external variable", "VAR=VALUE"),
+    OPT_STRING_MULTI(
+        'd',
+        "define",
+        &ext_vars,
+        MAX_ARGS_EXT_VAR,
+        "define external variable",
+        "VAR=VALUE"),
 
-  OPT_BOOLEAN(0, "fail-on-warnings", &fail_on_warnings,
-      "fail on warnings"),
+    OPT_BOOLEAN(0, "fail-on-warnings", &fail_on_warnings, "fail on warnings"),
 
-  OPT_BOOLEAN('h', "help", &show_help,
-      "show this help and exit"),
+    OPT_BOOLEAN('h', "help", &show_help, "show this help and exit"),
 
-  OPT_INTEGER(0, "max-strings-per-rule", &max_strings_per_rule,
-      "set maximum number of strings per rule (default=10000)", "NUMBER"),
+    OPT_INTEGER(
+        0,
+        "max-strings-per-rule",
+        &max_strings_per_rule,
+        "set maximum number of strings per rule (default=10000)",
+        "NUMBER"),
 
-  OPT_BOOLEAN('w', "no-warnings", &ignore_warnings,
-      "disable warnings"),
+    OPT_BOOLEAN('w', "no-warnings", &ignore_warnings, "disable warnings"),
 
-  OPT_BOOLEAN('v', "version", &show_version,
-      "show version information"),
+    OPT_BOOLEAN('v', "version", &show_version, "show version information"),
 
-  OPT_END()
-};
+    OPT_END()};
 
 
 static void report_error(
@@ -143,18 +150,12 @@ static void report_error(
   else
   {
     fprintf(
-        stderr,
-        "%s(%d): %s: %s\n",
-        file_name,
-        line_number,
-        msg_type,
-        message);
+        stderr, "%s(%d): %s: %s\n", file_name, line_number, msg_type, message);
   }
 }
 
 
-static bool define_external_variables(
-    YR_COMPILER* compiler)
+static bool define_external_variables(YR_COMPILER* compiler)
 {
   for (int i = 0; ext_vars[i] != NULL; i++)
   {
@@ -177,31 +178,20 @@ static bool define_external_variables(
 
     if (is_float(value))
     {
-      yr_compiler_define_float_variable(
-          compiler,
-          identifier,
-          atof(value));
+      yr_compiler_define_float_variable(compiler, identifier, atof(value));
     }
     else if (is_integer(value))
     {
-      yr_compiler_define_integer_variable(
-          compiler,
-          identifier,
-          atoi(value));
+      yr_compiler_define_integer_variable(compiler, identifier, atoi(value));
     }
     else if (strcmp(value, "true") == 0 || strcmp(value, "false") == 0)
     {
       yr_compiler_define_boolean_variable(
-          compiler,
-          identifier,
-          strcmp(value, "true") == 0);
+          compiler, identifier, strcmp(value, "true") == 0);
     }
     else
     {
-      yr_compiler_define_string_variable(
-          compiler,
-          identifier,
-          value);
+      yr_compiler_define_string_variable(compiler, identifier, value);
     }
   }
 
@@ -209,9 +199,7 @@ static bool define_external_variables(
 }
 
 
-int main(
-    int argc,
-    const char** argv)
+int main(int argc, const char** argv)
 {
   COMPILER_RESULTS cr;
 

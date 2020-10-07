@@ -32,10 +32,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // for getline(3)
 #define _POSIX_C_SOURCE 200809L
 
-#include <sys/stat.h>
 #include <dirent.h>
-#include <unistd.h>
 #include <inttypes.h>
+#include <sys/stat.h>
+#include <unistd.h>
 
 #else
 
@@ -46,12 +46,11 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #endif
 
-#include <time.h>
+#include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <ctype.h>
-
+#include <time.h>
 #include <yara.h>
 
 #include "args.h"
@@ -59,19 +58,19 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "threading.h"
 
 
-#define ERROR_COULD_NOT_CREATE_THREAD  100
+#define ERROR_COULD_NOT_CREATE_THREAD 100
 
 #ifndef MAX_PATH
 #define MAX_PATH 256
 #endif
 
 #ifndef min
-#define min(x, y)  ((x < y) ? (x) : (y))
+#define min(x, y) ((x < y) ? (x) : (y))
 #endif
 
 #ifdef _MSC_VER
 #define snprintf _snprintf
-#define strdup _strdup
+#define strdup   _strdup
 #endif
 
 #define MAX_QUEUED_FILES 64
@@ -96,10 +95,10 @@ typedef struct _CALLBACK_ARGS
 
 typedef struct _THREAD_ARGS
 {
-  YR_SCANNER*       scanner;
-  CALLBACK_ARGS     callback_args;
-  time_t            start_time;
-  int               current_count;
+  YR_SCANNER* scanner;
+  CALLBACK_ARGS callback_args;
+  time_t start_time;
+  int current_count;
 
 } THREAD_ARGS;
 
@@ -125,10 +124,10 @@ typedef struct SCAN_OPTIONS
 } SCAN_OPTIONS;
 
 
-#define MAX_ARGS_TAG            32
-#define MAX_ARGS_IDENTIFIER     32
-#define MAX_ARGS_EXT_VAR        32
-#define MAX_ARGS_MODULE_DATA    32
+#define MAX_ARGS_TAG         32
+#define MAX_ARGS_IDENTIFIER  32
+#define MAX_ARGS_EXT_VAR     32
+#define MAX_ARGS_MODULE_DATA 32
 
 static char* atom_quality_table;
 static char* tags[MAX_ARGS_TAG + 1];
@@ -163,97 +162,158 @@ static int max_strings_per_rule = DEFAULT_MAX_STRINGS_PER_RULE;
 
 
 #define USAGE_STRING \
-    "Usage: yara [OPTION]... [NAMESPACE:]RULES_FILE... FILE | DIR | PID"
+  "Usage: yara [OPTION]... [NAMESPACE:]RULES_FILE... FILE | DIR | PID"
 
 
-args_option_t options[] =
-{
-  OPT_STRING(0, "atom-quality-table", &atom_quality_table,
-      "path to a file with the atom quality table", "FILE"),
+args_option_t options[] = {
+    OPT_STRING(
+        0,
+        "atom-quality-table",
+        &atom_quality_table,
+        "path to a file with the atom quality table",
+        "FILE"),
 
-  OPT_BOOLEAN('C', "compiled-rules", &rules_are_compiled,
-      "load compiled rules"),
+    OPT_BOOLEAN(
+        'C',
+        "compiled-rules",
+        &rules_are_compiled,
+        "load compiled rules"),
 
-  OPT_BOOLEAN('c', "count", &print_count_only,
-      "print only number of matches"),
+    OPT_BOOLEAN(
+        'c',
+        "count",
+        &print_count_only,
+        "print only number of matches"),
 
-  OPT_STRING_MULTI('d', "define", &ext_vars, MAX_ARGS_EXT_VAR,
-      "define external variable", "VAR=VALUE"),
+    OPT_STRING_MULTI(
+        'd',
+        "define",
+        &ext_vars,
+        MAX_ARGS_EXT_VAR,
+        "define external variable",
+        "VAR=VALUE"),
 
-  OPT_BOOLEAN(0, "fail-on-warnings", &fail_on_warnings,
-      "fail on warnings"),
+    OPT_BOOLEAN(0, "fail-on-warnings", &fail_on_warnings, "fail on warnings"),
 
-  OPT_BOOLEAN('f', "fast-scan", &fast_scan,
-      "fast matching mode"),
+    OPT_BOOLEAN('f', "fast-scan", &fast_scan, "fast matching mode"),
 
-  OPT_BOOLEAN('h', "help", &show_help,
-      "show this help and exit"),
+    OPT_BOOLEAN('h', "help", &show_help, "show this help and exit"),
 
-  OPT_STRING_MULTI('i', "identifier", &identifiers, MAX_ARGS_IDENTIFIER,
-      "print only rules named IDENTIFIER", "IDENTIFIER"),
+    OPT_STRING_MULTI(
+        'i',
+        "identifier",
+        &identifiers,
+        MAX_ARGS_IDENTIFIER,
+        "print only rules named IDENTIFIER",
+        "IDENTIFIER"),
 
-  OPT_INTEGER('l', "max-rules", &limit,
-      "abort scanning after matching a NUMBER of rules", "NUMBER"),
+    OPT_INTEGER(
+        'l',
+        "max-rules",
+        &limit,
+        "abort scanning after matching a NUMBER of rules",
+        "NUMBER"),
 
-  OPT_INTEGER(0, "max-strings-per-rule", &max_strings_per_rule,
-      "set maximum number of strings per rule (default=10000)", "NUMBER"),
+    OPT_INTEGER(
+        0,
+        "max-strings-per-rule",
+        &max_strings_per_rule,
+        "set maximum number of strings per rule (default=10000)",
+        "NUMBER"),
 
-  OPT_STRING_MULTI('x', "module-data", &modules_data, MAX_ARGS_MODULE_DATA,
-      "pass FILE's content as extra data to MODULE", "MODULE=FILE"),
+    OPT_STRING_MULTI(
+        'x',
+        "module-data",
+        &modules_data,
+        MAX_ARGS_MODULE_DATA,
+        "pass FILE's content as extra data to MODULE",
+        "MODULE=FILE"),
 
-  OPT_BOOLEAN('n', "negate", &negate,
-      "print only not satisfied rules (negate)", NULL),
+    OPT_BOOLEAN(
+        'n',
+        "negate",
+        &negate,
+        "print only not satisfied rules (negate)",
+        NULL),
 
-  OPT_BOOLEAN('w', "no-warnings", &ignore_warnings,
-      "disable warnings"),
+    OPT_BOOLEAN('w', "no-warnings", &ignore_warnings, "disable warnings"),
 
-  OPT_BOOLEAN('m', "print-meta", &show_meta,
-      "print metadata"),
+    OPT_BOOLEAN('m', "print-meta", &show_meta, "print metadata"),
 
-  OPT_BOOLEAN('D', "print-module-data", &show_module_data,
-      "print module data"),
+    OPT_BOOLEAN(
+        'D',
+        "print-module-data",
+        &show_module_data,
+        "print module data"),
 
-  OPT_BOOLEAN('e', "print-namespace", &show_namespace,
-      "print rules' namespace"),
+    OPT_BOOLEAN(
+        'e',
+        "print-namespace",
+        &show_namespace,
+        "print rules' namespace"),
 
-  OPT_BOOLEAN('S', "print-stats", &show_stats,
-      "print rules' statistics"),
+    OPT_BOOLEAN('S', "print-stats", &show_stats, "print rules' statistics"),
 
-  OPT_BOOLEAN('s', "print-strings", &show_strings,
-      "print matching strings"),
+    OPT_BOOLEAN('s', "print-strings", &show_strings, "print matching strings"),
 
-  OPT_BOOLEAN('L', "print-string-length", &show_string_length,
-      "print length of matched strings"),
+    OPT_BOOLEAN(
+        'L',
+        "print-string-length",
+        &show_string_length,
+        "print length of matched strings"),
 
-  OPT_BOOLEAN('g', "print-tags", &show_tags,
-      "print tags"),
+    OPT_BOOLEAN('g', "print-tags", &show_tags, "print tags"),
 
-  OPT_BOOLEAN('r', "recursive", &recursive_search,
-      "recursively search directories"),
+    OPT_BOOLEAN(
+        'r',
+        "recursive",
+        &recursive_search,
+        "recursively search directories"),
 
-  OPT_BOOLEAN('N', "no-follow-symlinks", &follow_symlinks,
-      "do not follow symlinks when scanning"),
+    OPT_BOOLEAN(
+        'N',
+        "no-follow-symlinks",
+        &follow_symlinks,
+        "do not follow symlinks when scanning"),
 
-  OPT_BOOLEAN(0, "scan-list", &scan_list_search,
-      "scan files listed in FILE, one per line"),
+    OPT_BOOLEAN(
+        0,
+        "scan-list",
+        &scan_list_search,
+        "scan files listed in FILE, one per line"),
 
-  OPT_INTEGER('k', "stack-size", &stack_size,
-      "set maximum stack size (default=16384)", "SLOTS"),
+    OPT_INTEGER(
+        'k',
+        "stack-size",
+        &stack_size,
+        "set maximum stack size (default=16384)",
+        "SLOTS"),
 
-  OPT_STRING_MULTI('t', "tag", &tags, MAX_ARGS_TAG,
-      "print only rules tagged as TAG", "TAG"),
+    OPT_STRING_MULTI(
+        't',
+        "tag",
+        &tags,
+        MAX_ARGS_TAG,
+        "print only rules tagged as TAG",
+        "TAG"),
 
-  OPT_INTEGER('p', "threads", &threads,
-      "use the specified NUMBER of threads to scan a directory", "NUMBER"),
+    OPT_INTEGER(
+        'p',
+        "threads",
+        &threads,
+        "use the specified NUMBER of threads to scan a directory",
+        "NUMBER"),
 
-  OPT_INTEGER('a', "timeout", &timeout,
-      "abort scanning after the given number of SECONDS", "SECONDS"),
+    OPT_INTEGER(
+        'a',
+        "timeout",
+        &timeout,
+        "abort scanning after the given number of SECONDS",
+        "SECONDS"),
 
-  OPT_BOOLEAN('v', "version", &show_version,
-      "show version information"),
+    OPT_BOOLEAN('v', "version", &show_version, "show version information"),
 
-  OPT_END()
-};
+    OPT_END()};
 
 
 // file_queue is size-limited queue stored as a circular array, files are
@@ -293,7 +353,7 @@ static int file_queue_init()
   if (result != 0)
     return result;
 
- return semaphore_init(&unused_slots, MAX_QUEUED_FILES);
+  return semaphore_init(&unused_slots, MAX_QUEUED_FILES);
 }
 
 
@@ -309,13 +369,11 @@ static void file_queue_finish()
 {
   int i;
 
-  for (i = 0; i < YR_MAX_THREADS; i++)
-    semaphore_release(&used_slots);
+  for (i = 0; i < YR_MAX_THREADS; i++) semaphore_release(&used_slots);
 }
 
 
-static void file_queue_put(
-    const char* file_path)
+static void file_queue_put(const char* file_path)
 {
   semaphore_wait(&unused_slots);
   mutex_lock(&queue_mutex);
@@ -335,7 +393,7 @@ static char* file_queue_get()
   semaphore_wait(&used_slots);
   mutex_lock(&queue_mutex);
 
-  if (queue_head == queue_tail) // queue is empty
+  if (queue_head == queue_tail)  // queue is empty
   {
     result = NULL;
   }
@@ -354,13 +412,12 @@ static char* file_queue_get()
 
 #if defined(_WIN32) || defined(__CYGWIN__)
 
-static bool is_directory(
-    const char* path)
+static bool is_directory(const char* path)
 {
   DWORD attributes = GetFileAttributes(path);
 
   if (attributes != INVALID_FILE_ATTRIBUTES &&
-	  attributes & FILE_ATTRIBUTE_DIRECTORY)
+      attributes & FILE_ATTRIBUTE_DIRECTORY)
     return true;
   else
     return false;
@@ -384,16 +441,17 @@ static void scan_dir(
     {
       char full_path[MAX_PATH];
 
-      snprintf(full_path, sizeof(full_path), "%s\\%s",
-               dir, FindFileData.cFileName);
+      snprintf(
+          full_path, sizeof(full_path), "%s\\%s", dir, FindFileData.cFileName);
 
       if (!(FindFileData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
       {
         file_queue_put(full_path);
       }
-      else if (scan_opts->recursive_search &&
-               strcmp(FindFileData.cFileName, ".") != 0 &&
-               strcmp(FindFileData.cFileName, "..") != 0)
+      else if (
+          scan_opts->recursive_search &&
+          strcmp(FindFileData.cFileName, ".") != 0 &&
+          strcmp(FindFileData.cFileName, "..") != 0)
       {
         scan_dir(full_path, scan_opts, start_time);
       }
@@ -418,8 +476,13 @@ static int populate_scan_list(
   DWORD nread;
 
   HANDLE hFile = CreateFile(
-      filename, GENERIC_READ, FILE_SHARE_READ, NULL,
-      OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+      filename,
+      GENERIC_READ,
+      FILE_SHARE_READ,
+      NULL,
+      OPEN_EXISTING,
+      FILE_ATTRIBUTE_NORMAL,
+      NULL);
 
   if (hFile == INVALID_HANDLE_VALUE)
   {
@@ -431,8 +494,8 @@ static int populate_scan_list(
 
   if (fileSize == INVALID_FILE_SIZE)
   {
-    fprintf(stderr,
-      "error: could not determine size of file \"%s\".\n", filename);
+    fprintf(
+        stderr, "error: could not determine size of file \"%s\".\n", filename);
     CloseHandle(hFile);
     return ERROR_COULD_NOT_READ_FILE;
   }
@@ -443,8 +506,10 @@ static int populate_scan_list(
 
   if (buf == NULL)
   {
-    fprintf(stderr,
-        "error: could not allocate memory for file \"%s\".\n", filename);
+    fprintf(
+        stderr,
+        "error: could not allocate memory for file \"%s\".\n",
+        filename);
     CloseHandle(hFile);
     return ERROR_INSUFFICIENT_MEMORY;
   }
@@ -486,8 +551,7 @@ static int populate_scan_list(
 
 #else
 
-static bool is_directory(
-    const char* path)
+static bool is_directory(const char* path)
 {
   struct stat st;
 
@@ -531,10 +595,9 @@ static void scan_dir(
         {
           file_queue_put(full_path);
         }
-        else if (scan_opts->recursive_search &&
-                S_ISDIR(st.st_mode) &&
-                strcmp(de->d_name, ".") != 0 &&
-                strcmp(de->d_name, "..") != 0)
+        else if (
+            scan_opts->recursive_search && S_ISDIR(st.st_mode) &&
+            strcmp(de->d_name, ".") != 0 && strcmp(de->d_name, "..") != 0)
         {
           scan_dir(full_path, scan_opts, start_time);
         }
@@ -585,9 +648,7 @@ static int populate_scan_list(
 
 #endif
 
-static void print_string(
-    const uint8_t* data,
-    int length)
+static void print_string(const uint8_t* data, int length)
 {
   for (int i = 0; i < length; i++)
   {
@@ -601,18 +662,13 @@ static void print_string(
 }
 
 
-static char cescapes[] =
-{
-  0  , 0  , 0  , 0  , 0  , 0  , 0  , 'a',
-  'b', 't', 'n', 'v', 'f', 'r', 0  , 0  ,
-  0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  ,
-  0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  ,
+static char cescapes[] = {
+    0, 0, 0, 0, 0, 0, 0, 'a', 'b', 't', 'n', 'v', 'f', 'r', 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,   0,   0,   0,   0,   0,   0,   0, 0,
 };
 
 
-static void print_escaped(
-    const uint8_t* data,
-    size_t length)
+static void print_escaped(const uint8_t* data, size_t length)
 {
   size_t i;
 
@@ -620,29 +676,27 @@ static void print_escaped(
   {
     switch (data[i])
     {
-      case '\"':
-      case '\'':
-      case '\\':
-        printf("\\%c", data[i]);
-        break;
+    case '\"':
+    case '\'':
+    case '\\':
+      printf("\\%c", data[i]);
+      break;
 
-      default:
-        if (data[i] >= 127)
-          printf("\\%03o", data[i]);
-        else if (data[i] >= 32)
-          putchar(data[i]);
-        else if (cescapes[data[i]] != 0)
-          printf("\\%c", cescapes[data[i]]);
-        else
-          printf("\\%03o", data[i]);
+    default:
+      if (data[i] >= 127)
+        printf("\\%03o", data[i]);
+      else if (data[i] >= 32)
+        putchar(data[i]);
+      else if (cescapes[data[i]] != 0)
+        printf("\\%c", cescapes[data[i]]);
+      else
+        printf("\\%03o", data[i]);
     }
   }
 }
 
 
-static void print_hex_string(
-    const uint8_t* data,
-    int length)
+static void print_hex_string(const uint8_t* data, int length)
 {
   for (int i = 0; i < min(32, length); i++)
     printf("%s%02X", (i == 0 ? "" : " "), data[i]);
@@ -651,53 +705,52 @@ static void print_hex_string(
 }
 
 
-static void print_error(
-    int error)
+static void print_error(int error)
 {
   switch (error)
   {
-    case ERROR_SUCCESS:
-      break;
-    case ERROR_COULD_NOT_ATTACH_TO_PROCESS:
-      fprintf(stderr, "can not attach to process (try running as root)\n");
-      break;
-    case ERROR_INSUFFICIENT_MEMORY:
-      fprintf(stderr, "not enough memory\n");
-      break;
-    case ERROR_SCAN_TIMEOUT:
-      fprintf(stderr, "scanning timed out\n");
-      break;
-    case ERROR_COULD_NOT_OPEN_FILE:
-      fprintf(stderr, "could not open file\n");
-      break;
-    case ERROR_UNSUPPORTED_FILE_VERSION:
-      fprintf(stderr, "rules were compiled with a different version of YARA\n");
-      break;
-    case ERROR_INVALID_FILE:
-      fprintf(stderr, "invalid compiled rules file.\n");
-      break;
-    case ERROR_CORRUPT_FILE:
-      fprintf(stderr, "corrupt compiled rules file.\n");
-      break;
-    case ERROR_EXEC_STACK_OVERFLOW:
-      fprintf(stderr, "stack overflow while evaluating condition "
-                      "(see --stack-size argument) \n");
-      break;
-    case ERROR_INVALID_EXTERNAL_VARIABLE_TYPE:
-      fprintf(stderr, "invalid type for external variable\n");
-      break;
-    case ERROR_TOO_MANY_MATCHES:
-      fprintf(stderr, "too many matches\n");
-      break;
-    default:
-      fprintf(stderr, "error: %d\n", error);
-      break;
+  case ERROR_SUCCESS:
+    break;
+  case ERROR_COULD_NOT_ATTACH_TO_PROCESS:
+    fprintf(stderr, "can not attach to process (try running as root)\n");
+    break;
+  case ERROR_INSUFFICIENT_MEMORY:
+    fprintf(stderr, "not enough memory\n");
+    break;
+  case ERROR_SCAN_TIMEOUT:
+    fprintf(stderr, "scanning timed out\n");
+    break;
+  case ERROR_COULD_NOT_OPEN_FILE:
+    fprintf(stderr, "could not open file\n");
+    break;
+  case ERROR_UNSUPPORTED_FILE_VERSION:
+    fprintf(stderr, "rules were compiled with a different version of YARA\n");
+    break;
+  case ERROR_INVALID_FILE:
+    fprintf(stderr, "invalid compiled rules file.\n");
+    break;
+  case ERROR_CORRUPT_FILE:
+    fprintf(stderr, "corrupt compiled rules file.\n");
+    break;
+  case ERROR_EXEC_STACK_OVERFLOW:
+    fprintf(
+        stderr,
+        "stack overflow while evaluating condition "
+        "(see --stack-size argument) \n");
+    break;
+  case ERROR_INVALID_EXTERNAL_VARIABLE_TYPE:
+    fprintf(stderr, "invalid type for external variable\n");
+    break;
+  case ERROR_TOO_MANY_MATCHES:
+    fprintf(stderr, "too many matches\n");
+    break;
+  default:
+    fprintf(stderr, "error: %d\n", error);
+    break;
   }
 }
 
-static void print_scanner_error(
-    YR_SCANNER* scanner,
-    int error)
+static void print_scanner_error(YR_SCANNER* scanner, int error)
 {
   YR_RULE* rule = yr_scanner_last_error_rule(scanner);
   YR_STRING* string = yr_scanner_last_error_string(scanner);
@@ -712,10 +765,7 @@ static void print_scanner_error(
   }
   else if (rule != NULL)
   {
-    fprintf(
-        stderr,
-        "rule \"%s\" caused ",
-        rule->identifier);
+    fprintf(stderr, "rule \"%s\" caused ", rule->identifier);
   }
 
   print_error(error);
@@ -761,18 +811,12 @@ static void print_compiler_error(
   else
   {
     fprintf(
-        stderr,
-        "%s(%d): %s: %s\n",
-        file_name,
-        line_number,
-        msg_type,
-        message);
+        stderr, "%s(%d): %s: %s\n", file_name, line_number, msg_type, message);
   }
 }
 
 
-static void print_rules_stats(
-    YR_RULES* rules)
+static void print_rules_stats(YR_RULES* rules)
 {
   YR_RULES_STATS stats;
 
@@ -783,29 +827,21 @@ static void print_rules_stats(
 
   if (result != ERROR_SUCCESS)
   {
-     print_error(result);
-     return;
+    print_error(result);
+    return;
   }
 
-  printf(
-      "size of AC transition table        : %d\n",
-      stats.ac_tables_size);
+  printf("size of AC transition table        : %d\n", stats.ac_tables_size);
 
   printf(
       "average length of AC matches lists : %f\n",
       stats.ac_average_match_list_length);
 
-  printf(
-      "number of rules                    : %d\n",
-      stats.num_rules);
+  printf("number of rules                    : %d\n", stats.num_rules);
 
-  printf(
-      "number of strings                  : %d\n",
-      stats.num_strings);
+  printf("number of strings                  : %d\n", stats.num_strings);
 
-  printf(
-      "number of AC matches               : %d\n",
-      stats.ac_matches);
+  printf("number of AC matches               : %d\n", stats.ac_matches);
 
   printf(
       "number of AC matches in root node  : %d\n",
@@ -945,14 +981,16 @@ static int handle_message(
         yr_string_matches_foreach(context, string, match)
         {
           if (show_string_length)
-            printf("0x%" PRIx64 ":%d:%s",
-              match->base + match->offset,
-              match->data_length,
-              string->identifier);
+            printf(
+                "0x%" PRIx64 ":%d:%s",
+                match->base + match->offset,
+                match->data_length,
+                string->identifier);
           else
-            printf("0x%" PRIx64 ":%s",
-              match->base + match->offset,
-              string->identifier);
+            printf(
+                "0x%" PRIx64 ":%s",
+                match->base + match->offset,
+                string->identifier);
 
           if (show_strings)
           {
@@ -997,47 +1035,46 @@ static int callback(
   YR_OBJECT* object;
   MODULE_DATA* module_data;
 
-  switch(message)
+  switch (message)
   {
-    case CALLBACK_MSG_RULE_MATCHING:
-    case CALLBACK_MSG_RULE_NOT_MATCHING:
-      return handle_message(
-          context, message, (YR_RULE*) message_data, user_data);
+  case CALLBACK_MSG_RULE_MATCHING:
+  case CALLBACK_MSG_RULE_NOT_MATCHING:
+    return handle_message(context, message, (YR_RULE*) message_data, user_data);
 
-    case CALLBACK_MSG_IMPORT_MODULE:
+  case CALLBACK_MSG_IMPORT_MODULE:
 
-      mi = (YR_MODULE_IMPORT*) message_data;
-      module_data = modules_data_list;
+    mi = (YR_MODULE_IMPORT*) message_data;
+    module_data = modules_data_list;
 
-      while (module_data != NULL)
+    while (module_data != NULL)
+    {
+      if (strcmp(module_data->module_name, mi->module_name) == 0)
       {
-        if (strcmp(module_data->module_name, mi->module_name) == 0)
-        {
-          mi->module_data = (void*) module_data->mapped_file.data;
-          mi->module_data_size = module_data->mapped_file.size;
-          break;
-        }
-
-        module_data = module_data->next;
+        mi->module_data = (void*) module_data->mapped_file.data;
+        mi->module_data_size = module_data->mapped_file.size;
+        break;
       }
 
-      return CALLBACK_CONTINUE;
+      module_data = module_data->next;
+    }
 
-    case CALLBACK_MSG_MODULE_IMPORTED:
+    return CALLBACK_CONTINUE;
 
-      if (show_module_data)
-      {
-        object = (YR_OBJECT*) message_data;
+  case CALLBACK_MSG_MODULE_IMPORTED:
 
-        mutex_lock(&output_mutex);
+    if (show_module_data)
+    {
+      object = (YR_OBJECT*) message_data;
 
-        yr_object_print_data(object, 0, 1);
-        printf("\n");
+      mutex_lock(&output_mutex);
 
-        mutex_unlock(&output_mutex);
-      }
+      yr_object_print_data(object, 0, 1);
+      printf("\n");
 
-      return CALLBACK_CONTINUE;
+      mutex_unlock(&output_mutex);
+    }
+
+    return CALLBACK_CONTINUE;
   }
 
   return CALLBACK_ERROR;
@@ -1095,9 +1132,7 @@ static void* scanning_thread(void* param)
 }
 
 
-static int define_external_variables(
-    YR_RULES* rules,
-    YR_COMPILER* compiler)
+static int define_external_variables(YR_RULES* rules, YR_COMPILER* compiler)
 {
   int result = ERROR_SUCCESS;
 
@@ -1123,58 +1158,40 @@ static int define_external_variables(
     if (is_float(value))
     {
       if (rules != NULL)
-        result = yr_rules_define_float_variable(
-            rules,
-            identifier,
-            atof(value));
+        result = yr_rules_define_float_variable(rules, identifier, atof(value));
 
       if (compiler != NULL)
         result = yr_compiler_define_float_variable(
-            compiler,
-            identifier,
-            atof(value));
+            compiler, identifier, atof(value));
     }
     else if (is_integer(value))
     {
       if (rules != NULL)
         result = yr_rules_define_integer_variable(
-            rules,
-            identifier,
-            atoi(value));
+            rules, identifier, atoi(value));
 
       if (compiler != NULL)
         result = yr_compiler_define_integer_variable(
-            compiler,
-            identifier,
-            atoi(value));
+            compiler, identifier, atoi(value));
     }
     else if (strcmp(value, "true") == 0 || strcmp(value, "false") == 0)
     {
       if (rules != NULL)
         result = yr_rules_define_boolean_variable(
-            rules,
-            identifier,
-            strcmp(value, "true") == 0);
+            rules, identifier, strcmp(value, "true") == 0);
 
       if (compiler != NULL)
         result = yr_compiler_define_boolean_variable(
-            compiler,
-            identifier,
-            strcmp(value, "true") == 0);
+            compiler, identifier, strcmp(value, "true") == 0);
     }
     else
     {
       if (rules != NULL)
-        result = yr_rules_define_string_variable(
-            rules,
-            identifier,
-            value);
+        result = yr_rules_define_string_variable(rules, identifier, value);
 
       if (compiler != NULL)
         result = yr_compiler_define_string_variable(
-            compiler,
-            identifier,
-            value);
+            compiler, identifier, value);
     }
   }
 
@@ -1224,7 +1241,7 @@ static void unload_modules_data()
 {
   MODULE_DATA* module_data = modules_data_list;
 
-  while(module_data != NULL)
+  while (module_data != NULL)
   {
     MODULE_DATA* next_module_data = module_data->next;
 
@@ -1238,9 +1255,7 @@ static void unload_modules_data()
 }
 
 
-int main(
-    int argc,
-    const char** argv)
+int main(int argc, const char** argv)
 {
   COMPILER_RESULTS cr;
 
@@ -1267,13 +1282,16 @@ int main(
   if (show_help)
   {
     printf(
-      "YARA %s, the pattern matching swiss army knife.\n"
-      "%s\n\n"
-      "Mandatory arguments to long options are mandatory for "
-      "short options too.\n\n", YR_VERSION, USAGE_STRING);
+        "YARA %s, the pattern matching swiss army knife.\n"
+        "%s\n\n"
+        "Mandatory arguments to long options are mandatory for "
+        "short options too.\n\n",
+        YR_VERSION,
+        USAGE_STRING);
 
     args_print_usage(options, 40);
-    printf("\nSend bug reports and suggestions to: vmalvarez@virustotal.com.\n");
+    printf(
+        "\nSend bug reports and suggestions to: vmalvarez@virustotal.com.\n");
 
     return EXIT_SUCCESS;
   }
@@ -1321,9 +1339,10 @@ int main(
 
     if (argc != 2)
     {
-      fprintf(stderr,
-        "error: can't accept multiple rules files if one of them is in "
-        "compiled form.\n");
+      fprintf(
+          stderr,
+          "error: can't accept multiple rules files if one of them is in "
+          "compiled form.\n");
       exit_with_code(EXIT_FAILURE);
     }
 
@@ -1430,9 +1449,7 @@ int main(
       }
 
       yr_scanner_set_callback(
-          thread_args[i].scanner,
-          callback,
-          &thread_args[i].callback_args);
+          thread_args[i].scanner, callback, &thread_args[i].callback_args);
 
       yr_scanner_set_flags(thread_args[i].scanner, flags);
 
@@ -1458,17 +1475,15 @@ int main(
     file_queue_finish();
 
     // Wait for scan threads to finish
-    for (i = 0; i < threads; i++)
-      thread_join(&thread[i]);
+    for (i = 0; i < threads; i++) thread_join(&thread[i]);
 
-    for (i = 0; i < threads; i++)
-      yr_scanner_destroy(thread_args[i].scanner);
+    for (i = 0; i < threads; i++) yr_scanner_destroy(thread_args[i].scanner);
 
     file_queue_destroy();
   }
   else
   {
-    CALLBACK_ARGS user_data = { argv[argc - 1], 0 };
+    CALLBACK_ARGS user_data = {argv[argc - 1], 0};
 
     result = yr_scanner_create(rules, &scanner);
 
@@ -1497,9 +1512,9 @@ int main(
     if (print_count_only)
       printf("%d\n", user_data.current_count);
 
-    #ifdef YR_PROFILING_ENABLED
+#ifdef YR_PROFILING_ENABLED
     yr_scanner_print_profiling_info(scanner);
-    #endif
+#endif
   }
 
   result = EXIT_SUCCESS;

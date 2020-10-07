@@ -32,13 +32,13 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #if defined(_WIN32) || defined(__CYGWIN__)
 #include <windows.h>
 #else
-#include <sys/stat.h>
 #include <sys/mman.h>
+#include <sys/stat.h>
 #include <unistd.h>
 #endif
 
-#include <yara/filemap.h>
 #include <yara/error.h>
+#include <yara/filemap.h>
 
 
 //
@@ -58,9 +58,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //       ERROR_COULD_NOT_MAP_FILE
 //
 
-YR_API int yr_filemap_map(
-    const char* file_path,
-    YR_MAPPED_FILE* pmapped_file)
+YR_API int yr_filemap_map(const char* file_path, YR_MAPPED_FILE* pmapped_file)
 {
   return yr_filemap_map_ex(file_path, 0, 0, pmapped_file);
 }
@@ -112,11 +110,11 @@ YR_API int yr_filemap_map_fd(
 
   if (GetFileSizeEx(pmapped_file->file, &fs))
   {
-    #ifdef _WIN64
+#ifdef _WIN64
     file_size = fs.QuadPart;
-    #else
+#else
     file_size = fs.LowPart;
-    #endif
+#endif
   }
   else
   {
@@ -128,19 +126,14 @@ YR_API int yr_filemap_map_fd(
     return ERROR_COULD_NOT_MAP_FILE;
 
   if (size == 0)
-    size = (size_t) (file_size - offset);
+    size = (size_t)(file_size - offset);
 
-  pmapped_file->size = yr_min(size, (size_t) (file_size - offset));
+  pmapped_file->size = yr_min(size, (size_t)(file_size - offset));
 
   if (pmapped_file->size != 0)
   {
     pmapped_file->mapping = CreateFileMapping(
-        pmapped_file->file,
-        NULL,
-        PAGE_READONLY,
-        0,
-        0,
-        NULL);
+        pmapped_file->file, NULL, PAGE_READONLY, 0, 0, NULL);
 
     if (pmapped_file->mapping == NULL)
     {
@@ -174,27 +167,27 @@ YR_API int yr_filemap_map_fd(
   return ERROR_SUCCESS;
 }
 
-#else // POSIX
+#else  // POSIX
 
 #define MAP_EXTRA_FLAGS 0
 
-#if defined (__APPLE__)
+#if defined(__APPLE__)
 // MacOS defines some extra flags for mmap.The MAP_RESILIENT_CODESIGN allows
 // to read from binaries whose code signature is invalid, without this flags
 // any attempt to read from such binaries causes a crash, see:
 // https://github.com/VirusTotal/yara/issues/1309.
 //
-// Also, reading from files in removable media that becomes unavailable crashes
-// the program if the MAP_RESILIENT_MEDIA flag is not set.
+// Also, reading from files in removable media that becomes unavailable
+// crashes the program if the MAP_RESILIENT_MEDIA flag is not set.
 #if defined(MAP_RESILIENT_CODESIGN)
-  #undef MAP_EXTRA_FLAGS
-  #if defined(MAP_RESILIENT_MEDIA)
-    #define MAP_EXTRA_FLAGS MAP_RESILIENT_CODESIGN | MAP_RESILIENT_MEDIA
-  #else
-    #define MAP_EXTRA_FLAGS MAP_RESILIENT_CODESIGN
-  #endif
-#endif // #if defined(MAP_RESILIENT_CODESIGN)
-#endif // #if defined (__APPLE__)
+#undef MAP_EXTRA_FLAGS
+#if defined(MAP_RESILIENT_MEDIA)
+#define MAP_EXTRA_FLAGS MAP_RESILIENT_CODESIGN | MAP_RESILIENT_MEDIA
+#else
+#define MAP_EXTRA_FLAGS MAP_RESILIENT_CODESIGN
+#endif
+#endif  // #if defined(MAP_RESILIENT_CODESIGN)
+#endif  // #if defined (__APPLE__)
 
 YR_API int yr_filemap_map_fd(
     YR_FILE_DESCRIPTOR file,
@@ -219,9 +212,9 @@ YR_API int yr_filemap_map_fd(
     return ERROR_COULD_NOT_MAP_FILE;
 
   if (size == 0)
-    size = (size_t) (st.st_size - offset);
+    size = (size_t)(st.st_size - offset);
 
-  pmapped_file->size = yr_min(size, (size_t) (st.st_size - offset));
+  pmapped_file->size = yr_min(size, (size_t)(st.st_size - offset));
 
   if (pmapped_file->size != 0)
   {
@@ -312,7 +305,7 @@ YR_API int yr_filemap_map_ex(
   return result;
 }
 
-#else // POSIX
+#else  // POSIX
 
 YR_API int yr_filemap_map_ex(
     const char* file_path,
@@ -353,8 +346,7 @@ YR_API int yr_filemap_map_ex(
 
 #ifdef WIN32
 
-YR_API void yr_filemap_unmap_fd(
-    YR_MAPPED_FILE* pmapped_file)
+YR_API void yr_filemap_unmap_fd(YR_MAPPED_FILE* pmapped_file)
 {
   if (pmapped_file->data != NULL)
     UnmapViewOfFile(pmapped_file->data);
@@ -367,8 +359,7 @@ YR_API void yr_filemap_unmap_fd(
   pmapped_file->size = 0;
 }
 
-YR_API void yr_filemap_unmap(
-    YR_MAPPED_FILE* pmapped_file)
+YR_API void yr_filemap_unmap(YR_MAPPED_FILE* pmapped_file)
 {
   yr_filemap_unmap_fd(pmapped_file);
 
@@ -379,10 +370,9 @@ YR_API void yr_filemap_unmap(
   }
 }
 
-#else // POSIX
+#else  // POSIX
 
-YR_API void yr_filemap_unmap_fd(
-    YR_MAPPED_FILE* pmapped_file)
+YR_API void yr_filemap_unmap_fd(YR_MAPPED_FILE* pmapped_file)
 {
   if (pmapped_file->data != NULL)
     munmap((void*) pmapped_file->data, pmapped_file->size);
@@ -391,8 +381,7 @@ YR_API void yr_filemap_unmap_fd(
   pmapped_file->size = 0;
 }
 
-YR_API void yr_filemap_unmap(
-    YR_MAPPED_FILE* pmapped_file)
+YR_API void yr_filemap_unmap(YR_MAPPED_FILE* pmapped_file)
 {
   yr_filemap_unmap_fd(pmapped_file);
 

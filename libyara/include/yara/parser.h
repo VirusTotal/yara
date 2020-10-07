@@ -72,9 +72,7 @@ int yr_parser_emit_with_arg_reloc(
     YR_ARENA_REF* argument_ref);
 
 
-int yr_parser_emit_push_const(
-    yyscan_t yyscanner,
-    uint64_t argument);
+int yr_parser_emit_push_const(yyscan_t yyscanner, uint64_t argument);
 
 
 int yr_parser_check_types(
@@ -142,9 +140,7 @@ int yr_parser_reduce_external(
     uint8_t instruction);
 
 
-int yr_parser_reduce_import(
-    yyscan_t yyscanner,
-    SIZED_STRING* module_name);
+int yr_parser_reduce_import(yyscan_t yyscanner, SIZED_STRING* module_name);
 
 
 int yr_parser_reduce_operation(

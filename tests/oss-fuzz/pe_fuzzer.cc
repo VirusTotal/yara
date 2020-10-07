@@ -27,17 +27,16 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include <stdint.h>
 #include <stddef.h>
-
+#include <stdint.h>
 #include <yara.h>
 
-const char* RULES = \
-  "import \"pe\""
-  "rule test {"
-  " condition:"
-  "   pe.rva_to_offset(pe.sections[0].virtual_address) == pe.sections[0].raw_data_offset"
-  "}";
+const char* RULES = "import \"pe\""
+                    "rule test {"
+                    " condition:"
+                    "   pe.rva_to_offset(pe.sections[0].virtual_address) == "
+                    "pe.sections[0].raw_data_offset"
+                    "}";
 
 YR_RULES* rules = NULL;
 
@@ -60,25 +59,23 @@ extern "C" int LLVMFuzzerInitialize(int* argc, char*** argv)
 }
 
 
-int callback(YR_SCAN_CONTEXT* context, int message, void* message_data, void* user_data)
+int callback(
+    YR_SCAN_CONTEXT* context,
+    int message,
+    void* message_data,
+    void* user_data)
 {
   return CALLBACK_CONTINUE;
 }
 
 
-extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
+extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
 {
   if (rules == NULL)
     return 0;
 
   yr_rules_scan_mem(
-      rules,
-      data,
-      size,
-      SCAN_FLAGS_NO_TRYCATCH,
-      callback,
-      NULL,
-      0);
+      rules, data, size, SCAN_FLAGS_NO_TRYCATCH, callback, NULL, 0);
 
   return 0;
 }

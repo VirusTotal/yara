@@ -28,7 +28,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include <string.h>
-
 #include <yara/base64.h>
 #include <yara/error.h>
 #include <yara/mem.h>
@@ -80,8 +79,7 @@ static SIZED_STRING* _yr_modified_base64_encode(
 
   // Prepend appropriate number of bytes and copy remaining input bytes into
   // temporary buffer.
-  for (j = 0; j < i; j++)
-    tmp[j] = 'A';
+  for (j = 0; j < i; j++) tmp[j] = 'A';
 
   memcpy(tmp + j, src, len);
   src = tmp;
@@ -174,30 +172,17 @@ static SIZED_STRING* _yr_base64_get_base64_substring(
 
 
 // RE metacharacters which need to be escaped when generating the final RE.
-#define IS_METACHAR(x) \
-  (x == '\\' || \
-   x == '^' || \
-   x == '$' || \
-   x == '|' || \
-   x == '(' || \
-   x == ')' || \
-   x == '[' || \
-   x == ']' || \
-   x == '*' || \
-   x == '?' || \
-   x == '{' || \
-   x == ',' || \
-   x == '.' || \
-   x == '+' || \
-   x == '}')
+#define IS_METACHAR(x)                                                      \
+  (x == '\\' || x == '^' || x == '$' || x == '|' || x == '(' || x == ')' || \
+   x == '[' || x == ']' || x == '*' || x == '?' || x == '{' || x == ',' ||  \
+   x == '.' || x == '+' || x == '}')
 
 
 //
 // Given a SIZED_STRING return the number of characters which will need to be
 // escaped when generating the final string to pass to the regexp compiler.
 //
-static int _yr_base64_count_escaped(
-    SIZED_STRING* str)
+static int _yr_base64_count_escaped(SIZED_STRING* str)
 {
   uint32_t i;
   int c = 0;
@@ -246,11 +231,11 @@ static int _yr_base64_create_nodes(
     // Now take the encoded string and strip the bytes which are affected by
     // the leading and trailing bytes of the plaintext.
     FAIL_ON_NULL_WITH_CLEANUP(
-      final_str = _yr_base64_get_base64_substring(encoded_str, wide, i, pad),
-      {
-        yr_free(encoded_str);
-        yr_free(node);
-      });
+        final_str = _yr_base64_get_base64_substring(encoded_str, wide, i, pad),
+        {
+          yr_free(encoded_str);
+          yr_free(node);
+        });
 
     yr_free(encoded_str);
 
@@ -279,8 +264,7 @@ static int _yr_base64_create_nodes(
 //
 // Useful for printing the encoded strings.
 //
-void _yr_base64_print_nodes(
-    BASE64_NODE* head)
+void _yr_base64_print_nodes(BASE64_NODE* head)
 {
   size_t i;
   BASE64_NODE* p = head;
@@ -306,8 +290,7 @@ void _yr_base64_print_nodes(
 //
 // Destroy a list of base64 nodes.
 //
-static void _yr_base64_destroy_nodes(
-    BASE64_NODE* head)
+static void _yr_base64_destroy_nodes(BASE64_NODE* head)
 {
   BASE64_NODE* p = head;
   BASE64_NODE* next;
@@ -337,7 +320,8 @@ int _yr_base64_create_regexp(
   char* s;
   uint32_t i;
   uint32_t length = 0;
-  uint32_t c = 0; // The number of nodes in the list, used to know how many '|'.
+  uint32_t c =
+      0;  // The number of nodes in the list, used to know how many '|'.
   BASE64_NODE* p = head;
 
   while (p != NULL)
@@ -386,11 +370,10 @@ int _yr_base64_create_regexp(
   *s = '\x00';
 
   // Useful for debugging as long as the string has no NULL bytes in it. ;)
-  //printf("%s\n", re_str);
+  // printf("%s\n", re_str);
 
   FAIL_ON_ERROR_WITH_CLEANUP(
-      yr_re_parse(re_str, re_ast, re_error),
-      yr_free(re_str));
+      yr_re_parse(re_str, re_ast, re_error), yr_free(re_str));
 
   yr_free(re_str);
   return ERROR_SUCCESS;
@@ -427,7 +410,7 @@ int yr_base64_ast_from_string(
     {
       FAIL_ON_ERROR_WITH_CLEANUP(
           _yr_base64_create_nodes(wide_str, modifier.alphabet, 0, &head, &tail),
-          {
+          {  // Cleanup
             strcpy(error->message, "Failure encoding base64 wide string");
             yr_free(wide_str);
             _yr_base64_destroy_nodes(head);
@@ -438,7 +421,7 @@ int yr_base64_ast_from_string(
     {
       FAIL_ON_ERROR_WITH_CLEANUP(
           _yr_base64_create_nodes(wide_str, modifier.alphabet, 1, &head, &tail),
-          {
+          {  // Cleanup
             strcpy(error->message, "Failure encoding base64wide wide string");
             yr_free(wide_str);
             _yr_base64_destroy_nodes(head);
@@ -454,7 +437,7 @@ int yr_base64_ast_from_string(
     {
       FAIL_ON_ERROR_WITH_CLEANUP(
           _yr_base64_create_nodes(in_str, modifier.alphabet, 0, &head, &tail),
-          {
+          {  // Cleanup
             strcpy(error->message, "Failure encoding base64 ascii string");
             _yr_base64_destroy_nodes(head);
           });
@@ -464,7 +447,7 @@ int yr_base64_ast_from_string(
     {
       FAIL_ON_ERROR_WITH_CLEANUP(
           _yr_base64_create_nodes(in_str, modifier.alphabet, 1, &head, &tail),
-          {
+          {  // Cleanup
             strcpy(error->message, "Failure encoding base64wide ascii string");
             _yr_base64_destroy_nodes(head);
           });
@@ -478,7 +461,7 @@ int yr_base64_ast_from_string(
     {
       FAIL_ON_ERROR_WITH_CLEANUP(
           _yr_base64_create_nodes(in_str, modifier.alphabet, 0, &head, &tail),
-          {
+          {  // Cleanup
             strcpy(error->message, "Failure encoding base64 string");
             _yr_base64_destroy_nodes(head);
           });
@@ -488,7 +471,7 @@ int yr_base64_ast_from_string(
     {
       FAIL_ON_ERROR_WITH_CLEANUP(
           _yr_base64_create_nodes(in_str, modifier.alphabet, 1, &head, &tail),
-          {
+          {  // Cleanup
             strcpy(error->message, "Failure encoding base64wide string");
             _yr_base64_destroy_nodes(head);
           });

@@ -28,8 +28,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 
-#include <yara/bitmask.h>
 #include <yara.h>
+#include <yara/bitmask.h>
+
 #include "util.h"
 
 #define BITMAP_SIZE 512
@@ -65,12 +66,12 @@ void test_set_clear()
   if (yr_bitmask_is_set(bitmask, 0))
     exit(EXIT_FAILURE);
 
-  yr_bitmask_set(bitmask, BITMAP_SIZE-1);
+  yr_bitmask_set(bitmask, BITMAP_SIZE - 1);
 
   if (yr_bitmask_is_not_set(bitmask, BITMAP_SIZE - 1))
     exit(EXIT_FAILURE);
 
-  yr_bitmask_clear(bitmask, BITMAP_SIZE-1);
+  yr_bitmask_clear(bitmask, BITMAP_SIZE - 1);
 
   if (yr_bitmask_is_set(bitmask, BITMAP_SIZE - 1))
     exit(EXIT_FAILURE);

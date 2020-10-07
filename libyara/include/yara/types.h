@@ -31,159 +31,132 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define YR_TYPES_H
 
 #include <stdbool.h>
-
 #include <yara/arena.h>
 #include <yara/bitmask.h>
-#include <yara/limits.h>
 #include <yara/hash.h>
-#include <yara/utils.h>
+#include <yara/limits.h>
 #include <yara/sizedstr.h>
 #include <yara/stopwatch.h>
 #include <yara/threading.h>
+#include <yara/utils.h>
+
 #include "notebook.h"
 
 
 #define DECLARE_REFERENCE(type, name) \
-    union { \
-      type name; \
-      YR_ARENA_REF name##_; \
-    } YR_ALIGN(8)
+  union                               \
+  {                                   \
+    type name;                        \
+    YR_ARENA_REF name##_;             \
+  } YR_ALIGN(8)
 
 
 // Flags for YR_RULE
-#define RULE_FLAGS_PRIVATE              0x01
-#define RULE_FLAGS_GLOBAL               0x02
-#define RULE_FLAGS_NULL                 0x04
-#define RULE_FLAGS_DISABLED             0x08
+#define RULE_FLAGS_PRIVATE  0x01
+#define RULE_FLAGS_GLOBAL   0x02
+#define RULE_FLAGS_NULL     0x04
+#define RULE_FLAGS_DISABLED 0x08
 
-#define RULE_IS_PRIVATE(x) \
-    (((x)->flags) & RULE_FLAGS_PRIVATE)
+#define RULE_IS_PRIVATE(x) (((x)->flags) & RULE_FLAGS_PRIVATE)
 
-#define RULE_IS_GLOBAL(x) \
-    (((x)->flags) & RULE_FLAGS_GLOBAL)
+#define RULE_IS_GLOBAL(x) (((x)->flags) & RULE_FLAGS_GLOBAL)
 
-#define RULE_IS_NULL(x) \
-    (((x)->flags) & RULE_FLAGS_NULL)
+#define RULE_IS_NULL(x) (((x)->flags) & RULE_FLAGS_NULL)
 
-#define RULE_IS_DISABLED(x) \
-    (((x)->flags) & RULE_FLAGS_DISABLED)
+#define RULE_IS_DISABLED(x) (((x)->flags) & RULE_FLAGS_DISABLED)
 
 
 // Flags for YR_STRING
-#define STRING_FLAGS_REFERENCED        0x01
-#define STRING_FLAGS_HEXADECIMAL       0x02
-#define STRING_FLAGS_NO_CASE           0x04
-#define STRING_FLAGS_ASCII             0x08
-#define STRING_FLAGS_WIDE              0x10
-#define STRING_FLAGS_REGEXP            0x20
-#define STRING_FLAGS_FAST_REGEXP       0x40
-#define STRING_FLAGS_FULL_WORD         0x80
-#define STRING_FLAGS_ANONYMOUS         0x100
-#define STRING_FLAGS_SINGLE_MATCH      0x200
-#define STRING_FLAGS_LITERAL           0x400
-#define STRING_FLAGS_FITS_IN_ATOM      0x800
-#define STRING_FLAGS_LAST_IN_RULE      0x1000
-#define STRING_FLAGS_CHAIN_PART        0x2000
-#define STRING_FLAGS_CHAIN_TAIL        0x4000
-#define STRING_FLAGS_FIXED_OFFSET      0x8000
-#define STRING_FLAGS_GREEDY_REGEXP     0x10000
-#define STRING_FLAGS_DOT_ALL           0x20000
-#define STRING_FLAGS_DISABLED          0x40000
-#define STRING_FLAGS_XOR               0x80000
-#define STRING_FLAGS_PRIVATE           0x100000
-#define STRING_FLAGS_BASE64            0x200000
-#define STRING_FLAGS_BASE64_WIDE       0x400000
+#define STRING_FLAGS_REFERENCED    0x01
+#define STRING_FLAGS_HEXADECIMAL   0x02
+#define STRING_FLAGS_NO_CASE       0x04
+#define STRING_FLAGS_ASCII         0x08
+#define STRING_FLAGS_WIDE          0x10
+#define STRING_FLAGS_REGEXP        0x20
+#define STRING_FLAGS_FAST_REGEXP   0x40
+#define STRING_FLAGS_FULL_WORD     0x80
+#define STRING_FLAGS_ANONYMOUS     0x100
+#define STRING_FLAGS_SINGLE_MATCH  0x200
+#define STRING_FLAGS_LITERAL       0x400
+#define STRING_FLAGS_FITS_IN_ATOM  0x800
+#define STRING_FLAGS_LAST_IN_RULE  0x1000
+#define STRING_FLAGS_CHAIN_PART    0x2000
+#define STRING_FLAGS_CHAIN_TAIL    0x4000
+#define STRING_FLAGS_FIXED_OFFSET  0x8000
+#define STRING_FLAGS_GREEDY_REGEXP 0x10000
+#define STRING_FLAGS_DOT_ALL       0x20000
+#define STRING_FLAGS_DISABLED      0x40000
+#define STRING_FLAGS_XOR           0x80000
+#define STRING_FLAGS_PRIVATE       0x100000
+#define STRING_FLAGS_BASE64        0x200000
+#define STRING_FLAGS_BASE64_WIDE   0x400000
 
-#define STRING_IS_HEX(x) \
-    (((x)->flags) & STRING_FLAGS_HEXADECIMAL)
+#define STRING_IS_HEX(x) (((x)->flags) & STRING_FLAGS_HEXADECIMAL)
 
-#define STRING_IS_NO_CASE(x) \
-    (((x)->flags) & STRING_FLAGS_NO_CASE)
+#define STRING_IS_NO_CASE(x) (((x)->flags) & STRING_FLAGS_NO_CASE)
 
-#define STRING_IS_DOT_ALL(x) \
-    (((x)->flags) & STRING_FLAGS_DOT_ALL)
+#define STRING_IS_DOT_ALL(x) (((x)->flags) & STRING_FLAGS_DOT_ALL)
 
-#define STRING_IS_ASCII(x) \
-    (((x)->flags) & STRING_FLAGS_ASCII)
+#define STRING_IS_ASCII(x) (((x)->flags) & STRING_FLAGS_ASCII)
 
-#define STRING_IS_WIDE(x) \
-    (((x)->flags) & STRING_FLAGS_WIDE)
+#define STRING_IS_WIDE(x) (((x)->flags) & STRING_FLAGS_WIDE)
 
-#define STRING_IS_REGEXP(x) \
-    (((x)->flags) & STRING_FLAGS_REGEXP)
+#define STRING_IS_REGEXP(x) (((x)->flags) & STRING_FLAGS_REGEXP)
 
-#define STRING_IS_GREEDY_REGEXP(x) \
-    (((x)->flags) & STRING_FLAGS_GREEDY_REGEXP)
+#define STRING_IS_GREEDY_REGEXP(x) (((x)->flags) & STRING_FLAGS_GREEDY_REGEXP)
 
-#define STRING_IS_FULL_WORD(x) \
-    (((x)->flags) & STRING_FLAGS_FULL_WORD)
+#define STRING_IS_FULL_WORD(x) (((x)->flags) & STRING_FLAGS_FULL_WORD)
 
-#define STRING_IS_ANONYMOUS(x) \
-    (((x)->flags) & STRING_FLAGS_ANONYMOUS)
+#define STRING_IS_ANONYMOUS(x) (((x)->flags) & STRING_FLAGS_ANONYMOUS)
 
-#define STRING_IS_REFERENCED(x) \
-    (((x)->flags) & STRING_FLAGS_REFERENCED)
+#define STRING_IS_REFERENCED(x) (((x)->flags) & STRING_FLAGS_REFERENCED)
 
-#define STRING_IS_SINGLE_MATCH(x) \
-    (((x)->flags) & STRING_FLAGS_SINGLE_MATCH)
+#define STRING_IS_SINGLE_MATCH(x) (((x)->flags) & STRING_FLAGS_SINGLE_MATCH)
 
-#define STRING_IS_FIXED_OFFSET(x) \
-    (((x)->flags) & STRING_FLAGS_FIXED_OFFSET)
+#define STRING_IS_FIXED_OFFSET(x) (((x)->flags) & STRING_FLAGS_FIXED_OFFSET)
 
-#define STRING_IS_LITERAL(x) \
-    (((x)->flags) & STRING_FLAGS_LITERAL)
+#define STRING_IS_LITERAL(x) (((x)->flags) & STRING_FLAGS_LITERAL)
 
-#define STRING_IS_FAST_REGEXP(x) \
-    (((x)->flags) & STRING_FLAGS_FAST_REGEXP)
+#define STRING_IS_FAST_REGEXP(x) (((x)->flags) & STRING_FLAGS_FAST_REGEXP)
 
-#define STRING_IS_CHAIN_PART(x) \
-    (((x)->flags) & STRING_FLAGS_CHAIN_PART)
+#define STRING_IS_CHAIN_PART(x) (((x)->flags) & STRING_FLAGS_CHAIN_PART)
 
-#define STRING_IS_CHAIN_TAIL(x) \
-    (((x)->flags) & STRING_FLAGS_CHAIN_TAIL)
+#define STRING_IS_CHAIN_TAIL(x) (((x)->flags) & STRING_FLAGS_CHAIN_TAIL)
 
-#define STRING_IS_LAST_IN_RULE(x) \
-    (((x)->flags) & STRING_FLAGS_LAST_IN_RULE)
+#define STRING_IS_LAST_IN_RULE(x) (((x)->flags) & STRING_FLAGS_LAST_IN_RULE)
 
-#define STRING_FITS_IN_ATOM(x) \
-    (((x)->flags) & STRING_FLAGS_FITS_IN_ATOM)
+#define STRING_FITS_IN_ATOM(x) (((x)->flags) & STRING_FLAGS_FITS_IN_ATOM)
 
-#define STRING_IS_DISABLED(x) \
-    (((x)->flags) & STRING_FLAGS_DISABLED)
+#define STRING_IS_DISABLED(x) (((x)->flags) & STRING_FLAGS_DISABLED)
 
-#define STRING_IS_XOR(x) \
-    (((x)->flags) & STRING_FLAGS_XOR)
+#define STRING_IS_XOR(x) (((x)->flags) & STRING_FLAGS_XOR)
 
-#define STRING_IS_BASE64(x) \
-    (((x)->flags) & STRING_FLAGS_BASE64)
+#define STRING_IS_BASE64(x) (((x)->flags) & STRING_FLAGS_BASE64)
 
-#define STRING_IS_BASE64_WIDE(x) \
-    (((x)->flags) & STRING_FLAGS_BASE64_WIDE)
+#define STRING_IS_BASE64_WIDE(x) (((x)->flags) & STRING_FLAGS_BASE64_WIDE)
 
-#define STRING_IS_PRIVATE(x) \
-    (((x)->flags) & STRING_FLAGS_PRIVATE)
+#define STRING_IS_PRIVATE(x) (((x)->flags) & STRING_FLAGS_PRIVATE)
 
 
-#define META_TYPE_INTEGER   1
-#define META_TYPE_STRING    2
-#define META_TYPE_BOOLEAN   3
+#define META_TYPE_INTEGER 1
+#define META_TYPE_STRING  2
+#define META_TYPE_BOOLEAN 3
 
 
-#define META_FLAGS_LAST_IN_RULE  1
+#define META_FLAGS_LAST_IN_RULE 1
 
-#define META_IS_LAST_IN_RULE(x) \
-    (((x)->flags) & META_FLAGS_LAST_IN_RULE)
+#define META_IS_LAST_IN_RULE(x) (((x)->flags) & META_FLAGS_LAST_IN_RULE)
 
 
-#define EXTERNAL_VARIABLE_TYPE_NULL           0
-#define EXTERNAL_VARIABLE_TYPE_FLOAT          1
-#define EXTERNAL_VARIABLE_TYPE_INTEGER        2
-#define EXTERNAL_VARIABLE_TYPE_BOOLEAN        3
-#define EXTERNAL_VARIABLE_TYPE_STRING         4
-#define EXTERNAL_VARIABLE_TYPE_MALLOC_STRING  5
+#define EXTERNAL_VARIABLE_TYPE_NULL          0
+#define EXTERNAL_VARIABLE_TYPE_FLOAT         1
+#define EXTERNAL_VARIABLE_TYPE_INTEGER       2
+#define EXTERNAL_VARIABLE_TYPE_BOOLEAN       3
+#define EXTERNAL_VARIABLE_TYPE_STRING        4
+#define EXTERNAL_VARIABLE_TYPE_MALLOC_STRING 5
 
 #define EXTERNAL_VARIABLE_IS_NULL(x) \
-    ((x) != NULL ? (x)->type == EXTERNAL_VARIABLE_TYPE_NULL : true)
+  ((x) != NULL ? (x)->type == EXTERNAL_VARIABLE_TYPE_NULL : true)
 
 
 typedef struct RE RE;
@@ -238,7 +211,7 @@ typedef struct YR_MODIFIER YR_MODIFIER;
 
 typedef struct YR_ITERATOR YR_ITERATOR;
 
-typedef uint32_t  YR_AC_TRANSITION;
+typedef uint32_t YR_AC_TRANSITION;
 
 #pragma pack(push)
 #pragma pack(8)
@@ -348,7 +321,8 @@ struct YR_EXTERNAL_VARIABLE
 {
   int32_t type;
 
-  YR_ALIGN(8) union {
+  YR_ALIGN(8) union
+  {
     int64_t i;
     double f;
     char* s;
@@ -368,11 +342,11 @@ struct YR_AC_MATCH
   // When the Aho-Corasick automaton reaches some state that has associated
   // matches, the current position in the input buffer is a few bytes past
   // the point where the match actually occurs, for example, when looking for
-  // string "bar" in "foobarbaz", when the automaton reaches the state associated
-  // to the ending "r" in "bar, which is the one that has a match, the current
-  // position in the input is 6 (the "b" after the "r"), but the match is at
-  // position 3. The backtrack field indicates how many bytes the scanner has
-  // to go back to find the point where the match actually start.
+  // string "bar" in "foobarbaz", when the automaton reaches the state
+  // associated to the ending "r" in "bar, which is the one that has a match,
+  // the current position in the input is 6 (the "b" after the "r"), but the
+  // match is at position 3. The backtrack field indicates how many bytes the
+  // scanner has to go back to find the point where the match actually start.
   //
   // YR_ALIGN(8) forces the backtrack field to be treated as a 8-bytes field
   // and therefore the struct's size is 40 bytes. This is necessary only for
@@ -391,13 +365,15 @@ struct RE_NODE
 {
   int type;
 
-  union {
+  union
+  {
     int value;
     int count;
     int start;
   };
 
-  union {
+  union
+  {
     int mask;
     int end;
   };
@@ -431,10 +407,9 @@ struct RE_AST
 
 
 // Disable warning due to zero length array in Microsoft's compiler
-
 #ifdef _MSC_VER
 #pragma warning(push)
-#pragma warning(disable:4200)
+#pragma warning(disable : 4200)
 #endif
 
 struct RE
@@ -456,9 +431,9 @@ struct RE_ERROR
 
 struct RE_FIBER
 {
-  const uint8_t* ip;    // instruction pointer
-  int32_t  sp;          // stack pointer
-  int32_t  rc;          // repeat counter
+  const uint8_t* ip;  // instruction pointer
+  int32_t sp;         // stack pointer
+  int32_t rc;         // repeat counter
 
   RE_FIBER* prev;
   RE_FIBER* next;
@@ -486,7 +461,7 @@ struct YR_MODIFIER
   int32_t flags;
   uint8_t xor_min;
   uint8_t xor_max;
-  SIZED_STRING *alphabet;
+  SIZED_STRING* alphabet;
 };
 
 
@@ -501,9 +476,9 @@ struct YR_MATCHES
 
 struct YR_MATCH
 {
-  int64_t base;              // Base address for the match
-  int64_t offset;            // Offset relative to base for the match
-  int32_t match_length;      // Match length
+  int64_t base;          // Base address for the match
+  int64_t offset;        // Offset relative to base for the match
+  int32_t match_length;  // Match length
   int32_t data_length;
 
   // Pointer to a buffer containing a portion of the matched data. The size of
@@ -686,8 +661,8 @@ struct YR_MEMORY_BLOCK_ITERATOR
 {
   void* context;
 
-  YR_MEMORY_BLOCK_ITERATOR_FUNC  first;
-  YR_MEMORY_BLOCK_ITERATOR_FUNC  next;
+  YR_MEMORY_BLOCK_ITERATOR_FUNC first;
+  YR_MEMORY_BLOCK_ITERATOR_FUNC next;
 };
 
 
@@ -741,7 +716,7 @@ struct YR_SCAN_CONTEXT
 
   // Notebook used for storing YR_MATCH structures associated to the matches
   // found.
-  YR_NOTEBOOK * matches_notebook;
+  YR_NOTEBOOK* matches_notebook;
 
   // Stopwatch used for measuring the time elapsed during the scan.
   YR_STOPWATCH stopwatch;
@@ -789,18 +764,18 @@ union YR_VALUE
 
 struct YR_VALUE_STACK
 {
-  int32_t   sp;
-  int32_t   capacity;
+  int32_t sp;
+  int32_t capacity;
   YR_VALUE* items;
 };
 
 
 #define OBJECT_COMMON_FIELDS \
-    int canary; \
-    int8_t type; \
-    const char* identifier; \
-    YR_OBJECT* parent; \
-    void* data;
+  int canary;                \
+  int8_t type;               \
+  const char* identifier;    \
+  YR_OBJECT* parent;         \
+  void* data;
 
 
 struct YR_OBJECT
@@ -883,12 +858,12 @@ struct YR_DICTIONARY_ITEMS
   int used;
   int free;
 
-  struct {
+  struct
+  {
     SIZED_STRING* key;
     YR_OBJECT* obj;
   } objects[1];
 };
-
 
 
 // Iterators are used in loops of the form:
@@ -923,15 +898,13 @@ struct YR_DICTIONARY_ITEMS
 //  |   . . .    |
 //
 // We can't use the YR_UNDEFINED value in the stack as an indicator of the end
-// of the iterator, because it's legitimate for an iterator to return YR_UNDEFINED
-// items in the middle of the iteration.
+// of the iterator, because it's legitimate for an iterator to return
+// YR_UNDEFINED items in the middle of the iteration.
 //
 // The "next" function should return ERROR_SUCCESS if everything went fine or
 // an error code in case of error.
 
-typedef int (*YR_ITERATOR_NEXT_FUNC)(
-    YR_ITERATOR* self,
-    YR_VALUE_STACK* stack);
+typedef int (*YR_ITERATOR_NEXT_FUNC)(YR_ITERATOR* self, YR_VALUE_STACK* stack);
 
 
 struct YR_ARRAY_ITERATOR
@@ -967,13 +940,13 @@ struct YR_ITERATOR
 {
   YR_ITERATOR_NEXT_FUNC next;
 
-  union {
+  union
+  {
     struct YR_ARRAY_ITERATOR array_it;
     struct YR_DICT_ITERATOR dict_it;
     struct YR_INT_RANGE_ITERATOR int_range_it;
     struct YR_INT_ENUM_ITERATOR int_enum_it;
   };
 };
-
 
 #endif

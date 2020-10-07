@@ -42,64 +42,58 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "threading.h"
 
 
-int mutex_init(
-    MUTEX* mutex)
+int mutex_init(MUTEX* mutex)
 {
-  #if defined(_WIN32) || defined(__CYGWIN__)
-    InitializeCriticalSection(mutex);
-    return 0;
-  #else
+#if defined(_WIN32) || defined(__CYGWIN__)
+  InitializeCriticalSection(mutex);
+  return 0;
+#else
   return pthread_mutex_init(mutex, NULL);
-  #endif
+#endif
 }
 
-void mutex_destroy(
-    MUTEX* mutex)
+void mutex_destroy(MUTEX* mutex)
 {
-  #if defined(_WIN32) || defined(__CYGWIN__)
+#if defined(_WIN32) || defined(__CYGWIN__)
   DeleteCriticalSection(mutex);
-  #else
+#else
   pthread_mutex_destroy(mutex);
-  #endif
+#endif
 }
 
 
-void mutex_lock(
-    MUTEX* mutex)
+void mutex_lock(MUTEX* mutex)
 {
-  #if defined(_WIN32) || defined(__CYGWIN__)
+#if defined(_WIN32) || defined(__CYGWIN__)
   EnterCriticalSection(mutex);
-  #else
+#else
   pthread_mutex_lock(mutex);
-  #endif
+#endif
 }
 
 
-void mutex_unlock(
-    MUTEX* mutex)
+void mutex_unlock(MUTEX* mutex)
 {
-  #if defined(_WIN32) || defined(__CYGWIN__)
+#if defined(_WIN32) || defined(__CYGWIN__)
   LeaveCriticalSection(mutex);
-  #else
+#else
   pthread_mutex_unlock(mutex);
-  #endif
+#endif
 }
 
 
-int semaphore_init(
-    SEMAPHORE* semaphore,
-    int value)
+int semaphore_init(SEMAPHORE* semaphore, int value)
 {
-  #if defined(_WIN32) || defined(__CYGWIN__)
+#if defined(_WIN32) || defined(__CYGWIN__)
   *semaphore = CreateSemaphore(NULL, value, 65535, NULL);
   if (*semaphore == NULL)
     return GetLastError();
-  #elif defined(__FreeBSD__)
+#elif defined(__FreeBSD__)
   *semaphore = malloc(sizeof(sem_t));
   if (*semaphore == NULL)
     return errno;
   return sem_init(*semaphore, 0, value);
-  #else
+#else
   // Mac OS X doesn't support unnamed semaphores via sem_init, that's why
   // we use sem_open instead sem_init and immediately unlink the semaphore
   // from the name. More info at:
@@ -107,10 +101,11 @@ int semaphore_init(
   // http://stackoverflow.com/questions/1413785/sem-init-on-os-x
   //
   // Also create name for semaphore from PID because running multiple instances
-  // of YARA at the same time can cause that sem_open() was called in two processes
-  // simultaneously while neither of them had chance to call sem_unlink() yet.
+  // of YARA at the same time can cause that sem_open() was called in two
+  // processes simultaneously while neither of them had chance to call
+  // sem_unlink() yet.
   char name[20];
-  snprintf(name, sizeof(name), "/yara.sem.%i", (int)getpid());
+  snprintf(name, sizeof(name), "/yara.sem.%i", (int) getpid());
   *semaphore = sem_open(name, O_CREAT, S_IRUSR, value);
 
   if (*semaphore == SEM_FAILED)
@@ -118,45 +113,42 @@ int semaphore_init(
 
   if (sem_unlink(name) != 0)
     return errno;
-  #endif
+#endif
 
   return 0;
 }
 
 
-void semaphore_destroy(
-    SEMAPHORE* semaphore)
+void semaphore_destroy(SEMAPHORE* semaphore)
 {
-  #if defined(_WIN32) || defined(__CYGWIN__)
+#if defined(_WIN32) || defined(__CYGWIN__)
   CloseHandle(*semaphore);
-  #elif defined(__FreeBSD__)
+#elif defined(__FreeBSD__)
   sem_close(*semaphore);
   free(*semaphore);
-  #else
+#else
   sem_close(*semaphore);
-  #endif
+#endif
 }
 
 
-void semaphore_wait(
-    SEMAPHORE* semaphore)
+void semaphore_wait(SEMAPHORE* semaphore)
 {
-  #if defined(_WIN32) || defined(__CYGWIN__)
+#if defined(_WIN32) || defined(__CYGWIN__)
   WaitForSingleObject(*semaphore, INFINITE);
-  #else
+#else
   sem_wait(*semaphore);
-  #endif
+#endif
 }
 
 
-void semaphore_release(
-    SEMAPHORE* semaphore)
+void semaphore_release(SEMAPHORE* semaphore)
 {
-  #if defined(_WIN32) || defined(__CYGWIN__)
+#if defined(_WIN32) || defined(__CYGWIN__)
   ReleaseSemaphore(*semaphore, 1, NULL);
-  #else
+#else
   sem_post(*semaphore);
-  #endif
+#endif
 }
 
 
@@ -165,24 +157,23 @@ int create_thread(
     THREAD_START_ROUTINE start_routine,
     void* param)
 {
-  #if defined(_WIN32) || defined(__CYGWIN__)
+#if defined(_WIN32) || defined(__CYGWIN__)
   *thread = CreateThread(NULL, 0, start_routine, param, 0, NULL);
   if (*thread == NULL)
     return GetLastError();
   else
     return 0;
-  #else
+#else
   return pthread_create(thread, NULL, start_routine, param);
-  #endif
+#endif
 }
 
 
-void thread_join(
-    THREAD* thread)
+void thread_join(THREAD* thread)
 {
-  #if defined(_WIN32) || defined(__CYGWIN__)
+#if defined(_WIN32) || defined(__CYGWIN__)
   WaitForSingleObject(*thread, INFINITE);
-  #else
+#else
   pthread_join(*thread, NULL);
-  #endif
+#endif
 }
