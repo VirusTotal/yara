@@ -28,7 +28,11 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include <yara.h>
+#if defined(_WIN32)
+#include <string.h>
+#else
 #include <strings.h>
+#endif
 
 int main (int argc, char **argv)
 {

@@ -112,6 +112,8 @@ x64/
 windows/*/packages/
 *.trs
 *.log
-.dirstamp
 
+# Test files
+test-rules.yarc
+.dirstamp
 .idea/
