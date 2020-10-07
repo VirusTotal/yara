@@ -43,10 +43,7 @@ define_function(now)
 
 
 begin_declarations
-  ;
-
   declare_function("now", "", "i", now);
-
 end_declarations;
 
 

@@ -153,12 +153,9 @@ define_function(magic_type)
 }
 
 begin_declarations
-  ;
-
   declare_function("mime_type", "", "s", magic_mime_type);
   declare_function("type", "", "s", magic_type);
-
-end_declarations;
+end_declarations
 
 
 int module_initialize(YR_MODULE* module)

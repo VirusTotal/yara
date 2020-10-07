@@ -32,11 +32,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define MODULE_NAME demo
 
 begin_declarations
-  ;
-
   declare_string("greeting");
-
-end_declarations;
+end_declarations
 
 
 int module_initialize(YR_MODULE* module)

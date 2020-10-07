@@ -18,11 +18,8 @@ static void _pb_free(void* allocator_data, void* pointer)
 }
 
 begin_declarations
-  ;
   begin_struct("struct")
-    ;
     begin_struct("enum")
-      ;
       declare_integer("FIRST");
       declare_integer("SECOND");
     end_struct("enum");
@@ -37,37 +34,32 @@ begin_declarations
   declare_string("f_string");
   declare_string("f_bytes");
   begin_struct_array("f_struct_array")
-    ;
     declare_string("f_string");
     declare_integer("f_enum");
     begin_struct("f_nested_struct")
-      ;
       declare_integer("f_int32");
       declare_string("f_string");
-    end_struct("f_nested_struct");
+    end_struct("f_nested_struct")
     begin_struct_array("f_nested_struct_array")
-      ;
       declare_integer("f_int32");
       declare_string("f_string");
     end_struct_array("f_nested_struct_array");
-  end_struct_array("f_struct_array");
+  end_struct_array("f_struct_array")
   declare_integer_dictionary("f_map_int32");
   declare_integer_dictionary("f_map_bool");
   declare_string_dictionary("f_map_string");
   declare_float_dictionary("f_map_float");
   begin_struct_dictionary("f_map_struct")
-    ;
     declare_integer("f_int32");
     declare_integer("f_int64");
-  end_struct_dictionary("f_map_struct");
+  end_struct_dictionary("f_map_struct")
   declare_string("f_oneof_string");
   begin_struct("f_oneof_struct")
-    ;
     declare_integer("f_int32");
     declare_integer("f_int64");
-  end_struct("f_oneof_struct");
+  end_struct("f_oneof_struct")
   declare_string("f_yara_name");
-end_declarations;
+end_declarations
 
 int module_initialize(YR_MODULE* module)
 {

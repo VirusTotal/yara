@@ -1693,7 +1693,6 @@ void dotnet_parse_com(PE* pe, size_t base_address)
 
 
 begin_declarations
-
   declare_string("version");
   declare_string("module_name");
 
@@ -1722,7 +1721,7 @@ begin_declarations
       declare_integer("minor");
       declare_integer("build_number");
       declare_integer("revision_number");
-    end_struct("version");
+    end_struct("version")
     declare_string("public_key_or_token");
     declare_string("name");
   end_struct_array("assembly_refs")
@@ -1735,10 +1734,10 @@ begin_declarations
       declare_integer("minor");
       declare_integer("build_number");
       declare_integer("revision_number");
-    end_struct("version");
+    end_struct("version")
     declare_string("name");
     declare_string("culture");
-  end_struct("assembly");
+  end_struct("assembly")
 
   declare_string_array("modulerefs");
   declare_integer("number_of_modulerefs");
@@ -1750,7 +1749,6 @@ begin_declarations
 
   declare_integer_array("field_offsets");
   declare_integer("number_of_field_offsets");
-
 end_declarations
 
 

@@ -805,8 +805,6 @@ define_function(data_crc32)
 
 
 begin_declarations
-  ;
-
   declare_function("md5", "ii", "s", data_md5);
   declare_function("md5", "s", "s", string_md5);
 
@@ -821,8 +819,7 @@ begin_declarations
 
   declare_function("crc32", "ii", "i", data_crc32);
   declare_function("crc32", "s", "i", string_crc32);
-
-end_declarations;
+end_declarations
 
 
 int module_initialize(YR_MODULE* module)
