@@ -33,9 +33,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <yara/limits.h>
 #include <yara/re.h>
 
-#define ATOM_TREE_LEAF  1
-#define ATOM_TREE_AND   2
-#define ATOM_TREE_OR    3
+#define ATOM_TREE_LEAF 1
+#define ATOM_TREE_AND  2
+#define ATOM_TREE_OR   3
 
 typedef struct YR_ATOM YR_ATOM;
 typedef struct YR_ATOM_TREE_NODE YR_ATOM_TREE_NODE;
@@ -100,9 +100,7 @@ struct YR_ATOM_QUALITY_TABLE_ENTRY
 #pragma pack(pop)
 
 
-typedef int (*YR_ATOMS_QUALITY_FUNC)(
-    YR_ATOMS_CONFIG* config,
-    YR_ATOM* atom);
+typedef int (*YR_ATOMS_QUALITY_FUNC)(YR_ATOMS_CONFIG* config, YR_ATOM* atom);
 
 
 struct YR_ATOMS_CONFIG
@@ -133,27 +131,18 @@ int yr_atoms_extract_from_string(
     int* min_atom_quality);
 
 
-int yr_atoms_extract_triplets(
-    RE_NODE* re_node,
-    YR_ATOM_LIST_ITEM** atoms);
+int yr_atoms_extract_triplets(RE_NODE* re_node, YR_ATOM_LIST_ITEM** atoms);
 
 
-int yr_atoms_heuristic_quality(
-    YR_ATOMS_CONFIG* config,
-    YR_ATOM* atom);
+int yr_atoms_heuristic_quality(YR_ATOMS_CONFIG* config, YR_ATOM* atom);
 
 
-int yr_atoms_table_quality(
-    YR_ATOMS_CONFIG* config,
-    YR_ATOM* atom);
+int yr_atoms_table_quality(YR_ATOMS_CONFIG* config, YR_ATOM* atom);
 
 
-int yr_atoms_min_quality(
-    YR_ATOMS_CONFIG* config,
-    YR_ATOM_LIST_ITEM* atom_list);
+int yr_atoms_min_quality(YR_ATOMS_CONFIG* config, YR_ATOM_LIST_ITEM* atom_list);
 
 
-void yr_atoms_list_destroy(
-    YR_ATOM_LIST_ITEM* list_head);
+void yr_atoms_list_destroy(YR_ATOM_LIST_ITEM* list_head);
 
 #endif

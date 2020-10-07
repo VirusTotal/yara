@@ -30,7 +30,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include <assert.h>
-
 #include <yara/error.h>
 #include <yara/mem.h>
 #include <yara/notebook.h>
@@ -72,12 +71,9 @@ struct YR_NOTEBOOK_PAGE
 };
 
 
-
 // Creates a new notebook. The notebook initially has a single page of the
 // specified size, but more pages are created if needed.
-int yr_notebook_create(
-    size_t page_size,
-    YR_NOTEBOOK** pool)
+int yr_notebook_create(size_t page_size, YR_NOTEBOOK** pool)
 {
   YR_NOTEBOOK* new_notebook = yr_malloc(sizeof(YR_NOTEBOOK));
 
@@ -104,8 +100,7 @@ int yr_notebook_create(
 
 
 // Destroys a notebook and frees all the notebook's pages.
-int yr_notebook_destroy(
-    YR_NOTEBOOK* pool)
+int yr_notebook_destroy(YR_NOTEBOOK* pool)
 {
   YR_NOTEBOOK_PAGE* page = pool->page_list_head;
 
@@ -122,9 +117,7 @@ int yr_notebook_destroy(
 }
 
 
-void* yr_notebook_alloc(
-    YR_NOTEBOOK* notebook,
-    size_t size)
+void* yr_notebook_alloc(YR_NOTEBOOK* notebook, size_t size)
 {
   // The requested memory size can't be larger than a notebook's page.
   assert(size <= notebook->page_size);
@@ -144,10 +137,10 @@ void* yr_notebook_alloc(
     notebook->page_list_head = new_page;
   }
 
-  void *ptr = notebook->page_list_head->data + notebook->page_list_head->used;
+  void* ptr = notebook->page_list_head->data + notebook->page_list_head->used;
 
-  // In ARM make sure the alignment of the returned buffer is 4 bytes.
-  #if defined(__arm__)
+// In ARM make sure the alignment of the returned buffer is 4 bytes.
+#if defined(__arm__)
   uintptr_t misalignment = (uintptr_t) ptr & 3;
 
   if (misalignment)
@@ -155,7 +148,7 @@ void* yr_notebook_alloc(
     size += 4 - misalignment;
     ptr += 4 - misalignment;
   }
-  #endif
+#endif
 
   notebook->page_list_head->used += size;
 

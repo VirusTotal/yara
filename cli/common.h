@@ -34,19 +34,20 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <stdbool.h>
 
 #ifdef _WIN32
-   #include <io.h>
-   #define access    _access_s
+#include <io.h>
+#define access _access_s
 #else
-   #include <unistd.h>
+#include <unistd.h>
 #endif
 
-#define exit_with_code(code) { result = code; goto _exit; }
+#define exit_with_code(code) \
+  {                          \
+    result = code;           \
+    goto _exit;              \
+  }
 
 
-bool compile_files(
-    YR_COMPILER* compiler,
-    int argc,
-    const char** argv)
+bool compile_files(YR_COMPILER* compiler, int argc, const char** argv)
 {
   for (int i = 0; i < argc - 1; i++)
   {
@@ -69,7 +70,6 @@ bool compile_files(
     // backslash.
     if (colon && *(colon + 1) != '\\' && *(colon + 1) != '/')
     {
-
       file_name = colon + 1;
       *colon = '\0';
       ns = argv[i];
@@ -103,7 +103,7 @@ bool compile_files(
 }
 
 
-bool is_integer(const char *str)
+bool is_integer(const char* str)
 {
   if (*str == '-')
     str++;
@@ -111,7 +111,7 @@ bool is_integer(const char *str)
   if (*str == '\0')
     return false;
 
-  while(*str)
+  while (*str)
   {
     if (!isdigit(*str))
       return false;
@@ -122,21 +122,21 @@ bool is_integer(const char *str)
 }
 
 
-bool is_float(const char *str)
+bool is_float(const char* str)
 {
   bool has_dot = false;
 
-  if (*str == '-')      // skip the minus sign if present
+  if (*str == '-')  // skip the minus sign if present
     str++;
 
-  if (*str == '.')      // float can't start with a dot
+  if (*str == '.')  // float can't start with a dot
     return false;
 
-  while(*str)
+  while (*str)
   {
     if (*str == '.')
     {
-      if (has_dot)      // two dots, not a float
+      if (has_dot)  // two dots, not a float
         return false;
 
       has_dot = true;
@@ -149,7 +149,7 @@ bool is_float(const char *str)
     str++;
   }
 
-  return has_dot; // to be float must contain a dot
+  return has_dot;  // to be float must contain a dot
 }
 
 #endif

@@ -34,29 +34,29 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 #if defined(__has_builtin)
-#  if __has_builtin(__builtin_bswap16)
-#    define yr_bswap16(x) __builtin_bswap16(x)
-#  endif
+#if __has_builtin(__builtin_bswap16)
+#define yr_bswap16(x) __builtin_bswap16(x)
+#endif
 #endif
 
 #if !defined(yr_bswap16) && defined(_MSC_VER)
-#  define yr_bswap16(x) _byteswap_ushort(x)
+#define yr_bswap16(x) _byteswap_ushort(x)
 #endif
 
 #if !defined(yr_bswap16)
 uint16_t _yr_bswap16(uint16_t x);
-# define yr_bswap16(x) _yr_bswap16(x)
+#define yr_bswap16(x) _yr_bswap16(x)
 #endif
 
 
 #if defined(__has_builtin)
-#  if __has_builtin(__builtin_bswap32)
-#    define yr_bswap32(x) __builtin_bswap32(x)
-#  endif
+#if __has_builtin(__builtin_bswap32)
+#define yr_bswap32(x) __builtin_bswap32(x)
+#endif
 #endif
 
 #if !defined(yr_bswap32) && defined(_MSC_VER)
-#  define yr_bswap32(x) _byteswap_ulong(x)
+#define yr_bswap32(x) _byteswap_ulong(x)
 #endif
 
 #if !defined(yr_bswap32)
@@ -66,13 +66,13 @@ uint32_t _yr_bswap32(uint32_t x);
 
 
 #if defined(__has_builtin)
-#  if __has_builtin(__builtin_bswap64)
-#    define yr_bswap64(x) __builtin_bswap64(x)
-#  endif
+#if __has_builtin(__builtin_bswap64)
+#define yr_bswap64(x) __builtin_bswap64(x)
+#endif
 #endif
 
 #if !defined(yr_bswap64) && defined(_MSC_VER)
-#  define yr_bswap64(x) _byteswap_uint64(x)
+#define yr_bswap64(x) _byteswap_uint64(x)
 #endif
 
 #if !defined(yr_bswap64)

@@ -27,13 +27,13 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include <yara/mem.h>
 #include <yara/error.h>
+#include <yara/mem.h>
 
 #if defined(_WIN32) || defined(__CYGWIN__)
 
-#include <windows.h>
 #include <string.h>
+#include <windows.h>
 
 static HANDLE hHeap;
 
@@ -84,10 +84,10 @@ void yr_free(void* ptr)
 }
 
 
-char* yr_strdup(const char *str)
+char* yr_strdup(const char* str)
 {
   size_t len = strlen(str);
-  char *dup = (char*) yr_malloc(len + 1);
+  char* dup = (char*) yr_malloc(len + 1);
 
   if (dup == NULL)
     return NULL;
@@ -99,10 +99,10 @@ char* yr_strdup(const char *str)
 }
 
 
-char* yr_strndup(const char *str, size_t n)
+char* yr_strndup(const char* str, size_t n)
 {
   size_t len = strnlen(str, n);
-  char *dup = (char*) yr_malloc(len + 1);
+  char* dup = (char*) yr_malloc(len + 1);
 
   if (dup == NULL)
     return NULL;
@@ -110,14 +110,14 @@ char* yr_strndup(const char *str, size_t n)
   memcpy(dup, str, len);
   dup[len] = '\0';
 
-  return (char *) dup;
+  return (char*) dup;
 }
 
 #else
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdio.h>
 
 int yr_heap_alloc(void)
 {
@@ -149,19 +149,19 @@ void* yr_realloc(void* ptr, size_t size)
 }
 
 
-void yr_free(void *ptr)
+void yr_free(void* ptr)
 {
   free(ptr);
 }
 
 
-char* yr_strdup(const char *str)
+char* yr_strdup(const char* str)
 {
   return strdup(str);
 }
 
 
-char* yr_strndup(const char *str, size_t n)
+char* yr_strndup(const char* str, size_t n)
 {
   return strndup(str, n);
 }

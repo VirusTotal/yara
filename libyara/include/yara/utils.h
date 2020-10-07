@@ -42,9 +42,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <stdbool.h>
 #else
 #ifndef __cplusplus
-#define bool	int
-#define true	1
-#define false	0
+#define bool int
+#define true 1
+#define false 0
 #endif /* __cplusplus */
 #endif
 
@@ -56,34 +56,34 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 #if defined(_WIN32) || defined(__CYGWIN__)
-  #ifdef YR_BUILDING_DLL
-    #ifdef __GNUC__
-      #define YR_API EXTERNC __attribute__((dllexport))
-      #define YR_DEPRECATED_API EXTERNC __attribute__((deprecated))
-    #else
-      #define YR_API EXTERNC __declspec(dllexport)
-      #define YR_DEPRECATED_API EXTERNC __declspec(deprecated)
-    #endif
-  #elif defined(YR_IMPORTING_DLL)
-    #ifdef __GNUC__
-      #define YR_API EXTERNC __attribute__((dllimport))
-      #define YR_DEPRECATED_API EXTERNC __attribute__((deprecated))
-    #else
-      #define YR_API EXTERNC __declspec(dllimport)
-      #define YR_DEPRECATED_API EXTERNC __declspec(deprecated)
-    #endif
-  #else
-    #define YR_API EXTERNC
-    #define YR_DEPRECATED_API EXTERNC
-  #endif
+#ifdef YR_BUILDING_DLL
+#ifdef __GNUC__
+#define YR_API            EXTERNC __attribute__((dllexport))
+#define YR_DEPRECATED_API EXTERNC __attribute__((deprecated))
 #else
-  #if __GNUC__ >= 4
-    #define YR_API EXTERNC __attribute__((visibility ("default")))
-    #define YR_DEPRECATED_API YR_API __attribute__((deprecated))
-  #else
-    #define YR_API EXTERNC
-    #define YR_DEPRECATED_API EXTERNC
-  #endif
+#define YR_API            EXTERNC __declspec(dllexport)
+#define YR_DEPRECATED_API EXTERNC __declspec(deprecated)
+#endif
+#elif defined(YR_IMPORTING_DLL)
+#ifdef __GNUC__
+#define YR_API            EXTERNC __attribute__((dllimport))
+#define YR_DEPRECATED_API EXTERNC __attribute__((deprecated))
+#else
+#define YR_API            EXTERNC __declspec(dllimport)
+#define YR_DEPRECATED_API EXTERNC __declspec(deprecated)
+#endif
+#else
+#define YR_API            EXTERNC
+#define YR_DEPRECATED_API EXTERNC
+#endif
+#else
+#if __GNUC__ >= 4
+#define YR_API            EXTERNC __attribute__((visibility("default")))
+#define YR_DEPRECATED_API YR_API __attribute__((deprecated))
+#else
+#define YR_API            EXTERNC
+#define YR_DEPRECATED_API EXTERNC
+#endif
 #endif
 
 
@@ -104,21 +104,28 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define yr_min(x, y) (((x) < (y)) ? (x) : (y))
 #define yr_max(x, y) (((x) > (y)) ? (x) : (y))
 
-#define yr_swap(x, y, T) do { T temp = x; x = y; y = temp; } while (0)
+#define yr_swap(x, y, T) \
+  do                     \
+  {                      \
+    T temp = x;          \
+    x = y;               \
+    y = temp;            \
+  } while (0)
 
 #ifdef NDEBUG
 
-#define assertf(expr, msg, ...)  ((void)0)
+#define assertf(expr, msg, ...) ((void) 0)
 
 #else
 
 #include <stdlib.h>
 
-#define assertf(expr, msg, ...) \
-    if(!(expr)) { \
-      fprintf(stderr, "%s:%d: " msg "\n", __FILE__, __LINE__, ##__VA_ARGS__); \
-      abort(); \
-    }
+#define assertf(expr, msg, ...)                                             \
+  if (!(expr))                                                              \
+  {                                                                         \
+    fprintf(stderr, "%s:%d: " msg "\n", __FILE__, __LINE__, ##__VA_ARGS__); \
+    abort();                                                                \
+  }
 
 #endif
 
@@ -127,17 +134,19 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // ensure compatibility with the CHAR_BIT constant used in these definitions.
 
 #define YR_BITARRAY_SET(uchar_array_base, bitnum) \
-          (((uchar_array_base)[(bitnum)/CHAR_BIT]) = \
-            ((uchar_array_base)[(bitnum)/CHAR_BIT] | (1 << ((bitnum) % CHAR_BIT))))
+  (((uchar_array_base)[(bitnum) / CHAR_BIT]) =    \
+       ((uchar_array_base)[(bitnum) / CHAR_BIT] | \
+        (1 << ((bitnum) % CHAR_BIT))))
 
 #define YR_BITARRAY_UNSET(uchar_array_base, bitnum) \
-          (((uchar_array_base)[(bitnum)/CHAR_BIT]) = \
-            ((uchar_array_base)[(bitnum)/CHAR_BIT] & (~(1 << ((bitnum) % CHAR_BIT)))))
+  (((uchar_array_base)[(bitnum) / CHAR_BIT]) =      \
+       ((uchar_array_base)[(bitnum) / CHAR_BIT] &   \
+        (~(1 << ((bitnum) % CHAR_BIT)))))
 
-#define YR_BITARRAY_TEST(uchar_array_base, bitnum) \
-          (((uchar_array_base)[(bitnum)/CHAR_BIT] & (1 << ((bitnum) % CHAR_BIT))) != 0)
+#define YR_BITARRAY_TEST(uchar_array_base, bitnum)                             \
+  (((uchar_array_base)[(bitnum) / CHAR_BIT] & (1 << ((bitnum) % CHAR_BIT))) != \
+   0)
 
-#define YR_BITARRAY_NCHARS(bitnum) \
-          (((bitnum)+(CHAR_BIT-1))/CHAR_BIT)
+#define YR_BITARRAY_NCHARS(bitnum) (((bitnum) + (CHAR_BIT - 1)) / CHAR_BIT)
 
 #endif

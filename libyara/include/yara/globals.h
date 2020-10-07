@@ -46,9 +46,9 @@ extern uint8_t yr_altercase[256];
 #else
 
 #define YR_DEBUG_FPRINTF(VERBOSITY, FORMAT, ...) \
-  if (yr_debug_verbosity >= VERBOSITY) \
-  { \
-      fprintf(FORMAT, __VA_ARGS__); \
+  if (yr_debug_verbosity >= VERBOSITY)           \
+  {                                              \
+    fprintf(FORMAT, __VA_ARGS__);                \
   }
 
 // Default is 0 for production, which means be silent, else verbose.

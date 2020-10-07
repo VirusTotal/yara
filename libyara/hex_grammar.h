@@ -31,10 +31,10 @@
    version 2.2 of Bison.  */
 
 #ifndef YY_HEX_YY_HEX_GRAMMAR_H_INCLUDED
-# define YY_HEX_YY_HEX_GRAMMAR_H_INCLUDED
+#define YY_HEX_YY_HEX_GRAMMAR_H_INCLUDED
 /* Debug traces.  */
 #ifndef YYDEBUG
-# define YYDEBUG 0
+#define YYDEBUG 0
 #endif
 #if YYDEBUG
 extern int hex_yydebug;
@@ -42,21 +42,21 @@ extern int hex_yydebug;
 
 /* Token type.  */
 #ifndef YYTOKENTYPE
-# define YYTOKENTYPE
-  enum yytokentype
-  {
-    _BYTE_ = 258,
-    _MASKED_BYTE_ = 259,
-    _NUMBER_ = 260
-  };
+#define YYTOKENTYPE
+enum yytokentype
+{
+  _BYTE_ = 258,
+  _MASKED_BYTE_ = 259,
+  _NUMBER_ = 260
+};
 #endif
 /* Tokens.  */
-#define _BYTE_ 258
+#define _BYTE_        258
 #define _MASKED_BYTE_ 259
-#define _NUMBER_ 260
+#define _NUMBER_      260
 
 /* Value type.  */
-#if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
+#if !defined YYSTYPE && !defined YYSTYPE_IS_DECLARED
 
 union YYSTYPE
 {
@@ -69,12 +69,11 @@ union YYSTYPE
 };
 
 typedef union YYSTYPE YYSTYPE;
-# define YYSTYPE_IS_TRIVIAL 1
-# define YYSTYPE_IS_DECLARED 1
+#define YYSTYPE_IS_TRIVIAL  1
+#define YYSTYPE_IS_DECLARED 1
 #endif
 
 
-
-int hex_yyparse (void *yyscanner, HEX_LEX_ENVIRONMENT *lex_env);
+int hex_yyparse(void *yyscanner, HEX_LEX_ENVIRONMENT *lex_env);
 
 #endif /* !YY_HEX_YY_HEX_GRAMMAR_H_INCLUDED  */

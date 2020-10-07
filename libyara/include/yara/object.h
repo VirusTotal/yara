@@ -31,7 +31,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define YR_OBJECT_H
 
 #ifdef _MSC_VER
-
 #include <float.h>
 #ifndef isnan
 #define isnan _isnan
@@ -42,24 +41,23 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #endif
 
 #ifndef NAN
-#define NAN (INFINITY-INFINITY)
+#define NAN (INFINITY - INFINITY)
+#endif
 #endif
 
-#endif
-
-#include <yara/utils.h>
-#include <yara/types.h>
 #include <yara/sizedstr.h>
+#include <yara/types.h>
+#include <yara/utils.h>
 
-#define OBJECT_CREATE           1
+#define OBJECT_CREATE 1
 
-#define OBJECT_TYPE_INTEGER     1
-#define OBJECT_TYPE_STRING      2
-#define OBJECT_TYPE_STRUCTURE   3
-#define OBJECT_TYPE_ARRAY       4
-#define OBJECT_TYPE_FUNCTION    5
-#define OBJECT_TYPE_DICTIONARY  6
-#define OBJECT_TYPE_FLOAT       7
+#define OBJECT_TYPE_INTEGER    1
+#define OBJECT_TYPE_STRING     2
+#define OBJECT_TYPE_STRUCTURE  3
+#define OBJECT_TYPE_ARRAY      4
+#define OBJECT_TYPE_FUNCTION   5
+#define OBJECT_TYPE_DICTIONARY 6
+#define OBJECT_TYPE_FLOAT      7
 
 
 int yr_object_create(
@@ -69,9 +67,7 @@ int yr_object_create(
     YR_OBJECT** object);
 
 
-void yr_object_set_canary(
-    YR_OBJECT* object,
-    int canary);
+void yr_object_set_canary(YR_OBJECT* object, int canary);
 
 
 int yr_object_function_create(
@@ -88,18 +84,13 @@ int yr_object_from_external_variable(
     YR_OBJECT** object);
 
 
-void yr_object_destroy(
-    YR_OBJECT* object);
+void yr_object_destroy(YR_OBJECT* object);
 
 
-int yr_object_copy(
-    YR_OBJECT* object,
-    YR_OBJECT** object_copy);
+int yr_object_copy(YR_OBJECT* object, YR_OBJECT** object_copy);
 
 
-YR_OBJECT* yr_object_lookup_field(
-    YR_OBJECT* object,
-    const char* field_name);
+YR_OBJECT* yr_object_lookup_field(YR_OBJECT* object, const char* field_name);
 
 
 YR_OBJECT* yr_object_lookup(
@@ -109,26 +100,18 @@ YR_OBJECT* yr_object_lookup(
     ...) YR_PRINTF_LIKE(3, 4);
 
 
-bool yr_object_has_undefined_value(
-    YR_OBJECT* object,
-    const char* field,
-    ...) YR_PRINTF_LIKE(2, 3);
+bool yr_object_has_undefined_value(YR_OBJECT* object, const char* field, ...)
+    YR_PRINTF_LIKE(2, 3);
 
-double yr_object_get_float(
-    YR_OBJECT* object,
-    const char* field,
-    ...) YR_PRINTF_LIKE(2, 3);
+double yr_object_get_float(YR_OBJECT* object, const char* field, ...)
+    YR_PRINTF_LIKE(2, 3);
 
-int64_t yr_object_get_integer(
-    YR_OBJECT* object,
-    const char* field,
-    ...) YR_PRINTF_LIKE(2, 3);
+int64_t yr_object_get_integer(YR_OBJECT* object, const char* field, ...)
+    YR_PRINTF_LIKE(2, 3);
 
 
-SIZED_STRING* yr_object_get_string(
-    YR_OBJECT* object,
-    const char* field,
-    ...) YR_PRINTF_LIKE(2, 3);
+SIZED_STRING* yr_object_get_string(YR_OBJECT* object, const char* field, ...)
+    YR_PRINTF_LIKE(2, 3);
 
 
 int yr_object_set_integer(
@@ -138,11 +121,8 @@ int yr_object_set_integer(
     ...) YR_PRINTF_LIKE(3, 4);
 
 
-int yr_object_set_float(
-    double value,
-    YR_OBJECT* object,
-    const char* field,
-    ...) YR_PRINTF_LIKE(3, 4);
+int yr_object_set_float(double value, YR_OBJECT* object, const char* field, ...)
+    YR_PRINTF_LIKE(3, 4);
 
 
 int yr_object_set_string(
@@ -153,20 +133,13 @@ int yr_object_set_string(
     ...) YR_PRINTF_LIKE(4, 5);
 
 
-int yr_object_array_length(
-    YR_OBJECT* object);
+int yr_object_array_length(YR_OBJECT* object);
 
 
-YR_OBJECT* yr_object_array_get_item(
-    YR_OBJECT* object,
-    int flags,
-    int index);
+YR_OBJECT* yr_object_array_get_item(YR_OBJECT* object, int flags, int index);
 
 
-int yr_object_array_set_item(
-    YR_OBJECT* object,
-    YR_OBJECT* item,
-    int index);
+int yr_object_array_set_item(YR_OBJECT* object, YR_OBJECT* item, int index);
 
 
 YR_OBJECT* yr_object_dict_get_item(
@@ -181,13 +154,10 @@ int yr_object_dict_set_item(
     const char* key);
 
 
-int yr_object_structure_set_member(
-    YR_OBJECT* object,
-    YR_OBJECT* member);
+int yr_object_structure_set_member(YR_OBJECT* object, YR_OBJECT* member);
 
 
-YR_OBJECT* yr_object_get_root(
-    YR_OBJECT* object);
+YR_OBJECT* yr_object_get_root(YR_OBJECT* object);
 
 
 YR_API void yr_object_print_data(

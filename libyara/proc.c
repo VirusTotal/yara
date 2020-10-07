@@ -28,21 +28,19 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include <yara/error.h>
-#include <yara/proc.h>
-#include <yara/mem.h>
 #include <yara/globals.h>
+#include <yara/mem.h>
+#include <yara/proc.h>
 
 int _yr_process_attach(int, YR_PROC_ITERATOR_CTX*);
 int _yr_process_detach(YR_PROC_ITERATOR_CTX*);
 
-YR_API int yr_process_open_iterator(
-    int pid,
-    YR_MEMORY_BLOCK_ITERATOR* iterator)
+YR_API int yr_process_open_iterator(int pid, YR_MEMORY_BLOCK_ITERATOR* iterator)
 {
   YR_DEBUG_FPRINTF(2, stderr, "+ %s(pid=%d) {}\n", __FUNCTION__, pid);
 
-  YR_PROC_ITERATOR_CTX* context = (YR_PROC_ITERATOR_CTX*) \
-      yr_malloc(sizeof(YR_PROC_ITERATOR_CTX));
+  YR_PROC_ITERATOR_CTX* context = (YR_PROC_ITERATOR_CTX*) yr_malloc(
+      sizeof(YR_PROC_ITERATOR_CTX));
 
   if (context == NULL)
     return ERROR_INSUFFICIENT_MEMORY;
@@ -60,15 +58,13 @@ YR_API int yr_process_open_iterator(
   context->proc_info = NULL;
 
   FAIL_ON_ERROR_WITH_CLEANUP(
-      _yr_process_attach(pid, context),
-      yr_free(context));
+      _yr_process_attach(pid, context), yr_free(context));
 
   return ERROR_SUCCESS;
 }
 
 
-YR_API int yr_process_close_iterator(
-    YR_MEMORY_BLOCK_ITERATOR* iterator)
+YR_API int yr_process_close_iterator(YR_MEMORY_BLOCK_ITERATOR* iterator)
 {
   YR_DEBUG_FPRINTF(2, stderr, "+ %s() {}\n", __FUNCTION__);
 

@@ -30,21 +30,20 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <assert.h>
 #include <stddef.h>
 #include <string.h>
-
-#include <yara/arena.h>
 #include <yara/ahocorasick.h>
+#include <yara/arena.h>
 #include <yara/compiler.h>
 #include <yara/error.h>
-#include <yara/utils.h>
 #include <yara/mem.h>
+#include <yara/utils.h>
 
 
 typedef struct _QUEUE_NODE
 {
   YR_AC_STATE* value;
 
-  struct _QUEUE_NODE*  previous;
-  struct _QUEUE_NODE*  next;
+  struct _QUEUE_NODE* previous;
+  struct _QUEUE_NODE* next;
 
 } QUEUE_NODE;
 
@@ -70,9 +69,7 @@ typedef struct _QUEUE
 //    ERROR_SUCCESS if succeed or the corresponding error code otherwise.
 //
 
-static int _yr_ac_queue_push(
-    QUEUE* queue,
-    YR_AC_STATE* value)
+static int _yr_ac_queue_push(QUEUE* queue, YR_AC_STATE* value)
 {
   QUEUE_NODE* pushed_node;
 
@@ -87,7 +84,7 @@ static int _yr_ac_queue_push(
 
   if (queue->tail != NULL)
     queue->tail->next = pushed_node;
-  else // queue is empty
+  else  // queue is empty
     queue->head = pushed_node;
 
   queue->tail = pushed_node;
@@ -108,8 +105,7 @@ static int _yr_ac_queue_push(
 //    Pointer to the poped state.
 //
 
-static YR_AC_STATE* _yr_ac_queue_pop(
-    QUEUE* queue)
+static YR_AC_STATE* _yr_ac_queue_pop(QUEUE* queue)
 {
   YR_AC_STATE* result;
   QUEUE_NODE* popped_node;
@@ -122,7 +118,7 @@ static YR_AC_STATE* _yr_ac_queue_pop(
 
   if (queue->head)
     queue->head->previous = NULL;
-  else // queue is empty
+  else  // queue is empty
     queue->tail = NULL;
 
   result = popped_node->value;
@@ -144,8 +140,7 @@ static YR_AC_STATE* _yr_ac_queue_pop(
 //    true if queue is empty, false otherwise.
 //
 
-static int _yr_ac_queue_is_empty(
-    QUEUE* queue)
+static int _yr_ac_queue_is_empty(QUEUE* queue)
 {
   return queue->head == NULL;
 }
@@ -165,9 +160,7 @@ static int _yr_ac_queue_is_empty(
 //   Pointer to the next automaton state.
 //
 
-static YR_AC_STATE* _yr_ac_next_state(
-    YR_AC_STATE* state,
-    uint8_t input)
+static YR_AC_STATE* _yr_ac_next_state(YR_AC_STATE* state, uint8_t input)
 {
   YR_AC_STATE* next_state = state->first_child;
 
@@ -197,9 +190,7 @@ static YR_AC_STATE* _yr_ac_next_state(
 //   YR_AC_STATE* pointer to the newly allocated state or NULL in case
 //   of error.
 
-static YR_AC_STATE* _yr_ac_state_create(
-    YR_AC_STATE* state,
-    uint8_t input)
+static YR_AC_STATE* _yr_ac_state_create(YR_AC_STATE* state, uint8_t input)
 {
   YR_AC_STATE* new_state = (YR_AC_STATE*) yr_malloc(sizeof(YR_AC_STATE));
 
@@ -223,8 +214,7 @@ static YR_AC_STATE* _yr_ac_state_create(
 // _yr_ac_state_destroy
 //
 
-static int _yr_ac_state_destroy(
-    YR_AC_STATE* state)
+static int _yr_ac_state_destroy(YR_AC_STATE* state)
 {
   YR_AC_STATE* child_state = state->first_child;
 
@@ -248,8 +238,7 @@ static int _yr_ac_state_destroy(
 // be called after all the strings have been added to the automaton.
 //
 
-static int _yr_ac_create_failure_links(
-    YR_AC_AUTOMATON* automaton)
+static int _yr_ac_create_failure_links(YR_AC_AUTOMATON* automaton)
 {
   YR_AC_STATE* current_state;
   YR_AC_STATE* failure_state;
@@ -285,14 +274,12 @@ static int _yr_ac_create_failure_links(
   while (!_yr_ac_queue_is_empty(&queue))
   {
     current_state = _yr_ac_queue_pop(&queue);
-    match = yr_arena_ref_to_ptr(
-        automaton->arena, &current_state->matches_ref);
+    match = yr_arena_ref_to_ptr(automaton->arena, &current_state->matches_ref);
 
     if (match != NULL)
     {
       // Find the last match in the list of matches.
-      while (match->next != NULL)
-        match = match->next;
+      while (match->next != NULL) match = match->next;
 
       if (match->backtrack > 0)
         match->next = yr_arena_ref_to_ptr(
@@ -315,8 +302,7 @@ static int _yr_ac_create_failure_links(
 
       while (1)
       {
-        temp_state = _yr_ac_next_state(
-            failure_state, transition_state->input);
+        temp_state = _yr_ac_next_state(failure_state, transition_state->input);
 
         if (temp_state != NULL)
         {
@@ -334,8 +320,7 @@ static int _yr_ac_create_failure_links(
             assert(match != NULL);
 
             // Find the last match in the list of matches.
-            while (match->next != NULL)
-              match = match->next;
+            while (match->next != NULL) match = match->next;
 
             match->next = yr_arena_ref_to_ptr(
                 automaton->arena, &temp_state->matches_ref);
@@ -355,12 +340,12 @@ static int _yr_ac_create_failure_links(
             failure_state = failure_state->failure;
           }
         }
-      } // while(1)
+      }  // while(1)
 
       transition_state = transition_state->siblings;
     }
 
-  } // while(!__yr_ac_queue_is_empty(&queue))
+  }  // while(!__yr_ac_queue_is_empty(&queue))
 
   return ERROR_SUCCESS;
 }
@@ -374,9 +359,7 @@ static int _yr_ac_create_failure_links(
 // accepted in s1 too.
 //
 
-static bool _yr_ac_transitions_subset(
-    YR_AC_STATE* s1,
-    YR_AC_STATE* s2)
+static bool _yr_ac_transitions_subset(YR_AC_STATE* s1, YR_AC_STATE* s2)
 {
   uint8_t set[32];
 
@@ -410,10 +393,9 @@ static bool _yr_ac_transitions_subset(
 // Removes unnecessary failure links.
 //
 
-static int _yr_ac_optimize_failure_links(
-    YR_AC_AUTOMATON* automaton)
+static int _yr_ac_optimize_failure_links(YR_AC_AUTOMATON* automaton)
 {
-  QUEUE queue = { NULL, NULL};
+  QUEUE queue = {NULL, NULL};
 
   // Push root's children.
   YR_AC_STATE* root_state = automaton->root;
@@ -497,31 +479,25 @@ static int _yr_ac_find_suitable_transition_table_slot(
 
   if (*slot > automaton->tables_size - 257)
   {
-      FAIL_ON_ERROR(yr_arena_allocate_zeroed_memory(
-          arena,
-          YR_AC_TRANSITION_TABLE,
-          257 * sizeof(YR_AC_TRANSITION),
-          NULL));
+    FAIL_ON_ERROR(yr_arena_allocate_zeroed_memory(
+        arena, YR_AC_TRANSITION_TABLE, 257 * sizeof(YR_AC_TRANSITION), NULL));
 
-      FAIL_ON_ERROR(yr_arena_allocate_zeroed_memory(
-          arena,
-          YR_AC_STATE_MATCHES_TABLE,
-          257 * sizeof(uint8_t*),
-          NULL));
+    FAIL_ON_ERROR(yr_arena_allocate_zeroed_memory(
+        arena, YR_AC_STATE_MATCHES_TABLE, 257 * sizeof(uint8_t*), NULL));
 
-      size_t bm_len = YR_BITMASK_SIZE(automaton->tables_size) *
-           sizeof(YR_BITMASK);
+    size_t bm_len = YR_BITMASK_SIZE(automaton->tables_size) *
+                    sizeof(YR_BITMASK);
 
-      size_t bm_len_incr = YR_BITMASK_SIZE(257) * sizeof(YR_BITMASK);
+    size_t bm_len_incr = YR_BITMASK_SIZE(257) * sizeof(YR_BITMASK);
 
-      automaton->bitmask = yr_realloc(automaton->bitmask, bm_len + bm_len_incr);
+    automaton->bitmask = yr_realloc(automaton->bitmask, bm_len + bm_len_incr);
 
-      if (automaton->bitmask == NULL)
-        return ERROR_INSUFFICIENT_MEMORY;
+    if (automaton->bitmask == NULL)
+      return ERROR_INSUFFICIENT_MEMORY;
 
-      memset((uint8_t*) automaton->bitmask + bm_len, 0, bm_len_incr);
+    memset((uint8_t*) automaton->bitmask + bm_len, 0, bm_len_incr);
 
-      automaton->tables_size += 257;
+    automaton->tables_size += 257;
   }
 
   return ERROR_SUCCESS;
@@ -585,8 +561,7 @@ static int _yr_ac_find_suitable_transition_table_slot(
 //
 // A more detailed description can be found in: http://goo.gl/lE6zG
 
-static int _yr_ac_build_transition_table(
-    YR_AC_AUTOMATON* automaton)
+static int _yr_ac_build_transition_table(YR_AC_AUTOMATON* automaton)
 {
   YR_AC_TRANSITION* t_table;
   uint32_t* m_table;
@@ -596,7 +571,7 @@ static int _yr_ac_build_transition_table(
 
   uint32_t slot;
 
-  QUEUE queue = { NULL, NULL };
+  QUEUE queue = {NULL, NULL};
 
   // Both t_table and m_table have 512 slots initially, which is enough for the
   // root node's transition table.
@@ -722,20 +697,23 @@ static void _yr_ac_print_automaton_state(
   YR_AC_MATCH* match;
   YR_AC_STATE* child_state;
 
-  for (int i = 0; i < state->depth; i++)
-    printf(" ");
+  for (int i = 0; i < state->depth; i++) printf(" ");
 
   child_state = state->first_child;
   child_count = 0;
 
-  while(child_state != NULL)
+  while (child_state != NULL)
   {
     child_count++;
     child_state = child_state->siblings;
   }
 
-  printf("%p childs:%d depth:%d failure:%p",
-         state, child_count, state->depth, state->failure);
+  printf(
+      "%p childs:%d depth:%d failure:%p",
+      state,
+      child_count,
+      state->depth,
+      state->failure);
 
   match = yr_arena_ref_to_ptr(automaton->arena, &state->matches_ref);
 
@@ -743,8 +721,7 @@ static void _yr_ac_print_automaton_state(
   {
     printf("\n");
 
-    for (int i = 0; i < state->depth + 1; i++)
-      printf(" ");
+    for (int i = 0; i < state->depth + 1; i++) printf(" ");
 
     printf("%s = ", match->string->identifier);
 
@@ -783,7 +760,7 @@ static void _yr_ac_print_automaton_state(
 
   child_state = state->first_child;
 
-  while(child_state != NULL)
+  while (child_state != NULL)
   {
     _yr_ac_print_automaton_state(automaton, child_state);
     child_state = child_state->siblings;
@@ -797,9 +774,7 @@ static void _yr_ac_print_automaton_state(
 // Creates a new automaton
 //
 
-int yr_ac_automaton_create(
-    YR_ARENA* arena,
-    YR_AC_AUTOMATON** automaton)
+int yr_ac_automaton_create(YR_ARENA* arena, YR_AC_AUTOMATON** automaton)
 {
   YR_AC_AUTOMATON* new_automaton;
   YR_AC_STATE* root_state;
@@ -839,8 +814,7 @@ int yr_ac_automaton_create(
 // Destroys automaton
 //
 
-int yr_ac_automaton_destroy(
-    YR_AC_AUTOMATON* automaton)
+int yr_ac_automaton_destroy(YR_AC_AUTOMATON* automaton)
 {
   _yr_ac_state_destroy(automaton->root);
 
@@ -927,14 +901,12 @@ int yr_ac_add_string(
 // are written in the provided arena.
 //
 
-int yr_ac_compile(
-    YR_AC_AUTOMATON* automaton,
-    YR_ARENA* arena)
+int yr_ac_compile(YR_AC_AUTOMATON* automaton, YR_ARENA* arena)
 {
   FAIL_ON_ERROR(_yr_ac_create_failure_links(automaton));
   FAIL_ON_ERROR(_yr_ac_optimize_failure_links(automaton));
   FAIL_ON_ERROR(_yr_ac_build_transition_table(automaton));
-  
+
   return ERROR_SUCCESS;
 }
 
@@ -950,4 +922,3 @@ void yr_ac_print_automaton(YR_AC_AUTOMATON* automaton)
   _yr_ac_print_automaton_state(automaton, automaton->root);
   printf("-------------------------------------------------------\n");
 }
-
