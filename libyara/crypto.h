@@ -56,8 +56,9 @@ typedef SHA256_CTX yr_sha256_ctx;
 #define yr_sha256_final(digest, ctx)     SHA256_Final(digest, ctx)
 
 #elif defined(HAVE_WINCRYPT_H)
-#include <wincrypt.h>
 #include <windows.h>
+
+#include <wincrypt.h>
 
 HCRYPTPROV yr_cryptprov;
 
