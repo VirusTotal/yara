@@ -439,8 +439,6 @@ PARSE_ELF_HEADER(64, be);
 
 
 begin_declarations
-  ;
-
   declare_integer("ET_NONE");
   declare_integer("ET_REL");
   declare_integer("ET_EXEC");
@@ -492,14 +490,13 @@ begin_declarations
   declare_integer("ph_entry_size");
 
   begin_struct_array("sections")
-    ;
     declare_integer("type");
     declare_integer("flags");
     declare_integer("address");
     declare_string("name");
     declare_integer("size");
     declare_integer("offset");
-  end_struct_array("sections");
+  end_struct_array("sections")
 
   declare_integer("PT_NULL");
   declare_integer("PT_LOAD");
@@ -562,7 +559,6 @@ begin_declarations
   declare_integer("PF_R");
 
   begin_struct_array("segments")
-    ;
     declare_integer("type");
     declare_integer("flags");
     declare_integer("offset");
@@ -571,27 +567,25 @@ begin_declarations
     declare_integer("file_size");
     declare_integer("memory_size");
     declare_integer("alignment");
-  end_struct_array("segments");
+  end_struct_array("segments")
 
   declare_integer("dynamic_section_entries");
   begin_struct_array("dynamic")
-    ;
     declare_integer("type");
     declare_integer("val");
-  end_struct_array("dynamic");
+  end_struct_array("dynamic")
 
   declare_integer("symtab_entries");
   begin_struct_array("symtab")
-    ;
     declare_string("name");
     declare_integer("value");
     declare_integer("size");
     declare_integer("type");
     declare_integer("bind");
     declare_integer("shndx");
-  end_struct_array("symtab");
+  end_struct_array("symtab")
 
-end_declarations;
+end_declarations
 
 
 int module_initialize(YR_MODULE* module)

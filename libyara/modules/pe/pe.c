@@ -2680,10 +2680,8 @@ define_function(rva_to_offset)
   return_integer(offset);
 }
 
-// Prevent clang-format from messing up indentation
-// clang-format off
-begin_declarations;
 
+begin_declarations
   declare_integer("MACHINE_UNKNOWN");
   declare_integer("MACHINE_AM33");
   declare_integer("MACHINE_AMD64");
@@ -2798,7 +2796,6 @@ begin_declarations;
   declare_integer("RESOURCE_TYPE_HTML");
   declare_integer("RESOURCE_TYPE_MANIFEST");
 
-
   declare_integer("is_pe");
   declare_integer("machine");
   declare_integer("number_of_sections");
@@ -2823,22 +2820,22 @@ begin_declarations;
   declare_integer("section_alignment");
   declare_integer("file_alignment");
 
-  begin_struct("linker_version");
+  begin_struct("linker_version")
     declare_integer("major");
     declare_integer("minor");
   end_struct("linker_version");
 
-  begin_struct("os_version");
+  begin_struct("os_version")
     declare_integer("major");
     declare_integer("minor");
   end_struct("os_version");
 
-  begin_struct("image_version");
+  begin_struct("image_version")
     declare_integer("major");
     declare_integer("minor");
   end_struct("image_version");
 
-  begin_struct("subsystem_version");
+  begin_struct("subsystem_version")
     declare_integer("major");
     declare_integer("minor");
   end_struct("subsystem_version");
@@ -2858,12 +2855,12 @@ begin_declarations;
   declare_integer("size_of_heap_commit");
   declare_integer("loader_flags");
 
-  begin_struct_array("data_directories");
+  begin_struct_array("data_directories")
     declare_integer("virtual_address");
     declare_integer("size");
   end_struct_array("data_directories");
 
-  begin_struct_array("sections");
+  begin_struct_array("sections")
     declare_string("name");
     declare_integer("characteristics");
     declare_integer("virtual_address");
@@ -2876,12 +2873,12 @@ begin_declarations;
     declare_integer("number_of_line_numbers");
   end_struct_array("sections");
 
-  begin_struct("overlay");
+  begin_struct("overlay")
     declare_integer("offset");
     declare_integer("size");
   end_struct("overlay");
 
-  begin_struct("rich_signature");
+  begin_struct("rich_signature")
     declare_integer("offset");
     declare_integer("length");
     declare_integer("key");
@@ -2893,11 +2890,10 @@ begin_declarations;
     declare_function("toolid", "ii", "i", rich_toolid_version);
   end_struct("rich_signature");
 
-  #if defined(HAVE_LIBCRYPTO) || \
-      defined(HAVE_WINCRYPT_H) || \
-      defined(HAVE_COMMONCRYPTO_COMMONCRYPTO_H)
+#if defined(HAVE_LIBCRYPTO) || defined(HAVE_WINCRYPT_H) || \
+    defined(HAVE_COMMONCRYPTO_COMMONCRYPTO_H)
   declare_function("imphash", "", "s", imphash);
-  #endif
+#endif
 
   declare_function("section_index", "s", "i", section_index_name);
   declare_function("section_index", "i", "i", section_index_addr);
@@ -2922,21 +2918,21 @@ begin_declarations;
 
   declare_string("dll_name");
   declare_integer("export_timestamp");
-  begin_struct_array("export_details");
+  begin_struct_array("export_details")
     declare_integer("offset");
     declare_string("name");
     declare_string("forward_name");
     declare_integer("ordinal");
-  end_struct_array("export_details");
+  end_struct_array("export_details")
 
   declare_integer("resource_timestamp");
 
-  begin_struct("resource_version");
+  begin_struct("resource_version")
     declare_integer("major");
     declare_integer("minor");
-  end_struct("resource_version");
+  end_struct("resource_version")
 
-  begin_struct_array("resources");
+  begin_struct_array("resources")
     declare_integer("rva");
     declare_integer("offset");
     declare_integer("length");
@@ -2946,13 +2942,13 @@ begin_declarations;
     declare_string("type_string");
     declare_string("name_string");
     declare_string("language_string");
-  end_struct_array("resources");
+  end_struct_array("resources")
 
   declare_integer("number_of_resources");
   declare_string("pdb_path");
 
-  #if defined(HAVE_LIBCRYPTO) && !defined(BORINGSSL)
-  begin_struct_array("signatures");
+#if defined(HAVE_LIBCRYPTO) && !defined(BORINGSSL)
+  begin_struct_array("signatures")
     declare_string("thumbprint");
     declare_string("issuer");
     declare_string("subject");
@@ -2962,15 +2958,13 @@ begin_declarations;
     declare_integer("not_before");
     declare_integer("not_after");
     declare_function("valid_on", "i", "i", valid_on);
-  end_struct_array("signatures");
+  end_struct_array("signatures")
 
   declare_integer("number_of_signatures");
-  #endif
+#endif
 
   declare_function("rva_to_offset", "i", "i", rva_to_offset);
-
-end_declarations;
-// clang-format on
+end_declarations
 
 
 int module_initialize(YR_MODULE* module)

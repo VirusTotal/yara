@@ -38,8 +38,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // https://source.android.com/devices/tech/dalvik/dex-format
 
 begin_declarations
-  ;
-
   declare_string("DEX_FILE_MAGIC_035");
   declare_string("DEX_FILE_MAGIC_036");
   declare_string("DEX_FILE_MAGIC_037");
@@ -91,7 +89,6 @@ begin_declarations
   declare_integer("TYPE_ANNOTATIONS_DIRECTORY_ITEM");
 
   begin_struct("header")
-    ;
     declare_string("magic");
     declare_integer("checksum");
     declare_string("signature");
@@ -115,43 +112,37 @@ begin_declarations
     declare_integer("class_defs_offset");
     declare_integer("data_size");
     declare_integer("data_offset");
-  end_struct("header");
+  end_struct("header")
 
   begin_struct_array("string_ids")
-    ;
     declare_integer("offset");
     declare_integer("size");
     declare_string("value");
-  end_struct_array("string_ids");
+  end_struct_array("string_ids")
 
   begin_struct_array("type_ids")
-    ;
     declare_integer("descriptor_idx");
-  end_struct_array("type_ids");
+  end_struct_array("type_ids")
 
   begin_struct_array("proto_ids")
-    ;
     declare_integer("shorty_idx");
     declare_integer("return_type_idx");
     declare_integer("parameters_offset");
-  end_struct_array("proto_ids");
+  end_struct_array("proto_ids")
 
   begin_struct_array("field_ids")
-    ;
     declare_integer("class_idx");
     declare_integer("type_idx");
     declare_integer("name_idx");
-  end_struct_array("field_ids");
+  end_struct_array("field_ids")
 
   begin_struct_array("method_ids")
-    ;
     declare_integer("class_idx");
     declare_integer("proto_idx");
     declare_integer("name_idx");
-  end_struct_array("method_ids");
+  end_struct_array("method_ids")
 
   begin_struct_array("class_defs")
-    ;
     declare_integer("class_idx");
     declare_integer("access_flags");
     declare_integer("super_class_idx");
@@ -160,53 +151,46 @@ begin_declarations
     declare_integer("annotations_offset");
     declare_integer("class_data_offset");
     declare_integer("static_values_offset");
-  end_struct_array("class_defs");
+  end_struct_array("class_defs")
 
   begin_struct_array("class_data_item")
-    ;
     declare_integer("static_fields_size");
     declare_integer("instance_fields_size");
     declare_integer("direct_methods_size");
     declare_integer("virtual_methods_size");
-  end_struct_array("class_data_item");
+  end_struct_array("class_data_item")
 
   begin_struct("map_list")
-    ;
     declare_integer("size");
     begin_struct_array("map_item")
-      ;
       declare_integer("type");
       declare_integer("unused");
       declare_integer("size");
       declare_integer("offset");
     end_struct_array("map_item");
-  end_struct("map_list");
+  end_struct("map_list")
 
   declare_integer("number_of_fields");
   begin_struct_array("field")
-    ;
     declare_string("class_name");
     declare_string("name");
     declare_string("proto");
-
     declare_integer("field_idx_diff");
     declare_integer("access_flags");
-  end_struct_array("field");
+  end_struct_array("field")
 
   declare_integer("number_of_methods");
   begin_struct_array("method")
-    ;
     declare_string("class_name");
     declare_string("name");
     declare_string("proto");
     declare_integer("direct");
     declare_integer("virtual");
-
     declare_integer("method_idx_diff");
     declare_integer("access_flags");
     declare_integer("code_off");
+
     begin_struct("code_item")
-      ;
       declare_integer("registers_size");
       declare_integer("ins_size");
       declare_integer("outs_size");
@@ -216,15 +200,12 @@ begin_declarations
       declare_string("insns");
       declare_integer("padding");
       begin_struct("tries")
-        ;
       end_struct("tries");
       begin_struct_array("handlers")
-        ;
       end_struct_array("handlers");
-    end_struct("code_item");
-  end_struct_array("method");
-
-end_declarations;
+    end_struct("code_item")
+  end_struct_array("method")
+end_declarations
 
 // https://android.googlesource.com/platform/dalvik/+/android-4.4.2_r2/libdex/Leb128.cpp
 

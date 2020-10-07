@@ -1010,29 +1010,23 @@ define_function(ep_for_arch_subtype)
 
 
 begin_declarations
-  ;
-
   // Magic constants
-
   declare_integer("MH_MAGIC");
   declare_integer("MH_CIGAM");
   declare_integer("MH_MAGIC_64");
   declare_integer("MH_CIGAM_64");
 
   // Fat magic constants
-
   declare_integer("FAT_MAGIC");
   declare_integer("FAT_CIGAM");
   declare_integer("FAT_MAGIC_64");
   declare_integer("FAT_CIGAM_64");
 
   // 64-bit masks
-
   declare_integer("CPU_ARCH_ABI64");
   declare_integer("CPU_SUBTYPE_LIB64");
 
   // CPU types
-
   declare_integer("CPU_TYPE_MC680X0");
   declare_integer("CPU_TYPE_X86");
   declare_integer("CPU_TYPE_I386");
@@ -1047,7 +1041,6 @@ begin_declarations
   declare_integer("CPU_TYPE_POWERPC64");
 
   // CPU sub-types
-
   declare_integer("CPU_SUBTYPE_INTEL_MODEL_ALL");
   declare_integer("CPU_SUBTYPE_386");
   declare_integer("CPU_SUBTYPE_I386_ALL");
@@ -1103,7 +1096,6 @@ begin_declarations
   declare_integer("CPU_SUBTYPE_POWERPC_970");
 
   // File types
-
   declare_integer("MH_OBJECT");
   declare_integer("MH_EXECUTE");
   declare_integer("MH_FVMLIB");
@@ -1117,7 +1109,6 @@ begin_declarations
   declare_integer("MH_KEXT_BUNDLE");
 
   // Header flags
-
   declare_integer("MH_NOUNDEFS");
   declare_integer("MH_INCRLINK");
   declare_integer("MH_DYLDLINK");
@@ -1146,19 +1137,16 @@ begin_declarations
   declare_integer("MH_APP_EXTENSION_SAFE");
 
   // Segment flags
-
   declare_integer("SG_HIGHVM");
   declare_integer("SG_FVMLIB");
   declare_integer("SG_NORELOC");
   declare_integer("SG_PROTECTED_VERSION_1");
 
   // Section masks
-
   declare_integer("SECTION_TYPE");
   declare_integer("SECTION_ATTRIBUTES");
 
   // Section types
-
   declare_integer("S_REGULAR");
   declare_integer("S_ZEROFILL");
   declare_integer("S_CSTRING_LITERALS");
@@ -1183,7 +1171,6 @@ begin_declarations
   declare_integer("S_THREAD_LOCAL_INIT_FUNCTION_POINTERS");
 
   // Section attributes
-
   declare_integer("S_ATTR_PURE_INSTRUCTIONS");
   declare_integer("S_ATTR_NO_TOC");
   declare_integer("S_ATTR_STRIP_STATIC_SYMS");
@@ -1196,7 +1183,6 @@ begin_declarations
   declare_integer("S_ATTR_LOC_RELOC");
 
   // Header
-
   declare_integer("magic");
   declare_integer("cputype");
   declare_integer("cpusubtype");
@@ -1207,11 +1193,9 @@ begin_declarations
   declare_integer("reserved");
 
   // Segments and nested sections
-
   declare_integer("number_of_segments");
 
   begin_struct_array("segments")
-    ;
     declare_string("segname");
     declare_integer("vmaddr");
     declare_integer("vmsize");
@@ -1221,8 +1205,8 @@ begin_declarations
     declare_integer("initprot");
     declare_integer("nsects");
     declare_integer("flags");
+
     begin_struct_array("sections")
-      ;
       declare_string("sectname");
       declare_string("segname");
       declare_integer("addr");
@@ -1236,34 +1220,28 @@ begin_declarations
       declare_integer("reserved2");
       declare_integer("reserved3");
     end_struct_array("sections");
-  end_struct_array("segments");
+  end_struct_array("segments")
 
   // Entry point and stack size
-
   declare_integer("entry_point");
   declare_integer("stack_size");
 
   // Mach-O fat binary header
-
   declare_integer("fat_magic");
   declare_integer("nfat_arch");
 
   begin_struct_array("fat_arch")
-    ;
     declare_integer("cputype");
     declare_integer("cpusubtype");
     declare_integer("offset");
     declare_integer("size");
     declare_integer("align");
-  end_struct_array("fat_arch");
+  end_struct_array("fat_arch")
 
   // Included Mach-O files (must be same as single file structure above)
-
   begin_struct_array("file")
-    ;
 
     // Single file header
-
     declare_integer("magic");
     declare_integer("cputype");
     declare_integer("cpusubtype");
@@ -1274,11 +1252,9 @@ begin_declarations
     declare_integer("reserved");
 
     // Segments and nested sections
-
     declare_integer("number_of_segments");
 
     begin_struct_array("segments")
-      ;
       declare_string("segname");
       declare_integer("vmaddr");
       declare_integer("vmsize");
@@ -1289,7 +1265,6 @@ begin_declarations
       declare_integer("nsects");
       declare_integer("flags");
       begin_struct_array("sections")
-        ;
         declare_string("sectname");
         declare_string("segname");
         declare_integer("addr");
@@ -1303,23 +1278,20 @@ begin_declarations
         declare_integer("reserved2");
         declare_integer("reserved3");
       end_struct_array("sections");
-    end_struct_array("segments");
+    end_struct_array("segments")
 
     // Entry point and stack size
-
     declare_integer("entry_point");
     declare_integer("stack_size");
 
   end_struct_array("file");
 
   // Mach-O fat binary helper functions
-
   declare_function("file_index_for_arch", "i", "i", file_index_type);
   declare_function("file_index_for_arch", "ii", "i", file_index_subtype);
   declare_function("entry_point_for_arch", "i", "i", ep_for_arch_type);
   declare_function("entry_point_for_arch", "ii", "i", ep_for_arch_subtype);
-
-end_declarations;
+end_declarations
 
 int module_initialize(YR_MODULE* module)
 {

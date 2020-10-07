@@ -607,8 +607,6 @@ define_function(max)
 
 
 begin_declarations
-  ;
-
   declare_float("MEAN_BYTES");
   declare_function("in_range", "fff", "i", in_range);
   declare_function("deviation", "iif", "f", data_deviation);
@@ -623,8 +621,7 @@ begin_declarations
   declare_function("entropy", "s", "f", string_entropy);
   declare_function("min", "ii", "i", min);
   declare_function("max", "ii", "i", max);
-
-end_declarations;
+end_declarations
 
 
 int module_initialize(YR_MODULE* module)
