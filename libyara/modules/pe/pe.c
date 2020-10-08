@@ -572,7 +572,7 @@ static int pe_iterate_resources(
 
   if (yr_le32toh(directory->VirtualAddress) != 0)
   {
-    PIMAGE_RESOURCE_DIRECTORY rsrc_dir;
+    PIMAGE_RESOURCE_DIRECTORY rsrc_dir = NULL;
 
     offset = pe_rva_to_offset(pe, yr_le32toh(directory->VirtualAddress));
 
@@ -4106,9 +4106,16 @@ int module_load(
         if ((context->flags & SCAN_FLAGS_PROCESS_MEMORY) > 0)
         {
           pe->region = yr_process_fetch_memory_region_data(block);
+
           if (pe->region == NULL)
             return ERROR_INSUFFICIENT_MEMORY;
+
+          if (pe->region->block_count == 0)
+              continue;
+
           pe->memory = 1;
+
+          pe_header = pe_get_header(pe->region->blocks[0].context, block->size);
 
           FAIL_ON_ERROR_WITH_CLEANUP(
               yr_hash_table_create(17, &pe->hash_table),
