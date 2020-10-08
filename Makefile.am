@@ -1,5 +1,15 @@
 AM_CFLAGS=-Wall -I$(srcdir)/libyara/include
 
+if GCOV
+
+check:
+	@tests/gcov-summary
+
+MOSTLYCLEANFILES = {cli,tests}/*.gc{no,da,ov}
+AM_CFLAGS+=-O0 -g -ftest-coverage -fprofile-arcs
+
+else
+
 if DEBUG
 AM_CFLAGS+=-g
 endif
@@ -8,6 +18,8 @@ if OPTIMIZATION
 AM_CFLAGS+=-O3
 else
 AM_CFLAGS+=-O0
+endif
+
 endif
 
 if ADDRESS_SANITIZER
@@ -43,7 +55,7 @@ yarac_LDADD = -Llibyara/.libs -lyara
 test_alignment_SOURCES = tests/test-alignment.c
 test_arena_SOURCES = tests/test-arena.c
 test_arena_LDADD = libyara/.libs/libyara.a
-test_atoms_SOURCES = tests/test-atoms.c tests/util.c libyara/atoms.c
+test_atoms_SOURCES = tests/test-atoms.c tests/util.c
 test_atoms_LDADD = libyara/.libs/libyara.a
 test_rules_SOURCES = tests/test-rules.c tests/util.c
 test_rules_LDADD = libyara/.libs/libyara.a
