@@ -38,6 +38,27 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <yara/mem.h>
 #include <yara/proc.h>
 
+#ifndef _WIN64
+
+typedef BOOL(WINAPI* LPFN_ISWOW64PROCESS) (HANDLE, PBOOL);
+
+BOOL _IsWow64()
+{
+    LPFN_ISWOW64PROCESS pIsWow64Process;
+	BOOL isWow64 = FALSE;
+
+	pIsWow64Process = (LPFN_ISWOW64PROCESS)GetProcAddress(
+		GetModuleHandle(TEXT("kernel32")), "IsWow64Process");
+
+	if (pIsWow64Process != NULL && pIsWow64Process(GetCurrentProcess(), &isWow64))
+        return isWow64;
+
+    return FALSE;
+}
+
+#endif
+
+
 typedef struct _YR_PROC_INFO
 {
   HANDLE hProcess;
@@ -236,7 +257,7 @@ YR_API YR_MEMORY_REGION* yr_process_fetch_memory_region_data(
   {
     if (context->buffer != NULL)
       yr_free((void*)context->buffer);
-
+    
     context->buffer = (const uint8_t*)yr_malloc(allocSize);
 
     if (context->buffer != NULL) context->buffer_size = allocSize;
@@ -286,7 +307,8 @@ YR_API void* yr_process_fetch_primary_module_base(
 
 #ifdef _WIN64
 
-  if (NT_SUCCESS(NtQueryInformationProcess(proc_info->hProcess, ProcessWow64Information, &wow64, sizeof(wow64), &rlen)) && wow64)
+  if (NT_SUCCESS(NtQueryInformationProcess(proc_info->hProcess,
+      ProcessWow64Information, &wow64, sizeof(wow64), &rlen)) && wow64)
   {
     if (ReadProcessMemory(
       proc_info->hProcess,
@@ -300,7 +322,8 @@ YR_API void* yr_process_fetch_primary_module_base(
     return base;
   }
 
-  if (NT_SUCCESS(NtQueryInformationProcess(proc_info->hProcess, ProcessBasicInformation, &pbi, sizeof(pbi), &rlen)) && pbi.PebBaseAddress)
+  if (NT_SUCCESS(NtQueryInformationProcess(proc_info->hProcess, 
+      ProcessBasicInformation, &pbi, sizeof(pbi), &rlen)) && pbi.PebBaseAddress)
   {
     if (ReadProcessMemory(
       proc_info->hProcess,
@@ -316,7 +339,17 @@ YR_API void* yr_process_fetch_primary_module_base(
 
 #else
 
-  if (NT_SUCCESS(NtQueryInformationProcess(proc_info->hProcess, ProcessBasicInformation, &pbi, sizeof(pbi), &rlen)) && pbi.PebBaseAddress)
+  if (_IsWow64()) //The pointer is likely to be truncated when running 
+                  //under WOW64, so return NULL to force a brute force
+                  //search unless the target process is also WOW64
+  {
+    if (!NT_SUCCESS(NtQueryInformationProcess(proc_info->hProcess, 
+        ProcessWow64Information, &wow64, sizeof(wow64), &rlen)) || !wow64)
+      return NULL;
+  }
+
+  if (NT_SUCCESS(NtQueryInformationProcess(proc_info->hProcess, 
+      ProcessBasicInformation, &pbi, sizeof(pbi), &rlen)) && pbi.PebBaseAddress)
   {
     if (ReadProcessMemory(
       proc_info->hProcess,
