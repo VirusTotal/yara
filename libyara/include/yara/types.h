@@ -201,6 +201,7 @@ typedef struct YR_MODULE_IMPORT YR_MODULE_IMPORT;
 
 typedef struct YR_MEMORY_BLOCK YR_MEMORY_BLOCK;
 typedef struct YR_MEMORY_BLOCK_ITERATOR YR_MEMORY_BLOCK_ITERATOR;
+typedef struct YR_MEMORY_REGION YR_MEMORY_REGION;
 
 typedef struct YR_MODIFIER YR_MODIFIER;
 
@@ -718,6 +719,13 @@ struct YR_MEMORY_BLOCK_ITERATOR
   // only when they want to report an error.
   int last_error;
 };
+struct YR_MEMORY_REGION {
+  uint8_t block_count;
+  size_t data_size;
+  void* context;
+  YR_MEMORY_BLOCK blocks[32];
+};
+
 
 typedef int (*YR_CALLBACK_FUNC)(
     YR_SCAN_CONTEXT* context,

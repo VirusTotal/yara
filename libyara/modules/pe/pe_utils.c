@@ -133,9 +133,16 @@ int64_t pe_rva_to_offset(PE* pe, uint64_t rva)
   int alignment = 0;
   int rest = 0;
 
-  while (i < yr_min(
-                 yr_le16toh(pe->header->FileHeader.NumberOfSections),
-                 MAX_PE_SECTIONS))
+#if defined(USE_WINDOWS_PROC)
+
+  if (pe->memory > 0)
+  {
+      return rva;
+  }
+
+#endif
+
+  while(i < yr_min(yr_le16toh(pe->header->FileHeader.NumberOfSections), MAX_PE_SECTIONS))
   {
     if (struct_fits_in_pe(pe, section, IMAGE_SECTION_HEADER))
     {

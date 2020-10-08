@@ -30,6 +30,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #if defined(USE_WINDOWS_PROC)
 
 #include <windows.h>
+#include <winternl.h>
+
+#include <yara/mem.h>
 #include <yara/error.h>
 #include <yara/libyara.h>
 #include <yara/mem.h>
@@ -186,6 +189,130 @@ YR_API YR_MEMORY_BLOCK* yr_process_get_first_memory_block(
                                     proc_info->si.lpMinimumApplicationAddress;
 
   return yr_process_get_next_memory_block(iterator);
+}
+
+
+YR_API YR_MEMORY_REGION* yr_process_fetch_memory_region_data(
+  YR_MEMORY_BLOCK* block)
+{
+  SIZE_T read;
+
+  YR_PROC_ITERATOR_CTX* context = (YR_PROC_ITERATOR_CTX*)block->context;
+  YR_PROC_INFO* proc_info = (YR_PROC_INFO*)context->proc_info;
+
+  MEMORY_BASIC_INFORMATION mbi;
+  PVOID address = (PVOID)(context->current_block.base);
+  PVOID allocBase = NULL;
+  SIZE_T allocSize = 0;
+  YR_MEMORY_REGION* region = yr_malloc(sizeof(YR_MEMORY_REGION));
+  region->context = block->context;
+
+  while (address < proc_info->si.lpMaximumApplicationAddress &&
+    VirtualQueryEx(proc_info->hProcess, address, &mbi, sizeof(mbi)) != 0)
+  {
+    // mbi.RegionSize can overflow address while scanning a 64-bit process
+    // with a 32-bit YARA.
+    if ((uint8_t*)address + mbi.RegionSize <= (uint8_t*)address)
+      break;
+        
+    if (allocBase == NULL) allocBase = mbi.AllocationBase;
+    else if (allocBase != mbi.AllocationBase) break;
+
+    if (mbi.State == MEM_COMMIT && ((mbi.Protect & PAGE_NOACCESS) == 0))
+    {
+      allocSize += mbi.RegionSize;
+      if (region->block_count == 32)
+        return NULL;
+      
+      region->blocks[region->block_count].base = (size_t)mbi.BaseAddress;
+      region->blocks[region->block_count].size = mbi.RegionSize;
+      region->block_count++;
+    }
+
+    address = (uint8_t*)address + mbi.RegionSize;
+  }
+
+  if (context->buffer_size < allocSize)
+  {
+    if (context->buffer != NULL)
+      yr_free((void*)context->buffer);
+
+    context->buffer = (const uint8_t*)yr_malloc(allocSize);
+
+    if (context->buffer != NULL) context->buffer_size = allocSize;
+    else
+    {
+      context->buffer_size = 0;
+      return NULL;
+    }
+  }
+
+  region->data_size = allocSize;
+
+  allocSize = 0;
+  for (uint8_t i = 0; i < region->block_count; i++)
+  {
+    if (ReadProcessMemory(
+      proc_info->hProcess,
+      (LPCVOID)region->blocks[i].base,
+      (LPVOID)(context->buffer + allocSize),
+      (SIZE_T)region->blocks[i].size,
+      &read) == FALSE)
+    {
+      return NULL;
+    }
+
+      region->blocks[i].base -= (size_t)allocBase;
+      region->blocks[i].context = (void*)(context->buffer + allocSize);
+      allocSize += region->blocks[i].size;
+  }
+
+  return region;
+}
+
+
+YR_API void* yr_process_fetch_primary_module_base(
+    YR_MEMORY_BLOCK_ITERATOR* iterator)
+{
+  SIZE_T read;
+  PROCESS_BASIC_INFORMATION pbi = { 0 };
+
+  YR_PROC_ITERATOR_CTX* context = (YR_PROC_ITERATOR_CTX*)iterator->context;
+  YR_PROC_INFO* proc_info = (YR_PROC_INFO*)context->proc_info;
+
+  ULONG_PTR wow64 = 0;
+  ULONG rlen = 0;
+  PVOID base = NULL;
+
+  if (NT_SUCCESS(NtQueryInformationProcess(proc_info->hProcess, ProcessWow64Information, &wow64, sizeof(wow64), &rlen)) && wow64)
+  {
+    if (ReadProcessMemory(
+      proc_info->hProcess,
+      (PVOID)((uint8_t*)wow64 + 0x8),
+      (LPVOID)(&base),
+      sizeof(base),
+      &read) == FALSE)
+    {
+      return NULL;
+    }
+    return base;
+  }
+
+  if (NT_SUCCESS(NtQueryInformationProcess(proc_info->hProcess, ProcessBasicInformation, &pbi, sizeof(pbi), &rlen)) && pbi.PebBaseAddress)
+  {
+    if (ReadProcessMemory(
+      proc_info->hProcess,
+      (PVOID)((uint8_t*)pbi.PebBaseAddress + 0x10),
+      (LPVOID)(&base),
+      sizeof(base),
+      &read) == FALSE)
+    {
+      return NULL;
+    }
+    return base;
+  }
+
+  return NULL;
 }
 
 #endif

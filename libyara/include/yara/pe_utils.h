@@ -51,6 +51,8 @@ typedef struct _PE
 {
   const uint8_t* data;
   size_t data_size;
+  YR_MEMORY_REGION* region;
+  int memory;
 
   union
   {
@@ -68,12 +70,41 @@ typedef struct _PE
 
 } PE;
 
-#define fits_in_pe(pe, pointer, size)                                     \
-  ((size_t)(size) <= pe->data_size && (uint8_t*) (pointer) >= pe->data && \
-   (uint8_t*) (pointer) <= pe->data + pe->data_size - (size))
+#define fits_in_pe(pe, pointer, size) \
+(pe->memory ? \
+  ((size_t)size <= pe->region->data_size && \
+    pe->region->block_count > 0 && \
+    (uint8_t*)(pointer) >= (uint8_t*)pe->region->blocks[0].context && \
+    (uint8_t*)(pointer) <= (uint8_t*)pe->region->blocks[0].context + pe->region->data_size - size) : \
+  ((size_t)size <= pe->data_size && \
+    (uint8_t*)(pointer) >= pe->data && \
+    (uint8_t*)(pointer) <= pe->data + pe->data_size - size))
 
 #define struct_fits_in_pe(pe, pointer, struct_type) \
   fits_in_pe(pe, pointer, sizeof(struct_type))
+
+#define get_data_pointer_memory(pe, offset, value, type) \
+for (uint8_t i = 0; i < pe->region->block_count; i++) \
+{ \
+  if (offset > pe->region->blocks[i].base && \
+    offset < pe->region->blocks[i].base + pe->region->blocks[i].size) \
+  { \
+    value = (type)((uint8_t*)pe->region->blocks[i].context + (offset - pe->region->blocks[i].base)); \
+    break; \
+  } \
+}
+
+#define get_data_pointer_memory_with_size(pe, offset, value, type, maxsize) \
+for (uint8_t i = 0; i < pe->region->block_count; i++) \
+{ \
+  if (offset > pe->region->blocks[i].base && \
+    offset < pe->region->blocks[i].base + pe->region->blocks[i].size) \
+  { \
+    value = (type)((uint8_t*)pe->region->blocks[i].context + (offset - pe->region->blocks[i].base)); \
+        maxsize = pe->region->blocks[i].size - (offset - pe->region->blocks[i].base); \
+    break; \
+  } \
+}
 
 PIMAGE_NT_HEADERS32 pe_get_header(const uint8_t* data, size_t data_size);
 

@@ -114,6 +114,12 @@ typedef int (*RESOURCE_CALLBACK_FUNC)(
     const IMAGE_RESOURCE_DIR_STRING_U* lang_string,
     void* cb_data);
 
+YR_API YR_MEMORY_REGION* yr_process_fetch_memory_region_data(
+    YR_MEMORY_BLOCK* block);
+
+YR_API void* yr_process_fetch_primary_module_base(
+    YR_MEMORY_BLOCK_ITERATOR* iterator);
+
 static size_t available_space(PE* pe, void* pointer)
 {
   if ((uint8_t*) pointer < pe->data)
@@ -306,8 +312,14 @@ static void pe_parse_debug_directory(PE* pe)
   {
     int64_t pcv_hdr_offset = 0;
 
-    debug_dir = (PIMAGE_DEBUG_DIRECTORY)(
-        pe->data + debug_dir_offset + i * sizeof(IMAGE_DEBUG_DIRECTORY));
+    if (pe->memory)
+    {
+      get_data_pointer_memory(pe, (debug_dir_offset + i * \
+        sizeof(IMAGE_DEBUG_DIRECTORY)), debug_dir, PIMAGE_DEBUG_DIRECTORY);
+      if (debug_dir == NULL) break;
+    }
+    else debug_dir = (PIMAGE_DEBUG_DIRECTORY) \
+        (pe->data + debug_dir_offset + i * sizeof(IMAGE_DEBUG_DIRECTORY));
 
     if (!struct_fits_in_pe(pe, debug_dir, IMAGE_DEBUG_DIRECTORY))
       break;
@@ -333,7 +345,13 @@ static void pe_parse_debug_directory(PE* pe)
     if (pcv_hdr_offset <= 0)
       continue;
 
-    PCV_HEADER cv_hdr = (PCV_HEADER)(pe->data + pcv_hdr_offset);
+    PCV_HEADER cv_hdr;
+    if (pe->memory)
+    {
+      get_data_pointer_memory(pe, pcv_hdr_offset, cv_hdr, PCV_HEADER);
+      if (cv_hdr == NULL) continue;
+    }
+    else cv_hdr = (PCV_HEADER)(pe->data + pcv_hdr_offset);
 
     if (!struct_fits_in_pe(pe, cv_hdr, CV_HEADER))
       continue;
@@ -561,7 +579,12 @@ static int pe_iterate_resources(
     if (offset < 0)
       return 0;
 
-    rsrc_dir = (PIMAGE_RESOURCE_DIRECTORY)(pe->data + offset);
+    if (pe->memory)
+    {
+      get_data_pointer_memory(pe, offset, rsrc_dir, PIMAGE_RESOURCE_DIRECTORY);
+      if (rsrc_dir == NULL) return 0;
+    }
+    else rsrc_dir = (PIMAGE_RESOURCE_DIRECTORY) (pe->data + offset);
 
     if (struct_fits_in_pe(pe, rsrc_dir, IMAGE_RESOURCE_DIRECTORY))
     {
@@ -583,7 +606,7 @@ static int pe_iterate_resources(
       _pe_iterate_resources(
           pe,
           rsrc_dir,
-          pe->data + offset,
+          (uint8_t*)rsrc_dir,
           0,
           &type,
           &id,
@@ -616,7 +639,12 @@ static void pe_parse_version_info(PIMAGE_RESOURCE_DATA_ENTRY rsrc_data, PE* pe)
   if (version_info_offset < 0)
     return;
 
-  version_info = (PVERSION_INFO)(pe->data + version_info_offset);
+  if (pe->memory)
+  {
+      get_data_pointer_memory(pe, version_info_offset, version_info, PVERSION_INFO);
+      if (version_info == NULL) return;
+  }
+  else version_info = (PVERSION_INFO) (pe->data + version_info_offset);
 
   if (!struct_fits_in_pe(pe, version_info, VERSION_INFO))
     return;
@@ -810,7 +838,13 @@ static IMPORT_FUNCTION* pe_parse_import_descriptor(
 
   if (IS_64BITS_PE(pe))
   {
-    PIMAGE_THUNK_DATA64 thunks64 = (PIMAGE_THUNK_DATA64)(pe->data + offset);
+    PIMAGE_THUNK_DATA64 thunks64;
+    if (pe->memory)
+    {
+      get_data_pointer_memory(pe, offset, thunks64, PIMAGE_THUNK_DATA64);
+      if (thunks64 == NULL) return NULL;
+    }
+    else thunks64 = (PIMAGE_THUNK_DATA64)(pe->data + offset);
 
     while (struct_fits_in_pe(pe, thunks64, IMAGE_THUNK_DATA64) &&
            yr_le64toh(thunks64->u1.Ordinal) != 0 &&
@@ -827,14 +861,24 @@ static IMPORT_FUNCTION* pe_parse_import_descriptor(
 
         if (offset >= 0)
         {
-          PIMAGE_IMPORT_BY_NAME import = (PIMAGE_IMPORT_BY_NAME)(
-              pe->data + offset);
+          PIMAGE_IMPORT_BY_NAME import;
+          size_t imp_size;
+          if (pe->memory)
+          {
+            get_data_pointer_memory_with_size(pe, offset, import, PIMAGE_IMPORT_BY_NAME, imp_size);
+            if (import == NULL) continue;
+          }
+          else
+          {
+            import = (PIMAGE_IMPORT_BY_NAME)(pe->data + offset);
+            imp_size = available_space(pe, import->Name);
+          }
 
           if (struct_fits_in_pe(pe, import, IMAGE_IMPORT_BY_NAME))
           {
             name = (char*) yr_strndup(
                 (char*) import->Name,
-                yr_min(available_space(pe, import->Name), 512));
+                yr_min(imp_size, 512));
           }
         }
       }
@@ -878,7 +922,13 @@ static IMPORT_FUNCTION* pe_parse_import_descriptor(
   }
   else
   {
-    PIMAGE_THUNK_DATA32 thunks32 = (PIMAGE_THUNK_DATA32)(pe->data + offset);
+    PIMAGE_THUNK_DATA32 thunks32;
+    if (pe->memory)
+    {
+      get_data_pointer_memory(pe, offset, thunks32, PIMAGE_THUNK_DATA32);
+      if (thunks32 == NULL) return NULL;
+    }
+    else thunks32 = (PIMAGE_THUNK_DATA32)(pe->data + offset);
 
     while (struct_fits_in_pe(pe, thunks32, IMAGE_THUNK_DATA32) &&
            yr_le32toh(thunks32->u1.Ordinal) != 0 &&
@@ -895,14 +945,24 @@ static IMPORT_FUNCTION* pe_parse_import_descriptor(
 
         if (offset >= 0)
         {
-          PIMAGE_IMPORT_BY_NAME import = (PIMAGE_IMPORT_BY_NAME)(
-              pe->data + offset);
+          PIMAGE_IMPORT_BY_NAME import;
+          size_t imp_size;
+          if (pe->memory)
+          {
+            get_data_pointer_memory_with_size(pe, offset, import, PIMAGE_IMPORT_BY_NAME, imp_size);
+            if (import == NULL) continue;
+          }
+          else
+          {
+            import = (PIMAGE_IMPORT_BY_NAME)(pe->data + offset);
+            imp_size = available_space(pe, import->Name);
+          }
 
           if (struct_fits_in_pe(pe, import, IMAGE_IMPORT_BY_NAME))
           {
             name = (char*) yr_strndup(
                 (char*) import->Name,
-                yr_min(available_space(pe, import->Name), 512));
+                yr_min(imp_size, 512));
           }
         }
       }
@@ -1056,7 +1116,13 @@ static IMPORTED_DLL* pe_parse_imports(PE* pe)
   if (offset < 0)
     return NULL;
 
-  imports = (PIMAGE_IMPORT_DESCRIPTOR)(pe->data + offset);
+  if (pe->memory)
+  {
+    get_data_pointer_memory(pe, offset, imports, PIMAGE_IMPORT_DESCRIPTOR);
+    if (imports == NULL) return NULL;
+  }
+  else imports = (PIMAGE_IMPORT_DESCRIPTOR) \
+      (pe->data + offset);
 
   while (struct_fits_in_pe(pe, imports, IMAGE_IMPORT_DESCRIPTOR) &&
          yr_le32toh(imports->Name) != 0 && num_imports < MAX_PE_IMPORTS)
@@ -1067,9 +1133,20 @@ static IMPORTED_DLL* pe_parse_imports(PE* pe)
     {
       IMPORTED_DLL* imported_dll;
 
-      char* dll_name = (char*) (pe->data + offset);
+      char* dll_name;
+      size_t dll_name_max;
+      if (pe->memory)
+      {
+        get_data_pointer_memory_with_size(pe, offset, dll_name, char*, dll_name_max);
+        if (dll_name == NULL) return NULL;
+      }
+      else
+      {
+        dll_name = (char*)(pe->data + offset);
+        dll_name_max = pe->data_size - (size_t)offset;
+      }
 
-      if (!pe_valid_dll_name(dll_name, pe->data_size - (size_t) offset))
+      if (!pe_valid_dll_name(dll_name, dll_name_max))
       {
         imports++;
         continue;
@@ -1453,7 +1530,12 @@ static void pe_parse_exports(PE* pe)
   export_start = offset;
   export_size = yr_le32toh(directory->Size);
 
-  exports = (PIMAGE_EXPORT_DIRECTORY)(pe->data + offset);
+  if (pe->memory)
+  {
+    get_data_pointer_memory(pe, offset, exports, PIMAGE_EXPORT_DIRECTORY);
+    if (exports == NULL) return;
+  }
+  else exports = (PIMAGE_EXPORT_DIRECTORY) (pe->data + offset);
 
   if (!struct_fits_in_pe(pe, exports, IMAGE_EXPORT_DIRECTORY))
     return;
@@ -1471,9 +1553,17 @@ static void pe_parse_exports(PE* pe)
   if (offset > 0)
   {
     remaining = pe->data_size - (size_t) offset;
-    name_len = strnlen((char*) (pe->data + offset), remaining);
+    char* name;
+    if (pe->memory)
+    {
+      get_data_pointer_memory(pe, offset, name, char*);
+      if (name == NULL) return;
+    }
+    else name = (char*)(pe->data + offset);
+
+    name_len = strnlen(name, remaining);
     set_sized_string(
-        (char*) (pe->data + offset), name_len, pe->object, "dll_name");
+        name, name_len, pe->object, "dll_name");
   }
 
   if (number_of_exports * sizeof(DWORD) > pe->data_size - offset)
@@ -1490,7 +1580,12 @@ static void pe_parse_exports(PE* pe)
         pe->data_size - offset)
       return;
 
-    names = (DWORD*) (pe->data + offset);
+    if (pe->memory)
+    {
+      get_data_pointer_memory(pe, offset, names, DWORD*);
+      if (names == NULL) return;
+    }
+    else names = (DWORD*)(pe->data + offset);
   }
 
   offset = pe_rva_to_offset(pe, yr_le32toh(exports->AddressOfNameOrdinals));
@@ -1498,9 +1593,18 @@ static void pe_parse_exports(PE* pe)
   if (offset < 0)
     return;
 
-  ordinals = (WORD*) (pe->data + offset);
+  if (pe->memory)
+  {
+    get_data_pointer_memory_with_size(pe, offset, ordinals, WORD*, remaining);
+    if (ordinals == NULL) return;
+  }
+  else
+  {
+    ordinals = (WORD*)(pe->data + offset);
+    remaining = available_space(pe, ordinals);
+  }
 
-  if (available_space(pe, ordinals) < sizeof(WORD) * number_of_exports)
+  if (remaining < sizeof(WORD) * number_of_exports)
     return;
 
   offset = pe_rva_to_offset(pe, yr_le32toh(exports->AddressOfFunctions));
@@ -1508,9 +1612,18 @@ static void pe_parse_exports(PE* pe)
   if (offset < 0)
     return;
 
-  function_addrs = (DWORD*) (pe->data + offset);
+  if (pe->memory)
+  {
+    get_data_pointer_memory_with_size(pe, offset, function_addrs, DWORD*, remaining);
+    if (function_addrs == NULL) return;
+  }
+  else
+  {
+    function_addrs = (DWORD*)(pe->data + offset);
+    remaining = available_space(pe, function_addrs);
+  }
 
-  if (available_space(pe, function_addrs) < sizeof(DWORD) * number_of_exports)
+  if (remaining < sizeof(DWORD) * number_of_exports)
     return;
 
   number_of_names = yr_min(
@@ -1558,16 +1671,25 @@ static void pe_parse_exports(PE* pe)
     offset = pe_rva_to_offset(pe, yr_le32toh(function_addrs[i]));
 
     if (offset > export_start && offset < export_start + export_size)
+  {
+    char* name;
+    if (pe->memory)
     {
-      remaining = pe->data_size - (size_t) offset;
-      name_len = strnlen((char*) (pe->data + offset), remaining);
+      get_data_pointer_memory_with_size(pe, offset, name, char*, remaining);
+      if (name == NULL) return;
+    }
+    else
+    {
+      name = (char*)(pe->data + offset);
+      remaining = pe->data_size - (size_t)offset;
+    }
+    name_len = strnlen(name, remaining);
 
-      set_sized_string(
-          (char*) (pe->data + offset),
-          yr_min(name_len, MAX_EXPORT_NAME_LENGTH),
-          pe->object,
-          "export_details[%i].forward_name",
-          exp_sz);
+    set_sized_string(
+        name,
+        yr_min(name_len, MAX_EXPORT_NAME_LENGTH),
+        pe->object,
+        "export_details[%i].forward_name", exp_sz);
     }
     else
     {
@@ -1584,11 +1706,21 @@ static void pe_parse_exports(PE* pe)
 
           if (offset > 0)
           {
-            remaining = pe->data_size - (size_t) offset;
-            name_len = strnlen((char*) (pe->data + offset), remaining);
+            char* name;
+            if (pe->memory)
+            {
+              get_data_pointer_memory_with_size(pe, offset, name, char*, remaining);
+              if (name == NULL) return;
+            }
+            else
+            {
+              name = (char*)(pe->data + offset);
+              remaining = pe->data_size - (size_t)offset;
+            }
+            name_len = strnlen(name, remaining);
 
             set_sized_string(
-                (char*) (pe->data + offset),
+                name,
                 yr_min(name_len, MAX_EXPORT_NAME_LENGTH),
                 pe->object,
                 "export_details[%i].name",
@@ -2311,19 +2443,22 @@ static void pe_parse_header(PE* pe, uint64_t base_address, int flags)
   // RawData + RawOffset of the last section on the physical file
   last_section_end = highest_sec_siz + highest_sec_ofs;
 
-  // For PE files that have overlaid data overlay.offset contains the offset
-  // within the file where the overlay starts and overlay.size contains the
-  // size. If the PE file doesn't have an overlay both fields are 0, if the
-  // file is not a PE file (or is a malformed PE) both fields are YR_UNDEFINED.
-  if (last_section_end && (pe->data_size > last_section_end))
+  if (!pe->memory)
   {
-    set_integer(last_section_end, pe->object, "overlay.offset");
-    set_integer(pe->data_size - last_section_end, pe->object, "overlay.size");
-  }
-  else
-  {
-    set_integer(0, pe->object, "overlay.offset");
-    set_integer(0, pe->object, "overlay.size");
+    // For PE files that have overlaid data overlay.offset contains the offset
+    // within the file where the overlay starts and overlay.size contains the
+    // size. If the PE file doesn't have an overlay both fields are 0, if the
+    // file is not a PE file (or is a malformed PE) both fields are YR_UNDEFINED.
+    if (last_section_end && (pe->data_size > last_section_end))
+    {
+      set_integer(last_section_end, pe->object, "overlay.offset");
+      set_integer(pe->data_size - last_section_end, pe->object, "overlay.size");
+    }
+    else
+    {
+      set_integer(0, pe->object, "overlay.offset");
+      set_integer(0, pe->object, "overlay.size");
+    }
   }
 }
 
@@ -3144,7 +3279,7 @@ define_function(calculate_checksum)
   uint64_t csum = 0;
   size_t csum_offset;
 
-  if (pe == NULL)
+  if (pe == NULL || pe->memory)
     return_integer(YR_UNDEFINED);
 
   csum_offset = ((uint8_t*) &(pe->header->OptionalHeader) +
@@ -3933,10 +4068,21 @@ int module_load(
 
   set_integer(0, module_object, "is_pe");
 
+  PVOID base = NULL;
+
+#if defined(USE_WINDOWS_PROC)
+
+  if ((context->flags & SCAN_FLAGS_PROCESS_MEMORY) > 0)
+    base = yr_process_fetch_primary_module_base(iterator);
+
+#endif
+
   foreach_memory_block(iterator, block)
   {
-    block_data = block->fetch_data(block);
+    if (base && block->base != (uint64_t)base) continue;
 
+    block_data = block->fetch_data(block);
+    
     if (block_data == NULL)
       continue;
 
@@ -3950,15 +4096,40 @@ int module_load(
           !(yr_le16toh(pe_header->FileHeader.Characteristics) & IMAGE_FILE_DLL))
       {
         pe = (PE*) yr_malloc(sizeof(PE));
+        pe->data_size = block->size;
 
         if (pe == NULL)
           return ERROR_INSUFFICIENT_MEMORY;
 
-        FAIL_ON_ERROR_WITH_CLEANUP(
-            yr_hash_table_create(17, &pe->hash_table), yr_free(pe));
+#if defined(USE_WINDOWS_PROC)
+
+        if ((context->flags & SCAN_FLAGS_PROCESS_MEMORY) > 0)
+        {
+          pe->region = yr_process_fetch_memory_region_data(block);
+          if (pe->region == NULL)
+            return ERROR_INSUFFICIENT_MEMORY;
+          pe->memory = 1;
+
+          FAIL_ON_ERROR_WITH_CLEANUP(
+              yr_hash_table_create(17, &pe->hash_table),
+              yr_free(pe->region);  yr_free(pe));
+        }
+        else
+        {
+          FAIL_ON_ERROR_WITH_CLEANUP(
+              yr_hash_table_create(17, &pe->hash_table),
+              yr_free(pe));
+        }
+
+#else
+
+      FAIL_ON_ERROR_WITH_CLEANUP(
+          yr_hash_table_create(17, &pe->hash_table),
+          yr_free(pe));
+
+#endif
 
         pe->data = block_data;
-        pe->data_size = block->size;
         pe->header = pe_header;
         pe->object = module_object;
         pe->resources = 0;
@@ -3968,15 +4139,29 @@ int module_load(
 
         pe_parse_header(pe, block->base, context->flags);
         pe_parse_rich_signature(pe, block->base);
+
+        if (pe->memory) 
+          pe->data_size = pe->region->blocks[pe->region->block_count - 1].base + 
+            pe->region->blocks[pe->region->block_count - 1].size;
+
+        pe_iterate_resources(
+          pe,
+          (RESOURCE_CALLBACK_FUNC)pe_collect_resources,
+          (void*)pe);
+    
+        set_integer(pe->resources, pe->object, "number_of_resources");
+
         pe_parse_debug_directory(pe);
 
-#if defined(HAVE_LIBCRYPTO) && !defined(BORINGSSL)
-        pe_parse_certificates(pe);
-#endif
+        #if defined(HAVE_LIBCRYPTO) && !defined(BORINGSSL)
+        if (!pe->memory) pe_parse_certificates(pe);
+        #endif
 
         pe->imported_dlls = pe_parse_imports(pe);
         pe->delay_imported_dlls = pe_parse_delayed_imports(pe);
         pe_parse_exports(pe);
+
+        if (pe->region != NULL) yr_free(pe->region);
 
         break;
       }
