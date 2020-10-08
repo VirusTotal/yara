@@ -4113,6 +4113,8 @@ int module_load(
           if (pe->region->block_count == 0)
               continue;
 
+          pe->data = pe->region->blocks[0].context;
+          pe->data_size = pe->region->data_size;
           pe->memory = 1;
 
           pe_header = pe_get_header(pe->region->blocks[0].context, block->size);
@@ -4123,20 +4125,20 @@ int module_load(
         }
         else
         {
+          pe->data = block_data;
           FAIL_ON_ERROR_WITH_CLEANUP(
               yr_hash_table_create(17, &pe->hash_table),
               yr_free(pe));
         }
 
 #else
-
+      pe->data = block_data;
       FAIL_ON_ERROR_WITH_CLEANUP(
           yr_hash_table_create(17, &pe->hash_table),
           yr_free(pe));
 
 #endif
 
-        pe->data = block_data;
         pe->header = pe_header;
         pe->object = module_object;
         pe->resources = 0;
@@ -4146,10 +4148,6 @@ int module_load(
 
         pe_parse_header(pe, block->base, context->flags);
         pe_parse_rich_signature(pe, block->base);
-
-        if (pe->memory) 
-          pe->data_size = pe->region->blocks[pe->region->block_count - 1].base + 
-            pe->region->blocks[pe->region->block_count - 1].size;
 
         pe_iterate_resources(
           pe,
@@ -4168,7 +4166,8 @@ int module_load(
         pe->delay_imported_dlls = pe_parse_delayed_imports(pe);
         pe_parse_exports(pe);
 
-        if (pe->region != NULL) yr_free(pe->region);
+        if (pe->region != NULL)
+          yr_free(pe->region);
 
         break;
       }
