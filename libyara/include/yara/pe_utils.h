@@ -86,7 +86,7 @@ typedef struct _PE
 #define get_data_pointer_memory(pe, offset, value, type) \
 for (uint8_t i = 0; i < pe->region->block_count; i++) \
 { \
-  if (offset > pe->region->blocks[i].base && \
+  if (offset >= pe->region->blocks[i].base && \
     offset < pe->region->blocks[i].base + pe->region->blocks[i].size) \
   { \
     value = (type)((uint8_t*)pe->region->blocks[i].context + (offset - pe->region->blocks[i].base)); \
@@ -97,7 +97,7 @@ for (uint8_t i = 0; i < pe->region->block_count; i++) \
 #define get_data_pointer_memory_with_size(pe, offset, value, type, maxsize) \
 for (uint8_t i = 0; i < pe->region->block_count; i++) \
 { \
-  if (offset > pe->region->blocks[i].base && \
+  if (offset >= pe->region->blocks[i].base && \
     offset < pe->region->blocks[i].base + pe->region->blocks[i].size) \
   { \
     value = (type)((uint8_t*)pe->region->blocks[i].context + (offset - pe->region->blocks[i].base)); \
