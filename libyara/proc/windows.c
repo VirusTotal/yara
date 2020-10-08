@@ -284,6 +284,8 @@ YR_API void* yr_process_fetch_primary_module_base(
   ULONG rlen = 0;
   PVOID base = NULL;
 
+#ifdef _WIN64
+
   if (NT_SUCCESS(NtQueryInformationProcess(proc_info->hProcess, ProcessWow64Information, &wow64, sizeof(wow64), &rlen)) && wow64)
   {
     if (ReadProcessMemory(
@@ -311,6 +313,24 @@ YR_API void* yr_process_fetch_primary_module_base(
     }
     return base;
   }
+
+#else
+
+  if (NT_SUCCESS(NtQueryInformationProcess(proc_info->hProcess, ProcessBasicInformation, &pbi, sizeof(pbi), &rlen)) && pbi.PebBaseAddress)
+  {
+    if (ReadProcessMemory(
+      proc_info->hProcess,
+      (PVOID)((uint8_t*)pbi.PebBaseAddress + 0x08),
+      (LPVOID)(&base),
+      sizeof(base),
+      &read) == FALSE)
+    {
+      return NULL;
+    }
+    return base;
+  }
+
+#endif
 
   return NULL;
 }
