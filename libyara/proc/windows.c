@@ -313,8 +313,8 @@ YR_API void* yr_process_fetch_primary_module_base(
     if (ReadProcessMemory(
       proc_info->hProcess,
       (PVOID)((uint8_t*)wow64 + 0x8),
-      (LPVOID)(&base),
-      sizeof(base),
+      (PDWORD)(&base),
+      sizeof(DWORD),
       &read) == FALSE)
     {
       return NULL;
