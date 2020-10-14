@@ -471,7 +471,7 @@ static int _yr_ac_find_suitable_transition_table_slot(
   YR_AC_STATE* child_state = state->first_child;
 
   // Start with all bits set to zero.
-  yr_bitmask_clear_all(state_bitmask);
+  yr_bitmask_clear_all(state_bitmask, sizeof(state_bitmask));
 
   // The first slot in the transition table is for the state's failure link,
   // so the first bit in the bitmask must be set to one.
@@ -934,7 +934,7 @@ int yr_ac_compile(
   FAIL_ON_ERROR(_yr_ac_create_failure_links(automaton));
   FAIL_ON_ERROR(_yr_ac_optimize_failure_links(automaton));
   FAIL_ON_ERROR(_yr_ac_build_transition_table(automaton));
-  
+
   return ERROR_SUCCESS;
 }
 
@@ -950,4 +950,3 @@ void yr_ac_print_automaton(YR_AC_AUTOMATON* automaton)
   _yr_ac_print_automaton_state(automaton, automaton->root);
   printf("-------------------------------------------------------\n");
 }
-

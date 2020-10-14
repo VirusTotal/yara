@@ -121,7 +121,7 @@ int yr_atoms_heuristic_quality(
 
   assert(atom->length <= YR_MAX_ATOM_LENGTH);
 
-  yr_bitmask_clear_all(seen_bytes);
+  yr_bitmask_clear_all(seen_bytes, sizeof(seen_bytes));
 
   for (i = 0; i < atom->length; i++)
   {
