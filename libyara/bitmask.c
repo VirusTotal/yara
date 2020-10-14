@@ -78,24 +78,24 @@ uint32_t yr_bitmask_find_non_colliding_offset(
 
   *off_a = i;
 
-  for (; i <= len_a / YR_BITMASK_SLOT_BITS; i++)
+  for (; i < YR_BITMASK_SIZE(len_a); i++)
   {
     // The slot is filled with 1s, we can safely skip it.
-    if (a[i] == -1L)
+    if (a[i] == UINT64_MAX)
       continue;
 
     for (j = 0; j <= yr_min(len_a, YR_BITMASK_SLOT_BITS - 1); j++)
     {
       bool found = true;
 
-      for (k = 0; k <= len_b / YR_BITMASK_SLOT_BITS; k++)
+      for (k = 0; k < YR_BITMASK_SIZE(len_b); k++)
       {
         YR_BITMASK m = b[k] << j;
 
         if (j > 0 && k > 0)
           m |= b[k - 1] >> (YR_BITMASK_SLOT_BITS - j);
 
-        if ((i + k <= len_a / YR_BITMASK_SLOT_BITS) && (m & a[i + k]) != 0)
+        if ((i + k < YR_BITMASK_SIZE(len_a)) && (m & a[i + k]) != 0)
         {
           found = false;
           break;
