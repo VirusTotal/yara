@@ -33,6 +33,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <yara/limits.h>
 #include <yara/re.h>
 
+#define LOWERCASE_MASK 0x20
+
 #define ATOM_TREE_LEAF  1
 #define ATOM_TREE_AND   2
 #define ATOM_TREE_OR    3
@@ -52,6 +54,7 @@ struct YR_ATOM
   uint8_t length;
   uint8_t bytes[YR_MAX_ATOM_LENGTH];
   uint8_t mask[YR_MAX_ATOM_LENGTH];
+  YR_BITMASK bitmap[YR_MAX_ATOM_LENGTH][YR_BITMAP_SIZE];
 };
 
 struct YR_ATOM_TREE_NODE
