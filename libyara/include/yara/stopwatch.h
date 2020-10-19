@@ -61,7 +61,8 @@ typedef struct _YR_STOPWATCH
 
 typedef struct _YR_STOPWATCH
 {
-  union {
+  union
+  {
     struct timeval tv_start;
     struct timespec ts_start;
   };
@@ -70,14 +71,11 @@ typedef struct _YR_STOPWATCH
 
 #endif
 
-
 // yr_stopwatch_start starts measuring time.
-void yr_stopwatch_start(
-    YR_STOPWATCH* stopwatch);
+void yr_stopwatch_start(YR_STOPWATCH* stopwatch);
 
 // yr_stopwatch_elapsed_ns returns the number of nanoseconds elapsed
 // since the last call to yr_stopwatch_start.
-uint64_t yr_stopwatch_elapsed_ns(
-    YR_STOPWATCH* stopwatch);
+uint64_t yr_stopwatch_elapsed_ns(YR_STOPWATCH* stopwatch);
 
 #endif

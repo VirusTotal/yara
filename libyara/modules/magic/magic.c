@@ -33,9 +33,9 @@ The original idea and inspiration for this module comes from Armin Buescher.
 
 */
 
+#include <magic.h>
 #include <yara/mem.h>
 #include <yara/modules.h>
-#include <magic.h>
 
 #define MODULE_NAME magic
 
@@ -50,7 +50,7 @@ typedef struct
   const char* cached_type;
   const char* cached_mime_type;
 
-} MAGIC_CACHE ;
+} MAGIC_CACHE;
 
 
 static int get_cache(MAGIC_CACHE** cache)
@@ -71,8 +71,8 @@ static int get_cache(MAGIC_CACHE** cache)
 
     if (magic_load((*cache)->magic_cookie, NULL) != 0)
     {
-        magic_close((*cache)->magic_cookie);
-        return ERROR_INTERNAL_FATAL_ERROR;
+      magic_close((*cache)->magic_cookie);
+      return ERROR_INTERNAL_FATAL_ERROR;
     }
 
     (*cache)->cached_type = NULL;
@@ -108,9 +108,7 @@ define_function(magic_mime_type)
       magic_setflags(cache->magic_cookie, MAGIC_MIME_TYPE);
 
       cache->cached_mime_type = magic_buffer(
-          cache->magic_cookie,
-          block_data,
-          block->size);
+          cache->magic_cookie, block_data, block->size);
     }
   }
 
@@ -144,9 +142,7 @@ define_function(magic_type)
       magic_setflags(cache->magic_cookie, 0);
 
       cache->cached_type = magic_buffer(
-          cache->magic_cookie,
-          block_data,
-          block->size);
+          cache->magic_cookie, block_data, block->size);
     }
   }
 
@@ -156,23 +152,19 @@ define_function(magic_type)
   return_string((char*) cache->cached_type);
 }
 
-begin_declarations;
-
+begin_declarations
   declare_function("mime_type", "", "s", magic_mime_type);
   declare_function("type", "", "s", magic_type);
+end_declarations
 
-end_declarations;
 
-
-int module_initialize(
-    YR_MODULE* module)
+int module_initialize(YR_MODULE* module)
 {
   return yr_thread_storage_create(&magic_tls);
 }
 
 
-int module_finalize(
-    YR_MODULE* module)
+int module_finalize(YR_MODULE* module)
 {
   MAGIC_CACHE* cache = (MAGIC_CACHE*) yr_thread_storage_get_value(&magic_tls);
 
@@ -196,8 +188,7 @@ int module_load(
 }
 
 
-int module_unload(
-    YR_OBJECT* module)
+int module_unload(YR_OBJECT* module)
 {
   MAGIC_CACHE* cache = (MAGIC_CACHE*) yr_thread_storage_get_value(&magic_tls);
 

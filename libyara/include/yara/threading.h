@@ -30,8 +30,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef YR_MUTEX_H
 #define YR_MUTEX_H
 
-
-
 #if defined(_WIN32) || defined(__CYGWIN__)
 
 #include <windows.h>

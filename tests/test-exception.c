@@ -27,20 +27,20 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+#include <signal.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
 #include <sys/mman.h>
 #include <sys/wait.h>
-#include <signal.h>
-
+#include <unistd.h>
 #include <yara.h>
+
 #include "util.h"
 
 #define COUNT 128
 char wbuf[1024];
 
-extern char **environ;
+extern char** environ;
 
 int fd;
 uint8_t* mapped_region;
@@ -87,24 +87,24 @@ void setup_rules()
   yr_initialize();
 
   compile_rule(
-      "rule test { strings: $a = \"aaaa\" condition: all of them }",
-      &rules_a);
+      "rule test { strings: $a = \"aaaa\" condition: all of them }", &rules_a);
 
   compile_rule(
       "rule test { strings: $a = { 00 00 00 00 } condition: all of them }",
       &rules_0);
 }
 
-void* crasher_func (void* x)
+void* crasher_func(void* x)
 {
   sleep(1);
-  int *i = 0;
+  int* i = 0;
   puts("crashing process...");
   *i = 0;
   return NULL;
 }
 
-/* Set up a thread that will cause a null pointer dereference after one second */
+/* Set up a thread that will cause a null pointer dereference after one second
+ */
 void setup_crasher()
 {
   pthread_t t;
@@ -129,7 +129,8 @@ int delay_callback(
   return CALLBACK_CONTINUE;
 }
 
-/* Scan a partially backed memory map, raising an exceptions, usually SIGBUS or SIGSEGV. */
+/* Scan a partially backed memory map, raising an exceptions, usually SIGBUS or
+ * SIGSEGV. */
 int test_crash(int handle_exceptions)
 {
   setup_mmap();
@@ -187,7 +188,8 @@ int test_crash_other_thread()
   This tests that SIGUSR1 is not delivered when setting up SIGBUS
   signal handling -- or during SIGBUS signal handling
 */
-int test_blocked_signal() {
+int test_blocked_signal()
+{
   setup_mmap();
   setup_rules();
 
@@ -217,12 +219,12 @@ int test_blocked_signal() {
   return 0;
 }
 
-int reexec(char *program)
+int reexec(char* program)
 {
-  char *argv[] = { program, NULL };
+  char* argv[] = {program, NULL};
   int status;
   int pid = fork();
-  switch(pid)
+  switch (pid)
   {
   case 0:
     return execve(program, argv, environ);
@@ -233,9 +235,9 @@ int reexec(char *program)
   return status;
 }
 
-int main(int argc, char **argv)
+int main(int argc, char** argv)
 {
-  char *op = getenv("TEST_OP");
+  char* op = getenv("TEST_OP");
   if (op == NULL)
   {
     int status;

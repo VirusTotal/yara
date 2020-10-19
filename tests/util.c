@@ -27,17 +27,16 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include <stdio.h>
-#include <unistd.h>
-
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-
-#include <yara.h>
-#include <yara/proc.h>
-#include <yara/globals.h>
 #include "util.h"
+
+#include <fcntl.h>
+#include <stdio.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <unistd.h>
+#include <yara.h>
+#include <yara/globals.h>
+#include <yara/proc.h>
 
 //
 // Global variables used in test cases.
@@ -57,7 +56,7 @@ uint64_t yr_test_count_get_block = 0;
 static YR_MEMORY_BLOCK* _yr_test_single_block_get_first_block(
     YR_MEMORY_BLOCK_ITERATOR* iterator)
 {
-  yr_test_count_get_block ++;
+  yr_test_count_get_block++;
   return (YR_MEMORY_BLOCK*) iterator->context;
 }
 
@@ -65,7 +64,7 @@ static YR_MEMORY_BLOCK* _yr_test_single_block_get_first_block(
 static YR_MEMORY_BLOCK* _yr_test_single_block_get_next_block(
     YR_MEMORY_BLOCK_ITERATOR* iterator)
 {
-  yr_test_count_get_block ++;
+  yr_test_count_get_block++;
   return NULL;
 }
 
@@ -85,45 +84,53 @@ static YR_MEMORY_BLOCK* _yr_test_multi_block_get_next_block(
   YR_MEMORY_BLOCK* result;
   uint64_t overlap;
 
-  yr_test_count_get_block ++;
+  yr_test_count_get_block++;
 
-  if (0 == context->current_block.size) {
+  if (0 == context->current_block.size)
+  {
     overlap = 0;
-    context->current_block.size =
-      (context->buffer_size < yr_test_mem_block_size) ?
-       context->buffer_size :
-       yr_test_mem_block_size;
+    context->current_block.size = (context->buffer_size <
+                                   yr_test_mem_block_size)
+                                      ? context->buffer_size
+                                      : yr_test_mem_block_size;
     result = &context->current_block;
   }
-  else {
+  else
+  {
     overlap = yr_test_mem_block_size_overlap;
-    context->current_block.base +=
-      (0 == context->current_block.base) ?
-       0 :
-       overlap;
-    context->current_block.base +=
-      (context->current_block.base < context->buffer_size) ?
-       yr_test_mem_block_size :
-       0;
-    result = (context->current_block.base < context->buffer_size) ?
-             &context->current_block : NULL;
+    context->current_block.base += (0 == context->current_block.base) ? 0
+                                                                      : overlap;
+    context->current_block.base += (context->current_block.base <
+                                    context->buffer_size)
+                                       ? yr_test_mem_block_size
+                                       : 0;
+    result = (context->current_block.base < context->buffer_size)
+                 ? &context->current_block
+                 : NULL;
     context->current_block.size =
-      ((context->buffer_size - context->current_block.base) < yr_test_mem_block_size) ?
-        context->buffer_size - context->current_block.base + overlap :
-        yr_test_mem_block_size + overlap;
+        ((context->buffer_size - context->current_block.base) <
+         yr_test_mem_block_size)
+            ? context->buffer_size - context->current_block.base + overlap
+            : yr_test_mem_block_size + overlap;
     context->current_block.base -= overlap;
   }
 
-  YR_DEBUG_FPRINTF(2, stderr, "+ %s() {} = %p // "
-      ".base=(0x%" PRIx64" or %" PRId64 ") of "
-      "(0x%lx or %'lu) .size=%'lu, both including %" PRId64 " block overlap%s\n",
-      __FUNCTION__, result,
+  YR_DEBUG_FPRINTF(
+      2,
+      stderr,
+      "+ %s() {} = %p // "
+      ".base=(0x%" PRIx64 " or %" PRId64 ") of "
+      "(0x%lx or %'lu) .size=%'lu, both including %" PRId64
+      " block overlap%s\n",
+      __FUNCTION__,
+      result,
       context->current_block.base,
       context->current_block.base,
       context->buffer_size,
       context->buffer_size,
       context->current_block.size,
-      overlap, overlap ? "" : " (note: 1st block overlap always 0)");
+      overlap,
+      overlap ? "" : " (note: 1st block overlap always 0)");
 
   return result;
 }
@@ -132,11 +139,13 @@ static YR_MEMORY_BLOCK* _yr_test_multi_block_get_next_block(
 static YR_MEMORY_BLOCK* _yr_test_multi_block_get_first_block(
     YR_MEMORY_BLOCK_ITERATOR* iterator)
 {
-  YR_DEBUG_FPRINTF(2, stderr,
+  YR_DEBUG_FPRINTF(
+      2,
+      stderr,
       "+ %s() {} // wrapping _yr_test_multi_block_get_next_block()\n",
       __FUNCTION__);
 
-  yr_test_count_get_block ++;
+  yr_test_count_get_block++;
 
   YR_PROC_ITERATOR_CTX* context = (YR_PROC_ITERATOR_CTX*) iterator->context;
   context->current_block.base = 0;
@@ -150,19 +159,22 @@ static const uint8_t* _yr_test_multi_block_fetch_block_data(
 {
   YR_PROC_ITERATOR_CTX* context = (YR_PROC_ITERATOR_CTX*) block->context;
 
-  #if YR_DEBUG_VERBOSITY > 0
-  uint64_t overlap = context->current_block.base > 0 ?
-      yr_test_mem_block_size_overlap : 0;
-  #endif
-  YR_DEBUG_FPRINTF(2, stderr,
-      "+ %s() {} = %p = %p + 0x%" PRIx64
-      " base including %" PRId64
+#if YR_DEBUG_VERBOSITY > 0
+  uint64_t overlap = context->current_block.base > 0
+                         ? yr_test_mem_block_size_overlap
+                         : 0;
+#endif
+  YR_DEBUG_FPRINTF(
+      2,
+      stderr,
+      "+ %s() {} = %p = %p + 0x%" PRIx64 " base including %" PRId64
       " overlap%s\n",
       __FUNCTION__,
       context->buffer + context->current_block.base - overlap,
       context->buffer,
       context->current_block.base,
-      overlap, overlap ? "" : " (note: 1st block overlap always 0)");
+      overlap,
+      overlap ? "" : " (note: 1st block overlap always 0)");
 
   return context->buffer + context->current_block.base;
 }
@@ -181,13 +193,15 @@ YR_API int _yr_test_single_or_multi_block_scan_mem(
 
   if (yr_test_mem_block_size)
   {
-    YR_DEBUG_FPRINTF(2, stderr,
-      "+ %s(buffer=%p buffer_size=%zu) {}"
-      " // yr_test_mem_block_size=%" PRId64 "\n",
-       __FUNCTION__,
-       buffer,
-       buffer_size,
-       yr_test_mem_block_size);
+    YR_DEBUG_FPRINTF(
+        2,
+        stderr,
+        "+ %s(buffer=%p buffer_size=%zu) {}"
+        " // yr_test_mem_block_size=%" PRId64 "\n",
+        __FUNCTION__,
+        buffer,
+        buffer_size,
+        yr_test_mem_block_size);
 
     context.buffer = buffer;
     context.buffer_size = buffer_size;
@@ -218,7 +232,7 @@ YR_API int _yr_test_single_or_multi_block_scan_mem(
 
 void chdir_if_env_top_srcdir(void)
 {
-  char *top_srcdir = getenv("TOP_SRCDIR");
+  char* top_srcdir = getenv("TOP_SRCDIR");
   if (top_srcdir)
   {
     int result = chdir(top_srcdir);
@@ -239,13 +253,12 @@ int count(
 {
   switch (message)
   {
-    case CALLBACK_MSG_RULE_MATCHING:
-      (*(struct COUNTERS*) user_data).rules_matching++;
-      break;
+  case CALLBACK_MSG_RULE_MATCHING:
+    (*(struct COUNTERS*) user_data).rules_matching++;
+    break;
 
-    case CALLBACK_MSG_RULE_NOT_MATCHING:
-      (*(struct COUNTERS*) user_data).rules_not_matching++;
-
+  case CALLBACK_MSG_RULE_NOT_MATCHING:
+    (*(struct COUNTERS*) user_data).rules_not_matching++;
   }
   return CALLBACK_CONTINUE;
 }
@@ -298,9 +311,7 @@ static void _compiler_callback(
 }
 
 
-int compile_rule(
-    char* string,
-    YR_RULES** rules)
+int compile_rule(char* string, YR_RULES** rules)
 {
   YR_COMPILER* compiler = NULL;
   int result = ERROR_SUCCESS;
@@ -332,7 +343,8 @@ _exit:
 
 typedef struct SCAN_CALLBACK_CTX SCAN_CALLBACK_CTX;
 
-struct SCAN_CALLBACK_CTX {
+struct SCAN_CALLBACK_CTX
+{
   int matches;
   void* module_data;
   size_t module_data_size;
@@ -344,7 +356,7 @@ static int _scan_callback(
     void* message_data,
     void* user_data)
 {
-  SCAN_CALLBACK_CTX* ctx =  (SCAN_CALLBACK_CTX*) user_data;
+  SCAN_CALLBACK_CTX* ctx = (SCAN_CALLBACK_CTX*) user_data;
   YR_MODULE_IMPORT* mi;
 
   switch (message)
@@ -380,14 +392,15 @@ int matches_blob(
 
   if (compile_rule(rule, &rules) != ERROR_SUCCESS)
   {
-    fprintf(stderr, "failed to compile rule << %s >>: %s\n", rule, compile_error);
+    fprintf(
+        stderr, "failed to compile rule << %s >>: %s\n", rule, compile_error);
     exit(EXIT_FAILURE);
   }
 
   SCAN_CALLBACK_CTX ctx = {
-    .matches = 0,
-    .module_data = module_data,
-    .module_data_size = module_data_size,
+      .matches = 0,
+      .module_data = module_data,
+      .module_data_size = module_data_size,
   };
 
   int scan_result = yr_rules_scan_mem(
@@ -405,9 +418,7 @@ int matches_blob(
 }
 
 
-int matches_string(
-    char* rule,
-    char* string)
+int matches_string(char* rule, char* string)
 {
   size_t len = 0;
 
@@ -445,7 +456,8 @@ static int capture_matches(
       yr_string_matches_foreach(context, string, match)
       {
         if (strlen(f->expected) == match->data_length &&
-            strncmp(f->expected, (char*)(match->data), match->data_length) == 0)
+            strncmp(f->expected, (char*) (match->data), match->data_length) ==
+                0)
         {
           f->found++;
         }
@@ -457,16 +469,14 @@ static int capture_matches(
 }
 
 
-int capture_string(
-    char* rule,
-    char* string,
-    char* expected_string)
+int capture_string(char* rule, char* string, char* expected_string)
 {
   YR_RULES* rules;
 
   if (compile_rule(rule, &rules) != ERROR_SUCCESS)
   {
-    fprintf(stderr, "failed to compile rule << %s >>: %s\n", rule, compile_error);
+    fprintf(
+        stderr, "failed to compile rule << %s >>: %s\n", rule, compile_error);
     exit(EXIT_FAILURE);
   }
 
@@ -475,8 +485,14 @@ int capture_string(
   f.found = 0;
   f.expected = expected_string;
 
-  if (yr_rules_scan_mem(rules, (uint8_t*)string, strlen(string), 0,
-                        capture_matches, &f, 0) != ERROR_SUCCESS)
+  if (yr_rules_scan_mem(
+          rules,
+          (uint8_t*) string,
+          strlen(string),
+          0,
+          capture_matches,
+          &f,
+          0) != ERROR_SUCCESS)
   {
     fprintf(stderr, "yr_rules_scan_mem: error\n");
     exit(EXIT_FAILURE);
@@ -488,9 +504,7 @@ int capture_string(
 }
 
 
-int read_file(
-    char* filename,
-    char** buf)
+int read_file(char* filename, char** buf)
 {
   int fd;
 
@@ -521,10 +535,7 @@ _exit:
 }
 
 
-int _assert_atoms(
-    RE_AST* re_ast,
-    int expected_atom_count,
-    atom* expected_atoms)
+int _assert_atoms(RE_AST* re_ast, int expected_atom_count, atom* expected_atoms)
 {
   YR_ATOMS_CONFIG c;
   YR_ATOM_LIST_ITEM* atoms;
@@ -552,7 +563,7 @@ int _assert_atoms(
     }
 
     if (atom->atom.length != expected_atoms->length ||
-       memcmp(atom->atom.bytes, expected_atoms->data, atom->atom.length) != 0)
+        memcmp(atom->atom.bytes, expected_atoms->data, atom->atom.length) != 0)
     {
       exit_code = EXIT_FAILURE;
       break;
@@ -575,10 +586,7 @@ int _assert_atoms(
 }
 
 
-void assert_re_atoms(
-    char* re,
-    int expected_atom_count,
-    atom* expected_atoms)
+void assert_re_atoms(char* re, int expected_atom_count, atom* expected_atoms)
 {
   RE_AST* re_ast;
   RE_ERROR re_error;
@@ -596,10 +604,7 @@ void assert_re_atoms(
 }
 
 
-void assert_hex_atoms(
-    char* hex,
-    int expected_atom_count,
-    atom* expected_atoms)
+void assert_hex_atoms(char* hex, int expected_atom_count, atom* expected_atoms)
 {
   RE_AST* re_ast;
   RE_ERROR re_error;

@@ -14,18 +14,17 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#include <stdio.h>
-#include <stdarg.h>
+
 #include <ctype.h>
+#include <stdarg.h>
+#include <stdio.h>
 #include <time.h>
-
-#include <yara/pe.h>
 #include <yara/dotnet.h>
-#include <yara/modules.h>
 #include <yara/mem.h>
-#include <yara/strutils.h>
-
+#include <yara/modules.h>
+#include <yara/pe.h>
 #include <yara/pe_utils.h>
+#include <yara/strutils.h>
 
 #define MODULE_NAME dotnet
 
@@ -92,18 +91,20 @@ void dotnet_parse_guid(
   char guid[37];
   int i = 0;
 
-  const uint8_t* guid_offset = pe->data + \
-      metadata_root + yr_le32toh(guid_header->Offset);
+  const uint8_t* guid_offset = pe->data + metadata_root +
+                               yr_le32toh(guid_header->Offset);
 
   DWORD guid_size = yr_le32toh(guid_header->Size);
 
   // Limit the number of GUIDs to 16.
-  guid_size =  yr_min(guid_size, 256);
+  guid_size = yr_min(guid_size, 256);
 
   // Parse GUIDs if we have them. GUIDs are 16 bytes each.
   while (guid_size >= 16 && fits_in_pe(pe, guid_offset, 16))
   {
-    sprintf(guid, "%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x",
+    sprintf(
+        guid,
+        "%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x",
         yr_le32toh(*(uint32_t*) guid_offset),
         yr_le16toh(*(uint16_t*) (guid_offset + 4)),
         yr_le16toh(*(uint16_t*) (guid_offset + 6)),
@@ -131,9 +132,7 @@ void dotnet_parse_guid(
 
 // Given an offset into a #US or #Blob stream, parse the entry at that position.
 // The offset is relative to the start of the PE file.
-BLOB_PARSE_RESULT dotnet_parse_blob_entry(
-    PE* pe,
-    const uint8_t* offset)
+BLOB_PARSE_RESULT dotnet_parse_blob_entry(PE* pe, const uint8_t* offset)
 {
   BLOB_PARSE_RESULT result;
 
@@ -184,10 +183,8 @@ BLOB_PARSE_RESULT dotnet_parse_blob_entry(
       return result;
     }
 
-    result.length = ((*offset & 0x1F) << 24) |
-                     (*(offset + 1) << 16) |
-                     (*(offset + 2) << 8) |
-                      *(offset + 3);
+    result.length = ((*offset & 0x1F) << 24) | (*(offset + 1) << 16) |
+                    (*(offset + 2) << 8) | *(offset + 3);
     result.size = 4;
   }
   else
@@ -207,17 +204,15 @@ BLOB_PARSE_RESULT dotnet_parse_blob_entry(
 }
 
 
-void dotnet_parse_us(
-    PE* pe,
-    int64_t metadata_root,
-    PSTREAM_HEADER us_header)
+void dotnet_parse_us(PE* pe, int64_t metadata_root, PSTREAM_HEADER us_header)
 {
   BLOB_PARSE_RESULT blob_result;
   int i = 0;
 
   const uint32_t ush_sz = yr_le32toh(us_header->Size);
 
-  const uint8_t* offset = pe->data + metadata_root + yr_le32toh(us_header->Offset);
+  const uint8_t* offset = pe->data + metadata_root +
+                          yr_le32toh(us_header->Offset);
   const uint8_t* end_of_header = offset + ush_sz;
 
   // Make sure the header size is larger than 0 and its end is not past the
@@ -245,11 +240,11 @@ void dotnet_parse_us(
     if (blob_result.length > 0 && fits_in_pe(pe, offset, blob_result.length))
     {
       set_sized_string(
-         (char*) offset,
-         blob_result.length,
-         pe->object,
-         "user_strings[%i]",
-         i);
+          (char*) offset,
+          blob_result.length,
+          pe->object,
+          "user_strings[%i]",
+          i);
 
       offset += blob_result.length;
       i++;
@@ -269,14 +264,14 @@ STREAMS dotnet_parse_stream_headers(
   PSTREAM_HEADER stream_header;
   STREAMS headers;
 
-  char *start;
-  char *eos;
+  char* start;
+  char* eos;
   char stream_name[DOTNET_STREAM_NAME_SIZE + 1];
   unsigned int i;
 
   memset(&headers, '\0', sizeof(STREAMS));
 
-  stream_header = (PSTREAM_HEADER) (pe->data + offset);
+  stream_header = (PSTREAM_HEADER)(pe->data + offset);
 
   for (i = 0; i < num_streams; i++)
   {
@@ -296,13 +291,15 @@ STREAMS dotnet_parse_stream_headers(
     strncpy(stream_name, stream_header->Name, DOTNET_STREAM_NAME_SIZE);
     stream_name[DOTNET_STREAM_NAME_SIZE] = '\0';
 
-    set_string(stream_name,
-        pe->object, "streams[%i].name", i);
+    set_string(stream_name, pe->object, "streams[%i].name", i);
     // Offset is relative to metadata_root.
-    set_integer(metadata_root + yr_le32toh(stream_header->Offset),
-        pe->object, "streams[%i].offset", i);
-    set_integer(yr_le32toh(stream_header->Size),
-        pe->object, "streams[%i].size", i);
+    set_integer(
+        metadata_root + yr_le32toh(stream_header->Offset),
+        pe->object,
+        "streams[%i].offset",
+        i);
+    set_integer(
+        yr_le32toh(stream_header->Size), pe->object, "streams[%i].size", i);
 
     // Store necessary bits to parse these later. Not all tables will be
     // parsed, but are referenced from others. For example, the #Strings
@@ -314,7 +311,8 @@ STREAMS dotnet_parse_stream_headers(
     // tables and they do not interfere with anything we parse in this module.
 
     if ((strncmp(stream_name, "#~", 2) == 0 ||
-         strncmp(stream_name, "#-", 2) == 0) && headers.tilde == NULL)
+         strncmp(stream_name, "#-", 2) == 0) &&
+        headers.tilde == NULL)
       headers.tilde = stream_header;
     else if (strncmp(stream_name, "#GUID", 5) == 0)
       headers.guid = stream_header;
@@ -326,9 +324,8 @@ STREAMS dotnet_parse_stream_headers(
       headers.us = stream_header;
 
     // Stream name is padded to a multiple of 4.
-    stream_header = (PSTREAM_HEADER) ((uint8_t*) stream_header +
-        sizeof(STREAM_HEADER) +
-        strlen(stream_name) +
+    stream_header = (PSTREAM_HEADER)(
+        (uint8_t*) stream_header + sizeof(STREAM_HEADER) + strlen(stream_name) +
         4 - (strlen(stream_name) % 4));
   }
 
@@ -367,7 +364,7 @@ void dotnet_parse_tilde_2(
   PCONSTANT_TABLE constant_table;
   DWORD resource_size, implementation;
 
-  char *name;
+  char* name;
   char typelib[MAX_TYPELIB_SIZE + 1];
   unsigned int i;
   int bit_check;
@@ -432,10 +429,12 @@ void dotnet_parse_tilde_2(
   table_offset = (uint8_t*) row_offset;
   table_offset += sizeof(uint32_t) * valid_rows;
 
-#define DOTNET_STRING_INDEX(Name) \
-  index_sizes.string == 2 ? yr_le16toh(Name.Name_Short) : yr_le32toh(Name.Name_Long)
+#define DOTNET_STRING_INDEX(Name)                       \
+  index_sizes.string == 2 ? yr_le16toh(Name.Name_Short) \
+                          : yr_le32toh(Name.Name_Long)
 
-  string_offset = pe->data + metadata_root + yr_le32toh(streams->string->Offset);
+  string_offset = pe->data + metadata_root +
+                  yr_le32toh(streams->string->Offset);
 
   // Now walk again this time parsing out what we care about.
   for (bit_check = 0; bit_check < 64; bit_check++)
@@ -464,129 +463,237 @@ void dotnet_parse_tilde_2(
 
     switch (bit_check)
     {
-      case BIT_MODULE:
-        module_table = (PMODULE_TABLE) table_offset;
+    case BIT_MODULE:
+      module_table = (PMODULE_TABLE) table_offset;
 
-        name = pe_get_dotnet_string(pe,
-            string_offset,
-            DOTNET_STRING_INDEX(module_table->Name));
+      name = pe_get_dotnet_string(
+          pe, string_offset, DOTNET_STRING_INDEX(module_table->Name));
 
-        if (name != NULL)
-          set_string(name, pe->object, "module_name");
+      if (name != NULL)
+        set_string(name, pe->object, "module_name");
 
-        table_offset += (
-            2 + index_sizes.string + (index_sizes.guid * 3)) * num_rows;
+      table_offset += (2 + index_sizes.string + (index_sizes.guid * 3)) *
+                      num_rows;
 
-        break;
+      break;
 
-      case BIT_TYPEREF:
-        row_count = max_rows(4,
-            yr_le32toh(rows.module),
-            yr_le32toh(rows.moduleref),
-            yr_le32toh(rows.assemblyref),
-            yr_le32toh(rows.typeref));
+    case BIT_TYPEREF:
+      row_count = max_rows(
+          4,
+          yr_le32toh(rows.module),
+          yr_le32toh(rows.moduleref),
+          yr_le32toh(rows.assemblyref),
+          yr_le32toh(rows.typeref));
 
-        if (row_count > (0xFFFF >> 0x02))
-          index_size = 4;
+      if (row_count > (0xFFFF >> 0x02))
+        index_size = 4;
+      else
+        index_size = 2;
+
+      row_size = (index_size + (index_sizes.string * 2));
+      typeref_row_size = row_size;
+      typeref_ptr = table_offset;
+      table_offset += row_size * num_rows;
+      break;
+
+    case BIT_TYPEDEF:
+      row_count = max_rows(
+          3,
+          yr_le32toh(rows.typedef_),
+          yr_le32toh(rows.typeref),
+          yr_le32toh(rows.typespec));
+
+      if (row_count > (0xFFFF >> 0x02))
+        index_size = 4;
+      else
+        index_size = 2;
+
+      table_offset += (4 + (index_sizes.string * 2) + index_size +
+                       index_sizes.field + index_sizes.methoddef) *
+                      num_rows;
+      break;
+
+    case BIT_FIELDPTR:
+      // This one is not documented in ECMA-335.
+      table_offset += (index_sizes.field) * num_rows;
+      break;
+
+    case BIT_FIELD:
+      table_offset += (2 + (index_sizes.string) + index_sizes.blob) * num_rows;
+      break;
+
+    case BIT_METHODDEFPTR:
+      // This one is not documented in ECMA-335.
+      table_offset += (index_sizes.methoddef) * num_rows;
+      break;
+
+    case BIT_METHODDEF:
+      table_offset += (4 + 2 + 2 + index_sizes.string + index_sizes.blob +
+                       index_sizes.param) *
+                      num_rows;
+      break;
+
+    case BIT_PARAM:
+      table_offset += (2 + 2 + index_sizes.string) * num_rows;
+      break;
+
+    case BIT_INTERFACEIMPL:
+      row_count = max_rows(
+          3,
+          yr_le32toh(rows.typedef_),
+          yr_le32toh(rows.typeref),
+          yr_le32toh(rows.typespec));
+
+      if (row_count > (0xFFFF >> 0x02))
+        index_size = 4;
+      else
+        index_size = 2;
+
+      table_offset += (index_sizes.typedef_ + index_size) * num_rows;
+      break;
+
+    case BIT_MEMBERREF:
+      row_count = max_rows(
+          4,
+          yr_le32toh(rows.methoddef),
+          yr_le32toh(rows.moduleref),
+          yr_le32toh(rows.typeref),
+          yr_le32toh(rows.typespec));
+
+      if (row_count > (0xFFFF >> 0x03))
+        index_size = 4;
+      else
+        index_size = 2;
+
+      row_size = (index_size + index_sizes.string + index_sizes.blob);
+      memberref_row_size = row_size;
+      memberref_ptr = table_offset;
+      table_offset += row_size * num_rows;
+      break;
+
+    case BIT_CONSTANT:
+      row_count = max_rows(
+          3,
+          yr_le32toh(rows.param),
+          yr_le32toh(rows.field),
+          yr_le32toh(rows.property));
+
+      if (row_count > (0xFFFF >> 0x02))
+        index_size = 4;
+      else
+        index_size = 2;
+
+      // Using 'i' is insufficent since we may skip certain constants and
+      // it would give an inaccurate count in that case.
+      counter = 0;
+      row_size = (1 + 1 + index_size + index_sizes.blob);
+      row_ptr = table_offset;
+
+      for (i = 0; i < num_rows; i++)
+      {
+        if (!fits_in_pe(pe, row_ptr, row_size))
+          break;
+
+        constant_table = (PCONSTANT_TABLE) row_ptr;
+
+        // Only look for constants of type string.
+        if (yr_le32toh(constant_table->Type) != ELEMENT_TYPE_STRING)
+        {
+          row_ptr += row_size;
+          continue;
+        }
+
+        // Get the blob offset and pull it out of the blob table.
+        blob_offset = ((uint8_t*) constant_table) + 2 + index_size;
+
+        if (index_sizes.blob == 4)
+          blob_index = *(DWORD*) blob_offset;
         else
-          index_size = 2;
+          // Cast the value (index into blob table) to a 32bit value.
+          blob_index = (DWORD)(*(WORD*) blob_offset);
 
-        row_size = (index_size + (index_sizes.string * 2));
-        typeref_row_size = row_size;
-        typeref_ptr = table_offset;
-        table_offset += row_size * num_rows;
-        break;
+        // Everything checks out. Make sure the index into the blob field
+        // is valid (non-null and within range).
+        blob_offset = pe->data + metadata_root +
+                      yr_le32toh(streams->blob->Offset) + blob_index;
 
-      case BIT_TYPEDEF:
-        row_count = max_rows(3,
-            yr_le32toh(rows.typedef_),
-            yr_le32toh(rows.typeref),
-            yr_le32toh(rows.typespec));
+        blob_result = dotnet_parse_blob_entry(pe, blob_offset);
 
-        if (row_count > (0xFFFF >> 0x02))
-          index_size = 4;
-        else
-          index_size = 2;
+        if (blob_result.size == 0)
+        {
+          row_ptr += row_size;
+          continue;
+        }
 
-        table_offset += (
-            4 + (index_sizes.string * 2) + index_size +
-            index_sizes.field + index_sizes.methoddef) * num_rows;
-        break;
+        blob_length = blob_result.length;
+        blob_offset += blob_result.size;
 
-      case BIT_FIELDPTR:
-        // This one is not documented in ECMA-335.
-        table_offset += (index_sizes.field) * num_rows;
-        break;
+        // Quick sanity check to make sure the blob entry is within bounds.
+        if (blob_offset + blob_length >= pe->data + pe->data_size)
+        {
+          row_ptr += row_size;
+          continue;
+        }
 
-      case BIT_FIELD:
-        table_offset += (
-            2 + (index_sizes.string) + index_sizes.blob) * num_rows;
-        break;
+        set_sized_string(
+            (char*) blob_offset,
+            blob_result.length,
+            pe->object,
+            "constants[%i]",
+            counter);
 
-      case BIT_METHODDEFPTR:
-        // This one is not documented in ECMA-335.
-        table_offset += (index_sizes.methoddef) * num_rows;
-        break;
+        counter++;
+        row_ptr += row_size;
+      }
 
-      case BIT_METHODDEF:
-        table_offset += (
-            4 + 2 + 2 +
-            index_sizes.string +
-            index_sizes.blob +
-            index_sizes.param) * num_rows;
-        break;
+      set_integer(counter, pe->object, "number_of_constants");
+      table_offset += row_size * num_rows;
+      break;
 
-      case BIT_PARAM:
-        table_offset += (2 + 2 + index_sizes.string) * num_rows;
-        break;
+    case BIT_CUSTOMATTRIBUTE:
+      // index_size is size of the parent column.
+      row_count = max_rows(
+          21,
+          yr_le32toh(rows.methoddef),
+          yr_le32toh(rows.field),
+          yr_le32toh(rows.typeref),
+          yr_le32toh(rows.typedef_),
+          yr_le32toh(rows.param),
+          yr_le32toh(rows.interfaceimpl),
+          yr_le32toh(rows.memberref),
+          yr_le32toh(rows.module),
+          yr_le32toh(rows.property),
+          yr_le32toh(rows.event),
+          yr_le32toh(rows.standalonesig),
+          yr_le32toh(rows.moduleref),
+          yr_le32toh(rows.typespec),
+          yr_le32toh(rows.assembly),
+          yr_le32toh(rows.assemblyref),
+          yr_le32toh(rows.file),
+          yr_le32toh(rows.exportedtype),
+          yr_le32toh(rows.manifestresource),
+          yr_le32toh(rows.genericparam),
+          yr_le32toh(rows.genericparamconstraint),
+          yr_le32toh(rows.methodspec));
 
-      case BIT_INTERFACEIMPL:
-        row_count = max_rows(3,
-            yr_le32toh(rows.typedef_),
-            yr_le32toh(rows.typeref),
-            yr_le32toh(rows.typespec));
+      if (row_count > (0xFFFF >> 0x05))
+        index_size = 4;
+      else
+        index_size = 2;
 
-        if (row_count > (0xFFFF >> 0x02))
-          index_size = 4;
-        else
-          index_size = 2;
+      // index_size2 is size of the type column.
+      row_count = max_rows(
+          2, yr_le32toh(rows.methoddef), yr_le32toh(rows.memberref));
 
-        table_offset += (index_sizes.typedef_ + index_size) * num_rows;
-        break;
+      if (row_count > (0xFFFF >> 0x03))
+        index_size2 = 4;
+      else
+        index_size2 = 2;
 
-      case BIT_MEMBERREF:
-        row_count = max_rows(4,
-            yr_le32toh(rows.methoddef),
-            yr_le32toh(rows.moduleref),
-            yr_le32toh(rows.typeref),
-            yr_le32toh(rows.typespec));
+      row_size = (index_size + index_size2 + index_sizes.blob);
 
-        if (row_count > (0xFFFF >> 0x03))
-          index_size = 4;
-        else
-          index_size = 2;
-
-        row_size = (index_size + index_sizes.string + index_sizes.blob);
-        memberref_row_size = row_size;
-        memberref_ptr = table_offset;
-        table_offset += row_size * num_rows;
-        break;
-
-      case BIT_CONSTANT:
-        row_count = max_rows(3,
-            yr_le32toh(rows.param),
-            yr_le32toh(rows.field),
-            yr_le32toh(rows.property));
-
-        if (row_count > (0xFFFF >> 0x02))
-          index_size = 4;
-        else
-          index_size = 2;
-
-        // Using 'i' is insufficent since we may skip certain constants and
-        // it would give an inaccurate count in that case.
-        counter = 0;
-        row_size = (1 + 1 + index_size + index_sizes.blob);
+      if (typeref_ptr != NULL && memberref_ptr != NULL)
+      {
         row_ptr = table_offset;
 
         for (i = 0; i < num_rows; i++)
@@ -594,29 +701,164 @@ void dotnet_parse_tilde_2(
           if (!fits_in_pe(pe, row_ptr, row_size))
             break;
 
-          constant_table = (PCONSTANT_TABLE) row_ptr;
+          // Check the Parent field.
+          customattribute_table = (PCUSTOMATTRIBUTE_TABLE) row_ptr;
 
-          // Only look for constants of type string.
-          if (yr_le32toh(constant_table->Type) != ELEMENT_TYPE_STRING)
+          if (index_size == 4)
+          {
+            // Low 5 bits tell us what this is an index into. Remaining bits
+            // tell us the index value.
+            // Parent must be an index into the Assembly (0x0E) table.
+            if ((*(DWORD*) customattribute_table & 0x1F) != 0x0E)
+            {
+              row_ptr += row_size;
+              continue;
+            }
+          }
+          else
+          {
+            // Low 5 bits tell us what this is an index into. Remaining bits
+            // tell us the index value.
+            // Parent must be an index into the Assembly (0x0E) table.
+            if ((*(WORD*) customattribute_table & 0x1F) != 0x0E)
+            {
+              row_ptr += row_size;
+              continue;
+            }
+          }
+
+          // Check the Type field.
+          customattribute_table = (PCUSTOMATTRIBUTE_TABLE)(
+              row_ptr + index_size);
+
+          if (index_size2 == 4)
+          {
+            // Low 3 bits tell us what this is an index into. Remaining bits
+            // tell us the index value. Only values 2 and 3 are defined.
+            // Type must be an index into the MemberRef table.
+            if ((*(DWORD*) customattribute_table & 0x07) != 0x03)
+            {
+              row_ptr += row_size;
+              continue;
+            }
+
+            type_index = *(DWORD*) customattribute_table >> 3;
+          }
+          else
+          {
+            // Low 3 bits tell us what this is an index into. Remaining bits
+            // tell us the index value. Only values 2 and 3 are defined.
+            // Type must be an index into the MemberRef table.
+            if ((*(WORD*) customattribute_table & 0x07) != 0x03)
+            {
+              row_ptr += row_size;
+              continue;
+            }
+
+            // Cast the index to a 32bit value.
+            type_index = (DWORD)((*(WORD*) customattribute_table >> 3));
+          }
+
+          if (type_index > 0)
+            type_index--;
+
+          // Now follow the Type index into the MemberRef table.
+          memberref_row = memberref_ptr + (memberref_row_size * type_index);
+
+          if (!fits_in_pe(pe, memberref_row, memberref_row_size))
+            break;
+
+          if (index_sizes.memberref == 4)
+          {
+            // Low 3 bits tell us what this is an index into. Remaining bits
+            // tell us the index value. Class must be an index into the
+            // TypeRef table.
+            if ((*(DWORD*) memberref_row & 0x07) != 0x01)
+            {
+              row_ptr += row_size;
+              continue;
+            }
+
+            class_index = *(DWORD*) memberref_row >> 3;
+          }
+          else
+          {
+            // Low 3 bits tell us what this is an index into. Remaining bits
+            // tell us the index value. Class must be an index into the
+            // TypeRef table.
+            if ((*(WORD*) memberref_row & 0x07) != 0x01)
+            {
+              row_ptr += row_size;
+              continue;
+            }
+
+            // Cast the index to a 32bit value.
+            class_index = (DWORD)(*(WORD*) memberref_row >> 3);
+          }
+
+          if (class_index > 0)
+            class_index--;
+
+          // Now follow the Class index into the TypeRef table.
+          typeref_row = typeref_ptr + (typeref_row_size * class_index);
+
+          if (!fits_in_pe(pe, typeref_row, typeref_row_size))
+            break;
+
+          // Skip over the ResolutionScope and check the Name field,
+          // which is an index into the Strings heap.
+          row_count = max_rows(
+              4,
+              yr_le32toh(rows.module),
+              yr_le32toh(rows.moduleref),
+              yr_le32toh(rows.assemblyref),
+              yr_le32toh(rows.typeref));
+
+          if (row_count > (0xFFFF >> 0x02))
+            typeref_row += 4;
+          else
+            typeref_row += 2;
+
+          if (index_sizes.string == 4)
+          {
+            name = pe_get_dotnet_string(
+                pe, string_offset, *(DWORD*) typeref_row);
+          }
+          else
+          {
+            name = pe_get_dotnet_string(
+                pe, string_offset, *(WORD*) typeref_row);
+          }
+
+          if (name != NULL && strncmp(name, "GuidAttribute", 13) != 0)
           {
             row_ptr += row_size;
             continue;
           }
 
-          // Get the blob offset and pull it out of the blob table.
-          blob_offset = ((uint8_t*) constant_table) + 2 + index_size;
+          // Get the Value field.
+          customattribute_table = (PCUSTOMATTRIBUTE_TABLE)(
+              row_ptr + index_size + index_size2);
 
           if (index_sizes.blob == 4)
-            blob_index = *(DWORD*) blob_offset;
+            blob_index = *(DWORD*) customattribute_table;
           else
             // Cast the value (index into blob table) to a 32bit value.
-            blob_index = (DWORD) (*(WORD*) blob_offset);
+            blob_index = (DWORD)(*(WORD*) customattribute_table);
 
           // Everything checks out. Make sure the index into the blob field
           // is valid (non-null and within range).
-          blob_offset = \
-              pe->data + metadata_root +
-              yr_le32toh(streams->blob->Offset) + blob_index;
+          blob_offset = pe->data + metadata_root +
+                        yr_le32toh(streams->blob->Offset) + blob_index;
+
+          // If index into blob is 0 or past the end of the blob stream, skip
+          // it. We don't know the size of the blob entry yet because that is
+          // encoded in the start.
+          if (blob_index == 0x00 || blob_offset >= pe->data + pe->data_size)
+          {
+            row_ptr += row_size;
+            continue;
+          }
 
           blob_result = dotnet_parse_blob_entry(pe, blob_offset);
 
@@ -636,784 +878,565 @@ void dotnet_parse_tilde_2(
             continue;
           }
 
+          // Custom attributes MUST have a 16 bit prolog of 0x0001
+          if (*(WORD*) blob_offset != 0x0001)
+          {
+            row_ptr += row_size;
+            continue;
+          }
+
+          // The next byte is the length of the string.
+          blob_offset += 2;
+
+          if (blob_offset + *blob_offset >= pe->data + pe->data_size)
+          {
+            row_ptr += row_size;
+            continue;
+          }
+
+          blob_offset += 1;
+
+          if (*blob_offset == 0xFF || *blob_offset == 0x00)
+          {
+            typelib[0] = '\0';
+          }
+          else
+          {
+            strncpy(typelib, (char*) blob_offset, MAX_TYPELIB_SIZE);
+            typelib[MAX_TYPELIB_SIZE] = '\0';
+          }
+
+          set_string(typelib, pe->object, "typelib");
+
+          row_ptr += row_size;
+        }
+      }
+
+      table_offset += row_size * num_rows;
+      break;
+
+    case BIT_FIELDMARSHAL:
+      row_count = max_rows(2, yr_le32toh(rows.field), yr_le32toh(rows.param));
+
+      if (row_count > (0xFFFF >> 0x01))
+        index_size = 4;
+      else
+        index_size = 2;
+
+      table_offset += (index_size + index_sizes.blob) * num_rows;
+      break;
+
+    case BIT_DECLSECURITY:
+      row_count = max_rows(
+          3,
+          yr_le32toh(rows.typedef_),
+          yr_le32toh(rows.methoddef),
+          yr_le32toh(rows.assembly));
+
+      if (row_count > (0xFFFF >> 0x02))
+        index_size = 4;
+      else
+        index_size = 2;
+
+      table_offset += (2 + index_size + index_sizes.blob) * num_rows;
+      break;
+
+    case BIT_CLASSLAYOUT:
+      table_offset += (2 + 4 + index_sizes.typedef_) * num_rows;
+      break;
+
+    case BIT_FIELDLAYOUT:
+      table_offset += (4 + index_sizes.field) * num_rows;
+      break;
+
+    case BIT_STANDALONESIG:
+      table_offset += (index_sizes.blob) * num_rows;
+      break;
+
+    case BIT_EVENTMAP:
+      table_offset += (index_sizes.typedef_ + index_sizes.event) * num_rows;
+      break;
+
+    case BIT_EVENTPTR:
+      // This one is not documented in ECMA-335.
+      table_offset += (index_sizes.event) * num_rows;
+      break;
+
+    case BIT_EVENT:
+      row_count = max_rows(
+          3,
+          yr_le32toh(rows.typedef_),
+          yr_le32toh(rows.typeref),
+          yr_le32toh(rows.typespec));
+
+      if (row_count > (0xFFFF >> 0x02))
+        index_size = 4;
+      else
+        index_size = 2;
+
+      table_offset += (2 + index_sizes.string + index_size) * num_rows;
+      break;
+
+    case BIT_PROPERTYMAP:
+      table_offset += (index_sizes.typedef_ + index_sizes.property) * num_rows;
+      break;
+
+    case BIT_PROPERTYPTR:
+      // This one is not documented in ECMA-335.
+      table_offset += (index_sizes.property) * num_rows;
+      break;
+
+    case BIT_PROPERTY:
+      table_offset += (2 + index_sizes.string + index_sizes.blob) * num_rows;
+      break;
+
+    case BIT_METHODSEMANTICS:
+      row_count = max_rows(
+          2, yr_le32toh(rows.event), yr_le32toh(rows.property));
+
+      if (row_count > (0xFFFF >> 0x01))
+        index_size = 4;
+      else
+        index_size = 2;
+
+      table_offset += (2 + index_sizes.methoddef + index_size) * num_rows;
+      break;
+
+    case BIT_METHODIMPL:
+      row_count = max_rows(
+          2, yr_le32toh(rows.methoddef), yr_le32toh(rows.memberref));
+
+      if (row_count > (0xFFFF >> 0x01))
+        index_size = 4;
+      else
+        index_size = 2;
+
+      table_offset += (index_sizes.typedef_ + (index_size * 2)) * num_rows;
+      break;
+
+    case BIT_MODULEREF:
+      row_ptr = table_offset;
+
+      // Can't use 'i' here because we only set the string if it is not
+      // NULL. Instead use 'counter'.
+      counter = 0;
+
+      for (i = 0; i < num_rows; i++)
+      {
+        moduleref_table = (PMODULEREF_TABLE) row_ptr;
+
+        if (!struct_fits_in_pe(pe, moduleref_table, MODULEREF_TABLE))
+          break;
+
+        name = pe_get_dotnet_string(
+            pe, string_offset, DOTNET_STRING_INDEX(moduleref_table->Name));
+
+        if (name != NULL)
+        {
+          set_string(name, pe->object, "modulerefs[%i]", counter);
+          counter++;
+        }
+
+        row_ptr += index_sizes.string;
+      }
+
+      set_integer(counter, pe->object, "number_of_modulerefs");
+
+      table_offset += (index_sizes.string) * num_rows;
+      break;
+
+    case BIT_TYPESPEC:
+      table_offset += (index_sizes.blob) * num_rows;
+      break;
+
+    case BIT_IMPLMAP:
+      row_count = max_rows(
+          2, yr_le32toh(rows.field), yr_le32toh(rows.methoddef));
+
+      if (row_count > (0xFFFF >> 0x01))
+        index_size = 4;
+      else
+        index_size = 2;
+
+      table_offset += (2 + index_size + index_sizes.string +
+                       index_sizes.moduleref) *
+                      num_rows;
+      break;
+
+    case BIT_FIELDRVA:
+      row_size = 4 + index_sizes.field;
+      row_ptr = table_offset;
+
+      // Can't use 'i' here because we only set the field offset if it is
+      // valid. Instead use 'counter'.
+      counter = 0;
+
+      for (i = 0; i < num_rows; i++)
+      {
+        fieldrva_table = (PFIELDRVA_TABLE) row_ptr;
+
+        if (!struct_fits_in_pe(pe, fieldrva_table, FIELDRVA_TABLE))
+          break;
+
+        field_offset = pe_rva_to_offset(pe, fieldrva_table->RVA);
+
+        if (field_offset >= 0)
+        {
+          set_integer(field_offset, pe->object, "field_offsets[%i]", counter);
+          counter++;
+        }
+
+        row_ptr += row_size;
+      }
+
+      set_integer(counter, pe->object, "number_of_field_offsets");
+
+      table_offset += row_size * num_rows;
+      break;
+
+    case BIT_ENCLOG:
+      table_offset += (4 + 4) * num_rows;
+      break;
+
+    case BIT_ENCMAP:
+      table_offset += (4) * num_rows;
+      break;
+
+    case BIT_ASSEMBLY:
+      row_size =
+          (4 + 2 + 2 + 2 + 2 + 4 + index_sizes.blob + (index_sizes.string * 2));
+
+      if (!fits_in_pe(pe, table_offset, row_size))
+        break;
+
+      row_ptr = table_offset;
+      assembly_table = (PASSEMBLY_TABLE) table_offset;
+
+      set_integer(
+          yr_le16toh(assembly_table->MajorVersion),
+          pe->object,
+          "assembly.version.major");
+      set_integer(
+          yr_le16toh(assembly_table->MinorVersion),
+          pe->object,
+          "assembly.version.minor");
+      set_integer(
+          yr_le16toh(assembly_table->BuildNumber),
+          pe->object,
+          "assembly.version.build_number");
+      set_integer(
+          yr_le16toh(assembly_table->RevisionNumber),
+          pe->object,
+          "assembly.version.revision_number");
+
+      // Can't use assembly_table here because the PublicKey comes before
+      // Name and is a variable length field.
+
+      if (index_sizes.string == 4)
+        name = pe_get_dotnet_string(
+            pe,
+            string_offset,
+            yr_le32toh(*(
+                DWORD*) (row_ptr + 4 + 2 + 2 + 2 + 2 + 4 + index_sizes.blob)));
+      else
+        name = pe_get_dotnet_string(
+            pe,
+            string_offset,
+            yr_le16toh(
+                *(WORD*) (row_ptr + 4 + 2 + 2 + 2 + 2 + 4 + index_sizes.blob)));
+
+      if (name != NULL)
+        set_string(name, pe->object, "assembly.name");
+
+      // Culture comes after Name.
+      if (index_sizes.string == 4)
+      {
+        name = pe_get_dotnet_string(
+              pe,
+              string_offset,
+              yr_le32toh(*(DWORD*) (
+                  row_ptr + 4 + 2 + 2 + 2 + 2 + 4 +
+                  index_sizes.blob +
+                  index_sizes.string)));
+      }
+      else
+      {
+        name = pe_get_dotnet_string(
+              pe,
+              string_offset,
+              yr_le16toh(*(WORD*) (
+                  row_ptr + 4 + 2 + 2 + 2 + 2 + 4 +
+                  index_sizes.blob +
+                  index_sizes.string)));
+      }
+
+      // Sometimes it will be a zero length string. This is technically
+      // against the specification but happens from time to time.
+      if (name != NULL && strlen(name) > 0)
+        set_string(name, pe->object, "assembly.culture");
+
+      table_offset += row_size * num_rows;
+      break;
+
+    case BIT_ASSEMBLYPROCESSOR:
+      table_offset += (4) * num_rows;
+      break;
+
+    case BIT_ASSEMBLYOS:
+      table_offset += (4 + 4 + 4) * num_rows;
+      break;
+
+    case BIT_ASSEMBLYREF:
+      row_size =
+          (2 + 2 + 2 + 2 + 4 + (index_sizes.blob * 2) +
+           (index_sizes.string * 2));
+
+      row_ptr = table_offset;
+
+      for (i = 0; i < num_rows; i++)
+      {
+        if (!fits_in_pe(pe, row_ptr, row_size))
+          break;
+
+        assemblyref_table = (PASSEMBLYREF_TABLE) row_ptr;
+
+        set_integer(
+            yr_le16toh(assemblyref_table->MajorVersion),
+            pe->object,
+            "assembly_refs[%i].version.major",
+            i);
+        set_integer(
+            yr_le16toh(assemblyref_table->MinorVersion),
+            pe->object,
+            "assembly_refs[%i].version.minor",
+            i);
+        set_integer(
+            yr_le16toh(assemblyref_table->BuildNumber),
+            pe->object,
+            "assembly_refs[%i].version.build_number",
+            i);
+        set_integer(
+            yr_le16toh(assemblyref_table->RevisionNumber),
+            pe->object,
+            "assembly_refs[%i].version.revision_number",
+            i);
+
+        blob_offset = pe->data + metadata_root +
+                      yr_le32toh(streams->blob->Offset);
+
+        if (index_sizes.blob == 4)
+          blob_offset += yr_le32toh(
+              assemblyref_table->PublicKeyOrToken.PublicKeyOrToken_Long);
+        else
+          blob_offset += yr_le16toh(
+              assemblyref_table->PublicKeyOrToken.PublicKeyOrToken_Short);
+
+        blob_result = dotnet_parse_blob_entry(pe, blob_offset);
+        blob_offset += blob_result.size;
+
+        if (blob_result.size == 0 ||
+            !fits_in_pe(pe, blob_offset, blob_result.length))
+        {
+          row_ptr += row_size;
+          continue;
+        }
+
+        // Avoid empty strings.
+        if (blob_result.length > 0)
+        {
           set_sized_string(
               (char*) blob_offset,
               blob_result.length,
               pe->object,
-              "constants[%i]",
-              counter);
-
-          counter++;
-          row_ptr += row_size;
+              "assembly_refs[%i].public_key_or_token",
+              i);
         }
 
-        set_integer(counter, pe->object, "number_of_constants");
-        table_offset += row_size * num_rows;
-        break;
-
-      case BIT_CUSTOMATTRIBUTE:
-        // index_size is size of the parent column.
-        row_count = max_rows(21,
-            yr_le32toh(rows.methoddef),
-            yr_le32toh(rows.field),
-            yr_le32toh(rows.typeref),
-            yr_le32toh(rows.typedef_),
-            yr_le32toh(rows.param),
-            yr_le32toh(rows.interfaceimpl),
-            yr_le32toh(rows.memberref),
-            yr_le32toh(rows.module),
-            yr_le32toh(rows.property),
-            yr_le32toh(rows.event),
-            yr_le32toh(rows.standalonesig),
-            yr_le32toh(rows.moduleref),
-            yr_le32toh(rows.typespec),
-            yr_le32toh(rows.assembly),
-            yr_le32toh(rows.assemblyref),
-            yr_le32toh(rows.file),
-            yr_le32toh(rows.exportedtype),
-            yr_le32toh(rows.manifestresource),
-            yr_le32toh(rows.genericparam),
-            yr_le32toh(rows.genericparamconstraint),
-            yr_le32toh(rows.methodspec));
-
-        if (row_count > (0xFFFF >> 0x05))
-          index_size = 4;
-        else
-          index_size = 2;
-
-        // index_size2 is size of the type column.
-        row_count = max_rows(2,
-            yr_le32toh(rows.methoddef),
-            yr_le32toh(rows.memberref));
-
-        if (row_count > (0xFFFF >> 0x03))
-          index_size2 = 4;
-        else
-          index_size2 = 2;
-
-        row_size = (index_size + index_size2 + index_sizes.blob);
-
-        if (typeref_ptr != NULL && memberref_ptr != NULL)
-        {
-          row_ptr = table_offset;
-
-          for (i = 0; i < num_rows; i++)
-          {
-            if (!fits_in_pe(pe, row_ptr, row_size))
-              break;
-
-            // Check the Parent field.
-            customattribute_table = (PCUSTOMATTRIBUTE_TABLE) row_ptr;
-
-            if (index_size == 4)
-            {
-              // Low 5 bits tell us what this is an index into. Remaining bits
-              // tell us the index value.
-              // Parent must be an index into the Assembly (0x0E) table.
-              if ((*(DWORD*) customattribute_table & 0x1F) != 0x0E)
-              {
-                row_ptr += row_size;
-                continue;
-              }
-            }
-            else
-            {
-              // Low 5 bits tell us what this is an index into. Remaining bits
-              // tell us the index value.
-              // Parent must be an index into the Assembly (0x0E) table.
-              if ((*(WORD*) customattribute_table & 0x1F) != 0x0E)
-              {
-                row_ptr += row_size;
-                continue;
-              }
-            }
-
-            // Check the Type field.
-            customattribute_table = (PCUSTOMATTRIBUTE_TABLE) \
-                (row_ptr + index_size);
-
-            if (index_size2 == 4)
-            {
-              // Low 3 bits tell us what this is an index into. Remaining bits
-              // tell us the index value. Only values 2 and 3 are defined.
-              // Type must be an index into the MemberRef table.
-              if ((*(DWORD*) customattribute_table & 0x07) != 0x03)
-              {
-                row_ptr += row_size;
-                continue;
-              }
-
-              type_index = *(DWORD*) customattribute_table >> 3;
-            }
-            else
-            {
-              // Low 3 bits tell us what this is an index into. Remaining bits
-              // tell us the index value. Only values 2 and 3 are defined.
-              // Type must be an index into the MemberRef table.
-              if ((*(WORD*) customattribute_table & 0x07) != 0x03)
-              {
-                row_ptr += row_size;
-                continue;
-              }
-
-              // Cast the index to a 32bit value.
-              type_index = (DWORD) ((*(WORD*) customattribute_table >> 3));
-            }
-
-            if (type_index > 0)
-              type_index--;
-
-            // Now follow the Type index into the MemberRef table.
-            memberref_row = memberref_ptr + (memberref_row_size * type_index);
-
-            if (!fits_in_pe(pe, memberref_row, memberref_row_size))
-              break;
-
-            if (index_sizes.memberref == 4)
-            {
-              // Low 3 bits tell us what this is an index into. Remaining bits
-              // tell us the index value. Class must be an index into the
-              // TypeRef table.
-              if ((*(DWORD*) memberref_row & 0x07) != 0x01)
-              {
-                row_ptr += row_size;
-                continue;
-              }
-
-              class_index = *(DWORD*) memberref_row >> 3;
-            }
-            else
-            {
-              // Low 3 bits tell us what this is an index into. Remaining bits
-              // tell us the index value. Class must be an index into the
-              // TypeRef table.
-              if ((*(WORD*) memberref_row & 0x07) != 0x01)
-              {
-                row_ptr += row_size;
-                continue;
-              }
-
-              // Cast the index to a 32bit value.
-              class_index = (DWORD) (*(WORD*) memberref_row >> 3);
-            }
-
-            if (class_index > 0)
-              class_index--;
-
-            // Now follow the Class index into the TypeRef table.
-            typeref_row = typeref_ptr + (typeref_row_size * class_index);
-
-            if (!fits_in_pe(pe, typeref_row, typeref_row_size))
-              break;
-
-            // Skip over the ResolutionScope and check the Name field,
-            // which is an index into the Strings heap.
-            row_count = max_rows(4,
-                yr_le32toh(rows.module),
-                yr_le32toh(rows.moduleref),
-                yr_le32toh(rows.assemblyref),
-                yr_le32toh(rows.typeref));
-
-            if (row_count > (0xFFFF >> 0x02))
-              typeref_row += 4;
-            else
-              typeref_row += 2;
-
-            if (index_sizes.string == 4)
-            {
-              name = pe_get_dotnet_string(
-                  pe, string_offset, *(DWORD*) typeref_row);
-            }
-            else
-            {
-              name = pe_get_dotnet_string(
-                  pe, string_offset, *(WORD*) typeref_row);
-            }
-
-            if (name != NULL && strncmp(name, "GuidAttribute", 13) != 0)
-            {
-              row_ptr += row_size;
-              continue;
-            }
-
-            // Get the Value field.
-            customattribute_table = (PCUSTOMATTRIBUTE_TABLE) \
-                (row_ptr + index_size + index_size2);
-
-            if (index_sizes.blob == 4)
-              blob_index = *(DWORD*) customattribute_table;
-            else
-              // Cast the value (index into blob table) to a 32bit value.
-              blob_index = (DWORD) (*(WORD*) customattribute_table);
-
-            // Everything checks out. Make sure the index into the blob field
-            // is valid (non-null and within range).
-            blob_offset = \
-                pe->data + metadata_root + yr_le32toh(streams->blob->Offset) + blob_index;
-
-            // If index into blob is 0 or past the end of the blob stream, skip
-            // it. We don't know the size of the blob entry yet because that is
-            // encoded in the start.
-            if (blob_index == 0x00 || blob_offset >= pe->data + pe->data_size)
-            {
-              row_ptr += row_size;
-              continue;
-            }
-
-            blob_result = dotnet_parse_blob_entry(pe, blob_offset);
-
-            if (blob_result.size == 0)
-            {
-              row_ptr += row_size;
-              continue;
-            }
-
-            blob_length = blob_result.length;
-            blob_offset += blob_result.size;
-
-            // Quick sanity check to make sure the blob entry is within bounds.
-            if (blob_offset + blob_length >= pe->data + pe->data_size)
-            {
-              row_ptr += row_size;
-              continue;
-            }
-
-            // Custom attributes MUST have a 16 bit prolog of 0x0001
-            if (*(WORD*) blob_offset != 0x0001)
-            {
-              row_ptr += row_size;
-              continue;
-            }
-
-            // The next byte is the length of the string.
-            blob_offset += 2;
-
-            if (blob_offset + *blob_offset >= pe->data + pe->data_size)
-            {
-              row_ptr += row_size;
-              continue;
-            }
-
-            blob_offset += 1;
-
-            if (*blob_offset == 0xFF || *blob_offset == 0x00)
-            {
-              typelib[0] = '\0';
-            }
-            else
-            {
-              strncpy(typelib, (char*) blob_offset, MAX_TYPELIB_SIZE);
-              typelib[MAX_TYPELIB_SIZE] = '\0';
-            }
-
-            set_string(typelib, pe->object, "typelib");
-
-            row_ptr += row_size;
-          }
-        }
-
-        table_offset += row_size * num_rows;
-        break;
-
-      case BIT_FIELDMARSHAL:
-        row_count = max_rows(2,
-            yr_le32toh(rows.field),
-            yr_le32toh(rows.param));
-
-        if (row_count > (0xFFFF >> 0x01))
-          index_size = 4;
-        else
-          index_size = 2;
-
-        table_offset += (index_size + index_sizes.blob) * num_rows;
-        break;
-
-      case BIT_DECLSECURITY:
-        row_count = max_rows(3,
-            yr_le32toh(rows.typedef_),
-            yr_le32toh(rows.methoddef),
-            yr_le32toh(rows.assembly));
-
-        if (row_count > (0xFFFF >> 0x02))
-          index_size = 4;
-        else
-          index_size = 2;
-
-        table_offset += (2 + index_size + index_sizes.blob) * num_rows;
-        break;
-
-      case BIT_CLASSLAYOUT:
-        table_offset += (2 + 4 + index_sizes.typedef_) * num_rows;
-        break;
-
-      case BIT_FIELDLAYOUT:
-        table_offset += (4 + index_sizes.field) * num_rows;
-        break;
-
-      case BIT_STANDALONESIG:
-        table_offset += (index_sizes.blob) * num_rows;
-        break;
-
-      case BIT_EVENTMAP:
-        table_offset += (index_sizes.typedef_ + index_sizes.event) * num_rows;
-        break;
-
-      case BIT_EVENTPTR:
-        // This one is not documented in ECMA-335.
-        table_offset += (index_sizes.event) * num_rows;
-        break;
-
-      case BIT_EVENT:
-        row_count = max_rows(3,
-            yr_le32toh(rows.typedef_),
-            yr_le32toh(rows.typeref),
-            yr_le32toh(rows.typespec));
-
-        if (row_count > (0xFFFF >> 0x02))
-          index_size = 4;
-        else
-          index_size = 2;
-
-        table_offset += (2 + index_sizes.string + index_size) * num_rows;
-        break;
-
-      case BIT_PROPERTYMAP:
-        table_offset += (index_sizes.typedef_ + index_sizes.property) * num_rows;
-        break;
-
-      case BIT_PROPERTYPTR:
-        // This one is not documented in ECMA-335.
-        table_offset += (index_sizes.property) * num_rows;
-        break;
-
-      case BIT_PROPERTY:
-        table_offset += (2 + index_sizes.string + index_sizes.blob) * num_rows;
-        break;
-
-      case BIT_METHODSEMANTICS:
-        row_count = max_rows(2,
-            yr_le32toh(rows.event),
-            yr_le32toh(rows.property));
-
-        if (row_count > (0xFFFF >> 0x01))
-          index_size = 4;
-        else
-          index_size = 2;
-
-        table_offset += (2 + index_sizes.methoddef + index_size) * num_rows;
-        break;
-
-      case BIT_METHODIMPL:
-        row_count = max_rows(2,
-            yr_le32toh(rows.methoddef),
-            yr_le32toh(rows.memberref));
-
-        if (row_count > (0xFFFF >> 0x01))
-          index_size = 4;
-        else
-          index_size = 2;
-
-        table_offset += (index_sizes.typedef_ + (index_size * 2)) * num_rows;
-        break;
-
-      case BIT_MODULEREF:
-        row_ptr = table_offset;
-
-        // Can't use 'i' here because we only set the string if it is not
-        // NULL. Instead use 'counter'.
-        counter = 0;
-
-        for (i = 0; i < num_rows; i++)
-        {
-          moduleref_table = (PMODULEREF_TABLE) row_ptr;
-
-          if (!struct_fits_in_pe(pe, moduleref_table, MODULEREF_TABLE))
-            break;
-
-          name = pe_get_dotnet_string(pe,
-              string_offset,
-              DOTNET_STRING_INDEX(moduleref_table->Name));
-
-          if (name != NULL)
-          {
-            set_string(name, pe->object, "modulerefs[%i]", counter);
-            counter++;
-          }
-
-          row_ptr += index_sizes.string;
-        }
-
-        set_integer(counter, pe->object, "number_of_modulerefs");
-
-        table_offset += (index_sizes.string) * num_rows;
-        break;
-
-      case BIT_TYPESPEC:
-        table_offset += (index_sizes.blob) * num_rows;
-        break;
-
-      case BIT_IMPLMAP:
-        row_count = max_rows(2,
-            yr_le32toh(rows.field),
-            yr_le32toh(rows.methoddef));
-
-        if (row_count > (0xFFFF >> 0x01))
-          index_size = 4;
-        else
-          index_size = 2;
-
-        table_offset += (
-            2 + index_size + index_sizes.string +
-            index_sizes.moduleref) * num_rows;
-        break;
-
-      case BIT_FIELDRVA:
-        row_size = 4 + index_sizes.field;
-        row_ptr = table_offset;
-
-        // Can't use 'i' here because we only set the field offset if it is
-        // valid. Instead use 'counter'.
-        counter = 0;
-
-        for (i = 0; i < num_rows; i++)
-        {
-          fieldrva_table = (PFIELDRVA_TABLE) row_ptr;
-
-          if (!struct_fits_in_pe(pe, fieldrva_table, FIELDRVA_TABLE))
-            break;
-
-          field_offset = pe_rva_to_offset(pe, fieldrva_table->RVA);
-
-          if (field_offset >= 0)
-          {
-            set_integer(field_offset, pe->object, "field_offsets[%i]", counter);
-            counter++;
-          }
-
-          row_ptr += row_size;
-        }
-
-        set_integer(counter, pe->object, "number_of_field_offsets");
-
-        table_offset += row_size * num_rows;
-        break;
-
-      case BIT_ENCLOG:
-        table_offset += (4 + 4) * num_rows;
-        break;
-
-      case BIT_ENCMAP:
-        table_offset += (4) * num_rows;
-        break;
-
-      case BIT_ASSEMBLY:
-        row_size = (
-            4 + 2 + 2 + 2 + 2 + 4 + index_sizes.blob +
-            (index_sizes.string * 2));
-
-        if (!fits_in_pe(pe, table_offset, row_size))
-          break;
-
-        row_ptr = table_offset;
-        assembly_table = (PASSEMBLY_TABLE) table_offset;
-
-        set_integer(yr_le16toh(assembly_table->MajorVersion),
-            pe->object, "assembly.version.major");
-        set_integer(yr_le16toh(assembly_table->MinorVersion),
-            pe->object, "assembly.version.minor");
-        set_integer(yr_le16toh(assembly_table->BuildNumber),
-            pe->object, "assembly.version.build_number");
-        set_integer(yr_le16toh(assembly_table->RevisionNumber),
-            pe->object, "assembly.version.revision_number");
-
-        // Can't use assembly_table here because the PublicKey comes before
+        // Can't use assemblyref_table here because the PublicKey comes before
         // Name and is a variable length field.
 
         if (index_sizes.string == 4)
           name = pe_get_dotnet_string(
               pe,
               string_offset,
-              yr_le32toh(*(DWORD*) (
-                  row_ptr + 4 + 2 + 2 + 2 + 2 + 4 +
-                  index_sizes.blob)));
+              yr_le32toh(
+                  *(DWORD*) (row_ptr + 2 + 2 + 2 + 2 + 4 + index_sizes.blob)));
         else
           name = pe_get_dotnet_string(
               pe,
               string_offset,
-              yr_le16toh(*(WORD*) (
-                  row_ptr + 4 + 2 + 2 + 2 + 2 + 4 +
-                  index_sizes.blob)));
+              yr_le16toh(
+                  *(WORD*) (row_ptr + 2 + 2 + 2 + 2 + 4 + index_sizes.blob)));
 
         if (name != NULL)
-          set_string(name, pe->object, "assembly.name");
+          set_string(name, pe->object, "assembly_refs[%i].name", i);
 
-        // Culture comes after Name.
-        if (index_sizes.string == 4)
-        {
-          name = pe_get_dotnet_string(
-              pe,
-              string_offset,
-              yr_le32toh(*(DWORD*) (
-                  row_ptr + 4 + 2 + 2 + 2 + 2 + 4 +
-                  index_sizes.blob +
-                  index_sizes.string)));
-        }
+        row_ptr += row_size;
+      }
+
+      set_integer(i, pe->object, "number_of_assembly_refs");
+      table_offset += row_size * num_rows;
+      break;
+
+    case BIT_ASSEMBLYREFPROCESSOR:
+      table_offset += (4 + index_sizes.assemblyrefprocessor) * num_rows;
+      break;
+
+    case BIT_ASSEMBLYREFOS:
+      table_offset += (4 + 4 + 4 + index_sizes.assemblyref) * num_rows;
+      break;
+
+    case BIT_FILE:
+      table_offset += (4 + index_sizes.string + index_sizes.blob) * num_rows;
+      break;
+
+    case BIT_EXPORTEDTYPE:
+      row_count = max_rows(
+          3,
+          yr_le32toh(rows.file),
+          yr_le32toh(rows.assemblyref),
+          yr_le32toh(rows.exportedtype));
+
+      if (row_count > (0xFFFF >> 0x02))
+        index_size = 4;
+      else
+        index_size = 2;
+
+      table_offset += (4 + 4 + (index_sizes.string * 2) + index_size) *
+                      num_rows;
+      break;
+
+    case BIT_MANIFESTRESOURCE:
+      // This is an Implementation coded index with no 3rd bit specified.
+      row_count = max_rows(
+          2, yr_le32toh(rows.file), yr_le32toh(rows.assemblyref));
+
+      if (row_count > (0xFFFF >> 0x02))
+        index_size = 4;
+      else
+        index_size = 2;
+
+      row_size = (4 + 4 + index_sizes.string + index_size);
+
+      // Using 'i' is insufficent since we may skip certain resources and
+      // it would give an inaccurate count in that case.
+      counter = 0;
+      row_ptr = table_offset;
+
+      // First DWORD is the offset.
+      for (i = 0; i < num_rows; i++)
+      {
+        if (!fits_in_pe(pe, row_ptr, row_size))
+          break;
+
+        manifestresource_table = (PMANIFESTRESOURCE_TABLE) row_ptr;
+        resource_offset = yr_le32toh(manifestresource_table->Offset);
+
+        // Only set offset if it is in this file (implementation != 0).
+        // Can't use manifestresource_table here because the Name and
+        // Implementation fields are variable size.
+        if (index_size == 4)
+          implementation = yr_le32toh(
+              *(DWORD*) (row_ptr + 4 + 4 + index_sizes.string));
         else
+          implementation = yr_le16toh(
+              *(WORD*) (row_ptr + 4 + 4 + index_sizes.string));
+
+        if (implementation != 0)
         {
-          name = pe_get_dotnet_string(
-              pe,
-              string_offset,
-              yr_le16toh(*(WORD*) (
-                  row_ptr + 4 + 2 + 2 + 2 + 2 + 4 +
-                  index_sizes.blob +
-                  index_sizes.string)));
-        }
-
-        // Sometimes it will be a zero length string. This is technically
-        // against the specification but happens from time to time.
-        if (name != NULL && strlen(name) > 0)
-          set_string(name, pe->object, "assembly.culture");
-
-        table_offset += row_size * num_rows;
-        break;
-
-      case BIT_ASSEMBLYPROCESSOR:
-        table_offset += (4) * num_rows;
-        break;
-
-      case BIT_ASSEMBLYOS:
-        table_offset += (4 + 4 + 4) * num_rows;
-        break;
-
-      case BIT_ASSEMBLYREF:
-        row_size = (2 + 2 + 2 + 2 + 4 +
-            (index_sizes.blob * 2) +
-            (index_sizes.string * 2));
-
-        row_ptr = table_offset;
-
-        for (i = 0; i < num_rows; i++)
-        {
-          if (!fits_in_pe(pe, row_ptr, row_size))
-            break;
-
-          assemblyref_table = (PASSEMBLYREF_TABLE) row_ptr;
-
-          set_integer(yr_le16toh(assemblyref_table->MajorVersion),
-              pe->object, "assembly_refs[%i].version.major", i);
-          set_integer(yr_le16toh(assemblyref_table->MinorVersion),
-              pe->object, "assembly_refs[%i].version.minor", i);
-          set_integer(yr_le16toh(assemblyref_table->BuildNumber),
-              pe->object, "assembly_refs[%i].version.build_number", i);
-          set_integer(yr_le16toh(assemblyref_table->RevisionNumber),
-              pe->object, "assembly_refs[%i].version.revision_number", i);
-
-          blob_offset = pe->data + metadata_root + yr_le32toh(streams->blob->Offset);
-
-          if (index_sizes.blob == 4)
-            blob_offset += \
-                yr_le32toh(assemblyref_table->PublicKeyOrToken.PublicKeyOrToken_Long);
-          else
-            blob_offset += \
-                yr_le16toh(assemblyref_table->PublicKeyOrToken.PublicKeyOrToken_Short);
-
-          blob_result = dotnet_parse_blob_entry(pe, blob_offset);
-          blob_offset += blob_result.size;
-
-          if (blob_result.size == 0 ||
-              !fits_in_pe(pe, blob_offset, blob_result.length))
-          {
-            row_ptr += row_size;
-            continue;
-          }
-
-          // Avoid empty strings.
-          if (blob_result.length > 0)
-          {
-            set_sized_string((char*) blob_offset,
-                blob_result.length, pe->object,
-                "assembly_refs[%i].public_key_or_token", i);
-          }
-
-          // Can't use assemblyref_table here because the PublicKey comes before
-          // Name and is a variable length field.
-
-          if (index_sizes.string == 4)
-            name = pe_get_dotnet_string(pe,
-                string_offset,
-                yr_le32toh(*(DWORD*) (row_ptr + 2 + 2 + 2 + 2 + 4 + index_sizes.blob)));
-          else
-            name = pe_get_dotnet_string(pe,
-                string_offset,
-                yr_le16toh(*(WORD*) (row_ptr + 2 + 2 + 2 + 2 + 4 + index_sizes.blob)));
-
-          if (name != NULL)
-            set_string(name, pe->object, "assembly_refs[%i].name", i);
-
           row_ptr += row_size;
+          continue;
         }
 
-        set_integer(i, pe->object, "number_of_assembly_refs");
-        table_offset += row_size * num_rows;
-        break;
-
-      case BIT_ASSEMBLYREFPROCESSOR:
-        table_offset += (4 + index_sizes.assemblyrefprocessor) * num_rows;
-        break;
-
-      case BIT_ASSEMBLYREFOS:
-        table_offset += (4 + 4 + 4 + index_sizes.assemblyref) * num_rows;
-        break;
-
-      case BIT_FILE:
-        table_offset += (4 + index_sizes.string + index_sizes.blob) * num_rows;
-        break;
-
-      case BIT_EXPORTEDTYPE:
-        row_count = max_rows(3,
-            yr_le32toh(rows.file),
-            yr_le32toh(rows.assemblyref),
-            yr_le32toh(rows.exportedtype));
-
-        if (row_count > (0xFFFF >> 0x02))
-          index_size = 4;
-        else
-          index_size = 2;
-
-        table_offset += (4 + 4 + (index_sizes.string * 2) + index_size) * num_rows;
-        break;
-
-      case BIT_MANIFESTRESOURCE:
-        // This is an Implementation coded index with no 3rd bit specified.
-        row_count = max_rows(2,
-            yr_le32toh(rows.file),
-            yr_le32toh(rows.assemblyref));
-
-        if (row_count > (0xFFFF >> 0x02))
-          index_size = 4;
-        else
-          index_size = 2;
-
-        row_size = (4 + 4 + index_sizes.string + index_size);
-
-        // Using 'i' is insufficent since we may skip certain resources and
-        // it would give an inaccurate count in that case.
-        counter = 0;
-        row_ptr = table_offset;
-
-        // First DWORD is the offset.
-        for (i = 0; i < num_rows; i++)
+        if (!fits_in_pe(
+                pe, pe->data + resource_base + resource_offset, sizeof(DWORD)))
         {
-          if (!fits_in_pe(pe, row_ptr, row_size))
-            break;
-
-          manifestresource_table = (PMANIFESTRESOURCE_TABLE) row_ptr;
-          resource_offset = yr_le32toh(manifestresource_table->Offset);
-
-          // Only set offset if it is in this file (implementation != 0).
-          // Can't use manifestresource_table here because the Name and
-          // Implementation fields are variable size.
-          if (index_size == 4)
-            implementation = yr_le32toh(*(DWORD*) (row_ptr + 4 + 4 + index_sizes.string));
-          else
-            implementation = yr_le16toh(*(WORD*) (row_ptr + 4 + 4 + index_sizes.string));
-
-          if (implementation != 0)
-          {
-            row_ptr += row_size;
-            continue;
-          }
-
-          if (!fits_in_pe(
-                pe,
-                pe->data + resource_base + resource_offset,
-                sizeof(DWORD)))
-          {
-            row_ptr += row_size;
-            continue;
-          }
-
-          resource_size = yr_le32toh(*(DWORD*)(pe->data + resource_base + resource_offset));
-
-          if (!fits_in_pe(
-                pe, pe->data + resource_base +
-                resource_offset,
-                resource_size))
-          {
-            row_ptr += row_size;
-            continue;
-          }
-
-          // Add 4 to skip the size.
-          set_integer(resource_base + resource_offset + 4,
-              pe->object, "resources[%i].offset", counter);
-
-          set_integer(resource_size,
-              pe->object, "resources[%i].length", counter);
-
-          name = pe_get_dotnet_string(pe,
-              string_offset,
-              DOTNET_STRING_INDEX(manifestresource_table->Name));
-
-          if (name != NULL)
-            set_string(name, pe->object, "resources[%i].name", counter);
-
           row_ptr += row_size;
-          counter++;
+          continue;
         }
 
-        set_integer(counter, pe->object, "number_of_resources");
+        resource_size = yr_le32toh(
+            *(DWORD*) (pe->data + resource_base + resource_offset));
 
-        table_offset += row_size * num_rows;
-        break;
+        if (!fits_in_pe(
+                pe, pe->data + resource_base + resource_offset, resource_size))
+        {
+          row_ptr += row_size;
+          continue;
+        }
 
-      case BIT_NESTEDCLASS:
-        table_offset += (index_sizes.typedef_ * 2) * num_rows;
-        break;
+        // Add 4 to skip the size.
+        set_integer(
+            resource_base + resource_offset + 4,
+            pe->object,
+            "resources[%i].offset",
+            counter);
 
-      case BIT_GENERICPARAM:
-        row_count = max_rows(2,
-            yr_le32toh(rows.typedef_),
-            yr_le32toh(rows.methoddef));
+        set_integer(resource_size, pe->object, "resources[%i].length", counter);
 
-        if (row_count > (0xFFFF >> 0x01))
-          index_size = 4;
-        else
-          index_size = 2;
+        name = pe_get_dotnet_string(
+            pe,
+            string_offset,
+            DOTNET_STRING_INDEX(manifestresource_table->Name));
 
-        table_offset += (2 + 2 + index_size + index_sizes.string) * num_rows;
-        break;
+        if (name != NULL)
+          set_string(name, pe->object, "resources[%i].name", counter);
 
-      case BIT_METHODSPEC:
-        row_count = max_rows(2,
-            yr_le32toh(rows.methoddef),
-            yr_le32toh(rows.memberref));
+        row_ptr += row_size;
+        counter++;
+      }
 
-        if (row_count > (0xFFFF >> 0x01))
-          index_size = 4;
-        else
-          index_size = 2;
+      set_integer(counter, pe->object, "number_of_resources");
 
-        table_offset += (index_size + index_sizes.blob) * num_rows;
-        break;
+      table_offset += row_size * num_rows;
+      break;
 
-      case BIT_GENERICPARAMCONSTRAINT:
-        row_count = max_rows(3,
-            yr_le32toh(rows.typedef_),
-            yr_le32toh(rows.typeref),
-            yr_le32toh(rows.typespec));
+    case BIT_NESTEDCLASS:
+      table_offset += (index_sizes.typedef_ * 2) * num_rows;
+      break;
 
-        if (row_count > (0xFFFF >> 0x02))
-          index_size = 4;
-        else
-          index_size = 2;
+    case BIT_GENERICPARAM:
+      row_count = max_rows(
+          2, yr_le32toh(rows.typedef_), yr_le32toh(rows.methoddef));
 
-        table_offset += (index_sizes.genericparam + index_size) * num_rows;
-        break;
+      if (row_count > (0xFFFF >> 0x01))
+        index_size = 4;
+      else
+        index_size = 2;
 
-      default:
-        //printf("Unknown bit: %i\n", bit_check);
-        return;
+      table_offset += (2 + 2 + index_size + index_sizes.string) * num_rows;
+      break;
+
+    case BIT_METHODSPEC:
+      row_count = max_rows(
+          2, yr_le32toh(rows.methoddef), yr_le32toh(rows.memberref));
+
+      if (row_count > (0xFFFF >> 0x01))
+        index_size = 4;
+      else
+        index_size = 2;
+
+      table_offset += (index_size + index_sizes.blob) * num_rows;
+      break;
+
+    case BIT_GENERICPARAMCONSTRAINT:
+      row_count = max_rows(
+          3,
+          yr_le32toh(rows.typedef_),
+          yr_le32toh(rows.typeref),
+          yr_le32toh(rows.typespec));
+
+      if (row_count > (0xFFFF >> 0x02))
+        index_size = 4;
+      else
+        index_size = 2;
+
+      table_offset += (index_sizes.genericparam + index_size) * num_rows;
+      break;
+
+    default:
+      // printf("Unknown bit: %i\n", bit_check);
+      return;
     }
 
     matched_bits++;
@@ -1458,10 +1481,8 @@ void dotnet_parse_tilde(
   // Default index sizes are 2. Will be bumped to 4 if necessary.
   memset(&index_sizes, 2, sizeof(index_sizes));
 
-  tilde_header = (PTILDE_HEADER) (
-      pe->data +
-      metadata_root +
-      yr_le32toh(streams->tilde->Offset));
+  tilde_header = (PTILDE_HEADER)(
+      pe->data + metadata_root + yr_le32toh(streams->tilde->Offset));
 
   if (!struct_fits_in_pe(pe, tilde_header, TILDE_HEADER))
     return;
@@ -1493,92 +1514,93 @@ void dotnet_parse_tilde(
     if (!((yr_le64toh(tilde_header->Valid) >> bit_check) & 0x01))
       continue;
 
-#define ROW_CHECK(name) \
-    if (fits_in_pe(pe, row_offset, (matched_bits + 1) * sizeof(uint32_t))) \
-      rows.name = *(row_offset + matched_bits);
+#define ROW_CHECK(name)                                                  \
+  if (fits_in_pe(pe, row_offset, (matched_bits + 1) * sizeof(uint32_t))) \
+    rows.name = *(row_offset + matched_bits);
 
-#define ROW_CHECK_WITH_INDEX(name) \
-    ROW_CHECK(name); \
-    if (yr_le32toh(rows.name) > 0xFFFF)         \
-      index_sizes.name = 4;
+#define ROW_CHECK_WITH_INDEX(name)    \
+  ROW_CHECK(name);                    \
+  if (yr_le32toh(rows.name) > 0xFFFF) \
+    index_sizes.name = 4;
 
     switch (bit_check)
     {
-      case BIT_MODULE:
-        ROW_CHECK(module);
-        break;
-      case BIT_MODULEREF:
-        ROW_CHECK_WITH_INDEX(moduleref);
-        break;
-      case BIT_ASSEMBLYREF:
-        ROW_CHECK_WITH_INDEX(assemblyref);
-        break;
-      case BIT_ASSEMBLYREFPROCESSOR:
-        ROW_CHECK_WITH_INDEX(assemblyrefprocessor);
-        break;
-      case BIT_TYPEREF:
-        ROW_CHECK(typeref);
-        break;
-      case BIT_METHODDEF:
-        ROW_CHECK_WITH_INDEX(methoddef);
-        break;
-      case BIT_MEMBERREF:
-        ROW_CHECK_WITH_INDEX(memberref);
-        break;
-      case BIT_TYPEDEF:
-        ROW_CHECK_WITH_INDEX(typedef_);
-        break;
-      case BIT_TYPESPEC:
-        ROW_CHECK(typespec);
-        break;
-      case BIT_FIELD:
-        ROW_CHECK_WITH_INDEX(field);
-        break;
-      case BIT_PARAM:
-        ROW_CHECK_WITH_INDEX(param);
-        break;
-      case BIT_PROPERTY:
-        ROW_CHECK_WITH_INDEX(property);
-        break;
-      case BIT_INTERFACEIMPL:
-        ROW_CHECK(interfaceimpl);
-        break;
-      case BIT_EVENT:
-        ROW_CHECK_WITH_INDEX(event);
-        break;
-      case BIT_STANDALONESIG:
-        ROW_CHECK(standalonesig);
-        break;
-      case BIT_ASSEMBLY:
-        ROW_CHECK(assembly);
-        break;
-      case BIT_FILE:
-        ROW_CHECK(file);
-        break;
-      case BIT_EXPORTEDTYPE:
-        ROW_CHECK(exportedtype);
-        break;
-      case BIT_MANIFESTRESOURCE:
-        ROW_CHECK(manifestresource);
-        break;
-      case BIT_GENERICPARAM:
-        ROW_CHECK_WITH_INDEX(genericparam);
-        break;
-      case BIT_GENERICPARAMCONSTRAINT:
-        ROW_CHECK(genericparamconstraint);
-        break;
-      case BIT_METHODSPEC:
-        ROW_CHECK(methodspec);
-        break;
-      default:
-        break;
+    case BIT_MODULE:
+      ROW_CHECK(module);
+      break;
+    case BIT_MODULEREF:
+      ROW_CHECK_WITH_INDEX(moduleref);
+      break;
+    case BIT_ASSEMBLYREF:
+      ROW_CHECK_WITH_INDEX(assemblyref);
+      break;
+    case BIT_ASSEMBLYREFPROCESSOR:
+      ROW_CHECK_WITH_INDEX(assemblyrefprocessor);
+      break;
+    case BIT_TYPEREF:
+      ROW_CHECK(typeref);
+      break;
+    case BIT_METHODDEF:
+      ROW_CHECK_WITH_INDEX(methoddef);
+      break;
+    case BIT_MEMBERREF:
+      ROW_CHECK_WITH_INDEX(memberref);
+      break;
+    case BIT_TYPEDEF:
+      ROW_CHECK_WITH_INDEX(typedef_);
+      break;
+    case BIT_TYPESPEC:
+      ROW_CHECK(typespec);
+      break;
+    case BIT_FIELD:
+      ROW_CHECK_WITH_INDEX(field);
+      break;
+    case BIT_PARAM:
+      ROW_CHECK_WITH_INDEX(param);
+      break;
+    case BIT_PROPERTY:
+      ROW_CHECK_WITH_INDEX(property);
+      break;
+    case BIT_INTERFACEIMPL:
+      ROW_CHECK(interfaceimpl);
+      break;
+    case BIT_EVENT:
+      ROW_CHECK_WITH_INDEX(event);
+      break;
+    case BIT_STANDALONESIG:
+      ROW_CHECK(standalonesig);
+      break;
+    case BIT_ASSEMBLY:
+      ROW_CHECK(assembly);
+      break;
+    case BIT_FILE:
+      ROW_CHECK(file);
+      break;
+    case BIT_EXPORTEDTYPE:
+      ROW_CHECK(exportedtype);
+      break;
+    case BIT_MANIFESTRESOURCE:
+      ROW_CHECK(manifestresource);
+      break;
+    case BIT_GENERICPARAM:
+      ROW_CHECK_WITH_INDEX(genericparam);
+      break;
+    case BIT_GENERICPARAMCONSTRAINT:
+      ROW_CHECK(genericparamconstraint);
+      break;
+    case BIT_METHODSPEC:
+      ROW_CHECK(methodspec);
+      break;
+    default:
+      break;
     }
 
     matched_bits++;
   }
 
   // This is used when parsing the MANIFEST RESOURCE table.
-  resource_base = pe_rva_to_offset(pe, yr_le32toh(cli_header->Resources.VirtualAddress));
+  resource_base = pe_rva_to_offset(
+      pe, yr_le32toh(cli_header->Resources.VirtualAddress));
 
   dotnet_parse_tilde_2(
       pe,
@@ -1591,9 +1613,7 @@ void dotnet_parse_tilde(
 }
 
 
-void dotnet_parse_com(
-    PE* pe,
-    size_t base_address)
+void dotnet_parse_com(PE* pe, size_t base_address)
 {
   PIMAGE_DATA_DIRECTORY directory;
   PCLI_HEADER cli_header;
@@ -1613,7 +1633,7 @@ void dotnet_parse_com(
   if (offset < 0 || !struct_fits_in_pe(pe, pe->data + offset, CLI_HEADER))
     return;
 
-  cli_header = (PCLI_HEADER) (pe->data + offset);
+  cli_header = (PCLI_HEADER)(pe->data + offset);
 
   offset = metadata_root = pe_rva_to_offset(
       pe, yr_le32toh(cli_header->MetaData.VirtualAddress));
@@ -1621,7 +1641,7 @@ void dotnet_parse_com(
   if (!struct_fits_in_pe(pe, pe->data + offset, NET_METADATA))
     return;
 
-  metadata = (PNET_METADATA) (pe->data + offset);
+  metadata = (PNET_METADATA)(pe->data + offset);
 
   if (yr_le32toh(metadata->Magic) != NET_METADATA_MAGIC)
     return;
@@ -1629,9 +1649,7 @@ void dotnet_parse_com(
   // Version length must be between 1 and 255, and be a multiple of 4.
   // Also make sure it fits in pe.
   md_len = yr_le32toh(metadata->Length);
-  if (md_len == 0 ||
-      md_len > 255 ||
-      md_len % 4 != 0 ||
+  if (md_len == 0 || md_len > 255 || md_len % 4 != 0 ||
       !fits_in_pe(pe, pe->data + offset, md_len))
   {
     return;
@@ -1642,10 +1660,8 @@ void dotnet_parse_com(
   // first NULL byte.
   end = (char*) memmem((void*) metadata->Version, md_len, "\0", 1);
   if (end != NULL)
-      set_sized_string(metadata->Version,
-          (end - metadata->Version),
-          pe->object,
-          "version");
+    set_sized_string(
+        metadata->Version, (end - metadata->Version), pe->object, "version");
 
   // The metadata structure has some variable length records after the version.
   // We must manually parse things from here on out.
@@ -1657,7 +1673,7 @@ void dotnet_parse_com(
   if (!fits_in_pe(pe, pe->data + offset, 2))
     return;
 
-  num_streams = (WORD) *(pe->data + offset);
+  num_streams = (WORD) * (pe->data + offset);
   offset += 2;
 
   headers = dotnet_parse_stream_headers(pe, offset, metadata_root, num_streams);
@@ -1676,53 +1692,52 @@ void dotnet_parse_com(
 }
 
 
-begin_declarations;
-
+begin_declarations
   declare_string("version");
   declare_string("module_name");
 
-  begin_struct_array("streams");
+  begin_struct_array("streams")
     declare_string("name");
     declare_integer("offset");
     declare_integer("size");
-  end_struct_array("streams");
+  end_struct_array("streams")
 
   declare_integer("number_of_streams");
 
   declare_string_array("guids");
   declare_integer("number_of_guids");
 
-  begin_struct_array("resources");
+  begin_struct_array("resources")
     declare_integer("offset");
     declare_integer("length");
     declare_string("name");
-  end_struct_array("resources");
+  end_struct_array("resources")
 
   declare_integer("number_of_resources");
 
-  begin_struct_array("assembly_refs");
-    begin_struct("version");
+  begin_struct_array("assembly_refs")
+    begin_struct("version")
       declare_integer("major");
       declare_integer("minor");
       declare_integer("build_number");
       declare_integer("revision_number");
-    end_struct("version");
+    end_struct("version")
     declare_string("public_key_or_token");
     declare_string("name");
-  end_struct_array("assembly_refs");
+  end_struct_array("assembly_refs")
 
   declare_integer("number_of_assembly_refs");
 
-  begin_struct("assembly");
-    begin_struct("version");
+  begin_struct("assembly")
+    begin_struct("version")
       declare_integer("major");
       declare_integer("minor");
       declare_integer("build_number");
       declare_integer("revision_number");
-    end_struct("version");
+    end_struct("version")
     declare_string("name");
     declare_string("culture");
-  end_struct("assembly");
+  end_struct("assembly")
 
   declare_string_array("modulerefs");
   declare_integer("number_of_modulerefs");
@@ -1734,19 +1749,16 @@ begin_declarations;
 
   declare_integer_array("field_offsets");
   declare_integer("number_of_field_offsets");
+end_declarations
 
-end_declarations;
 
-
-int module_initialize(
-    YR_MODULE* module)
+int module_initialize(YR_MODULE* module)
 {
   return ERROR_SUCCESS;
 }
 
 
-int module_finalize(
-    YR_MODULE* module)
+int module_finalize(YR_MODULE* module)
 {
   return ERROR_SUCCESS;
 }
@@ -1803,10 +1815,9 @@ int module_load(
 }
 
 
-int module_unload(
-    YR_OBJECT* module_object)
+int module_unload(YR_OBJECT* module_object)
 {
-  PE* pe = (PE *) module_object->data;
+  PE* pe = (PE*) module_object->data;
 
   if (pe == NULL)
     return ERROR_SUCCESS;

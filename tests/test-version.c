@@ -27,10 +27,10 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include <yara.h>
 #include <strings.h>
+#include <yara.h>
 
-int main (int argc, char **argv)
+int main(int argc, char **argv)
 {
   // make sure that versions defined in configure.ac and in
   // libyara/include/yara/libyara.h are in sync.

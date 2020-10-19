@@ -27,46 +27,47 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include <yara.h>
 #include <stdio.h>
+#include <yara.h>
 #undef NDEBUG
 #include <assert.h>
 
 int err = 0;
 
-#define CHECK_SIZE(expr,size)                          \
+#define CHECK_SIZE(expr, size)                           \
+  do                                                     \
+  {                                                      \
+    printf("sizeof(" #expr ") = %zd ...", sizeof(expr)); \
+    if (sizeof(expr) == size)                            \
+    {                                                    \
+      puts("ok");                                        \
+    }                                                    \
+    else                                                 \
+    {                                                    \
+      printf("expected %d\n", size);                     \
+      err = 1;                                           \
+    }                                                    \
+  } while (0);
+
+#define CHECK_OFFSET(expr, offset, subexpr)            \
   do                                                   \
   {                                                    \
-    printf("sizeof("#expr") = %zd ...", sizeof(expr)); \
-    if (sizeof(expr) == size)                          \
+    printf(                                            \
+        "offsetof(" #expr ", " #subexpr ") = %zd ...", \
+        offsetof(expr, subexpr));                      \
+    if (offsetof(expr, subexpr) == offset)             \
     {                                                  \
       puts("ok");                                      \
     }                                                  \
     else                                               \
     {                                                  \
-      printf("expected %d\n", size);                   \
+      printf("expected %d\n", offset);                 \
       err = 1;                                         \
     }                                                  \
-  } while (0);
-
-#define CHECK_OFFSET(expr,offset,subexpr)             \
-  do                                                  \
-  {                                                   \
-    printf("offsetof("#expr", "#subexpr") = %zd ...", \
-           offsetof(expr, subexpr));                  \
-    if (offsetof(expr, subexpr) == offset)            \
-    {                                                 \
-      puts("ok");                                     \
-    }                                                 \
-    else                                              \
-    {                                                 \
-      printf("expected %d\n", offset);                \
-      err = 1;                                        \
-    }                                                 \
   } while (0)
 
 
-int main (int argc, char **argv)
+int main(int argc, char **argv)
 {
   CHECK_SIZE(YR_NAMESPACE, 16);
   CHECK_OFFSET(YR_NAMESPACE, 0, name);
@@ -75,9 +76,9 @@ int main (int argc, char **argv)
   CHECK_SIZE(YR_META, 32);
   CHECK_OFFSET(YR_META, 0, identifier);
   CHECK_OFFSET(YR_META, 8, string);
-  CHECK_OFFSET(YR_META, 16,  integer);
-  CHECK_OFFSET(YR_META, 24,  type);
-  CHECK_OFFSET(YR_META, 28,  flags);
+  CHECK_OFFSET(YR_META, 16, integer);
+  CHECK_OFFSET(YR_META, 24, type);
+  CHECK_OFFSET(YR_META, 28, flags);
 
   CHECK_SIZE(YR_STRING, 56);
   CHECK_OFFSET(YR_STRING, 0, flags);
@@ -92,21 +93,21 @@ int main (int argc, char **argv)
   CHECK_OFFSET(YR_STRING, 48, identifier);
 
   CHECK_SIZE(YR_RULE, 48);
-  CHECK_OFFSET(YR_RULE, 8,  identifier);
+  CHECK_OFFSET(YR_RULE, 8, identifier);
   CHECK_OFFSET(YR_RULE, 16, tags);
   CHECK_OFFSET(YR_RULE, 24, metas);
   CHECK_OFFSET(YR_RULE, 32, strings);
   CHECK_OFFSET(YR_RULE, 40, ns);
 
   CHECK_SIZE(YR_SUMMARY, 12);
-  CHECK_OFFSET(YR_SUMMARY, 0,  num_rules);
-  CHECK_OFFSET(YR_SUMMARY, 4,  num_strings);
-  CHECK_OFFSET(YR_SUMMARY, 8,  num_namespaces);
+  CHECK_OFFSET(YR_SUMMARY, 0, num_rules);
+  CHECK_OFFSET(YR_SUMMARY, 4, num_strings);
+  CHECK_OFFSET(YR_SUMMARY, 8, num_namespaces);
 
   CHECK_SIZE(YR_EXTERNAL_VARIABLE, 24);
-  CHECK_OFFSET(YR_EXTERNAL_VARIABLE, 8,  value.i);
-  CHECK_OFFSET(YR_EXTERNAL_VARIABLE, 8,  value.f);
-  CHECK_OFFSET(YR_EXTERNAL_VARIABLE, 8,  value.s);
+  CHECK_OFFSET(YR_EXTERNAL_VARIABLE, 8, value.i);
+  CHECK_OFFSET(YR_EXTERNAL_VARIABLE, 8, value.f);
+  CHECK_OFFSET(YR_EXTERNAL_VARIABLE, 8, value.s);
   CHECK_OFFSET(YR_EXTERNAL_VARIABLE, 16, identifier);
 
   CHECK_SIZE(YR_AC_MATCH, 40);

@@ -9,19 +9,10 @@
 
 typedef struct YR_NOTEBOOK YR_NOTEBOOK;
 
+int yr_notebook_create(size_t page_size, YR_NOTEBOOK** pool);
 
-int yr_notebook_create(
-    size_t page_size,
-    YR_NOTEBOOK** pool);
+int yr_notebook_destroy(YR_NOTEBOOK* pool);
 
+void* yr_notebook_alloc(YR_NOTEBOOK* notebook, size_t size);
 
-int yr_notebook_destroy(
-    YR_NOTEBOOK* pool);
-
-
-void* yr_notebook_alloc(
-    YR_NOTEBOOK* notebook,
-    size_t size);
-
-
-#endif // YR_NOTEBOOK_H
+#endif  // YR_NOTEBOOK_H
