@@ -33,9 +33,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <yara/limits.h>
 #include <yara/re.h>
 
-#define ATOM_TREE_LEAF  1
-#define ATOM_TREE_AND   2
-#define ATOM_TREE_OR    3
+#define ATOM_TREE_LEAF 1
+#define ATOM_TREE_AND  2
+#define ATOM_TREE_OR   3
 
 typedef struct YR_ATOM YR_ATOM;
 typedef struct YR_ATOM_TREE_NODE YR_ATOM_TREE_NODE;
@@ -45,7 +45,6 @@ typedef struct YR_ATOM_LIST_ITEM YR_ATOM_LIST_ITEM;
 
 typedef struct YR_ATOM_QUALITY_TABLE_ENTRY YR_ATOM_QUALITY_TABLE_ENTRY;
 typedef struct YR_ATOMS_CONFIG YR_ATOMS_CONFIG;
-
 
 struct YR_ATOM
 {
@@ -68,12 +67,10 @@ struct YR_ATOM_TREE_NODE
   YR_ATOM_TREE_NODE* next_sibling;
 };
 
-
 struct YR_ATOM_TREE
 {
   YR_ATOM_TREE_NODE* root_node;
 };
-
 
 struct YR_ATOM_LIST_ITEM
 {
@@ -87,7 +84,6 @@ struct YR_ATOM_LIST_ITEM
   YR_ATOM_LIST_ITEM* next;
 };
 
-
 #pragma pack(push)
 #pragma pack(1)
 
@@ -99,11 +95,7 @@ struct YR_ATOM_QUALITY_TABLE_ENTRY
 
 #pragma pack(pop)
 
-
-typedef int (*YR_ATOMS_QUALITY_FUNC)(
-    YR_ATOMS_CONFIG* config,
-    YR_ATOM* atom);
-
+typedef int (*YR_ATOMS_QUALITY_FUNC)(YR_ATOMS_CONFIG* config, YR_ATOM* atom);
 
 struct YR_ATOMS_CONFIG
 {
@@ -115,14 +107,12 @@ struct YR_ATOMS_CONFIG
   bool free_quality_table;
 };
 
-
 int yr_atoms_extract_from_re(
     YR_ATOMS_CONFIG* config,
     RE_AST* re_ast,
     YR_MODIFIER modifier,
     YR_ATOM_LIST_ITEM** atoms,
     int* min_atom_quality);
-
 
 int yr_atoms_extract_from_string(
     YR_ATOMS_CONFIG* config,
@@ -132,28 +122,14 @@ int yr_atoms_extract_from_string(
     YR_ATOM_LIST_ITEM** atoms,
     int* min_atom_quality);
 
+int yr_atoms_extract_triplets(RE_NODE* re_node, YR_ATOM_LIST_ITEM** atoms);
 
-int yr_atoms_extract_triplets(
-    RE_NODE* re_node,
-    YR_ATOM_LIST_ITEM** atoms);
+int yr_atoms_heuristic_quality(YR_ATOMS_CONFIG* config, YR_ATOM* atom);
 
+int yr_atoms_table_quality(YR_ATOMS_CONFIG* config, YR_ATOM* atom);
 
-int yr_atoms_heuristic_quality(
-    YR_ATOMS_CONFIG* config,
-    YR_ATOM* atom);
+int yr_atoms_min_quality(YR_ATOMS_CONFIG* config, YR_ATOM_LIST_ITEM* atom_list);
 
-
-int yr_atoms_table_quality(
-    YR_ATOMS_CONFIG* config,
-    YR_ATOM* atom);
-
-
-int yr_atoms_min_quality(
-    YR_ATOMS_CONFIG* config,
-    YR_ATOM_LIST_ITEM* atom_list);
-
-
-void yr_atoms_list_destroy(
-    YR_ATOM_LIST_ITEM* list_head);
+void yr_atoms_list_destroy(YR_ATOM_LIST_ITEM* list_head);
 
 #endif

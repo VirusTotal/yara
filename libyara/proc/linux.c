@@ -29,29 +29,27 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #if defined(USE_LINUX_PROC)
 
+#include <errno.h>
 #include <fcntl.h>
 #include <inttypes.h>
-#include <unistd.h>
 #include <sys/types.h>
 #include <sys/wait.h>
-#include <errno.h>
-
+#include <unistd.h>
 #include <yara/error.h>
-#include <yara/proc.h>
-#include <yara/mem.h>
 #include <yara/globals.h>
+#include <yara/mem.h>
+#include <yara/proc.h>
 
 
-typedef struct _YR_PROC_INFO {
-  int             pid;
-  int             mem_fd;
-  FILE*           maps;
+typedef struct _YR_PROC_INFO
+{
+  int pid;
+  int mem_fd;
+  FILE* maps;
 } YR_PROC_INFO;
 
 
-int _yr_process_attach(
-    int pid,
-    YR_PROC_ITERATOR_CTX* context)
+int _yr_process_attach(int pid, YR_PROC_ITERATOR_CTX* context)
 {
   char buffer[256];
 
@@ -92,8 +90,7 @@ int _yr_process_attach(
 }
 
 
-int _yr_process_detach(
-    YR_PROC_ITERATOR_CTX* context)
+int _yr_process_detach(YR_PROC_ITERATOR_CTX* context)
 {
   YR_PROC_INFO* proc_info = (YR_PROC_INFO*) context->proc_info;
 
@@ -104,8 +101,7 @@ int _yr_process_detach(
 }
 
 
-YR_API const uint8_t* yr_process_fetch_memory_block_data(
-    YR_MEMORY_BLOCK* block)
+YR_API const uint8_t* yr_process_fetch_memory_block_data(YR_MEMORY_BLOCK* block)
 {
   const uint8_t* result = NULL;
 
@@ -126,21 +122,22 @@ YR_API const uint8_t* yr_process_fetch_memory_block_data(
     else
     {
       context->buffer_size = 0;
-      goto _exit; // return NULL;
+      goto _exit;  // return NULL;
     }
   }
 
-  if (pread(proc_info->mem_fd,
-            (void *) context->buffer,
-            block->size,
-            block->base) == -1)
+  if (pread(
+          proc_info->mem_fd,
+          (void*) context->buffer,
+          block->size,
+          block->base) == -1)
   {
-    goto _exit; // return NULL;
+    goto _exit;  // return NULL;
   }
 
   result = context->buffer;
 
-  _exit:;
+_exit:;
 
   YR_DEBUG_FPRINTF(2, stderr, "+ %s() {} = %p\n", __FUNCTION__, result);
 
@@ -159,14 +156,18 @@ YR_API YR_MEMORY_BLOCK* yr_process_get_next_memory_block(
 
   if (fgets(buffer, sizeof(buffer), proc_info->maps) != NULL)
   {
-    sscanf(buffer, "%"SCNx64"-%"SCNx64, &begin, &end);
+    sscanf(buffer, "%" SCNx64 "-%" SCNx64, &begin, &end);
 
     context->current_block.base = begin;
     context->current_block.size = end - begin;
 
-    YR_DEBUG_FPRINTF(2, stderr,
+    YR_DEBUG_FPRINTF(
+        2,
+        stderr,
         "+ %s() {} // .base=0x%" PRIx64 " .size=%lu\n",
-        __FUNCTION__, context->current_block.base, context->current_block.size);
+        __FUNCTION__,
+        context->current_block.base,
+        context->current_block.size);
 
     return &context->current_block;
   }

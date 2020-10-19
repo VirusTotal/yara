@@ -34,21 +34,17 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <yara/sizedstr.h>
 #include <yara/types.h>
 
-//
+////////////////////////////////////////////////////////////////////////////////
 // ss_compare returns:
 //     0 if s1 == s2
 //    -1 if s1 < s2
 //     1 if s1 > s2
 //
-int ss_compare(
-    SIZED_STRING* s1,
-    SIZED_STRING* s2)
+int ss_compare(SIZED_STRING* s1, SIZED_STRING* s2)
 {
   size_t i = 0;
 
-  while (s1->length > i &&
-         s2->length > i &&
-         s1->c_string[i] == s2->c_string[i])
+  while (s1->length > i && s2->length > i && s1->c_string[i] == s2->c_string[i])
   {
     i++;
   }
@@ -65,19 +61,16 @@ int ss_compare(
     return 1;
 }
 
-//
+////////////////////////////////////////////////////////////////////////////////
 // ss_icompare is the case-insensitive version of ss_compare.
 //
-int ss_icompare(
-    SIZED_STRING* s1,
-    SIZED_STRING* s2)
+int ss_icompare(SIZED_STRING* s1, SIZED_STRING* s2)
 {
   size_t i = 0;
 
-  while (s1->length > i &&
-         s2->length > i &&
+  while (s1->length > i && s2->length > i &&
          yr_lowercase[(uint8_t) s1->c_string[i]] ==
-         yr_lowercase[(uint8_t) s2->c_string[i]])
+             yr_lowercase[(uint8_t) s2->c_string[i]])
   {
     i++;
   }
@@ -94,25 +87,18 @@ int ss_icompare(
     return 1;
 }
 
-
-//
+////////////////////////////////////////////////////////////////////////////////
 // ss_contains returns true if the sized string s1 contains s2.
 //
-bool ss_contains(
-    SIZED_STRING* s1,
-    SIZED_STRING* s2)
+bool ss_contains(SIZED_STRING* s1, SIZED_STRING* s2)
 {
-  return memmem(s1->c_string, s1->length,
-                s2->c_string, s2->length) != NULL;
+  return memmem(s1->c_string, s1->length, s2->c_string, s2->length) != NULL;
 }
 
-
-//
+////////////////////////////////////////////////////////////////////////////////
 // ss_icontains is the case-insensitive version of ss_contains.
 //
-bool ss_icontains(
-    SIZED_STRING* s1,
-    SIZED_STRING* s2)
+bool ss_icontains(SIZED_STRING* s1, SIZED_STRING* s2)
 {
   if (s1->length < s2->length)
     return false;
@@ -133,13 +119,10 @@ bool ss_icontains(
   return false;
 }
 
-
-//
+////////////////////////////////////////////////////////////////////////////////
 // ss_startswith returns true if the sized string s1 starts with s2.
 //
-bool ss_startswith(
-    SIZED_STRING* s1,
-    SIZED_STRING* s2)
+bool ss_startswith(SIZED_STRING* s1, SIZED_STRING* s2)
 {
   if (s1->length < s2->length)
     return false;
@@ -153,13 +136,10 @@ bool ss_startswith(
   return true;
 }
 
-
-//
+////////////////////////////////////////////////////////////////////////////////
 // ss_istartswith is the case-insensitive version of ss_startswith
 //
-bool ss_istartswith(
-    SIZED_STRING* s1,
-    SIZED_STRING* s2)
+bool ss_istartswith(SIZED_STRING* s1, SIZED_STRING* s2)
 {
   if (s1->length < s2->length)
     return false;
@@ -174,13 +154,10 @@ bool ss_istartswith(
   return true;
 }
 
-
-//
+////////////////////////////////////////////////////////////////////////////////
 // ss_endswith returns true if the sized string s1 ends with s2.
 //
-bool ss_endswith(
-    SIZED_STRING* s1,
-    SIZED_STRING* s2)
+bool ss_endswith(SIZED_STRING* s1, SIZED_STRING* s2)
 {
   if (s1->length < s2->length)
     return false;
@@ -194,10 +171,7 @@ bool ss_endswith(
   return true;
 }
 
-
-bool ss_iendswith(
-    SIZED_STRING* s1,
-    SIZED_STRING* s2)
+bool ss_iendswith(SIZED_STRING* s1, SIZED_STRING* s2)
 {
   if (s1->length < s2->length)
     return false;
@@ -212,10 +186,7 @@ bool ss_iendswith(
   return true;
 }
 
-
-
-SIZED_STRING* ss_dup(
-    SIZED_STRING* s)
+SIZED_STRING* ss_dup(SIZED_STRING* s)
 {
   SIZED_STRING* result = (SIZED_STRING*) yr_malloc(
       sizeof(SIZED_STRING) + s->length);
@@ -231,9 +202,7 @@ SIZED_STRING* ss_dup(
   return result;
 }
 
-
-SIZED_STRING* ss_new(
-    const char* s)
+SIZED_STRING* ss_new(const char* s)
 {
   SIZED_STRING* result;
 
@@ -253,13 +222,11 @@ SIZED_STRING* ss_new(
   return result;
 }
 
-//
+////////////////////////////////////////////////////////////////////////////////
 // Convert a SIZED_STRING to a wide version. It is up to the caller to free
 // the returned string.
 //
-
-SIZED_STRING* ss_convert_to_wide(
-    SIZED_STRING* s)
+SIZED_STRING* ss_convert_to_wide(SIZED_STRING* s)
 {
   SIZED_STRING* wide = (SIZED_STRING*) yr_malloc(
       sizeof(SIZED_STRING) + s->length * 2);

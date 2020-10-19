@@ -37,14 +37,15 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "libyara/include/yara/error.h"
 #include "sandboxed_api/util/status_macros.h"
 
-namespace yara {
-
+namespace yara
+{
 absl::Mutex YaraTransaction::mutex_(absl::kConstInit);
 
 ::sapi::StatusOr<std::unique_ptr<YaraTransaction>> YaraTransaction::Create(
-    Options options) {
-  auto transaction =
-      absl::WrapUnique(new YaraTransaction(options.scan_timeout));
+    Options options)
+{
+  auto transaction = absl::WrapUnique(
+      new YaraTransaction(options.scan_timeout));
   // "Run" the transaction in order to initialize the underlying sandbox.
   SAPI_RETURN_IF_ERROR(transaction->Run());
 
@@ -55,20 +56,23 @@ absl::Mutex YaraTransaction::mutex_(absl::kConstInit);
   return transaction;
 }
 
-::sapi::StatusOr<int> YaraTransaction::LoadRules(
-    const std::string& rule_string) {
+::sapi::StatusOr<int> YaraTransaction::LoadRules(const std::string& rule_string)
+{
   absl::MutexLock lock(&mutex_);
   sandbox::YaraApi api(sandbox());
 
   ::sapi::v::ConstCStr rule_string_sapi(rule_string.c_str());
   YaraStatus error_status;
   ::sapi::v::Proto<YaraStatus> error_status_sapi(error_status);
-  SAPI_ASSIGN_OR_RETURN(int num_rules,
-                        api.YaraLoadRules(rule_string_sapi.PtrBefore(),
-                                          error_status_sapi.PtrBoth()));
-  if (num_rules <= 0) {
+  SAPI_ASSIGN_OR_RETURN(
+      int num_rules,
+      api.YaraLoadRules(
+          rule_string_sapi.PtrBefore(), error_status_sapi.PtrBoth()));
+  if (num_rules <= 0)
+  {
     auto error_status_copy = error_status_sapi.GetProtoCopy();
-    if (!error_status_copy) {
+    if (!error_status_copy)
+    {
       return absl::UnknownError("Deserialization of response failed");
     }
     return absl::InvalidArgumentError(error_status_copy->message());
@@ -76,13 +80,16 @@ absl::Mutex YaraTransaction::mutex_(absl::kConstInit);
   return num_rules;
 }
 
-::sapi::StatusOr<YaraMatches> YaraTransaction::ScanFd(int fd) {
+::sapi::StatusOr<YaraMatches> YaraTransaction::ScanFd(int fd)
+{
   int local_event_fd = eventfd(0 /* initval */, 0 /* flags */);
-  if (local_event_fd == -1) {
+  if (local_event_fd == -1)
+  {
     return absl::InternalError(
         absl::StrCat("eventfd() error: ", strerror(errno)));
   }
-  struct FDCloser {
+  struct FDCloser
+  {
     ~FDCloser() { close(event_fd); }
     int event_fd;
   } event_fd_closer = {local_event_fd};
@@ -106,8 +113,10 @@ absl::Mutex YaraTransaction::mutex_(absl::kConstInit);
 
     SAPI_ASSIGN_OR_RETURN(
         result_id,
-        api.YaraAsyncScanFd(data_fd.GetRemoteFd(), event_fd.GetRemoteFd(),
-                            absl::ToInt64Seconds(scan_timeout_)));
+        api.YaraAsyncScanFd(
+            data_fd.GetRemoteFd(),
+            event_fd.GetRemoteFd(),
+            absl::ToInt64Seconds(scan_timeout_)));
   }
 
   pollfd poll_events{local_event_fd, POLLIN};
@@ -115,20 +124,23 @@ absl::Mutex YaraTransaction::mutex_(absl::kConstInit);
 
   // TEMP_FAILURE_RETRY is a GNU extension that retries if the call returns
   // EINTR.
-  poll_result = TEMP_FAILURE_RETRY(
-      poll(&poll_events, 1 /* nfds */,
-           // Add extra time to allow code inside the sandbox to time out first.
-           absl::ToInt64Milliseconds(scan_timeout_ + absl::Seconds(10))));
-  if (poll_result == 0) {
+  poll_result = TEMP_FAILURE_RETRY(poll(
+      &poll_events,
+      1 /* nfds */,
+      // Add extra time to allow code inside the sandbox to time out first.
+      absl::ToInt64Milliseconds(scan_timeout_ + absl::Seconds(10))));
+  if (poll_result == 0)
+  {
     return absl::DeadlineExceededError("Scan timeout during poll()");
   }
 
-  if (poll_result == -1) {
-    return absl::InternalError(
-        absl::StrCat("poll() error: ", strerror(errno)));
+  if (poll_result == -1)
+  {
+    return absl::InternalError(absl::StrCat("poll() error: ", strerror(errno)));
   }
   if (poll_events.revents & POLLHUP || poll_events.revents & POLLERR ||
-      poll_events.revents & POLLNVAL) {
+      poll_events.revents & POLLNVAL)
+  {
     return absl::InternalError(
         absl::StrCat("poll() error, revents: ", poll_events.revents));
   }
@@ -139,18 +151,21 @@ absl::Mutex YaraTransaction::mutex_(absl::kConstInit);
   SAPI_ASSIGN_OR_RETURN(
       int scan_result,
       api.YaraGetScanResult(result_id, matches_sapi.PtrBoth()));
-  switch (scan_result) {
-    case ERROR_SUCCESS:
-    case ERROR_TOO_MANY_MATCHES: {
-      auto matches_copy = matches_sapi.GetProtoCopy();
-      if (!matches_copy) {
-        return absl::UnknownError("Deserialization of response failed");
-      }
-      return *matches_copy;
+  switch (scan_result)
+  {
+  case ERROR_SUCCESS:
+  case ERROR_TOO_MANY_MATCHES:
+  {
+    auto matches_copy = matches_sapi.GetProtoCopy();
+    if (!matches_copy)
+    {
+      return absl::UnknownError("Deserialization of response failed");
     }
+    return *matches_copy;
+  }
 
-    case ERROR_SCAN_TIMEOUT:
-      return absl::DeadlineExceededError("Scan timeout");
+  case ERROR_SCAN_TIMEOUT:
+    return absl::DeadlineExceededError("Scan timeout");
   }
   return absl::InternalError(absl::StrCat("Error during scan: ", scan_result));
 }

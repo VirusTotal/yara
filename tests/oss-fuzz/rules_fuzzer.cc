@@ -27,21 +27,20 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include <stdint.h>
 #include <stddef.h>
+#include <stdint.h>
 #include <string.h>
-
 #include <yara.h>
 
 
 extern "C" int LLVMFuzzerInitialize(int* argc, char*** argv)
 {
-   yr_initialize();
+  yr_initialize();
   return 0;
 }
 
 
-extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
+extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
 {
   YR_RULES* rules;
   YR_COMPILER* compiler;
@@ -51,7 +50,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
   if (!buffer)
     return 0;
 
-  strncpy(buffer, (const char *) data, size);
+  strncpy(buffer, (const char*) data, size);
   buffer[size] = 0;
 
   if (yr_compiler_create(&compiler) != ERROR_SUCCESS)

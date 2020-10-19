@@ -27,16 +27,15 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-
 #ifndef THREADING_H
 #define THREADING_H
 
 #if defined(_WIN32) || defined(__CYGWIN__)
 #include <windows.h>
 #else
-#include <sys/stat.h>
 #include <pthread.h>
 #include <semaphore.h>
+#include <sys/stat.h>
 #endif
 
 #if defined(_WIN32) || defined(__CYGWIN__)
@@ -52,41 +51,31 @@ typedef LPTHREAD_START_ROUTINE THREAD_START_ROUTINE;
 typedef sem_t* SEMAPHORE;
 typedef pthread_mutex_t MUTEX;
 typedef pthread_t THREAD;
-typedef void *(*THREAD_START_ROUTINE) (void *);
+typedef void* (*THREAD_START_ROUTINE)(void*);
 
 #endif
 
-int mutex_init(
-    MUTEX* mutex);
+int mutex_init(MUTEX* mutex);
 
-void mutex_destroy(
-    MUTEX* mutex);
+void mutex_destroy(MUTEX* mutex);
 
-void mutex_lock(
-    MUTEX* mutex);
+void mutex_lock(MUTEX* mutex);
 
-void mutex_unlock(
-    MUTEX* mutex);
+void mutex_unlock(MUTEX* mutex);
 
-int semaphore_init(
-    SEMAPHORE* semaphore,
-    int value);
+int semaphore_init(SEMAPHORE* semaphore, int value);
 
-void semaphore_destroy(
-    SEMAPHORE* semaphore);
+void semaphore_destroy(SEMAPHORE* semaphore);
 
-void semaphore_wait(
-    SEMAPHORE* semaphore);
+void semaphore_wait(SEMAPHORE* semaphore);
 
-void semaphore_release(
-    SEMAPHORE* semaphore);
+void semaphore_release(SEMAPHORE* semaphore);
 
 int create_thread(
     THREAD* thread,
     THREAD_START_ROUTINE start_routine,
     void* param);
 
-void thread_join(
-    THREAD* thread);
+void thread_join(THREAD* thread);
 
 #endif

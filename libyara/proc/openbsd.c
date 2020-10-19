@@ -29,32 +29,30 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #if defined(USE_OPENBSD_PROC)
 
-#include <sys/types.h>
+#include <errno.h>
 #include <sys/ptrace.h>
 #include <sys/sysctl.h>
+#include <sys/types.h>
 #include <sys/wait.h>
-#include <errno.h>
-
 #include <yara/error.h>
-#include <yara/proc.h>
 #include <yara/mem.h>
+#include <yara/proc.h>
 
 
-typedef struct _YR_PROC_INFO {
-  int                  pid;
-  uint64_t             old_end;
+typedef struct _YR_PROC_INFO
+{
+  int pid;
+  uint64_t old_end;
   struct kinfo_vmentry vm_entry;
 } YR_PROC_INFO;
 
 
-int _yr_process_attach(
-    int pid,
-    YR_PROC_ITERATOR_CTX* context)
+int _yr_process_attach(int pid, YR_PROC_ITERATOR_CTX* context)
 {
   int status;
   size_t len = sizeof(struct kinfo_vmentry);
 
-  int mib[] = { CTL_KERN, KERN_PROC_VMMAP, pid };
+  int mib[] = {CTL_KERN, KERN_PROC_VMMAP, pid};
   YR_PROC_INFO* proc_info = (YR_PROC_INFO*) yr_malloc(sizeof(YR_PROC_INFO));
 
   if (proc_info == NULL)
@@ -91,8 +89,7 @@ int _yr_process_attach(
 }
 
 
-int _yr_process_detach(
-    YR_PROC_ITERATOR_CTX* context)
+int _yr_process_detach(YR_PROC_ITERATOR_CTX* context)
 {
   YR_PROC_INFO* proc_info = (YR_PROC_INFO*) context->proc_info;
 
@@ -102,8 +99,7 @@ int _yr_process_detach(
 }
 
 
-YR_API const uint8_t* yr_process_fetch_memory_block_data(
-    YR_MEMORY_BLOCK* block)
+YR_API const uint8_t* yr_process_fetch_memory_block_data(YR_MEMORY_BLOCK* block)
 {
   YR_PROC_ITERATOR_CTX* context = (YR_PROC_ITERATOR_CTX*) block->context;
   YR_PROC_INFO* proc_info = (YR_PROC_INFO*) context->proc_info;
@@ -129,11 +125,11 @@ YR_API const uint8_t* yr_process_fetch_memory_block_data(
   }
 
   io_desc.piod_op = PIOD_READ_D;
-  io_desc.piod_offs = (void*)block->base;
-  io_desc.piod_addr = (void*)context->buffer;
+  io_desc.piod_offs = (void*) block->base;
+  io_desc.piod_addr = (void*) context->buffer;
   io_desc.piod_len = block->size;
 
-  if (ptrace(PT_IO, proc_info->pid, (char*)&io_desc, 0) == -1)
+  if (ptrace(PT_IO, proc_info->pid, (char*) &io_desc, 0) == -1)
     return NULL;
 
   return context->buffer;
@@ -146,7 +142,7 @@ YR_API YR_MEMORY_BLOCK* yr_process_get_next_memory_block(
   YR_PROC_ITERATOR_CTX* context = (YR_PROC_ITERATOR_CTX*) iterator->context;
   YR_PROC_INFO* proc_info = (YR_PROC_INFO*) context->proc_info;
 
-  int mib[] = { CTL_KERN, KERN_PROC_VMMAP, proc_info->pid };
+  int mib[] = {CTL_KERN, KERN_PROC_VMMAP, proc_info->pid};
   size_t len = sizeof(struct kinfo_vmentry);
 
   if (sysctl(mib, 3, &proc_info->vm_entry, &len, NULL, 0) < 0)
@@ -158,8 +154,8 @@ YR_API YR_MEMORY_BLOCK* yr_process_get_next_memory_block(
 
   proc_info->old_end = proc_info->vm_entry.kve_end;
   context->current_block.base = proc_info->vm_entry.kve_start;
-  context->current_block.size =
-      proc_info->vm_entry.kve_end - proc_info->vm_entry.kve_start;
+  context->current_block.size = proc_info->vm_entry.kve_end -
+                                proc_info->vm_entry.kve_start;
 
   proc_info->vm_entry.kve_start = proc_info->vm_entry.kve_start + 1;
 

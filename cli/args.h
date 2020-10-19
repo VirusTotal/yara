@@ -34,68 +34,76 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
 
-typedef enum _args_error_type {
-  ARGS_ERROR_OK,
-  ARGS_ERROR_UNKNOWN_OPT,
-  ARGS_ERROR_TOO_MANY,
-  ARGS_ERROR_REQUIRED_INTEGER_ARG,
-  ARGS_ERROR_REQUIRED_STRING_ARG,
-  ARGS_ERROR_UNEXPECTED_ARG,
-} args_error_type_t;
+  typedef enum _args_error_type
+  {
+    ARGS_ERROR_OK,
+    ARGS_ERROR_UNKNOWN_OPT,
+    ARGS_ERROR_TOO_MANY,
+    ARGS_ERROR_REQUIRED_INTEGER_ARG,
+    ARGS_ERROR_REQUIRED_STRING_ARG,
+    ARGS_ERROR_UNEXPECTED_ARG,
+  } args_error_type_t;
 
 
-typedef enum _args_option_type {
-  // special
-  ARGS_OPT_END,
-  ARGS_OPT_GROUP,
-  // options with no arguments
-  ARGS_OPT_BOOLEAN,
-  // options with arguments (optional or required)
-  ARGS_OPT_INTEGER,
-  ARGS_OPT_STRING,
-} args_option_type_t;
+  typedef enum _args_option_type
+  {
+    // special
+    ARGS_OPT_END,
+    ARGS_OPT_GROUP,
+    // options with no arguments
+    ARGS_OPT_BOOLEAN,
+    // options with arguments (optional or required)
+    ARGS_OPT_INTEGER,
+    ARGS_OPT_STRING,
+  } args_option_type_t;
 
 
-typedef struct _args_option {
-  args_option_type_t type;
-  const char short_name;
-  const char *long_name;
-  void *value;
-  int max_count;
-  const char *help;
-  const char *type_help;
-  int count;
-} args_option_t;
+  typedef struct _args_option
+  {
+    args_option_type_t type;
+    const char short_name;
+    const char *long_name;
+    void *value;
+    int max_count;
+    const char *help;
+    const char *type_help;
+    int count;
+  } args_option_t;
 
 
-#define OPT_BOOLEAN(short_name, long_name, value, ...) \
-    { ARGS_OPT_BOOLEAN, short_name, long_name, value, 1, __VA_ARGS__ }
+#define OPT_BOOLEAN(short_name, long_name, value, ...)             \
+  {                                                                \
+    ARGS_OPT_BOOLEAN, short_name, long_name, value, 1, __VA_ARGS__ \
+  }
 
-#define OPT_INTEGER(short_name, long_name, value, ...) \
-    { ARGS_OPT_INTEGER, short_name, long_name, value, 1, __VA_ARGS__ }
+#define OPT_INTEGER(short_name, long_name, value, ...)             \
+  {                                                                \
+    ARGS_OPT_INTEGER, short_name, long_name, value, 1, __VA_ARGS__ \
+  }
 
-#define OPT_STRING_MULTI(short_name, long_name, value, max_count, ...) \
-    { ARGS_OPT_STRING, short_name, long_name, value, max_count, __VA_ARGS__ }
+#define OPT_STRING_MULTI(short_name, long_name, value, max_count, ...)    \
+  {                                                                       \
+    ARGS_OPT_STRING, short_name, long_name, value, max_count, __VA_ARGS__ \
+  }
 
 #define OPT_STRING(short_name, long_name, value, ...) \
-    OPT_STRING_MULTI(short_name, long_name, value, 1, __VA_ARGS__)
+  OPT_STRING_MULTI(short_name, long_name, value, 1, __VA_ARGS__)
 
-#define OPT_END() { ARGS_OPT_END, 0 }
-
-
-int args_parse(
-    args_option_t *options,
-    int argc,
-    const char **argv);
+#define OPT_END()   \
+  {                 \
+    ARGS_OPT_END, 0 \
+  }
 
 
-void args_print_usage(
-    args_option_t *options,
-    int alignment);
+  int args_parse(args_option_t *options, int argc, const char **argv);
+
+
+  void args_print_usage(args_option_t *options, int alignment);
 
 
 #ifdef __cplusplus
