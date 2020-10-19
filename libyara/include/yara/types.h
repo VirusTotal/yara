@@ -30,7 +30,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef YR_TYPES_H
 #define YR_TYPES_H
 
-#include <stdbool.h>
 #include <yara/arena.h>
 #include <yara/bitmask.h>
 #include <yara/hash.h>
