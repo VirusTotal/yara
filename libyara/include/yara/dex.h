@@ -45,7 +45,6 @@ typedef struct
   uint32_t string_data_offset;
 } string_id_item_t;
 
-
 typedef struct
 {
   uint32_t utf16_size;
@@ -135,7 +134,6 @@ typedef struct _DEX
   dex_header_t* header;
   YR_OBJECT* object;
 } DEX;
-
 
 #define fits_in_dex(dex, pointer, size)                                    \
   ((size_t) size <= dex->data_size && (uint8_t*) (pointer) >= dex->data && \

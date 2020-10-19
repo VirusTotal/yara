@@ -44,10 +44,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <yara/strutils.h>
 #include <yara/utils.h>
 
-
 #define todigit(x) \
   ((x) >= 'A' && (x) <= 'F') ? ((uint8_t)(x - 'A' + 10)) : ((uint8_t)(x - '0'))
-
 
 int yr_parser_emit(
     yyscan_t yyscanner,
@@ -61,7 +59,6 @@ int yr_parser_emit(
       sizeof(uint8_t),
       instruction_ref);
 }
-
 
 int yr_parser_emit_with_arg_double(
     yyscan_t yyscanner,
@@ -88,7 +85,6 @@ int yr_parser_emit_with_arg_double(
   return result;
 }
 
-
 int yr_parser_emit_with_arg_int32(
     yyscan_t yyscanner,
     uint8_t instruction,
@@ -114,7 +110,6 @@ int yr_parser_emit_with_arg_int32(
   return result;
 }
 
-
 int yr_parser_emit_with_arg(
     yyscan_t yyscanner,
     uint8_t instruction,
@@ -139,7 +134,6 @@ int yr_parser_emit_with_arg(
 
   return result;
 }
-
 
 int yr_parser_emit_with_arg_reloc(
     yyscan_t yyscanner,
@@ -179,7 +173,6 @@ int yr_parser_emit_with_arg_reloc(
 
   return result;
 }
-
 
 int yr_parser_emit_pushes_for_strings(
     yyscan_t yyscanner,
@@ -235,7 +228,6 @@ int yr_parser_emit_pushes_for_strings(
   return ERROR_SUCCESS;
 }
 
-
 int yr_parser_emit_push_const(yyscan_t yyscanner, uint64_t argument)
 {
   uint64_t u = (uint64_t) argument;
@@ -273,7 +265,6 @@ int yr_parser_emit_push_const(yyscan_t yyscanner, uint64_t argument)
       yyget_extra(yyscanner)->arena, YR_CODE_SECTION, buf, bufsz, NULL);
 }
 
-
 int yr_parser_check_types(
     YR_COMPILER* compiler,
     YR_OBJECT_FUNCTION* function,
@@ -294,7 +285,6 @@ int yr_parser_check_types(
 
       return ERROR_WRONG_ARGUMENTS;
 }
-
 
 int yr_parser_lookup_string(
     yyscan_t yyscanner,
@@ -327,10 +317,7 @@ int yr_parser_lookup_string(
   return ERROR_UNDEFINED_STRING;
 }
 
-
-//
-// yr_parser_lookup_loop_variable
-//
+////////////////////////////////////////////////////////////////////////////////
 // Searches for a variable with the given identifier in the scope of the current
 // "for" loop. In case of nested "for" loops the identifier is searched starting
 // at the top-level loop and going down thorough the nested loops until the
@@ -375,7 +362,6 @@ int yr_parser_lookup_loop_variable(
 
   return -1;
 }
-
 
 static int _yr_parser_write_string(
     const char* identifier,
@@ -672,7 +658,6 @@ int yr_parser_reduce_string_declaration(
   // and unmarked later if required.
   modifier.flags |= STRING_FLAGS_FIXED_OFFSET;
 
-
   if (modifier.flags & STRING_FLAGS_HEXADECIMAL ||
       modifier.flags & STRING_FLAGS_REGEXP ||
       modifier.flags & STRING_FLAGS_BASE64 ||
@@ -850,7 +835,6 @@ _exit:
   return result;
 }
 
-
 int yr_parser_reduce_rule_declaration_phase_1(
     yyscan_t yyscanner,
     int32_t flags,
@@ -1013,7 +997,6 @@ int yr_parser_reduce_rule_declaration_phase_2(
   return ERROR_SUCCESS;
 }
 
-
 int yr_parser_reduce_string_identifier(
     yyscan_t yyscanner,
     const char* identifier,
@@ -1104,7 +1087,6 @@ int yr_parser_reduce_string_identifier(
   return ERROR_SUCCESS;
 }
 
-
 int yr_parser_reduce_meta_declaration(
     yyscan_t yyscanner,
     int32_t type,
@@ -1150,7 +1132,6 @@ int yr_parser_reduce_meta_declaration(
   return ERROR_SUCCESS;
 }
 
-
 static int _yr_parser_valid_module_name(SIZED_STRING* module_name)
 {
   if (module_name->length == 0)
@@ -1161,7 +1142,6 @@ static int _yr_parser_valid_module_name(SIZED_STRING* module_name)
 
   return true;
 }
-
 
 int yr_parser_reduce_import(yyscan_t yyscanner, SIZED_STRING* module_name)
 {
@@ -1218,7 +1198,6 @@ int yr_parser_reduce_import(yyscan_t yyscanner, SIZED_STRING* module_name)
 
   return ERROR_SUCCESS;
 }
-
 
 static int _yr_parser_operator_to_opcode(const char* op, int expression_type)
 {
@@ -1284,7 +1263,6 @@ static int _yr_parser_operator_to_opcode(const char* op, int expression_type)
 
   return OP_ERROR;
 }
-
 
 int yr_parser_reduce_operation(
     yyscan_t yyscanner,

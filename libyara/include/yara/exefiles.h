@@ -32,7 +32,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 uint64_t yr_get_entry_point_offset(const uint8_t* buffer, size_t buffer_length);
 
-
 uint64_t yr_get_entry_point_address(
     const uint8_t* buffer,
     size_t buffer_length,

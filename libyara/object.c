@@ -27,7 +27,6 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-
 #include <assert.h>
 #include <ctype.h>
 #include <math.h>
@@ -41,7 +40,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <yara/mem.h>
 #include <yara/object.h>
 #include <yara/utils.h>
-
 
 int yr_object_create(
     int8_t type,
@@ -170,12 +168,10 @@ int yr_object_create(
   return ERROR_SUCCESS;
 }
 
-
 void yr_object_set_canary(YR_OBJECT* object, int canary)
 {
   object->canary = canary;
 }
-
 
 int yr_object_function_create(
     const char* identifier,
@@ -247,7 +243,6 @@ int yr_object_function_create(
   return ERROR_SUCCESS;
 }
 
-
 int yr_object_from_external_variable(
     YR_EXTERNAL_VARIABLE* external,
     YR_OBJECT** object)
@@ -310,7 +305,6 @@ int yr_object_from_external_variable(
 
   return result;
 }
-
 
 void yr_object_destroy(YR_OBJECT* object)
 {
@@ -389,7 +383,6 @@ void yr_object_destroy(YR_OBJECT* object)
   yr_free(object);
 }
 
-
 YR_OBJECT* yr_object_lookup_field(YR_OBJECT* object, const char* field_name)
 {
   YR_STRUCTURE_MEMBER* member;
@@ -409,7 +402,6 @@ YR_OBJECT* yr_object_lookup_field(YR_OBJECT* object, const char* field_name)
 
   return NULL;
 }
-
 
 static YR_OBJECT* _yr_object_lookup(
     YR_OBJECT* object,
@@ -514,7 +506,6 @@ static YR_OBJECT* _yr_object_lookup(
   return obj;
 }
 
-
 YR_OBJECT* yr_object_lookup(
     YR_OBJECT* object,
     int flags,
@@ -532,7 +523,6 @@ YR_OBJECT* yr_object_lookup(
 
   return result;
 }
-
 
 int yr_object_copy(YR_OBJECT* object, YR_OBJECT** object_copy)
 {
@@ -633,7 +623,6 @@ int yr_object_copy(YR_OBJECT* object, YR_OBJECT** object_copy)
   return ERROR_SUCCESS;
 }
 
-
 int yr_object_structure_set_member(YR_OBJECT* object, YR_OBJECT* member)
 {
   YR_STRUCTURE_MEMBER* sm;
@@ -659,7 +648,6 @@ int yr_object_structure_set_member(YR_OBJECT* object, YR_OBJECT* member)
   return ERROR_SUCCESS;
 }
 
-
 int yr_object_array_length(YR_OBJECT* object)
 {
   YR_OBJECT_ARRAY* array;
@@ -672,7 +660,6 @@ int yr_object_array_length(YR_OBJECT* object)
 
   return array->items->length;
 }
-
 
 YR_OBJECT* yr_object_array_get_item(YR_OBJECT* object, int flags, int index)
 {
@@ -699,7 +686,6 @@ YR_OBJECT* yr_object_array_get_item(YR_OBJECT* object, int flags, int index)
 
   return result;
 }
-
 
 int yr_object_array_set_item(YR_OBJECT* object, YR_OBJECT* item, int index)
 {
@@ -757,7 +743,6 @@ int yr_object_array_set_item(YR_OBJECT* object, YR_OBJECT* item, int index)
   return ERROR_SUCCESS;
 }
 
-
 YR_OBJECT* yr_object_dict_get_item(
     YR_OBJECT* object,
     int flags,
@@ -791,7 +776,6 @@ YR_OBJECT* yr_object_dict_get_item(
 
   return result;
 }
-
 
 int yr_object_dict_set_item(YR_OBJECT* object, YR_OBJECT* item, const char* key)
 {
@@ -849,7 +833,6 @@ int yr_object_dict_set_item(YR_OBJECT* object, YR_OBJECT* item, const char* key)
   return ERROR_SUCCESS;
 }
 
-
 bool yr_object_has_undefined_value(YR_OBJECT* object, const char* field, ...)
 {
   YR_OBJECT* field_obj;
@@ -880,7 +863,6 @@ bool yr_object_has_undefined_value(YR_OBJECT* object, const char* field, ...)
   return false;
 }
 
-
 int64_t yr_object_get_integer(YR_OBJECT* object, const char* field, ...)
 {
   YR_OBJECT* integer_obj;
@@ -905,7 +887,6 @@ int64_t yr_object_get_integer(YR_OBJECT* object, const char* field, ...)
 
   return integer_obj->value.i;
 }
-
 
 double yr_object_get_float(YR_OBJECT* object, const char* field, ...)
 {
@@ -932,7 +913,6 @@ double yr_object_get_float(YR_OBJECT* object, const char* field, ...)
   return double_obj->value.d;
 }
 
-
 SIZED_STRING* yr_object_get_string(YR_OBJECT* object, const char* field, ...)
 {
   YR_OBJECT* string_obj;
@@ -957,7 +937,6 @@ SIZED_STRING* yr_object_get_string(YR_OBJECT* object, const char* field, ...)
 
   return string_obj->value.ss;
 }
-
 
 int yr_object_set_integer(
     int64_t value,
@@ -992,7 +971,6 @@ int yr_object_set_integer(
   return ERROR_SUCCESS;
 }
 
-
 int yr_object_set_float(double value, YR_OBJECT* object, const char* field, ...)
 {
   YR_OBJECT* double_obj;
@@ -1021,7 +999,6 @@ int yr_object_set_float(double value, YR_OBJECT* object, const char* field, ...)
 
   return ERROR_SUCCESS;
 }
-
 
 int yr_object_set_string(
     const char* value,
@@ -1076,7 +1053,6 @@ int yr_object_set_string(
 
   return ERROR_SUCCESS;
 }
-
 
 YR_OBJECT* yr_object_get_root(YR_OBJECT* object)
 {

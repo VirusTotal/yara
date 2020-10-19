@@ -40,54 +40,42 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <yara/error.h>
 #include <yara/filemap.h>
 
-
-//
-// yr_filemap_map
-//
+////////////////////////////////////////////////////////////////////////////////
 // Maps a whole file into memory.
 //
 // Args:
-//    const char* file_path        - Path of the file to map.
-//    YR_MAPPED_FILE* pmapped_file - Pointer to a YR_MAPPED_FILE that will be
-//                                   filled with information about the mapping.
+//   file_path: Path of the file to map.
+//   pmapped_file: Pointer to a YR_MAPPED_FILE that will be filled with
+//                 information about the mapping.
 // Returns:
-//    One of the following error codes:
-//       ERROR_SUCCESS
-//       ERROR_INVALID_ARGUMENT
-//       ERROR_COULD_NOT_OPEN_FILE
-//       ERROR_COULD_NOT_MAP_FILE
+//   ERROR_SUCCESS
+//   ERROR_INVALID_ARGUMENT
+//   ERROR_COULD_NOT_OPEN_FILE
+//   ERROR_COULD_NOT_MAP_FILE
 //
-
 YR_API int yr_filemap_map(const char* file_path, YR_MAPPED_FILE* pmapped_file)
 {
   return yr_filemap_map_ex(file_path, 0, 0, pmapped_file);
 }
 
-//
-// yr_filemap_map_fd
-//
+////////////////////////////////////////////////////////////////////////////////
 // Maps a portion of a file (specified by descriptor) into memory.
 //
 // Args:
-//    YR_FILE_DESCRIPTOR file      - File descriptor representing the file to
-//                                   map
-//    off_t offset                 - File offset where the mapping will begin.
-//                                   This offset must be multiple of 1MB and not
-//                                   greater than the actual file size.
-//    size_t size                  - Number of bytes that will be mapped. If
-//                                   zero or greater than the actual file size
-//                                   all content until the end of the file will
-//                                   be mapped.
-//    YR_MAPPED_FILE* pmapped_file - Pointer to a YR_MAPPED_FILE struct that
-//                                   will be filled with the new mapping.
+//   file: File descriptor representing the file to map.
+//   offset: File offset where the mapping will begin. This offset must be
+//           multiple of 1MB and not greater than the actualfile size.
+//   size: Number of bytes that will be mapped. If zero or greater than the
+//         actual file size all content until the end of the file will be
+//         mapped.
+//   pmapped_file: Pointer to a YR_MAPPED_FILE struct that will be filled with
+//                 the new mapping.
 // Returns:
-//    One of the following error codes:
-//       ERROR_SUCCESS
-//       ERROR_INVALID_ARGUMENT
-//       ERROR_COULD_NOT_OPEN_FILE
-//       ERROR_COULD_NOT_MAP_FILE
+//   ERROR_SUCCESS
+//   ERROR_INVALID_ARGUMENT
+//   ERROR_COULD_NOT_OPEN_FILE
+//   ERROR_COULD_NOT_MAP_FILE
 //
-
 #if defined(_WIN32) || defined(__CYGWIN__)
 
 YR_API int yr_filemap_map_fd(
@@ -247,30 +235,24 @@ YR_API int yr_filemap_map_fd(
 
 #endif
 
-//
-// yr_filemap_map_ex
-//
+////////////////////////////////////////////////////////////////////////////////
 // Maps a portion of a file (specified by path) into memory.
 //
 // Args:
-//    const char* file_path        - Path of the file to map.
-//    off_t offset                 - File offset where the mapping will begin.
-//                                   This offset must be multiple of 1MB and not
-//                                   greater than the actual file size.
-//    size_t size                  - Number of bytes that will be mapped. If
-//                                   zero or greater than the actual file size
-//                                   all content until the end of the file will
-//                                   be mapped.
-//    YR_MAPPED_FILE* pmapped_file - Pointer to a YR_MAPPED_FILE struct that
-//                                   will be filled with the new mapping.
+//   file_path: Path of the file to map.
+//   offset: File offset where the mapping will begin. This offset must be
+//           multiple of 1MB and not greater than the actualfile size.
+//   size: Number of bytes that will be mapped. If zero or greater than the
+//         actual file size all content until the end of the file will be
+//         mapped.
+//   pmapped_file: Pointer to a YR_MAPPED_FILE struct that will be filled with
+//                 the new mapping.
 // Returns:
-//    One of the following error codes:
-//       ERROR_SUCCESS
-//       ERROR_INVALID_ARGUMENT
-//       ERROR_COULD_NOT_OPEN_FILE
-//       ERROR_COULD_NOT_MAP_FILE
+//   ERROR_SUCCESS
+//   ERROR_INVALID_ARGUMENT
+//   ERROR_COULD_NOT_OPEN_FILE
+//   ERROR_COULD_NOT_MAP_FILE
 //
-
 #if defined(_WIN32) || defined(__CYGWIN__)
 
 YR_API int yr_filemap_map_ex(
@@ -334,16 +316,12 @@ YR_API int yr_filemap_map_ex(
 
 #endif
 
-
-//
-// yr_filemap_unmap
-//
+////////////////////////////////////////////////////////////////////////////////
 // Unmaps a file mapping.
 //
 // Args:
-//    YR_MAPPED_FILE* pmapped_file - Pointer to a YR_MAPPED_FILE that struct.
+//   pmapped_file: Pointer to a YR_MAPPED_FILE that struct.
 //
-
 #ifdef WIN32
 
 YR_API void yr_filemap_unmap_fd(YR_MAPPED_FILE* pmapped_file)

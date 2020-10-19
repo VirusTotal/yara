@@ -90,7 +90,6 @@ uint32_t byte_to_int32[] = {
     0xA8BF6307, 0x7454AAD2, 0x256425E5, 0xD87DEF67, 0xCFE95452, 0xE7548DF7,
     0xA84956C7, 0xD8402C60, 0xCFBD0373, 0x6B6CDAFE};
 
-
 uint32_t yr_hash(uint32_t seed, const void* buffer, size_t len)
 {
   const uint8_t* b = (uint8_t*) buffer;
@@ -111,12 +110,11 @@ uint32_t yr_hash(uint32_t seed, const void* buffer, size_t len)
   return result;
 }
 
-// _yr_hash_table_lookup
-//
+////////////////////////////////////////////////////////////////////////////////
 // Return the value associated to a given key and optionally remove it from
 // the hash table. Key can be any byte sequence, namespace is a null-terminated
 // string, and remove is a boolean.
-
+//
 static void* _yr_hash_table_lookup(
     YR_HASH_TABLE* table,
     const void* key,
@@ -176,7 +174,6 @@ static void* _yr_hash_table_lookup(
   return NULL;
 }
 
-
 YR_API int yr_hash_table_create(int size, YR_HASH_TABLE** table)
 {
   YR_HASH_TABLE* new_table;
@@ -196,7 +193,6 @@ YR_API int yr_hash_table_create(int size, YR_HASH_TABLE** table)
 
   return ERROR_SUCCESS;
 }
-
 
 YR_API void yr_hash_table_clean(
     YR_HASH_TABLE* table,
@@ -234,7 +230,6 @@ YR_API void yr_hash_table_clean(
   }
 }
 
-
 YR_API void yr_hash_table_destroy(
     YR_HASH_TABLE* table,
     YR_HASH_TABLE_FREE_VALUE_FUNC free_value)
@@ -242,7 +237,6 @@ YR_API void yr_hash_table_destroy(
   yr_hash_table_clean(table, free_value);
   yr_free(table);
 }
-
 
 YR_API void* yr_hash_table_lookup_raw_key(
     YR_HASH_TABLE* table,
@@ -253,7 +247,6 @@ YR_API void* yr_hash_table_lookup_raw_key(
   return _yr_hash_table_lookup(table, key, key_length, ns, false);
 }
 
-
 YR_API void* yr_hash_table_remove_raw_key(
     YR_HASH_TABLE* table,
     const void* key,
@@ -262,7 +255,6 @@ YR_API void* yr_hash_table_remove_raw_key(
 {
   return _yr_hash_table_lookup(table, key, key_length, ns, true);
 }
-
 
 YR_API int yr_hash_table_add_raw_key(
     YR_HASH_TABLE* table,
@@ -322,7 +314,6 @@ YR_API int yr_hash_table_add_raw_key(
   return ERROR_SUCCESS;
 }
 
-
 YR_API void* yr_hash_table_lookup(
     YR_HASH_TABLE* table,
     const char* key,
@@ -330,7 +321,6 @@ YR_API void* yr_hash_table_lookup(
 {
   return yr_hash_table_lookup_raw_key(table, (void*) key, strlen(key), ns);
 }
-
 
 YR_API void* yr_hash_table_remove(
     YR_HASH_TABLE* table,
@@ -340,7 +330,6 @@ YR_API void* yr_hash_table_remove(
   return yr_hash_table_remove_raw_key(table, (void*) key, strlen(key), ns);
 }
 
-
 YR_API int yr_hash_table_add(
     YR_HASH_TABLE* table,
     const char* key,
@@ -349,7 +338,6 @@ YR_API int yr_hash_table_add(
 {
   return yr_hash_table_add_raw_key(table, (void*) key, strlen(key), ns, value);
 }
-
 
 YR_API int yr_hash_table_add_uint32(
     YR_HASH_TABLE* table,
@@ -361,7 +349,6 @@ YR_API int yr_hash_table_add_uint32(
       table, (void*) key, strlen(key), ns, value);
 }
 
-
 YR_API uint32_t yr_hash_table_lookup_uint32(
     YR_HASH_TABLE* table,
     const char* key,
@@ -370,7 +357,6 @@ YR_API uint32_t yr_hash_table_lookup_uint32(
   return yr_hash_table_lookup_uint32_raw_key(
       table, (void*) key, strlen(key), ns);
 }
-
 
 YR_API int yr_hash_table_add_uint32_raw_key(
     YR_HASH_TABLE* table,
@@ -389,7 +375,6 @@ YR_API int yr_hash_table_add_uint32_raw_key(
   return yr_hash_table_add_raw_key(
       table, key, key_length, ns, (void*) (size_t)(value + 1));
 }
-
 
 YR_API uint32_t yr_hash_table_lookup_uint32_raw_key(
     YR_HASH_TABLE* table,

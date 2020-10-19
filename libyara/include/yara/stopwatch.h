@@ -71,7 +71,6 @@ typedef struct _YR_STOPWATCH
 
 #endif
 
-
 // yr_stopwatch_start starts measuring time.
 void yr_stopwatch_start(YR_STOPWATCH* stopwatch);
 

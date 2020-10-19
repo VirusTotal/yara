@@ -31,7 +31,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <yara/libyara.h>
 #include <yara/modules.h>
 
-
 #define MODULE(name)                             \
   int name##__declarations(YR_OBJECT* module);   \
   int name##__load(                              \
@@ -43,11 +42,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
   int name##__initialize(YR_MODULE* module);     \
   int name##__finalize(YR_MODULE* module);
 
-
 #include <modules/module_list>
 
 #undef MODULE
-
 
 #define MODULE(name)     \
   {#name,                \
@@ -62,7 +59,6 @@ YR_MODULE yr_modules_table[] = {
 };
 
 #undef MODULE
-
 
 int yr_modules_initialize()
 {
@@ -79,7 +75,6 @@ int yr_modules_initialize()
   return ERROR_SUCCESS;
 }
 
-
 int yr_modules_finalize()
 {
   int i;
@@ -95,7 +90,6 @@ int yr_modules_finalize()
   return ERROR_SUCCESS;
 }
 
-
 int yr_modules_do_declarations(
     const char* module_name,
     YR_OBJECT* main_structure)
@@ -110,7 +104,6 @@ int yr_modules_do_declarations(
 
   return ERROR_UNKNOWN_MODULE;
 }
-
 
 int yr_modules_load(const char* module_name, YR_SCAN_CONTEXT* context)
 {
@@ -181,7 +174,6 @@ int yr_modules_load(const char* module_name, YR_SCAN_CONTEXT* context)
 
   return ERROR_SUCCESS;
 }
-
 
 int yr_modules_unload_all(YR_SCAN_CONTEXT* context)
 {

@@ -42,7 +42,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define MIN(x, y) ((x < y) ? (x) : (y))
 #endif
 
-
 PIMAGE_NT_HEADERS32 yr_get_pe_header(
     const uint8_t* buffer,
     size_t buffer_length)
@@ -86,7 +85,6 @@ PIMAGE_NT_HEADERS32 yr_get_pe_header(
   }
 }
 
-
 uint64_t yr_pe_rva_to_offset(
     PIMAGE_NT_HEADERS32 pe_header,
     uint64_t rva,
@@ -126,7 +124,6 @@ uint64_t yr_pe_rva_to_offset(
   return section_offset + (rva - section_rva);
 }
 
-
 int yr_get_elf_type(const uint8_t* buffer, size_t buffer_length)
 {
   elf_ident_t* elf_ident;
@@ -162,7 +159,6 @@ int yr_get_elf_type(const uint8_t* buffer, size_t buffer_length)
 
   return elf_ident->_class;
 }
-
 
 static uint64_t yr_elf_rva_to_offset_32(
     elf32_header_t* elf_header,
@@ -267,7 +263,6 @@ static uint64_t yr_elf_rva_to_offset_32(
   return 0;
 }
 
-
 static uint64_t yr_elf_rva_to_offset_64(
     elf64_header_t* elf_header,
     uint64_t rva,
@@ -352,7 +347,6 @@ static uint64_t yr_elf_rva_to_offset_64(
   return 0;
 }
 
-
 uint64_t yr_get_entry_point_offset(const uint8_t* buffer, size_t buffer_length)
 {
   PIMAGE_NT_HEADERS32 pe_header;
@@ -384,7 +378,6 @@ uint64_t yr_get_entry_point_offset(const uint8_t* buffer, size_t buffer_length)
 
   return YR_UNDEFINED;
 }
-
 
 uint64_t yr_get_entry_point_address(
     const uint8_t* buffer,

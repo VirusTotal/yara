@@ -35,9 +35,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <yara/sizedstr.h>
 
 
-//
-// _yr_modified_base64_encode
-//
+////////////////////////////////////////////////////////////////////////////////
 // Given a pointer to a SIZED_STRING append 0, 1 or 2 bytes and base64 encode
 // the string. The number of padding bytes is returned in "pad" and the caller
 // is expected to trim the appropriate number of leading and trailing bytes.
@@ -117,8 +115,7 @@ static SIZED_STRING* _yr_modified_base64_encode(
   return out;
 }
 
-
-//
+////////////////////////////////////////////////////////////////////////////////
 // Given a base64 encoded string, return a new string with leading and trailing
 // bytes stripped appropriately. The number of leading bytes to skip is always
 // (i + 1) or zero when no leading bytes are added and the number of trailing
@@ -178,7 +175,7 @@ static SIZED_STRING* _yr_base64_get_base64_substring(
    x == '.' || x == '+' || x == '}')
 
 
-//
+////////////////////////////////////////////////////////////////////////////////
 // Given a SIZED_STRING return the number of characters which will need to be
 // escaped when generating the final string to pass to the regexp compiler.
 //
@@ -199,7 +196,7 @@ static int _yr_base64_count_escaped(SIZED_STRING* str)
   return c;
 }
 
-//
+////////////////////////////////////////////////////////////////////////////////
 // Create nodes representing the different encodings of a base64 string.
 //
 static int _yr_base64_create_nodes(
@@ -260,8 +257,7 @@ static int _yr_base64_create_nodes(
   return ERROR_SUCCESS;
 }
 
-
-//
+////////////////////////////////////////////////////////////////////////////////
 // Useful for printing the encoded strings.
 //
 void _yr_base64_print_nodes(BASE64_NODE* head)
@@ -286,8 +282,7 @@ void _yr_base64_print_nodes(BASE64_NODE* head)
   return;
 }
 
-
-//
+////////////////////////////////////////////////////////////////////////////////
 // Destroy a list of base64 nodes.
 //
 static void _yr_base64_destroy_nodes(BASE64_NODE* head)
@@ -306,8 +301,7 @@ static void _yr_base64_destroy_nodes(BASE64_NODE* head)
   return;
 }
 
-
-//
+////////////////////////////////////////////////////////////////////////////////
 // Create the regexp that is the alternatives of each of the strings collected
 // in the BASE64_NODE list.
 //
@@ -316,13 +310,14 @@ int _yr_base64_create_regexp(
     RE_AST** re_ast,
     RE_ERROR* re_error)
 {
+  BASE64_NODE* p = head;
   char* re_str;
   char* s;
   uint32_t i;
   uint32_t length = 0;
-  uint32_t c =
-      0;  // The number of nodes in the list, used to know how many '|'.
-  BASE64_NODE* p = head;
+
+  // The number of nodes in the list, used to know how many '|'.
+  uint32_t c = 0;
 
   while (p != NULL)
   {
@@ -379,8 +374,7 @@ int _yr_base64_create_regexp(
   return ERROR_SUCCESS;
 }
 
-
-//
+////////////////////////////////////////////////////////////////////////////////
 // Given a string and an alphabet, generate the RE_AST suitable for representing
 // the different encodings of the string. This means we generate
 // "(ABCD|EFGH|IJKL)" and must be careful to escape any special characters as

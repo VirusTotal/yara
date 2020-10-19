@@ -35,7 +35,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <string.h>
 #include <yara/integers.h>
 
-
 #if defined(_WIN32)
 
 #if !defined(PRIu64)
@@ -62,7 +61,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <inttypes.h>
 #endif
 
-
 // Cygwin already has these functions.
 #if defined(_WIN32) && !defined(__CYGWIN__)
 #if defined(_MSC_VER) && _MSC_VER < 1900
@@ -76,19 +74,15 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define strncasecmp _strnicmp
 #endif
 
-
 uint64_t xtoi(const char* hexstr);
-
 
 #if !HAVE_STRLCPY && !defined(strlcpy)
 size_t strlcpy(char* dst, const char* src, size_t size);
 #endif
 
-
 #if !HAVE_STRLCAT && !defined(strlcat)
 size_t strlcat(char* dst, const char* src, size_t size);
 #endif
-
 
 #if !HAVE_MEMMEM && !defined(memmem)
 void* memmem(
@@ -98,12 +92,9 @@ void* memmem(
     size_t needle_size);
 #endif
 
-
 int strnlen_w(const char* w_str);
 
-
 int strcmp_w(const char* w_str, const char* str);
-
 
 size_t strlcpy_w(char* dst, const char* w_src, size_t n);
 

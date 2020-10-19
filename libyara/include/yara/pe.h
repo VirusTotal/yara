@@ -52,7 +52,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define IMAGE_FILE_MACHINE_ARM64 0xaa64
 #endif
 
-
 #else
 
 #include <stdlib.h>
@@ -126,7 +125,6 @@ typedef struct _IMAGE_FILE_HEADER
   WORD Characteristics;
 } IMAGE_FILE_HEADER, *PIMAGE_FILE_HEADER;
 
-
 #define IMAGE_SIZEOF_FILE_HEADER           20
 
 // Relocation info stripped from file.
@@ -159,7 +157,6 @@ typedef struct _IMAGE_FILE_HEADER
 #define IMAGE_FILE_UP_SYSTEM_ONLY          0x4000
 // Bytes of machine word are reversed.
 #define IMAGE_FILE_BYTES_REVERSED_HI       0x8000
-
 
 #define IMAGE_FILE_MACHINE_UNKNOWN       0x0000
 #define IMAGE_FILE_MACHINE_AM33          0x01d3
@@ -211,7 +208,6 @@ typedef struct _IMAGE_DATA_DIRECTORY
 
 #define IMAGE_NUMBEROF_DIRECTORY_ENTRIES 16
 
-
 #define IMAGE_DIRECTORY_ENTRY_EXPORT         0
 #define IMAGE_DIRECTORY_ENTRY_IMPORT         1
 #define IMAGE_DIRECTORY_ENTRY_RESOURCE       2
@@ -228,7 +224,6 @@ typedef struct _IMAGE_DATA_DIRECTORY
 #define IMAGE_DIRECTORY_ENTRY_IAT            12
 #define IMAGE_DIRECTORY_ENTRY_DELAY_IMPORT   13
 #define IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR 14
-
 
 //
 // Optional header format.
@@ -270,7 +265,6 @@ typedef struct _IMAGE_OPTIONAL_HEADER32
 
 } IMAGE_OPTIONAL_HEADER32, *PIMAGE_OPTIONAL_HEADER32;
 
-
 typedef struct _IMAGE_OPTIONAL_HEADER64
 {
   WORD Magic;
@@ -306,10 +300,8 @@ typedef struct _IMAGE_OPTIONAL_HEADER64
 
 } IMAGE_OPTIONAL_HEADER64, *PIMAGE_OPTIONAL_HEADER64;
 
-
 #define IMAGE_NT_OPTIONAL_HDR32_MAGIC 0x10b
 #define IMAGE_NT_OPTIONAL_HDR64_MAGIC 0x20b
-
 
 typedef struct _IMAGE_NT_HEADERS32
 {
@@ -318,7 +310,6 @@ typedef struct _IMAGE_NT_HEADERS32
   IMAGE_OPTIONAL_HEADER32 OptionalHeader;
 
 } IMAGE_NT_HEADERS32, *PIMAGE_NT_HEADERS32;
-
 
 typedef struct _IMAGE_NT_HEADERS64
 {
@@ -392,7 +383,6 @@ typedef struct _IMAGE_SECTION_HEADER
 
 #define IMAGE_SIZEOF_SECTION_HEADER 40
 
-
 typedef struct _IMAGE_EXPORT_DIRECTORY
 {
   DWORD Characteristics;
@@ -408,7 +398,6 @@ typedef struct _IMAGE_EXPORT_DIRECTORY
   DWORD AddressOfNameOrdinals;
 } IMAGE_EXPORT_DIRECTORY, *PIMAGE_EXPORT_DIRECTORY;
 
-
 typedef struct _IMAGE_IMPORT_DESCRIPTOR
 {
   union
@@ -422,7 +411,6 @@ typedef struct _IMAGE_IMPORT_DESCRIPTOR
   DWORD FirstThunk;
 
 } IMAGE_IMPORT_DESCRIPTOR, *PIMAGE_IMPORT_DESCRIPTOR;
-
 
 typedef struct _IMAGE_IMPORT_BY_NAME
 {
@@ -443,7 +431,6 @@ typedef struct _IMAGE_THUNK_DATA32
 
 } IMAGE_THUNK_DATA32, *PIMAGE_THUNK_DATA32;
 
-
 #define IMAGE_ORDINAL_FLAG32 0x80000000
 #define IMAGE_ORDINAL_FLAG64 0x8000000000000000L
 
@@ -459,13 +446,11 @@ typedef struct _IMAGE_THUNK_DATA64
 
 } IMAGE_THUNK_DATA64, *PIMAGE_THUNK_DATA64;
 
-
 typedef struct _IMAGE_RESOURCE_DIRECTORY_ENTRY
 {
   DWORD Name;
   DWORD OffsetToData;
 } IMAGE_RESOURCE_DIRECTORY_ENTRY, *PIMAGE_RESOURCE_DIRECTORY_ENTRY;
-
 
 typedef struct _IMAGE_RESOURCE_DATA_ENTRY
 {
@@ -474,7 +459,6 @@ typedef struct _IMAGE_RESOURCE_DATA_ENTRY
   DWORD CodePage;
   DWORD Reserved;
 } IMAGE_RESOURCE_DATA_ENTRY, *PIMAGE_RESOURCE_DATA_ENTRY;
-
 
 typedef struct _IMAGE_RESOURCE_DIRECTORY
 {
@@ -544,7 +528,6 @@ typedef struct _VERSION_INFO
   char Key[0];
 } VERSION_INFO, *PVERSION_INFO;
 
-
 #define MAX_PE_CERTS 16
 
 #define WIN_CERT_REVISION_1_0 0x0100
@@ -566,7 +549,6 @@ typedef struct _WIN_CERTIFICATE
 } WIN_CERTIFICATE, *PWIN_CERTIFICATE;
 
 #define SPC_NESTED_SIGNATURE_OBJID "1.3.6.1.4.1.311.2.4.1"
-
 
 //
 // Rich signature.
@@ -594,7 +576,6 @@ typedef struct _RICH_SIGNATURE
 
 #define RICH_DANS 0x536e6144  // "DanS"
 #define RICH_RICH 0x68636952  // "Rich"
-
 
 #pragma pack(pop)
 #endif

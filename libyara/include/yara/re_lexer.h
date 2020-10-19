@@ -41,7 +41,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #undef YY_DECL
 #undef LEX_ENV
 
-
 #define yyparse      re_yyparse
 #define yylex        re_yylex
 #define yyerror      re_yyerror
@@ -52,7 +51,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define yyget_extra  re_yyget_extra
 #define yyget_lineno re_yyget_lineno
 
-
 #ifndef YY_TYPEDEF_YY_SCANNER_T
 #define YY_TYPEDEF_YY_SCANNER_T
 typedef void* yyscan_t;
@@ -61,7 +59,6 @@ typedef void* yyscan_t;
 #define YY_EXTRA_TYPE RE_AST*
 #define YY_USE_CONST
 
-
 typedef struct _RE_LEX_ENVIRONMENT
 {
   RE_CLASS re_class;
@@ -69,7 +66,6 @@ typedef struct _RE_LEX_ENVIRONMENT
   char last_error_message[256];
 
 } RE_LEX_ENVIRONMENT;
-
 
 #define LEX_ENV ((RE_LEX_ENVIRONMENT*) lex_env)
 
@@ -85,7 +81,6 @@ typedef struct _RE_LEX_ENVIRONMENT
 #define YY_DECL \
   int re_yylex( \
       YYSTYPE* yylval_param, yyscan_t yyscanner, RE_LEX_ENVIRONMENT* lex_env)
-
 
 YY_EXTRA_TYPE yyget_extra(yyscan_t yyscanner);
 

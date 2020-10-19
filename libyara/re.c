@@ -27,7 +27,6 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-
 /*
 
 This module implements a regular expressions engine based on Thompson's
@@ -51,7 +50,6 @@ order to avoid confusion with operating system threads.
 #include <yara/threading.h>
 #include <yara/utils.h>
 
-
 #define EMIT_BACKWARDS               0x01
 #define EMIT_DONT_SET_FORWARDS_CODE  0x02
 #define EMIT_DONT_SET_BACKWARDS_CODE 0x04
@@ -60,9 +58,7 @@ order to avoid confusion with operating system threads.
 #define INT16_MAX (32767)
 #endif
 
-
 typedef uint8_t RE_SPLIT_ID_TYPE;
-
 
 typedef struct _RE_REPEAT_ARGS
 {
@@ -72,14 +68,12 @@ typedef struct _RE_REPEAT_ARGS
 
 } RE_REPEAT_ARGS;
 
-
 typedef struct _RE_REPEAT_ANY_ARGS
 {
   uint16_t min;
   uint16_t max;
 
 } RE_REPEAT_ANY_ARGS;
-
 
 typedef struct _RE_EMIT_CONTEXT
 {
@@ -88,9 +82,7 @@ typedef struct _RE_EMIT_CONTEXT
 
 } RE_EMIT_CONTEXT;
 
-
 #define CHAR_IN_CLASS(cls, chr) ((cls)[(chr) / 8] & 1 << ((chr) % 8))
-
 
 static bool _yr_re_is_char_in_class(
     RE_CLASS* re_class,
@@ -108,7 +100,6 @@ static bool _yr_re_is_char_in_class(
   return result;
 }
 
-
 static bool _yr_re_is_word_char(const uint8_t* input, uint8_t character_size)
 {
   int result = ((isalnum(*input) || (*input) == '_'));
@@ -118,7 +109,6 @@ static bool _yr_re_is_word_char(const uint8_t* input, uint8_t character_size)
 
   return result;
 }
-
 
 RE_NODE* yr_re_node_create(int type)
 {
@@ -139,7 +129,6 @@ RE_NODE* yr_re_node_create(int type)
   return result;
 }
 
-
 void yr_re_node_destroy(RE_NODE* node)
 {
   RE_NODE* child = node->children_head;
@@ -158,10 +147,7 @@ void yr_re_node_destroy(RE_NODE* node)
   yr_free(node);
 }
 
-
-//
-// yr_re_node_append_child
-//
+////////////////////////////////////////////////////////////////////////////////
 // Appends a node to the end of the children list.
 //
 void yr_re_node_append_child(RE_NODE* node, RE_NODE* child)
@@ -176,10 +162,7 @@ void yr_re_node_append_child(RE_NODE* node, RE_NODE* child)
   node->children_tail = child;
 }
 
-
-//
-// yr_re_node_prepend_child
-//
+////////////////////////////////////////////////////////////////////////////////
 // Appends a node to the beginning of the children list.
 //
 void yr_re_node_prepend_child(RE_NODE* node, RE_NODE* child)
@@ -195,7 +178,6 @@ void yr_re_node_prepend_child(RE_NODE* node, RE_NODE* child)
     node->children_tail = child;
 }
 
-
 int yr_re_ast_create(RE_AST** re_ast)
 {
   *re_ast = (RE_AST*) yr_malloc(sizeof(RE_AST));
@@ -209,7 +191,6 @@ int yr_re_ast_create(RE_AST** re_ast)
   return ERROR_SUCCESS;
 }
 
-
 void yr_re_ast_destroy(RE_AST* re_ast)
 {
   if (re_ast->root_node != NULL)
@@ -218,40 +199,28 @@ void yr_re_ast_destroy(RE_AST* re_ast)
   yr_free(re_ast);
 }
 
-
-//
-// yr_re_parse
-//
+////////////////////////////////////////////////////////////////////////////////
 // Parses a regexp but don't emit its code. A further call to
 // yr_re_ast_emit_code is required to get the code.
 //
-
 int yr_re_parse(const char* re_string, RE_AST** re_ast, RE_ERROR* error)
 {
   return yr_parse_re_string(re_string, re_ast, error);
 }
 
-
-//
-// yr_re_parse_hex
-//
+////////////////////////////////////////////////////////////////////////////////
 // Parses a hex string but don't emit its code. A further call to
 // yr_re_ast_emit_code is required to get the code.
 //
-
 int yr_re_parse_hex(const char* hex_string, RE_AST** re_ast, RE_ERROR* error)
 {
   return yr_parse_hex_string(hex_string, re_ast, error);
 }
 
-
-//
-// yr_re_compile
-//
+////////////////////////////////////////////////////////////////////////////////
 // Parses the regexp and emit its code to the provided to the
 // YR_RE_CODE_SECTION in the specified arena.
 //
-
 int yr_re_compile(
     const char* re_string,
     int flags,
@@ -278,21 +247,17 @@ int yr_re_compile(
   return ERROR_SUCCESS;
 }
 
-
-//
-// yr_re_match
-//
+////////////////////////////////////////////////////////////////////////////////
 // Verifies if the target string matches the pattern
 //
 // Args:
-//    YR_SCAN_CONTEXT* context  - Scan context
-//    RE* re                    -  A pointer to a compiled regexp
-//    char* target              -  Target string
+//    context: Scan context
+//    re: A pointer to a compiled regexp
+//    target: Target string
 //
 // Returns:
 //    See return codes for yr_re_exec
-
-
+//
 int yr_re_match(YR_SCAN_CONTEXT* context, RE* re, const char* target)
 {
   int result;
@@ -311,10 +276,7 @@ int yr_re_match(YR_SCAN_CONTEXT* context, RE* re, const char* target)
   return result;
 }
 
-
-//
-// yr_re_ast_extract_literal
-//
+////////////////////////////////////////////////////////////////////////////////
 // Verifies if the provided regular expression is just a literal string
 // like "abc", "12345", without any wildcard, operator, etc. In that case
 // returns the string as a SIZED_STRING, or returns NULL if otherwise.
@@ -322,7 +284,6 @@ int yr_re_match(YR_SCAN_CONTEXT* context, RE* re, const char* target)
 // The caller is responsible for deallocating the returned SIZED_STRING by
 // calling yr_free.
 //
-
 SIZED_STRING* yr_re_ast_extract_literal(RE_AST* re_ast)
 {
   SIZED_STRING* string;
@@ -380,7 +341,6 @@ SIZED_STRING* yr_re_ast_extract_literal(RE_AST* re_ast)
   return string;
 }
 
-
 int _yr_re_node_contains_dot_star(RE_NODE* re_node)
 {
   RE_NODE* child;
@@ -405,16 +365,12 @@ int _yr_re_node_contains_dot_star(RE_NODE* re_node)
   return false;
 }
 
-
 int yr_re_ast_contains_dot_star(RE_AST* re_ast)
 {
   return _yr_re_node_contains_dot_star(re_ast->root_node);
 }
 
-
-//
-// yr_re_ast_split_at_chaining_point
-//
+////////////////////////////////////////////////////////////////////////////////
 // In some cases splitting a regular expression (or hex string) in two parts is
 // convenient for increasing performance. This happens when the pattern contains
 // a large gap (a.k.a jump), for example: { 01 02 03 [0-999] 04 05 06 }
@@ -472,7 +428,7 @@ int yr_re_ast_contains_dot_star(RE_AST* re_ast)
 // The integers pointed to by min_gap and max_gap will be filled with the
 // minimum and maximum gap size between the sub-strings represented by the
 // two ASTs.
-
+//
 int yr_re_ast_split_at_chaining_point(
     RE_AST* re_ast,
     RE_AST** remainder_re_ast,
@@ -535,7 +491,6 @@ int yr_re_ast_split_at_chaining_point(
   return ERROR_SUCCESS;
 }
 
-
 int _yr_emit_inst(
     RE_EMIT_CONTEXT* emit_context,
     uint8_t opcode,
@@ -550,7 +505,6 @@ int _yr_emit_inst(
 
   return ERROR_SUCCESS;
 }
-
 
 int _yr_emit_inst_arg_uint8(
     RE_EMIT_CONTEXT* emit_context,
@@ -576,7 +530,6 @@ int _yr_emit_inst_arg_uint8(
   return ERROR_SUCCESS;
 }
 
-
 int _yr_emit_inst_arg_uint16(
     RE_EMIT_CONTEXT* emit_context,
     uint8_t opcode,
@@ -600,7 +553,6 @@ int _yr_emit_inst_arg_uint16(
 
   return ERROR_SUCCESS;
 }
-
 
 int _yr_emit_inst_arg_uint32(
     RE_EMIT_CONTEXT* emit_context,
@@ -626,7 +578,6 @@ int _yr_emit_inst_arg_uint32(
   return ERROR_SUCCESS;
 }
 
-
 int _yr_emit_inst_arg_int16(
     RE_EMIT_CONTEXT* emit_context,
     uint8_t opcode,
@@ -650,7 +601,6 @@ int _yr_emit_inst_arg_int16(
 
   return ERROR_SUCCESS;
 }
-
 
 int _yr_emit_inst_arg_struct(
     RE_EMIT_CONTEXT* emit_context,
@@ -676,7 +626,6 @@ int _yr_emit_inst_arg_struct(
 
   return ERROR_SUCCESS;
 }
-
 
 int _yr_emit_split(
     RE_EMIT_CONTEXT* emit_context,
@@ -715,7 +664,6 @@ int _yr_emit_split(
 
   return ERROR_SUCCESS;
 }
-
 
 #define current_re_code_offset() \
   yr_arena_get_current_offset(emit_context->arena, YR_RE_CODE_SECTION)
@@ -1186,7 +1134,6 @@ static int _yr_re_emit(
   return ERROR_SUCCESS;
 }
 
-
 int yr_re_ast_emit_code(RE_AST* re_ast, YR_ARENA* arena, int backwards_code)
 {
   RE_EMIT_CONTEXT emit_context;
@@ -1205,7 +1152,6 @@ int yr_re_ast_emit_code(RE_AST* re_ast, YR_ARENA* arena, int backwards_code)
 
   return ERROR_SUCCESS;
 }
-
 
 static int _yr_re_fiber_create(RE_FIBER_POOL* fiber_pool, RE_FIBER** new_fiber)
 {
@@ -1243,13 +1189,9 @@ static int _yr_re_fiber_create(RE_FIBER_POOL* fiber_pool, RE_FIBER** new_fiber)
   return ERROR_SUCCESS;
 }
 
-
-//
-// _yr_re_fiber_append
-//
+////////////////////////////////////////////////////////////////////////////////
 // Appends 'fiber' to 'fiber_list'
 //
-
 static void _yr_re_fiber_append(RE_FIBER_LIST* fiber_list, RE_FIBER* fiber)
 {
   assert(fiber->prev == NULL);
@@ -1269,16 +1211,12 @@ static void _yr_re_fiber_append(RE_FIBER_LIST* fiber_list, RE_FIBER* fiber)
   assert(fiber_list->head->prev == NULL);
 }
 
-
-//
-// _yr_re_fiber_exists
-//
+////////////////////////////////////////////////////////////////////////////////
 // Verifies if a fiber with the same properties (ip, rc, sp, and stack values)
 // than 'target_fiber' exists in 'fiber_list'. The list is iterated from
 // the start until 'last_fiber' (inclusive). Fibers past 'last_fiber' are not
 // taken into account.
 //
-
 static int _yr_re_fiber_exists(
     RE_FIBER_LIST* fiber_list,
     RE_FIBER* target_fiber,
@@ -1318,10 +1256,7 @@ static int _yr_re_fiber_exists(
   return false;
 }
 
-
-//
-// _yr_re_fiber_split
-//
+////////////////////////////////////////////////////////////////////////////////
 // Clones a fiber in fiber_list and inserts the cloned fiber just after.
 // the original one. If fiber_list is:
 //
@@ -1331,7 +1266,6 @@ static int _yr_re_fiber_exists(
 //
 //   f1 -> f2 -> cloned f2 -> f3 -> f4
 //
-
 static int _yr_re_fiber_split(
     RE_FIBER_LIST* fiber_list,
     RE_FIBER_POOL* fiber_pool,
@@ -1365,14 +1299,10 @@ static int _yr_re_fiber_split(
   return ERROR_SUCCESS;
 }
 
-
+////////////////////////////////////////////////////////////////////////////////
+// Kills a given fiber by removing it from the fiber list and putting it in the
+// fiber pool.
 //
-// _yr_re_fiber_kill
-//
-// Kills a given fiber by removing it from the fiber list and putting it
-// in the fiber pool.
-//
-
 static RE_FIBER* _yr_re_fiber_kill(
     RE_FIBER_LIST* fiber_list,
     RE_FIBER_POOL* fiber_pool,
@@ -1405,13 +1335,9 @@ static RE_FIBER* _yr_re_fiber_kill(
   return next_fiber;
 }
 
-
-//
-// _yr_re_fiber_kill_tail
-//
+////////////////////////////////////////////////////////////////////////////////
 // Kills all fibers from the given one up to the end of the fiber list.
 //
-
 static void _yr_re_fiber_kill_tail(
     RE_FIBER_LIST* fiber_list,
     RE_FIBER_POOL* fiber_pool,
@@ -1437,13 +1363,9 @@ static void _yr_re_fiber_kill_tail(
     fiber_pool->fibers.head = fiber;
 }
 
-
-//
-// _yr_re_fiber_kill_all
-//
+////////////////////////////////////////////////////////////////////////////////
 // Kills all fibers in the fiber list.
 //
-
 static void _yr_re_fiber_kill_all(
     RE_FIBER_LIST* fiber_list,
     RE_FIBER_POOL* fiber_pool)
@@ -1452,16 +1374,12 @@ static void _yr_re_fiber_kill_all(
     _yr_re_fiber_kill_tail(fiber_list, fiber_pool, fiber_list->head);
 }
 
-
-//
-// _yr_re_fiber_sync
-//
+////////////////////////////////////////////////////////////////////////////////
 // Executes a fiber until reaching an "matching" instruction. A "matching"
 // instruction is one that actually reads a byte from the input and performs
 // some matching. If the fiber reaches a split instruction, the new fiber is
 // also synced.
 //
-
 static int _yr_re_fiber_sync(
     RE_FIBER_LIST* fiber_list,
     RE_FIBER_POOL* fiber_pool,
@@ -1671,10 +1589,7 @@ static int _yr_re_fiber_sync(
   return ERROR_SUCCESS;
 }
 
-
-//
-// yr_re_exec
-//
+////////////////////////////////////////////////////////////////////////////////
 // Executes a regular expression. The specified regular expression will try to
 // match the data starting at the address specified by "input". The "input"
 // pointer can point to any address inside a memory buffer. Arguments
@@ -2057,9 +1972,7 @@ int yr_re_exec(
   return ERROR_SUCCESS;
 }
 
-//
-// yr_re_fast_exec
-//
+////////////////////////////////////////////////////////////////////////////////
 // This function replaces yr_re_exec for regular expressions marked with flag
 // RE_FLAGS_FAST_REGEXP. These are regular expression whose code contain only
 // the following operations: RE_OPCODE_LITERAL, RE_OPCODE_MASKED_LITERAL,
@@ -2069,7 +1982,6 @@ int yr_re_exec(
 //  /foobar/
 //  /foo.*?bar/
 //
-
 int yr_re_fast_exec(
     YR_SCAN_CONTEXT* context,
     const uint8_t* code,
@@ -2237,7 +2149,6 @@ int yr_re_fast_exec(
 
   return ERROR_SUCCESS;
 }
-
 
 static void _yr_re_print_node(RE_NODE* re_node, uint32_t indent)
 {

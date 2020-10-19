@@ -47,7 +47,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <yara/strutils.h>
 #include <yara/utils.h>
 
-
 // Turn on paranoid mode by default if not defined otherwise. In paranoid
 // mode additional checks are performed in order to mitigate the effects of
 // malicious tampering with compiled rules. Such checks are not necessary
@@ -66,9 +65,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define YR_PARANOID_EXEC 1
 #endif
 
-
 #define MEM_SIZE YR_MAX_LOOP_NESTING*(YR_MAX_LOOP_VARS + YR_INTERNAL_LOOP_VARS)
-
 
 #define push(x)                         \
   if (stack.sp < stack.capacity)        \
@@ -81,7 +78,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
     stop = true;                        \
     break;                              \
   }
-
 
 #define pop(x)                   \
   {                              \
@@ -141,7 +137,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define big_endian_uint32_t(x) yr_be32toh(x)
 #define big_endian_int32_t(x)  yr_be32toh(x)
 
-
 #define function_read(type, endianess)                            \
   int64_t read_##type##_##endianess(                              \
       YR_MEMORY_BLOCK_ITERATOR* iterator, size_t offset)          \
@@ -165,21 +160,20 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
     return YR_UNDEFINED;                                          \
   };
 
+function_read(uint8_t, little_endian);
+function_read(uint16_t, little_endian);
+function_read(uint32_t, little_endian);
+function_read(int8_t, little_endian);
+function_read(int16_t, little_endian);
+function_read(int32_t, little_endian);
+function_read(uint8_t, big_endian);
+function_read(uint16_t, big_endian);
+function_read(uint32_t, big_endian);
+function_read(int8_t, big_endian);
+function_read(int16_t, big_endian);
+function_read(int32_t, big_endian);
 
-function_read(uint8_t, little_endian) function_read(uint16_t, little_endian)
-    function_read(uint32_t, little_endian) function_read(int8_t, little_endian)
-        function_read(int16_t, little_endian)
-            function_read(int32_t, little_endian)
-                function_read(uint8_t, big_endian)
-                    function_read(uint16_t, big_endian)
-                        function_read(uint32_t, big_endian)
-                            function_read(int8_t, big_endian)
-                                function_read(int16_t, big_endian)
-                                    function_read(int32_t, big_endian)
-
-
-                                        static const
-    uint8_t* jmp_if(int condition, const uint8_t* ip)
+static const uint8_t* jmp_if(int condition, const uint8_t* ip)
 {
   size_t off;
 
@@ -200,7 +194,6 @@ function_read(uint8_t, little_endian) function_read(uint16_t, little_endian)
 
   return ip + off;
 }
-
 
 static int iter_array_next(YR_ITERATOR* self, YR_VALUE_STACK* stack)
 {
@@ -237,7 +230,6 @@ static int iter_array_next(YR_ITERATOR* self, YR_VALUE_STACK* stack)
 
   return ERROR_SUCCESS;
 }
-
 
 static int iter_dict_next(YR_ITERATOR* self, YR_VALUE_STACK* stack)
 {
@@ -281,7 +273,6 @@ static int iter_dict_next(YR_ITERATOR* self, YR_VALUE_STACK* stack)
   return ERROR_SUCCESS;
 }
 
-
 static int iter_int_range_next(YR_ITERATOR* self, YR_VALUE_STACK* stack)
 {
   // Check that there's two available slots in the stack, one for the next
@@ -309,7 +300,6 @@ static int iter_int_range_next(YR_ITERATOR* self, YR_VALUE_STACK* stack)
 
   return ERROR_SUCCESS;
 }
-
 
 static int iter_int_enum_next(YR_ITERATOR* self, YR_VALUE_STACK* stack)
 {
@@ -339,7 +329,6 @@ static int iter_int_enum_next(YR_ITERATOR* self, YR_VALUE_STACK* stack)
 
   return ERROR_SUCCESS;
 }
-
 
 int yr_execute_code(YR_SCAN_CONTEXT* context)
 {

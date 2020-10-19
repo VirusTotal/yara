@@ -51,7 +51,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <yara/strutils.h>
 #include <yara/utils.h>
 
-
 static void _yr_compiler_default_include_free(
     const char* callback_result_ptr,
     void* user_data)
@@ -61,7 +60,6 @@ static void _yr_compiler_default_include_free(
     yr_free((void*) callback_result_ptr);
   }
 }
-
 
 const char* _yr_compiler_default_include_callback(
     const char* include_name,
@@ -149,14 +147,14 @@ const char* _yr_compiler_default_include_callback(
   return file_buffer;
 }
 
-
+////////////////////////////////////////////////////////////////////////////////
+// Returns a rule given its index in the rules table.
 //
-// _yr_compiler_get_rule_by_idx returns a rule given its index in the rules
-// table. The returned pointer is valid as long as no other rule is written
-// to the table. This is because the write operation may cause the table to
-// be moved to a different location in memory. Use the pointer only in a
-// limited scope where you can be sure that no other rule is being written
-// during the pointer's lifetime.
+// The returned pointer is valid as long as no other rule is written to the
+// table. This is because the write operation may cause the table to be moved to
+// a different location in memory. Use the pointer only in a limited scope where
+// you can be sure that no other rule is being written during the pointer's
+// lifetime.
 //
 YR_RULE* _yr_compiler_get_rule_by_idx(YR_COMPILER* compiler, uint32_t rule_idx)
 {
@@ -164,12 +162,12 @@ YR_RULE* _yr_compiler_get_rule_by_idx(YR_COMPILER* compiler, uint32_t rule_idx)
       compiler->arena, YR_RULES_TABLE, rule_idx * sizeof(YR_RULE));
 }
 
-
+////////////////////////////////////////////////////////////////////////////////
+// Stores some data in the YR_SZ_POOL and returns a reference to it.
 //
-// _yr_compiler_store_data stores some data in the YR_SZ_POOL and returns a
-// reference to it. If the same data was already stored in a previous call
-// to this function the data is not written again, a reference to the
-// existing data is returned instead.
+// If the same data was already stored in a previous call to this function the
+// data is not written again, a reference to the existing data is returned
+// instead.
 //
 int _yr_compiler_store_data(
     YR_COMPILER* compiler,
@@ -201,10 +199,8 @@ int _yr_compiler_store_data(
   return ERROR_SUCCESS;
 }
 
-
-//
-// _yr_compiler_store_string is similar to _yr_compiler_store_data, but receives
-// a null-terminated string.
+////////////////////////////////////////////////////////////////////////////////
+// Similar to _yr_compiler_store_data, but receives a null-terminated string.
 //
 int _yr_compiler_store_string(
     YR_COMPILER* compiler,
@@ -217,7 +213,6 @@ int _yr_compiler_store_string(
       strlen(string) + 1,  // include the null terminator
       ref);
 }
-
 
 YR_API int yr_compiler_create(YR_COMPILER** compiler)
 {
@@ -285,7 +280,6 @@ YR_API int yr_compiler_create(YR_COMPILER** compiler)
   return result;
 }
 
-
 YR_API void yr_compiler_destroy(YR_COMPILER* compiler)
 {
   yr_arena_release(compiler->arena);
@@ -321,7 +315,6 @@ YR_API void yr_compiler_destroy(YR_COMPILER* compiler)
   yr_free(compiler);
 }
 
-
 YR_API void yr_compiler_set_callback(
     YR_COMPILER* compiler,
     YR_COMPILER_CALLBACK_FUNC callback,
@@ -330,7 +323,6 @@ YR_API void yr_compiler_set_callback(
   compiler->callback = callback;
   compiler->user_data = user_data;
 }
-
 
 YR_API void yr_compiler_set_include_callback(
     YR_COMPILER* compiler,
@@ -343,7 +335,6 @@ YR_API void yr_compiler_set_include_callback(
   compiler->incl_clbk_user_data = user_data;
 }
 
-
 YR_API void yr_compiler_set_re_ast_callback(
     YR_COMPILER* compiler,
     YR_COMPILER_RE_AST_CALLBACK_FUNC re_ast_callback,
@@ -353,10 +344,7 @@ YR_API void yr_compiler_set_re_ast_callback(
   compiler->re_ast_clbk_user_data = user_data;
 }
 
-
-//
-// yr_compiler_set_atom_quality_table
-//
+////////////////////////////////////////////////////////////////////////////////
 // This function allows to specify an atom quality table to be used by the
 // compiler for choosing the best atoms from regular expressions and strings.
 // When a quality table is set, the compiler uses yr_atoms_table_quality
@@ -383,7 +371,7 @@ YR_API void yr_compiler_set_re_ast_callback(
 // The "warning_threshold" argument must be a number between 0 and 255, if some
 // atom chosen for a string have a quality below the specified threshold a
 // warning like "<string> is slowing down scanning" is shown.
-
+//
 YR_API void yr_compiler_set_atom_quality_table(
     YR_COMPILER* compiler,
     const void* table,
@@ -397,13 +385,10 @@ YR_API void yr_compiler_set_atom_quality_table(
   compiler->atoms_config.quality_table = (YR_ATOM_QUALITY_TABLE_ENTRY*) table;
 }
 
-//
-// yr_compiler_set_atom_quality_table
-//
+////////////////////////////////////////////////////////////////////////////////
 // Load an atom quality table from a file. The file's content must have the
 // format explained in the description for yr_compiler_set_atom_quality_table.
 //
-
 YR_API int yr_compiler_load_atom_quality_table(
     YR_COMPILER* compiler,
     const char* filename,
@@ -455,7 +440,6 @@ YR_API int yr_compiler_load_atom_quality_table(
   return ERROR_SUCCESS;
 }
 
-
 int _yr_compiler_push_file_name(YR_COMPILER* compiler, const char* file_name)
 {
   char* str;
@@ -481,7 +465,6 @@ int _yr_compiler_push_file_name(YR_COMPILER* compiler, const char* file_name)
   return ERROR_SUCCESS;
 }
 
-
 void _yr_compiler_pop_file_name(YR_COMPILER* compiler)
 {
   if (compiler->file_name_stack_ptr > 0)
@@ -491,7 +474,6 @@ void _yr_compiler_pop_file_name(YR_COMPILER* compiler)
     compiler->file_name_stack[compiler->file_name_stack_ptr] = NULL;
   }
 }
-
 
 int _yr_compiler_get_var_frame(YR_COMPILER* compiler)
 {
@@ -506,7 +488,6 @@ int _yr_compiler_get_var_frame(YR_COMPILER* compiler)
   return result;
 }
 
-
 YR_API char* yr_compiler_get_current_file_name(YR_COMPILER* compiler)
 {
   if (compiler->file_name_stack_ptr > 0)
@@ -518,7 +499,6 @@ YR_API char* yr_compiler_get_current_file_name(YR_COMPILER* compiler)
     return NULL;
   }
 }
-
 
 static int _yr_compiler_set_namespace(
     YR_COMPILER* compiler,
@@ -565,7 +545,6 @@ static int _yr_compiler_set_namespace(
   return ERROR_SUCCESS;
 }
 
-
 YR_API int yr_compiler_add_file(
     YR_COMPILER* compiler,
     FILE* rules_file,
@@ -603,7 +582,6 @@ YR_API int yr_compiler_add_file(
   return result;
 }
 
-
 YR_API int yr_compiler_add_fd(
     YR_COMPILER* compiler,
     YR_FILE_DESCRIPTOR rules_fd,
@@ -614,12 +592,10 @@ YR_API int yr_compiler_add_fd(
 
   // Don't allow yr_compiler_add_fd() after
   // yr_compiler_get_rules() has been called.
-
   assert(compiler->rules == NULL);
 
   // Don't allow calls to yr_compiler_add_fd() if a previous call to
   // yr_compiler_add_XXXX failed.
-
   assert(compiler->errors == 0);
 
   if (namespace_ != NULL)
@@ -641,7 +617,6 @@ YR_API int yr_compiler_add_fd(
   return result;
 }
 
-
 YR_API int yr_compiler_add_string(
     YR_COMPILER* compiler,
     const char* rules_string,
@@ -649,12 +624,10 @@ YR_API int yr_compiler_add_string(
 {
   // Don't allow calls to yr_compiler_add_string() after
   // yr_compiler_get_rules() has been called.
-
   assert(compiler->rules == NULL);
 
   // Don't allow calls to yr_compiler_add_string() if a previous call to
   // yr_compiler_add_XXXX failed.
-
   assert(compiler->errors == 0);
 
   if (namespace_ != NULL)
@@ -667,7 +640,6 @@ YR_API int yr_compiler_add_string(
 
   return yr_lex_parse_rules_string(rules_string, compiler);
 }
-
 
 static int _yr_compiler_compile_rules(YR_COMPILER* compiler)
 {
@@ -715,7 +687,6 @@ static int _yr_compiler_compile_rules(YR_COMPILER* compiler)
 
   return yr_rules_from_arena(compiler->arena, &compiler->rules);
 }
-
 
 YR_API int yr_compiler_get_rules(YR_COMPILER* compiler, YR_RULES** rules)
 {
@@ -796,7 +767,6 @@ static int _yr_compiler_define_variable(
   return ERROR_SUCCESS;
 }
 
-
 YR_API int yr_compiler_define_integer_variable(
     YR_COMPILER* compiler,
     const char* identifier,
@@ -812,7 +782,6 @@ YR_API int yr_compiler_define_integer_variable(
 
   return ERROR_SUCCESS;
 }
-
 
 YR_API int yr_compiler_define_boolean_variable(
     YR_COMPILER* compiler,
@@ -830,7 +799,6 @@ YR_API int yr_compiler_define_boolean_variable(
   return ERROR_SUCCESS;
 }
 
-
 YR_API int yr_compiler_define_float_variable(
     YR_COMPILER* compiler,
     const char* identifier,
@@ -847,7 +815,6 @@ YR_API int yr_compiler_define_float_variable(
   return ERROR_SUCCESS;
 }
 
-
 YR_API int yr_compiler_define_string_variable(
     YR_COMPILER* compiler,
     const char* identifier,
@@ -863,7 +830,6 @@ YR_API int yr_compiler_define_string_variable(
 
   return ERROR_SUCCESS;
 }
-
 
 YR_API char* yr_compiler_get_error_message(
     YR_COMPILER* compiler,

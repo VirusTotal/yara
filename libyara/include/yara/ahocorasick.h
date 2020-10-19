@@ -50,12 +50,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
   ((YR_AC_TRANSITION)(                     \
       (((YR_AC_TRANSITION) state) << YR_AC_SLOT_OFFSET_BITS) | (code)))
 
-
 int yr_ac_automaton_create(YR_ARENA* arena, YR_AC_AUTOMATON** automaton);
 
-
 int yr_ac_automaton_destroy(YR_AC_AUTOMATON* automaton);
-
 
 int yr_ac_add_string(
     YR_AC_AUTOMATON* automaton,
@@ -64,10 +61,8 @@ int yr_ac_add_string(
     YR_ATOM_LIST_ITEM* atom,
     YR_ARENA* arena);
 
-
 int yr_ac_compile(YR_AC_AUTOMATON* automaton, YR_ARENA* arena);
 
 void yr_ac_print_automaton(YR_AC_AUTOMATON* automaton);
-
 
 #endif

@@ -49,15 +49,11 @@ struct YR_STACK
   int top;
 };
 
-
 int yr_stack_create(int initial_capacity, int item_size, YR_STACK** stack);
-
 
 void yr_stack_destroy(YR_STACK* stack);
 
-
 int yr_stack_push(YR_STACK* stack, void* item);
-
 
 int yr_stack_pop(YR_STACK* stack, void* item);
 

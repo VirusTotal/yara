@@ -1,5 +1,3 @@
-#include <stdint.h>
-
 /*
 Copyright (c) 2020. The YARA Authors. All Rights Reserved.
 
@@ -30,14 +28,13 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include <assert.h>
+#include <stdint.h>
 #include <yara/error.h>
 #include <yara/mem.h>
 #include <yara/notebook.h>
 
-
 // Forward declaration of YR_NOTEBOOK_PAGE.
 typedef struct YR_NOTEBOOK_PAGE YR_NOTEBOOK_PAGE;
-
 
 // A notebook is a data structure that can be used for allocating memory
 // space in the same way malloc() would do. However, the buffers returned
@@ -46,20 +43,18 @@ typedef struct YR_NOTEBOOK_PAGE YR_NOTEBOOK_PAGE;
 // via yr_notebook_alloc() with space taken from the current page, or creates
 // a new page when necessary. It's recommended that the page size is at least
 // 4x the size of the buffers you plan to allocate with yr_notebook_alloc().
-
+//
 // Once the notebook is destroyed all the pages are freed, and consequently
 // all the buffers allocated via yr_notebook_alloc().
 struct YR_NOTEBOOK
 {
   // Size of each page in the notebook.
   size_t page_size;
-  // Pointer to the first page in the book, this also the most recently
+  // Pointer to the first page in the book, this is also the most recently
   // created page, the one that is being filled.
   YR_NOTEBOOK_PAGE* page_list_head;
 };
 
-
-// YR_NOTEBOOK_PAGE
 struct YR_NOTEBOOK_PAGE
 {
   // Amount of bytes in the page that are actually used.
@@ -70,10 +65,19 @@ struct YR_NOTEBOOK_PAGE
   uint8_t data[0];
 };
 
-
+////////////////////////////////////////////////////////////////////////////////
 // Creates a new notebook. The notebook initially has a single page of the
 // specified size, but more pages are created if needed.
-int yr_notebook_create(size_t page_size, YR_NOTEBOOK** pool)
+//
+// Args:
+//   page_size: Size of each page in the notebook.
+//   notebook: Address of a pointer to the newly created notebook.
+//
+// Returns:
+//   ERROR_SUCCESS
+//   ERROR_INSUFFICIENT_MEMORY
+//
+int yr_notebook_create(size_t page_size, YR_NOTEBOOK** notebook)
 {
   YR_NOTEBOOK* new_notebook = yr_malloc(sizeof(YR_NOTEBOOK));
 
@@ -93,16 +97,23 @@ int yr_notebook_create(size_t page_size, YR_NOTEBOOK** pool)
   new_notebook->page_list_head->used = 0;
   new_notebook->page_list_head->next = NULL;
 
-  *pool = new_notebook;
+  *notebook = new_notebook;
 
   return ERROR_SUCCESS;
 }
 
-
+////////////////////////////////////////////////////////////////////////////////
 // Destroys a notebook and frees all the notebook's pages.
-int yr_notebook_destroy(YR_NOTEBOOK* pool)
+//
+// Args:
+//   notebook: Pointer to the notebook being destroyed.
+//
+// Returns:
+//   ERROR_SUCCESS
+//
+int yr_notebook_destroy(YR_NOTEBOOK* notebook)
 {
-  YR_NOTEBOOK_PAGE* page = pool->page_list_head;
+  YR_NOTEBOOK_PAGE* page = notebook->page_list_head;
 
   while (page != NULL)
   {
@@ -111,12 +122,22 @@ int yr_notebook_destroy(YR_NOTEBOOK* pool)
     page = next;
   }
 
-  yr_free(pool);
+  yr_free(notebook);
 
   return ERROR_SUCCESS;
 }
 
-
+////////////////////////////////////////////////////////////////////////////////
+// Allocates a memory buffer from a notebook. The memory is freed when the
+// notebook is destroyed, allocated buffers can't be freed individually.
+//
+// Args:
+//   notebook: Pointer to the notebook.
+//   size: Size of the allocated memory.
+//
+// Returns:
+//   Pointer to the allocated memory, or NULL if the allocation fails.
+//
 void* yr_notebook_alloc(YR_NOTEBOOK* notebook, size_t size)
 {
   // The requested memory size can't be larger than a notebook's page.

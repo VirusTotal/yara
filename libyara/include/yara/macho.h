@@ -293,7 +293,6 @@ typedef struct
   uint32_t flags;
 } yr_mach_header_32_t;
 
-
 typedef struct
 {
   uint32_t magic;
@@ -306,13 +305,11 @@ typedef struct
   uint32_t reserved;
 } yr_mach_header_64_t;
 
-
 typedef struct
 {
   uint32_t cmd;
   uint32_t cmdsize;
 } yr_load_command_t;
-
 
 typedef struct
 {
@@ -329,7 +326,6 @@ typedef struct
   uint32_t flags;
 } yr_segment_command_32_t;
 
-
 typedef struct
 {
   uint32_t cmd;
@@ -345,7 +341,6 @@ typedef struct
   uint32_t flags;
 } yr_segment_command_64_t;
 
-
 typedef struct
 {
   char sectname[16];
@@ -360,7 +355,6 @@ typedef struct
   uint32_t reserved1;
   uint32_t reserved2;
 } yr_section_32_t;
-
 
 typedef struct
 {
@@ -378,14 +372,12 @@ typedef struct
   uint32_t reserved3;
 } yr_section_64_t;
 
-
 typedef struct
 {
   uint32_t cmd;
   uint32_t cmdsize;
   uint8_t uuid[16];
 } yr_uuid_command_t;
-
 
 typedef struct
 {
@@ -395,7 +387,6 @@ typedef struct
   uint64_t stacksize;
 } yr_entry_point_command_t;
 
-
 typedef struct
 {
   uint32_t cmd;
@@ -404,7 +395,6 @@ typedef struct
   uint32_t count;
   // cpu_thread_state
 } yr_thread_command_t;
-
 
 typedef struct
 {
@@ -426,7 +416,6 @@ typedef struct
   uint32_t gs;
 } yr_x86_thread_state_t;
 
-
 typedef struct
 {
   uint32_t r[13];
@@ -435,7 +424,6 @@ typedef struct
   uint32_t pc;
   uint32_t cpsr;
 } yr_arm_thread_state_t;
-
 
 typedef struct
 {
@@ -449,7 +437,6 @@ typedef struct
   uint32_t mq;
   uint32_t vrsavead;
 } yr_ppc_thread_state_t;
-
 
 typedef struct
 {
@@ -474,7 +461,6 @@ typedef struct
   uint32_t o7;
 } yr_sparc_thread_state_t;
 
-
 typedef struct
 {
   uint32_t dreg[8];
@@ -483,7 +469,6 @@ typedef struct
   uint16_t sr;
   uint32_t pc;
 } yr_m68k_thread_state_t;
-
 
 typedef struct
 {
@@ -523,7 +508,6 @@ typedef struct
   uint32_t nip;
 } yr_m88k_thread_state_t;
 
-
 typedef struct
 {
   uint64_t rax;
@@ -549,7 +533,6 @@ typedef struct
   uint64_t gs;
 } yr_x86_thread_state64_t;
 
-
 typedef struct
 {
   uint64_t r[29];
@@ -559,7 +542,6 @@ typedef struct
   uint64_t pc;
   uint64_t cpsr;
 } yr_arm_thread_state64_t;
-
 
 typedef struct
 {
@@ -573,13 +555,11 @@ typedef struct
   uint32_t vrsave;
 } yr_ppc_thread_state64_t;
 
-
 typedef struct
 {
   uint32_t magic;
   uint32_t nfat_arch;
 } yr_fat_header_t;
-
 
 typedef struct
 {
@@ -589,7 +569,6 @@ typedef struct
   uint32_t size;
   uint32_t align;
 } yr_fat_arch_32_t;
-
 
 typedef struct
 {

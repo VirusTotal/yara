@@ -41,7 +41,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "threading.h"
 
-
 int mutex_init(MUTEX* mutex)
 {
 #if defined(_WIN32) || defined(__CYGWIN__)
@@ -61,7 +60,6 @@ void mutex_destroy(MUTEX* mutex)
 #endif
 }
 
-
 void mutex_lock(MUTEX* mutex)
 {
 #if defined(_WIN32) || defined(__CYGWIN__)
@@ -71,7 +69,6 @@ void mutex_lock(MUTEX* mutex)
 #endif
 }
 
-
 void mutex_unlock(MUTEX* mutex)
 {
 #if defined(_WIN32) || defined(__CYGWIN__)
@@ -80,7 +77,6 @@ void mutex_unlock(MUTEX* mutex)
   pthread_mutex_unlock(mutex);
 #endif
 }
-
 
 int semaphore_init(SEMAPHORE* semaphore, int value)
 {
@@ -118,7 +114,6 @@ int semaphore_init(SEMAPHORE* semaphore, int value)
   return 0;
 }
 
-
 void semaphore_destroy(SEMAPHORE* semaphore)
 {
 #if defined(_WIN32) || defined(__CYGWIN__)
@@ -131,7 +126,6 @@ void semaphore_destroy(SEMAPHORE* semaphore)
 #endif
 }
 
-
 void semaphore_wait(SEMAPHORE* semaphore)
 {
 #if defined(_WIN32) || defined(__CYGWIN__)
@@ -141,7 +135,6 @@ void semaphore_wait(SEMAPHORE* semaphore)
 #endif
 }
 
-
 void semaphore_release(SEMAPHORE* semaphore)
 {
 #if defined(_WIN32) || defined(__CYGWIN__)
@@ -150,7 +143,6 @@ void semaphore_release(SEMAPHORE* semaphore)
   sem_post(*semaphore);
 #endif
 }
-
 
 int create_thread(
     THREAD* thread,
@@ -167,7 +159,6 @@ int create_thread(
   return pthread_create(thread, NULL, start_routine, param);
 #endif
 }
-
 
 void thread_join(THREAD* thread)
 {

@@ -35,7 +35,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <yara/scan.h>
 #include <yara/types.h>
 
-
 #define YR_UNDEFINED    0xFFFABADAFABADAFFLL
 #define IS_UNDEFINED(x) ((size_t)(x) == (size_t) YR_UNDEFINED)
 
@@ -125,7 +124,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define _OP_DIV   9
 #define _OP_MINUS 10
 
-
 #define OP_INT_BEGIN 100
 #define OP_INT_EQ    (OP_INT_BEGIN + _OP_EQ)
 #define OP_INT_NEQ   (OP_INT_BEGIN + _OP_NEQ)
@@ -181,14 +179,11 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define OP_UINT16BE (OP_READ_INT + 10)
 #define OP_UINT32BE (OP_READ_INT + 11)
 
-
 #define OPERATION(operator, op1, op2) \
   (IS_UNDEFINED(op1) || IS_UNDEFINED(op2)) ? (YR_UNDEFINED) : (op1 operator op2)
 
-
 #define COMPARISON(operator, op1, op2) \
   (IS_UNDEFINED(op1) || IS_UNDEFINED(op2)) ? (0) : (op1 operator op2)
-
 
 int yr_execute_code(YR_SCAN_CONTEXT* context);
 
