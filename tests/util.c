@@ -52,14 +52,12 @@ uint64_t yr_test_mem_block_size = 0;
 uint64_t yr_test_mem_block_size_overlap = 0;
 uint64_t yr_test_count_get_block = 0;
 
-
 static YR_MEMORY_BLOCK* _yr_test_single_block_get_first_block(
     YR_MEMORY_BLOCK_ITERATOR* iterator)
 {
   yr_test_count_get_block++;
   return (YR_MEMORY_BLOCK*) iterator->context;
 }
-
 
 static YR_MEMORY_BLOCK* _yr_test_single_block_get_next_block(
     YR_MEMORY_BLOCK_ITERATOR* iterator)
@@ -68,13 +66,11 @@ static YR_MEMORY_BLOCK* _yr_test_single_block_get_next_block(
   return NULL;
 }
 
-
 static const uint8_t* _yr_test_single_block_fetch_block_data(
     YR_MEMORY_BLOCK* block)
 {
   return (const uint8_t*) block->context;
 }
-
 
 static YR_MEMORY_BLOCK* _yr_test_multi_block_get_next_block(
     YR_MEMORY_BLOCK_ITERATOR* iterator)
@@ -135,7 +131,6 @@ static YR_MEMORY_BLOCK* _yr_test_multi_block_get_next_block(
   return result;
 }
 
-
 static YR_MEMORY_BLOCK* _yr_test_multi_block_get_first_block(
     YR_MEMORY_BLOCK_ITERATOR* iterator)
 {
@@ -152,7 +147,6 @@ static YR_MEMORY_BLOCK* _yr_test_multi_block_get_first_block(
   context->current_block.size = 0;
   return _yr_test_multi_block_get_next_block(iterator);
 }
-
 
 static const uint8_t* _yr_test_multi_block_fetch_block_data(
     YR_MEMORY_BLOCK* block)
@@ -178,7 +172,6 @@ static const uint8_t* _yr_test_multi_block_fetch_block_data(
 
   return context->buffer + context->current_block.base;
 }
-
 
 YR_API int _yr_test_single_or_multi_block_scan_mem(
     YR_SCANNER* scanner,
@@ -229,7 +222,6 @@ YR_API int _yr_test_single_or_multi_block_scan_mem(
   return yr_scanner_scan_mem_blocks(scanner, &iterator);
 }
 
-
 void chdir_if_env_top_srcdir(void)
 {
   char* top_srcdir = getenv("TOP_SRCDIR");
@@ -239,7 +231,6 @@ void chdir_if_env_top_srcdir(void)
     assert_true_expr(0 == result);
   }
 }
-
 
 //
 // A YR_CALLBACK_FUNC that counts the number of matching and non-matching rules
@@ -262,7 +253,6 @@ int count(
   }
   return CALLBACK_CONTINUE;
 }
-
 
 int count_non_matches(
     YR_SCAN_CONTEXT* context,
@@ -289,7 +279,6 @@ int do_nothing(
 {
   return CALLBACK_CONTINUE;
 }
-
 
 static void _compiler_callback(
     int error_level,
@@ -340,7 +329,6 @@ _exit:
   return result;
 }
 
-
 typedef struct SCAN_CALLBACK_CTX SCAN_CALLBACK_CTX;
 
 struct SCAN_CALLBACK_CTX
@@ -373,7 +361,6 @@ static int _scan_callback(
 
   return CALLBACK_CONTINUE;
 }
-
 
 int matches_blob(
     char* rule,
@@ -434,7 +421,6 @@ typedef struct
   int found;
 
 } find_string_t;
-
 
 static int capture_matches(
     YR_SCAN_CONTEXT* context,

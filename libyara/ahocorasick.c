@@ -151,37 +151,36 @@ static YR_AC_STATE* _yr_ac_next_state(YR_AC_STATE* state, uint8_t input)
   {
     switch (next_state->type)
     {
-      // Literal - the input byte has to be the same
-      case YR_ATOM_TYPE_LITERAL:
-        if (state2->type == YR_ATOM_TYPE_LITERAL)
-        {
-          if (next_state->input == state2->input)
-            return next_state;
-        }
-        break;
-      // Atom - accepts everything
-      case YR_ATOM_TYPE_ANY:
-        return next_state;
-      // Class - the input has to be set in the class
-      case YR_ATOM_TYPE_CLASS:
-        if (state2->type == YR_ATOM_TYPE_LITERAL)
-        {
-          if (yr_bitmask_is_set(next_state->bitmap, state2->input))
-            return next_state;
-        }
-        else if (state2->type == YR_ATOM_TYPE_CLASS)
-        {
-          if (_yr_ac_bitmap_subset(next_state->bitmap, state2->bitmap))
-            return next_state;
-        }
-        break;
+    // Literal - the input byte has to be the same
+    case YR_ATOM_TYPE_LITERAL:
+      if (state2->type == YR_ATOM_TYPE_LITERAL)
+      {
+        if (next_state->input == state2->input)
+          return next_state;
+      }
+      break;
+    // Atom - accepts everything
+    case YR_ATOM_TYPE_ANY:
+      return next_state;
+    // Class - the input has to be set in the class
+    case YR_ATOM_TYPE_CLASS:
+      if (state2->type == YR_ATOM_TYPE_LITERAL)
+      {
+        if (yr_bitmask_is_set(next_state->bitmap, state2->input))
+          return next_state;
+      }
+      else if (state2->type == YR_ATOM_TYPE_CLASS)
+      {
+        if (_yr_ac_bitmap_subset(next_state->bitmap, state2->bitmap))
+          return next_state;
+      }
+      break;
     }
     next_state = next_state->siblings;
   }
 
-    return NULL;
+  return NULL;
 }
-
 
 //
 // _yr_ac_next_state_typed
@@ -212,16 +211,16 @@ static YR_AC_STATE* _yr_ac_next_state_typed(
     {
       switch (type)
       {
-        case YR_ATOM_TYPE_LITERAL:
-          if (next_state->input == input)
-            return next_state;
-          break;
-        case YR_ATOM_TYPE_ANY:
+      case YR_ATOM_TYPE_LITERAL:
+        if (next_state->input == input)
           return next_state;
-        case YR_ATOM_TYPE_CLASS:
-          if (_yr_ac_compare_classes(next_state->bitmap, bitmap))
-            return next_state;
-          break;
+        break;
+      case YR_ATOM_TYPE_ANY:
+        return next_state;
+      case YR_ATOM_TYPE_CLASS:
+        if (_yr_ac_compare_classes(next_state->bitmap, bitmap))
+          return next_state;
+        break;
       }
     }
     next_state = next_state->siblings;
@@ -448,12 +447,11 @@ static bool _yr_ac_transitions_subset(YR_AC_STATE* s1, YR_AC_STATE* s2)
   {
     if (state->type == YR_ATOM_TYPE_LITERAL)
     {
-       yr_bitmask_set(set, state->input);
+      yr_bitmask_set(set, state->input);
     }
     else
     {
-      for (int i = 0; i < YR_BITMAP_SIZE; i++)
-        set[i] |= state->bitmap[i];
+      for (int i = 0; i < YR_BITMAP_SIZE; i++) set[i] |= state->bitmap[i];
     }
 
     state = state->siblings;
@@ -560,7 +558,8 @@ static int _yr_ac_find_suitable_transition_table_slot(
         {
           for (int k = 0; k < YR_BITMASK_SLOT_BITS; k++)
           {
-            if (yr_bitmask_is_set(child_state->bitmap, i * YR_BITMASK_SLOT_BITS + k))
+            if (yr_bitmask_is_set(
+                    child_state->bitmap, i * YR_BITMASK_SLOT_BITS + k))
               yr_bitmask_set(state_bitmask, i * YR_BITMASK_SLOT_BITS + k + 1);
           }
         }
@@ -944,11 +943,16 @@ int yr_ac_add_string(
         }
       }
 
-      YR_AC_STATE* next_state = _yr_ac_next_state_typed(state, atom->atom.bytes[i], atom->atom.mask[i], atom->atom.bitmap[i]);
+      YR_AC_STATE* next_state = _yr_ac_next_state_typed(
+          state, atom->atom.bytes[i], atom->atom.mask[i], atom->atom.bitmap[i]);
 
       if (next_state == NULL)
       {
-        next_state = _yr_ac_state_create(state, atom->atom.bytes[i], atom->atom.mask[i], atom->atom.bitmap[i]);
+        next_state = _yr_ac_state_create(
+            state,
+            atom->atom.bytes[i],
+            atom->atom.mask[i],
+            atom->atom.bitmap[i]);
 
         if (next_state == NULL)
           return ERROR_INSUFFICIENT_MEMORY;

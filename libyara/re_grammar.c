@@ -62,7 +62,6 @@
 /* Pull parsers.  */
 #define YYPULL 1
 
-
 /* Substitute the variable and function names.  */
 #define yyparse re_yyparse
 #define yylex   re_yylex
@@ -194,8 +193,6 @@ int re_yyparse(void *yyscanner, RE_LEX_ENVIRONMENT *lex_env);
 
 #endif /* !YY_RE_YY_RE_GRAMMAR_H_INCLUDED  */
 
-
-
 #ifdef short
 #undef short
 #endif
@@ -286,7 +283,7 @@ typedef short yytype_int16;
 #define YYUSE(E) /* empty */
 #endif
 
-#if defined __GNUC__ && ! defined __ICC && 407 <= __GNUC__ * 100 + __GNUC_MINOR__
+#if defined __GNUC__ && !defined __ICC && 407 <= __GNUC__ * 100 + __GNUC_MINOR__
 /* Suppress an incorrect diagnostic about yylval being uninitialized.  */
 #define YY_IGNORE_MAYBE_UNINITIALIZED_BEGIN                 \
   _Pragma("GCC diagnostic push")                            \
@@ -377,6 +374,49 @@ void free(void *);      /* INFRINGES ON USER NAME SPACE */
 #endif
 #endif /* ! defined yyoverflow || YYERROR_VERBOSE */
 
+#ifdef YYSTACK_ALLOC
+/* Pacify GCC's 'empty if-body' warning.  */
+#define YYSTACK_FREE(Ptr) \
+  do                      \
+  { /* empty */           \
+    ;                     \
+  } while (0)
+#ifndef YYSTACK_ALLOC_MAXIMUM
+/* The OS might guarantee only one guard page at the bottom of the stack,
+   and a page size can be as small as 4096 bytes.  So we cannot safely
+   invoke alloca (N) if N exceeds 4096.  Use a slightly smaller number
+   to allow for a few compiler-allocated temporary stack slots.  */
+#define YYSTACK_ALLOC_MAXIMUM 4032 /* reasonable circa 2006 */
+#endif
+#else
+#define YYSTACK_ALLOC YYMALLOC
+#define YYSTACK_FREE  YYFREE
+#ifndef YYSTACK_ALLOC_MAXIMUM
+#define YYSTACK_ALLOC_MAXIMUM YYSIZE_MAXIMUM
+#endif
+#if (                                               \
+    defined __cplusplus && !defined EXIT_SUCCESS && \
+    !((defined YYMALLOC || defined malloc) &&       \
+      (defined YYFREE || defined free)))
+#include <stdlib.h> /* INFRINGES ON USER NAME SPACE */
+#ifndef EXIT_SUCCESS
+#define EXIT_SUCCESS 0
+#endif
+#endif
+#ifndef YYMALLOC
+#define YYMALLOC malloc
+#if !defined malloc && !defined EXIT_SUCCESS
+void *malloc(YYSIZE_T); /* INFRINGES ON USER NAME SPACE */
+#endif
+#endif
+#ifndef YYFREE
+#define YYFREE free
+#if !defined free && !defined EXIT_SUCCESS
+void free(void *); /* INFRINGES ON USER NAME SPACE */
+#endif
+#endif
+#endif
+#endif /* ! defined yyoverflow || YYERROR_VERBOSE */
 
 #if (                        \
     !defined yyoverflow &&   \
@@ -676,7 +716,6 @@ static void yy_symbol_value_print(
   YYUSE(yytype);
 }
 
-
 /*---------------------------.
 | Print this symbol on YYO.  |
 `---------------------------*/
@@ -769,7 +808,6 @@ int yydebug;
 #define YY_REDUCE_PRINT(Rule)
 #endif /* !YYDEBUG */
 
-
 /* YYINITDEPTH -- initial size of the parser's stacks.  */
 #ifndef YYINITDEPTH
 #define YYINITDEPTH 200
@@ -785,7 +823,6 @@ int yydebug;
 #ifndef YYMAXDEPTH
 #define YYMAXDEPTH 10000
 #endif
-
 
 #if YYERROR_VERBOSE
 
@@ -1090,6 +1127,11 @@ int yyparse(void *yyscanner, RE_LEX_ENVIRONMENT *lex_env)
   /* The lookahead symbol.  */
   int yychar;
 
+  /* The semantic value of the lookahead symbol.  */
+  /* Default value used for initialization, for pacifying older GCCs
+     or non-GCC compilers.  */
+  YY_INITIAL_VALUE(static YYSTYPE yyval_default;)
+  YYSTYPE yylval YY_INITIAL_VALUE(= yyval_default);
 
   /* The semantic value of the lookahead symbol.  */
   /* Default value used for initialization, for pacifying older GCCs
@@ -1240,7 +1282,6 @@ yysetstate:
 
   goto yybackup;
 
-
 /*-----------.
 | yybackup.  |
 `-----------*/
@@ -1305,7 +1346,6 @@ yybackup:
 
   goto yynewstate;
 
-
 /*-----------------------------------------------------------.
 | yydefault -- do the default action for the current state.  |
 `-----------------------------------------------------------*/
@@ -1314,7 +1354,6 @@ yydefault:
   if (yyn == 0)
     goto yyerrlab;
   goto yyreduce;
-
 
 /*-----------------------------.
 | yyreduce -- do a reduction.  |
@@ -1800,13 +1839,13 @@ yyreduce:
   {
     const int yylhs = yyr1[yyn] - YYNTOKENS;
     const int yyi = yypgoto[yylhs] + *yyssp;
-    yystate = (0 <= yyi && yyi <= YYLAST && yycheck[yyi] == *yyssp
-               ? yytable[yyi]
-               : yydefgoto[yylhs]);
+    yystate =
+        (0 <= yyi && yyi <= YYLAST && yycheck[yyi] == *yyssp
+             ? yytable[yyi]
+             : yydefgoto[yylhs]);
   }
 
   goto yynewstate;
-
 
 /*--------------------------------------.
 | yyerrlab -- here on detecting error.  |
@@ -1878,7 +1917,6 @@ yyerrlab:
      token.  */
   goto yyerrlab1;
 
-
 /*---------------------------------------------------.
 | yyerrorlab -- error raised explicitly by YYERROR.  |
 `---------------------------------------------------*/
@@ -1897,7 +1935,6 @@ yyerrorlab:
   YY_STACK_PRINT(yyss, yyssp);
   yystate = *yyssp;
   goto yyerrlab1;
-
 
 /*-------------------------------------------------------------.
 | yyerrlab1 -- common code for both syntax error and YYERROR.  |
@@ -1923,6 +1960,9 @@ yyerrlab1:
     if (yyssp == yyss)
       YYABORT;
 
+    /* Pop the current state because it cannot handle the error token.  */
+    if (yyssp == yyss)
+      YYABORT;
 
     yydestruct("Error: popping", yystos[yystate], yyvsp, yyscanner, lex_env);
     YYPOPSTACK(1);
@@ -1934,13 +1974,11 @@ yyerrlab1:
   *++yyvsp = yylval;
   YY_IGNORE_MAYBE_UNINITIALIZED_END
 
-
   /* Shift the error token.  */
   YY_SYMBOL_PRINT("Shifting", yystos[yyn], yyvsp, yylsp);
 
   yystate = yyn;
   goto yynewstate;
-
 
 /*-------------------------------------.
 | yyacceptlab -- YYACCEPT comes here.  |
@@ -1949,14 +1987,12 @@ yyacceptlab:
   yyresult = 0;
   goto yyreturn;
 
-
 /*-----------------------------------.
 | yyabortlab -- YYABORT comes here.  |
 `-----------------------------------*/
 yyabortlab:
   yyresult = 1;
   goto yyreturn;
-
 
 #if !defined yyoverflow || YYERROR_VERBOSE
 /*-------------------------------------------------.
@@ -1967,7 +2003,6 @@ yyexhaustedlab:
   yyresult = 2;
   /* Fall through.  */
 #endif
-
 
 /*-----------------------------------------------------.
 | yyreturn -- parsing is finished, return the result.  |

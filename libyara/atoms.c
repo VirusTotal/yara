@@ -487,7 +487,10 @@ int _yr_atoms_trim(YR_ATOM* atom)
   {
     atom->bytes[i] = atom->bytes[trim_left + i];
     atom->mask[i] = atom->mask[trim_left + i];
-    memcpy(atom->bitmap[i], atom->bitmap[trim_left + i], (sizeof(YR_BITMASK) * YR_BITMAP_SIZE));
+    memcpy(
+        atom->bitmap[i],
+        atom->bitmap[trim_left + i],
+        (sizeof(YR_BITMASK) * YR_BITMAP_SIZE));
   }
 
   return trim_left;
@@ -726,7 +729,6 @@ static int _yr_atoms_case_insensitive(
             atom->atom.mask[i] = YR_ATOM_TYPE_CLASS;
         }
       }
-
     }
     atom = atom->next;
   }
@@ -764,7 +766,8 @@ static int _yr_atoms_xor(
       {
         new_atom->atom.bytes[i] = atom->atom.bytes[i] ^ j;
         new_atom->atom.mask[i] = 0xFF;
-        yr_bitmask_clear_all(new_atom->atom.bitmap[i], sizeof(new_atom->atom.bitmap[i]));
+        yr_bitmask_clear_all(
+            new_atom->atom.bitmap[i], sizeof(new_atom->atom.bitmap[i]));
         yr_bitmask_set(new_atom->atom.bitmap[i], new_atom->atom.bytes[i]);
       }
 
@@ -809,7 +812,8 @@ static int _yr_atoms_wide(
     {
       new_atom->atom.bytes[i] = 0;
       new_atom->atom.mask[i] = 0xFF;
-      yr_bitmask_clear_all(new_atom->atom.bitmap[i], sizeof(new_atom->atom.bitmap[i]));
+      yr_bitmask_clear_all(
+          new_atom->atom.bitmap[i], sizeof(new_atom->atom.bitmap[i]));
       yr_bitmask_set(new_atom->atom.bitmap[i], new_atom->atom.bytes[i]);
     }
 
@@ -819,7 +823,10 @@ static int _yr_atoms_wide(
       {
         new_atom->atom.bytes[i * 2] = atom->atom.bytes[i];
         new_atom->atom.mask[i * 2] = atom->atom.mask[i];
-        memcpy(new_atom->atom.bitmap[i * 2], atom->atom.bitmap[i], (sizeof(YR_BITMASK) * YR_BITMAP_SIZE));
+        memcpy(
+            new_atom->atom.bitmap[i * 2],
+            atom->atom.bitmap[i],
+            (sizeof(YR_BITMASK) * YR_BITMAP_SIZE));
       }
       else
         break;
@@ -838,7 +845,6 @@ static int _yr_atoms_wide(
 
   return ERROR_SUCCESS;
 }
-
 
 struct STACK_ITEM
 {
@@ -1245,7 +1251,8 @@ static int _yr_atoms_expand_wildcards(YR_ATOM_LIST_ITEM* atoms)
 
         new_atom->atom.bytes[i] = (uint8_t) a;
         new_atom->atom.mask[i] = 0xFF;
-        yr_bitmask_clear_all(new_atom->atom.bitmap[i], sizeof(new_atom->atom.bitmap[i]));
+        yr_bitmask_clear_all(
+            new_atom->atom.bitmap[i], sizeof(new_atom->atom.bitmap[i]));
         yr_bitmask_set(new_atom->atom.bitmap[i], new_atom->atom.bytes[i]);
         new_atom->next = next_atom;
         prev_atom->next = new_atom;
@@ -1418,7 +1425,7 @@ int yr_atoms_extract_from_string(
     atom.length = YR_MAX_ATOM_LENGTH;
     memcpy(atom.bytes, string + i - YR_MAX_ATOM_LENGTH + 1, atom.length);
 
-    for (int j = 0; j <atom.length; j++)
+    for (int j = 0; j < atom.length; j++)
     {
       yr_bitmask_clear_all(atom.bitmap[j], sizeof(atom.bitmap[j]));
       yr_bitmask_set(atom.bitmap[j], atom.bytes[j]);
