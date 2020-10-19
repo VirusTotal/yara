@@ -38,7 +38,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "blob.h"
 #include "util.h"
 
-
 static void test_boolean_operators()
 {
   YR_DEBUG_FPRINTF(1, stderr, "+ %s() {}\n", __FUNCTION__);
@@ -57,7 +56,6 @@ static void test_boolean_operators()
 
   assert_false_rule("rule test { condition: false or false }", NULL);
 }
-
 
 static void test_comparison_operators()
 {
@@ -240,7 +238,6 @@ static void test_arithmetic_operators()
       ERROR_INTEGER_OVERFLOW);
 }
 
-
 static void test_bitwise_operators()
 {
   YR_DEBUG_FPRINTF(1, stderr, "+ %s() {}\n", __FUNCTION__);
@@ -272,7 +269,6 @@ static void test_bitwise_operators()
 
   assert_false_rule("rule test { condition: 1 | 3 ^ 3 == (1 | 3) ^ 3}", NULL);
 }
-
 
 static void test_string_operators()
 {
@@ -338,7 +334,6 @@ static void test_string_operators()
       "rule test { condition: \"foobarbaz\" endswith \"ba\" }", NULL);
 }
 
-
 static void test_syntax()
 {
   YR_DEBUG_FPRINTF(1, stderr, "+ %s() {}\n", __FUNCTION__);
@@ -370,7 +365,6 @@ static void test_syntax()
   // Test case for issue #1295
   assert_error("rule test rule test", ERROR_DUPLICATED_IDENTIFIER);
 }
-
 
 static void test_anonymous_strings()
 {
@@ -1005,7 +999,6 @@ static void test_strings()
       "tests/data/base64");
 }
 
-
 static void test_wildcard_strings()
 {
   YR_DEBUG_FPRINTF(1, stderr, "+ %s() {}\n", __FUNCTION__);
@@ -1022,7 +1015,6 @@ static void test_wildcard_strings()
       "B\x00"
       "C\x00 ---- xyz");
 }
-
 
 static void test_hex_strings()
 {
@@ -1112,7 +1104,6 @@ static void test_hex_strings()
         strings: $a = { 31 32 [-] 33 34 [-] 38 39 } private \
         condition: $a }",
       "1234567890");
-
 
   assert_true_rule(
       "rule test { \
@@ -1254,7 +1245,6 @@ static void test_hex_strings()
   /* TODO: tests.py:551 ff. */
 }
 
-
 static void test_count()
 {
   YR_DEBUG_FPRINTF(1, stderr, "+ %s() {}\n", __FUNCTION__);
@@ -1266,7 +1256,6 @@ static void test_count()
       "rule test { strings: $a = \"ssi\" private condition: #a == 2 }",
       "mississippi");
 }
-
 
 static void test_at()
 {
@@ -1297,7 +1286,6 @@ static void test_at()
       PE32_FILE);
 }
 
-
 static void test_in()
 {
   YR_DEBUG_FPRINTF(1, stderr, "+ %s() {}\n", __FUNCTION__);
@@ -1314,7 +1302,6 @@ static void test_in()
         condition: $a in (entrypoint .. entrypoint + 1) }",
       PE32_FILE);
 }
-
 
 static void test_offset()
 {
@@ -1335,7 +1322,6 @@ static void test_offset()
       "rule test { strings: $a = \"ssi\" condition: @a[2] == 5 }",
       "mississippi");
 }
-
 
 static void test_length()
 {
@@ -1385,7 +1371,6 @@ static void test_length()
       "11}",
       "mississippi");
 }
-
 
 static void test_of()
 {
@@ -1437,7 +1422,6 @@ static void test_of()
 
   assert_error("rule test { condition: all of them }", ERROR_UNDEFINED_STRING);
 }
-
 
 void test_for()
 {
@@ -1676,7 +1660,6 @@ void test_for()
       }",
       ERROR_WRONG_TYPE);
 
-
   assert_false_rule(
       "rule test { \
         condition: \
@@ -1692,7 +1675,6 @@ void test_for()
       }",
       NULL);
 }
-
 
 void test_re()
 {
@@ -2141,7 +2123,6 @@ void test_re()
       "abc\xE0\x22");
 }
 
-
 static void test_entrypoint()
 {
   YR_DEBUG_FPRINTF(1, stderr, "+ %s() {}\n", __FUNCTION__);
@@ -2167,7 +2148,6 @@ static void test_entrypoint()
   assert_false_rule("rule test { condition: entrypoint >= 0 }", NULL);
 }
 
-
 static void test_filesize()
 {
   YR_DEBUG_FPRINTF(1, stderr, "+ %s() {}\n", __FUNCTION__);
@@ -2182,7 +2162,6 @@ static void test_filesize()
 
   assert_true_rule_blob(rule, PE32_FILE);
 }
-
 
 static void test_comments()
 {
@@ -2267,7 +2246,6 @@ static void test_matches_operator()
       "rule test { condition: \"foo\\nbar\" matches /foo.*bar/ }", NULL);
 }
 
-
 static void test_global_rules()
 {
   YR_DEBUG_FPRINTF(1, stderr, "+ %s() {}\n", __FUNCTION__);
@@ -2292,7 +2270,6 @@ static void test_global_rules()
       }",
       NULL);
 }
-
 
 static void test_modules()
 {
@@ -2438,7 +2415,6 @@ static void test_modules()
       }",
       NULL);
 
-
   assert_false_rule(
       "import \"tests\" \
       rule test { condition: tests.struct_array[0].i == 1  \
@@ -2486,7 +2462,6 @@ static void test_modules()
   assert_error("import \"\"", ERROR_INVALID_MODULE_NAME);
 }
 
-
 static void test_time_module()
 {
   YR_DEBUG_FPRINTF(1, stderr, "+ %s() {}\n", __FUNCTION__);
@@ -2496,7 +2471,6 @@ static void test_time_module()
         rule test { condition: time.now() > 0 }",
       NULL);
 }
-
 
 #if defined(HASH_MODULE)
 static void test_hash_module()
@@ -2604,7 +2578,6 @@ static void test_hash_module()
 }
 #endif
 
-
 void test_integer_functions()
 {
   YR_DEBUG_FPRINTF(1, stderr, "+ %s() {}\n", __FUNCTION__);
@@ -2628,7 +2601,6 @@ void test_integer_functions()
       "rule test { condition: uint32be(0) == 0xAABBCCDD}", "\xaa\xbb\xcc\xdd");
 }
 
-
 void test_include_files()
 {
   YR_DEBUG_FPRINTF(1, stderr, "+ %s() {}\n", __FUNCTION__);
@@ -2639,7 +2611,6 @@ void test_include_files()
   assert_true_rule(
       "include \"tests/data/foo.yar\" rule t { condition: foo }", NULL);
 }
-
 
 void test_tags()
 {
@@ -2653,7 +2624,6 @@ void test_tags()
       "rule test : tag1 tag1 { condition: true}",
       ERROR_DUPLICATED_TAG_IDENTIFIER);
 }
-
 
 void test_process_scan()
 {
@@ -2750,7 +2720,6 @@ void test_process_scan()
     exit(EXIT_FAILURE);
   }
 }
-
 
 void test_performance_warnings()
 {
@@ -2878,7 +2847,6 @@ void test_performance_warnings()
         strings: $a = \"AAAAAAAAAAAAAAAAAAAA\" xor \
         condition: $a }")
 }
-
 
 int main(int argc, char** argv)
 {

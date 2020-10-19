@@ -109,13 +109,13 @@ int yr_atoms_heuristic_quality(YR_ATOMS_CONFIG* config, YR_ATOM* atom)
 
   int quality = 0;
   int unique_bytes = 0;
-  int i;
+  int class_bytes = 0;
 
   assert(atom->length <= YR_MAX_ATOM_LENGTH);
 
-  yr_bitmask_clear_all(seen_bytes);
+  yr_bitmask_clear_all(seen_bytes, sizeof(seen_bytes));
 
-  for (i = 0; i < atom->length; i++)
+  for (int i = 0; i < atom->length; i++)
   {
     switch (atom->mask[i])
     {
@@ -428,6 +428,10 @@ int _yr_atoms_trim(YR_ATOM* atom)
 {
   int mask_00 = 0;
   int mask_ff = 0;
+  int mask_cc = 0;
+  int same_cc = 0;
+
+  int trim_left = 0;
 
   int trim_left = 0;
 
@@ -450,6 +454,8 @@ int _yr_atoms_trim(YR_ATOM* atom)
   {
     if (atom->mask[trim_left + i] == 0xFF)
       mask_ff++;
+    else if (atom->mask[trim_left + i] == 0xCC)
+      mask_cc++;
     else if (atom->mask[trim_left + i] == 0x00)
       mask_00++;
   }
@@ -463,8 +469,14 @@ int _yr_atoms_trim(YR_ATOM* atom)
   // example, in { XX ?? ?? ?? YY ZZ } the best atom is { YY ZZ } not { XX }.
   // But let's keep it like this for simplicity.
 
-  if (mask_00 >= mask_ff)
+  if (mask_00 >= (mask_ff + mask_cc))
     atom->length = 1;
+
+  if (mask_cc >= 3)
+  {
+    if (same_cc == atom->length)
+      atom->length = 2;
+  }
 
   if (trim_left == 0)
     return 0;
@@ -475,6 +487,10 @@ int _yr_atoms_trim(YR_ATOM* atom)
   {
     atom->bytes[i] = atom->bytes[trim_left + i];
     atom->mask[i] = atom->mask[trim_left + i];
+    memcpy(
+        atom->bitmap[i],
+        atom->bitmap[trim_left + i],
+        (sizeof(YR_BITMASK) * YR_BITMAP_SIZE));
   }
 
   return trim_left;
@@ -662,22 +678,13 @@ static uint8_t* _yr_atoms_case_combinations(
 
 ////////////////////////////////////////////////////////////////////////////////
 // For a given list of atoms returns another list of atoms
-// with every case combination.
+// with every case combination encoded into bitmap.
 //
 static int _yr_atoms_case_insensitive(
-    YR_ATOM_LIST_ITEM* atoms,
-    YR_ATOM_LIST_ITEM** case_insensitive_atoms)
+    YR_ATOM_LIST_ITEM* atoms)
 {
   YR_ATOM_LIST_ITEM* atom;
-  YR_ATOM_LIST_ITEM* new_atom;
 
-  uint8_t buffer[CASE_COMBINATIONS_BUFFER_SIZE];
-  uint8_t atom_length;
-  uint8_t* atoms_cursor;
-
-  int i;
-
-  *case_insensitive_atoms = NULL;
   atom = atoms;
 
   while (atom != NULL)
@@ -690,30 +697,39 @@ static int _yr_atoms_case_insensitive(
 
     while (atom_length != 0)
     {
-      new_atom = (YR_ATOM_LIST_ITEM*) yr_malloc(sizeof(YR_ATOM_LIST_ITEM));
+      if (atom->atom.mask[i] == YR_ATOM_TYPE_ANY)
+        continue;
 
-      if (new_atom == NULL)
-        return ERROR_INSUFFICIENT_MEMORY;
-
-      for (i = 0; i < atom_length; i++)
+      bool alphabet = false;
+      // insensitive encoding added
+      for (int j = 'A'; j <= 'Z'; j++)
       {
-        new_atom->atom.bytes[i] = atoms_cursor[i];
-        new_atom->atom.mask[i] = 0xFF;
+        if (yr_bitmask_is_set(atom->atom.bitmap[i], j))
+        {
+          alphabet = true;
+          yr_bitmask_set(atom->atom.bitmap[i], j | LOWERCASE_MASK);
+        }
+        else if (yr_bitmask_is_set(atom->atom.bitmap[i], j | LOWERCASE_MASK))
+        {
+          alphabet = true;
+          yr_bitmask_set(atom->atom.bitmap[i], j);
+        }
       }
 
-      new_atom->atom.length = atom_length;
-      new_atom->forward_code_ref = atom->forward_code_ref;
-      new_atom->backward_code_ref = atom->backward_code_ref;
-      new_atom->backtrack = atom->backtrack;
-      new_atom->next = *case_insensitive_atoms;
-
-      *case_insensitive_atoms = new_atom;
-
-      atoms_cursor += atom_length;
-      atom_length = *atoms_cursor;
-      atoms_cursor++;
+      if (alphabet)
+      {
+        int any_counter = 0;
+        for (int k = 0; k < YR_BITMAP_SIZE; k++)
+        {
+          if (atom->atom.bitmap[i][k] == UINT64_MAX)
+            any_counter++;
+          if (any_counter == YR_BITMAP_SIZE)
+            atom->atom.mask[i] = YR_ATOM_TYPE_ANY;
+          else
+            atom->atom.mask[i] = YR_ATOM_TYPE_CLASS;
+        }
+      }
     }
-
     atom = atom->next;
   }
 
@@ -734,23 +750,25 @@ static int _yr_atoms_xor(
   YR_ATOM_LIST_ITEM* atom;
   YR_ATOM_LIST_ITEM* new_atom;
 
-  int i, j;
   *xor_atoms = NULL;
   atom = atoms;
 
   while (atom != NULL)
   {
-    for (j = min; j <= max; j++)
+    for (int j = min; j <= max; j++)
     {
       new_atom = (YR_ATOM_LIST_ITEM*) yr_malloc(sizeof(YR_ATOM_LIST_ITEM));
 
       if (new_atom == NULL)
         return ERROR_INSUFFICIENT_MEMORY;
 
-      for (i = 0; i < atom->atom.length; i++)
+      for (int i = 0; i < atom->atom.length; i++)
       {
         new_atom->atom.bytes[i] = atom->atom.bytes[i] ^ j;
         new_atom->atom.mask[i] = 0xFF;
+        yr_bitmask_clear_all(
+            new_atom->atom.bitmap[i], sizeof(new_atom->atom.bitmap[i]));
+        yr_bitmask_set(new_atom->atom.bitmap[i], new_atom->atom.bytes[i]);
       }
 
       new_atom->atom.length = yr_min(atom->atom.length, YR_MAX_ATOM_LENGTH);
@@ -780,8 +798,6 @@ static int _yr_atoms_wide(
   YR_ATOM_LIST_ITEM* atom;
   YR_ATOM_LIST_ITEM* new_atom;
 
-  int i;
-
   *wide_atoms = NULL;
   atom = atoms;
 
@@ -792,16 +808,26 @@ static int _yr_atoms_wide(
     if (new_atom == NULL)
       return ERROR_INSUFFICIENT_MEMORY;
 
-    for (i = 0; i < YR_MAX_ATOM_LENGTH; i++)
+    for (int i = 0; i < YR_MAX_ATOM_LENGTH; i++)
     {
       new_atom->atom.bytes[i] = 0;
       new_atom->atom.mask[i] = 0xFF;
+      yr_bitmask_clear_all(
+          new_atom->atom.bitmap[i], sizeof(new_atom->atom.bitmap[i]));
+      yr_bitmask_set(new_atom->atom.bitmap[i], new_atom->atom.bytes[i]);
     }
 
-    for (i = 0; i < atom->atom.length; i++)
+    for (int i = 0; i < atom->atom.length; i++)
     {
       if (i * 2 < YR_MAX_ATOM_LENGTH)
+      {
         new_atom->atom.bytes[i * 2] = atom->atom.bytes[i];
+        new_atom->atom.mask[i * 2] = atom->atom.mask[i];
+        memcpy(
+            new_atom->atom.bitmap[i * 2],
+            atom->atom.bitmap[i],
+            (sizeof(YR_BITMASK) * YR_BITMAP_SIZE));
+      }
       else
         break;
     }
@@ -819,7 +845,6 @@ static int _yr_atoms_wide(
 
   return ERROR_SUCCESS;
 }
-
 
 struct STACK_ITEM
 {
@@ -859,7 +884,7 @@ static int _yr_atoms_extract_from_re(
 
   struct STACK_ITEM si;
 
-  int i, shift;
+  int shift;
   int quality;
   int best_quality = -1;
   int n = 0;
@@ -914,7 +939,7 @@ static int _yr_atoms_extract_from_re(
       // the current appending node.
       if (n > 0)
       {
-        make_atom_from_re_nodes(atom, n, recent_re_nodes);
+        make_atom_from_re_nodes(&atom, n, recent_re_nodes);
         shift = _yr_atoms_trim(&atom);
         quality = config->get_atom_quality(config, &atom);
 
@@ -1169,8 +1194,6 @@ static YR_ATOM_LIST_ITEM* _yr_atoms_clone_list_item(YR_ATOM_LIST_ITEM* item)
 //
 static int _yr_atoms_expand_wildcards(YR_ATOM_LIST_ITEM* atoms)
 {
-  int i;
-
   YR_ATOM_LIST_ITEM* atom = atoms;
   YR_ATOM_LIST_ITEM* new_atom;
   YR_ATOM_LIST_ITEM* prev_atom;
@@ -1180,7 +1203,7 @@ static int _yr_atoms_expand_wildcards(YR_ATOM_LIST_ITEM* atoms)
   {
     bool expanded = false;
 
-    for (i = 0; i < atom->atom.length; i++)
+    for (int i = 0; i < atom->atom.length; i++)
     {
       uint16_t a, s, e, incr = 1;
 
@@ -1228,6 +1251,9 @@ static int _yr_atoms_expand_wildcards(YR_ATOM_LIST_ITEM* atoms)
 
         new_atom->atom.bytes[i] = (uint8_t) a;
         new_atom->atom.mask[i] = 0xFF;
+        yr_bitmask_clear_all(
+            new_atom->atom.bitmap[i], sizeof(new_atom->atom.bitmap[i]));
+        yr_bitmask_set(new_atom->atom.bitmap[i], new_atom->atom.bytes[i]);
         new_atom->next = next_atom;
         prev_atom->next = new_atom;
         prev_atom = new_atom;
@@ -1257,7 +1283,6 @@ int yr_atoms_extract_from_re(
   YR_ATOM_TREE* atom_tree = (YR_ATOM_TREE*) yr_malloc(sizeof(YR_ATOM_TREE));
 
   YR_ATOM_LIST_ITEM* wide_atoms;
-  YR_ATOM_LIST_ITEM* case_insensitive_atoms;
 
   if (atom_tree == NULL)
     return ERROR_INSUFFICIENT_MEMORY;
@@ -1361,14 +1386,12 @@ int yr_atoms_extract_from_string(
     int* min_atom_quality)
 {
   YR_ATOM_LIST_ITEM* item;
-  YR_ATOM_LIST_ITEM* case_insensitive_atoms;
   YR_ATOM_LIST_ITEM* xor_atoms;
   YR_ATOM_LIST_ITEM* wide_atoms;
 
   YR_ATOM atom;
 
   int quality, max_quality;
-  int i;
 
   item = (YR_ATOM_LIST_ITEM*) yr_malloc(sizeof(YR_ATOM_LIST_ITEM));
 
@@ -1382,10 +1405,12 @@ int yr_atoms_extract_from_string(
 
   item->atom.length = yr_min(string_length, YR_MAX_ATOM_LENGTH);
 
-  for (i = 0; i < item->atom.length; i++)
+  for (int i = 0; i < item->atom.length; i++)
   {
     item->atom.bytes[i] = string[i];
     item->atom.mask[i] = 0xFF;
+    yr_bitmask_clear_all(item->atom.bitmap[i], sizeof(item->atom.bitmap[i]));
+    yr_bitmask_set(item->atom.bitmap[i], item->atom.bytes[i]);
   }
 
   max_quality = config->get_atom_quality(config, &item->atom);
@@ -1393,12 +1418,18 @@ int yr_atoms_extract_from_string(
   atom.length = YR_MAX_ATOM_LENGTH;
   memset(atom.mask, 0xFF, atom.length);
 
-  for (i = YR_MAX_ATOM_LENGTH;
+  for (int i = YR_MAX_ATOM_LENGTH;
        i < string_length && max_quality < YR_MAX_ATOM_QUALITY;
        i++)
   {
     atom.length = YR_MAX_ATOM_LENGTH;
     memcpy(atom.bytes, string + i - YR_MAX_ATOM_LENGTH + 1, atom.length);
+
+    for (int j = 0; j < atom.length; j++)
+    {
+      yr_bitmask_clear_all(atom.bitmap[j], sizeof(atom.bitmap[j]));
+      yr_bitmask_set(atom.bitmap[j], atom.bytes[j]);
+    }
 
     quality = config->get_atom_quality(config, &atom);
 
