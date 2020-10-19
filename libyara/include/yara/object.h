@@ -59,16 +59,13 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define OBJECT_TYPE_DICTIONARY 6
 #define OBJECT_TYPE_FLOAT      7
 
-
 int yr_object_create(
     int8_t type,
     const char* identifier,
     YR_OBJECT* parent,
     YR_OBJECT** object);
 
-
 void yr_object_set_canary(YR_OBJECT* object, int canary);
-
 
 int yr_object_function_create(
     const char* identifier,
@@ -78,27 +75,21 @@ int yr_object_function_create(
     YR_OBJECT* parent,
     YR_OBJECT** function);
 
-
 int yr_object_from_external_variable(
     YR_EXTERNAL_VARIABLE* external,
     YR_OBJECT** object);
 
-
 void yr_object_destroy(YR_OBJECT* object);
-
 
 int yr_object_copy(YR_OBJECT* object, YR_OBJECT** object_copy);
 
-
 YR_OBJECT* yr_object_lookup_field(YR_OBJECT* object, const char* field_name);
-
 
 YR_OBJECT* yr_object_lookup(
     YR_OBJECT* root,
     int flags,
     const char* pattern,
     ...) YR_PRINTF_LIKE(3, 4);
-
 
 bool yr_object_has_undefined_value(YR_OBJECT* object, const char* field, ...)
     YR_PRINTF_LIKE(2, 3);
@@ -109,10 +100,8 @@ double yr_object_get_float(YR_OBJECT* object, const char* field, ...)
 int64_t yr_object_get_integer(YR_OBJECT* object, const char* field, ...)
     YR_PRINTF_LIKE(2, 3);
 
-
 SIZED_STRING* yr_object_get_string(YR_OBJECT* object, const char* field, ...)
     YR_PRINTF_LIKE(2, 3);
-
 
 int yr_object_set_integer(
     int64_t value,
@@ -120,10 +109,8 @@ int yr_object_set_integer(
     const char* field,
     ...) YR_PRINTF_LIKE(3, 4);
 
-
 int yr_object_set_float(double value, YR_OBJECT* object, const char* field, ...)
     YR_PRINTF_LIKE(3, 4);
-
 
 int yr_object_set_string(
     const char* value,
@@ -132,38 +119,29 @@ int yr_object_set_string(
     const char* field,
     ...) YR_PRINTF_LIKE(4, 5);
 
-
 int yr_object_array_length(YR_OBJECT* object);
-
 
 YR_OBJECT* yr_object_array_get_item(YR_OBJECT* object, int flags, int index);
 
-
 int yr_object_array_set_item(YR_OBJECT* object, YR_OBJECT* item, int index);
-
 
 YR_OBJECT* yr_object_dict_get_item(
     YR_OBJECT* object,
     int flags,
     const char* key);
 
-
 int yr_object_dict_set_item(
     YR_OBJECT* object,
     YR_OBJECT* item,
     const char* key);
 
-
 int yr_object_structure_set_member(YR_OBJECT* object, YR_OBJECT* member);
 
-
 YR_OBJECT* yr_object_get_root(YR_OBJECT* object);
-
 
 YR_API void yr_object_print_data(
     YR_OBJECT* object,
     int indent,
     int print_identifier);
-
 
 #endif

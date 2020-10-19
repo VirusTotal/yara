@@ -66,7 +66,6 @@ static struct yr_config_var
 
 } yr_cfgs[YR_CONFIG_LAST];
 
-
 // Global variables. See globals.h for their descriptions.
 
 uint8_t yr_lowercase[256];
@@ -88,12 +87,10 @@ uint64_t yr_debug_verbosity = YR_DEBUG_VERBOSITY;
 
 static YR_MUTEX *openssl_locks;
 
-
 static void _thread_id(CRYPTO_THREADID *id)
 {
   CRYPTO_THREADID_set_numeric(id, (unsigned long) yr_current_thread_id());
 }
-
 
 static void _locking_function(int mode, int n, const char *file, int line)
 {
@@ -105,20 +102,15 @@ static void _locking_function(int mode, int n, const char *file, int line)
 
 #endif
 
-//
-// yr_initialize
-//
+////////////////////////////////////////////////////////////////////////////////
 // Should be called by main thread before using any other
 // function from libyara.
 //
-
 YR_API int yr_initialize(void)
 {
   uint32_t def_stack_size = DEFAULT_STACK_SIZE;
   uint32_t def_max_strings_per_rule = DEFAULT_MAX_STRINGS_PER_RULE;
   uint32_t def_max_match_data = DEFAULT_MAX_MATCH_DATA;
-
-  int i;
 
   init_count++;
 
@@ -129,7 +121,7 @@ YR_API int yr_initialize(void)
   // canaries.
   srand((unsigned) time(NULL));
 
-  for (i = 0; i < 256; i++)
+  for (int i = 0; i < 256; i++)
   {
     if (i >= 'a' && i <= 'z')
       yr_altercase[i] = i - 32;
@@ -150,7 +142,8 @@ YR_API int yr_initialize(void)
   openssl_locks = (YR_MUTEX *) OPENSSL_malloc(
       CRYPTO_num_locks() * sizeof(YR_MUTEX));
 
-  for (i = 0; i < CRYPTO_num_locks(); i++) yr_mutex_create(&openssl_locks[i]);
+  for (int i = 0; i < CRYPTO_num_locks(); i++)
+    yr_mutex_create(&openssl_locks[i]);
 
   CRYPTO_THREADID_set_callback(_thread_id);
   CRYPTO_set_locking_callback(_locking_function);
@@ -172,6 +165,7 @@ YR_API int yr_initialize(void)
   FAIL_ON_ERROR(yr_modules_initialize());
 
   // Initialize default configuration options
+
   FAIL_ON_ERROR(yr_set_configuration(YR_CONFIG_STACK_SIZE, &def_stack_size));
 
   FAIL_ON_ERROR(yr_set_configuration(
@@ -183,13 +177,9 @@ YR_API int yr_initialize(void)
   return ERROR_SUCCESS;
 }
 
-
-//
-// yr_finalize
-//
+////////////////////////////////////////////////////////////////////////////////
 // Should be called by main thread before exiting.
 //
-
 YR_API int yr_finalize(void)
 {
 #if defined HAVE_LIBCRYPTO && OPENSSL_VERSION_NUMBER < 0x10100000L
@@ -233,27 +223,26 @@ YR_API int yr_finalize(void)
   return ERROR_SUCCESS;
 }
 
-
+////////////////////////////////////////////////////////////////////////////////
+// Sets a configuration option.
 //
-// yr_set_configuration
-//
-// Sets a configuration option. This function receives a configuration name,
-// as defined by the YR_CONFIG_NAME enum, and a pointer to the value being
-// set. The type of the value depends on the configuration name.
+// This function receives a configuration name, as defined by the YR_CONFIG_NAME
+// enum, and a pointer to the value being set. The type of the value depends on
+// the configuration name.
 //
 // Args:
-//    YR_CONFIG_NAME  name   - Any of the values defined by the YR_CONFIG_NAME
-//                             enum. Possible values are:
+//   name: Any of the values defined by the YR_CONFIG_NAME enum. Possible values
+//         are:
+//              YR_CONFIG_STACK_SIZE             data type: uint32_t
+//              YR_CONFIG_MAX_STRINGS_PER_RULE   data type: uint32_t
+//              YR_CONFIG_MAX_MATCH_DATA         data type: uint32_t
 //
-//       YR_CONFIG_STACK_SIZE             data type: uint32_t
-//       YR_CONFIG_MAX_STRINGS_PER_RULE   data type: uint32_t
-//       YR_CONFIG_MAX_MATCH_DATA         data type: uint32_t
-//
-//    void *src              - Pointer to the value being set for the option.
+//   src: Pointer to the value being set for the option.
 //
 // Returns:
-//    An error code.
-
+//   ERROR_SUCCESS
+//   ERROR_INTERNAL_FATAL_ERROR
+//
 YR_API int yr_set_configuration(YR_CONFIG_NAME name, void *src)
 {
   if (src == NULL)
@@ -273,7 +262,6 @@ YR_API int yr_set_configuration(YR_CONFIG_NAME name, void *src)
 
   return ERROR_SUCCESS;
 }
-
 
 YR_API int yr_get_configuration(YR_CONFIG_NAME name, void *dest)
 {

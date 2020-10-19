@@ -32,7 +32,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <yara/integers.h>
 
-
 // 32-bit ELF base types
 
 typedef uint32_t elf32_addr_t;
@@ -80,7 +79,6 @@ typedef uint64_t elf64_xword_t;
 #define ELF_DATA_NONE 0x0000
 #define ELF_DATA_2LSB 0x0001
 #define ELF_DATA_2MSB 0x002
-
 
 #define ELF_SHT_NULL     0   // Section header table entry unused
 #define ELF_SHT_PROGBITS 1   // Program data
@@ -177,7 +175,6 @@ typedef struct
 
 } elf_ident_t;
 
-
 typedef struct
 {
   elf_ident_t ident;
@@ -196,7 +193,6 @@ typedef struct
   elf32_half_t sh_str_table_index;
 
 } elf32_header_t;
-
 
 typedef struct
 {
@@ -217,7 +213,6 @@ typedef struct
 
 } elf64_header_t;
 
-
 typedef struct
 {
   elf32_word_t type;
@@ -231,7 +226,6 @@ typedef struct
 
 } elf32_program_header_t;
 
-
 typedef struct
 {
   elf64_word_t type;
@@ -244,7 +238,6 @@ typedef struct
   elf64_xword_t alignment;
 
 } elf64_program_header_t;
-
 
 typedef struct
 {
@@ -261,7 +254,6 @@ typedef struct
 
 } elf32_section_header_t;
 
-
 typedef struct
 {
   elf64_word_t name;
@@ -277,7 +269,6 @@ typedef struct
 
 } elf64_section_header_t;
 
-
 typedef struct
 {
   elf32_word_t tag;
@@ -285,14 +276,12 @@ typedef struct
 
 } elf32_dyn_t;
 
-
 typedef struct
 {
   elf64_xword_t tag;
   elf64_xword_t val;
 
 } elf64_dyn_t;
-
 
 typedef struct
 {
@@ -305,7 +294,6 @@ typedef struct
 
 } elf32_sym_t;
 
-
 typedef struct
 {
   elf32_word_t name;
@@ -316,7 +304,6 @@ typedef struct
   elf64_xword_t size;
 
 } elf64_sym_t;
-
 
 #pragma pack(pop)
 

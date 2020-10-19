@@ -27,7 +27,6 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-
 #include <stdarg.h>
 #include <stddef.h>
 #include <yara/arena.h>
@@ -55,10 +54,7 @@ struct YR_ARENA_FILE_BUFFER
 
 #pragma pack(pop)
 
-
-//
-// _yr_arena_make_ptr_relocatable
-//
+////////////////////////////////////////////////////////////////////////////////
 // Tells the arena that certain offsets within a buffer contain relocatable
 // pointers. The offsets are passed as a vararg list where the end of the
 // list is indicated by the special value EOL (-1), offsets in the list are
@@ -66,15 +62,15 @@ struct YR_ARENA_FILE_BUFFER
 // buffer.
 //
 // Args:
-//    [in]  YR_ARENA* arena     - Pointer the arena.
-//    [in]  uint32_t buffer_id  - Buffer number.
-//    [in]  size_t base_offset  - Base offset.
-//    [in]  va_list offsets     - List of offsets relative to base offset.
+//   arena: Pointer the arena.
+//   buffer_id: Buffer number.
+//   base_offset: Base offset.
+//   offsets: List of offsets relative to base offset.
 //
 // Returns:
-//    ERROR_SUCCESS if succeed or the corresponding error code otherwise.
+//   ERROR_SUCCESS
+//   ERROR_INSUFFICIENT_MEMORY
 //
-
 static int _yr_arena_make_ptr_relocatable(
     YR_ARENA* arena,
     uint32_t buffer_id,
@@ -114,24 +110,22 @@ static int _yr_arena_make_ptr_relocatable(
 // Flags for _yr_arena_allocate_memory.
 #define YR_ARENA_ZERO_MEMORY 1
 
-
-//
-// _yr_arena_allocate_memory
-//
+////////////////////////////////////////////////////////////////////////////////
 // Allocates memory in a buffer within the arena.
 //
 // Args:
-//    [in]  YR_ARENA* arena    - Pointer to the arena.
-//    [in]  int flags          - Flags.
-//    [in]  uint32_t buffer_id - Buffer number.
-//    [in]  size_t size        - Size of the region to be allocated.
-//    [out] size_t* offset     - Pointer to a variable where the function puts
-//                              the offset within the buffer of the allocated
-//                              region. The pointer can be NULL.
+//   arena: Pointer to the arena.
+//   flags: Flags. The only supported flag so far is YR_ARENA_ZERO_MEMORY.
+//   buffer_id: Buffer number.
+//   size : Size of the region to be allocated.
+//   [out] ref: Pointer to a YR_ARENA_REF that will be updated with the
+//              reference to the newly allocated region. The pointer can be
+///             NULL.
 // Returns:
-//    ERROR_SUCCESS if succeed or the corresponding error code if otherwise.
+//   ERROR_SUCCESS
+//   ERROR_INVALID_ARGUMENT
+//   ERROR_INSUFFICIENT_MEMORY
 //
-
 static int _yr_arena_allocate_memory(
     YR_ARENA* arena,
     int flags,
@@ -159,9 +153,9 @@ static int _yr_arena_allocate_memory(
     if (new_data == NULL)
       return ERROR_INSUFFICIENT_MEMORY;
 
-// When yr_realloc uses the Windows API (HeapAlloc, HeapReAlloc) under the
-// hood this is not necessary because HeapReAlloc already sets the new
-// memory to zero.
+// When yr_realloc uses the Windows API (HeapAlloc, HeapReAlloc) it is not
+// necessary to set the memory to zero because the API is called with the
+// HEAP_ZERO_MEMORY flag.
 #if !defined(_WIN32) && !defined(__CYGWIN__)
     if (flags & YR_ARENA_ZERO_MEMORY)
       memset(new_data + b->used, 0, new_size - b->used);
@@ -172,9 +166,9 @@ static int _yr_arena_allocate_memory(
     while (reloc != NULL)
     {
       // If the reloc entry is for the same buffer that is being relocated,
-      // the base pointer that we use to access the buffer must be new_data,
-      // as arena->buffers[reloc->buffer_id].data which is the same than
-      // b->data can't be accessed anymore after the call to yr_realloc.
+      // the base pointer that we use to access the buffer must be new_data
+      // as arena->buffers[reloc->buffer_id].data (which is the same than
+      // b->data) can't be accessed anymore after the call to yr_realloc.
       uint8_t* base = buffer_id == reloc->buffer_id
                           ? new_data
                           : arena->buffers[reloc->buffer_id].data;
@@ -212,20 +206,18 @@ static int _yr_arena_allocate_memory(
   return ERROR_SUCCESS;
 }
 
-
-//
-// yr_arena_create
-//
+////////////////////////////////////////////////////////////////////////////////
 // Creates an arena with the specified number of buffers.
 //
 // Args:
-//    [in]  int num_buffers             - Number of buffers
-//    [in]  size_t initial_buffer_size  - Initial size of each buffer.
-//    [out] YR_ARENA** arena           - Address of a YR_ARENA* pointer that
-//                                        will receive the address of the newly
-//                                        created arena.
+//   num_buffers: Number of buffers.
+//   initial_buffer_size: Initial size of each buffer.
+//   [out] arena: Address of a YR_ARENA* pointer that will receive the address
+//                of the newly created arena.
+// Returns:
+//   ERROR_SUCCESS
+//   ERROR_INSUFFICIENT_MEMORY
 //
-
 int yr_arena_create(
     int number_of_buffers,
     size_t initial_buffer_size,
@@ -250,16 +242,20 @@ void yr_arena_acquire(YR_ARENA* arena)
   arena->xrefs++;
 }
 
+////////////////////////////////////////////////////////////////////////////////
+// Releases the arena.
 //
-// yr_arena_release
-//
-// Releases the arena. If the number of cross-references to this arena drops
-// to zero the arena is destroyed and all its resources are freed.
+// Decrements the cross-references counter for the arena, if the number of
+// cross-references reaches zero the arena is destroyed and all its resources
+// are freed.
 //
 // Args:
-//    [in] YR_ARENA* arena    - Pointer to the arena.
+//   arena :Pointer to the arena.
 //
-
+// Returns:
+//   ERROR_SUCCESS
+//   ERROR_INSUFFICIENT_MEMORY
+//
 int yr_arena_release(YR_ARENA* arena)
 {
   arena->xrefs--;
@@ -287,7 +283,21 @@ int yr_arena_release(YR_ARENA* arena)
   return ERROR_SUCCESS;
 }
 
-
+////////////////////////////////////////////////////////////////////////////////
+// Allocates memory in a buffer within the arena.
+//
+// Args:
+//   arena: Pointer to the arena.
+//   buffer_id: Buffer number.
+//   size : Size of the region to be allocated.
+//   [out] offset: Pointer to a variable where the function puts the offset
+//                 within the buffer of the allocated region. The pointer can
+//                 be NULL.
+// Returns:
+//   ERROR_SUCCESS
+//   ERROR_INVALID_ARGUMENT
+//   ERROR_INSUFFICIENT_MEMORY
+//
 int yr_arena_allocate_memory(
     YR_ARENA* arena,
     uint32_t buffer_id,
@@ -297,7 +307,21 @@ int yr_arena_allocate_memory(
   return _yr_arena_allocate_memory(arena, 0, buffer_id, size, ref);
 }
 
-
+////////////////////////////////////////////////////////////////////////////////
+// Allocates memory in a buffer within the arena and fill it with zeroes.
+//
+// Args:
+//   arena: Pointer to the arena.
+//   buffer_id: Buffer number.
+//   size : Size of the region to be allocated.
+//   [out] offset: Pointer to a variable where the function puts the offset
+//                 within the buffer of the allocated region. The pointer can
+//                 be NULL.
+// Returns:
+//   ERROR_SUCCESS
+//   ERROR_INVALID_ARGUMENT
+//   ERROR_INSUFFICIENT_MEMORY
+//
 int yr_arena_allocate_zeroed_memory(
     YR_ARENA* arena,
     uint32_t buffer_id,
@@ -308,10 +332,7 @@ int yr_arena_allocate_zeroed_memory(
       arena, YR_ARENA_ZERO_MEMORY, buffer_id, size, ref);
 }
 
-
-//
-// yr_arena_allocate_struct
-//
+////////////////////////////////////////////////////////////////////////////////
 // Allocates a structure within the arena. This function is similar to
 // yr_arena_allocate_memory but additionally receives a variable-length
 // list of offsets within the structure where pointers reside. This allows
@@ -330,21 +351,20 @@ int yr_arena_allocate_zeroed_memory(
 //        EOL);
 //
 // Args:
-//    [in]  YR_ARENA* arena     - Pointer to the arena.
-//    [in]  uint32_t buffer_id  - Buffer number.
-//    [in]  size_t size         - Size of the region to be allocated.
-//    [out] YR_ARENA_REF* ref   - Pointer to a reference that will point to the
-//                                newly allocated structure when the function
-//                                returns. The pointer can be NULL if you don't
-//                                need the reference.
-//    ...                       - Variable number of offsets relative to the
-//                                beginning of the struct. Offsets are of type
-//                                size_t.
+//   arena: Pointer to the arena.
+//   buffer_id: Buffer number.
+//   size: Size of the region to be allocated.
+//   [out] ref: Pointer to a reference that will point to the newly allocated
+//              structure when the function returns. The pointer can be NULL
+//              if you don't need the reference.
+//   ...   Variable number of offsets relative to the beginning of the struct.
+//         These offsets are of type size_t.
 //
 // Returns:
-//    ERROR_SUCCESS if succeed or the corresponding error code otherwise.
+//   ERROR_SUCCESS
+//   ERROR_INVALID_ARGUMENT
+//   ERROR_INSUFFICIENT_MEMORY
 //
-
 int yr_arena_allocate_struct(
     YR_ARENA* arena,
     uint32_t buffer_id,
@@ -377,7 +397,6 @@ int yr_arena_allocate_struct(
   return result;
 }
 
-
 void* yr_arena_get_ptr(
     YR_ARENA* arena,
     uint32_t buffer_id,
@@ -389,14 +408,12 @@ void* yr_arena_get_ptr(
   return arena->buffers[buffer_id].data + offset;
 }
 
-
 yr_arena_off_t yr_arena_get_current_offset(YR_ARENA* arena, uint32_t buffer_id)
 {
   assert(buffer_id < arena->num_buffers);
 
   return arena->buffers[buffer_id].used;
 }
-
 
 int yr_arena_ptr_to_ref(YR_ARENA* arena, const void* address, YR_ARENA_REF* ref)
 {
@@ -433,22 +450,17 @@ void* yr_arena_ref_to_ptr(YR_ARENA* arena, YR_ARENA_REF* ref)
   return yr_arena_get_ptr(arena, ref->buffer_id, ref->offset);
 }
 
-
-//
-// yr_arena_make_ptr_relocatable
-//
+////////////////////////////////////////////////////////////////////////////////
 // Tells the arena that certain addresses contains a relocatable pointer.
 //
 // Args:
-//    YR_ARENA* arena    - Pointer to the arena.
-//    uint32_t buffer_id - Buffer number.
-//    ...                - Variable number of size_t arguments with offsets
-//                         within the buffer.
+//   arena: Pointer to the arena.
+//   buffer_id: Buffer number.
+//   ... : Variable number of size_t arguments with offsets within the buffer.
 //
 // Returns:
 //    ERROR_SUCCESS if succeed or the corresponding error code otherwise.
 //
-
 int yr_arena_make_ptr_relocatable(YR_ARENA* arena, uint32_t buffer_id, ...)
 {
   int result;
@@ -462,7 +474,6 @@ int yr_arena_make_ptr_relocatable(YR_ARENA* arena, uint32_t buffer_id, ...)
 
   return result;
 }
-
 
 int yr_arena_write_data(
     YR_ARENA* arena,
@@ -488,7 +499,6 @@ int yr_arena_write_data(
   return ERROR_SUCCESS;
 }
 
-
 int yr_arena_write_string(
     YR_ARENA* arena,
     uint32_t buffer_id,
@@ -498,7 +508,6 @@ int yr_arena_write_string(
   return yr_arena_write_data(arena, buffer_id, string, strlen(string) + 1, ref);
 }
 
-
 int yr_arena_write_uint32(
     YR_ARENA* arena,
     uint32_t buffer_id,
@@ -507,7 +516,6 @@ int yr_arena_write_uint32(
 {
   return yr_arena_write_data(arena, buffer_id, &integer, sizeof(integer), ref);
 }
-
 
 int yr_arena_load_stream(YR_STREAM* stream, YR_ARENA** arena)
 {
@@ -588,7 +596,6 @@ int yr_arena_load_stream(YR_STREAM* stream, YR_ARENA** arena)
 
   return ERROR_SUCCESS;
 }
-
 
 int yr_arena_save_stream(YR_ARENA* arena, YR_STREAM* stream)
 {

@@ -42,14 +42,12 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "notebook.h"
 
-
 #define DECLARE_REFERENCE(type, name) \
   union                               \
   {                                   \
     type name;                        \
     YR_ARENA_REF name##_;             \
   } YR_ALIGN(8)
-
 
 // Flags for YR_RULE
 #define RULE_FLAGS_PRIVATE  0x01
@@ -64,7 +62,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define RULE_IS_NULL(x) (((x)->flags) & RULE_FLAGS_NULL)
 
 #define RULE_IS_DISABLED(x) (((x)->flags) & RULE_FLAGS_DISABLED)
-
 
 // Flags for YR_STRING
 #define STRING_FLAGS_REFERENCED    0x01
@@ -137,16 +134,13 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define STRING_IS_PRIVATE(x) (((x)->flags) & STRING_FLAGS_PRIVATE)
 
-
 #define META_TYPE_INTEGER 1
 #define META_TYPE_STRING  2
 #define META_TYPE_BOOLEAN 3
 
-
 #define META_FLAGS_LAST_IN_RULE 1
 
 #define META_IS_LAST_IN_RULE(x) (((x)->flags) & META_FLAGS_LAST_IN_RULE)
-
 
 #define EXTERNAL_VARIABLE_TYPE_NULL          0
 #define EXTERNAL_VARIABLE_TYPE_FLOAT         1
@@ -157,7 +151,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define EXTERNAL_VARIABLE_IS_NULL(x) \
   ((x) != NULL ? (x)->type == EXTERNAL_VARIABLE_TYPE_NULL : true)
-
 
 typedef struct RE RE;
 typedef struct RE_AST RE_AST;
@@ -230,7 +223,6 @@ struct YR_NAMESPACE
   YR_ALIGN(8) uint32_t idx;
 };
 
-
 struct YR_META
 {
   DECLARE_REFERENCE(const char*, identifier);
@@ -240,7 +232,6 @@ struct YR_META
   int32_t type;
   int32_t flags;
 };
-
 
 struct YR_STRING
 {
@@ -293,7 +284,6 @@ struct YR_STRING
   DECLARE_REFERENCE(const char*, identifier);
 };
 
-
 struct YR_RULE
 {
   int32_t flags;
@@ -308,14 +298,12 @@ struct YR_RULE
   DECLARE_REFERENCE(YR_NAMESPACE*, ns);
 };
 
-
 struct YR_SUMMARY
 {
   uint32_t num_rules;
   uint32_t num_strings;
   uint32_t num_namespaces;
 };
-
 
 struct YR_EXTERNAL_VARIABLE
 {
@@ -330,7 +318,6 @@ struct YR_EXTERNAL_VARIABLE
 
   DECLARE_REFERENCE(const char*, identifier);
 };
-
 
 struct YR_AC_MATCH
 {
@@ -355,7 +342,6 @@ struct YR_AC_MATCH
 };
 
 #pragma pack(pop)
-
 
 //
 // Structs defined below are never stored in the compiled rules file
@@ -391,20 +377,17 @@ struct RE_NODE
   YR_ARENA_REF backward_code_ref;
 };
 
-
 struct RE_CLASS
 {
   uint8_t negated;
   uint8_t bitmap[32];
 };
 
-
 struct RE_AST
 {
   uint32_t flags;
   RE_NODE* root_node;
 };
-
 
 // Disable warning due to zero length array in Microsoft's compiler
 #ifdef _MSC_VER
@@ -422,12 +405,10 @@ struct RE
 #pragma warning(pop)
 #endif
 
-
 struct RE_ERROR
 {
   char message[384];
 };
-
 
 struct RE_FIBER
 {
@@ -441,20 +422,17 @@ struct RE_FIBER
   uint16_t stack[RE_MAX_STACK];
 };
 
-
 struct RE_FIBER_LIST
 {
   RE_FIBER* head;
   RE_FIBER* tail;
 };
 
-
 struct RE_FIBER_POOL
 {
   int fiber_count;
   RE_FIBER_LIST fibers;
 };
-
 
 struct YR_MODIFIER
 {
@@ -464,7 +442,6 @@ struct YR_MODIFIER
   SIZED_STRING* alphabet;
 };
 
-
 struct YR_MATCHES
 {
   YR_MATCH* head;
@@ -472,7 +449,6 @@ struct YR_MATCHES
 
   int32_t count;
 };
-
 
 struct YR_MATCH
 {
@@ -497,7 +473,6 @@ struct YR_MATCH
   bool is_private;
 };
 
-
 struct YR_AC_STATE
 {
   YR_AC_STATE* failure;
@@ -514,7 +489,6 @@ struct YR_AC_STATE
   uint32_t t_table_slot;
 };
 
-
 struct YR_AC_MATCH_LIST_ENTRY
 {
   uint16_t backtrack;
@@ -526,7 +500,6 @@ struct YR_AC_MATCH_LIST_ENTRY
 
   YR_AC_MATCH_LIST_ENTRY* next;
 };
-
 
 struct YR_AC_AUTOMATON
 {
@@ -548,7 +521,6 @@ struct YR_AC_AUTOMATON
   // Pointer to the root Aho-Corasick state.
   YR_AC_STATE* root;
 };
-
 
 struct YR_RULES
 {
@@ -573,7 +545,6 @@ struct YR_RULES
   // Total number of namespaces.
   uint32_t num_namespaces;
 };
-
 
 struct YR_RULES_STATS
 {
@@ -606,7 +577,6 @@ struct YR_RULES_STATS
   uint32_t ac_tables_size;
 };
 
-
 //
 // YR_PROFILING_INFO contains profiling information for a rule.
 //
@@ -626,7 +596,6 @@ struct YR_PROFILING_INFO
   uint64_t exec_time;
 };
 
-
 //
 // YR_RULE_PROFILING_INFO is the structure returned by
 // yr_scanner_get_profiling_info
@@ -637,14 +606,11 @@ struct YR_RULE_PROFILING_INFO
   uint64_t cost;
 };
 
-
 typedef const uint8_t* (*YR_MEMORY_BLOCK_FETCH_DATA_FUNC)(
     YR_MEMORY_BLOCK* self);
 
-
 typedef YR_MEMORY_BLOCK* (*YR_MEMORY_BLOCK_ITERATOR_FUNC)(
     YR_MEMORY_BLOCK_ITERATOR* self);
-
 
 struct YR_MEMORY_BLOCK
 {
@@ -656,7 +622,6 @@ struct YR_MEMORY_BLOCK
   YR_MEMORY_BLOCK_FETCH_DATA_FUNC fetch_data;
 };
 
-
 struct YR_MEMORY_BLOCK_ITERATOR
 {
   void* context;
@@ -665,13 +630,11 @@ struct YR_MEMORY_BLOCK_ITERATOR
   YR_MEMORY_BLOCK_ITERATOR_FUNC next;
 };
 
-
 typedef int (*YR_CALLBACK_FUNC)(
     YR_SCAN_CONTEXT* context,
     int message,
     void* message_data,
     void* user_data);
-
 
 struct YR_SCAN_CONTEXT
 {
@@ -749,7 +712,6 @@ struct YR_SCAN_CONTEXT
   YR_PROFILING_INFO* profiling_info;
 };
 
-
 union YR_VALUE
 {
   int64_t i;
@@ -769,7 +731,6 @@ struct YR_VALUE_STACK
   YR_VALUE* items;
 };
 
-
 #define OBJECT_COMMON_FIELDS \
   int canary;                \
   int8_t type;               \
@@ -777,20 +738,17 @@ struct YR_VALUE_STACK
   YR_OBJECT* parent;         \
   void* data;
 
-
 struct YR_OBJECT
 {
   OBJECT_COMMON_FIELDS
   YR_VALUE value;
 };
 
-
 struct YR_OBJECT_STRUCTURE
 {
   OBJECT_COMMON_FIELDS
   YR_STRUCTURE_MEMBER* members;
 };
-
 
 struct YR_OBJECT_ARRAY
 {
@@ -799,7 +757,6 @@ struct YR_OBJECT_ARRAY
   YR_ARRAY_ITEMS* items;
 };
 
-
 struct YR_OBJECT_DICTIONARY
 {
   OBJECT_COMMON_FIELDS
@@ -807,12 +764,10 @@ struct YR_OBJECT_DICTIONARY
   YR_DICTIONARY_ITEMS* items;
 };
 
-
 typedef int (*YR_MODULE_FUNC)(
     YR_VALUE* args,
     YR_SCAN_CONTEXT* context,
     YR_OBJECT_FUNCTION* function_obj);
-
 
 struct YR_OBJECT_FUNCTION
 {
@@ -826,19 +781,16 @@ struct YR_OBJECT_FUNCTION
   } prototypes[YR_MAX_OVERLOADED_FUNCTIONS];
 };
 
-
 #define object_as_structure(obj)  ((YR_OBJECT_STRUCTURE*) (obj))
 #define object_as_array(obj)      ((YR_OBJECT_ARRAY*) (obj))
 #define object_as_dictionary(obj) ((YR_OBJECT_DICTIONARY*) (obj))
 #define object_as_function(obj)   ((YR_OBJECT_FUNCTION*) (obj))
-
 
 struct YR_STRUCTURE_MEMBER
 {
   YR_OBJECT* object;
   YR_STRUCTURE_MEMBER* next;
 };
-
 
 struct YR_ARRAY_ITEMS
 {
@@ -852,7 +804,6 @@ struct YR_ARRAY_ITEMS
   YR_OBJECT* objects[1];
 };
 
-
 struct YR_DICTIONARY_ITEMS
 {
   int used;
@@ -864,7 +815,6 @@ struct YR_DICTIONARY_ITEMS
     YR_OBJECT* obj;
   } objects[1];
 };
-
 
 // Iterators are used in loops of the form:
 //
@@ -906,13 +856,11 @@ struct YR_DICTIONARY_ITEMS
 
 typedef int (*YR_ITERATOR_NEXT_FUNC)(YR_ITERATOR* self, YR_VALUE_STACK* stack);
 
-
 struct YR_ARRAY_ITERATOR
 {
   YR_OBJECT* array;
   int index;
 };
-
 
 struct YR_DICT_ITERATOR
 {
@@ -920,13 +868,11 @@ struct YR_DICT_ITERATOR
   int index;
 };
 
-
 struct YR_INT_RANGE_ITERATOR
 {
   int64_t next;
   int64_t last;
 };
-
 
 struct YR_INT_ENUM_ITERATOR
 {
@@ -934,7 +880,6 @@ struct YR_INT_ENUM_ITERATOR
   int count;
   int64_t items[1];
 };
-
 
 struct YR_ITERATOR
 {

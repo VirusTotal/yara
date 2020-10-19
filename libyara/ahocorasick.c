@@ -37,7 +37,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <yara/mem.h>
 #include <yara/utils.h>
 
-
 typedef struct _QUEUE_NODE
 {
   YR_AC_STATE* value;
@@ -47,7 +46,6 @@ typedef struct _QUEUE_NODE
 
 } QUEUE_NODE;
 
-
 typedef struct _QUEUE
 {
   QUEUE_NODE* head;
@@ -55,21 +53,18 @@ typedef struct _QUEUE
 
 } QUEUE;
 
-
-//
-// _yr_ac_queue_push
-//
-// Pushes a state in a queue.
+////////////////////////////////////////////////////////////////////////////////
+// Pushes an automaton state into the tail of a queue.
 //
 // Args:
-//    QUEUE* queue     - The queue
-//    YR_AC_STATE* state  - The state
+//   queue: Pointer to the queue.
+//   state: Pointer to the state being pushed into the queue.
 //
 // Returns:
-//    ERROR_SUCCESS if succeed or the corresponding error code otherwise.
+//   ERROR_SUCCESS
+//   ERROR_INSUFFICIENT_MEMORY
 //
-
-static int _yr_ac_queue_push(QUEUE* queue, YR_AC_STATE* value)
+static int _yr_ac_queue_push(QUEUE* queue, YR_AC_STATE* state)
 {
   QUEUE_NODE* pushed_node;
 
@@ -80,7 +75,7 @@ static int _yr_ac_queue_push(QUEUE* queue, YR_AC_STATE* value)
 
   pushed_node->previous = queue->tail;
   pushed_node->next = NULL;
-  pushed_node->value = value;
+  pushed_node->value = state;
 
   if (queue->tail != NULL)
     queue->tail->next = pushed_node;
@@ -92,19 +87,15 @@ static int _yr_ac_queue_push(QUEUE* queue, YR_AC_STATE* value)
   return ERROR_SUCCESS;
 }
 
-
-//
-// _yr_ac_queue_pop
-//
-// Pops a state from a queue.
+////////////////////////////////////////////////////////////////////////////////
+// Pops an automaton state from the head of a queue.
 //
 // Args:
-//    QUEUE* queue     - The queue
+//   queue: Pointer to the queue.
 //
 // Returns:
-//    Pointer to the poped state.
+//   Pointer to the poped state.
 //
-
 static YR_AC_STATE* _yr_ac_queue_pop(QUEUE* queue)
 {
   YR_AC_STATE* result;
@@ -127,39 +118,31 @@ static YR_AC_STATE* _yr_ac_queue_pop(QUEUE* queue)
   return result;
 }
 
-
-//
-// _yr_ac_queue_is_empty
-//
+////////////////////////////////////////////////////////////////////////////////
 // Checks if a queue is empty.
 //
 // Args:
-//    QUEUE* queue     - The queue
+//   queue: Pointer to the queue.
 //
 // Returns:
-//    true if queue is empty, false otherwise.
+//   true if queue is empty, false otherwise.
 //
-
 static int _yr_ac_queue_is_empty(QUEUE* queue)
 {
   return queue->head == NULL;
 }
 
-
-//
-// _yr_ac_next_state
-//
+////////////////////////////////////////////////////////////////////////////////
 // Given an automaton state and an input symbol, returns the new state
 // after reading the input symbol.
 //
 // Args:
-//    YR_AC_STATE* state     - Automaton state
-//    uint8_t input       - Input symbol
+//    state: Pointer to automaton state.
+//    input: Input symbol.
 //
 // Returns:
 //   Pointer to the next automaton state.
 //
-
 static YR_AC_STATE* _yr_ac_next_state(YR_AC_STATE* state, uint8_t input)
 {
   YR_AC_STATE* next_state = state->first_child;
@@ -175,21 +158,18 @@ static YR_AC_STATE* _yr_ac_next_state(YR_AC_STATE* state, uint8_t input)
   return NULL;
 }
 
-
-//
-// _yr_ac_state_create
-//
+////////////////////////////////////////////////////////////////////////////////
 // Creates a new automaton state, the automaton will transition from
 // the given state to the new state after reading the input symbol.
 //
 // Args:
-//   YR_AC_STATE* state  - Origin state
-//   uint8_t input       - Input symbol
+//   state: Pointer to the origin state.
+//   input: Input symbol.
 //
 // Returns:
 //   YR_AC_STATE* pointer to the newly allocated state or NULL in case
 //   of error.
-
+//
 static YR_AC_STATE* _yr_ac_state_create(YR_AC_STATE* state, uint8_t input)
 {
   YR_AC_STATE* new_state = (YR_AC_STATE*) yr_malloc(sizeof(YR_AC_STATE));
@@ -209,11 +189,9 @@ static YR_AC_STATE* _yr_ac_state_create(YR_AC_STATE* state, uint8_t input)
   return new_state;
 }
 
-
+////////////////////////////////////////////////////////////////////////////////
+// Destroys an automaton state.
 //
-// _yr_ac_state_destroy
-//
-
 static int _yr_ac_state_destroy(YR_AC_STATE* state)
 {
   YR_AC_STATE* child_state = state->first_child;
@@ -230,14 +208,12 @@ static int _yr_ac_state_destroy(YR_AC_STATE* state)
   return ERROR_SUCCESS;
 }
 
-
+////////////////////////////////////////////////////////////////////////////////
+// Create failure links for each automaton state.
 //
-// _yr_ac_create_failure_links
+// This function must be called after all the strings have been added to the
+// automaton with yr_ac_add_string.
 //
-// Create failure links for each automaton state. This function must
-// be called after all the strings have been added to the automaton.
-//
-
 static int _yr_ac_create_failure_links(YR_AC_AUTOMATON* automaton)
 {
   YR_AC_STATE* current_state;
@@ -270,7 +246,6 @@ static int _yr_ac_create_failure_links(YR_AC_AUTOMATON* automaton)
 
   // Traverse the trie in BFS order calculating the failure link
   // for each state.
-
   while (!_yr_ac_queue_is_empty(&queue))
   {
     current_state = _yr_ac_queue_pop(&queue);
@@ -350,15 +325,11 @@ static int _yr_ac_create_failure_links(YR_AC_AUTOMATON* automaton)
   return ERROR_SUCCESS;
 }
 
-
-//
-// _yr_ac_transitions_subset
-//
+////////////////////////////////////////////////////////////////////////////////
 // Returns true if the transitions for state s2 are a subset of the transitions
 // for state s1. In other words, if at state s2 input X is accepted, it must be
 // accepted in s1 too.
 //
-
 static bool _yr_ac_transitions_subset(YR_AC_STATE* s1, YR_AC_STATE* s2)
 {
   uint8_t set[32];
@@ -386,13 +357,9 @@ static bool _yr_ac_transitions_subset(YR_AC_STATE* s1, YR_AC_STATE* s2)
   return true;
 }
 
-
-//
-// _yr_ac_optimize_failure_links
-//
+////////////////////////////////////////////////////////////////////////////////
 // Removes unnecessary failure links.
 //
-
 static int _yr_ac_optimize_failure_links(YR_AC_AUTOMATON* automaton)
 {
   QUEUE queue = {NULL, NULL};
@@ -430,16 +397,12 @@ static int _yr_ac_optimize_failure_links(YR_AC_AUTOMATON* automaton)
   return ERROR_SUCCESS;
 }
 
-
-//
-// _yr_ac_find_suitable_transition_table_slot
-//
+////////////////////////////////////////////////////////////////////////////////
 // Find a place within the automaton's transition table where the transitions
 // for the given state can be put. The function first create a bitmask for the
 // state's transition table, then searches for an offset within the automaton's
 // bitmask where the state's bitmask can be put without bit collisions.
 //
-
 static int _yr_ac_find_suitable_transition_table_slot(
     YR_AC_AUTOMATON* automaton,
     YR_ARENA* arena,
@@ -503,9 +466,7 @@ static int _yr_ac_find_suitable_transition_table_slot(
   return ERROR_SUCCESS;
 }
 
-//
-// _yr_ac_build_transition_table
-//
+////////////////////////////////////////////////////////////////////////////////
 // Builds the transition table for the automaton. The transition table (T) is a
 // large array of 32-bits integers. Each state in the automaton is represented
 // by an index S within the array. The integer stored in T[S] is the failure
@@ -560,7 +521,7 @@ static int _yr_ac_find_suitable_transition_table_slot(
 // +-----------------------+---------+
 //
 // A more detailed description can be found in: http://goo.gl/lE6zG
-
+//
 static int _yr_ac_build_transition_table(YR_AC_AUTOMATON* automaton)
 {
   YR_AC_TRANSITION* t_table;
@@ -681,10 +642,7 @@ static int _yr_ac_build_transition_table(YR_AC_AUTOMATON* automaton)
   return ERROR_SUCCESS;
 }
 
-
-//
-// _yr_ac_print_automaton_state
-//
+////////////////////////////////////////////////////////////////////////////////
 // Prints automaton state for debug purposes. This function is invoked by
 // yr_ac_print_automaton, is not intended to be used stand-alone.
 //
@@ -767,13 +725,9 @@ static void _yr_ac_print_automaton_state(
   }
 }
 
-
-//
-// yr_ac_automaton_create
-//
+////////////////////////////////////////////////////////////////////////////////
 // Creates a new automaton
 //
-
 int yr_ac_automaton_create(YR_ARENA* arena, YR_AC_AUTOMATON** automaton)
 {
   YR_AC_AUTOMATON* new_automaton;
@@ -807,13 +761,9 @@ int yr_ac_automaton_create(YR_ARENA* arena, YR_AC_AUTOMATON** automaton)
   return ERROR_SUCCESS;
 }
 
-
-//
-// yr_ac_automaton_destroy
-//
+////////////////////////////////////////////////////////////////////////////////
 // Destroys automaton
 //
-
 int yr_ac_automaton_destroy(YR_AC_AUTOMATON* automaton)
 {
   _yr_ac_state_destroy(automaton->root);
@@ -824,14 +774,10 @@ int yr_ac_automaton_destroy(YR_AC_AUTOMATON* automaton)
   return ERROR_SUCCESS;
 }
 
-
-//
-// yr_ac_add_string
-//
+////////////////////////////////////////////////////////////////////////////////
 // Adds a string to the automaton. This function is invoked once for each
 // string defined in the rules.
 //
-
 int yr_ac_add_string(
     YR_AC_AUTOMATON* automaton,
     YR_STRING* string,
@@ -893,14 +839,10 @@ int yr_ac_add_string(
   return ERROR_SUCCESS;
 }
 
-
-//
-// yr_ac_compile
-//
+////////////////////////////////////////////////////////////////////////////////
 // Compiles the Aho-Corasick automaton, the resulting data structures are
 // are written in the provided arena.
 //
-
 int yr_ac_compile(YR_AC_AUTOMATON* automaton, YR_ARENA* arena)
 {
   FAIL_ON_ERROR(_yr_ac_create_failure_links(automaton));
@@ -910,10 +852,7 @@ int yr_ac_compile(YR_AC_AUTOMATON* automaton, YR_ARENA* arena)
   return ERROR_SUCCESS;
 }
 
-
-//
-// yr_ac_print_automaton
-//
+////////////////////////////////////////////////////////////////////////////////
 // Prints automaton for debug purposes.
 //
 void yr_ac_print_automaton(YR_AC_AUTOMATON* automaton)

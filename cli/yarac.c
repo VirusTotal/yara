@@ -49,13 +49,11 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "args.h"
 #include "common.h"
 
-
 #ifndef MAX_PATH
 #define MAX_PATH 256
 #endif
 
 #define MAX_ARGS_EXT_VAR 32
-
 
 typedef struct COMPILER_RESULTS
 {
@@ -64,7 +62,6 @@ typedef struct COMPILER_RESULTS
 
 } COMPILER_RESULTS;
 
-
 static char* atom_quality_table;
 static char* ext_vars[MAX_ARGS_EXT_VAR + 1];
 static bool ignore_warnings = false;
@@ -72,7 +69,6 @@ static bool show_version = false;
 static bool show_help = false;
 static bool fail_on_warnings = false;
 static int max_strings_per_rule = DEFAULT_MAX_STRINGS_PER_RULE;
-
 
 #define USAGE_STRING \
   "Usage: yarac [OPTION]... [NAMESPACE:]SOURCE_FILE... OUTPUT_FILE"
@@ -109,7 +105,6 @@ args_option_t options[] = {
     OPT_BOOLEAN('v', "version", &show_version, "show version information"),
 
     OPT_END()};
-
 
 static void report_error(
     int error_level,
@@ -154,7 +149,6 @@ static void report_error(
   }
 }
 
-
 static bool define_external_variables(YR_COMPILER* compiler)
 {
   for (int i = 0; ext_vars[i] != NULL; i++)
@@ -197,7 +191,6 @@ static bool define_external_variables(YR_COMPILER* compiler)
 
   return true;
 }
-
 
 int main(int argc, const char** argv)
 {

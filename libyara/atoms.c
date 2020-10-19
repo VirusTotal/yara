@@ -75,7 +75,6 @@ number of required atoms, but also using high quality atoms (long atoms with
 not too many zeroes and a bit of byte diversity). In the previous example YARA
 will end up using the "Look" atom alone, but in /a(bcd|efg)h/ atoms "bcd" and
 "efg" will be used because "a" and "h" are too short.
-
 */
 
 #include <assert.h>
@@ -89,10 +88,7 @@ will end up using the "Look" atom alone, but in /a(bcd|efg)h/ atoms "bcd" and
 #include <yara/types.h>
 #include <yara/utils.h>
 
-
-//
-// yr_atoms_heuristic_quality
-//
+////////////////////////////////////////////////////////////////////////////////
 // Returns a numeric value indicating the quality of an atom. The quality
 // depends on some characteristics of the atom, including its length, number
 // of very common bytes like 00 and FF and number of unique distinct bytes.
@@ -101,13 +97,12 @@ will end up using the "Look" atom alone, but in /a(bcd|efg)h/ atoms "bcd" and
 // because the same byte is repeated. Atom 01 02 03 04 is an optimal one.
 //
 // Args:
-//    YR_ATOMS_CONFIG* config   - Pointer to YR_ATOMS_CONFIG struct.
-//    YR_ATOM* atom             - Pointer to YR_ATOM struct.
+//    config: Pointer to YR_ATOMS_CONFIG struct.
+//    atom: Pointer to YR_ATOM struct.
 //
 // Returns:
 //    An integer indicating the atom's quality
 //
-
 int yr_atoms_heuristic_quality(YR_ATOMS_CONFIG* config, YR_ATOM* atom)
 {
   YR_BITMASK seen_bytes[YR_BITMASK_SIZE(256)];
@@ -164,7 +159,6 @@ int yr_atoms_heuristic_quality(YR_ATOMS_CONFIG* config, YR_ATOM* atom)
 
   // If all the bytes in the atom are equal and very common, let's penalize
   // it heavily.
-
   if (unique_bytes == 1 && (yr_bitmask_is_set(seen_bytes, 0x00) ||
                             yr_bitmask_is_set(seen_bytes, 0x20) ||
                             yr_bitmask_is_set(seen_bytes, 0xCC) ||
@@ -176,10 +170,7 @@ int yr_atoms_heuristic_quality(YR_ATOMS_CONFIG* config, YR_ATOM* atom)
   return YR_MAX_ATOM_QUALITY - 20 * YR_MAX_ATOM_LENGTH + quality;
 }
 
-
-//
-// _yr_atoms_cmp
-//
+////////////////////////////////////////////////////////////////////////////////
 // Compares the byte sequence in a1 with the YR_ATOM in a2, taking atom's mask
 // into account.
 //
@@ -190,7 +181,6 @@ int yr_atoms_heuristic_quality(YR_ATOMS_CONFIG* config, YR_ATOM* atom)
 //       in a2.
 //   = 0 if a1 is equal or matches a2.
 //
-
 static int _yr_atoms_cmp(const uint8_t* a1, YR_ATOM* a2)
 {
   int result = 0;
@@ -216,9 +206,7 @@ static int _yr_atoms_cmp(const uint8_t* a1, YR_ATOM* a2)
   return result;
 }
 
-//
-// yr_atoms_table_quality
-//
+////////////////////////////////////////////////////////////////////////////////
 // Returns a numeric value indicating the quality of an atom. The quality is
 // based in the atom quality table passed in "config". Very common atoms
 // (i.e: those with greater quality) have lower quality than those that are
@@ -232,7 +220,6 @@ static int _yr_atoms_cmp(const uint8_t* a1, YR_ATOM* a2)
 // Returns:
 //    An integer indicating the atom's quality
 //
-
 int yr_atoms_table_quality(YR_ATOMS_CONFIG* config, YR_ATOM* atom)
 {
   YR_ATOM_QUALITY_TABLE_ENTRY* table = config->quality_table;
@@ -286,13 +273,9 @@ int yr_atoms_table_quality(YR_ATOMS_CONFIG* config, YR_ATOM* atom)
   return YR_MAX_ATOM_QUALITY;
 }
 
-
-//
-// yr_atoms_min_quality
-//
+////////////////////////////////////////////////////////////////////////////////
 // Returns the quality for the worst quality atom in a list.
 //
-
 int yr_atoms_min_quality(YR_ATOMS_CONFIG* config, YR_ATOM_LIST_ITEM* atom_list)
 {
   YR_ATOM_LIST_ITEM* atom;
@@ -318,13 +301,9 @@ int yr_atoms_min_quality(YR_ATOMS_CONFIG* config, YR_ATOM_LIST_ITEM* atom_list)
   return min_quality;
 }
 
-
-//
-// _yr_atoms_tree_node_create
-//
+////////////////////////////////////////////////////////////////////////////////
 // Creates a new node for an atoms tree.
 //
-
 static YR_ATOM_TREE_NODE* _yr_atoms_tree_node_create(uint8_t type)
 {
   YR_ATOM_TREE_NODE* new_node = (YR_ATOM_TREE_NODE*) yr_malloc(
@@ -342,13 +321,9 @@ static YR_ATOM_TREE_NODE* _yr_atoms_tree_node_create(uint8_t type)
   return new_node;
 }
 
-
-//
-// _yr_atoms_tree_node_destroy
-//
+////////////////////////////////////////////////////////////////////////////////
 // Destroys a node from an atoms tree.
 //
-
 static void _yr_atoms_tree_node_destroy(YR_ATOM_TREE_NODE* node)
 {
   YR_ATOM_TREE_NODE* child;
@@ -372,13 +347,9 @@ static void _yr_atoms_tree_node_destroy(YR_ATOM_TREE_NODE* node)
   yr_free(node);
 }
 
-
-//
-// _yr_atoms_tree_node_append
-//
+////////////////////////////////////////////////////////////////////////////////
 // Appends a new child node to another atoms tree node.
 //
-
 static void _yr_atoms_tree_node_append(
     YR_ATOM_TREE_NODE* dest,
     YR_ATOM_TREE_NODE* node)
@@ -392,26 +363,18 @@ static void _yr_atoms_tree_node_append(
   dest->children_tail = node;
 }
 
-
-//
-// _yr_atoms_tree_destroy
-//
+////////////////////////////////////////////////////////////////////////////////
 // Destroys an atoms tree.
 //
-
 static void _yr_atoms_tree_destroy(YR_ATOM_TREE* atom_tree)
 {
   _yr_atoms_tree_node_destroy(atom_tree->root_node);
   yr_free(atom_tree);
 }
 
-
-//
-// yr_atoms_list_destroy
-//
+////////////////////////////////////////////////////////////////////////////////
 // Destroys an atoms list.
 //
-
 void yr_atoms_list_destroy(YR_ATOM_LIST_ITEM* list_head)
 {
   YR_ATOM_LIST_ITEM* item = list_head;
@@ -425,13 +388,9 @@ void yr_atoms_list_destroy(YR_ATOM_LIST_ITEM* list_head)
   }
 }
 
-
-//
-// yr_atoms_list_destroy
-//
+////////////////////////////////////////////////////////////////////////////////
 // Concats two atoms lists.
 //
-
 static YR_ATOM_LIST_ITEM* _yr_atoms_list_concat(
     YR_ATOM_LIST_ITEM* list1,
     YR_ATOM_LIST_ITEM* list2)
@@ -453,27 +412,24 @@ static YR_ATOM_LIST_ITEM* _yr_atoms_list_concat(
 }
 
 
-//
-// _yr_atoms_trim
-//
+////////////////////////////////////////////////////////////////////////////////
 // If the atom starts or ends with an unknown byte (mask == 0x00), trim
 // those bytes out of the atom. We don't want to expand an atom like
 // { ?? 01 02 } into { 00 01 02 }, { 01 01 02}, { 02 01 02} .. { FF 01 02}
 // in those cases it's better to simply have a shorter atom { 01 02 }.
 //
 // Args:
-//   atom     - Pointer to the YR_ATOM to be trimmed.
+//   atom: Pointer to the YR_ATOM to be trimmed.
 //
 // Returns:
 //   The number of bytes that were trimmed from the beginning of the atom.
 //
-
 int _yr_atoms_trim(YR_ATOM* atom)
 {
   int mask_00 = 0;
   int mask_ff = 0;
 
-  int i, trim_left = 0;
+  int trim_left = 0;
 
   while (trim_left < atom->length && atom->mask[trim_left] == 0) trim_left++;
 
@@ -490,7 +446,7 @@ int _yr_atoms_trim(YR_ATOM* atom)
   // number of known and unknown bytes in the atom (mask == 0xFF and
   // mask == 0x00 respectively).
 
-  for (i = 0; i < atom->length; i++)
+  for (int i = 0; i < atom->length; i++)
   {
     if (atom->mask[trim_left + i] == 0xFF)
       mask_ff++;
@@ -499,7 +455,7 @@ int _yr_atoms_trim(YR_ATOM* atom)
   }
 
   // If the number of unknown bytes is >= than the number of known bytes
-  // it doesn't make sense the to use this atom, so we use a single byte atpm
+  // it doesn't make sense the to use this atom, so we use a single byte atom
   // containing the first known byte. If YR_MAX_ATOM_LENGTH == 4 this happens
   // only when the atom is like { XX ?? ?? YY }, so using the first known
   // byte is good enough. For larger values of YR_MAX_ATOM_LENGTH this is not
@@ -515,7 +471,7 @@ int _yr_atoms_trim(YR_ATOM* atom)
 
   // Shift bytes and mask trim_left positions to the left.
 
-  for (i = 0; i < YR_MAX_ATOM_LENGTH - trim_left; i++)
+  for (int i = 0; i < YR_MAX_ATOM_LENGTH - trim_left; i++)
   {
     atom->bytes[i] = atom->bytes[trim_left + i];
     atom->mask[i] = atom->mask[trim_left + i];
@@ -524,14 +480,10 @@ int _yr_atoms_trim(YR_ATOM* atom)
   return trim_left;
 }
 
-
-//
-// _yr_atoms_choose
-//
+////////////////////////////////////////////////////////////////////////////////
 // This function receives an atom tree and returns a list of atoms to be added
 // to the Aho-Corasick automaton.
 //
-
 static int _yr_atoms_choose(
     YR_ATOMS_CONFIG* config,
     YR_ATOM_TREE_NODE* node,
@@ -643,10 +595,7 @@ static int _yr_atoms_choose(
   return ERROR_SUCCESS;
 }
 
-
-//
-// _yr_atoms_case_combinations
-//
+////////////////////////////////////////////////////////////////////////////////
 // Returns all combinations of lower and upper cases for a given atom. For
 // atom "abc" the output would be "abc" "abC" "aBC" and so on. Resulting
 // atoms are written into the output buffer in this format:
@@ -658,7 +607,6 @@ static int _yr_atoms_choose(
 // The caller is responsible of providing a buffer large enough to hold the
 // returned atoms.
 //
-
 static uint8_t* _yr_atoms_case_combinations(
     uint8_t* atom,
     int atom_length,
@@ -707,18 +655,15 @@ static uint8_t* _yr_atoms_case_combinations(
 // characters and each character has two possible values (upper and lower case).
 // That means 2 ^ YR_MAX_ATOM_LENGTH combinations for an atom, where each atom
 // occupies YR_MAX_ATOM_LENGTH + 1 bytes (the atom itself +1 byte for its
-// length) One extra bytes is allocated for the zero value indicating the end.
+// length). One extra bytes is allocated for the zero value indicating the end.
 
 #define CASE_COMBINATIONS_BUFFER_SIZE \
   (1 << YR_MAX_ATOM_LENGTH) * (YR_MAX_ATOM_LENGTH + 1) + 1
 
-//
-// _yr_atoms_case_insensitive
-//
+////////////////////////////////////////////////////////////////////////////////
 // For a given list of atoms returns another list of atoms
 // with every case combination.
 //
-
 static int _yr_atoms_case_insensitive(
     YR_ATOM_LIST_ITEM* atoms,
     YR_ATOM_LIST_ITEM** case_insensitive_atoms)
@@ -776,13 +721,10 @@ static int _yr_atoms_case_insensitive(
 }
 
 
-//
-// _yr_atoms_xor
-//
+////////////////////////////////////////////////////////////////////////////////
 // For a given list of atoms returns another list after a single byte xor
 // has been applied to it.
 //
-
 static int _yr_atoms_xor(
     YR_ATOM_LIST_ITEM* atoms,
     uint8_t min,
@@ -826,14 +768,11 @@ static int _yr_atoms_xor(
 }
 
 
-//
-// _yr_atoms_wide
-//
+////////////////////////////////////////////////////////////////////////////////
 // For a given list of atoms returns another list with the corresponding
 // wide atoms. Wide atoms are just the original atoms with interleaved zeroes,
 // for example: 01 02 -> 01 00 02 00
 //
-
 static int _yr_atoms_wide(
     YR_ATOM_LIST_ITEM* atoms,
     YR_ATOM_LIST_ITEM** wide_atoms)
@@ -900,16 +839,13 @@ struct STACK_ITEM
   }
 
 
-//
-// _yr_atoms_extract_from_re
-//
+////////////////////////////////////////////////////////////////////////////////
 // Extract atoms from a regular expression. This is a helper function used by
 // yr_atoms_extract_from_re that receives the abstract syntax tree for a regexp
 // (or hex pattern) and builds an atom tree. The appending_node argument is a
 // pointer to the ATOM_TREE_OR node at the root of the atom tree. This function
 // creates the tree by appending new nodes to it.
 //
-
 static int _yr_atoms_extract_from_re(
     YR_ATOMS_CONFIG* config,
     RE_AST* re_ast,
@@ -1201,12 +1137,9 @@ static int _yr_atoms_extract_from_re(
 }
 
 
-//
-// _yr_atoms_clone_list_item
-//
+////////////////////////////////////////////////////////////////////////////////
 // Makes an exact copy of an YR_ATOM_LIST_ITEM.
 //
-
 static YR_ATOM_LIST_ITEM* _yr_atoms_clone_list_item(YR_ATOM_LIST_ITEM* item)
 {
   YR_ATOM_LIST_ITEM* clone = (YR_ATOM_LIST_ITEM*) yr_malloc(
@@ -1221,9 +1154,7 @@ static YR_ATOM_LIST_ITEM* _yr_atoms_clone_list_item(YR_ATOM_LIST_ITEM* item)
 }
 
 
-//
-// _yr_atoms_expand_wildcards
-//
+////////////////////////////////////////////////////////////////////////////////
 // Given list of atoms that may contain wildcards, replace those wildcarded
 // atoms with a list of non-wildcarded atoms covering all the combinations
 // allowed by the wildcarded atom. For example, the atom {01 ?2 03} will be
@@ -1231,12 +1162,11 @@ static YR_ATOM_LIST_ITEM* _yr_atoms_clone_list_item(YR_ATOM_LIST_ITEM* item)
 // is modified in-place.
 //
 // Args:
-//   YR_ATOM_LIST_ITEM* atoms   -  Pointer to first element of the list.
+//   atoms: Pointer to first element of the list.
 //
 // Returns:
 //   ERROR_SUCCESS or ERROR_INSUFFICIENT_MEMORY.
 //
-
 static int _yr_atoms_expand_wildcards(YR_ATOM_LIST_ITEM* atoms)
 {
   int i;
@@ -1312,14 +1242,11 @@ static int _yr_atoms_expand_wildcards(YR_ATOM_LIST_ITEM* atoms)
 }
 
 
-//
-// yr_atoms_extract_from_re
-//
+////////////////////////////////////////////////////////////////////////////////
 // Extract atoms from a regular expression. This function receives the abstract
 // syntax tree for a regexp (or hex pattern) and returns a list of atoms that
 // should be added to the Aho-Corasick automaton.
 //
-
 int yr_atoms_extract_from_re(
     YR_ATOMS_CONFIG* config,
     RE_AST* re_ast,
@@ -1422,13 +1349,9 @@ int yr_atoms_extract_from_re(
   return ERROR_SUCCESS;
 }
 
-
-//
-// yr_atoms_extract_from_string
-//
+////////////////////////////////////////////////////////////////////////////////
 // Extract atoms from a string.
 //
-
 int yr_atoms_extract_from_string(
     YR_ATOMS_CONFIG* config,
     uint8_t* string,
@@ -1550,13 +1473,9 @@ int yr_atoms_extract_from_string(
   return ERROR_SUCCESS;
 }
 
-
-//
-// yr_atoms_tree_node_print
-//
+////////////////////////////////////////////////////////////////////////////////
 // Prints an atom tree node. Used only for debugging purposes.
 //
-
 void yr_atoms_tree_node_print(YR_ATOM_TREE_NODE* node)
 {
   YR_ATOM_TREE_NODE* child;

@@ -57,7 +57,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "common.h"
 #include "threading.h"
 
-
 #define ERROR_COULD_NOT_CREATE_THREAD 100
 
 #ifndef MAX_PATH
@@ -75,7 +74,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define MAX_QUEUED_FILES 64
 
-
 typedef struct _MODULE_DATA
 {
   const char* module_name;
@@ -84,14 +82,12 @@ typedef struct _MODULE_DATA
 
 } MODULE_DATA;
 
-
 typedef struct _CALLBACK_ARGS
 {
   const char* file_path;
   int current_count;
 
 } CALLBACK_ARGS;
-
 
 typedef struct _THREAD_ARGS
 {
@@ -102,13 +98,11 @@ typedef struct _THREAD_ARGS
 
 } THREAD_ARGS;
 
-
 typedef struct _QUEUED_FILE
 {
   char* path;
 
 } QUEUED_FILE;
-
 
 typedef struct COMPILER_RESULTS
 {
@@ -122,7 +116,6 @@ typedef struct SCAN_OPTIONS
   bool follow_symlinks;
   bool recursive_search;
 } SCAN_OPTIONS;
-
 
 #define MAX_ARGS_TAG         32
 #define MAX_ARGS_IDENTIFIER  32
@@ -160,10 +153,8 @@ static int stack_size = DEFAULT_STACK_SIZE;
 static int threads = YR_MAX_THREADS;
 static int max_strings_per_rule = DEFAULT_MAX_STRINGS_PER_RULE;
 
-
 #define USAGE_STRING \
   "Usage: yara [OPTION]... [NAMESPACE:]RULES_FILE... FILE | DIR | PID"
-
 
 args_option_t options[] = {
     OPT_STRING(
@@ -315,7 +306,6 @@ args_option_t options[] = {
 
     OPT_END()};
 
-
 // file_queue is size-limited queue stored as a circular array, files are
 // removed from queue_head position and new files are added at queue_tail
 // position. The array has room for one extra element to avoid queue_head
@@ -334,7 +324,6 @@ MUTEX queue_mutex;
 MUTEX output_mutex;
 
 MODULE_DATA* modules_data_list = NULL;
-
 
 static int file_queue_init()
 {
@@ -356,7 +345,6 @@ static int file_queue_init()
   return semaphore_init(&unused_slots, MAX_QUEUED_FILES);
 }
 
-
 static void file_queue_destroy()
 {
   mutex_destroy(&queue_mutex);
@@ -364,14 +352,12 @@ static void file_queue_destroy()
   semaphore_destroy(&used_slots);
 }
 
-
 static void file_queue_finish()
 {
   int i;
 
   for (i = 0; i < YR_MAX_THREADS; i++) semaphore_release(&used_slots);
 }
-
 
 static void file_queue_put(const char* file_path)
 {
@@ -384,7 +370,6 @@ static void file_queue_put(const char* file_path)
   mutex_unlock(&queue_mutex);
   semaphore_release(&used_slots);
 }
-
 
 static char* file_queue_get()
 {
@@ -408,7 +393,6 @@ static char* file_queue_get()
 
   return result;
 }
-
 
 #if defined(_WIN32) || defined(__CYGWIN__)
 
@@ -461,7 +445,6 @@ static void scan_dir(
     FindClose(hFind);
   }
 }
-
 
 #if defined(__CYGWIN__)
 #define strtok_s strtok_r
@@ -561,7 +544,6 @@ static bool is_directory(const char* path)
   return 0;
 }
 
-
 static void scan_dir(
     const char* dir,
     SCAN_OPTIONS* scan_opts,
@@ -609,7 +591,6 @@ static void scan_dir(
     closedir(dp);
   }
 }
-
 
 static int populate_scan_list(
     const char* filename,
@@ -661,12 +642,10 @@ static void print_string(const uint8_t* data, int length)
   printf("\n");
 }
 
-
 static char cescapes[] = {
     0, 0, 0, 0, 0, 0, 0, 'a', 'b', 't', 'n', 'v', 'f', 'r', 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0,   0,   0,   0,   0,   0,   0,   0, 0,
 };
-
 
 static void print_escaped(const uint8_t* data, size_t length)
 {
@@ -695,7 +674,6 @@ static void print_escaped(const uint8_t* data, size_t length)
   }
 }
 
-
 static void print_hex_string(const uint8_t* data, int length)
 {
   for (int i = 0; i < min(32, length); i++)
@@ -703,7 +681,6 @@ static void print_hex_string(const uint8_t* data, int length)
 
   puts(length > 32 ? " ..." : "");
 }
-
 
 static void print_error(int error)
 {
@@ -771,7 +748,6 @@ static void print_scanner_error(YR_SCANNER* scanner, int error)
   print_error(error);
 }
 
-
 static void print_compiler_error(
     int error_level,
     const char* file_name,
@@ -815,7 +791,6 @@ static void print_compiler_error(
   }
 }
 
-
 static void print_rules_stats(YR_RULES* rules)
 {
   YR_RULES_STATS stats;
@@ -857,7 +832,6 @@ static void print_rules_stats(YR_RULES* rules)
   for (int i = 100; i >= 0; i--)
     printf(" %3d: %d\n", i, stats.ac_match_list_length_pctls[i]);
 }
-
 
 static int handle_message(
     YR_SCAN_CONTEXT* context,
@@ -1024,7 +998,6 @@ static int handle_message(
   return CALLBACK_CONTINUE;
 }
 
-
 static int callback(
     YR_SCAN_CONTEXT* context,
     int message,
@@ -1080,7 +1053,6 @@ static int callback(
   return CALLBACK_ERROR;
 }
 
-
 #if defined(_WIN32) || defined(__CYGWIN__)
 static DWORD WINAPI scanning_thread(LPVOID param)
 #else
@@ -1130,7 +1102,6 @@ static void* scanning_thread(void* param)
 
   return 0;
 }
-
 
 static int define_external_variables(YR_RULES* rules, YR_COMPILER* compiler)
 {
@@ -1198,7 +1169,6 @@ static int define_external_variables(YR_RULES* rules, YR_COMPILER* compiler)
   return result;
 }
 
-
 static int load_modules_data()
 {
   for (int i = 0; modules_data[i] != NULL; i++)
@@ -1236,7 +1206,6 @@ static int load_modules_data()
   return true;
 }
 
-
 static void unload_modules_data()
 {
   MODULE_DATA* module_data = modules_data_list;
@@ -1253,7 +1222,6 @@ static void unload_modules_data()
 
   modules_data_list = NULL;
 }
-
 
 int main(int argc, const char** argv)
 {

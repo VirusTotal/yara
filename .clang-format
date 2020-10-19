@@ -85,7 +85,7 @@ begin_struct.*$"
 MacroBlockEnd: "^\
 end_declarations|\
 end_struct.*$"
-MaxEmptyLinesToKeep: 2
+MaxEmptyLinesToKeep: 1
 NamespaceIndentation: None
 ObjCBinPackProtocolList: Never
 ObjCBlockIndentWidth: 2

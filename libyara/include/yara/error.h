@@ -104,7 +104,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define ERROR_INVALID_MODIFIER               59
 #define ERROR_DUPLICATED_MODIFIER            60
 
-
 #define FAIL_ON_ERROR(x)         \
   {                              \
     int result = (x);            \
@@ -130,7 +129,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
       return ERROR_INSUFFICIENT_MEMORY;       \
     }                                         \
   }
-
 
 #ifdef NDEBUG
 #define assertf(expr, msg, ...) ((void) 0)
