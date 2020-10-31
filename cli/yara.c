@@ -446,16 +446,11 @@ static void scan_dir(
   }
 }
 
-#if defined(__CYGWIN__)
-#define strtok_s strtok_r
-#endif
-
 static int populate_scan_list(
     const char* filename,
     SCAN_OPTIONS* scan_opts,
     time_t start_time)
 {
-  char* context;
   DWORD nread;
 
   HANDLE hFile = CreateFile(
@@ -510,7 +505,9 @@ static int populate_scan_list(
     total += nread;
   }
 
-  char* path = strtok_s(buf, "\n", &context);
+  /* Note: There's no need for reentrant strtok variants since this
+     function is run in single-threaded code. */
+  char* path = strtok(buf, "\n");
 
   while (path != NULL)
   {
@@ -525,7 +522,7 @@ static int populate_scan_list(
       scan_dir(path, scan_opts, start_time);
     else
       file_queue_put(path);
-    path = strtok_s(NULL, "\n", &context);
+    path = strtok(NULL, "\n");
   }
 
   CloseHandle(hFile);
