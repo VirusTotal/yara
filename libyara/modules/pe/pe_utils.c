@@ -254,7 +254,7 @@ int64_t pe_rva_to_offset(PE* pe, uint64_t rva)
 
 
 #if !HAVE_TIMEGM
-#if HAVE__MKGMTIME
+#if HAVE__MKGMTIME && !defined(__MINGW32__)
 #define timegm _mkgmtime
 #else
 
