@@ -199,6 +199,7 @@ AC_ARG_WITH([jemalloc],
     AC_CHECK_LIB(jemalloc, $jemalloc_prefix$mallctl,,
       AC_MSG_ERROR([please install jemalloc library]))
     CFLAGS="$CFLAGS -DJEMALLOC -Dmallctl=$jemalloc_prefix$mallctl -Dmalloc_stats_print=$jemalloc_prefix$malloc_stats_print $no_std_allocator"
+    PC_REQUIRES_PRIVATE="$PC_REQUIRES_PRIVATE jemalloc"
   fi])
 
 AC_ARG_WITH([tcmalloc],
@@ -211,6 +212,7 @@ AC_ARG_WITH([tcmalloc],
     AC_CHECK_LIB(tcmalloc, tc_cfree,,
       AC_MSG_ERROR([please install https://github.com/gperftools/gperftools]))
     CFLAGS="$CFLAGS -DTCMALLOC $no_std_allocator"
+    PC_REQUIRES_PRIVATE="$PC_REQUIRES_PRIVATE tcmalloc"
   fi])
 
 AC_ARG_WITH([cpu-profiler],
@@ -219,6 +221,7 @@ AC_ARG_WITH([cpu-profiler],
   [if test x$withval = xyes; then
     AC_CHECK_LIB(profiler, ProfilerStart,,
       AC_MSG_ERROR([please install https://github.com/gperftools/gperftools]))
+    PC_REQUIRES_PRIVATE="$PC_REQUIRES_PRIVATE libprofiler"
   fi])
 
 AC_ARG_WITH([crypto],
