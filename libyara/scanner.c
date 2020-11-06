@@ -256,6 +256,11 @@ YR_API int yr_scanner_create(YR_RULES* rules, YR_SCANNER** scanner)
     external++;
   }
 
+  new_scanner->matches_notebook = NULL;
+  new_scanner->addr_iterator    = NULL;
+  new_scanner->addr_context     = NULL;
+  new_scanner->addr_block       = NULL;
+
   *scanner = new_scanner;
 
   return ERROR_SUCCESS;
@@ -396,37 +401,45 @@ YR_API int yr_scanner_scan_mem_blocks(
     YR_SCANNER* scanner,
     YR_MEMORY_BLOCK_ITERATOR* iterator)
 {
-  YR_DEBUG_FPRINTF(2, stderr, "+ %s() {} \n", __FUNCTION__);
+  YR_DEBUG_FPRINTF(2, stderr, "+ %s() {\n", __FUNCTION__);
 
   YR_RULES* rules;
   YR_RULE* rule;
   YR_MEMORY_BLOCK* block;
 
-  uint32_t max_match_data;
-
   int i, result = ERROR_SUCCESS;
 
   if (scanner->callback == NULL)
-    return ERROR_CALLBACK_REQUIRED;
-
-  FAIL_ON_ERROR(yr_get_configuration(YR_CONFIG_MAX_MATCH_DATA, &max_match_data))
+  {
+    result = ERROR_CALLBACK_REQUIRED;
+    goto _exit;
+  }
 
   scanner->iterator = iterator;
   rules = scanner->rules;
-  block = iterator->first(iterator);
 
-  if (block == NULL)
-    return ERROR_SUCCESS;
+  if (scanner->matches_notebook == NULL)
+  {
+    // Create the notebook that will hold the YR_MATCH structures representing
+    // each match found. This notebook will also contain snippets of the matching
+    // data (the "data" field in YR_MATCH points to the snippet corresponding to
+    // the match). Each notebook's page can store up to 1024 matches.
+    uint32_t max_match_data;
 
-  // Create the notebook that will hold the YR_MATCH structures representing
-  // each match found. This notebook will also contain snippets of the matching
-  // data (the "data" field in YR_MATCH points to the snippet corresponding to
-  // the match). Each notebook's page can store up to 1024 matches.
-  result = yr_notebook_create(
-      1024 * (sizeof(YR_MATCH) + max_match_data), &scanner->matches_notebook);
+    FAIL_ON_ERROR(yr_get_configuration(YR_CONFIG_MAX_MATCH_DATA, &max_match_data));
 
-  if (result != ERROR_SUCCESS)
-    goto _exit;
+    result = yr_notebook_create(
+        1024 * (sizeof(YR_MATCH) + max_match_data), &scanner->matches_notebook);
+
+    if (result != ERROR_SUCCESS)
+      goto _exit;
+
+    block = iterator->first(iterator);
+  }
+  else
+  {
+    block = iterator->next(iterator);
+  }
 
   yr_stopwatch_start(&scanner->stopwatch);
 
@@ -466,58 +479,78 @@ YR_API int yr_scanner_scan_mem_blocks(
 
     block = iterator->next(iterator);
   }
+  // Come here if finished last block or no block currently available.
 
-  YR_TRYCATCH(
-      !(scanner->flags & SCAN_FLAGS_NO_TRYCATCH),
-      { result = yr_execute_code(scanner); },
-      { result = ERROR_COULD_NOT_MAP_FILE; });
-
-  if (result != ERROR_SUCCESS)
-    goto _exit;
-
-  for (i = 0, rule = rules->rules_list_head; !RULE_IS_NULL(rule); i++, rule++)
+  YR_MEMORY_BLOCK* block_not_ready = iterator->first(iterator);
+  if (block_not_ready == NULL)
   {
-    int message = 0;
+    result = ERROR_BLOCK_NOT_READY;
+  }
+  else
+  {
+    YR_DEBUG_FPRINTF(2, stderr, "- last block; finishing up // %s()\n", __FUNCTION__);
 
-    if (yr_bitmask_is_set(scanner->rule_matches_flags, i) &&
-        yr_bitmask_is_not_set(scanner->ns_unsatisfied_flags, rule->ns->idx))
-    {
-      if (scanner->flags & SCAN_FLAGS_REPORT_RULES_MATCHING)
-        message = CALLBACK_MSG_RULE_MATCHING;
-    }
-    else
-    {
-      if (scanner->flags & SCAN_FLAGS_REPORT_RULES_NOT_MATCHING)
-        message = CALLBACK_MSG_RULE_NOT_MATCHING;
-    }
+    YR_TRYCATCH(
+        !(scanner->flags & SCAN_FLAGS_NO_TRYCATCH),
+        { result = yr_execute_code(scanner); },
+        { result = ERROR_COULD_NOT_MAP_FILE; });
 
-    if (message != 0 && !RULE_IS_PRIVATE(rule))
+    if (result != ERROR_SUCCESS)
+      goto _exit;
+
+    for (i = 0, rule = rules->rules_list_head; !RULE_IS_NULL(rule); i++, rule++)
     {
-      switch (scanner->callback(scanner, message, rule, scanner->user_data))
+      int message = 0;
+
+      if (yr_bitmask_is_set(scanner->rule_matches_flags, i) &&
+          yr_bitmask_is_not_set(scanner->ns_unsatisfied_flags, rule->ns->idx))
       {
-      case CALLBACK_ABORT:
-        result = ERROR_SUCCESS;
-        goto _exit;
+        if (scanner->flags & SCAN_FLAGS_REPORT_RULES_MATCHING)
+          message = CALLBACK_MSG_RULE_MATCHING;
+      }
+      else
+      {
+        if (scanner->flags & SCAN_FLAGS_REPORT_RULES_NOT_MATCHING)
+          message = CALLBACK_MSG_RULE_NOT_MATCHING;
+      }
 
-      case CALLBACK_ERROR:
-        result = ERROR_CALLBACK_ERROR;
-        goto _exit;
+      if (message != 0 && !RULE_IS_PRIVATE(rule))
+      {
+        switch (scanner->callback(scanner, message, rule, scanner->user_data))
+        {
+        case CALLBACK_ABORT:
+          result = ERROR_SUCCESS;
+          goto _exit;
+
+        case CALLBACK_ERROR:
+          result = ERROR_CALLBACK_ERROR;
+          goto _exit;
+        }
       }
     }
-  }
 
-  scanner->callback(
-      scanner, CALLBACK_MSG_SCAN_FINISHED, NULL, scanner->user_data);
+    scanner->callback(
+        scanner, CALLBACK_MSG_SCAN_FINISHED, NULL, scanner->user_data);
+  }
 
 _exit:
 
-  _yr_scanner_clean_matches(scanner);
-
-  if (scanner->matches_notebook != NULL)
+  if (result != ERROR_BLOCK_NOT_READY)
   {
-    yr_notebook_destroy(scanner->matches_notebook);
-    scanner->matches_notebook = NULL;
+    _yr_scanner_clean_matches(scanner);
+
+    if (scanner->matches_notebook != NULL)
+    {
+      yr_notebook_destroy(scanner->matches_notebook);
+      scanner->matches_notebook = NULL;
+    }
   }
+
+  YR_DEBUG_FPRINTF(2, stderr, "} = %d AKA %s // %s()\n",
+      result,
+      ERROR_SUCCESS         == result ? "ERROR_SUCCESS"         :
+      ERROR_BLOCK_NOT_READY == result ? "ERROR_BLOCK_NOT_READY" : "ERROR_?",
+      __FUNCTION__);
 
   return result;
 }

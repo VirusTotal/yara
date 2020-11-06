@@ -44,6 +44,10 @@ extern uint64_t yr_test_mem_block_size;
 // previous memory block to include in the current memory block.
 extern uint64_t yr_test_mem_block_size_overlap;
 
+// Decrement and if yr_test_mem_block_not_ready_if_zero is zero, pretend ERROR_BLOCK_NOT_READY.
+extern int64_t yr_test_mem_block_not_ready_if_zero;
+extern int64_t yr_test_mem_block_not_ready_if_zero_init_value;
+
 // Counts calls to 'get first / next block' function for testing purposes.
 extern uint64_t yr_test_count_get_block;
 
@@ -63,6 +67,22 @@ struct COUNTERS
 int compile_rule(
     char* string,
     YR_RULES** rules);
+
+
+typedef struct SCAN_CALLBACK_CTX SCAN_CALLBACK_CTX;
+
+struct SCAN_CALLBACK_CTX {
+  int matches;
+  void* module_data;
+  size_t module_data_size;
+};
+
+
+int _scan_callback(
+    YR_SCAN_CONTEXT* context,
+    int message,
+    void* message_data,
+    void* user_data);
 
 
 int count(

@@ -297,7 +297,7 @@ define_function(data_md5)
   if (block == NULL)
   {
     YR_DEBUG_FPRINTF(
-        2, stderr, "} // %s() = YR_UNDEFINED // block == NULL\n", __FUNCTION__);
+        2, stderr, "} = YR_UNDEFINED // block == NULL; %s()\n", __FUNCTION__);
     return_string(YR_UNDEFINED);
   }
 
@@ -308,7 +308,7 @@ define_function(data_md5)
     YR_DEBUG_FPRINTF(
         2,
         stderr,
-        "} // %s() = YR_UNDEFINED // bad offset / length\n",
+        "} = YR_UNDEFINED // bad offset / length; %s()\n",
         __FUNCTION__);
     return_string(YR_UNDEFINED);
   }
@@ -320,9 +320,9 @@ define_function(data_md5)
     YR_DEBUG_FPRINTF(
         2,
         stderr,
-        "} // %s() = %s (cached)\n",
-        __FUNCTION__,
-        cached_ascii_digest);
+        "} = %s // (cached); %s()\n",
+        cached_ascii_digest,
+        __FUNCTION__);
     return_string(cached_ascii_digest);
   }
 
@@ -359,7 +359,7 @@ define_function(data_md5)
       YR_DEBUG_FPRINTF(
           2,
           stderr,
-          "} // %s() = YR_UNDEFINED // past_first_block\n",
+          "} = YR_UNDEFINED // past_first_block; %s()\n",
           __FUNCTION__);
       return_string(YR_UNDEFINED);
     }
@@ -373,7 +373,7 @@ define_function(data_md5)
     YR_DEBUG_FPRINTF(
         2,
         stderr,
-        "} // %s() = YR_UNDEFINED // !past_first_block\n",
+        "} = YR_UNDEFINED // !past_first_block; %s()\n",
         __FUNCTION__);
     return_string(YR_UNDEFINED);
   }
@@ -385,7 +385,7 @@ define_function(data_md5)
   FAIL_ON_ERROR(
       add_to_cache(module(), "md5", arg_offset, arg_length, digest_ascii));
 
-  YR_DEBUG_FPRINTF(2, stderr, "} // %s() = 0x%s\n", __FUNCTION__, digest_ascii);
+  YR_DEBUG_FPRINTF(2, stderr, "} = 0x%s // %s()\n", digest_ascii, __FUNCTION__);
   return_string(digest_ascii);
 }
 
@@ -421,7 +421,7 @@ define_function(data_sha1)
   if (block == NULL)
   {
     YR_DEBUG_FPRINTF(
-        2, stderr, "} // %s() = YR_UNDEFINED // block == NULL\n", __FUNCTION__);
+        2, stderr, "} = YR_UNDEFINED // block == NULL; %s()\n", __FUNCTION__);
     return_string(YR_UNDEFINED);
   }
 
@@ -432,7 +432,7 @@ define_function(data_sha1)
     YR_DEBUG_FPRINTF(
         2,
         stderr,
-        "} // %s() = YR_UNDEFINED // bad offset / length\n",
+        "} = YR_UNDEFINED // bad offset / length; %s()\n",
         __FUNCTION__);
     return_string(YR_UNDEFINED);
   }
@@ -445,9 +445,9 @@ define_function(data_sha1)
     YR_DEBUG_FPRINTF(
         2,
         stderr,
-        "} // %s() = %s (cached)\n",
-        __FUNCTION__,
-        cached_ascii_digest);
+        "} = %s // (cached); %s()\n",
+        cached_ascii_digest,
+        __FUNCTION__);
     return_string(cached_ascii_digest);
   }
 
@@ -483,7 +483,7 @@ define_function(data_sha1)
       YR_DEBUG_FPRINTF(
           2,
           stderr,
-          "} // %s() = YR_UNDEFINED // past_first_block\n",
+          "} = YR_UNDEFINED // past_first_block; %s()\n",
           __FUNCTION__);
       return_string(YR_UNDEFINED);
     }
@@ -497,7 +497,7 @@ define_function(data_sha1)
     YR_DEBUG_FPRINTF(
         2,
         stderr,
-        "} // %s() = YR_UNDEFINED // !past_first_block\n",
+        "} = YR_UNDEFINED // !past_first_block; %s()\n",
         __FUNCTION__);
     return_string(YR_UNDEFINED);
   }
@@ -509,7 +509,7 @@ define_function(data_sha1)
   FAIL_ON_ERROR(
       add_to_cache(module(), "sha1", arg_offset, arg_length, digest_ascii));
 
-  YR_DEBUG_FPRINTF(2, stderr, "} // %s() = 0x%s\n", __FUNCTION__, digest_ascii);
+  YR_DEBUG_FPRINTF(2, stderr, "} = 0x%s // %s()\n", digest_ascii, __FUNCTION__);
   return_string(digest_ascii);
 }
 
@@ -545,7 +545,7 @@ define_function(data_sha256)
   if (block == NULL)
   {
     YR_DEBUG_FPRINTF(
-        2, stderr, "} // %s() = YR_UNDEFINED // block == NULL\n", __FUNCTION__);
+        2, stderr, "} = YR_UNDEFINED // block == NULL; %s()\n", __FUNCTION__);
     return_string(YR_UNDEFINED);
   }
 
@@ -556,7 +556,7 @@ define_function(data_sha256)
     YR_DEBUG_FPRINTF(
         2,
         stderr,
-        "} // %s() = YR_UNDEFINED // bad offset / length\n",
+        "} = YR_UNDEFINED // bad offset / length; %s()\n",
         __FUNCTION__);
     return_string(YR_UNDEFINED);
   }
@@ -569,9 +569,9 @@ define_function(data_sha256)
     YR_DEBUG_FPRINTF(
         2,
         stderr,
-        "} // %s() = %s (cached)\n",
-        __FUNCTION__,
-        cached_ascii_digest);
+        "} = %s // (cached); %s()\n",
+        cached_ascii_digest,
+        __FUNCTION__);
     return_string(cached_ascii_digest);
   }
 
@@ -606,7 +606,7 @@ define_function(data_sha256)
       YR_DEBUG_FPRINTF(
           2,
           stderr,
-          "} // %s() = YR_UNDEFINED // past_first_block\n",
+          "} = YR_UNDEFINED // past_first_block; %s()\n",
           __FUNCTION__);
       return_string(YR_UNDEFINED);
     }
@@ -620,7 +620,7 @@ define_function(data_sha256)
     YR_DEBUG_FPRINTF(
         2,
         stderr,
-        "} // %s() = YR_UNDEFINED // !past_first_block\n",
+        "} = YR_UNDEFINED // !past_first_block; %s()\n",
         __FUNCTION__);
     return_string(YR_UNDEFINED);
   }
@@ -632,7 +632,7 @@ define_function(data_sha256)
   FAIL_ON_ERROR(
       add_to_cache(module(), "sha256", arg_offset, arg_length, digest_ascii));
 
-  YR_DEBUG_FPRINTF(2, stderr, "} // %s() = 0x%s\n", __FUNCTION__, digest_ascii);
+  YR_DEBUG_FPRINTF(2, stderr, "} = 0x%s // %s()\n", digest_ascii, __FUNCTION__);
   return_string(digest_ascii);
 }
 
@@ -703,7 +703,7 @@ define_function(data_checksum32)
   if (!past_first_block)
     return_integer(YR_UNDEFINED);
 
-  YR_DEBUG_FPRINTF(2, stderr, "} // %s() = 0x%x\n", __FUNCTION__, checksum);
+  YR_DEBUG_FPRINTF(2, stderr, "} = 0x%x // %s()\n", checksum, __FUNCTION__);
   return_integer(checksum);
 }
 
@@ -799,7 +799,7 @@ define_function(data_crc32)
     return_integer(YR_UNDEFINED);
 
   YR_DEBUG_FPRINTF(
-      2, stderr, "} // %s() = 0x%x\n", __FUNCTION__, checksum ^ 0xFFFFFFFF);
+      2, stderr, "} = 0x%x // %s()\n", checksum ^ 0xFFFFFFFF, __FUNCTION__);
   return_integer(checksum ^ 0xFFFFFFFF);
 }
 

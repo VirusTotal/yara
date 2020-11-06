@@ -203,6 +203,8 @@ typedef struct YR_MODIFIER YR_MODIFIER;
 
 typedef struct YR_ITERATOR YR_ITERATOR;
 
+typedef struct _YR_PROC_ITERATOR_CTX YR_PROC_ITERATOR_CTX;
+
 typedef uint32_t YR_AC_TRANSITION;
 
 #pragma pack(push)
@@ -709,6 +711,12 @@ struct YR_SCAN_CONTEXT
   // profiling_info is a pointer to an array of YR_PROFILING_INFO structures,
   // one per rule. Entry N has the profiling information for rule with index N.
   YR_PROFILING_INFO* profiling_info;
+
+  // Allocated iterator memory for the duration of the scan.
+  // Note: Stored here instead of stack for ERROR_BLOCK_NOT_READY functionality.
+  YR_MEMORY_BLOCK* addr_block;
+  YR_MEMORY_BLOCK_ITERATOR* addr_iterator;
+  YR_PROC_ITERATOR_CTX* addr_context;
 };
 
 union YR_VALUE

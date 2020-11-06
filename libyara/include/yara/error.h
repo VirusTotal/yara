@@ -103,6 +103,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define ERROR_WRITING_FILE                   58
 #define ERROR_INVALID_MODIFIER               59
 #define ERROR_DUPLICATED_MODIFIER            60
+#define ERROR_BLOCK_NOT_READY                61
 
 #define FAIL_ON_ERROR(x)         \
   {                              \
