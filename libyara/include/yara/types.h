@@ -629,6 +629,11 @@ struct YR_MEMORY_BLOCK_ITERATOR
 
   YR_MEMORY_BLOCK_ITERATOR_FUNC first;
   YR_MEMORY_BLOCK_ITERATOR_FUNC next;
+
+  // If (next == NULL) and switch(last_error):
+  // case ERROR_SUCCESS        : No more blocks.
+  // case ERROR_BLOCK_NOT_READY: Block not ready.
+  int last_error;
 };
 
 typedef int (*YR_CALLBACK_FUNC)(

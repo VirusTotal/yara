@@ -89,10 +89,14 @@ static YR_MEMORY_BLOCK* _yr_test_multi_block_get_next_block(
   yr_test_count_get_block++;
   yr_test_mem_block_not_ready_if_zero--;
 
+  iterator->last_error = ERROR_SUCCESS;
+
   if (yr_test_mem_block_not_ready_if_zero == 0)
   {
     overlap = 0;
     result = NULL;
+    yr_test_mem_block_not_ready_if_zero = yr_test_mem_block_not_ready_if_zero_init_value;
+    iterator->last_error = ERROR_BLOCK_NOT_READY;
   }
   else if (0 == context->current_block.size)
   {
@@ -152,17 +156,6 @@ static YR_MEMORY_BLOCK* _yr_test_multi_block_get_next_block(
 static YR_MEMORY_BLOCK* _yr_test_multi_block_get_first_block(
     YR_MEMORY_BLOCK_ITERATOR* iterator)
 {
-  if (yr_test_mem_block_not_ready_if_zero == 0)
-  {
-    YR_DEBUG_FPRINTF(
-        2,
-        stderr,
-        "+ %s() {} = NULL // yr_test_mem_block_not_ready_if_zero=0\n",
-        __FUNCTION__);
-    yr_test_mem_block_not_ready_if_zero = yr_test_mem_block_not_ready_if_zero_init_value;
-    return NULL;
-  }
-
   yr_test_mem_block_not_ready_if_zero = yr_test_mem_block_not_ready_if_zero_init_value;
 
   YR_DEBUG_FPRINTF(
@@ -270,6 +263,7 @@ YR_API int _yr_test_single_or_multi_block_scan_mem(
       scanner->addr_iterator->context = scanner->addr_context;
       scanner->addr_iterator->first = _yr_test_multi_block_get_first_block;
       scanner->addr_iterator->next = _yr_test_multi_block_get_next_block;
+      scanner->addr_iterator->last_error = ERROR_SUCCESS;
     }
     else
     {
@@ -289,6 +283,7 @@ YR_API int _yr_test_single_or_multi_block_scan_mem(
       scanner->addr_iterator->context = scanner->addr_block;
       scanner->addr_iterator->first = _yr_test_single_block_get_first_block;
       scanner->addr_iterator->next = _yr_test_single_block_get_next_block;
+      scanner->addr_iterator->last_error = ERROR_SUCCESS;
     }
   }
 

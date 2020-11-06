@@ -65,11 +65,13 @@ test-alignment
 test-api
 test-arena
 test-arena-stream
+test-async
 test-atoms
 test-bitmask
 test-elf
 test-exception
 test-rules
+test-rules.yarc
 test-pb
 test-pe
 test-re-split

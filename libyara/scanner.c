@@ -479,15 +479,15 @@ YR_API int yr_scanner_scan_mem_blocks(
 
     block = iterator->next(iterator);
   }
-  // Come here if finished last block or no block currently available.
 
-  YR_MEMORY_BLOCK* block_not_ready = iterator->first(iterator);
-  if (block_not_ready == NULL)
+  if (ERROR_BLOCK_NOT_READY == iterator->last_error)
   {
+    // Come here if no next block because currently unavailable.
     result = ERROR_BLOCK_NOT_READY;
   }
   else
   {
+    // Come here if no next block beceause no more blocks.
     YR_DEBUG_FPRINTF(2, stderr, "- last block; finishing up // %s()\n", __FUNCTION__);
 
     YR_TRYCATCH(

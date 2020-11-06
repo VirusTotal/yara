@@ -750,7 +750,10 @@ static int _yr_scan_match_callback(
 
 _exit:;
 
-  YR_DEBUG_FPRINTF(2, stderr, "} = %d // %s()\n", result, __FUNCTION__);
+  YR_DEBUG_FPRINTF(2, stderr, "} = %d AKA %s // %s()\n",
+      result,
+      ERROR_SUCCESS == result ? "ERROR_SUCCESS" : "ERROR_?",
+      __FUNCTION__);
 
   return result;
 }
