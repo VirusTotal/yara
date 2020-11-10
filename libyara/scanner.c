@@ -257,9 +257,8 @@ YR_API int yr_scanner_create(YR_RULES* rules, YR_SCANNER** scanner)
   }
 
   new_scanner->matches_notebook = NULL;
-  new_scanner->addr_iterator    = NULL;
-  new_scanner->addr_context     = NULL;
-  new_scanner->addr_block       = NULL;
+  new_scanner->user_data = NULL;
+  new_scanner->user_data_iterator = NULL;
 
   *scanner = new_scanner;
 
@@ -309,6 +308,21 @@ YR_API void yr_scanner_set_callback(
 {
   scanner->callback = callback;
   scanner->user_data = user_data;
+}
+
+
+YR_API void yr_scanner_set_user_data_iterator(
+    YR_SCANNER* scanner,
+    void* user_data_iterator)
+{
+  scanner->user_data_iterator = user_data_iterator;
+}
+
+
+YR_API void* yr_scanner_get_user_data_iterator(
+    YR_SCANNER* scanner)
+{
+  return scanner->user_data_iterator;
 }
 
 
@@ -582,7 +596,7 @@ static int __yr_scanner_scan_mem(
   YR_DEBUG_FPRINTF(
       2,
       stderr,
-      "+ %s(buffer=%p buffer_size=%zu)\n",
+      "+ %s(buffer=%p buffer_size=%zu) {\n",
       __FUNCTION__,
       buffer,
       buffer_size);
@@ -601,7 +615,22 @@ static int __yr_scanner_scan_mem(
   iterator.first = _yr_get_first_block;
   iterator.next = _yr_get_next_block;
 
-  return yr_scanner_scan_mem_blocks(scanner, &iterator);
+  int result = yr_scanner_scan_mem_blocks(scanner, &iterator);
+
+  YR_DEBUG_FPRINTF(2, stderr, "} = %d AKA %s // %s()\n",
+      result,
+      ERROR_SUCCESS         == result ? "ERROR_SUCCESS"         :
+      ERROR_BLOCK_NOT_READY == result ? "ERROR_BLOCK_NOT_READY" : "ERROR_?",
+      __FUNCTION__);
+
+  // Note: This implementation places block and iterator data on the stack and assumes iterator will
+  //       never return ERROR_BLOCK_NOT_READY. For an alternative implementation see the util.c file.
+  assertf(
+      ERROR_BLOCK_NOT_READY != result,
+      "detected ERROR_BLOCK_NOT_READY but default implementation of %s() is not compatible\n",
+      __FUNCTION__);
+
+  return result;
 }
 
 
@@ -620,7 +649,24 @@ YR_API int yr_scanner_scan_mem(
     const uint8_t* buffer,
     size_t buffer_size)
 {
-  return _yr_scanner_scan_mem(scanner, buffer, buffer_size);
+  YR_DEBUG_FPRINTF(
+      2,
+      stderr,
+      "+ %s(buffer=%p buffer_size=%zu) { %s\n",
+      __FUNCTION__,
+      buffer,
+      buffer_size,
+      "// calling user overridable function at (*_yr_scanner_scan_mem)");
+
+  int result = _yr_scanner_scan_mem(scanner, buffer, buffer_size);
+
+  YR_DEBUG_FPRINTF(2, stderr, "} = %d AKA %s // %s()\n",
+      result,
+      ERROR_SUCCESS         == result ? "ERROR_SUCCESS"         :
+      ERROR_BLOCK_NOT_READY == result ? "ERROR_BLOCK_NOT_READY" : "ERROR_?",
+      __FUNCTION__);
+
+  return result;
 }
 
 

@@ -27,6 +27,12 @@ void test_disabled_rules()
   counters.rules_not_matching = 0;
   counters.rules_matching = 0;
 
+  SCAN_USER_DATA_ITERATOR udi = {
+      .block = NULL,
+      .iterator = NULL,
+      .context = NULL,
+  };
+
   yr_initialize();
 
   if (compile_rule(rules_str, &rules) != ERROR_SUCCESS)
@@ -42,7 +48,7 @@ void test_disabled_rules()
       yr_rule_disable(rule);
   }
 
-  yr_rules_scan_mem(rules, (uint8_t*) buf, strlen(buf), 0, count, &counters, 0);
+  yr_rules_scan_mem(rules, (uint8_t*) buf, strlen(buf), 0, count, &counters, &udi, 0);
 
   yr_rules_destroy(rules);
 
@@ -238,6 +244,12 @@ void test_max_match_data()
   uint32_t new_max_match_data = 0;
   uint32_t old_max_match_data;
 
+  SCAN_USER_DATA_ITERATOR udi = {
+      .block = NULL,
+      .iterator = NULL,
+      .context = NULL,
+  };
+
   char* rules_str = "rule t { strings: $a = \"foobar\" condition: $a }";
 
   yr_initialize();
@@ -259,6 +271,7 @@ void test_max_match_data()
       0,
       test_max_match_data_callback,
       NULL,
+      &udi,
       0);
 
   if (err != ERROR_SUCCESS)
@@ -281,6 +294,12 @@ void test_save_load_rules()
 
   counters.rules_not_matching = 0;
   counters.rules_matching = 0;
+
+  SCAN_USER_DATA_ITERATOR udi = {
+      .block = NULL,
+      .iterator = NULL,
+      .context = NULL,
+  };
 
   char* rules_str = "rule t {condition: bool_var and str_var == \"foobar\"}";
 
@@ -326,7 +345,7 @@ void test_save_load_rules()
     exit(EXIT_FAILURE);
   }
 
-  int err = yr_rules_scan_mem(rules, (uint8_t*) "", 0, 0, count, &counters, 0);
+  int err = yr_rules_scan_mem(rules, (uint8_t*) "", 0, 0, count, &counters, &udi, 0);
 
   if (err != ERROR_SUCCESS)
   {

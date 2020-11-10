@@ -143,10 +143,16 @@ int test_crash(int handle_exceptions)
   counters.rules_not_matching = 0;
   counters.rules_matching = 0;
 
+  SCAN_USER_DATA_ITERATOR udi = {
+      .block = NULL,
+      .iterator = NULL,
+      .context = NULL,
+  };
+
   int flags = (handle_exceptions ? 0 : SCAN_FLAGS_NO_TRYCATCH);
 
   int rc = yr_rules_scan_mem(
-      rules_a, mapped_region, COUNT * sizeof(wbuf), flags, count, &counters, 0);
+      rules_a, mapped_region, COUNT * sizeof(wbuf), flags, count, &counters, &udi, 0);
 
   printf("err = %d, matches = %d\n", rc, counters.rules_matching);
 
@@ -173,8 +179,14 @@ int test_crash_other_thread()
   puts("Scanning for \"aaaa\"...");
   int matches = 0;
 
+  SCAN_USER_DATA_ITERATOR udi = {
+      .block = NULL,
+      .iterator = NULL,
+      .context = NULL,
+  };
+
   int rc = yr_rules_scan_mem(
-      rules_a, mem, sizeof(mem), 0, delay_callback, &matches, 0);
+      rules_a, mem, sizeof(mem), 0, delay_callback, &matches, &udi, 0);
 
   printf("err = %d, matches = %d\n", rc, matches);
 
@@ -208,8 +220,14 @@ int test_blocked_signal()
   counters.rules_not_matching = 0;
   counters.rules_matching = 0;
 
+  SCAN_USER_DATA_ITERATOR udi = {
+      .block = NULL,
+      .iterator = NULL,
+      .context = NULL,
+  };
+
   int rc = yr_rules_scan_mem(
-      rules_0, mapped_region, COUNT * sizeof(wbuf), 0, count, &counters, 0);
+      rules_0, mapped_region, COUNT * sizeof(wbuf), 0, count, &counters, &udi, 0);
 
   printf("err = %d, matches = %d\n", rc, counters.rules_matching);
 

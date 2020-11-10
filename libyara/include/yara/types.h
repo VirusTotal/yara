@@ -666,6 +666,9 @@ struct YR_SCAN_CONTEXT
   // Pointer to user-provided data passed to the callback function.
   void* user_data;
 
+  // Pointer to user-provided data for the user (*_yr_scanner_scan_mem) function.
+  void* user_data_iterator;
+
   // Pointer to the user-provided callback function that is called when an
   // event occurs during the scan (a rule matching, a module being loaded, etc)
   YR_CALLBACK_FUNC callback;
@@ -716,12 +719,6 @@ struct YR_SCAN_CONTEXT
   // profiling_info is a pointer to an array of YR_PROFILING_INFO structures,
   // one per rule. Entry N has the profiling information for rule with index N.
   YR_PROFILING_INFO* profiling_info;
-
-  // Allocated iterator memory for the duration of the scan.
-  // Note: Stored here instead of stack for ERROR_BLOCK_NOT_READY functionality.
-  YR_MEMORY_BLOCK* addr_block;
-  YR_MEMORY_BLOCK_ITERATOR* addr_iterator;
-  YR_PROC_ITERATOR_CTX* addr_context;
 };
 
 union YR_VALUE

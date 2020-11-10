@@ -2636,6 +2636,12 @@ void test_process_scan()
   counters.rules_not_matching = 0;
   counters.rules_matching = 0;
 
+  SCAN_USER_DATA_ITERATOR udi = {
+      .block = NULL,
+      .iterator = NULL,
+      .context = NULL,
+  };
+
   if (pid == 0)
   {
     // The string should appear somewhere in the shell's process space.
@@ -2672,7 +2678,7 @@ void test_process_scan()
     exit(EXIT_FAILURE);
   }
 
-  rc1 = yr_rules_scan_proc(rules, pid, 0, count, &counters, 0);
+  rc1 = yr_rules_scan_proc(rules, pid, 0, count, &counters, &udi, 0);
   yr_rules_destroy(rules);
   kill(pid, SIGALRM);
 

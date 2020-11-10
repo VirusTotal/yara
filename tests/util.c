@@ -218,26 +218,29 @@ YR_API int _yr_test_single_or_multi_block_scan_mem(
       buffer_size,
       yr_test_mem_block_size);
 
-  if (scanner->addr_iterator != NULL)
+  SCAN_USER_DATA_ITERATOR* udi = (SCAN_USER_DATA_ITERATOR*) yr_scanner_get_user_data_iterator(scanner);
+  assert_true_expr(udi != NULL);
+
+  if (udi->iterator != NULL)
   {
     YR_DEBUG_FPRINTF(
         2,
         stderr,
-        "- ->addr_iterator=%p (existing) // %s()\n",
-        scanner->addr_iterator,
+        "- ->iterator=%p (existing) // %s()\n",
+        udi->iterator,
         __FUNCTION__);
   }
   else
   {
-    scanner->addr_iterator = (YR_MEMORY_BLOCK_ITERATOR*) yr_calloc(1, sizeof(YR_MEMORY_BLOCK_ITERATOR));
+    udi->iterator = (YR_MEMORY_BLOCK_ITERATOR*) yr_calloc(1, sizeof(YR_MEMORY_BLOCK_ITERATOR));
     YR_DEBUG_FPRINTF(
         2,
         stderr,
-        "- ->addr_iterator=%p (new) // %s()\n",
-        scanner->addr_iterator,
+        "- ->iterator=%p (new) // %s()\n",
+        udi->iterator,
         __FUNCTION__);
 
-    if (scanner->addr_iterator == NULL)
+    if (udi->iterator == NULL)
     {
       result = ERROR_INSUFFICIENT_MEMORY;
       goto _exit;
@@ -245,57 +248,57 @@ YR_API int _yr_test_single_or_multi_block_scan_mem(
 
     if (yr_test_mem_block_size)
     {
-      scanner->addr_context = (YR_PROC_ITERATOR_CTX*) yr_calloc(1, sizeof(YR_PROC_ITERATOR_CTX));
+      udi->context = (YR_PROC_ITERATOR_CTX*) yr_calloc(1, sizeof(YR_PROC_ITERATOR_CTX));
 
-      if (scanner->addr_context == NULL)
+      if (udi->context == NULL)
       {
         result = ERROR_INSUFFICIENT_MEMORY;
         goto _exit;
       }
 
-      scanner->addr_context->buffer = buffer;
-      scanner->addr_context->buffer_size = buffer_size;
-      scanner->addr_context->current_block.base = 0;
-      scanner->addr_context->current_block.size = 0;
-      scanner->addr_context->current_block.context = scanner->addr_context;
-      scanner->addr_context->current_block.fetch_data = _yr_test_multi_block_fetch_block_data;
+      udi->context->buffer = buffer;
+      udi->context->buffer_size = buffer_size;
+      udi->context->current_block.base = 0;
+      udi->context->current_block.size = 0;
+      udi->context->current_block.context = udi->context;
+      udi->context->current_block.fetch_data = _yr_test_multi_block_fetch_block_data;
 
-      scanner->addr_iterator->context = scanner->addr_context;
-      scanner->addr_iterator->first = _yr_test_multi_block_get_first_block;
-      scanner->addr_iterator->next = _yr_test_multi_block_get_next_block;
-      scanner->addr_iterator->last_error = ERROR_SUCCESS;
+      udi->iterator->context = udi->context;
+      udi->iterator->first = _yr_test_multi_block_get_first_block;
+      udi->iterator->next = _yr_test_multi_block_get_next_block;
+      udi->iterator->last_error = ERROR_SUCCESS;
     }
     else
     {
-      scanner->addr_block = (YR_MEMORY_BLOCK*) yr_calloc(1, sizeof(YR_MEMORY_BLOCK));
+      udi->block = (YR_MEMORY_BLOCK*) yr_calloc(1, sizeof(YR_MEMORY_BLOCK));
 
-      if (scanner->addr_block == NULL)
+      if (udi->block == NULL)
       {
         result = ERROR_INSUFFICIENT_MEMORY;
         goto _exit;
       }
 
-      scanner->addr_block->size = buffer_size;
-      scanner->addr_block->base = 0;
-      scanner->addr_block->fetch_data = _yr_test_single_block_fetch_block_data;
-      scanner->addr_block->context = (void*) buffer;
+      udi->block->size = buffer_size;
+      udi->block->base = 0;
+      udi->block->fetch_data = _yr_test_single_block_fetch_block_data;
+      udi->block->context = (void*) buffer;
 
-      scanner->addr_iterator->context = scanner->addr_block;
-      scanner->addr_iterator->first = _yr_test_single_block_get_first_block;
-      scanner->addr_iterator->next = _yr_test_single_block_get_next_block;
-      scanner->addr_iterator->last_error = ERROR_SUCCESS;
+      udi->iterator->context = udi->block;
+      udi->iterator->first = _yr_test_single_block_get_first_block;
+      udi->iterator->next = _yr_test_single_block_get_next_block;
+      udi->iterator->last_error = ERROR_SUCCESS;
     }
   }
 
-  result = yr_scanner_scan_mem_blocks(scanner, scanner->addr_iterator);
+  result = yr_scanner_scan_mem_blocks(scanner, udi->iterator);
 
   _exit:
 
   if (ERROR_BLOCK_NOT_READY != result)
   {
-    if (scanner->addr_iterator) yr_free(scanner->addr_iterator);
-    if (scanner->addr_context ) yr_free(scanner->addr_context );
-    if (scanner->addr_block   ) yr_free(scanner->addr_block   );
+    if (udi->iterator) yr_free(udi->iterator);
+    if (udi->context ) yr_free(udi->context );
+    if (udi->block   ) yr_free(udi->block   );
   }
 
   YR_DEBUG_FPRINTF(
@@ -482,8 +485,14 @@ int matches_blob(
       .module_data_size = module_data_size,
   };
 
+  SCAN_USER_DATA_ITERATOR udi = {
+      .block = NULL,
+      .iterator = NULL,
+      .context = NULL,
+  };
+
   int scan_result = yr_rules_scan_mem(
-      rules, blob, blob_size, SCAN_FLAGS_NO_TRYCATCH, _scan_callback, &ctx, 0);
+      rules, blob, blob_size, SCAN_FLAGS_NO_TRYCATCH, _scan_callback, &ctx, &udi, 0);
 
   if (scan_result != ERROR_SUCCESS)
   {
@@ -522,6 +531,8 @@ static int capture_matches(
     void* message_data,
     void* user_data)
 {
+  YR_DEBUG_FPRINTF(2, stderr, "+ %s() {\n", __FUNCTION__);
+
   if (message == CALLBACK_MSG_RULE_MATCHING)
   {
     find_string_t* f = (find_string_t*) user_data;
@@ -545,7 +556,10 @@ static int capture_matches(
     }
   }
 
-  return CALLBACK_CONTINUE;
+  int result = CALLBACK_CONTINUE;
+
+  YR_DEBUG_FPRINTF(2, stderr, "} = %d // %s()\n", result, __FUNCTION__);
+  return result;
 }
 
 
@@ -562,13 +576,19 @@ int capture_string(char* rule, char* string, char* expected_string)
     exit(EXIT_FAILURE);
   }
 
-  find_string_t f;
+  find_string_t f = {
+      .found = 0,
+      .expected = expected_string,
+  };
 
-  f.found = 0;
-  f.expected = expected_string;
+  SCAN_USER_DATA_ITERATOR udi = {
+      .block = NULL,
+      .iterator = NULL,
+      .context = NULL,
+  };
 
   int scan_result = yr_rules_scan_mem(
-      rules, (uint8_t*)string, strlen(string), 0, capture_matches, &f, 0);
+      rules, (uint8_t*)string, strlen(string), 0, capture_matches, &f, &udi, 0);
 
   if (scan_result != ERROR_SUCCESS)
   {

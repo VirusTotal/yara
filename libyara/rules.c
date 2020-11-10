@@ -180,14 +180,23 @@ YR_API int yr_rules_scan_mem_blocks(
     int flags,
     YR_CALLBACK_FUNC callback,
     void* user_data,
+    void* user_data_iterator,
     int timeout)
 {
+  YR_DEBUG_FPRINTF(
+      2,
+      stderr,
+      "+ %s(timeout=%d) {}\n",
+      __FUNCTION__,
+      timeout);
+
   YR_SCANNER* scanner;
   int result;
 
   FAIL_ON_ERROR(yr_scanner_create(rules, &scanner));
 
   yr_scanner_set_callback(scanner, callback, user_data);
+  yr_scanner_set_user_data_iterator(scanner, user_data_iterator);
   yr_scanner_set_timeout(scanner, timeout);
   yr_scanner_set_flags(scanner, flags);
 
@@ -206,6 +215,7 @@ YR_API int yr_rules_scan_mem(
     int flags,
     YR_CALLBACK_FUNC callback,
     void* user_data,
+    void* user_data_iterator,
     int timeout)
 {
   YR_DEBUG_FPRINTF(
@@ -223,6 +233,7 @@ YR_API int yr_rules_scan_mem(
   FAIL_ON_ERROR(yr_scanner_create(rules, &scanner));
 
   yr_scanner_set_callback(scanner, callback, user_data);
+  yr_scanner_set_user_data_iterator(scanner, user_data_iterator);
   yr_scanner_set_timeout(scanner, timeout);
   yr_scanner_set_flags(scanner, flags);
 
@@ -240,6 +251,7 @@ YR_API int yr_rules_scan_file(
     int flags,
     YR_CALLBACK_FUNC callback,
     void* user_data,
+    void* user_data_iterator,
     int timeout)
 {
   YR_MAPPED_FILE mfile;
@@ -249,7 +261,7 @@ YR_API int yr_rules_scan_file(
   if (result == ERROR_SUCCESS)
   {
     result = yr_rules_scan_mem(
-        rules, mfile.data, mfile.size, flags, callback, user_data, timeout);
+        rules, mfile.data, mfile.size, flags, callback, user_data, user_data_iterator, timeout);
 
     yr_filemap_unmap(&mfile);
   }
@@ -264,6 +276,7 @@ YR_API int yr_rules_scan_fd(
     int flags,
     YR_CALLBACK_FUNC callback,
     void* user_data,
+    void* user_data_iterator,
     int timeout)
 {
   YR_MAPPED_FILE mfile;
@@ -273,7 +286,7 @@ YR_API int yr_rules_scan_fd(
   if (result == ERROR_SUCCESS)
   {
     result = yr_rules_scan_mem(
-        rules, mfile.data, mfile.size, flags, callback, user_data, timeout);
+        rules, mfile.data, mfile.size, flags, callback, user_data, user_data_iterator, timeout);
 
     yr_filemap_unmap_fd(&mfile);
   }
@@ -288,6 +301,7 @@ YR_API int yr_rules_scan_proc(
     int flags,
     YR_CALLBACK_FUNC callback,
     void* user_data,
+    void* user_data_iterator,
     int timeout)
 {
   YR_DEBUG_FPRINTF(
@@ -305,6 +319,7 @@ YR_API int yr_rules_scan_proc(
         flags | SCAN_FLAGS_PROCESS_MEMORY,
         callback,
         user_data,
+        user_data_iterator,
         timeout);
 
     yr_process_close_iterator(&iterator);

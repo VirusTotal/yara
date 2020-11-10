@@ -80,6 +80,11 @@ static void test_parallel_triple_scan(
     [1].matches = 0, [1].module_data = NULL, [1].module_data_size = 0,
     [2].matches = 0, [2].module_data = NULL, [2].module_data_size = 0,
   };
+  SCAN_USER_DATA_ITERATOR                   udi[PARALLEL_SCANS] = {
+    [0].iterator = NULL, [0].context = NULL, [0].block = NULL,
+    [1].iterator = NULL, [1].context = NULL, [1].block = NULL,
+    [2].iterator = NULL, [2].context = NULL, [2].block = NULL,
+  };
 
   text[0] = text_0;
   text[1] = text_1;
@@ -101,9 +106,11 @@ static void test_parallel_triple_scan(
     int flags = SCAN_FLAGS_NO_TRYCATCH;
     YR_CALLBACK_FUNC callback = _scan_callback;
     void* user_data = &ctx[i];
+    void* user_data_iterator = &udi[i];
     int timeout = 0;
 
     yr_scanner_set_callback(scanner_instance[i], callback, user_data);
+    yr_scanner_set_user_data_iterator(scanner_instance[i], user_data_iterator);
     yr_scanner_set_timeout(scanner_instance[i], timeout);
     yr_scanner_set_flags(scanner_instance[i], flags);
   }

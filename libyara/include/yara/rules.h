@@ -75,6 +75,7 @@ YR_API int yr_rules_scan_mem_blocks(
     int flags,
     YR_CALLBACK_FUNC callback,
     void* user_data,
+    void* user_data_iterator,
     int timeout);
 
 YR_API int yr_rules_scan_mem(
@@ -84,6 +85,7 @@ YR_API int yr_rules_scan_mem(
     int flags,
     YR_CALLBACK_FUNC callback,
     void* user_data,
+    void* user_data_iterator,
     int timeout);
 
 YR_API int yr_rules_scan_file(
@@ -92,6 +94,7 @@ YR_API int yr_rules_scan_file(
     int flags,
     YR_CALLBACK_FUNC callback,
     void* user_data,
+    void* user_data_iterator,
     int timeout);
 
 YR_API int yr_rules_scan_fd(
@@ -100,6 +103,7 @@ YR_API int yr_rules_scan_fd(
     int flags,
     YR_CALLBACK_FUNC callback,
     void* user_data,
+    void* user_data_iterator,
     int timeout);
 
 YR_API int yr_rules_scan_proc(
@@ -108,6 +112,7 @@ YR_API int yr_rules_scan_proc(
     int flags,
     YR_CALLBACK_FUNC callback,
     void* user_data,
+    void* user_data_iterator,
     int timeout);
 
 YR_API int yr_rules_save(YR_RULES* rules, const char* filename);

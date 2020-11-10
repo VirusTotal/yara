@@ -78,6 +78,17 @@ struct SCAN_CALLBACK_CTX {
 };
 
 
+typedef struct SCAN_USER_DATA_ITERATOR SCAN_USER_DATA_ITERATOR;
+
+struct SCAN_USER_DATA_ITERATOR {
+  // Allocated iterator memory for the duration of the scan.
+  // Note: Stored here instead of stack for ERROR_BLOCK_NOT_READY functionality.
+  YR_MEMORY_BLOCK* block;
+  YR_MEMORY_BLOCK_ITERATOR* iterator;
+  YR_PROC_ITERATOR_CTX* context;
+};
+
+
 int _scan_callback(
     YR_SCAN_CONTEXT* context,
     int message,
