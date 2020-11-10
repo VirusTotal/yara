@@ -74,7 +74,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
     return 0;
 
   yr_rules_scan_mem(
-      rules, data, size, SCAN_FLAGS_NO_TRYCATCH, callback, NULL, 0);
+      rules, data, size, SCAN_FLAGS_NO_TRYCATCH, callback, NULL, NULL, 0);
 
   return 0;
 }
