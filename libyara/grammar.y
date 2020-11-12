@@ -1405,8 +1405,6 @@ expression
       }
     | _FOR_ for_expression error
       {
-        int i;
-
         // Free all the loop variable identifiers, including the variables for
         // the current loop (represented by loop_index), and set loop_index to
         // -1. This is OK even if we have nested loops. If an error occurs while
@@ -1414,7 +1412,7 @@ expression
         // anyways, so it's safe to do this cleanup while processing the error
         // for the inner loop.
 
-        for (i = 0; i <= compiler->loop_index; i++)
+        for (int i = 0; i <= compiler->loop_index; i++)
         {
           loop_vars_cleanup(i);
         }
@@ -1528,7 +1526,6 @@ expression
         YR_ARENA_REF jmp_offset_ref;
 
         int var_frame = _yr_compiler_get_var_frame(compiler);
-        int i;
 
         fail_if_error(yr_parser_emit(
             yyscanner, OP_ITER_NEXT, &loop_start_ref));
@@ -1538,7 +1535,7 @@ expression
         // YR_INTERNAL_LOOP_VARS because the first YR_INTERNAL_LOOP_VARS slots
         // in the frame are for the internal variables.
 
-        for (i = 0; i < loop_ctx->vars_count; i++)
+        for (int i = 0; i < loop_ctx->vars_count; i++)
         {
           fail_if_error(yr_parser_emit_with_arg(
               yyscanner,
