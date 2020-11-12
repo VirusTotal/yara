@@ -535,22 +535,22 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
       break;
 
     case OP_PUSH_8:
-      YR_DEBUG_FPRINTF(2, stderr, "- case OP_PUSH_8: // %s()\n", __FUNCTION__);
       r1.i = *ip;
+      YR_DEBUG_FPRINTF(2, stderr, "- case OP_PUSH_8: r1.i=%ld // %s()\n", r1.i, __FUNCTION__);
       ip += sizeof(uint8_t);
       push(r1);
       break;
 
     case OP_PUSH_16:
-      YR_DEBUG_FPRINTF(2, stderr, "- case OP_PUSH_16: // %s()\n", __FUNCTION__);
       r1.i = *(uint16_t*) (ip);
+      YR_DEBUG_FPRINTF(2, stderr, "- case OP_PUSH_16: r1.i=%ld // %s()\n", r1.i, __FUNCTION__);
       ip += sizeof(uint16_t);
       push(r1);
       break;
 
     case OP_PUSH_32:
-      YR_DEBUG_FPRINTF(2, stderr, "- case OP_PUSH_32: // %s()\n", __FUNCTION__);
       r1.i = *(uint32_t*) (ip);
+      YR_DEBUG_FPRINTF(2, stderr, "- case OP_PUSH_32: r1.i=%ld // %s()\n", r1.i, __FUNCTION__);
       ip += sizeof(uint32_t);
       push(r1);
       break;
@@ -1120,9 +1120,9 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
       break;
 
     case OP_FOUND:
-      YR_DEBUG_FPRINTF(2, stderr, "- case OP_FOUND: // %s()\n", __FUNCTION__);
       pop(r1);
       r2.i = context->matches[r1.s->idx].tail != NULL ? 1 : 0;
+      YR_DEBUG_FPRINTF(2, stderr, "- case OP_FOUND: r2.i=%ld // %s()\n", r2.i, __FUNCTION__);
       push(r2);
       break;
 
@@ -1290,8 +1290,8 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
       break;
 
     case OP_FILESIZE:
-      YR_DEBUG_FPRINTF(2, stderr, "- case OP_FILESIZE: // %s()\n", __FUNCTION__);
       r1.i = context->file_size;
+      YR_DEBUG_FPRINTF(2, stderr, "- case OP_FILESIZE: r1.i=%ld // %s()\n", r1.i, __FUNCTION__);
       push(r1);
       break;
 

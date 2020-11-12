@@ -86,6 +86,9 @@ struct SCAN_USER_DATA_ITERATOR {
   YR_MEMORY_BLOCK* block;
   YR_MEMORY_BLOCK_ITERATOR* iterator;
   YR_PROC_ITERATOR_CTX* context;
+
+  // Used by test iterator if buffer size not known in advance.
+  size_t buffer_size;
 };
 
 

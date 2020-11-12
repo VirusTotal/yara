@@ -94,9 +94,10 @@ static void test_parallel_triple_scan(
   for (int i = 0; i < PARALLEL_SCANS; i ++)
   {
     mem_block_not_ready_if_zero[i] = yr_test_mem_block_not_ready_if_zero_init_value;
-    len_text[i] = strlen(text[i]);
     scan_not_complete[i] = 1;
     scan_complete_loops[i] = 0;
+    len_text[i] = strlen(text[i]);
+    udi[i].buffer_size = len_text[i];
 
     // Note: yr_rules_scan_mem() incompatible with async ERROR_BLOCK_NOT_READY scanner API,
     //       therefore its setup code is here:
@@ -116,6 +117,7 @@ static void test_parallel_triple_scan(
   }
 
   int total_scans_not_complete;
+  int buffer_size = YR_DYNAMIC_BUFFER_SIZE;
   int loop = 0;
   do
   {
@@ -141,7 +143,7 @@ static void test_parallel_triple_scan(
 
         // Note: yr_rules_scan_mem() incompatible with async ERROR_BLOCK_NOT_READY scanner API,
         //       therefore yr_scanner_scan_mem() used directly:
-        int scan_result = yr_scanner_scan_mem(scanner_instance[i], (uint8_t*) text[i], len_text[i]);
+        int scan_result = yr_scanner_scan_mem(scanner_instance[i], (uint8_t*) text[i], buffer_size);
 
         if (ERROR_BLOCK_NOT_READY == scan_result)
         {
@@ -168,11 +170,11 @@ static void test_parallel_triple_scan(
     yr_scanner_destroy(scanner_instance[i]);
   }
 
-  if ((ctx[0].matches != 1)
-  ||  (ctx[1].matches != 1)
-  ||  (ctx[2].matches != 1))
+  if ((ctx[0].matches != 2)
+  ||  (ctx[1].matches != 2)
+  ||  (ctx[2].matches != 2))
   {
-    fprintf(stderr, "%s:%d: parallel triple scan matches %d,%d,%d but expected 1,1,1\n",
+    fprintf(stderr, "%s:%d: parallel triple scan matches %d,%d,%d but expected 2,2,2\n",
         __FILE__, __LINE__,
         ctx[0].matches, ctx[1].matches, ctx[2].matches);
     exit(EXIT_FAILURE);
@@ -199,7 +201,7 @@ static void test_parallel_strings()
 
   // Compile one rule.
 
-  char * rule = "rule test { strings: $a = \"a\" condition: $a }";
+  char * rule = "rule test { strings: $a = \"a\" condition: $a } rule test2 { condition: filesize > 10 }";
   YR_RULES* rules;
 
   if (compile_rule(rule, &rules) != ERROR_SUCCESS)

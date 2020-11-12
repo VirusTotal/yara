@@ -502,7 +502,18 @@ YR_API int yr_scanner_scan_mem_blocks(
   else
   {
     // Come here if no next block beceause no more blocks.
-    YR_DEBUG_FPRINTF(2, stderr, "- last block; finishing up // %s()\n", __FUNCTION__);
+    YR_DEBUG_FPRINTF(
+        2,
+        stderr,
+        "- last block; finishing up; %s file_size is %zu // %s()\n",
+        scanner->file_size == YR_DYNAMIC_BUFFER_SIZE ? "iterator says" : "caller said",
+        scanner->file_size == YR_DYNAMIC_BUFFER_SIZE ? iterator->buffer_size : scanner->file_size,
+        __FUNCTION__);
+
+    if (scanner->file_size == YR_DYNAMIC_BUFFER_SIZE)
+    {
+      scanner->file_size = iterator->buffer_size; // grab total buffer size from iterator
+    }
 
     YR_TRYCATCH(
         !(scanner->flags & SCAN_FLAGS_NO_TRYCATCH),
@@ -652,10 +663,11 @@ YR_API int yr_scanner_scan_mem(
   YR_DEBUG_FPRINTF(
       2,
       stderr,
-      "+ %s(buffer=%p buffer_size=%zu) { %s\n",
+      "+ %s(buffer=%p buffer_size=%zu%s) { %s\n",
       __FUNCTION__,
       buffer,
       buffer_size,
+      buffer_size == YR_DYNAMIC_BUFFER_SIZE ? " AKA YR_DYNAMIC_BUFFER_SIZE" : "",
       "// calling user overridable function at (*_yr_scanner_scan_mem)");
 
   int result = _yr_scanner_scan_mem(scanner, buffer, buffer_size);

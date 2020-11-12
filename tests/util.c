@@ -129,6 +129,8 @@ static YR_MEMORY_BLOCK* _yr_test_multi_block_get_next_block(
     if (result == NULL)
     {
       yr_test_mem_block_not_ready_if_zero = -1; // never report block not ready because end of blocks
+
+      iterator->buffer_size = context->buffer_size; // last block, so tell scanner total buffer size
     }
   }
 
@@ -211,11 +213,12 @@ YR_API int _yr_test_single_or_multi_block_scan_mem(
   YR_DEBUG_FPRINTF(
       2,
       stderr,
-      "+ %s(buffer=%p buffer_size=%zu) {"
+      "+ %s(buffer=%p buffer_size=%zu%s) {"
       " // yr_test_mem_block_size=%" PRId64 "\n",
       __FUNCTION__,
       buffer,
       buffer_size,
+      buffer_size == YR_DYNAMIC_BUFFER_SIZE ? " AKA YR_DYNAMIC_BUFFER_SIZE" : "",
       yr_test_mem_block_size);
 
   SCAN_USER_DATA_ITERATOR* udi = (SCAN_USER_DATA_ITERATOR*) yr_scanner_get_user_data_iterator(scanner);
@@ -257,7 +260,8 @@ YR_API int _yr_test_single_or_multi_block_scan_mem(
       }
 
       udi->context->buffer = buffer;
-      udi->context->buffer_size = buffer_size;
+      udi->context->buffer_size =
+          (buffer_size == YR_DYNAMIC_BUFFER_SIZE) ? udi->buffer_size : buffer_size;
       udi->context->current_block.base = 0;
       udi->context->current_block.size = 0;
       udi->context->current_block.context = udi->context;
@@ -278,7 +282,8 @@ YR_API int _yr_test_single_or_multi_block_scan_mem(
         goto _exit;
       }
 
-      udi->block->size = buffer_size;
+      udi->block->size =
+          (buffer_size == YR_DYNAMIC_BUFFER_SIZE) ? udi->buffer_size : buffer_size;
       udi->block->base = 0;
       udi->block->fetch_data = _yr_test_single_block_fetch_block_data;
       udi->block->context = (void*) buffer;
