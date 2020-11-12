@@ -61,6 +61,7 @@ awesome list of [YARA-related stuff](https://github.com/InQuest/awesome-yara).
 * [BinaryAlert](https://github.com/airbnb/binaryalert)
 * [Blue Coat](http://www.bluecoat.com/products/malware-analysis-appliance)
 * [Blueliv](http://www.blueliv.com)
+* [Claroty](https://claroty.com/continuous-threat-detection)
 * [Cofense](https://cofense.com)
 * [Conix](http://www.conix.fr)
 * [CounterCraft](https://www.countercraft.eu)
