@@ -36,6 +36,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <sys/wait.h>
 #include <unistd.h>
 #include <yara/error.h>
+#include <yara/libyara.h>
 #include <yara/mem.h>
 #include <yara/proc.h>
 
@@ -142,15 +143,37 @@ YR_API YR_MEMORY_BLOCK* yr_process_get_next_memory_block(
 
   iterator->last_error = ERROR_SUCCESS;
 
-  if (ptrace(PT_VM_ENTRY, proc_info->pid, (char*) (&proc_info->vm_entry), 0) ==
-      -1)
+  uint64_t current_begin = context->current_block.base +
+                           context->current_block.size;
+  uint64_t max_processmemory_chunk;
+
+  yr_get_configuration(
+      YR_CONFIG_MAX_PROCESSMEMORY_CHUNK, (void*) &max_processmemory_chunk);
+
+  if (proc_info->vm_entry.pve_end <= current_begin)
   {
-    return NULL;
+    if (ptrace(
+            PT_VM_ENTRY, proc_info->pid, (char*) (&proc_info->vm_entry), 0) ==
+        -1)
+    {
+      return NULL;
+    }
+    else
+    {
+      current_begin = proc_info->vm_entry.pve_start;
+    }
   }
 
-  context->current_block.base = proc_info->vm_entry.pve_start;
-  context->current_block.size = proc_info->vm_entry.pve_end -
-                                proc_info->vm_entry.pve_start + 1;
+  if (proc_info->vm_entry.pve_end - current_begin + 1 > max_processmemory_chunk)
+  {
+    context->current_block.size = max_processmemory_chunk;
+  }
+  else
+  {
+    context->current_block.size = proc_info->vm_entry.pve_end - current_begin +
+                                  1;
+  }
+  context->current_block.base = current_begin;
 
   return &context->current_block;
 }
