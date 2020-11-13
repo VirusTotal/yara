@@ -31,6 +31,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <windows.h>
 #include <yara/error.h>
+#include <yara/libyara.h>
 #include <yara/mem.h>
 #include <yara/proc.h>
 
@@ -138,8 +139,13 @@ YR_API YR_MEMORY_BLOCK* yr_process_get_next_memory_block(
   YR_PROC_INFO* proc_info = (YR_PROC_INFO*) context->proc_info;
 
   MEMORY_BASIC_INFORMATION mbi;
-  PVOID address = (PVOID)(
-      context->current_block.base + context->current_block.size);
+  void* address =
+      (void*) (context->current_block.base + context->current_block.size);
+  size_t area_to_scan;
+  uint64_t max_processmemory_chunk;
+
+  yr_get_configuration(
+      YR_CONFIG_MAX_PROCESSMEMORY_CHUNK, (void*) &max_processmemory_chunk);
 
   iterator->last_error = ERROR_SUCCESS;
 
@@ -153,13 +159,18 @@ YR_API YR_MEMORY_BLOCK* yr_process_get_next_memory_block(
 
     if (mbi.State == MEM_COMMIT && ((mbi.Protect & PAGE_NOACCESS) == 0))
     {
-      context->current_block.base = (size_t) mbi.BaseAddress;
-      context->current_block.size = mbi.RegionSize;
+      area_to_scan = mbi.RegionSize - (size_t)(address - mbi.BaseAddress);
+      if (((uint64_t) area_to_scan) > max_processmemory_chunk)
+      {
+        area_to_scan = (size_t) max_processmemory_chunk;
+      }
+      context->current_block.base = (size_t) address;
+      context->current_block.size = area_to_scan;
 
       return &context->current_block;
     }
 
-    address = (uint8_t*) address + mbi.RegionSize;
+    address = (uint8_t*) mbi.BaseAddress + mbi.RegionSize;
   }
 
   return NULL;
