@@ -34,6 +34,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <mach/vm_region.h>
 #include <mach/vm_statistics.h>
 #include <yara/error.h>
+#include <yara/libyara.h>
 #include <yara/mem.h>
 #include <yara/proc.h>
 
@@ -126,8 +127,14 @@ YR_API YR_MEMORY_BLOCK* yr_process_get_next_memory_block(
   vm_region_basic_info_data_64_t info;
   vm_size_t size = 0;
 
-  vm_address_t address = (vm_address_t) context->current_block.base +
-                         context->current_block.size;
+  uint64_t current_begin = (vm_address_t) context->current_block.base +
+                           context->current_block.size;
+  vm_address_t address = current_begin;
+  size_t area_to_scan;
+  uint64_t max_processmemory_chunk;
+
+  yr_get_configuration(
+      YR_CONFIG_MAX_PROCESSMEMORY_CHUNK, (void*) &max_processmemory_chunk);
 
   iterator->last_error = ERROR_SUCCESS;
 
@@ -146,11 +153,18 @@ YR_API YR_MEMORY_BLOCK* yr_process_get_next_memory_block(
 
     if (kr == KERN_SUCCESS)
     {
-      context->current_block.base = address;
-      context->current_block.size = size;
+      area_to_scan = size - (size_t)(current_begin - address);
+      if (((uint64_t) area_to_scan) > max_processmemory_chunk)
+      {
+        area_to_scan = (size_t) max_processmemory_chunk;
+      }
+      context->current_block.base = (size_t) current_begin;
+      context->current_block.size = area_to_scan;
 
       return &context->current_block;
     }
+
+    current_begin = address;
 
   } while (kr != KERN_INVALID_ADDRESS);
 
