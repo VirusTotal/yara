@@ -44,6 +44,10 @@ extern uint64_t yr_test_mem_block_size;
 // previous memory block to include in the current memory block.
 extern uint64_t yr_test_mem_block_size_overlap;
 
+// Decrement and if yr_test_mem_block_not_ready_if_zero is zero, pretend ERROR_BLOCK_NOT_READY.
+extern int64_t yr_test_mem_block_not_ready_if_zero;
+extern int64_t yr_test_mem_block_not_ready_if_zero_init_value;
+
 // Counts calls to 'get first / next block' function for testing purposes.
 extern uint64_t yr_test_count_get_block;
 
@@ -65,6 +69,36 @@ int compile_rule(
     YR_RULES** rules);
 
 
+typedef struct SCAN_CALLBACK_CTX SCAN_CALLBACK_CTX;
+
+struct SCAN_CALLBACK_CTX {
+  int matches;
+  void* module_data;
+  size_t module_data_size;
+};
+
+
+typedef struct SCAN_USER_DATA_ITERATOR SCAN_USER_DATA_ITERATOR;
+
+struct SCAN_USER_DATA_ITERATOR {
+  // Allocated iterator memory for the duration of the scan.
+  // Note: Stored here instead of stack for ERROR_BLOCK_NOT_READY functionality.
+  YR_MEMORY_BLOCK* block;
+  YR_MEMORY_BLOCK_ITERATOR* iterator;
+  YR_PROC_ITERATOR_CTX* context;
+
+  // Used by test iterator if buffer size not known in advance.
+  size_t buffer_size;
+};
+
+
+int _scan_callback(
+    YR_SCAN_CONTEXT* context,
+    int message,
+    void* message_data,
+    void* user_data);
+
+
 int count(
     YR_SCAN_CONTEXT* context,
     int message,
@@ -78,6 +112,8 @@ int do_nothing(
     void* message_data,
     void* user_data);
 
+
+int matches_blob_uses_default_iterator;
 
 int matches_blob(
     char* rule,

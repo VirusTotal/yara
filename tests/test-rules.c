@@ -2846,21 +2846,30 @@ int main(int argc, char** argv)
 
   assert_true_expr(strlen(TEXT_1024_BYTES) == 1024);
 
-  _yr_scanner_scan_mem = &_yr_test_single_or_multi_block_scan_mem;
-
   uint64_t last_yr_test_count_get_block;
 
-  for (int i = 1; i <= 2; i++)
+  for (int pass = 1; pass <= 3; pass++)
   {
-    if (2 == i)
+    switch (pass)
     {
-      // "Actually, a single block will contain the whole file's content in most
-      // cases, but you
-      //  can't rely on that while writing your code. For very big files YARA
-      //  could eventually split the file into two or more blocks, and your
-      //  module should be prepared to handle that." [1]
-      // [1]
-      // https://yara.readthedocs.io/en/stable/writingmodules.html#accessing-the-scanned-data
+    case 1:
+      // Come here to test with default libyara iterator which creates a single block.
+      matches_blob_uses_default_iterator = 1;
+      break;
+    case 2:
+      // Come here to test with test libyara iterator which is:
+      // Like default libyara iterator, plus records block stats.
+      matches_blob_uses_default_iterator = 0;
+      break;
+    case 3:
+      // Come here to test with test libyara iterator which is:
+      // Like default libyara iterator, plus records block stats, plus splits into multiple blocks:
+      matches_blob_uses_default_iterator = 0;
+      // "Actually, a single block will contain the whole file's content in most cases,
+      //  but you can't rely on that while writing your code. For very big files YARA
+      //  could eventually split the file into two or more blocks, and your module
+      //  should be prepared to handle that." [1]
+      // [1] https://yara.readthedocs.io/en/stable/writingmodules.html#accessing-the-scanned-data
       yr_test_mem_block_size = getenv("YR_TEST_MEM_BLOCK_SIZE")
                                    ? atoi(getenv("YR_TEST_MEM_BLOCK_SIZE"))
                                    : 1024;
@@ -2869,16 +2878,18 @@ int main(int argc, char** argv)
               ? atoi(getenv("YR_TEST_MEM_BLOCK_SIZE_OVERLAP"))
               : 256;
       assert(yr_test_mem_block_size_overlap <= yr_test_mem_block_size);
+      break;
     }
 
     YR_DEBUG_FPRINTF(
         1,
         stderr,
-        "- // run all rule tests: pass %d: "
+        "- // pass %d: run all rule tests: using %s iterator "
         "split data into blocks of max %" PRId64 " bytes "
         "(0 means single / unlimited block size; default) "
         "with %" PRId64 " bytes overlapping the previous block\n",
-        i,
+        pass,
+        pass == 1 ? "default" : "test",
         yr_test_mem_block_size,
         yr_test_mem_block_size_overlap);
 
@@ -2930,14 +2941,19 @@ int main(int argc, char** argv)
     test_time_module();
     test_performance_warnings();
 
-    YR_DEBUG_FPRINTF(
-        1,
-        stderr,
-        "- // yr_test_count_get_block=%" PRId64
-        " is the number of times the above tests got a first or next block\n",
-        yr_test_count_get_block);
+    if (pass >= 2)
+    {
+      YR_DEBUG_FPRINTF(
+          1,
+          stderr,
+          "- // pass %d: yr_test_count_get_block=%" PRId64
+          " is the number of times the above tests got a "
+          "first or next block via the test iterator\n",
+          pass,
+          yr_test_count_get_block);
+    }
 
-    if (2 == i)
+    if (3 == pass)
       assert(yr_test_count_get_block > last_yr_test_count_get_block);
 
     last_yr_test_count_get_block = yr_test_count_get_block;

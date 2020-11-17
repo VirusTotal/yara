@@ -307,6 +307,21 @@ YR_API void yr_scanner_set_callback(
 }
 
 
+YR_API void yr_scanner_set_user_data_iterator(
+    YR_SCANNER* scanner,
+    void* user_data_iterator)
+{
+  scanner->user_data_iterator = user_data_iterator;
+}
+
+
+YR_API void* yr_scanner_get_user_data_iterator(
+    YR_SCANNER* scanner)
+{
+  return scanner->user_data_iterator;
+}
+
+
 YR_API void yr_scanner_set_timeout(YR_SCANNER* scanner, int timeout)
 {
   // Convert timeout from seconds to nanoseconds.
@@ -396,37 +411,45 @@ YR_API int yr_scanner_scan_mem_blocks(
     YR_SCANNER* scanner,
     YR_MEMORY_BLOCK_ITERATOR* iterator)
 {
-  YR_DEBUG_FPRINTF(2, stderr, "+ %s() {} \n", __FUNCTION__);
+  YR_DEBUG_FPRINTF(2, stderr, "+ %s() {\n", __FUNCTION__);
 
   YR_RULES* rules;
   YR_RULE* rule;
   YR_MEMORY_BLOCK* block;
 
-  uint32_t max_match_data;
-
   int i, result = ERROR_SUCCESS;
 
   if (scanner->callback == NULL)
-    return ERROR_CALLBACK_REQUIRED;
-
-  FAIL_ON_ERROR(yr_get_configuration(YR_CONFIG_MAX_MATCH_DATA, &max_match_data))
+  {
+    result = ERROR_CALLBACK_REQUIRED;
+    goto _exit;
+  }
 
   scanner->iterator = iterator;
   rules = scanner->rules;
-  block = iterator->first(iterator);
 
-  if (block == NULL)
-    return ERROR_SUCCESS;
+  if (scanner->matches_notebook == NULL)
+  {
+    // Create the notebook that will hold the YR_MATCH structures representing
+    // each match found. This notebook will also contain snippets of the matching
+    // data (the "data" field in YR_MATCH points to the snippet corresponding to
+    // the match). Each notebook's page can store up to 1024 matches.
+    uint32_t max_match_data;
 
-  // Create the notebook that will hold the YR_MATCH structures representing
-  // each match found. This notebook will also contain snippets of the matching
-  // data (the "data" field in YR_MATCH points to the snippet corresponding to
-  // the match). Each notebook's page can store up to 1024 matches.
-  result = yr_notebook_create(
-      1024 * (sizeof(YR_MATCH) + max_match_data), &scanner->matches_notebook);
+    FAIL_ON_ERROR(yr_get_configuration(YR_CONFIG_MAX_MATCH_DATA, &max_match_data));
 
-  if (result != ERROR_SUCCESS)
-    goto _exit;
+    result = yr_notebook_create(
+        1024 * (sizeof(YR_MATCH) + max_match_data), &scanner->matches_notebook);
+
+    if (result != ERROR_SUCCESS)
+      goto _exit;
+
+    block = iterator->first(iterator);
+  }
+  else
+  {
+    block = iterator->next(iterator);
+  }
 
   yr_stopwatch_start(&scanner->stopwatch);
 
@@ -467,57 +490,88 @@ YR_API int yr_scanner_scan_mem_blocks(
     block = iterator->next(iterator);
   }
 
-  YR_TRYCATCH(
-      !(scanner->flags & SCAN_FLAGS_NO_TRYCATCH),
-      { result = yr_execute_code(scanner); },
-      { result = ERROR_COULD_NOT_MAP_FILE; });
-
-  if (result != ERROR_SUCCESS)
-    goto _exit;
-
-  for (i = 0, rule = rules->rules_list_head; !RULE_IS_NULL(rule); i++, rule++)
+  if (ERROR_BLOCK_NOT_READY == iterator->last_error)
   {
-    int message = 0;
+    // Come here if no next block because currently unavailable.
+    result = ERROR_BLOCK_NOT_READY;
+  }
+  else
+  {
+    // Come here if no next block beceause no more blocks.
+    YR_DEBUG_FPRINTF(
+        2,
+        stderr,
+        "- last block; finishing up; %s file_size is %zu // %s()\n",
+        scanner->file_size == YR_DYNAMIC_BUFFER_SIZE ? "iterator says" : "caller said",
+        scanner->file_size == YR_DYNAMIC_BUFFER_SIZE ? iterator->buffer_size : scanner->file_size,
+        __FUNCTION__);
 
-    if (yr_bitmask_is_set(scanner->rule_matches_flags, i) &&
-        yr_bitmask_is_not_set(scanner->ns_unsatisfied_flags, rule->ns->idx))
+    if (scanner->file_size == YR_DYNAMIC_BUFFER_SIZE)
     {
-      if (scanner->flags & SCAN_FLAGS_REPORT_RULES_MATCHING)
-        message = CALLBACK_MSG_RULE_MATCHING;
-    }
-    else
-    {
-      if (scanner->flags & SCAN_FLAGS_REPORT_RULES_NOT_MATCHING)
-        message = CALLBACK_MSG_RULE_NOT_MATCHING;
+      scanner->file_size = iterator->buffer_size; // grab total buffer size from iterator
     }
 
-    if (message != 0 && !RULE_IS_PRIVATE(rule))
+    YR_TRYCATCH(
+        !(scanner->flags & SCAN_FLAGS_NO_TRYCATCH),
+        { result = yr_execute_code(scanner); },
+        { result = ERROR_COULD_NOT_MAP_FILE; });
+
+    if (result != ERROR_SUCCESS)
+      goto _exit;
+
+    for (i = 0, rule = rules->rules_list_head; !RULE_IS_NULL(rule); i++, rule++)
     {
-      switch (scanner->callback(scanner, message, rule, scanner->user_data))
+      int message = 0;
+
+      if (yr_bitmask_is_set(scanner->rule_matches_flags, i) &&
+          yr_bitmask_is_not_set(scanner->ns_unsatisfied_flags, rule->ns->idx))
       {
-      case CALLBACK_ABORT:
-        result = ERROR_SUCCESS;
-        goto _exit;
+        if (scanner->flags & SCAN_FLAGS_REPORT_RULES_MATCHING)
+          message = CALLBACK_MSG_RULE_MATCHING;
+      }
+      else
+      {
+        if (scanner->flags & SCAN_FLAGS_REPORT_RULES_NOT_MATCHING)
+          message = CALLBACK_MSG_RULE_NOT_MATCHING;
+      }
 
-      case CALLBACK_ERROR:
-        result = ERROR_CALLBACK_ERROR;
-        goto _exit;
+      if (message != 0 && !RULE_IS_PRIVATE(rule))
+      {
+        switch (scanner->callback(scanner, message, rule, scanner->user_data))
+        {
+        case CALLBACK_ABORT:
+          result = ERROR_SUCCESS;
+          goto _exit;
+
+        case CALLBACK_ERROR:
+          result = ERROR_CALLBACK_ERROR;
+          goto _exit;
+        }
       }
     }
-  }
 
-  scanner->callback(
-      scanner, CALLBACK_MSG_SCAN_FINISHED, NULL, scanner->user_data);
+    scanner->callback(
+        scanner, CALLBACK_MSG_SCAN_FINISHED, NULL, scanner->user_data);
+  }
 
 _exit:
 
-  _yr_scanner_clean_matches(scanner);
-
-  if (scanner->matches_notebook != NULL)
+  if (result != ERROR_BLOCK_NOT_READY)
   {
-    yr_notebook_destroy(scanner->matches_notebook);
-    scanner->matches_notebook = NULL;
+    _yr_scanner_clean_matches(scanner);
+
+    if (scanner->matches_notebook != NULL)
+    {
+      yr_notebook_destroy(scanner->matches_notebook);
+      scanner->matches_notebook = NULL;
+    }
   }
+
+  YR_DEBUG_FPRINTF(2, stderr, "} = %d AKA %s // %s()\n",
+      result,
+      ERROR_SUCCESS         == result ? "ERROR_SUCCESS"         :
+      ERROR_BLOCK_NOT_READY == result ? "ERROR_BLOCK_NOT_READY" : "ERROR_?",
+      __FUNCTION__);
 
   return result;
 }
@@ -525,13 +579,31 @@ _exit:
 
 static YR_MEMORY_BLOCK* _yr_get_first_block(YR_MEMORY_BLOCK_ITERATOR* iterator)
 {
-  return (YR_MEMORY_BLOCK*) iterator->context;
+  YR_MEMORY_BLOCK* result = (YR_MEMORY_BLOCK*) iterator->context;
+
+  YR_DEBUG_FPRINTF(
+      2,
+      stderr,
+      "+ %s() {} = %p // default iterator; single memory block, non-blocking\n",
+      __FUNCTION__,
+      result);
+
+  return result;
 }
 
 
 static YR_MEMORY_BLOCK* _yr_get_next_block(YR_MEMORY_BLOCK_ITERATOR* iterator)
 {
-  return NULL;
+  YR_MEMORY_BLOCK* result = NULL;
+
+  YR_DEBUG_FPRINTF(
+      2,
+      stderr,
+      "+ %s() {} = %p // test iterator; single memory block, non-blocking\n",
+      __FUNCTION__,
+      result);
+
+  return result;
 }
 
 
@@ -541,7 +613,7 @@ static const uint8_t* _yr_fetch_block_data(YR_MEMORY_BLOCK* block)
 }
 
 
-static int __yr_scanner_scan_mem(
+YR_API int yr_scanner_scan_mem(
     YR_SCANNER* scanner,
     const uint8_t* buffer,
     size_t buffer_size)
@@ -549,10 +621,11 @@ static int __yr_scanner_scan_mem(
   YR_DEBUG_FPRINTF(
       2,
       stderr,
-      "+ %s(buffer=%p buffer_size=%zu)\n",
+      "+ %s(buffer=%p buffer_size=%zu%s) {\n",
       __FUNCTION__,
       buffer,
-      buffer_size);
+      buffer_size,
+      buffer_size == YR_DYNAMIC_BUFFER_SIZE ? " AKA YR_DYNAMIC_BUFFER_SIZE" : "");
 
   YR_MEMORY_BLOCK block;
   YR_MEMORY_BLOCK_ITERATOR iterator;
@@ -568,26 +641,15 @@ static int __yr_scanner_scan_mem(
   iterator.first = _yr_get_first_block;
   iterator.next = _yr_get_next_block;
 
-  return yr_scanner_scan_mem_blocks(scanner, &iterator);
-}
+  int result = yr_scanner_scan_mem_blocks(scanner, &iterator);
 
+  YR_DEBUG_FPRINTF(2, stderr, "} = %d AKA %s // %s()\n",
+      result,
+      ERROR_SUCCESS         == result ? "ERROR_SUCCESS"         :
+      ERROR_BLOCK_NOT_READY == result ? "ERROR_BLOCK_NOT_READY" : "ERROR_?",
+      __FUNCTION__);
 
-//
-// Tests may override this default with their own iterator, e.g. for testing
-// multiple blocks.
-//
-YR_API int (*_yr_scanner_scan_mem)(
-    YR_SCANNER* scanner,
-    const uint8_t* buffer,
-    size_t buffer_size) = &__yr_scanner_scan_mem;
-
-
-YR_API int yr_scanner_scan_mem(
-    YR_SCANNER* scanner,
-    const uint8_t* buffer,
-    size_t buffer_size)
-{
-  return _yr_scanner_scan_mem(scanner, buffer, buffer_size);
+  return result;
 }
 
 

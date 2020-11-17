@@ -34,6 +34,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <yara/types.h>
 #include <yara/utils.h>
 
+// If buffer size dynamic then calc file size at end of all mem blocks.
+#define YR_DYNAMIC_BUFFER_SIZE (0)
+
 typedef YR_SCAN_CONTEXT YR_SCANNER;
 
 YR_API int yr_scanner_create(YR_RULES* rules, YR_SCANNER** scanner);
@@ -44,6 +47,10 @@ YR_API void yr_scanner_set_callback(
     YR_SCANNER* scanner,
     YR_CALLBACK_FUNC callback,
     void* user_data);
+
+YR_API void yr_scanner_set_user_data_iterator(YR_SCANNER* scanner, void* user_data_iterator);
+
+YR_API void* yr_scanner_get_user_data_iterator(YR_SCANNER* scanner);
 
 YR_API void yr_scanner_set_timeout(YR_SCANNER* scanner, int timeout);
 
@@ -72,11 +79,6 @@ YR_API int yr_scanner_define_string_variable(
 YR_API int yr_scanner_scan_mem_blocks(
     YR_SCANNER* scanner,
     YR_MEMORY_BLOCK_ITERATOR* iterator);
-
-extern int (*_yr_scanner_scan_mem)(
-    YR_SCANNER* scanner,
-    const uint8_t* buffer,
-    size_t buffer_size);
 
 YR_API int yr_scanner_scan_mem(
     YR_SCANNER* scanner,

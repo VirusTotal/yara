@@ -199,6 +199,54 @@ YR_API int yr_rules_scan_mem_blocks(
 }
 
 
+YR_API int yr_rules_scan_mem_init(
+    YR_RULES* rules,
+    int flags,
+    YR_CALLBACK_FUNC callback,
+    void* user_data,
+    int timeout,
+    void* user_data_iterator,
+    YR_SCANNER** scanner)
+{
+  YR_DEBUG_FPRINTF(
+      2,
+      stderr,
+      "+ %s(timeout=%d) {\n",
+      __FUNCTION__,
+      timeout);
+
+  int result = ERROR_INTERNAL_FATAL_ERROR;
+
+  GOTO_EXIT_ON_ERROR(yr_scanner_create(rules, scanner));
+
+  yr_scanner_set_callback(*scanner, callback, user_data);
+  yr_scanner_set_user_data_iterator(*scanner, user_data_iterator);
+  yr_scanner_set_timeout(*scanner, timeout);
+  yr_scanner_set_flags(*scanner, flags);
+
+_exit:
+
+  YR_DEBUG_FPRINTF(2, stderr, "} = %d AKA %s // %s()\n",
+      result,
+      ERROR_SUCCESS         == result ? "ERROR_SUCCESS"         :
+      ERROR_BLOCK_NOT_READY == result ? "ERROR_BLOCK_NOT_READY" : "ERROR_?",
+      __FUNCTION__);
+
+  return result;
+}
+
+
+YR_API void yr_rules_scan_mem_fini(
+    YR_SCANNER* scanner)
+{
+  YR_DEBUG_FPRINTF(2, stderr, "+ %s() {\n", __FUNCTION__);
+
+  yr_scanner_destroy(scanner);
+
+  YR_DEBUG_FPRINTF(2, stderr, "} // %s()\n",__FUNCTION__);
+}
+
+
 YR_API int yr_rules_scan_mem(
     YR_RULES* rules,
     const uint8_t* buffer,
@@ -211,24 +259,30 @@ YR_API int yr_rules_scan_mem(
   YR_DEBUG_FPRINTF(
       2,
       stderr,
-      "+ %s(buffer=%p buffer_size=%zu timeout=%d) {}\n",
+      "+ %s(buffer=%p buffer_size=%zu timeout=%d) {\n",
       __FUNCTION__,
       buffer,
       buffer_size,
       timeout);
 
   YR_SCANNER* scanner;
-  int result;
+  void* user_data_iterator = NULL; // yr_scanner_scan_mem() uses stack for user data.
+  int result = ERROR_INTERNAL_FATAL_ERROR;
 
-  FAIL_ON_ERROR(yr_scanner_create(rules, &scanner));
-
-  yr_scanner_set_callback(scanner, callback, user_data);
-  yr_scanner_set_timeout(scanner, timeout);
-  yr_scanner_set_flags(scanner, flags);
+  GOTO_EXIT_ON_ERROR(yr_rules_scan_mem_init(
+      rules, flags, callback, user_data, timeout, user_data_iterator, &scanner));
 
   result = yr_scanner_scan_mem(scanner, buffer, buffer_size);
 
-  yr_scanner_destroy(scanner);
+  yr_rules_scan_mem_fini(scanner);
+
+_exit:
+
+  YR_DEBUG_FPRINTF(2, stderr, "} = %d AKA %s // %s()\n",
+      result,
+      ERROR_SUCCESS         == result ? "ERROR_SUCCESS"         :
+      ERROR_BLOCK_NOT_READY == result ? "ERROR_BLOCK_NOT_READY" : "ERROR_?",
+      __FUNCTION__);
 
   return result;
 }

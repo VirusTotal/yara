@@ -33,6 +33,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <yara/filemap.h>
 #include <yara/types.h>
 #include <yara/utils.h>
+#include <yara/scanner.h>
 
 #define CALLBACK_MSG_RULE_MATCHING     1
 #define CALLBACK_MSG_RULE_NOT_MATCHING 2
@@ -76,6 +77,18 @@ YR_API int yr_rules_scan_mem_blocks(
     YR_CALLBACK_FUNC callback,
     void* user_data,
     int timeout);
+
+YR_API int yr_rules_scan_mem_init(
+    YR_RULES* rules,
+    int flags,
+    YR_CALLBACK_FUNC callback,
+    void* user_data,
+    int timeout,
+    void* user_data_iterator,
+    YR_SCANNER** scanner);
+
+YR_API void yr_rules_scan_mem_fini(
+    YR_SCANNER* scanner);
 
 YR_API int yr_rules_scan_mem(
     YR_RULES* rules,

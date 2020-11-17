@@ -203,6 +203,8 @@ typedef struct YR_MODIFIER YR_MODIFIER;
 
 typedef struct YR_ITERATOR YR_ITERATOR;
 
+typedef struct _YR_PROC_ITERATOR_CTX YR_PROC_ITERATOR_CTX;
+
 typedef uint32_t YR_AC_TRANSITION;
 
 #pragma pack(push)
@@ -627,6 +629,14 @@ struct YR_MEMORY_BLOCK_ITERATOR
 
   YR_MEMORY_BLOCK_ITERATOR_FUNC first;
   YR_MEMORY_BLOCK_ITERATOR_FUNC next;
+
+  // If (next == NULL) and switch(last_error):
+  // case ERROR_SUCCESS        : No more blocks.
+  // case ERROR_BLOCK_NOT_READY: Block not ready.
+  int last_error;
+
+  // If buffer_size not known in advance, upon last block, iterator populates this buffer_size.
+  size_t buffer_size;
 };
 
 typedef int (*YR_CALLBACK_FUNC)(
@@ -658,6 +668,9 @@ struct YR_SCAN_CONTEXT
 
   // Pointer to user-provided data passed to the callback function.
   void* user_data;
+
+  // Pointer to user-provided data for the user (*_yr_scanner_scan_mem) function.
+  void* user_data_iterator;
 
   // Pointer to the user-provided callback function that is called when an
   // event occurs during the scan (a rule matching, a module being loaded, etc)
