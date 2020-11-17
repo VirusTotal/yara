@@ -525,7 +525,7 @@ int matches_blob(
 
   if (matches_blob_uses_default_iterator)
   {
-    // Call   yr_rules_scan_mem()                      <- Create scanner, and
+    // Call   yr_rules_scan_mem()                      <- Create & config scanner, and
     // calls  yr_scanner_scan_mem()                    <- Create default iterator, and
     // calls  yr_scanner_scan_mem_blocks()             <- Scan
 
@@ -534,10 +534,11 @@ int matches_blob(
   }
   else
   {
-    // Call   yr_rules_scan_mem_init()                 <- Create scanner
+    // Call   yr_scanner_create()                      <- Create scanner
+    // Call   yr_scanner_set_*()                       <- Config scanner
     // Call  _yr_test_single_or_multi_block_scan_mem() <- Create test iterator, and
     // calls  yr_scanner_scan_mem_blocks()             <- Scan
-    // Call   yr_rules_scan_mem_fini                   <- Destroy scanner
+    // Call   yr_scanner_destroy()                     <- Destroy scanner
 
     SCAN_USER_DATA_ITERATOR udi = {
       .iterator = NULL,
@@ -548,12 +549,16 @@ int matches_blob(
     void* user_data_iterator = &udi;
     YR_SCANNER* scanner;
 
-    assert_true_expr(ERROR_SUCCESS == yr_rules_scan_mem_init(
-        rules, flags, callback, user_data, timeout, user_data_iterator, &scanner));
+    assert_true_expr(ERROR_SUCCESS == yr_scanner_create(rules, &scanner));
+
+    yr_scanner_set_callback(scanner, callback, user_data);
+    yr_scanner_set_user_data_iterator(scanner, user_data_iterator);
+    yr_scanner_set_timeout(scanner, timeout);
+    yr_scanner_set_flags(scanner, flags);
 
     scan_result = _yr_test_single_or_multi_block_scan_mem(scanner, blob, blob_size);
 
-    yr_rules_scan_mem_fini(scanner);
+    yr_scanner_destroy(scanner);
   }
 
   if (scan_result != ERROR_SUCCESS)

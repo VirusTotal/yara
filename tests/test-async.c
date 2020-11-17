@@ -106,9 +106,13 @@ static void test_parallel_triple_scan(
     int timeout = 0;
 
     // Note: yr_rules_scan_mem() incompatible with ERROR_BLOCK_NOT_READY iterator return code,
-    //       therefore create scanner, but do not scan:
-    assert_true_expr(ERROR_SUCCESS == yr_rules_scan_mem_init(
-        rules, flags, callback, user_data, timeout, user_data_iterator, &scanner_instance[i]));
+    //       therefore create & configure scanner, but do not scan:
+    assert_true_expr(ERROR_SUCCESS == yr_scanner_create(rules, &scanner_instance[i]));
+
+    yr_scanner_set_callback(scanner_instance[i], callback, user_data);
+    yr_scanner_set_user_data_iterator(scanner_instance[i], user_data_iterator);
+    yr_scanner_set_timeout(scanner_instance[i], timeout);
+    yr_scanner_set_flags(scanner_instance[i], flags);
   }
 
   int total_scans_not_complete;
@@ -163,7 +167,7 @@ static void test_parallel_triple_scan(
   {
     // Note: yr_rules_scan_mem() incompatible with ERROR_BLOCK_NOT_READY return code,
     //       therefore its teardown code is here instead:
-    yr_rules_scan_mem_fini(scanner_instance[i]);
+    yr_scanner_destroy(scanner_instance[i]);
   }
 
   if ((ctx[0].matches != 2)
