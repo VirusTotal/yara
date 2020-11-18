@@ -453,7 +453,6 @@ int _scan_callback(
 
 int matches_blob_uses_default_iterator = 1;
 
-
 int matches_blob(
     char* rule,
     uint8_t* blob,
