@@ -75,15 +75,12 @@ static void test_parallel_triple_scan(
   YR_SCANNER*                  scanner_instance[PARALLEL_SCANS];
   int               mem_block_not_ready_if_zero[PARALLEL_SCANS];
   int                         scan_not_complete[PARALLEL_SCANS];
-  SCAN_CALLBACK_CTX                         ctx[PARALLEL_SCANS] = {
+  YR_MEMORY_BLOCK_ITERATOR             iterator[PARALLEL_SCANS];
+  YR_TEST_ITERATOR_CTX             iterator_ctx[PARALLEL_SCANS];
+  SCAN_CALLBACK_CTX                callback_ctx[PARALLEL_SCANS] = {
     [0].matches = 0, [0].module_data = NULL, [0].module_data_size = 0,
     [1].matches = 0, [1].module_data = NULL, [1].module_data_size = 0,
     [2].matches = 0, [2].module_data = NULL, [2].module_data_size = 0,
-  };
-  SCAN_USER_DATA_ITERATOR                   udi[PARALLEL_SCANS] = {
-    [0].iterator = NULL, [0].context = NULL, [0].block = NULL,
-    [1].iterator = NULL, [1].context = NULL, [1].block = NULL,
-    [2].iterator = NULL, [2].context = NULL, [2].block = NULL,
   };
 
   text[0] = text_0;
@@ -97,12 +94,11 @@ static void test_parallel_triple_scan(
     scan_not_complete[i] = 1;
     scan_complete_loops[i] = 0;
     len_text[i] = strlen(text[i]);
-    udi[i].buffer_size = len_text[i];
+    iterator_ctx[i].buffer_size_of_all_blocks = len_text[i];
 
     int flags = SCAN_FLAGS_NO_TRYCATCH;
     YR_CALLBACK_FUNC callback = _scan_callback;
-    void* user_data = &ctx[i];
-    void* user_data_iterator = &udi[i];
+    void* user_data = &callback_ctx[i];
     int timeout = 0;
 
     // Note: yr_rules_scan_mem() incompatible with ERROR_BLOCK_NOT_READY iterator return code,
@@ -110,13 +106,11 @@ static void test_parallel_triple_scan(
     assert_true_expr(ERROR_SUCCESS == yr_scanner_create(rules, &scanner_instance[i]));
 
     yr_scanner_set_callback(scanner_instance[i], callback, user_data);
-    yr_scanner_set_user_data_iterator(scanner_instance[i], user_data_iterator);
     yr_scanner_set_timeout(scanner_instance[i], timeout);
     yr_scanner_set_flags(scanner_instance[i], flags);
   }
 
   int total_scans_not_complete;
-  int buffer_size = YR_DYNAMIC_BUFFER_SIZE;
   int loop = 0;
   do
   {
@@ -126,11 +120,12 @@ static void test_parallel_triple_scan(
       YR_DEBUG_FPRINTF(
           1,
           stderr,
-          "- loop=%d i=%d strlen(text[i])=%ld ctx[i].matches=%d scan_not_complete[i]=%d // %s()\n",
+          "- loop=%d i=%d strlen(text[i])=%ld callback_ctx[i].matches=%d"
+          " scan_not_complete[i]=%d // %s()\n",
           loop,
           i,
           len_text[i],
-          ctx[i].matches,
+          callback_ctx[i].matches,
           scan_not_complete[i],
           __FUNCTION__);
 
@@ -143,7 +138,12 @@ static void test_parallel_triple_scan(
         // Note: yr_scanner_scan_mem() incompatible with ERROR_BLOCK_NOT_READY iterator return code,
         //       therefore use test _yr_test_single_or_multi_block_scan_mem() instead:
         int scan_result = _yr_test_single_or_multi_block_scan_mem(
-            scanner_instance[i], (uint8_t*) text[i], buffer_size);
+            scanner_instance[i],
+            (uint8_t*) text[i],
+            YR_DYNAMIC_BUFFER_SIZE,
+            &iterator[i],
+            &iterator_ctx[i],
+            loop);
 
         if (ERROR_BLOCK_NOT_READY == scan_result)
         {
@@ -170,13 +170,13 @@ static void test_parallel_triple_scan(
     yr_scanner_destroy(scanner_instance[i]);
   }
 
-  if ((ctx[0].matches != 2)
-  ||  (ctx[1].matches != 2)
-  ||  (ctx[2].matches != 2))
+  if ((callback_ctx[0].matches != 2)
+  ||  (callback_ctx[1].matches != 2)
+  ||  (callback_ctx[2].matches != 2))
   {
     fprintf(stderr, "%s:%d: parallel triple scan matches %d,%d,%d but expected 2,2,2\n",
         __FILE__, __LINE__,
-        ctx[0].matches, ctx[1].matches, ctx[2].matches);
+        callback_ctx[0].matches, callback_ctx[1].matches, callback_ctx[2].matches);
     exit(EXIT_FAILURE);
   }
 

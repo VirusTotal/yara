@@ -307,21 +307,6 @@ YR_API void yr_scanner_set_callback(
 }
 
 
-YR_API void yr_scanner_set_user_data_iterator(
-    YR_SCANNER* scanner,
-    void* user_data_iterator)
-{
-  scanner->user_data_iterator = user_data_iterator;
-}
-
-
-YR_API void* yr_scanner_get_user_data_iterator(
-    YR_SCANNER* scanner)
-{
-  return scanner->user_data_iterator;
-}
-
-
 YR_API void yr_scanner_set_timeout(YR_SCANNER* scanner, int timeout)
 {
   // Convert timeout from seconds to nanoseconds.

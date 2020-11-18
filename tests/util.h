@@ -51,10 +51,27 @@ extern int64_t yr_test_mem_block_not_ready_if_zero_init_value;
 // Counts calls to 'get first / next block' function for testing purposes.
 extern uint64_t yr_test_count_get_block;
 
-extern YR_API int _yr_test_single_or_multi_block_scan_mem(
+
+typedef struct YR_TEST_ITERATOR_CTX YR_TEST_ITERATOR_CTX;
+
+struct YR_TEST_ITERATOR_CTX {
+  const uint8_t* buffer;
+  size_t buffer_size;
+  YR_MEMORY_BLOCK current_block;
+  void* proc_info;
+
+  // Used by test iterator if buffer size not known in advance.
+  size_t buffer_size_of_all_blocks;
+};
+
+
+extern int _yr_test_single_or_multi_block_scan_mem(
     YR_SCANNER* scanner,
     const uint8_t* buffer,
-    size_t buffer_size);
+    size_t buffer_size,
+    YR_MEMORY_BLOCK_ITERATOR* iterator,
+    YR_TEST_ITERATOR_CTX* context,
+    int previous_calls);
 
 extern void chdir_if_env_top_srcdir(void);
 
@@ -75,20 +92,6 @@ struct SCAN_CALLBACK_CTX {
   int matches;
   void* module_data;
   size_t module_data_size;
-};
-
-
-typedef struct SCAN_USER_DATA_ITERATOR SCAN_USER_DATA_ITERATOR;
-
-struct SCAN_USER_DATA_ITERATOR {
-  // Allocated iterator memory for the duration of the scan.
-  // Note: Stored here instead of stack for ERROR_BLOCK_NOT_READY functionality.
-  YR_MEMORY_BLOCK* block;
-  YR_MEMORY_BLOCK_ITERATOR* iterator;
-  YR_PROC_ITERATOR_CTX* context;
-
-  // Used by test iterator if buffer size not known in advance.
-  size_t buffer_size;
 };
 
 

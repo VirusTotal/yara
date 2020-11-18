@@ -58,7 +58,10 @@ uint64_t yr_test_count_get_block = 0;
 static YR_MEMORY_BLOCK* _yr_test_single_block_get_first_block(
     YR_MEMORY_BLOCK_ITERATOR* iterator)
 {
-  YR_MEMORY_BLOCK* result = (YR_MEMORY_BLOCK*) iterator->context;
+  YR_TEST_ITERATOR_CTX* context = (YR_TEST_ITERATOR_CTX*) iterator->context;
+
+  context->current_block.size = context->buffer_size;
+  YR_MEMORY_BLOCK* result = &context->current_block;
 
   yr_test_count_get_block++;
 
@@ -94,14 +97,23 @@ static YR_MEMORY_BLOCK* _yr_test_single_block_get_next_block(
 static const uint8_t* _yr_test_single_block_fetch_block_data(
     YR_MEMORY_BLOCK* block)
 {
-  return (const uint8_t*) block->context;
+  YR_TEST_ITERATOR_CTX* context = (YR_TEST_ITERATOR_CTX*) block->context;
+
+  YR_DEBUG_FPRINTF(
+      2,
+      stderr,
+      "+ %s() {} = %p // test iterator; single memory block, non-blocking\n",
+      __FUNCTION__,
+      context->buffer);
+
+  return context->buffer;
 }
 
 
 static YR_MEMORY_BLOCK* _yr_test_multi_block_get_next_block(
     YR_MEMORY_BLOCK_ITERATOR* iterator)
 {
-  YR_PROC_ITERATOR_CTX* context = (YR_PROC_ITERATOR_CTX*) iterator->context;
+  YR_TEST_ITERATOR_CTX* context = (YR_TEST_ITERATOR_CTX*) iterator->context;
 
   YR_MEMORY_BLOCK* result;
   uint64_t overlap;
@@ -184,7 +196,7 @@ static YR_MEMORY_BLOCK* _yr_test_multi_block_get_first_block(
       "+ %s() {} // wrapping _yr_test_multi_block_get_next_block()\n",
       __FUNCTION__);
 
-  YR_PROC_ITERATOR_CTX* context = (YR_PROC_ITERATOR_CTX*) iterator->context;
+  YR_TEST_ITERATOR_CTX* context = (YR_TEST_ITERATOR_CTX*) iterator->context;
   context->current_block.base = 0;
   context->current_block.size = 0;
   return _yr_test_multi_block_get_next_block(iterator);
@@ -194,7 +206,7 @@ static YR_MEMORY_BLOCK* _yr_test_multi_block_get_first_block(
 static const uint8_t* _yr_test_multi_block_fetch_block_data(
     YR_MEMORY_BLOCK* block)
 {
-  YR_PROC_ITERATOR_CTX* context = (YR_PROC_ITERATOR_CTX*) block->context;
+  YR_TEST_ITERATOR_CTX* context = (YR_TEST_ITERATOR_CTX*) block->context;
 
 #if YR_DEBUG_VERBOSITY > 0
   uint64_t overlap = context->current_block.base > 0
@@ -217,10 +229,13 @@ static const uint8_t* _yr_test_multi_block_fetch_block_data(
 }
 
 
-YR_API int _yr_test_single_or_multi_block_scan_mem(
+int _yr_test_single_or_multi_block_scan_mem(
     YR_SCANNER* scanner,
     const uint8_t* buffer,
-    size_t buffer_size)
+    size_t buffer_size,
+    YR_MEMORY_BLOCK_ITERATOR* iterator,
+    YR_TEST_ITERATOR_CTX* iterator_ctx,
+    int previous_calls)
 {
   int result;
 
@@ -229,98 +244,50 @@ YR_API int _yr_test_single_or_multi_block_scan_mem(
   YR_DEBUG_FPRINTF(
       2,
       stderr,
-      "+ %s(buffer=%p buffer_size=%zu%s) {"
+      "+ %s(buffer=%p buffer_size=%zu%s previous_calls=%d) {"
       " // yr_test_mem_block_size=%" PRId64 "\n",
       __FUNCTION__,
       buffer,
       buffer_size,
       buffer_size == YR_DYNAMIC_BUFFER_SIZE ? " AKA YR_DYNAMIC_BUFFER_SIZE" : "",
+      previous_calls,
       yr_test_mem_block_size);
 
-  SCAN_USER_DATA_ITERATOR* udi = (SCAN_USER_DATA_ITERATOR*) yr_scanner_get_user_data_iterator(scanner);
-  assert_true_expr(udi != NULL);
-
-  if (udi->iterator != NULL)
+  if (previous_calls)
   {
-    YR_DEBUG_FPRINTF(
-        2,
-        stderr,
-        "- ->iterator=%p (existing) // %s()\n",
-        udi->iterator,
-        __FUNCTION__);
+    // Come here to skip initialization of iterator and context
   }
   else
   {
-    udi->iterator = (YR_MEMORY_BLOCK_ITERATOR*) yr_calloc(1, sizeof(YR_MEMORY_BLOCK_ITERATOR));
-    YR_DEBUG_FPRINTF(
-        2,
-        stderr,
-        "- ->iterator=%p (new) // %s()\n",
-        udi->iterator,
-        __FUNCTION__);
+    // Come here for initialization of iterator and context
 
-    if (udi->iterator == NULL)
-    {
-      result = ERROR_INSUFFICIENT_MEMORY;
-      goto _exit;
-    }
+    iterator_ctx->buffer = buffer;
+    iterator_ctx->buffer_size =
+        (buffer_size == YR_DYNAMIC_BUFFER_SIZE) ? iterator_ctx->buffer_size_of_all_blocks : buffer_size;
+    iterator_ctx->current_block.base = 0;
+    iterator_ctx->current_block.size = 0;
+    iterator_ctx->current_block.context = iterator_ctx;
+
+    iterator->context = iterator_ctx;
+    iterator->last_error = ERROR_SUCCESS;
 
     if (yr_test_mem_block_size)
     {
-      udi->context = (YR_PROC_ITERATOR_CTX*) yr_calloc(1, sizeof(YR_PROC_ITERATOR_CTX));
-
-      if (udi->context == NULL)
-      {
-        result = ERROR_INSUFFICIENT_MEMORY;
-        goto _exit;
-      }
-
-      udi->context->buffer = buffer;
-      udi->context->buffer_size =
-          (buffer_size == YR_DYNAMIC_BUFFER_SIZE) ? udi->buffer_size : buffer_size;
-      udi->context->current_block.base = 0;
-      udi->context->current_block.size = 0;
-      udi->context->current_block.context = udi->context;
-      udi->context->current_block.fetch_data = _yr_test_multi_block_fetch_block_data;
-
-      udi->iterator->context = udi->context;
-      udi->iterator->first = _yr_test_multi_block_get_first_block;
-      udi->iterator->next = _yr_test_multi_block_get_next_block;
-      udi->iterator->last_error = ERROR_SUCCESS;
+      // Come here for callbacks which dish up the buffer as multi blocks
+      iterator_ctx->current_block.fetch_data = _yr_test_multi_block_fetch_block_data;
+      iterator->first = _yr_test_multi_block_get_first_block;
+      iterator->next = _yr_test_multi_block_get_next_block;
     }
     else
     {
-      udi->block = (YR_MEMORY_BLOCK*) yr_calloc(1, sizeof(YR_MEMORY_BLOCK));
-
-      if (udi->block == NULL)
-      {
-        result = ERROR_INSUFFICIENT_MEMORY;
-        goto _exit;
-      }
-
-      udi->block->size =
-          (buffer_size == YR_DYNAMIC_BUFFER_SIZE) ? udi->buffer_size : buffer_size;
-      udi->block->base = 0;
-      udi->block->fetch_data = _yr_test_single_block_fetch_block_data;
-      udi->block->context = (void*) buffer;
-
-      udi->iterator->context = udi->block;
-      udi->iterator->first = _yr_test_single_block_get_first_block;
-      udi->iterator->next = _yr_test_single_block_get_next_block;
-      udi->iterator->last_error = ERROR_SUCCESS;
+      // Come here for callbacks which dish up the buffer as a single block
+      iterator_ctx->current_block.fetch_data = _yr_test_single_block_fetch_block_data;
+      iterator->first = _yr_test_single_block_get_first_block;
+      iterator->next = _yr_test_single_block_get_next_block;
     }
   }
 
-  result = yr_scanner_scan_mem_blocks(scanner, udi->iterator);
-
-  _exit:
-
-  if (ERROR_BLOCK_NOT_READY != result)
-  {
-    if (udi->iterator) yr_free(udi->iterator);
-    if (udi->context ) yr_free(udi->context );
-    if (udi->block   ) yr_free(udi->block   );
-  }
+  result = yr_scanner_scan_mem_blocks(scanner, iterator);
 
   YR_DEBUG_FPRINTF(
       2,
@@ -540,23 +507,20 @@ int matches_blob(
     // calls  yr_scanner_scan_mem_blocks()             <- Scan
     // Call   yr_scanner_destroy()                     <- Destroy scanner
 
-    SCAN_USER_DATA_ITERATOR udi = {
-      .iterator = NULL,
-      .context = NULL,
-      .block = NULL,
-    };
-
-    void* user_data_iterator = &udi;
     YR_SCANNER* scanner;
 
     assert_true_expr(ERROR_SUCCESS == yr_scanner_create(rules, &scanner));
 
     yr_scanner_set_callback(scanner, callback, user_data);
-    yr_scanner_set_user_data_iterator(scanner, user_data_iterator);
     yr_scanner_set_timeout(scanner, timeout);
     yr_scanner_set_flags(scanner, flags);
 
-    scan_result = _yr_test_single_or_multi_block_scan_mem(scanner, blob, blob_size);
+    YR_MEMORY_BLOCK_ITERATOR iterator;
+    YR_TEST_ITERATOR_CTX iterator_ctx;
+    int previous_calls = 0;
+
+    scan_result = _yr_test_single_or_multi_block_scan_mem(
+        scanner, blob, blob_size, &iterator, &iterator_ctx, previous_calls);
 
     yr_scanner_destroy(scanner);
   }

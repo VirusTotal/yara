@@ -48,10 +48,6 @@ YR_API void yr_scanner_set_callback(
     YR_CALLBACK_FUNC callback,
     void* user_data);
 
-YR_API void yr_scanner_set_user_data_iterator(YR_SCANNER* scanner, void* user_data_iterator);
-
-YR_API void* yr_scanner_get_user_data_iterator(YR_SCANNER* scanner);
-
 YR_API void yr_scanner_set_timeout(YR_SCANNER* scanner, int timeout);
 
 YR_API void yr_scanner_set_flags(YR_SCANNER* scanner, int flags);

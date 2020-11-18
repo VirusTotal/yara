@@ -218,13 +218,11 @@ YR_API int yr_rules_scan_mem(
       timeout);
 
   YR_SCANNER* scanner;
-  void* user_data_iterator = NULL; // yr_scanner_scan_mem() uses stack for user data.
   int result = ERROR_INTERNAL_FATAL_ERROR;
 
   GOTO_EXIT_ON_ERROR(yr_scanner_create(rules, &scanner));
 
   yr_scanner_set_callback(scanner, callback, user_data);
-  yr_scanner_set_user_data_iterator(scanner, user_data_iterator);
   yr_scanner_set_timeout(scanner, timeout);
   yr_scanner_set_flags(scanner, flags);
 
