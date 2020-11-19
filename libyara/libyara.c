@@ -235,7 +235,7 @@ YR_API int yr_initialize(void)
   uint32_t def_stack_size = DEFAULT_STACK_SIZE;
   uint32_t def_max_strings_per_rule = DEFAULT_MAX_STRINGS_PER_RULE;
   uint32_t def_max_match_data = DEFAULT_MAX_MATCH_DATA;
-  uint32_t def_max_processmemory_chunk = DEFAULT_MAX_PROCESSMEMORY_CHUNK;
+  uint64_t def_max_processmemory_chunk = DEFAULT_MAX_PROCESSMEMORY_CHUNK;
 
   init_count++;
 
