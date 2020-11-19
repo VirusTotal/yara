@@ -1142,26 +1142,23 @@ static void test_hex_strings()
         condition: all of them }",
       TEXT_1024_BYTES "1234567890");
 
-  // TODO why does this fail with TEXT_1024_BYTES ?
   assert_false_rule(
       "rule test { \
         strings: $a = { 31 32 [-] 32 33 } \
         condition: $a }",
-      "1234567890");
+      TEXT_1024_BYTES "1234567890");
 
-  // TODO why does this fail with TEXT_1024_BYTES ?
   assert_false_rule(
       "rule test { \
         strings: $a = { 35 36 [-] 31 32 } \
         condition: $a }",
-      "1234567890");
+      TEXT_1024_BYTES "1234567890");
 
-  // TODO why does this fail with TEXT_1024_BYTES ?
   assert_false_rule(
       "rule test { \
         strings: $a = { 31 32 [2-] 34 35 } \
         condition: $a }",
-      "1234567890");
+      TEXT_1024_BYTES "1234567890");
 
   assert_true_rule(
       "rule test { \
@@ -2547,42 +2544,42 @@ static void test_hash_module()
        rule test { \
         condition: \
           hash.md5(768, 8) == \
-            \"d1be8bf650fab9ab7a85e4a714d4eba6\" /*    exact 1st block boundary - overlap */ \
+            \"9edc35bab4510f115d0974fc3597d444\" /*    exact 1st block boundary - overlap */ \
             and \
           hash.md5(1024, 8) == \
-            \"d4363205e7f6176dabe8b933b2769f8f\" /*    exact 1st block boundary */ \
+            \"2b607f2bcdf01d2cc5484230c89f5e18\" /*    exact 1st block boundary */ \
             and \
           hash.md5(764, 8) == \
-            \"35405b1b2683b1d51ba3441a3172a374\" /* straddle 1st block boundary - overlap */ \
+            \"0cdfa992f3a982b27c364ab7d4ae9aa2\" /* straddle 1st block boundary - overlap */ \
             and \
           hash.md5(764, 8) == \
-            \"35405b1b2683b1d51ba3441a3172a374\" /* straddle 1st block boundary - overlap; cache */ \
+            \"0cdfa992f3a982b27c364ab7d4ae9aa2\" /* straddle 1st block boundary - overlap; cache */ \
             and \
           hash.md5(1020, 8) == \
-            \"a70d5cde4401a95d65ab1a1427e09840\" /* straddle 1st block boundary */ \
+            \"478adcaee8dec0bf8d9425d6894e8672\" /* straddle 1st block boundary */ \
             and \
           hash.md5(1020, 8) == \
-            \"a70d5cde4401a95d65ab1a1427e09840\" /* straddle 1st block boundary; cache */ \
+            \"478adcaee8dec0bf8d9425d6894e8672\" /* straddle 1st block boundary; cache */ \
             and \
           hash.md5(0, filesize) == \
-            \"8ac180ab8851afadaca143d1cddb0b24\" \
+            \"578848bccbd8294394864707e7f581e3\" \
             and \
           hash.md5(1, filesize) == \
-            \"423c5e6cbefc0b300a77b677b057a5f6\" \
+            \"633e48db55a5b477f9eeafad0ebbe108\" \
             and \
           hash.sha1(0, filesize) == \
-            \"c378be154b93768287c888ecd970f2a78d2227ee\" \
+            \"0170d3bfb54b5ba2fc12df571ffb000fcb2a379d\" \
             and \
           hash.sha1(1, filesize) == \
-            \"5adae5947d9aebac74b6bf134e32e5817b590a94\" \
+            \"89d614c846abe670f998ef02c4f5277ab76c0b4d\" \
             and \
           hash.sha256(0, filesize) == \
-            \"60879555540d4f89198601e259f20c2272f5a1212ac01a9de69284eaf472cee5\" \
+            \"ebc7a22f28028552576eeef3c17182a7d635ddaefbc94fc6d85f099289fdf8a5\" \
             and \
           hash.sha256(1, filesize) == \
-            \"f920a63e258ead17a4a1225192959bcb3872918d67abbbbad5a66b8ce827d721\" \
+            \"9c19006ade01c93f42949723f4ec8b1158e07fa43fd946f03e84a1ce25baa2c1\" \
             and \
-          hash.crc32(0, filesize) == 0xd26a1e20 \
+          hash.crc32(0, filesize) == 0x2b11af72 \
             and \
           hash.crc32(\"TEST STRING\") == 0x51f9be31 \
       }",
