@@ -159,7 +159,7 @@ YR_API YR_MEMORY_BLOCK* yr_process_get_next_memory_block(
 
     if (mbi.State == MEM_COMMIT && ((mbi.Protect & PAGE_NOACCESS) == 0))
     {
-      area_to_scan = mbi.RegionSize - (size_t)(address - mbi.BaseAddress);
+      area_to_scan = mbi.RegionSize - (size_t)(((uint8_t*) address) - ((uint8_t*) mbi.BaseAddress));
       if (((uint64_t) area_to_scan) > max_processmemory_chunk)
       {
         area_to_scan = (size_t) max_processmemory_chunk;
