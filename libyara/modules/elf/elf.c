@@ -306,7 +306,8 @@ static const char* str_table_entry(
             set_string(section_name, elf_obj, "sections[%i].name", i);                    \
         }                                                                                 \
                                                                                           \
-        if (yr_##bo##32toh(section->type) == ELF_SHT_SYMTAB &&                            \
+        if ((yr_##bo##32toh(section->type) == ELF_SHT_SYMTAB ||                           \
+             yr_##bo##32toh(section->type) == ELF_SHT_DYNSYM) &&                          \
             yr_##bo##32toh(section->link) < elf->sh_entry_count)                          \
         {                                                                                 \
           elf##bits##_section_header_t* string_section = section_table +                  \
