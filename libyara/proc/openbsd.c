@@ -29,10 +29,11 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #if defined(USE_OPENBSD_PROC)
 
+#include <sys/types.h>
+
 #include <errno.h>
 #include <sys/ptrace.h>
 #include <sys/sysctl.h>
-#include <sys/types.h>
 #include <sys/wait.h>
 #include <yara/error.h>
 #include <yara/libyara.h>
@@ -58,6 +59,8 @@ int _yr_process_attach(int pid, YR_PROC_ITERATOR_CTX* context)
 
   if (proc_info == NULL)
     return ERROR_INSUFFICIENT_MEMORY;
+
+  memset(proc_info, 0, sizeof(YR_PROC_INFO));
 
   proc_info->pid = pid;
   if (ptrace(PT_ATTACH, pid, NULL, 0) == -1)

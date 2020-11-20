@@ -57,6 +57,8 @@ int _yr_process_attach(int pid, YR_PROC_ITERATOR_CTX* context)
   if (proc_info == NULL)
     return ERROR_INSUFFICIENT_MEMORY;
 
+  memset(proc_info, 0, sizeof(YR_PROC_INFO));
+
   context->proc_info = proc_info;
 
   proc_info->pid = pid;
