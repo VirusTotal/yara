@@ -30,18 +30,17 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef YR_BASE64_H
 #define YR_BASE64_H
 
-#include <yara/types.h>
 #include <yara/re.h>
 #include <yara/sizedstr.h>
+#include <yara/types.h>
 
 typedef struct BASE64_NODE BASE64_NODE;
 
-struct BASE64_NODE {
-
+struct BASE64_NODE
+{
   SIZED_STRING* str;
   int escaped;
   BASE64_NODE* next;
-
 };
 
 int yr_base64_ast_from_string(

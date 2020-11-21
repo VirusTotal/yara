@@ -27,6 +27,7 @@ If you plan to modify YARA's source code you may also need ``flex`` and
 
 Compile and install YARA in the standard way::
 
+    ./bootstrap.sh
     ./configure
     make
     sudo make install

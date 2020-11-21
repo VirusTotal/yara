@@ -1,6 +1,7 @@
 #include <yara.h>
-#include "util.h"
+
 #include "blob.h"
+#include "util.h"
 
 int main(int argc, char** argv)
 {

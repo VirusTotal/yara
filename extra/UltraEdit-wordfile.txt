@@ -1,5 +1,5 @@
 /L20"YARA rules" YARA_LANG Line Comment = // Block Comment On = /* Block Comment Off = */ Escape Char = \ String Chars = " File Extensions = YAR
-/Marker Characters = "//" 
+/Marker Characters = "//"
 /Delimiters = ~!@%^&*()-+=|\/{}[]<>:;"' ,	.?
 /Function String = "rule [a-zA-Z0-9_]*"
 /Indent Strings = "{"
@@ -10,16 +10,16 @@
 /C1"YARA Keywords"
 and at any all ascii
 condition contains
-entrypoint
+endswith entrypoint
 for false filesize fullword
 global
-is in include int8 int16 int32
+icontains iendswith is istartswith in include int8 int16 int32
 meta matches
 nocase not
 or of
 private
 rule rva
-section strings
+section startswith strings
 them true
 uint8 uint16 uint32
 wide
@@ -27,7 +27,3 @@ wide
 /C4"YARA Strings"
 "
 // /
-
-
-
-

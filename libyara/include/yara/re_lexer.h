@@ -1,4 +1,4 @@
-  /*
+/*
 Copyright (c) 2013. The YARA Authors. All Rights Reserved.
 
 Redistribution and use in source and binary forms, with or without modification,
@@ -41,17 +41,15 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #undef YY_DECL
 #undef LEX_ENV
 
-
-#define yyparse         re_yyparse
-#define yylex           re_yylex
-#define yyerror         re_yyerror
-#define yyfatal         re_yyfatal
-#define yychar          re_yychar
-#define yydebug         re_yydebug
-#define yynerrs         re_yynerrs
-#define yyget_extra     re_yyget_extra
-#define yyget_lineno    re_yyget_lineno
-
+#define yyparse      re_yyparse
+#define yylex        re_yylex
+#define yyerror      re_yyerror
+#define yyfatal      re_yyfatal
+#define yychar       re_yychar
+#define yydebug      re_yydebug
+#define yynerrs      re_yynerrs
+#define yyget_extra  re_yyget_extra
+#define yyget_lineno re_yyget_lineno
 
 #ifndef YY_TYPEDEF_YY_SCANNER_T
 #define YY_TYPEDEF_YY_SCANNER_T
@@ -61,7 +59,6 @@ typedef void* yyscan_t;
 #define YY_EXTRA_TYPE RE_AST*
 #define YY_USE_CONST
 
-
 typedef struct _RE_LEX_ENVIRONMENT
 {
   RE_CLASS re_class;
@@ -70,8 +67,7 @@ typedef struct _RE_LEX_ENVIRONMENT
 
 } RE_LEX_ENVIRONMENT;
 
-
-#define LEX_ENV  ((RE_LEX_ENVIRONMENT*) lex_env)
+#define LEX_ENV ((RE_LEX_ENVIRONMENT*) lex_env)
 
 // The default behavior when a fatal error occurs in the parser is calling
 // exit(YY_EXIT_FAILURE) for terminating the process. This is not acceptable
@@ -82,32 +78,24 @@ typedef struct _RE_LEX_ENVIRONMENT
 
 #include <re_grammar.h>
 
-#define YY_DECL int re_yylex \
-    (YYSTYPE * yylval_param , yyscan_t yyscanner, RE_LEX_ENVIRONMENT* lex_env)
+#define YY_DECL \
+  int re_yylex( \
+      YYSTYPE* yylval_param, yyscan_t yyscanner, RE_LEX_ENVIRONMENT* lex_env)
 
-
-YY_EXTRA_TYPE yyget_extra(
-    yyscan_t yyscanner);
+YY_EXTRA_TYPE yyget_extra(yyscan_t yyscanner);
 
 int yylex(
     YYSTYPE* yylval_param,
     yyscan_t yyscanner,
     RE_LEX_ENVIRONMENT* lex_env);
 
-int yyparse(
-    void *yyscanner,
-    RE_LEX_ENVIRONMENT *lex_env);
-
 void yyerror(
     yyscan_t yyscanner,
     RE_LEX_ENVIRONMENT* lex_env,
-    const char *error_message);
+    const char* error_message);
 
-void yyfatal(
-    yyscan_t yyscanner,
-    const char *error_message);
+void yyfatal(yyscan_t yyscanner, const char* error_message);
 
-int yr_parse_re_string(
-  const char* re_string,
-  RE_AST** re_ast,
-  RE_ERROR* error);
+int yyparse(void* yyscanner, RE_LEX_ENVIRONMENT* lex_env);
+
+int yr_parse_re_string(const char* re_string, RE_AST** re_ast, RE_ERROR* error);

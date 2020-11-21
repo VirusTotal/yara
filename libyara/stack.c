@@ -27,26 +27,18 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-
-#include <yara/integers.h>
-#include <yara/stack.h>
-#include <yara/mem.h>
 #include <yara/error.h>
+#include <yara/integers.h>
+#include <yara/mem.h>
+#include <yara/stack.h>
 
-
-//
-// yr_stack_create
-//
+////////////////////////////////////////////////////////////////////////////////
 // Creates a stack for items of the size specified by item_size. All items
 // in the stack must have the same size. The stack will have an initial
 // capacity as specified by initial_capacity and will grow as required when
 // more objects are pushed.
 //
-
-int yr_stack_create(
-    int initial_capacity,
-    int item_size,
-    YR_STACK** stack)
+int yr_stack_create(int initial_capacity, int item_size, YR_STACK** stack)
 {
   *stack = (YR_STACK*) yr_malloc(sizeof(YR_STACK));
 
@@ -69,31 +61,21 @@ int yr_stack_create(
   return ERROR_SUCCESS;
 }
 
-//
-// yr_stack_destroy
-//
+////////////////////////////////////////////////////////////////////////////////
 // Destroys a stack and deallocates all its resources.
 //
-
-void yr_stack_destroy(
-    YR_STACK* stack)
+void yr_stack_destroy(YR_STACK* stack)
 {
   yr_free(stack->items);
   yr_free(stack);
 }
 
-
-//
-// yr_stack_push
-//
+////////////////////////////////////////////////////////////////////////////////
 // Pushes an item into the stack. If the stack has reached its capacity the
 // funtion tries to double the capacity. This operation can fail with
 // ERROR_INSUFFICIENT_MEMORY.
 //
-
-int yr_stack_push(
-    YR_STACK* stack,
-    void* item)
+int yr_stack_push(YR_STACK* stack, void* item)
 {
   if (stack->top == stack->capacity)
   {
@@ -117,19 +99,13 @@ int yr_stack_push(
   return ERROR_SUCCESS;
 }
 
-
-//
-// yr_stack_pop
-//
+////////////////////////////////////////////////////////////////////////////////
 // Pops an item from the stack. The caller must pass pointer to a buffer
 // where the function will copy the item. The buffer must have enough space
 // to hold the item. Returns 1 if an item could be poped and 0 if the stack
 // was already empty.
 //
-
-int yr_stack_pop(
-    YR_STACK* stack,
-    void* item)
+int yr_stack_pop(YR_STACK* stack, void* item)
 {
   if (stack->top == 0)  // Return 0 if stack is empty.
     return 0;

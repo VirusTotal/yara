@@ -68,6 +68,11 @@ AM_CFLAGS=-Wall -Wno-deprecated-declarations \
 	-D_GNU_SOURCE \
 	-I$(srcdir)/include
 
+if GCOV
+MOSTLYCLEANFILES = {.,proc,modules/*}/*.gc{no,da,ov}
+AM_CFLAGS+=-O0 -g -ftest-coverage -fprofile-arcs
+else
+
 if DEBUG
 AM_CFLAGS+=-g
 endif
@@ -77,6 +82,9 @@ AM_CFLAGS+=-O3
 else
 AM_CFLAGS+=-O0
 endif
+
+endif
+
 
 if ADDRESS_SANITIZER
 AM_CFLAGS+=-fsanitize=address

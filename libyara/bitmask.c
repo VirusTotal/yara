@@ -28,13 +28,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include <assert.h>
-
-#include <yara/utils.h>
 #include <yara/bitmask.h>
+#include <yara/utils.h>
 
-//
-// yr_bitmask_find_non_colliding_offset
-//
+////////////////////////////////////////////////////////////////////////////////
 // Find the smallest offset within bitmask A where bitmask B can be accommodated
 // without bit collisions. A collision occurs when both bitmasks have a bit set
 // to 1 at the same offset. This function assumes that the first bit in B is 1
@@ -48,18 +45,16 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // updates the value.
 //
 // Args:
-//    YR_BITMASK* a      - Bitmask A
-//    YR_BITMASK* b      - Bitmask B
-//    uint32_t len_a     - Length of bitmask A in bits
-//    uint32_t len_b     - Length of bitmask B in bits
-//    uint32_t* off_a    - Address of an uint32_t indicating the offset within
-//                         bitmask A where to start searching. In the first call
-//                         to it must point to a 0 value. This function updates
-//                         the value to use it in subsequent calls.
+//   a: Bitmask A
+//   b: Bitmask B
+//   len_a: Length of bitmask A in bits
+//   len_b: Length of bitmask B in bits
+//   off_a: Address of an uint32_t indicating the offset within bitmask A where
+//          to start searching. In the first call to it must point to a 0 value.
+//          This function updates the value to use it in subsequent calls.
 // Returns:
-//    The smaller offset within bitmask A where bitmask B can be put.
+//   The smaller offset within bitmask A where bitmask B can be put.
 //
-
 uint32_t yr_bitmask_find_non_colliding_offset(
     YR_BITMASK* a,
     YR_BITMASK* b,
@@ -78,7 +73,8 @@ uint32_t yr_bitmask_find_non_colliding_offset(
   // within such slots.
   for (i = *off_a / YR_BITMASK_SLOT_BITS;
        i <= len_a / YR_BITMASK_SLOT_BITS && a[i] == -1L;
-       i++);
+       i++)
+    ;
 
   *off_a = i;
 
@@ -102,7 +98,7 @@ uint32_t yr_bitmask_find_non_colliding_offset(
         if ((i + k <= len_a / YR_BITMASK_SLOT_BITS) && (m & a[i + k]) != 0)
         {
           found = false;
-          break ;
+          break;
         }
       }
 

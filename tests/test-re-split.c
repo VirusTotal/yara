@@ -27,8 +27,9 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include <yara.h>
 #include <stdio.h>
+#include <yara.h>
+
 #include "util.h"
 
 
@@ -45,12 +46,12 @@ int main(int argc, char** argv)
   yr_initialize();
   yr_re_parse_hex(
       "{ 01 02 03 04 [0-300] 05 06 07 08 [1-400] 09 0A 0B 0C }",
-      &re_ast, &re_error);
+      &re_ast,
+      &re_error);
 
   assert(re_ast != NULL);
 
-  yr_re_ast_split_at_chaining_point(
-      re_ast, &re_ast_remain, &min_gap, &max_gap);
+  yr_re_ast_split_at_chaining_point(re_ast, &re_ast_remain, &min_gap, &max_gap);
 
   assert(re_ast != NULL);
   assert(re_ast_remain != NULL);
@@ -60,8 +61,7 @@ int main(int argc, char** argv)
   yr_re_ast_destroy(re_ast);
   re_ast = re_ast_remain;
 
-  yr_re_ast_split_at_chaining_point(
-      re_ast, &re_ast_remain, &min_gap, &max_gap);
+  yr_re_ast_split_at_chaining_point(re_ast, &re_ast_remain, &min_gap, &max_gap);
 
   assert(re_ast != NULL);
   assert(re_ast_remain != NULL);
@@ -71,8 +71,7 @@ int main(int argc, char** argv)
   yr_re_ast_destroy(re_ast);
   re_ast = re_ast_remain;
 
-  yr_re_ast_split_at_chaining_point(
-      re_ast, &re_ast_remain, &min_gap, &max_gap);
+  yr_re_ast_split_at_chaining_point(re_ast, &re_ast_remain, &min_gap, &max_gap);
 
   assert(re_ast != NULL);
   assert(re_ast_remain == NULL);

@@ -28,12 +28,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 
-#include <string.h>
 #include <jansson.h>
-
-
-#include <yara/re.h>
+#include <string.h>
 #include <yara/modules.h>
+#include <yara/re.h>
 
 
 #if defined(_WIN32) || defined(__CYGWIN__)
@@ -105,8 +103,8 @@ define_function(network_dns_lookup)
 }
 
 
-#define METHOD_GET    0x01
-#define METHOD_POST   0x02
+#define METHOD_GET  0x01
+#define METHOD_POST 0x02
 
 
 uint64_t http_request(
@@ -131,7 +129,7 @@ uint64_t http_request(
     {
       if (((methods & METHOD_GET && strcasecmp(method, "get") == 0) ||
            (methods & METHOD_POST && strcasecmp(method, "post") == 0)) &&
-           yr_re_match(context, uri_regexp, uri) > 0)
+          yr_re_match(context, uri_regexp, uri) > 0)
       {
         result = 1;
         break;
@@ -145,34 +143,22 @@ uint64_t http_request(
 
 define_function(network_http_request)
 {
-  return_integer(
-      http_request(
-          scan_context(),
-          parent(),
-          regexp_argument(1),
-          METHOD_GET | METHOD_POST));
+  return_integer(http_request(
+      scan_context(), parent(), regexp_argument(1), METHOD_GET | METHOD_POST));
 }
 
 
 define_function(network_http_get)
 {
   return_integer(
-      http_request(
-          scan_context(),
-          parent(),
-          regexp_argument(1),
-          METHOD_GET));
+      http_request(scan_context(), parent(), regexp_argument(1), METHOD_GET));
 }
 
 
 define_function(network_http_post)
 {
   return_integer(
-      http_request(
-          scan_context(),
-          parent(),
-          regexp_argument(1),
-          METHOD_POST));
+      http_request(scan_context(), parent(), regexp_argument(1), METHOD_POST));
 }
 
 
@@ -227,7 +213,8 @@ define_function(network_tcp)
     {
       if (yr_re_match(context, regexp_argument(1), dst) > 0)
       {
-        if ((int64_t)dport == integer_argument(2)) {
+        if ((int64_t) dport == integer_argument(2))
+        {
           result = 1;
           break;
         }
@@ -263,7 +250,8 @@ define_function(network_udp)
     {
       if (yr_re_match(context, regexp_argument(1), dst) > 0)
       {
-        if ((int64_t)dport == integer_argument(2)) {
+        if ((int64_t) dport == integer_argument(2))
+        {
           result = 1;
           break;
         }
@@ -279,7 +267,6 @@ define_function(network_udp)
 // checks for regex match on user-agent
 define_function(network_http_user_agent)
 {
-  
   YR_SCAN_CONTEXT* context = scan_context();
   YR_OBJECT* network_obj = parent();
 
@@ -356,7 +343,6 @@ define_function(filesystem_file_access)
 }
 
 
-
 define_function(sync_mutex)
 {
   YR_SCAN_CONTEXT* context = scan_context();
@@ -381,9 +367,8 @@ define_function(sync_mutex)
 }
 
 
-begin_declarations;
-
-  begin_struct("network");
+begin_declarations
+  begin_struct("network")
     declare_function("dns_lookup", "r", "i", network_dns_lookup);
     declare_function("http_get", "r", "i", network_http_get);
     declare_function("http_post", "r", "i", network_http_post);
@@ -392,32 +377,29 @@ begin_declarations;
     declare_function("host", "r", "i", network_host);
     declare_function("tcp", "ri", "i", network_tcp);
     declare_function("udp", "ri", "i", network_udp);
-  end_struct("network");
+  end_struct("network")
 
-  begin_struct("registry");
+  begin_struct("registry")
     declare_function("key_access", "r", "i", registry_key_access);
-  end_struct("registry");
+  end_struct("registry")
 
-  begin_struct("filesystem");
+  begin_struct("filesystem")
     declare_function("file_access", "r", "i", filesystem_file_access);
-  end_struct("filesystem");
+  end_struct("filesystem")
 
-  begin_struct("sync");
-    declare_function("mutex", "r", "i", sync_mutex);
-  end_struct("sync");
+  begin_struct("sync")
+    declare_function("mutex", "r", "i", sync_mutex)
+  end_struct("sync")
+end_declarations
 
-end_declarations;
 
-
-int module_initialize(
-    YR_MODULE* module)
+int module_initialize(YR_MODULE* module)
 {
   return ERROR_SUCCESS;
 }
 
 
-int module_finalize(
-    YR_MODULE* module)
+int module_finalize(YR_MODULE* module)
 {
   return ERROR_SUCCESS;
 }
@@ -445,11 +427,11 @@ int module_load(
   json = json_loadb(
       (const char*) module_data,
       module_data_size,
-      #if JANSSON_VERSION_HEX >= 0x020600
+#if JANSSON_VERSION_HEX >= 0x020600
       JSON_ALLOW_NUL,
-      #else
+#else
       0,
-      #endif
+#endif
       &json_error);
 
   if (json == NULL)
@@ -482,4 +464,3 @@ int module_unload(YR_OBJECT* module)
 
   return ERROR_SUCCESS;
 }
-

@@ -32,22 +32,21 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <yara/utils.h>
 
-#define YR_MAJOR_VERSION   4
-#define YR_MINOR_VERSION   0
-#define YR_MICRO_VERSION   2
+#define YR_MAJOR_VERSION 4
+#define YR_MINOR_VERSION 0
+#define YR_MICRO_VERSION 2
 
-#define version_str(s) _version_str(s)
+#define version_str(s)  _version_str(s)
 #define _version_str(s) #s
 
 // Version as a string
-#define YR_VERSION version_str(YR_MAJOR_VERSION) \
-    "." version_str(YR_MINOR_VERSION) \
-    "." version_str(YR_MICRO_VERSION)
+#define YR_VERSION                               \
+  version_str(YR_MAJOR_VERSION) "." version_str( \
+      YR_MINOR_VERSION) "." version_str(YR_MICRO_VERSION)
 
 // Version as a single 4-byte hex number, e.g. 0x030401 == 3.4.1.
-#define YR_VERSION_HEX ((YR_MAJOR_VERSION << 16) | \
-    (YR_MINOR_VERSION << 8) | \
-    (YR_MICRO_VERSION << 0))
+#define YR_VERSION_HEX \
+  ((YR_MAJOR_VERSION << 16) | (YR_MINOR_VERSION << 8) | (YR_MICRO_VERSION << 0))
 
 
 // Enumerated type listing configuration options
@@ -62,9 +61,9 @@ typedef enum _YR_CONFIG_NAME
 } YR_CONFIG_NAME;
 
 
-#define DEFAULT_STACK_SIZE              16384
-#define DEFAULT_MAX_STRINGS_PER_RULE    10000
-#define DEFAULT_MAX_MATCH_DATA          512
+#define DEFAULT_STACK_SIZE           16384
+#define DEFAULT_MAX_STRINGS_PER_RULE 10000
+#define DEFAULT_MAX_MATCH_DATA       512
 
 
 YR_API int yr_initialize(void);

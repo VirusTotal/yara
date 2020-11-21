@@ -31,9 +31,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define YR_HASH_H
 
 #include <stddef.h>
-
-#include <yara/utils.h>
 #include <yara/integers.h>
+#include <yara/utils.h>
 
 typedef struct _YR_HASH_TABLE_ENTRY
 {
@@ -59,15 +58,10 @@ typedef struct _YR_HASH_TABLE
 typedef int (*YR_HASH_TABLE_FREE_VALUE_FUNC)(void* value);
 
 
-uint32_t yr_hash(
-    uint32_t seed,
-    const void* buffer,
-    size_t len);
+uint32_t yr_hash(uint32_t seed, const void* buffer, size_t len);
 
 
-YR_API int yr_hash_table_create(
-    int size,
-    YR_HASH_TABLE** table);
+YR_API int yr_hash_table_create(int size, YR_HASH_TABLE** table);
 
 
 YR_API void yr_hash_table_clean(
