@@ -597,7 +597,7 @@ u?int(8|16|32)(be)? {
 
 <str>\\r   {
 
-  lex_check_space_ok("\t", yyextra->lex_buf_len, YR_LEX_BUF_SIZE);
+  lex_check_space_ok("\r", yyextra->lex_buf_len, YR_LEX_BUF_SIZE);
   *yyextra->lex_buf_ptr++ = '\r';
   yyextra->lex_buf_len++;
 }

@@ -2074,7 +2074,7 @@ YY_RULE_SETUP
 #line 598 "lexer.l"
 {
 
-  lex_check_space_ok("\t", yyextra->lex_buf_len, YR_LEX_BUF_SIZE);
+  lex_check_space_ok("\r", yyextra->lex_buf_len, YR_LEX_BUF_SIZE);
   *yyextra->lex_buf_ptr++ = '\r';
   yyextra->lex_buf_len++;
 }
