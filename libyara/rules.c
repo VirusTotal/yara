@@ -28,19 +28,18 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include <assert.h>
-#include <string.h>
 #include <ctype.h>
-
+#include <string.h>
+#include <yara/compiler.h>
 #include <yara/error.h>
 #include <yara/filemap.h>
+#include <yara/globals.h>
 #include <yara/mem.h>
 #include <yara/proc.h>
 #include <yara/rules.h>
-#include <yara/utils.h>
-#include <yara/globals.h>
 #include <yara/scan.h>
 #include <yara/scanner.h>
-#include <yara/compiler.h>
+#include <yara/utils.h>
 
 
 YR_API int yr_rules_define_integer_variable(
@@ -200,27 +199,6 @@ YR_API int yr_rules_scan_mem_blocks(
 }
 
 
-static YR_MEMORY_BLOCK* _yr_get_first_block(
-    YR_MEMORY_BLOCK_ITERATOR* iterator)
-{
-  return (YR_MEMORY_BLOCK*) iterator->context;
-}
-
-
-static YR_MEMORY_BLOCK* _yr_get_next_block(
-    YR_MEMORY_BLOCK_ITERATOR* iterator)
-{
-  return NULL;
-}
-
-
-static const uint8_t* _yr_fetch_block_data(
-    YR_MEMORY_BLOCK* block)
-{
-  return (const uint8_t*) block->context;
-}
-
-
 YR_API int yr_rules_scan_mem(
     YR_RULES* rules,
     const uint8_t* buffer,
@@ -230,25 +208,29 @@ YR_API int yr_rules_scan_mem(
     void* user_data,
     int timeout)
 {
-  YR_MEMORY_BLOCK block;
-  YR_MEMORY_BLOCK_ITERATOR iterator;
-
-  block.size = buffer_size;
-  block.base = 0;
-  block.fetch_data = _yr_fetch_block_data;
-  block.context = (void*) buffer;
-
-  iterator.context = &block;
-  iterator.first = _yr_get_first_block;
-  iterator.next = _yr_get_next_block;
-
-  return yr_rules_scan_mem_blocks(
-      rules,
-      &iterator,
-      flags,
-      callback,
-      user_data,
+  YR_DEBUG_FPRINTF(
+      2,
+      stderr,
+      "+ %s(buffer=%p buffer_size=%zu timeout=%d) {}\n",
+      __FUNCTION__,
+      buffer,
+      buffer_size,
       timeout);
+
+  YR_SCANNER* scanner;
+  int result;
+
+  FAIL_ON_ERROR(yr_scanner_create(rules, &scanner));
+
+  yr_scanner_set_callback(scanner, callback, user_data);
+  yr_scanner_set_timeout(scanner, timeout);
+  yr_scanner_set_flags(scanner, flags);
+
+  result = yr_scanner_scan_mem(scanner, buffer, buffer_size);
+
+  yr_scanner_destroy(scanner);
+
+  return result;
 }
 
 
@@ -267,13 +249,7 @@ YR_API int yr_rules_scan_file(
   if (result == ERROR_SUCCESS)
   {
     result = yr_rules_scan_mem(
-        rules,
-        mfile.data,
-        mfile.size,
-        flags,
-        callback,
-        user_data,
-        timeout);
+        rules, mfile.data, mfile.size, flags, callback, user_data, timeout);
 
     yr_filemap_unmap(&mfile);
   }
@@ -297,13 +273,7 @@ YR_API int yr_rules_scan_fd(
   if (result == ERROR_SUCCESS)
   {
     result = yr_rules_scan_mem(
-        rules,
-        mfile.data,
-        mfile.size,
-        flags,
-        callback,
-        user_data,
-        timeout);
+        rules, mfile.data, mfile.size, flags, callback, user_data, timeout);
 
     yr_filemap_unmap_fd(&mfile);
   }
@@ -320,11 +290,12 @@ YR_API int yr_rules_scan_proc(
     void* user_data,
     int timeout)
 {
+  YR_DEBUG_FPRINTF(
+      2, stderr, "+ %s(pid=%d timeout=%d) {}\n", __FUNCTION__, pid, timeout);
+
   YR_MEMORY_BLOCK_ITERATOR iterator;
 
-  int result = yr_process_open_iterator(
-      pid,
-      &iterator);
+  int result = yr_process_open_iterator(pid, &iterator);
 
   if (result == ERROR_SUCCESS)
   {
@@ -343,9 +314,7 @@ YR_API int yr_rules_scan_proc(
 }
 
 
-int yr_rules_from_arena(
-    YR_ARENA* arena,
-    YR_RULES** rules)
+int yr_rules_from_arena(YR_ARENA* arena, YR_RULES** rules)
 {
   YR_RULES* new_rules = (YR_RULES*) yr_malloc(sizeof(YR_RULES));
 
@@ -365,11 +334,9 @@ int yr_rules_from_arena(
   new_rules->num_strings = summary->num_strings;
   new_rules->num_namespaces = summary->num_namespaces;
 
-  new_rules->rules_list_head = yr_arena_get_ptr(
-      arena, YR_RULES_TABLE, 0);
+  new_rules->rules_list_head = yr_arena_get_ptr(arena, YR_RULES_TABLE, 0);
 
-  new_rules->strings_list_head = yr_arena_get_ptr(
-      arena, YR_STRINGS_TABLE, 0);
+  new_rules->strings_list_head = yr_arena_get_ptr(arena, YR_STRINGS_TABLE, 0);
 
   new_rules->externals_list_head = yr_arena_get_ptr(
       arena, YR_EXTERNAL_VARIABLES_TABLE, 0);
@@ -383,8 +350,7 @@ int yr_rules_from_arena(
   new_rules->ac_match_pool = yr_arena_get_ptr(
       arena, YR_AC_STATE_MATCHES_POOL, 0);
 
-  new_rules->code_start = yr_arena_get_ptr(
-      arena, YR_CODE_SECTION, 0);
+  new_rules->code_start = yr_arena_get_ptr(arena, YR_CODE_SECTION, 0);
 
   *rules = new_rules;
 
@@ -392,10 +358,7 @@ int yr_rules_from_arena(
 }
 
 
-
-YR_API int yr_rules_load_stream(
-    YR_STREAM* stream,
-    YR_RULES** rules)
+YR_API int yr_rules_load_stream(YR_STREAM* stream, YR_RULES** rules)
 {
   YR_ARENA* arena;
 
@@ -414,9 +377,7 @@ YR_API int yr_rules_load_stream(
 }
 
 
-YR_API int yr_rules_load(
-    const char* filename,
-    YR_RULES** rules)
+YR_API int yr_rules_load(const char* filename, YR_RULES** rules)
 {
   int result;
 
@@ -436,17 +397,13 @@ YR_API int yr_rules_load(
 }
 
 
-YR_API int yr_rules_save_stream(
-    YR_RULES* rules,
-    YR_STREAM* stream)
+YR_API int yr_rules_save_stream(YR_RULES* rules, YR_STREAM* stream)
 {
   return yr_arena_save_stream(rules->arena, stream);
 }
 
 
-YR_API int yr_rules_save(
-    YR_RULES* rules,
-    const char* filename)
+YR_API int yr_rules_save(YR_RULES* rules, const char* filename)
 {
   int result;
 
@@ -466,21 +423,18 @@ YR_API int yr_rules_save(
 }
 
 
-static int _uint32_cmp (
-    const void * a,
-    const void * b)
+static int _uint32_cmp(const void* a, const void* b)
 {
-   return (*(uint32_t*) a - *(uint32_t*) b);
+  return (*(uint32_t*) a - *(uint32_t*) b);
 }
 
-YR_API int yr_rules_get_stats(
-    YR_RULES* rules,
-    YR_RULES_STATS *stats)
+YR_API int yr_rules_get_stats(YR_RULES* rules, YR_RULES_STATS* stats)
 {
   memset(stats, 0, sizeof(YR_RULES_STATS));
 
   stats->ac_tables_size = yr_arena_get_current_offset(
-      rules->arena, YR_AC_TRANSITION_TABLE) / sizeof(YR_AC_TRANSITION);
+                              rules->arena, YR_AC_TRANSITION_TABLE) /
+                          sizeof(YR_AC_TRANSITION);
 
   uint32_t* match_list_lengths = (uint32_t*) yr_malloc(
       sizeof(uint32_t) * stats->ac_tables_size);
@@ -500,7 +454,7 @@ YR_API int yr_rules_get_stats(
 
     if (rules->ac_match_table[i] != 0)
     {
-      YR_AC_MATCH *m = &rules->ac_match_pool[rules->ac_match_table[i]-1];
+      YR_AC_MATCH* m = &rules->ac_match_pool[rules->ac_match_table[i] - 1];
 
       while (m != NULL)
       {
@@ -534,14 +488,14 @@ YR_API int yr_rules_get_stats(
   for (int i = 0; i < 100; i++)
   {
     if (i < c)
-      stats->top_ac_match_list_lengths[i] = match_list_lengths[c-i-1];
+      stats->top_ac_match_list_lengths[i] = match_list_lengths[c - i - 1];
     else
       stats->top_ac_match_list_lengths[i] = 0;
   }
 
   stats->ac_average_match_list_length = match_list_length_sum / c;
   stats->ac_match_list_length_pctls[0] = match_list_lengths[0];
-  stats->ac_match_list_length_pctls[100] = match_list_lengths[c-1];
+  stats->ac_match_list_length_pctls[100] = match_list_lengths[c - 1];
 
   for (int i = 1; i < 100; i++)
     stats->ac_match_list_length_pctls[i] = match_list_lengths[(c * i) / 100];
@@ -552,8 +506,7 @@ YR_API int yr_rules_get_stats(
 }
 
 
-YR_API int yr_rules_destroy(
-    YR_RULES* rules)
+YR_API int yr_rules_destroy(YR_RULES* rules)
 {
   YR_EXTERNAL_VARIABLE* external = rules->externals_list_head;
 
@@ -571,8 +524,7 @@ YR_API int yr_rules_destroy(
   return ERROR_SUCCESS;
 }
 
-YR_API void yr_rule_disable(
-    YR_RULE* rule)
+YR_API void yr_rule_disable(YR_RULE* rule)
 {
   YR_STRING* string;
 
@@ -585,8 +537,7 @@ YR_API void yr_rule_disable(
 }
 
 
-YR_API void yr_rule_enable(
-    YR_RULE* rule)
+YR_API void yr_rule_enable(YR_RULE* rule)
 {
   YR_STRING* string;
 

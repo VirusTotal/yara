@@ -7,910 +7,990 @@
 #endif
 
 #include "modules/pb_tests/pb_tests.pb-c.h"
-void   test__struct__nested_struct__init
-                     (Test__Struct__NestedStruct         *message)
+void test__struct__nested_struct__init(Test__Struct__NestedStruct *message)
 {
-  static const Test__Struct__NestedStruct init_value = TEST__STRUCT__NESTED_STRUCT__INIT;
+  static const Test__Struct__NestedStruct init_value =
+      TEST__STRUCT__NESTED_STRUCT__INIT;
   *message = init_value;
 }
-void   test__struct__init
-                     (Test__Struct         *message)
+void test__struct__init(Test__Struct *message)
 {
   static const Test__Struct init_value = TEST__STRUCT__INIT;
   *message = init_value;
 }
-size_t test__struct__get_packed_size
-                     (const Test__Struct *message)
+size_t test__struct__get_packed_size(const Test__Struct *message)
 {
   assert(message->base.descriptor == &test__struct__descriptor);
-  return protobuf_c_message_get_packed_size ((const ProtobufCMessage*)(message));
+  return protobuf_c_message_get_packed_size(
+      (const ProtobufCMessage *) (message));
 }
-size_t test__struct__pack
-                     (const Test__Struct *message,
-                      uint8_t       *out)
+size_t test__struct__pack(const Test__Struct *message, uint8_t *out)
 {
   assert(message->base.descriptor == &test__struct__descriptor);
-  return protobuf_c_message_pack ((const ProtobufCMessage*)message, out);
+  return protobuf_c_message_pack((const ProtobufCMessage *) message, out);
 }
-size_t test__struct__pack_to_buffer
-                     (const Test__Struct *message,
-                      ProtobufCBuffer *buffer)
+size_t test__struct__pack_to_buffer(
+    const Test__Struct *message,
+    ProtobufCBuffer *buffer)
 {
   assert(message->base.descriptor == &test__struct__descriptor);
-  return protobuf_c_message_pack_to_buffer ((const ProtobufCMessage*)message, buffer);
+  return protobuf_c_message_pack_to_buffer(
+      (const ProtobufCMessage *) message, buffer);
 }
-Test__Struct *
-       test__struct__unpack
-                     (ProtobufCAllocator  *allocator,
-                      size_t               len,
-                      const uint8_t       *data)
+Test__Struct *test__struct__unpack(
+    ProtobufCAllocator *allocator,
+    size_t len,
+    const uint8_t *data)
 {
-  return (Test__Struct *)
-     protobuf_c_message_unpack (&test__struct__descriptor,
-                                allocator, len, data);
+  return (Test__Struct *) protobuf_c_message_unpack(
+      &test__struct__descriptor, allocator, len, data);
 }
-void   test__struct__free_unpacked
-                     (Test__Struct *message,
-                      ProtobufCAllocator *allocator)
+void test__struct__free_unpacked(
+    Test__Struct *message,
+    ProtobufCAllocator *allocator)
 {
-  if(!message)
+  if (!message)
     return;
   assert(message->base.descriptor == &test__struct__descriptor);
-  protobuf_c_message_free_unpacked ((ProtobufCMessage*)message, allocator);
+  protobuf_c_message_free_unpacked((ProtobufCMessage *) message, allocator);
 }
-void   test__map_struct__init
-                     (Test__MapStruct         *message)
+void test__map_struct__init(Test__MapStruct *message)
 {
   static const Test__MapStruct init_value = TEST__MAP_STRUCT__INIT;
   *message = init_value;
 }
-size_t test__map_struct__get_packed_size
-                     (const Test__MapStruct *message)
+size_t test__map_struct__get_packed_size(const Test__MapStruct *message)
 {
   assert(message->base.descriptor == &test__map_struct__descriptor);
-  return protobuf_c_message_get_packed_size ((const ProtobufCMessage*)(message));
+  return protobuf_c_message_get_packed_size(
+      (const ProtobufCMessage *) (message));
 }
-size_t test__map_struct__pack
-                     (const Test__MapStruct *message,
-                      uint8_t       *out)
+size_t test__map_struct__pack(const Test__MapStruct *message, uint8_t *out)
 {
   assert(message->base.descriptor == &test__map_struct__descriptor);
-  return protobuf_c_message_pack ((const ProtobufCMessage*)message, out);
+  return protobuf_c_message_pack((const ProtobufCMessage *) message, out);
 }
-size_t test__map_struct__pack_to_buffer
-                     (const Test__MapStruct *message,
-                      ProtobufCBuffer *buffer)
+size_t test__map_struct__pack_to_buffer(
+    const Test__MapStruct *message,
+    ProtobufCBuffer *buffer)
 {
   assert(message->base.descriptor == &test__map_struct__descriptor);
-  return protobuf_c_message_pack_to_buffer ((const ProtobufCMessage*)message, buffer);
+  return protobuf_c_message_pack_to_buffer(
+      (const ProtobufCMessage *) message, buffer);
 }
-Test__MapStruct *
-       test__map_struct__unpack
-                     (ProtobufCAllocator  *allocator,
-                      size_t               len,
-                      const uint8_t       *data)
+Test__MapStruct *test__map_struct__unpack(
+    ProtobufCAllocator *allocator,
+    size_t len,
+    const uint8_t *data)
 {
-  return (Test__MapStruct *)
-     protobuf_c_message_unpack (&test__map_struct__descriptor,
-                                allocator, len, data);
+  return (Test__MapStruct *) protobuf_c_message_unpack(
+      &test__map_struct__descriptor, allocator, len, data);
 }
-void   test__map_struct__free_unpacked
-                     (Test__MapStruct *message,
-                      ProtobufCAllocator *allocator)
+void test__map_struct__free_unpacked(
+    Test__MapStruct *message,
+    ProtobufCAllocator *allocator)
 {
-  if(!message)
+  if (!message)
     return;
   assert(message->base.descriptor == &test__map_struct__descriptor);
-  protobuf_c_message_free_unpacked ((ProtobufCMessage*)message, allocator);
+  protobuf_c_message_free_unpacked((ProtobufCMessage *) message, allocator);
 }
-void   test__root_message__fmap_int32_entry__init
-                     (Test__RootMessage__FMapInt32Entry         *message)
+void test__root_message__fmap_int32_entry__init(
+    Test__RootMessage__FMapInt32Entry *message)
 {
-  static const Test__RootMessage__FMapInt32Entry init_value = TEST__ROOT_MESSAGE__FMAP_INT32_ENTRY__INIT;
+  static const Test__RootMessage__FMapInt32Entry init_value =
+      TEST__ROOT_MESSAGE__FMAP_INT32_ENTRY__INIT;
   *message = init_value;
 }
-void   test__root_message__fmap_bool_entry__init
-                     (Test__RootMessage__FMapBoolEntry         *message)
+void test__root_message__fmap_bool_entry__init(
+    Test__RootMessage__FMapBoolEntry *message)
 {
-  static const Test__RootMessage__FMapBoolEntry init_value = TEST__ROOT_MESSAGE__FMAP_BOOL_ENTRY__INIT;
+  static const Test__RootMessage__FMapBoolEntry init_value =
+      TEST__ROOT_MESSAGE__FMAP_BOOL_ENTRY__INIT;
   *message = init_value;
 }
-void   test__root_message__fmap_string_entry__init
-                     (Test__RootMessage__FMapStringEntry         *message)
+void test__root_message__fmap_string_entry__init(
+    Test__RootMessage__FMapStringEntry *message)
 {
-  static const Test__RootMessage__FMapStringEntry init_value = TEST__ROOT_MESSAGE__FMAP_STRING_ENTRY__INIT;
+  static const Test__RootMessage__FMapStringEntry init_value =
+      TEST__ROOT_MESSAGE__FMAP_STRING_ENTRY__INIT;
   *message = init_value;
 }
-void   test__root_message__fmap_float_entry__init
-                     (Test__RootMessage__FMapFloatEntry         *message)
+void test__root_message__fmap_float_entry__init(
+    Test__RootMessage__FMapFloatEntry *message)
 {
-  static const Test__RootMessage__FMapFloatEntry init_value = TEST__ROOT_MESSAGE__FMAP_FLOAT_ENTRY__INIT;
+  static const Test__RootMessage__FMapFloatEntry init_value =
+      TEST__ROOT_MESSAGE__FMAP_FLOAT_ENTRY__INIT;
   *message = init_value;
 }
-void   test__root_message__fmap_struct_entry__init
-                     (Test__RootMessage__FMapStructEntry         *message)
+void test__root_message__fmap_struct_entry__init(
+    Test__RootMessage__FMapStructEntry *message)
 {
-  static const Test__RootMessage__FMapStructEntry init_value = TEST__ROOT_MESSAGE__FMAP_STRUCT_ENTRY__INIT;
+  static const Test__RootMessage__FMapStructEntry init_value =
+      TEST__ROOT_MESSAGE__FMAP_STRUCT_ENTRY__INIT;
   *message = init_value;
 }
-void   test__root_message__init
-                     (Test__RootMessage         *message)
+void test__root_message__init(Test__RootMessage *message)
 {
   static const Test__RootMessage init_value = TEST__ROOT_MESSAGE__INIT;
   *message = init_value;
 }
-size_t test__root_message__get_packed_size
-                     (const Test__RootMessage *message)
+size_t test__root_message__get_packed_size(const Test__RootMessage *message)
 {
   assert(message->base.descriptor == &test__root_message__descriptor);
-  return protobuf_c_message_get_packed_size ((const ProtobufCMessage*)(message));
+  return protobuf_c_message_get_packed_size(
+      (const ProtobufCMessage *) (message));
 }
-size_t test__root_message__pack
-                     (const Test__RootMessage *message,
-                      uint8_t       *out)
+size_t test__root_message__pack(const Test__RootMessage *message, uint8_t *out)
 {
   assert(message->base.descriptor == &test__root_message__descriptor);
-  return protobuf_c_message_pack ((const ProtobufCMessage*)message, out);
+  return protobuf_c_message_pack((const ProtobufCMessage *) message, out);
 }
-size_t test__root_message__pack_to_buffer
-                     (const Test__RootMessage *message,
-                      ProtobufCBuffer *buffer)
+size_t test__root_message__pack_to_buffer(
+    const Test__RootMessage *message,
+    ProtobufCBuffer *buffer)
 {
   assert(message->base.descriptor == &test__root_message__descriptor);
-  return protobuf_c_message_pack_to_buffer ((const ProtobufCMessage*)message, buffer);
+  return protobuf_c_message_pack_to_buffer(
+      (const ProtobufCMessage *) message, buffer);
 }
-Test__RootMessage *
-       test__root_message__unpack
-                     (ProtobufCAllocator  *allocator,
-                      size_t               len,
-                      const uint8_t       *data)
+Test__RootMessage *test__root_message__unpack(
+    ProtobufCAllocator *allocator,
+    size_t len,
+    const uint8_t *data)
 {
-  return (Test__RootMessage *)
-     protobuf_c_message_unpack (&test__root_message__descriptor,
-                                allocator, len, data);
+  return (Test__RootMessage *) protobuf_c_message_unpack(
+      &test__root_message__descriptor, allocator, len, data);
 }
-void   test__root_message__free_unpacked
-                     (Test__RootMessage *message,
-                      ProtobufCAllocator *allocator)
+void test__root_message__free_unpacked(
+    Test__RootMessage *message,
+    ProtobufCAllocator *allocator)
 {
-  if(!message)
+  if (!message)
     return;
   assert(message->base.descriptor == &test__root_message__descriptor);
-  protobuf_c_message_free_unpacked ((ProtobufCMessage*)message, allocator);
+  protobuf_c_message_free_unpacked((ProtobufCMessage *) message, allocator);
 }
-static const ProtobufCFieldDescriptor test__struct__nested_struct__field_descriptors[2] =
-{
-  {
-    "f_int32",
-    1,
-    PROTOBUF_C_LABEL_OPTIONAL,
-    PROTOBUF_C_TYPE_INT32,
-    offsetof(Test__Struct__NestedStruct, has_f_int32),
-    offsetof(Test__Struct__NestedStruct, f_int32),
-    NULL,
-    NULL,
-    0,             /* flags */
-    0,NULL,NULL    /* reserved1,reserved2, etc */
-  },
-  {
-    "f_string",
-    2,
-    PROTOBUF_C_LABEL_OPTIONAL,
-    PROTOBUF_C_TYPE_STRING,
-    0,   /* quantifier_offset */
-    offsetof(Test__Struct__NestedStruct, f_string),
-    NULL,
-    NULL,
-    0,             /* flags */
-    0,NULL,NULL    /* reserved1,reserved2, etc */
-  },
+static const ProtobufCFieldDescriptor
+    test__struct__nested_struct__field_descriptors[2] = {
+        {
+            "f_int32",
+            1,
+            PROTOBUF_C_LABEL_OPTIONAL,
+            PROTOBUF_C_TYPE_INT32,
+            offsetof(Test__Struct__NestedStruct, has_f_int32),
+            offsetof(Test__Struct__NestedStruct, f_int32),
+            NULL,
+            NULL,
+            0, /* flags */
+            0,
+            NULL,
+            NULL /* reserved1,reserved2, etc */
+        },
+        {
+            "f_string",
+            2,
+            PROTOBUF_C_LABEL_OPTIONAL,
+            PROTOBUF_C_TYPE_STRING,
+            0, /* quantifier_offset */
+            offsetof(Test__Struct__NestedStruct, f_string),
+            NULL,
+            NULL,
+            0, /* flags */
+            0,
+            NULL,
+            NULL /* reserved1,reserved2, etc */
+        },
 };
 static const unsigned test__struct__nested_struct__field_indices_by_name[] = {
-  0,   /* field[0] = f_int32 */
-  1,   /* field[1] = f_string */
+    0, /* field[0] = f_int32 */
+    1, /* field[1] = f_string */
 };
-static const ProtobufCIntRange test__struct__nested_struct__number_ranges[1 + 1] =
-{
-  { 1, 0 },
-  { 0, 2 }
+static const ProtobufCIntRange
+    test__struct__nested_struct__number_ranges[1 + 1] = {{1, 0}, {0, 2}};
+const ProtobufCMessageDescriptor test__struct__nested_struct__descriptor = {
+    PROTOBUF_C__MESSAGE_DESCRIPTOR_MAGIC,
+    "test.Struct.NestedStruct",
+    "NestedStruct",
+    "Test__Struct__NestedStruct",
+    "test",
+    sizeof(Test__Struct__NestedStruct),
+    2,
+    test__struct__nested_struct__field_descriptors,
+    test__struct__nested_struct__field_indices_by_name,
+    1,
+    test__struct__nested_struct__number_ranges,
+    (ProtobufCMessageInit) test__struct__nested_struct__init,
+    NULL,
+    NULL,
+    NULL /* reserved[123] */
 };
-const ProtobufCMessageDescriptor test__struct__nested_struct__descriptor =
-{
-  PROTOBUF_C__MESSAGE_DESCRIPTOR_MAGIC,
-  "test.Struct.NestedStruct",
-  "NestedStruct",
-  "Test__Struct__NestedStruct",
-  "test",
-  sizeof(Test__Struct__NestedStruct),
-  2,
-  test__struct__nested_struct__field_descriptors,
-  test__struct__nested_struct__field_indices_by_name,
-  1,  test__struct__nested_struct__number_ranges,
-  (ProtobufCMessageInit) test__struct__nested_struct__init,
-  NULL,NULL,NULL    /* reserved[123] */
-};
-static const ProtobufCEnumValue test__struct__enum__enum_values_by_number[2] =
-{
-  { "FIRST", "TEST__STRUCT__ENUM__FIRST", 0 },
-  { "SECOND", "TEST__STRUCT__ENUM__SECOND", 1 },
+static const ProtobufCEnumValue test__struct__enum__enum_values_by_number[2] = {
+    {"FIRST", "TEST__STRUCT__ENUM__FIRST", 0},
+    {"SECOND", "TEST__STRUCT__ENUM__SECOND", 1},
 };
 static const ProtobufCIntRange test__struct__enum__value_ranges[] = {
-{0, 0},{0, 2}
+    {0, 0},
+    {0, 2}};
+static const ProtobufCEnumValueIndex
+    test__struct__enum__enum_values_by_name[2] = {
+        {"FIRST", 0},
+        {"SECOND", 1},
 };
-static const ProtobufCEnumValueIndex test__struct__enum__enum_values_by_name[2] =
-{
-  { "FIRST", 0 },
-  { "SECOND", 1 },
-};
-const ProtobufCEnumDescriptor test__struct__enum__descriptor =
-{
-  PROTOBUF_C__ENUM_DESCRIPTOR_MAGIC,
-  "test.Struct.Enum",
-  "Enum",
-  "Test__Struct__Enum",
-  "test",
-  2,
-  test__struct__enum__enum_values_by_number,
-  2,
-  test__struct__enum__enum_values_by_name,
-  1,
-  test__struct__enum__value_ranges,
-  NULL,NULL,NULL,NULL   /* reserved[1234] */
-};
-static const ProtobufCFieldDescriptor test__struct__field_descriptors[4] =
-{
-  {
-    "f_string",
-    1,
-    PROTOBUF_C_LABEL_REQUIRED,
-    PROTOBUF_C_TYPE_STRING,
-    0,   /* quantifier_offset */
-    offsetof(Test__Struct, f_string),
-    NULL,
-    NULL,
-    0,             /* flags */
-    0,NULL,NULL    /* reserved1,reserved2, etc */
-  },
-  {
-    "f_enum",
+const ProtobufCEnumDescriptor test__struct__enum__descriptor = {
+    PROTOBUF_C__ENUM_DESCRIPTOR_MAGIC,
+    "test.Struct.Enum",
+    "Enum",
+    "Test__Struct__Enum",
+    "test",
     2,
-    PROTOBUF_C_LABEL_OPTIONAL,
-    PROTOBUF_C_TYPE_ENUM,
-    offsetof(Test__Struct, has_f_enum),
-    offsetof(Test__Struct, f_enum),
-    &test__struct__enum__descriptor,
+    test__struct__enum__enum_values_by_number,
+    2,
+    test__struct__enum__enum_values_by_name,
+    1,
+    test__struct__enum__value_ranges,
     NULL,
-    0,             /* flags */
-    0,NULL,NULL    /* reserved1,reserved2, etc */
-  },
-  {
-    "f_nested_struct",
-    3,
-    PROTOBUF_C_LABEL_OPTIONAL,
-    PROTOBUF_C_TYPE_MESSAGE,
-    0,   /* quantifier_offset */
-    offsetof(Test__Struct, f_nested_struct),
-    &test__struct__nested_struct__descriptor,
     NULL,
-    0,             /* flags */
-    0,NULL,NULL    /* reserved1,reserved2, etc */
-  },
-  {
-    "f_nested_struct_array",
-    4,
-    PROTOBUF_C_LABEL_REPEATED,
-    PROTOBUF_C_TYPE_MESSAGE,
-    offsetof(Test__Struct, n_f_nested_struct_array),
-    offsetof(Test__Struct, f_nested_struct_array),
-    &test__struct__nested_struct__descriptor,
     NULL,
-    0,             /* flags */
-    0,NULL,NULL    /* reserved1,reserved2, etc */
-  },
+    NULL /* reserved[1234] */
+};
+static const ProtobufCFieldDescriptor test__struct__field_descriptors[4] = {
+    {
+        "f_string",
+        1,
+        PROTOBUF_C_LABEL_REQUIRED,
+        PROTOBUF_C_TYPE_STRING,
+        0, /* quantifier_offset */
+        offsetof(Test__Struct, f_string),
+        NULL,
+        NULL,
+        0, /* flags */
+        0,
+        NULL,
+        NULL /* reserved1,reserved2, etc */
+    },
+    {
+        "f_enum",
+        2,
+        PROTOBUF_C_LABEL_OPTIONAL,
+        PROTOBUF_C_TYPE_ENUM,
+        offsetof(Test__Struct, has_f_enum),
+        offsetof(Test__Struct, f_enum),
+        &test__struct__enum__descriptor,
+        NULL,
+        0, /* flags */
+        0,
+        NULL,
+        NULL /* reserved1,reserved2, etc */
+    },
+    {
+        "f_nested_struct",
+        3,
+        PROTOBUF_C_LABEL_OPTIONAL,
+        PROTOBUF_C_TYPE_MESSAGE,
+        0, /* quantifier_offset */
+        offsetof(Test__Struct, f_nested_struct),
+        &test__struct__nested_struct__descriptor,
+        NULL,
+        0, /* flags */
+        0,
+        NULL,
+        NULL /* reserved1,reserved2, etc */
+    },
+    {
+        "f_nested_struct_array",
+        4,
+        PROTOBUF_C_LABEL_REPEATED,
+        PROTOBUF_C_TYPE_MESSAGE,
+        offsetof(Test__Struct, n_f_nested_struct_array),
+        offsetof(Test__Struct, f_nested_struct_array),
+        &test__struct__nested_struct__descriptor,
+        NULL,
+        0, /* flags */
+        0,
+        NULL,
+        NULL /* reserved1,reserved2, etc */
+    },
 };
 static const unsigned test__struct__field_indices_by_name[] = {
-  1,   /* field[1] = f_enum */
-  2,   /* field[2] = f_nested_struct */
-  3,   /* field[3] = f_nested_struct_array */
-  0,   /* field[0] = f_string */
+    1, /* field[1] = f_enum */
+    2, /* field[2] = f_nested_struct */
+    3, /* field[3] = f_nested_struct_array */
+    0, /* field[0] = f_string */
 };
-static const ProtobufCIntRange test__struct__number_ranges[1 + 1] =
-{
-  { 1, 0 },
-  { 0, 4 }
-};
-const ProtobufCMessageDescriptor test__struct__descriptor =
-{
-  PROTOBUF_C__MESSAGE_DESCRIPTOR_MAGIC,
-  "test.Struct",
-  "Struct",
-  "Test__Struct",
-  "test",
-  sizeof(Test__Struct),
-  4,
-  test__struct__field_descriptors,
-  test__struct__field_indices_by_name,
-  1,  test__struct__number_ranges,
-  (ProtobufCMessageInit) test__struct__init,
-  NULL,NULL,NULL    /* reserved[123] */
-};
-static const ProtobufCFieldDescriptor test__map_struct__field_descriptors[2] =
-{
-  {
-    "f_int32",
+static const ProtobufCIntRange test__struct__number_ranges[1 + 1] = {
+    {1, 0},
+    {0, 4}};
+const ProtobufCMessageDescriptor test__struct__descriptor = {
+    PROTOBUF_C__MESSAGE_DESCRIPTOR_MAGIC,
+    "test.Struct",
+    "Struct",
+    "Test__Struct",
+    "test",
+    sizeof(Test__Struct),
+    4,
+    test__struct__field_descriptors,
+    test__struct__field_indices_by_name,
     1,
-    PROTOBUF_C_LABEL_OPTIONAL,
-    PROTOBUF_C_TYPE_INT32,
-    offsetof(Test__MapStruct, has_f_int32),
-    offsetof(Test__MapStruct, f_int32),
+    test__struct__number_ranges,
+    (ProtobufCMessageInit) test__struct__init,
     NULL,
     NULL,
-    0,             /* flags */
-    0,NULL,NULL    /* reserved1,reserved2, etc */
-  },
-  {
-    "f_int64",
-    2,
-    PROTOBUF_C_LABEL_OPTIONAL,
-    PROTOBUF_C_TYPE_INT64,
-    offsetof(Test__MapStruct, has_f_int64),
-    offsetof(Test__MapStruct, f_int64),
-    NULL,
-    NULL,
-    0,             /* flags */
-    0,NULL,NULL    /* reserved1,reserved2, etc */
-  },
+    NULL /* reserved[123] */
+};
+static const ProtobufCFieldDescriptor test__map_struct__field_descriptors[2] = {
+    {
+        "f_int32",
+        1,
+        PROTOBUF_C_LABEL_OPTIONAL,
+        PROTOBUF_C_TYPE_INT32,
+        offsetof(Test__MapStruct, has_f_int32),
+        offsetof(Test__MapStruct, f_int32),
+        NULL,
+        NULL,
+        0, /* flags */
+        0,
+        NULL,
+        NULL /* reserved1,reserved2, etc */
+    },
+    {
+        "f_int64",
+        2,
+        PROTOBUF_C_LABEL_OPTIONAL,
+        PROTOBUF_C_TYPE_INT64,
+        offsetof(Test__MapStruct, has_f_int64),
+        offsetof(Test__MapStruct, f_int64),
+        NULL,
+        NULL,
+        0, /* flags */
+        0,
+        NULL,
+        NULL /* reserved1,reserved2, etc */
+    },
 };
 static const unsigned test__map_struct__field_indices_by_name[] = {
-  0,   /* field[0] = f_int32 */
-  1,   /* field[1] = f_int64 */
+    0, /* field[0] = f_int32 */
+    1, /* field[1] = f_int64 */
 };
-static const ProtobufCIntRange test__map_struct__number_ranges[1 + 1] =
-{
-  { 1, 0 },
-  { 0, 2 }
-};
-const ProtobufCMessageDescriptor test__map_struct__descriptor =
-{
-  PROTOBUF_C__MESSAGE_DESCRIPTOR_MAGIC,
-  "test.MapStruct",
-  "MapStruct",
-  "Test__MapStruct",
-  "test",
-  sizeof(Test__MapStruct),
-  2,
-  test__map_struct__field_descriptors,
-  test__map_struct__field_indices_by_name,
-  1,  test__map_struct__number_ranges,
-  (ProtobufCMessageInit) test__map_struct__init,
-  NULL,NULL,NULL    /* reserved[123] */
-};
-static const ProtobufCFieldDescriptor test__root_message__fmap_int32_entry__field_descriptors[2] =
-{
-  {
-    "key",
-    1,
-    PROTOBUF_C_LABEL_OPTIONAL,
-    PROTOBUF_C_TYPE_STRING,
-    0,   /* quantifier_offset */
-    offsetof(Test__RootMessage__FMapInt32Entry, key),
-    NULL,
-    NULL,
-    0,             /* flags */
-    0,NULL,NULL    /* reserved1,reserved2, etc */
-  },
-  {
-    "value",
+static const ProtobufCIntRange test__map_struct__number_ranges[1 + 1] = {
+    {1, 0},
+    {0, 2}};
+const ProtobufCMessageDescriptor test__map_struct__descriptor = {
+    PROTOBUF_C__MESSAGE_DESCRIPTOR_MAGIC,
+    "test.MapStruct",
+    "MapStruct",
+    "Test__MapStruct",
+    "test",
+    sizeof(Test__MapStruct),
     2,
-    PROTOBUF_C_LABEL_OPTIONAL,
-    PROTOBUF_C_TYPE_INT32,
-    offsetof(Test__RootMessage__FMapInt32Entry, has_value),
-    offsetof(Test__RootMessage__FMapInt32Entry, value),
-    NULL,
-    NULL,
-    0,             /* flags */
-    0,NULL,NULL    /* reserved1,reserved2, etc */
-  },
-};
-static const unsigned test__root_message__fmap_int32_entry__field_indices_by_name[] = {
-  0,   /* field[0] = key */
-  1,   /* field[1] = value */
-};
-static const ProtobufCIntRange test__root_message__fmap_int32_entry__number_ranges[1 + 1] =
-{
-  { 1, 0 },
-  { 0, 2 }
-};
-const ProtobufCMessageDescriptor test__root_message__fmap_int32_entry__descriptor =
-{
-  PROTOBUF_C__MESSAGE_DESCRIPTOR_MAGIC,
-  "test.RootMessage.FMapInt32Entry",
-  "FMapInt32Entry",
-  "Test__RootMessage__FMapInt32Entry",
-  "test",
-  sizeof(Test__RootMessage__FMapInt32Entry),
-  2,
-  test__root_message__fmap_int32_entry__field_descriptors,
-  test__root_message__fmap_int32_entry__field_indices_by_name,
-  1,  test__root_message__fmap_int32_entry__number_ranges,
-  (ProtobufCMessageInit) test__root_message__fmap_int32_entry__init,
-  NULL,NULL,NULL    /* reserved[123] */
-};
-static const ProtobufCFieldDescriptor test__root_message__fmap_bool_entry__field_descriptors[2] =
-{
-  {
-    "key",
+    test__map_struct__field_descriptors,
+    test__map_struct__field_indices_by_name,
     1,
-    PROTOBUF_C_LABEL_OPTIONAL,
-    PROTOBUF_C_TYPE_STRING,
-    0,   /* quantifier_offset */
-    offsetof(Test__RootMessage__FMapBoolEntry, key),
+    test__map_struct__number_ranges,
+    (ProtobufCMessageInit) test__map_struct__init,
     NULL,
     NULL,
-    0,             /* flags */
-    0,NULL,NULL    /* reserved1,reserved2, etc */
-  },
-  {
-    "value",
-    2,
-    PROTOBUF_C_LABEL_OPTIONAL,
-    PROTOBUF_C_TYPE_BOOL,
-    offsetof(Test__RootMessage__FMapBoolEntry, has_value),
-    offsetof(Test__RootMessage__FMapBoolEntry, value),
-    NULL,
-    NULL,
-    0,             /* flags */
-    0,NULL,NULL    /* reserved1,reserved2, etc */
-  },
+    NULL /* reserved[123] */
 };
-static const unsigned test__root_message__fmap_bool_entry__field_indices_by_name[] = {
-  0,   /* field[0] = key */
-  1,   /* field[1] = value */
+static const ProtobufCFieldDescriptor
+    test__root_message__fmap_int32_entry__field_descriptors[2] = {
+        {
+            "key",
+            1,
+            PROTOBUF_C_LABEL_OPTIONAL,
+            PROTOBUF_C_TYPE_STRING,
+            0, /* quantifier_offset */
+            offsetof(Test__RootMessage__FMapInt32Entry, key),
+            NULL,
+            NULL,
+            0, /* flags */
+            0,
+            NULL,
+            NULL /* reserved1,reserved2, etc */
+        },
+        {
+            "value",
+            2,
+            PROTOBUF_C_LABEL_OPTIONAL,
+            PROTOBUF_C_TYPE_INT32,
+            offsetof(Test__RootMessage__FMapInt32Entry, has_value),
+            offsetof(Test__RootMessage__FMapInt32Entry, value),
+            NULL,
+            NULL,
+            0, /* flags */
+            0,
+            NULL,
+            NULL /* reserved1,reserved2, etc */
+        },
 };
-static const ProtobufCIntRange test__root_message__fmap_bool_entry__number_ranges[1 + 1] =
-{
-  { 1, 0 },
-  { 0, 2 }
+static const unsigned
+    test__root_message__fmap_int32_entry__field_indices_by_name[] = {
+        0, /* field[0] = key */
+        1, /* field[1] = value */
 };
-const ProtobufCMessageDescriptor test__root_message__fmap_bool_entry__descriptor =
-{
-  PROTOBUF_C__MESSAGE_DESCRIPTOR_MAGIC,
-  "test.RootMessage.FMapBoolEntry",
-  "FMapBoolEntry",
-  "Test__RootMessage__FMapBoolEntry",
-  "test",
-  sizeof(Test__RootMessage__FMapBoolEntry),
-  2,
-  test__root_message__fmap_bool_entry__field_descriptors,
-  test__root_message__fmap_bool_entry__field_indices_by_name,
-  1,  test__root_message__fmap_bool_entry__number_ranges,
-  (ProtobufCMessageInit) test__root_message__fmap_bool_entry__init,
-  NULL,NULL,NULL    /* reserved[123] */
+static const ProtobufCIntRange
+    test__root_message__fmap_int32_entry__number_ranges[1 + 1] = {
+        {1, 0},
+        {0, 2}};
+const ProtobufCMessageDescriptor
+    test__root_message__fmap_int32_entry__descriptor = {
+        PROTOBUF_C__MESSAGE_DESCRIPTOR_MAGIC,
+        "test.RootMessage.FMapInt32Entry",
+        "FMapInt32Entry",
+        "Test__RootMessage__FMapInt32Entry",
+        "test",
+        sizeof(Test__RootMessage__FMapInt32Entry),
+        2,
+        test__root_message__fmap_int32_entry__field_descriptors,
+        test__root_message__fmap_int32_entry__field_indices_by_name,
+        1,
+        test__root_message__fmap_int32_entry__number_ranges,
+        (ProtobufCMessageInit) test__root_message__fmap_int32_entry__init,
+        NULL,
+        NULL,
+        NULL /* reserved[123] */
 };
-static const ProtobufCFieldDescriptor test__root_message__fmap_string_entry__field_descriptors[2] =
-{
-  {
-    "key",
-    1,
-    PROTOBUF_C_LABEL_OPTIONAL,
-    PROTOBUF_C_TYPE_STRING,
-    0,   /* quantifier_offset */
-    offsetof(Test__RootMessage__FMapStringEntry, key),
-    NULL,
-    NULL,
-    0,             /* flags */
-    0,NULL,NULL    /* reserved1,reserved2, etc */
-  },
-  {
-    "value",
-    2,
-    PROTOBUF_C_LABEL_OPTIONAL,
-    PROTOBUF_C_TYPE_STRING,
-    0,   /* quantifier_offset */
-    offsetof(Test__RootMessage__FMapStringEntry, value),
-    NULL,
-    NULL,
-    0,             /* flags */
-    0,NULL,NULL    /* reserved1,reserved2, etc */
-  },
+static const ProtobufCFieldDescriptor
+    test__root_message__fmap_bool_entry__field_descriptors[2] = {
+        {
+            "key",
+            1,
+            PROTOBUF_C_LABEL_OPTIONAL,
+            PROTOBUF_C_TYPE_STRING,
+            0, /* quantifier_offset */
+            offsetof(Test__RootMessage__FMapBoolEntry, key),
+            NULL,
+            NULL,
+            0, /* flags */
+            0,
+            NULL,
+            NULL /* reserved1,reserved2, etc */
+        },
+        {
+            "value",
+            2,
+            PROTOBUF_C_LABEL_OPTIONAL,
+            PROTOBUF_C_TYPE_BOOL,
+            offsetof(Test__RootMessage__FMapBoolEntry, has_value),
+            offsetof(Test__RootMessage__FMapBoolEntry, value),
+            NULL,
+            NULL,
+            0, /* flags */
+            0,
+            NULL,
+            NULL /* reserved1,reserved2, etc */
+        },
 };
-static const unsigned test__root_message__fmap_string_entry__field_indices_by_name[] = {
-  0,   /* field[0] = key */
-  1,   /* field[1] = value */
+static const unsigned
+    test__root_message__fmap_bool_entry__field_indices_by_name[] = {
+        0, /* field[0] = key */
+        1, /* field[1] = value */
 };
-static const ProtobufCIntRange test__root_message__fmap_string_entry__number_ranges[1 + 1] =
-{
-  { 1, 0 },
-  { 0, 2 }
+static const ProtobufCIntRange
+    test__root_message__fmap_bool_entry__number_ranges[1 + 1] = {
+        {1, 0},
+        {0, 2}};
+const ProtobufCMessageDescriptor
+    test__root_message__fmap_bool_entry__descriptor = {
+        PROTOBUF_C__MESSAGE_DESCRIPTOR_MAGIC,
+        "test.RootMessage.FMapBoolEntry",
+        "FMapBoolEntry",
+        "Test__RootMessage__FMapBoolEntry",
+        "test",
+        sizeof(Test__RootMessage__FMapBoolEntry),
+        2,
+        test__root_message__fmap_bool_entry__field_descriptors,
+        test__root_message__fmap_bool_entry__field_indices_by_name,
+        1,
+        test__root_message__fmap_bool_entry__number_ranges,
+        (ProtobufCMessageInit) test__root_message__fmap_bool_entry__init,
+        NULL,
+        NULL,
+        NULL /* reserved[123] */
 };
-const ProtobufCMessageDescriptor test__root_message__fmap_string_entry__descriptor =
-{
-  PROTOBUF_C__MESSAGE_DESCRIPTOR_MAGIC,
-  "test.RootMessage.FMapStringEntry",
-  "FMapStringEntry",
-  "Test__RootMessage__FMapStringEntry",
-  "test",
-  sizeof(Test__RootMessage__FMapStringEntry),
-  2,
-  test__root_message__fmap_string_entry__field_descriptors,
-  test__root_message__fmap_string_entry__field_indices_by_name,
-  1,  test__root_message__fmap_string_entry__number_ranges,
-  (ProtobufCMessageInit) test__root_message__fmap_string_entry__init,
-  NULL,NULL,NULL    /* reserved[123] */
+static const ProtobufCFieldDescriptor
+    test__root_message__fmap_string_entry__field_descriptors[2] = {
+        {
+            "key",
+            1,
+            PROTOBUF_C_LABEL_OPTIONAL,
+            PROTOBUF_C_TYPE_STRING,
+            0, /* quantifier_offset */
+            offsetof(Test__RootMessage__FMapStringEntry, key),
+            NULL,
+            NULL,
+            0, /* flags */
+            0,
+            NULL,
+            NULL /* reserved1,reserved2, etc */
+        },
+        {
+            "value",
+            2,
+            PROTOBUF_C_LABEL_OPTIONAL,
+            PROTOBUF_C_TYPE_STRING,
+            0, /* quantifier_offset */
+            offsetof(Test__RootMessage__FMapStringEntry, value),
+            NULL,
+            NULL,
+            0, /* flags */
+            0,
+            NULL,
+            NULL /* reserved1,reserved2, etc */
+        },
 };
-static const ProtobufCFieldDescriptor test__root_message__fmap_float_entry__field_descriptors[2] =
-{
-  {
-    "key",
-    1,
-    PROTOBUF_C_LABEL_OPTIONAL,
-    PROTOBUF_C_TYPE_STRING,
-    0,   /* quantifier_offset */
-    offsetof(Test__RootMessage__FMapFloatEntry, key),
-    NULL,
-    NULL,
-    0,             /* flags */
-    0,NULL,NULL    /* reserved1,reserved2, etc */
-  },
-  {
-    "value",
-    2,
-    PROTOBUF_C_LABEL_OPTIONAL,
-    PROTOBUF_C_TYPE_FLOAT,
-    offsetof(Test__RootMessage__FMapFloatEntry, has_value),
-    offsetof(Test__RootMessage__FMapFloatEntry, value),
-    NULL,
-    NULL,
-    0,             /* flags */
-    0,NULL,NULL    /* reserved1,reserved2, etc */
-  },
+static const unsigned
+    test__root_message__fmap_string_entry__field_indices_by_name[] = {
+        0, /* field[0] = key */
+        1, /* field[1] = value */
 };
-static const unsigned test__root_message__fmap_float_entry__field_indices_by_name[] = {
-  0,   /* field[0] = key */
-  1,   /* field[1] = value */
+static const ProtobufCIntRange
+    test__root_message__fmap_string_entry__number_ranges[1 + 1] = {
+        {1, 0},
+        {0, 2}};
+const ProtobufCMessageDescriptor
+    test__root_message__fmap_string_entry__descriptor = {
+        PROTOBUF_C__MESSAGE_DESCRIPTOR_MAGIC,
+        "test.RootMessage.FMapStringEntry",
+        "FMapStringEntry",
+        "Test__RootMessage__FMapStringEntry",
+        "test",
+        sizeof(Test__RootMessage__FMapStringEntry),
+        2,
+        test__root_message__fmap_string_entry__field_descriptors,
+        test__root_message__fmap_string_entry__field_indices_by_name,
+        1,
+        test__root_message__fmap_string_entry__number_ranges,
+        (ProtobufCMessageInit) test__root_message__fmap_string_entry__init,
+        NULL,
+        NULL,
+        NULL /* reserved[123] */
 };
-static const ProtobufCIntRange test__root_message__fmap_float_entry__number_ranges[1 + 1] =
-{
-  { 1, 0 },
-  { 0, 2 }
+static const ProtobufCFieldDescriptor
+    test__root_message__fmap_float_entry__field_descriptors[2] = {
+        {
+            "key",
+            1,
+            PROTOBUF_C_LABEL_OPTIONAL,
+            PROTOBUF_C_TYPE_STRING,
+            0, /* quantifier_offset */
+            offsetof(Test__RootMessage__FMapFloatEntry, key),
+            NULL,
+            NULL,
+            0, /* flags */
+            0,
+            NULL,
+            NULL /* reserved1,reserved2, etc */
+        },
+        {
+            "value",
+            2,
+            PROTOBUF_C_LABEL_OPTIONAL,
+            PROTOBUF_C_TYPE_FLOAT,
+            offsetof(Test__RootMessage__FMapFloatEntry, has_value),
+            offsetof(Test__RootMessage__FMapFloatEntry, value),
+            NULL,
+            NULL,
+            0, /* flags */
+            0,
+            NULL,
+            NULL /* reserved1,reserved2, etc */
+        },
 };
-const ProtobufCMessageDescriptor test__root_message__fmap_float_entry__descriptor =
-{
-  PROTOBUF_C__MESSAGE_DESCRIPTOR_MAGIC,
-  "test.RootMessage.FMapFloatEntry",
-  "FMapFloatEntry",
-  "Test__RootMessage__FMapFloatEntry",
-  "test",
-  sizeof(Test__RootMessage__FMapFloatEntry),
-  2,
-  test__root_message__fmap_float_entry__field_descriptors,
-  test__root_message__fmap_float_entry__field_indices_by_name,
-  1,  test__root_message__fmap_float_entry__number_ranges,
-  (ProtobufCMessageInit) test__root_message__fmap_float_entry__init,
-  NULL,NULL,NULL    /* reserved[123] */
+static const unsigned
+    test__root_message__fmap_float_entry__field_indices_by_name[] = {
+        0, /* field[0] = key */
+        1, /* field[1] = value */
 };
-static const ProtobufCFieldDescriptor test__root_message__fmap_struct_entry__field_descriptors[2] =
-{
-  {
-    "key",
-    1,
-    PROTOBUF_C_LABEL_OPTIONAL,
-    PROTOBUF_C_TYPE_STRING,
-    0,   /* quantifier_offset */
-    offsetof(Test__RootMessage__FMapStructEntry, key),
-    NULL,
-    NULL,
-    0,             /* flags */
-    0,NULL,NULL    /* reserved1,reserved2, etc */
-  },
-  {
-    "value",
-    2,
-    PROTOBUF_C_LABEL_OPTIONAL,
-    PROTOBUF_C_TYPE_MESSAGE,
-    0,   /* quantifier_offset */
-    offsetof(Test__RootMessage__FMapStructEntry, value),
-    &test__map_struct__descriptor,
-    NULL,
-    0,             /* flags */
-    0,NULL,NULL    /* reserved1,reserved2, etc */
-  },
+static const ProtobufCIntRange
+    test__root_message__fmap_float_entry__number_ranges[1 + 1] = {
+        {1, 0},
+        {0, 2}};
+const ProtobufCMessageDescriptor
+    test__root_message__fmap_float_entry__descriptor = {
+        PROTOBUF_C__MESSAGE_DESCRIPTOR_MAGIC,
+        "test.RootMessage.FMapFloatEntry",
+        "FMapFloatEntry",
+        "Test__RootMessage__FMapFloatEntry",
+        "test",
+        sizeof(Test__RootMessage__FMapFloatEntry),
+        2,
+        test__root_message__fmap_float_entry__field_descriptors,
+        test__root_message__fmap_float_entry__field_indices_by_name,
+        1,
+        test__root_message__fmap_float_entry__number_ranges,
+        (ProtobufCMessageInit) test__root_message__fmap_float_entry__init,
+        NULL,
+        NULL,
+        NULL /* reserved[123] */
 };
-static const unsigned test__root_message__fmap_struct_entry__field_indices_by_name[] = {
-  0,   /* field[0] = key */
-  1,   /* field[1] = value */
+static const ProtobufCFieldDescriptor
+    test__root_message__fmap_struct_entry__field_descriptors[2] = {
+        {
+            "key",
+            1,
+            PROTOBUF_C_LABEL_OPTIONAL,
+            PROTOBUF_C_TYPE_STRING,
+            0, /* quantifier_offset */
+            offsetof(Test__RootMessage__FMapStructEntry, key),
+            NULL,
+            NULL,
+            0, /* flags */
+            0,
+            NULL,
+            NULL /* reserved1,reserved2, etc */
+        },
+        {
+            "value",
+            2,
+            PROTOBUF_C_LABEL_OPTIONAL,
+            PROTOBUF_C_TYPE_MESSAGE,
+            0, /* quantifier_offset */
+            offsetof(Test__RootMessage__FMapStructEntry, value),
+            &test__map_struct__descriptor,
+            NULL,
+            0, /* flags */
+            0,
+            NULL,
+            NULL /* reserved1,reserved2, etc */
+        },
 };
-static const ProtobufCIntRange test__root_message__fmap_struct_entry__number_ranges[1 + 1] =
-{
-  { 1, 0 },
-  { 0, 2 }
+static const unsigned
+    test__root_message__fmap_struct_entry__field_indices_by_name[] = {
+        0, /* field[0] = key */
+        1, /* field[1] = value */
 };
-const ProtobufCMessageDescriptor test__root_message__fmap_struct_entry__descriptor =
-{
-  PROTOBUF_C__MESSAGE_DESCRIPTOR_MAGIC,
-  "test.RootMessage.FMapStructEntry",
-  "FMapStructEntry",
-  "Test__RootMessage__FMapStructEntry",
-  "test",
-  sizeof(Test__RootMessage__FMapStructEntry),
-  2,
-  test__root_message__fmap_struct_entry__field_descriptors,
-  test__root_message__fmap_struct_entry__field_indices_by_name,
-  1,  test__root_message__fmap_struct_entry__number_ranges,
-  (ProtobufCMessageInit) test__root_message__fmap_struct_entry__init,
-  NULL,NULL,NULL    /* reserved[123] */
+static const ProtobufCIntRange
+    test__root_message__fmap_struct_entry__number_ranges[1 + 1] = {
+        {1, 0},
+        {0, 2}};
+const ProtobufCMessageDescriptor
+    test__root_message__fmap_struct_entry__descriptor = {
+        PROTOBUF_C__MESSAGE_DESCRIPTOR_MAGIC,
+        "test.RootMessage.FMapStructEntry",
+        "FMapStructEntry",
+        "Test__RootMessage__FMapStructEntry",
+        "test",
+        sizeof(Test__RootMessage__FMapStructEntry),
+        2,
+        test__root_message__fmap_struct_entry__field_descriptors,
+        test__root_message__fmap_struct_entry__field_indices_by_name,
+        1,
+        test__root_message__fmap_struct_entry__number_ranges,
+        (ProtobufCMessageInit) test__root_message__fmap_struct_entry__init,
+        NULL,
+        NULL,
+        NULL /* reserved[123] */
 };
-static const ProtobufCFieldDescriptor test__root_message__field_descriptors[19] =
-{
-  {
-    "f_int32",
-    1,
-    PROTOBUF_C_LABEL_OPTIONAL,
-    PROTOBUF_C_TYPE_INT32,
-    offsetof(Test__RootMessage, has_f_int32),
-    offsetof(Test__RootMessage, f_int32),
-    NULL,
-    NULL,
-    0,             /* flags */
-    0,NULL,NULL    /* reserved1,reserved2, etc */
-  },
-  {
-    "f_int64",
-    2,
-    PROTOBUF_C_LABEL_OPTIONAL,
-    PROTOBUF_C_TYPE_INT64,
-    offsetof(Test__RootMessage, has_f_int64),
-    offsetof(Test__RootMessage, f_int64),
-    NULL,
-    NULL,
-    0,             /* flags */
-    0,NULL,NULL    /* reserved1,reserved2, etc */
-  },
-  {
-    "f_sint32",
-    5,
-    PROTOBUF_C_LABEL_OPTIONAL,
-    PROTOBUF_C_TYPE_SINT32,
-    offsetof(Test__RootMessage, has_f_sint32),
-    offsetof(Test__RootMessage, f_sint32),
-    NULL,
-    NULL,
-    0,             /* flags */
-    0,NULL,NULL    /* reserved1,reserved2, etc */
-  },
-  {
-    "f_sint64",
-    6,
-    PROTOBUF_C_LABEL_OPTIONAL,
-    PROTOBUF_C_TYPE_SINT64,
-    offsetof(Test__RootMessage, has_f_sint64),
-    offsetof(Test__RootMessage, f_sint64),
-    NULL,
-    NULL,
-    0,             /* flags */
-    0,NULL,NULL    /* reserved1,reserved2, etc */
-  },
-  {
-    "f_sfixed32",
-    9,
-    PROTOBUF_C_LABEL_OPTIONAL,
-    PROTOBUF_C_TYPE_SFIXED32,
-    offsetof(Test__RootMessage, has_f_sfixed32),
-    offsetof(Test__RootMessage, f_sfixed32),
-    NULL,
-    NULL,
-    0,             /* flags */
-    0,NULL,NULL    /* reserved1,reserved2, etc */
-  },
-  {
-    "f_sfixed64",
-    10,
-    PROTOBUF_C_LABEL_OPTIONAL,
-    PROTOBUF_C_TYPE_SFIXED64,
-    offsetof(Test__RootMessage, has_f_sfixed64),
-    offsetof(Test__RootMessage, f_sfixed64),
-    NULL,
-    NULL,
-    0,             /* flags */
-    0,NULL,NULL    /* reserved1,reserved2, etc */
-  },
-  {
-    "f_bool",
-    11,
-    PROTOBUF_C_LABEL_OPTIONAL,
-    PROTOBUF_C_TYPE_BOOL,
-    offsetof(Test__RootMessage, has_f_bool),
-    offsetof(Test__RootMessage, f_bool),
-    NULL,
-    NULL,
-    0,             /* flags */
-    0,NULL,NULL    /* reserved1,reserved2, etc */
-  },
-  {
-    "f_string",
-    12,
-    PROTOBUF_C_LABEL_OPTIONAL,
-    PROTOBUF_C_TYPE_STRING,
-    0,   /* quantifier_offset */
-    offsetof(Test__RootMessage, f_string),
-    NULL,
-    NULL,
-    0,             /* flags */
-    0,NULL,NULL    /* reserved1,reserved2, etc */
-  },
-  {
-    "f_bytes",
-    13,
-    PROTOBUF_C_LABEL_OPTIONAL,
-    PROTOBUF_C_TYPE_BYTES,
-    offsetof(Test__RootMessage, has_f_bytes),
-    offsetof(Test__RootMessage, f_bytes),
-    NULL,
-    NULL,
-    0,             /* flags */
-    0,NULL,NULL    /* reserved1,reserved2, etc */
-  },
-  {
-    "f_struct_array",
-    14,
-    PROTOBUF_C_LABEL_REPEATED,
-    PROTOBUF_C_TYPE_MESSAGE,
-    offsetof(Test__RootMessage, n_f_struct_array),
-    offsetof(Test__RootMessage, f_struct_array),
-    &test__struct__descriptor,
-    NULL,
-    0,             /* flags */
-    0,NULL,NULL    /* reserved1,reserved2, etc */
-  },
-  {
-    "f_map_int32",
-    15,
-    PROTOBUF_C_LABEL_REPEATED,
-    PROTOBUF_C_TYPE_MESSAGE,
-    offsetof(Test__RootMessage, n_f_map_int32),
-    offsetof(Test__RootMessage, f_map_int32),
-    &test__root_message__fmap_int32_entry__descriptor,
-    NULL,
-    0,             /* flags */
-    0,NULL,NULL    /* reserved1,reserved2, etc */
-  },
-  {
-    "f_map_bool",
-    16,
-    PROTOBUF_C_LABEL_REPEATED,
-    PROTOBUF_C_TYPE_MESSAGE,
-    offsetof(Test__RootMessage, n_f_map_bool),
-    offsetof(Test__RootMessage, f_map_bool),
-    &test__root_message__fmap_bool_entry__descriptor,
-    NULL,
-    0,             /* flags */
-    0,NULL,NULL    /* reserved1,reserved2, etc */
-  },
-  {
-    "f_map_string",
-    17,
-    PROTOBUF_C_LABEL_REPEATED,
-    PROTOBUF_C_TYPE_MESSAGE,
-    offsetof(Test__RootMessage, n_f_map_string),
-    offsetof(Test__RootMessage, f_map_string),
-    &test__root_message__fmap_string_entry__descriptor,
-    NULL,
-    0,             /* flags */
-    0,NULL,NULL    /* reserved1,reserved2, etc */
-  },
-  {
-    "f_map_float",
-    18,
-    PROTOBUF_C_LABEL_REPEATED,
-    PROTOBUF_C_TYPE_MESSAGE,
-    offsetof(Test__RootMessage, n_f_map_float),
-    offsetof(Test__RootMessage, f_map_float),
-    &test__root_message__fmap_float_entry__descriptor,
-    NULL,
-    0,             /* flags */
-    0,NULL,NULL    /* reserved1,reserved2, etc */
-  },
-  {
-    "f_map_struct",
-    19,
-    PROTOBUF_C_LABEL_REPEATED,
-    PROTOBUF_C_TYPE_MESSAGE,
-    offsetof(Test__RootMessage, n_f_map_struct),
-    offsetof(Test__RootMessage, f_map_struct),
-    &test__root_message__fmap_struct_entry__descriptor,
-    NULL,
-    0,             /* flags */
-    0,NULL,NULL    /* reserved1,reserved2, etc */
-  },
-  {
-    "f_oneof_string",
-    20,
-    PROTOBUF_C_LABEL_OPTIONAL,
-    PROTOBUF_C_TYPE_STRING,
-    offsetof(Test__RootMessage, f_oneof_case),
-    offsetof(Test__RootMessage, f_oneof_string),
-    NULL,
-    NULL,
-    0 | PROTOBUF_C_FIELD_FLAG_ONEOF,             /* flags */
-    0,NULL,NULL    /* reserved1,reserved2, etc */
-  },
-  {
-    "f_oneof_struct",
-    21,
-    PROTOBUF_C_LABEL_OPTIONAL,
-    PROTOBUF_C_TYPE_MESSAGE,
-    offsetof(Test__RootMessage, f_oneof_case),
-    offsetof(Test__RootMessage, f_oneof_struct),
-    &test__map_struct__descriptor,
-    NULL,
-    0 | PROTOBUF_C_FIELD_FLAG_ONEOF,             /* flags */
-    0,NULL,NULL    /* reserved1,reserved2, etc */
-  },
-  {
-    "f_ignored",
-    22,
-    PROTOBUF_C_LABEL_OPTIONAL,
-    PROTOBUF_C_TYPE_STRING,
-    0,   /* quantifier_offset */
-    offsetof(Test__RootMessage, f_ignored),
-    NULL,
-    NULL,
-    0,             /* flags */
-    0,NULL,NULL    /* reserved1,reserved2, etc */
-  },
-  {
-    "f_renamed",
-    23,
-    PROTOBUF_C_LABEL_OPTIONAL,
-    PROTOBUF_C_TYPE_STRING,
-    0,   /* quantifier_offset */
-    offsetof(Test__RootMessage, f_renamed),
-    NULL,
-    NULL,
-    0,             /* flags */
-    0,NULL,NULL    /* reserved1,reserved2, etc */
-  },
+static const ProtobufCFieldDescriptor
+    test__root_message__field_descriptors[19] = {
+        {
+            "f_int32",
+            1,
+            PROTOBUF_C_LABEL_OPTIONAL,
+            PROTOBUF_C_TYPE_INT32,
+            offsetof(Test__RootMessage, has_f_int32),
+            offsetof(Test__RootMessage, f_int32),
+            NULL,
+            NULL,
+            0, /* flags */
+            0,
+            NULL,
+            NULL /* reserved1,reserved2, etc */
+        },
+        {
+            "f_int64",
+            2,
+            PROTOBUF_C_LABEL_OPTIONAL,
+            PROTOBUF_C_TYPE_INT64,
+            offsetof(Test__RootMessage, has_f_int64),
+            offsetof(Test__RootMessage, f_int64),
+            NULL,
+            NULL,
+            0, /* flags */
+            0,
+            NULL,
+            NULL /* reserved1,reserved2, etc */
+        },
+        {
+            "f_sint32",
+            5,
+            PROTOBUF_C_LABEL_OPTIONAL,
+            PROTOBUF_C_TYPE_SINT32,
+            offsetof(Test__RootMessage, has_f_sint32),
+            offsetof(Test__RootMessage, f_sint32),
+            NULL,
+            NULL,
+            0, /* flags */
+            0,
+            NULL,
+            NULL /* reserved1,reserved2, etc */
+        },
+        {
+            "f_sint64",
+            6,
+            PROTOBUF_C_LABEL_OPTIONAL,
+            PROTOBUF_C_TYPE_SINT64,
+            offsetof(Test__RootMessage, has_f_sint64),
+            offsetof(Test__RootMessage, f_sint64),
+            NULL,
+            NULL,
+            0, /* flags */
+            0,
+            NULL,
+            NULL /* reserved1,reserved2, etc */
+        },
+        {
+            "f_sfixed32",
+            9,
+            PROTOBUF_C_LABEL_OPTIONAL,
+            PROTOBUF_C_TYPE_SFIXED32,
+            offsetof(Test__RootMessage, has_f_sfixed32),
+            offsetof(Test__RootMessage, f_sfixed32),
+            NULL,
+            NULL,
+            0, /* flags */
+            0,
+            NULL,
+            NULL /* reserved1,reserved2, etc */
+        },
+        {
+            "f_sfixed64",
+            10,
+            PROTOBUF_C_LABEL_OPTIONAL,
+            PROTOBUF_C_TYPE_SFIXED64,
+            offsetof(Test__RootMessage, has_f_sfixed64),
+            offsetof(Test__RootMessage, f_sfixed64),
+            NULL,
+            NULL,
+            0, /* flags */
+            0,
+            NULL,
+            NULL /* reserved1,reserved2, etc */
+        },
+        {
+            "f_bool",
+            11,
+            PROTOBUF_C_LABEL_OPTIONAL,
+            PROTOBUF_C_TYPE_BOOL,
+            offsetof(Test__RootMessage, has_f_bool),
+            offsetof(Test__RootMessage, f_bool),
+            NULL,
+            NULL,
+            0, /* flags */
+            0,
+            NULL,
+            NULL /* reserved1,reserved2, etc */
+        },
+        {
+            "f_string",
+            12,
+            PROTOBUF_C_LABEL_OPTIONAL,
+            PROTOBUF_C_TYPE_STRING,
+            0, /* quantifier_offset */
+            offsetof(Test__RootMessage, f_string),
+            NULL,
+            NULL,
+            0, /* flags */
+            0,
+            NULL,
+            NULL /* reserved1,reserved2, etc */
+        },
+        {
+            "f_bytes",
+            13,
+            PROTOBUF_C_LABEL_OPTIONAL,
+            PROTOBUF_C_TYPE_BYTES,
+            offsetof(Test__RootMessage, has_f_bytes),
+            offsetof(Test__RootMessage, f_bytes),
+            NULL,
+            NULL,
+            0, /* flags */
+            0,
+            NULL,
+            NULL /* reserved1,reserved2, etc */
+        },
+        {
+            "f_struct_array",
+            14,
+            PROTOBUF_C_LABEL_REPEATED,
+            PROTOBUF_C_TYPE_MESSAGE,
+            offsetof(Test__RootMessage, n_f_struct_array),
+            offsetof(Test__RootMessage, f_struct_array),
+            &test__struct__descriptor,
+            NULL,
+            0, /* flags */
+            0,
+            NULL,
+            NULL /* reserved1,reserved2, etc */
+        },
+        {
+            "f_map_int32",
+            15,
+            PROTOBUF_C_LABEL_REPEATED,
+            PROTOBUF_C_TYPE_MESSAGE,
+            offsetof(Test__RootMessage, n_f_map_int32),
+            offsetof(Test__RootMessage, f_map_int32),
+            &test__root_message__fmap_int32_entry__descriptor,
+            NULL,
+            0, /* flags */
+            0,
+            NULL,
+            NULL /* reserved1,reserved2, etc */
+        },
+        {
+            "f_map_bool",
+            16,
+            PROTOBUF_C_LABEL_REPEATED,
+            PROTOBUF_C_TYPE_MESSAGE,
+            offsetof(Test__RootMessage, n_f_map_bool),
+            offsetof(Test__RootMessage, f_map_bool),
+            &test__root_message__fmap_bool_entry__descriptor,
+            NULL,
+            0, /* flags */
+            0,
+            NULL,
+            NULL /* reserved1,reserved2, etc */
+        },
+        {
+            "f_map_string",
+            17,
+            PROTOBUF_C_LABEL_REPEATED,
+            PROTOBUF_C_TYPE_MESSAGE,
+            offsetof(Test__RootMessage, n_f_map_string),
+            offsetof(Test__RootMessage, f_map_string),
+            &test__root_message__fmap_string_entry__descriptor,
+            NULL,
+            0, /* flags */
+            0,
+            NULL,
+            NULL /* reserved1,reserved2, etc */
+        },
+        {
+            "f_map_float",
+            18,
+            PROTOBUF_C_LABEL_REPEATED,
+            PROTOBUF_C_TYPE_MESSAGE,
+            offsetof(Test__RootMessage, n_f_map_float),
+            offsetof(Test__RootMessage, f_map_float),
+            &test__root_message__fmap_float_entry__descriptor,
+            NULL,
+            0, /* flags */
+            0,
+            NULL,
+            NULL /* reserved1,reserved2, etc */
+        },
+        {
+            "f_map_struct",
+            19,
+            PROTOBUF_C_LABEL_REPEATED,
+            PROTOBUF_C_TYPE_MESSAGE,
+            offsetof(Test__RootMessage, n_f_map_struct),
+            offsetof(Test__RootMessage, f_map_struct),
+            &test__root_message__fmap_struct_entry__descriptor,
+            NULL,
+            0, /* flags */
+            0,
+            NULL,
+            NULL /* reserved1,reserved2, etc */
+        },
+        {
+            "f_oneof_string",
+            20,
+            PROTOBUF_C_LABEL_OPTIONAL,
+            PROTOBUF_C_TYPE_STRING,
+            offsetof(Test__RootMessage, f_oneof_case),
+            offsetof(Test__RootMessage, f_oneof_string),
+            NULL,
+            NULL,
+            0 | PROTOBUF_C_FIELD_FLAG_ONEOF, /* flags */
+            0,
+            NULL,
+            NULL /* reserved1,reserved2, etc */
+        },
+        {
+            "f_oneof_struct",
+            21,
+            PROTOBUF_C_LABEL_OPTIONAL,
+            PROTOBUF_C_TYPE_MESSAGE,
+            offsetof(Test__RootMessage, f_oneof_case),
+            offsetof(Test__RootMessage, f_oneof_struct),
+            &test__map_struct__descriptor,
+            NULL,
+            0 | PROTOBUF_C_FIELD_FLAG_ONEOF, /* flags */
+            0,
+            NULL,
+            NULL /* reserved1,reserved2, etc */
+        },
+        {
+            "f_ignored",
+            22,
+            PROTOBUF_C_LABEL_OPTIONAL,
+            PROTOBUF_C_TYPE_STRING,
+            0, /* quantifier_offset */
+            offsetof(Test__RootMessage, f_ignored),
+            NULL,
+            NULL,
+            0, /* flags */
+            0,
+            NULL,
+            NULL /* reserved1,reserved2, etc */
+        },
+        {
+            "f_renamed",
+            23,
+            PROTOBUF_C_LABEL_OPTIONAL,
+            PROTOBUF_C_TYPE_STRING,
+            0, /* quantifier_offset */
+            offsetof(Test__RootMessage, f_renamed),
+            NULL,
+            NULL,
+            0, /* flags */
+            0,
+            NULL,
+            NULL /* reserved1,reserved2, etc */
+        },
 };
 static const unsigned test__root_message__field_indices_by_name[] = {
-  6,   /* field[6] = f_bool */
-  8,   /* field[8] = f_bytes */
-  17,   /* field[17] = f_ignored */
-  0,   /* field[0] = f_int32 */
-  1,   /* field[1] = f_int64 */
-  11,   /* field[11] = f_map_bool */
-  13,   /* field[13] = f_map_float */
-  10,   /* field[10] = f_map_int32 */
-  12,   /* field[12] = f_map_string */
-  14,   /* field[14] = f_map_struct */
-  15,   /* field[15] = f_oneof_string */
-  16,   /* field[16] = f_oneof_struct */
-  18,   /* field[18] = f_renamed */
-  4,   /* field[4] = f_sfixed32 */
-  5,   /* field[5] = f_sfixed64 */
-  2,   /* field[2] = f_sint32 */
-  3,   /* field[3] = f_sint64 */
-  7,   /* field[7] = f_string */
-  9,   /* field[9] = f_struct_array */
+    6,  /* field[6] = f_bool */
+    8,  /* field[8] = f_bytes */
+    17, /* field[17] = f_ignored */
+    0,  /* field[0] = f_int32 */
+    1,  /* field[1] = f_int64 */
+    11, /* field[11] = f_map_bool */
+    13, /* field[13] = f_map_float */
+    10, /* field[10] = f_map_int32 */
+    12, /* field[12] = f_map_string */
+    14, /* field[14] = f_map_struct */
+    15, /* field[15] = f_oneof_string */
+    16, /* field[16] = f_oneof_struct */
+    18, /* field[18] = f_renamed */
+    4,  /* field[4] = f_sfixed32 */
+    5,  /* field[5] = f_sfixed64 */
+    2,  /* field[2] = f_sint32 */
+    3,  /* field[3] = f_sint64 */
+    7,  /* field[7] = f_string */
+    9,  /* field[9] = f_struct_array */
 };
-static const ProtobufCIntRange test__root_message__number_ranges[3 + 1] =
-{
-  { 1, 0 },
-  { 5, 2 },
-  { 9, 4 },
-  { 0, 19 }
-};
-const ProtobufCMessageDescriptor test__root_message__descriptor =
-{
-  PROTOBUF_C__MESSAGE_DESCRIPTOR_MAGIC,
-  "test.RootMessage",
-  "RootMessage",
-  "Test__RootMessage",
-  "test",
-  sizeof(Test__RootMessage),
-  19,
-  test__root_message__field_descriptors,
-  test__root_message__field_indices_by_name,
-  3,  test__root_message__number_ranges,
-  (ProtobufCMessageInit) test__root_message__init,
-  NULL,NULL,NULL    /* reserved[123] */
+static const ProtobufCIntRange test__root_message__number_ranges[3 + 1] = {
+    {1, 0},
+    {5, 2},
+    {9, 4},
+    {0, 19}};
+const ProtobufCMessageDescriptor test__root_message__descriptor = {
+    PROTOBUF_C__MESSAGE_DESCRIPTOR_MAGIC,
+    "test.RootMessage",
+    "RootMessage",
+    "Test__RootMessage",
+    "test",
+    sizeof(Test__RootMessage),
+    19,
+    test__root_message__field_descriptors,
+    test__root_message__field_indices_by_name,
+    3,
+    test__root_message__number_ranges,
+    (ProtobufCMessageInit) test__root_message__init,
+    NULL,
+    NULL,
+    NULL /* reserved[123] */
 };

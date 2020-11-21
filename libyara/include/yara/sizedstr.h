@@ -30,12 +30,12 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef _SIZEDSTR_H
 #define _SIZEDSTR_H
 
+#include <stdbool.h>
 #include <stddef.h>
-
 #include <yara/integers.h>
 
-#define SIZED_STRING_FLAGS_NO_CASE  1
-#define SIZED_STRING_FLAGS_DOT_ALL  2
+#define SIZED_STRING_FLAGS_NO_CASE 1
+#define SIZED_STRING_FLAGS_DOT_ALL 2
 
 #pragma pack(push)
 #pragma pack(1)
@@ -56,25 +56,26 @@ typedef struct _SIZED_STRING
 
 #pragma pack(pop)
 
+int ss_compare(SIZED_STRING* s1, SIZED_STRING* s2);
 
-int sized_string_cmp_nocase(
-  SIZED_STRING* s1,
-  SIZED_STRING* s2);
+int ss_icompare(SIZED_STRING* s1, SIZED_STRING* s2);
 
+bool ss_contains(SIZED_STRING* s1, SIZED_STRING* s2);
 
-int sized_string_cmp(
-    SIZED_STRING* s1,
-    SIZED_STRING* s2);
+bool ss_icontains(SIZED_STRING* s1, SIZED_STRING* s2);
 
+bool ss_startswith(SIZED_STRING* s1, SIZED_STRING* s2);
 
-SIZED_STRING* sized_string_dup(
-    SIZED_STRING* s);
+bool ss_istartswith(SIZED_STRING* s1, SIZED_STRING* s2);
 
+bool ss_endswith(SIZED_STRING* s1, SIZED_STRING* s2);
 
-SIZED_STRING* sized_string_new(
-    const char* s);
+bool ss_iendswith(SIZED_STRING* s1, SIZED_STRING* s2);
 
-SIZED_STRING* sized_string_convert_to_wide(
-    SIZED_STRING* s);
+SIZED_STRING* ss_dup(SIZED_STRING* s);
+
+SIZED_STRING* ss_new(const char* s);
+
+SIZED_STRING* ss_convert_to_wide(SIZED_STRING* s);
 
 #endif

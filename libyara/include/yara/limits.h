@@ -58,14 +58,14 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // Capacity of the buffer used for storing compiler error messages. Messages
 // will be truncated at this size.
 #ifndef YR_MAX_COMPILER_ERROR_EXTRA_INFO
-#define YR_MAX_COMPILER_ERROR_EXTRA_INFO  256
+#define YR_MAX_COMPILER_ERROR_EXTRA_INFO 256
 #endif
 
 // Maximum size for the substring (atoms) extracted from strings and regular
 // expressions and put into the Aho-Corasick automaton. The maximum allows size
 // for this constant is 255.
 #ifndef YR_MAX_ATOM_LENGTH
-#define YR_MAX_ATOM_LENGTH  4
+#define YR_MAX_ATOM_LENGTH 4
 #endif
 
 #ifndef YR_MAX_ATOM_QUALITY
@@ -82,12 +82,12 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // must specify the threshold when calling yr_compiler_set_atom_quality_table.
 #ifndef YR_ATOM_QUALITY_WARNING_THRESHOLD
 #define YR_ATOM_QUALITY_WARNING_THRESHOLD \
-    YR_MAX_ATOM_QUALITY - 20 * YR_MAX_ATOM_LENGTH + 38
+  YR_MAX_ATOM_QUALITY - 20 * YR_MAX_ATOM_LENGTH + 38
 #endif
 
 // If a rule generates more than this number of atoms a warning is shown.
 #ifndef YR_ATOMS_PER_RULE_WARNING_THRESHOLD
-#define YR_ATOMS_PER_RULE_WARNING_THRESHOLD  10000
+#define YR_ATOMS_PER_RULE_WARNING_THRESHOLD 10000
 #endif
 
 // Maximum number of nested "for" loops in rule. Rules ith nested loops
@@ -131,8 +131,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 // Regular expressions like /foo.{x,y}bar/ are split in two separate ones /foo/
-// and /bar/ if x is larger than YR_STRING_CHAINING_THRESHOLD. This also applies to
-// hex strings like { 01 02 03 [x-y] 004 05 06 }.
+// and /bar/ if x is larger than YR_STRING_CHAINING_THRESHOLD. This also applies
+// to hex strings like { 01 02 03 [x-y] 004 05 06 }.
 #ifndef YR_STRING_CHAINING_THRESHOLD
 #define YR_STRING_CHAINING_THRESHOLD 200
 #endif
@@ -145,9 +145,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 // Each time an atom is found it means that we have a potential match for some
 // string, and that match must be verified. The time spent in verifying those
-// matches is measured in one out of YR_MATCH_VERIFICATION_PROFILING_RATE matches.
-// The time is not measured for all matches because measuring it is expensive
-// by itself and match verification is a frequent operation.
+// matches is measured in one out of YR_MATCH_VERIFICATION_PROFILING_RATE
+// matches. The time is not measured for all matches because measuring it is
+// expensive by itself and match verification is a frequent operation.
 #ifndef YR_MATCH_VERIFICATION_PROFILING_RATE
 #define YR_MATCH_VERIFICATION_PROFILING_RATE 1024
 #endif

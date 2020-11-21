@@ -43,29 +43,21 @@ typedef MD5_CTX yr_md5_ctx;
 typedef SHA_CTX yr_sha1_ctx;
 typedef SHA256_CTX yr_sha256_ctx;
 
-#define yr_md5_init(ctx) \
- MD5_Init(ctx)
-#define yr_md5_update(ctx,data,len) \
- MD5_Update(ctx,data,len)
-#define yr_md5_final(digest,ctx) \
- MD5_Final(digest,ctx)
+#define yr_md5_init(ctx)              MD5_Init(ctx)
+#define yr_md5_update(ctx, data, len) MD5_Update(ctx, data, len)
+#define yr_md5_final(digest, ctx)     MD5_Final(digest, ctx)
 
-#define yr_sha1_init(ctx) \
- SHA1_Init(ctx)
-#define yr_sha1_update(ctx,data,len) \
- SHA1_Update(ctx,data,len)
-#define yr_sha1_final(digest,ctx) \
- SHA1_Final(digest,ctx)
+#define yr_sha1_init(ctx)              SHA1_Init(ctx)
+#define yr_sha1_update(ctx, data, len) SHA1_Update(ctx, data, len)
+#define yr_sha1_final(digest, ctx)     SHA1_Final(digest, ctx)
 
-#define yr_sha256_init(ctx) \
- SHA256_Init(ctx)
-#define yr_sha256_update(ctx,data,len) \
- SHA256_Update(ctx,data,len)
-#define yr_sha256_final(digest,ctx) \
- SHA256_Final(digest,ctx)
+#define yr_sha256_init(ctx)              SHA256_Init(ctx)
+#define yr_sha256_update(ctx, data, len) SHA256_Update(ctx, data, len)
+#define yr_sha256_final(digest, ctx)     SHA256_Final(digest, ctx)
 
 #elif defined(HAVE_WINCRYPT_H)
 #include <windows.h>
+
 #include <wincrypt.h>
 
 HCRYPTPROV yr_cryptprov;
@@ -74,35 +66,36 @@ typedef HCRYPTHASH yr_md5_ctx;
 typedef HCRYPTHASH yr_sha1_ctx;
 typedef HCRYPTHASH yr_sha256_ctx;
 
-#define yr_md5_init(ctx) \
-  CryptCreateHash(yr_cryptprov, CALG_MD5, 0, 0, ctx)
-#define yr_md5_update(ctx,data,len) \
-  CryptHashData(*ctx, (const BYTE*)data, len, 0)
-#define yr_md5_final(digest,ctx) {                      \
-  DWORD len = YR_MD5_LEN;                               \
-  CryptGetHashParam(*ctx, HP_HASHVAL, digest, &len, 0); \
-  CryptDestroyHash(*ctx);                               \
-}
+#define yr_md5_init(ctx) CryptCreateHash(yr_cryptprov, CALG_MD5, 0, 0, ctx)
+#define yr_md5_update(ctx, data, len) \
+  CryptHashData(*ctx, (const BYTE*) data, len, 0)
+#define yr_md5_final(digest, ctx)                         \
+  {                                                       \
+    DWORD len = YR_MD5_LEN;                               \
+    CryptGetHashParam(*ctx, HP_HASHVAL, digest, &len, 0); \
+    CryptDestroyHash(*ctx);                               \
+  }
 
-#define yr_sha1_init(ctx) \
-  CryptCreateHash(yr_cryptprov, CALG_SHA1, 0, 0, ctx)
-#define yr_sha1_update(ctx,data,len) \
-  CryptHashData(*ctx, (const BYTE*)data, len, 0)
-#define yr_sha1_final(digest,ctx) {                     \
-  DWORD len = YR_SHA1_LEN;                              \
-  CryptGetHashParam(*ctx, HP_HASHVAL, digest, &len, 0); \
-  CryptDestroyHash(*ctx);                               \
-}
+#define yr_sha1_init(ctx) CryptCreateHash(yr_cryptprov, CALG_SHA1, 0, 0, ctx)
+#define yr_sha1_update(ctx, data, len) \
+  CryptHashData(*ctx, (const BYTE*) data, len, 0)
+#define yr_sha1_final(digest, ctx)                        \
+  {                                                       \
+    DWORD len = YR_SHA1_LEN;                              \
+    CryptGetHashParam(*ctx, HP_HASHVAL, digest, &len, 0); \
+    CryptDestroyHash(*ctx);                               \
+  }
 
 #define yr_sha256_init(ctx) \
   CryptCreateHash(yr_cryptprov, CALG_SHA_256, 0, 0, ctx)
-#define yr_sha256_update(ctx,data,len) \
-  CryptHashData(*ctx, (const BYTE*)data, len, 0)
-#define yr_sha256_final(digest,ctx) {                   \
-  DWORD len = YR_SHA256_LEN;                            \
-  CryptGetHashParam(*ctx, HP_HASHVAL, digest, &len, 0); \
-  CryptDestroyHash(*ctx);                               \
-}
+#define yr_sha256_update(ctx, data, len) \
+  CryptHashData(*ctx, (const BYTE*) data, len, 0)
+#define yr_sha256_final(digest, ctx)                      \
+  {                                                       \
+    DWORD len = YR_SHA256_LEN;                            \
+    CryptGetHashParam(*ctx, HP_HASHVAL, digest, &len, 0); \
+    CryptDestroyHash(*ctx);                               \
+  }
 
 #elif defined(HAVE_COMMONCRYPTO_COMMONCRYPTO_H)
 #include <CommonCrypto/CommonDigest.h>
@@ -111,26 +104,17 @@ typedef CC_MD5_CTX yr_md5_ctx;
 typedef CC_SHA1_CTX yr_sha1_ctx;
 typedef CC_SHA256_CTX yr_sha256_ctx;
 
-#define yr_md5_init(ctx) \
-  CC_MD5_Init(ctx)
-#define yr_md5_update(ctx,data,len) \
-  CC_MD5_Update(ctx, data, len)
-#define yr_md5_final(digest,ctx) \
-  CC_MD5_Final(digest, ctx)
+#define yr_md5_init(ctx)              CC_MD5_Init(ctx)
+#define yr_md5_update(ctx, data, len) CC_MD5_Update(ctx, data, len)
+#define yr_md5_final(digest, ctx)     CC_MD5_Final(digest, ctx)
 
-#define yr_sha1_init(ctx) \
-  CC_SHA1_Init(ctx)
-#define yr_sha1_update(ctx,data,len) \
-  CC_SHA1_Update(ctx, data, len)
-#define yr_sha1_final(digest,ctx) \
-  CC_SHA1_Final(digest, ctx)
+#define yr_sha1_init(ctx)              CC_SHA1_Init(ctx)
+#define yr_sha1_update(ctx, data, len) CC_SHA1_Update(ctx, data, len)
+#define yr_sha1_final(digest, ctx)     CC_SHA1_Final(digest, ctx)
 
-#define yr_sha256_init(ctx) \
-  CC_SHA256_Init(ctx)
-#define yr_sha256_update(ctx,data,len) \
-  CC_SHA256_Update(ctx, data, len)
-#define yr_sha256_final(digest,ctx) \
-  CC_SHA256_Final(digest, ctx)
+#define yr_sha256_init(ctx)              CC_SHA256_Init(ctx)
+#define yr_sha256_update(ctx, data, len) CC_SHA256_Update(ctx, data, len)
+#define yr_sha256_final(digest, ctx)     CC_SHA256_Final(digest, ctx)
 
 #endif
 

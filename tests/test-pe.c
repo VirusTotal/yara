@@ -1,14 +1,13 @@
-#include <yara.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <yara.h>
+
 #include "util.h"
 
 int main(int argc, char** argv)
 {
-  char *top_srcdir = getenv("TOP_SRCDIR");
-  if (top_srcdir)
-    chdir(top_srcdir);
+  chdir_if_env_top_srcdir();
 
   yr_initialize();
 
@@ -115,9 +114,8 @@ int main(int argc, char** argv)
       }",
       "tests/data/tiny");
 
-  #if defined(HAVE_LIBCRYPTO) || \
-      defined(HAVE_WINCRYPT_H) || \
-      defined(HAVE_COMMONCRYPTO_COMMONCRYPTO_H)
+#if defined(HAVE_LIBCRYPTO) || defined(HAVE_WINCRYPT_H) || \
+    defined(HAVE_COMMONCRYPTO_COMMONCRYPTO_H)
 
   assert_true_rule_file(
       "import \"pe\" \
@@ -127,9 +125,9 @@ int main(int argc, char** argv)
       }",
       "tests/data/tiny");
 
-  #endif
+#endif
 
-  #if defined(HAVE_LIBCRYPTO)
+#if defined(HAVE_LIBCRYPTO)
 
   assert_true_rule_file(
       "import \"pe\" \
@@ -139,9 +137,10 @@ int main(int argc, char** argv)
           pe.signatures[0].thumbprint == \"c1bf1b8f751bf97626ed77f755f0a393106f2454\" and \
           pe.signatures[0].subject == \"/C=US/ST=California/L=Menlo Park/O=Quicken, Inc./OU=Operations/CN=Quicken, Inc.\" \
       }",
-      "tests/data/079a472d22290a94ebb212aa8015cdc8dd28a968c6b4d3b88acdd58ce2d3b885");
+      "tests/data/"
+      "079a472d22290a94ebb212aa8015cdc8dd28a968c6b4d3b88acdd58ce2d3b885");
 
-  #endif
+#endif
 
   assert_true_rule_file(
       "import \"pe\" \
@@ -205,7 +204,8 @@ int main(int argc, char** argv)
         condition: \
           pe.pdb_path == \"D:\\\\workspace\\\\2018_R9_RelBld\\\\target\\\\checkout\\\\custprof\\\\Release\\\\custprof.pdb\" \
       }",
-       "tests/data/079a472d22290a94ebb212aa8015cdc8dd28a968c6b4d3b88acdd58ce2d3b885");
+      "tests/data/"
+      "079a472d22290a94ebb212aa8015cdc8dd28a968c6b4d3b88acdd58ce2d3b885");
 
   assert_false_rule_file(
       "import \"pe\" \
@@ -216,12 +216,10 @@ int main(int argc, char** argv)
       "tests/data/tiny-idata-51ff");
 
   /*
-   * mtxex.dll is 23e72ce7e9cdbc80c0095484ebeb02f56b21e48fd67044e69e7a2ae76db631e5,
-   * which was taken from a Windows 10 install. The details of which are:
-   *         export_timestamp = 1827812126
-   *         dll_name = "mtxex.dll"
-   *         number_of_exports = 4
-   *         export_details
+   * mtxex.dll is
+   * 23e72ce7e9cdbc80c0095484ebeb02f56b21e48fd67044e69e7a2ae76db631e5, which was
+   * taken from a Windows 10 install. The details of which are: export_timestamp
+   * = 1827812126 dll_name = "mtxex.dll" number_of_exports = 4 export_details
    *            [0]
    *                    offset = 1072
    *                    name = "DllGetClassObject"
@@ -301,7 +299,8 @@ int main(int argc, char** argv)
         condition: \
           pe.export_details[0].name == \"CP_PutItem\" \
       }",
-      "tests/data/079a472d22290a94ebb212aa8015cdc8dd28a968c6b4d3b88acdd58ce2d3b885.upx");
+      "tests/data/"
+      "079a472d22290a94ebb212aa8015cdc8dd28a968c6b4d3b88acdd58ce2d3b885.upx");
 
 
   assert_true_rule_file(
@@ -313,10 +312,12 @@ int main(int argc, char** argv)
           pe.rich_signature.version(30319) and \
           pe.rich_signature.version(40219, 170) == 11 \
       }",
-      "tests/data/079a472d22290a94ebb212aa8015cdc8dd28a968c6b4d3b88acdd58ce2d3b885");
+      "tests/data/"
+      "079a472d22290a94ebb212aa8015cdc8dd28a968c6b4d3b88acdd58ce2d3b885");
 
   // This is the first 840 bytes (just enough to make sure the rich header is
-  // parsed) of 3593d3d08761d8ddc269dde945c0cb07e5cef5dd46ad9eefc22d17901f542093.
+  // parsed) of
+  // 3593d3d08761d8ddc269dde945c0cb07e5cef5dd46ad9eefc22d17901f542093.
   assert_true_rule_file(
       "import \"pe\" \
       rule test { \

@@ -84,21 +84,26 @@ extern int yara_yydebug;
     _THEM_ = 293,
     _MATCHES_ = 294,
     _CONTAINS_ = 295,
-    _IMPORT_ = 296,
-    _TRUE_ = 297,
-    _FALSE_ = 298,
-    _OR_ = 299,
-    _AND_ = 300,
-    _NOT_ = 301,
-    _EQ_ = 302,
-    _NEQ_ = 303,
-    _LT_ = 304,
-    _LE_ = 305,
-    _GT_ = 306,
-    _GE_ = 307,
-    _SHIFT_LEFT_ = 308,
-    _SHIFT_RIGHT_ = 309,
-    UNARY_MINUS = 310
+    _STARTSWITH_ = 296,
+    _ENDSWITH_ = 297,
+    _ICONTAINS_ = 298,
+    _ISTARTSWITH_ = 299,
+    _IENDSWITH_ = 300,
+    _IMPORT_ = 301,
+    _TRUE_ = 302,
+    _FALSE_ = 303,
+    _OR_ = 304,
+    _AND_ = 305,
+    _NOT_ = 306,
+    _EQ_ = 307,
+    _NEQ_ = 308,
+    _LT_ = 309,
+    _LE_ = 310,
+    _GT_ = 311,
+    _GE_ = 312,
+    _SHIFT_LEFT_ = 313,
+    _SHIFT_RIGHT_ = 314,
+    UNARY_MINUS = 315
   };
 #endif
 /* Tokens.  */
@@ -141,28 +146,33 @@ extern int yara_yydebug;
 #define _THEM_ 293
 #define _MATCHES_ 294
 #define _CONTAINS_ 295
-#define _IMPORT_ 296
-#define _TRUE_ 297
-#define _FALSE_ 298
-#define _OR_ 299
-#define _AND_ 300
-#define _NOT_ 301
-#define _EQ_ 302
-#define _NEQ_ 303
-#define _LT_ 304
-#define _LE_ 305
-#define _GT_ 306
-#define _GE_ 307
-#define _SHIFT_LEFT_ 308
-#define _SHIFT_RIGHT_ 309
-#define UNARY_MINUS 310
+#define _STARTSWITH_ 296
+#define _ENDSWITH_ 297
+#define _ICONTAINS_ 298
+#define _ISTARTSWITH_ 299
+#define _IENDSWITH_ 300
+#define _IMPORT_ 301
+#define _TRUE_ 302
+#define _FALSE_ 303
+#define _OR_ 304
+#define _AND_ 305
+#define _NOT_ 306
+#define _EQ_ 307
+#define _NEQ_ 308
+#define _LT_ 309
+#define _LE_ 310
+#define _GT_ 311
+#define _GE_ 312
+#define _SHIFT_LEFT_ 313
+#define _SHIFT_RIGHT_ 314
+#define UNARY_MINUS 315
 
 /* Value type.  */
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 
 union YYSTYPE
 {
-#line 297 "grammar.y" /* yacc.c:1916  */
+#line 302 "grammar.y" /* yacc.c:1916  */
 
   YR_EXPRESSION   expression;
   SIZED_STRING*   sized_string;
@@ -176,7 +186,7 @@ union YYSTYPE
   YR_ARENA_REF meta;
   YR_ARENA_REF string;
 
-#line 180 "grammar.h" /* yacc.c:1916  */
+#line 190 "grammar.h" /* yacc.c:1916  */
 };
 
 typedef union YYSTYPE YYSTYPE;

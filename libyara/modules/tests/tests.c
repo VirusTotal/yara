@@ -85,10 +85,7 @@ define_function(empty)
 define_function(match)
 {
   return_integer(
-      yr_re_match(
-          scan_context(),
-          regexp_argument(1),
-          string_argument(2)));
+      yr_re_match(scan_context(), regexp_argument(1), string_argument(2)));
 }
 
 
@@ -98,52 +95,50 @@ define_function(foobar)
 
   switch (arg)
   {
-    case 1:
-      return_string("foo");
-      break;
-    case 2:
-      return_string("bar");
-      break;
+  case 1:
+    return_string("foo");
+    break;
+  case 2:
+    return_string("bar");
+    break;
   }
 
   return_string("oops")
 }
 
-begin_declarations;
-
-  begin_struct("constants");
+begin_declarations
+  begin_struct("constants")
     declare_integer("one");
     declare_integer("two");
     declare_string("foo");
     declare_string("empty");
-  end_struct("constants");
+  end_struct("constants")
 
-  begin_struct("undefined");
+  begin_struct("undefined")
     declare_integer("i");
     declare_float("f");
-  end_struct("undefined");
+  end_struct("undefined")
 
-  declare_string("module_data")
-
+  declare_string("module_data");
   declare_integer_array("integer_array");
   declare_string_array("string_array");
 
   declare_integer_dictionary("integer_dict");
   declare_string_dictionary("string_dict");
 
-  begin_struct_array("struct_array");
+  begin_struct_array("struct_array")
     declare_integer("i");
     declare_string("s");
-  end_struct_array("struct_array");
+  end_struct_array("struct_array")
 
-  begin_struct_dictionary("struct_dict");
+  begin_struct_dictionary("struct_dict")
     declare_integer("i");
     declare_string("s");
   end_struct_dictionary("struct_dict");
 
-  begin_struct_dictionary("empty_struct_dict");
+  begin_struct_dictionary("empty_struct_dict")
     declare_integer("unused");
-  end_struct_dictionary("empty_struct_dict");
+  end_struct_dictionary("empty_struct_dict")
 
   declare_function("match", "rs", "i", match);
   declare_function("isum", "ii", "i", isum_2);
@@ -153,19 +148,16 @@ begin_declarations;
   declare_function("length", "s", "i", length);
   declare_function("empty", "", "s", empty);
   declare_function("foobar", "i", "s", foobar);
+end_declarations
 
-end_declarations;
 
-
-int module_initialize(
-    YR_MODULE* module)
+int module_initialize(YR_MODULE* module)
 {
   return ERROR_SUCCESS;
 }
 
 
-int module_finalize(
-    YR_MODULE* module)
+int module_finalize(YR_MODULE* module)
 {
   return ERROR_SUCCESS;
 }
@@ -200,7 +192,8 @@ int module_load(
   set_string("foo", module_object, "struct_dict[%s].s", "foo");
   set_integer(1, module_object, "struct_dict[%s].i", "foo");
 
-  if (module_data_size > 0 && module_data != NULL) {
+  if (module_data_size > 0 && module_data != NULL)
+  {
     set_sized_string(
         (const char*) module_data,
         module_data_size,
@@ -212,8 +205,7 @@ int module_load(
 }
 
 
-int module_unload(
-    YR_OBJECT* module_object)
+int module_unload(YR_OBJECT* module_object)
 {
   // Fail if module_unload is called twice with the same module_object
   if (module_object->data == (void*) 0xFABADA)

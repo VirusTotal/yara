@@ -31,19 +31,19 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define YR_ARENA_H
 
 #include <stddef.h>
-#include <yara/limits.h>
 #include <yara/integers.h>
+#include <yara/limits.h>
 #include <yara/stream.h>
 
 #define EOL ((uint32_t) -1)
 
-#define YR_ARENA_FILE_VERSION  17
+#define YR_ARENA_FILE_VERSION 18
 
-#define YR_ARENA_NULL_REF  \
-    (YR_ARENA_REF){ UINT32_MAX, UINT32_MAX }
+#define YR_ARENA_NULL_REF \
+  (YR_ARENA_REF) { UINT32_MAX, UINT32_MAX }
 
 #define YR_ARENA_IS_NULL_REF(ref) \
-    (memcmp(&(ref), &YR_ARENA_NULL_REF, sizeof(YR_ARENA_NULL_REF)) == 0)
+  (memcmp(&(ref), &YR_ARENA_NULL_REF, sizeof(YR_ARENA_NULL_REF)) == 0)
 
 typedef uint32_t yr_arena_off_t;
 
@@ -72,7 +72,6 @@ struct YR_ARENA_REF
 
 #pragma pack(pop)
 
-
 struct YR_ARENA_BUFFER
 {
   // Pointer the buffer's data.
@@ -85,7 +84,6 @@ struct YR_ARENA_BUFFER
   size_t used;
 };
 
-
 struct YR_RELOC
 {
   // Buffer ID associated to this relocation entry.
@@ -97,7 +95,6 @@ struct YR_RELOC
   // Pointer to the next entry in the list.
   struct YR_RELOC* next;
 };
-
 
 /*
 YR_ARENA is the structure that represents an arena.
@@ -140,8 +137,8 @@ in the structure are relocatable pointers.
 
 struct YR_ARENA
 {
-  // Number of users of this arena. This is set to one when the arena is created,
-  // and can be incremented by calling yr_arena_acquire. On each call
+  // Number of users of this arena. This is set to one when the arena is
+  // created, and can be incremented by calling yr_arena_acquire. On each call
   // to yr_arena_release it gets decremented by one, if xrefs reaches zero
   // the buffers and the YR_ARENA structures are freed.
   int xrefs;
@@ -162,7 +159,6 @@ struct YR_ARENA
   YR_RELOC* reloc_list_tail;
 };
 
-
 // Creates an arena with the specified number of buffers and takes ownership of
 // it. Initially each buffer is empty, the first time that some data is written
 // into a buffer at least initial_buffer_size are reserved for the buffer.
@@ -171,17 +167,12 @@ int yr_arena_create(
     size_t initial_buffer_size,
     YR_ARENA** arena);
 
-
 // Takes ownership of the arena.
-void yr_arena_acquire(
-    YR_ARENA* arena);
-
+void yr_arena_acquire(YR_ARENA* arena);
 
 // Release ownership of the arena. If the number of owners drops to zero the
 // arena is destroyed and all its resources are freed.
-int yr_arena_release(
-    YR_ARENA* arena);
-
+int yr_arena_release(YR_ARENA* arena);
 
 // Given a reference to some data within the arena, it returns a pointer to
 // the data. This pointer is valid only until the next call to any of the
@@ -189,10 +180,7 @@ int yr_arena_release(
 // yr_arena_allocate_xxx and yr_arena_write_xxx. These functions can cause
 // the buffer to be moved to different memory location and the pointer won't
 // valid any longer.
-void* yr_arena_ref_to_ptr(
-    YR_ARENA* arena,
-    YR_ARENA_REF* ref);
-
+void* yr_arena_ref_to_ptr(YR_ARENA* arena, YR_ARENA_REF* ref);
 
 // Given a pointer into the arena, it returns a reference to it. The reference
 // can be used with yr_arena_ref_to_ptr to obtain a pointer again. Unlike
@@ -203,7 +191,6 @@ int yr_arena_ptr_to_ref(
     const void* address,
     YR_ARENA_REF* ref);
 
-
 // Given a buffer number and an offset within the buffer, returns a pointer
 // to that offset. The same limitations explained for yr_arena_ref_to_ptr
 // applies for the pointers returned by this function.
@@ -212,11 +199,7 @@ void* yr_arena_get_ptr(
     uint32_t buffer_id,
     yr_arena_off_t offset);
 
-
-yr_arena_off_t yr_arena_get_current_offset(
-    YR_ARENA* arena,
-    uint32_t buffer_id);
-
+yr_arena_off_t yr_arena_get_current_offset(YR_ARENA* arena, uint32_t buffer_id);
 
 int yr_arena_allocate_memory(
     YR_ARENA* arena,
@@ -224,13 +207,11 @@ int yr_arena_allocate_memory(
     size_t size,
     YR_ARENA_REF* ref);
 
-
 int yr_arena_allocate_zeroed_memory(
     YR_ARENA* arena,
     uint32_t buffer_id,
     size_t size,
     YR_ARENA_REF* ref);
-
 
 int yr_arena_allocate_struct(
     YR_ARENA* arena,
@@ -239,12 +220,7 @@ int yr_arena_allocate_struct(
     YR_ARENA_REF* ref,
     ...);
 
-
-int yr_arena_make_ptr_relocatable(
-    YR_ARENA* arena,
-    uint32_t buffer_id,
-    ...);
-
+int yr_arena_make_ptr_relocatable(YR_ARENA* arena, uint32_t buffer_id, ...);
 
 int yr_arena_write_data(
     YR_ARENA* arena,
@@ -253,13 +229,11 @@ int yr_arena_write_data(
     size_t size,
     YR_ARENA_REF* ref);
 
-
 int yr_arena_write_string(
     YR_ARENA* arena,
     uint32_t buffer_id,
     const char* string,
     YR_ARENA_REF* ref);
-
 
 int yr_arena_write_uint32(
     YR_ARENA* arena,
@@ -267,14 +241,8 @@ int yr_arena_write_uint32(
     uint32_t integer,
     YR_ARENA_REF* ref);
 
+int yr_arena_load_stream(YR_STREAM* stream, YR_ARENA** arena);
 
-int yr_arena_load_stream(
-    YR_STREAM* stream,
-    YR_ARENA** arena);
+int yr_arena_save_stream(YR_ARENA* arena, YR_STREAM* stream);
 
-
-int yr_arena_save_stream(
-    YR_ARENA* arena,
-    YR_STREAM* stream);
-
-#endif // YR_ARENA_H
+#endif  // YR_ARENA_H

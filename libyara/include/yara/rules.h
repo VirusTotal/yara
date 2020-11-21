@@ -30,9 +30,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef YR_RULES_H
 #define YR_RULES_H
 
+#include <yara/filemap.h>
 #include <yara/types.h>
 #include <yara/utils.h>
-#include <yara/filemap.h>
 
 
 #define CALLBACK_MSG_RULE_MATCHING              1
@@ -42,41 +42,40 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define CALLBACK_MSG_MODULE_IMPORTED            5
 #define CALLBACK_MSG_SCAN_WARNING_MATCH_LIMIT   6
 
-#define CALLBACK_CONTINUE   0
-#define CALLBACK_ABORT      1
-#define CALLBACK_ERROR      2
+#define CALLBACK_MSG_RULE_MATCHING     1
+#define CALLBACK_MSG_RULE_NOT_MATCHING 2
+#define CALLBACK_MSG_SCAN_FINISHED     3
+#define CALLBACK_MSG_IMPORT_MODULE     4
+#define CALLBACK_MSG_MODULE_IMPORTED   5
 
+#define CALLBACK_CONTINUE 0
+#define CALLBACK_ABORT    1
+#define CALLBACK_ERROR    2
 
-#define yr_rule_tags_foreach(rule, tag_name) \
-    for (tag_name = rule->tags; \
-         tag_name != NULL && *tag_name != '\0'; \
-         tag_name += strlen(tag_name) + 1)
-
+#define yr_rule_tags_foreach(rule, tag_name)                         \
+  for (tag_name = rule->tags; tag_name != NULL && *tag_name != '\0'; \
+       tag_name += strlen(tag_name) + 1)
 
 #define yr_rule_metas_foreach(rule, meta) \
-    for (meta = rule->metas; \
-         meta != NULL; \
-         meta = META_IS_LAST_IN_RULE(meta) ? NULL : meta + 1)
+  for (meta = rule->metas; meta != NULL;  \
+       meta = META_IS_LAST_IN_RULE(meta) ? NULL : meta + 1)
 
+#define yr_rule_strings_foreach(rule, string)  \
+  for (string = rule->strings; string != NULL; \
+       string = STRING_IS_LAST_IN_RULE(string) ? NULL : string + 1)
 
-#define yr_rule_strings_foreach(rule, string) \
-    for (string = rule->strings; \
-         string != NULL; \
-         string = STRING_IS_LAST_IN_RULE(string) ? NULL : string + 1)
-
-
-#define yr_string_matches_foreach(context, string, match) \
-    for (match = context->matches[string->idx].head; \
-         match != NULL; \
-         match = match->next) \
-      /* private matches are skipped */ \
-      if (match->is_private) { continue; } \
-      else /* user code block goes here */
-
+#define yr_string_matches_foreach(context, string, match)         \
+  for (match = context->matches[string->idx].head; match != NULL; \
+       match = match->next)                                       \
+    /* private matches are skipped */                             \
+    if (match->is_private)                                        \
+    {                                                             \
+      continue;                                                   \
+    }                                                             \
+    else /* user code block goes here */
 
 #define yr_rules_foreach(rules, rule) \
-    for (rule = rules->rules_list_head; !RULE_IS_NULL(rule); rule++)
-
+  for (rule = rules->rules_list_head; !RULE_IS_NULL(rule); rule++)
 
 YR_API int yr_rules_scan_mem_blocks(
     YR_RULES* rules,
@@ -85,7 +84,6 @@ YR_API int yr_rules_scan_mem_blocks(
     YR_CALLBACK_FUNC callback,
     void* user_data,
     int timeout);
-
 
 YR_API int yr_rules_scan_mem(
     YR_RULES* rules,
@@ -96,7 +94,6 @@ YR_API int yr_rules_scan_mem(
     void* user_data,
     int timeout);
 
-
 YR_API int yr_rules_scan_file(
     YR_RULES* rules,
     const char* filename,
@@ -104,7 +101,6 @@ YR_API int yr_rules_scan_file(
     YR_CALLBACK_FUNC callback,
     void* user_data,
     int timeout);
-
 
 YR_API int yr_rules_scan_fd(
     YR_RULES* rules,
@@ -114,7 +110,6 @@ YR_API int yr_rules_scan_fd(
     void* user_data,
     int timeout);
 
-
 YR_API int yr_rules_scan_proc(
     YR_RULES* rules,
     int pid,
@@ -123,70 +118,42 @@ YR_API int yr_rules_scan_proc(
     void* user_data,
     int timeout);
 
+YR_API int yr_rules_save(YR_RULES* rules, const char* filename);
 
-YR_API int yr_rules_save(
-    YR_RULES* rules,
-    const char* filename);
+YR_API int yr_rules_save_stream(YR_RULES* rules, YR_STREAM* stream);
 
+YR_API int yr_rules_load(const char* filename, YR_RULES** rules);
 
-YR_API int yr_rules_save_stream(
-    YR_RULES* rules,
-    YR_STREAM* stream);
+YR_API int yr_rules_load_stream(YR_STREAM* stream, YR_RULES** rules);
 
-
-YR_API int yr_rules_load(
-    const char* filename,
-    YR_RULES** rules);
-
-
-YR_API int yr_rules_load_stream(
-    YR_STREAM* stream,
-    YR_RULES** rules);
-
-
-YR_API int yr_rules_destroy(
-    YR_RULES* rules);
-
+YR_API int yr_rules_destroy(YR_RULES* rules);
 
 YR_API int yr_rules_define_integer_variable(
     YR_RULES* rules,
     const char* identifier,
     int64_t value);
 
-
 YR_API int yr_rules_define_boolean_variable(
     YR_RULES* rules,
     const char* identifier,
     int value);
-
 
 YR_API int yr_rules_define_float_variable(
     YR_RULES* rules,
     const char* identifier,
     double value);
 
-
 YR_API int yr_rules_define_string_variable(
     YR_RULES* rules,
     const char* identifier,
     const char* value);
 
+YR_API int yr_rules_get_stats(YR_RULES* rules, YR_RULES_STATS* stats);
 
-YR_API int yr_rules_get_stats(
-    YR_RULES* rules,
-    YR_RULES_STATS *stats);
+YR_API void yr_rule_disable(YR_RULE* rule);
 
+YR_API void yr_rule_enable(YR_RULE* rule);
 
-YR_API void yr_rule_disable(
-    YR_RULE* rule);
-
-
-YR_API void yr_rule_enable(
-    YR_RULE* rule);
-
-
-int yr_rules_from_arena(
-    YR_ARENA* arena,
-    YR_RULES** rules);
+int yr_rules_from_arena(YR_ARENA* arena, YR_RULES** rules);
 
 #endif

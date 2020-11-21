@@ -75,7 +75,8 @@ for:
     on:
       APPVEYOR_REPO_TAG: true        # deploy on tag push only
 
-  test: off
+  test_script:
+  - cmd: c:/projects/yara/windows/vs2015/%CONFIGURATION%/test-alignment.exe
 
 -
   matrix:
@@ -90,7 +91,9 @@ for:
     project: windows/vs2015/yara.sln
     verbosity: minimal
 
-  test: off
+  test_script:
+  - cmd: c:/projects/yara/windows/vs2015/%CONFIGURATION%/test-alignment.exe
+
 
 # Uncomment the lines below for enabling Remote Desktop in the Appveyor. This
 # allows connecting to the remote machine and debug issues.

@@ -35,6 +35,25 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 extern char compile_error[1024];
 extern int warnings;
 
+// Default is 0 for production, which means use 1 block for contiguous memory.
+// For testing, 1024 means split contiguous memory into max 1024 byte blocks.
+// See https://github.com/VirusTotal/yara/issues/1356
+extern uint64_t yr_test_mem_block_size;
+
+// If yr_test_mem_block_size is non-zero, this specifies the bytes of the
+// previous memory block to include in the current memory block.
+extern uint64_t yr_test_mem_block_size_overlap;
+
+// Counts calls to 'get first / next block' function for testing purposes.
+extern uint64_t yr_test_count_get_block;
+
+extern YR_API int _yr_test_single_or_multi_block_scan_mem(
+    YR_SCANNER* scanner,
+    const uint8_t* buffer,
+    size_t buffer_size);
+
+extern void chdir_if_env_top_srcdir(void);
+
 struct COUNTERS
 {
   int rules_matching;

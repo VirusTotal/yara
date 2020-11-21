@@ -28,8 +28,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 
-#include <yara/stack.h>
 #include <yara.h>
+#include <yara/stack.h>
+
 #include "util.h"
 
 
@@ -40,7 +41,7 @@ int main(int argc, char** argv)
   int item;
 
   yr_initialize();
-  yr_stack_create(1, sizeof(item),  &stack);
+  yr_stack_create(1, sizeof(item), &stack);
 
   item = 1;
 
