@@ -1,5 +1,15 @@
 AM_CFLAGS=-Wall -I$(srcdir)/libyara/include
 
+if GCOV
+
+check:
+	@tests/gcov-summary
+
+MOSTLYCLEANFILES = {cli,tests}/*.gc{no,da,ov}
+AM_CFLAGS+=-O0 -g -ftest-coverage -fprofile-arcs
+
+else
+
 if DEBUG
 AM_CFLAGS+=-g
 endif
@@ -8,6 +18,8 @@ if OPTIMIZATION
 AM_CFLAGS+=-O3
 else
 AM_CFLAGS+=-O0
+endif
+
 endif
 
 if ADDRESS_SANITIZER
@@ -22,14 +34,28 @@ ACLOCAL_AMFLAGS=-I m4
 
 bin_PROGRAMS = yara yarac
 
-yara_SOURCES = args.c args.h common.h threading.c threading.h yara.c
+yara_SOURCES = \
+  cli/args.c \
+  cli/args.h \
+  cli/common.h \
+  cli/threading.c \
+  cli/threading.h \
+  cli/yara.c
+
 yara_LDADD = -Llibyara/.libs -lyara
 
-yarac_SOURCES = args.c args.h common.h yarac.c
+yarac_SOURCES = \
+   cli/args.c \
+   cli/args.h \
+   cli/common.h \
+   cli/yarac.c
+
 yarac_LDADD = -Llibyara/.libs -lyara
 
 test_alignment_SOURCES = tests/test-alignment.c
-test_atoms_SOURCES = tests/test-atoms.c tests/util.c libyara/atoms.c
+test_arena_SOURCES = tests/test-arena.c
+test_arena_LDADD = libyara/.libs/libyara.a
+test_atoms_SOURCES = tests/test-atoms.c tests/util.c
 test_atoms_LDADD = libyara/.libs/libyara.a
 test_rules_SOURCES = tests/test-rules.c tests/util.c
 test_rules_LDADD = libyara/.libs/libyara.a
@@ -52,7 +78,9 @@ test_re_split_LDADD = libyara/.libs/libyara.a
 TESTS = $(check_PROGRAMS)
 TESTS_ENVIRONMENT = TOP_SRCDIR=$(top_srcdir)
 
-check_PROGRAMS = test-alignment \
+check_PROGRAMS = \
+  test-arena \
+  test-alignment \
   test-atoms \
   test-api \
   test-rules \

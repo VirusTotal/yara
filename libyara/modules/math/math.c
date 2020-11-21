@@ -28,10 +28,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include <math.h>
-
-#include <yara/utils.h>
-#include <yara/modules.h>
 #include <yara/mem.h>
+#include <yara/modules.h>
+#include <yara/utils.h>
 
 #define MODULE_NAME math
 
@@ -57,7 +56,7 @@ define_function(string_entropy)
   uint32_t* data = (uint32_t*) yr_calloc(256, sizeof(uint32_t));
 
   if (data == NULL)
-    return_float(UNDEFINED);
+    return_float(YR_UNDEFINED);
 
   for (i = 0; i < s->length; i++)
   {
@@ -89,36 +88,35 @@ define_function(data_entropy)
 
   uint32_t* data;
 
-  int64_t offset = integer_argument(1);   // offset where to start
-  int64_t length = integer_argument(2);   // length of bytes we want entropy on
+  int64_t offset = integer_argument(1);  // offset where to start
+  int64_t length = integer_argument(2);  // length of bytes we want entropy on
 
   YR_SCAN_CONTEXT* context = scan_context();
   YR_MEMORY_BLOCK* block = first_memory_block(context);
   YR_MEMORY_BLOCK_ITERATOR* iterator = context->iterator;
 
   if (offset < 0 || length < 0 || offset < block->base)
-    return_float(UNDEFINED);
+    return_float(YR_UNDEFINED);
 
   data = (uint32_t*) yr_calloc(256, sizeof(uint32_t));
 
   if (data == NULL)
-    return_float(UNDEFINED);
+    return_float(YR_UNDEFINED);
 
   foreach_memory_block(iterator, block)
   {
-    if (offset >= block->base &&
-        offset < block->base + block->size)
+    if (offset >= block->base && offset < block->base + block->size)
     {
-      size_t data_offset = (size_t) (offset - block->base);
+      size_t data_offset = (size_t)(offset - block->base);
       size_t data_len = (size_t) yr_min(
-          length, (size_t) (block->size - data_offset));
+          length, (size_t)(block->size - data_offset));
 
       const uint8_t* block_data = block->fetch_data(block);
 
       if (block_data == NULL)
       {
         yr_free(data);
-        return_float(UNDEFINED);
+        return_float(YR_UNDEFINED);
       }
 
       total_len += data_len;
@@ -142,7 +140,7 @@ define_function(data_entropy)
       // undefined.
 
       yr_free(data);
-      return_float(UNDEFINED);
+      return_float(YR_UNDEFINED);
     }
 
     if (block->base + block->size > offset + length)
@@ -152,7 +150,7 @@ define_function(data_entropy)
   if (!past_first_block)
   {
     yr_free(data);
-    return_float(UNDEFINED);
+    return_float(YR_UNDEFINED);
   }
 
   for (i = 0; i < 256; i++)
@@ -178,8 +176,7 @@ define_function(string_deviation)
 
   size_t i;
 
-  for (i = 0; i < s->length; i++)
-    sum += fabs(((double) s->c_string[i]) - mean);
+  for (i = 0; i < s->length; i++) sum += fabs(((double) s->c_string[i]) - mean);
 
   return_float(sum / s->length);
 }
@@ -207,27 +204,25 @@ define_function(data_deviation)
   YR_MEMORY_BLOCK_ITERATOR* iterator = context->iterator;
 
   if (offset < 0 || length < 0 || offset < block->base)
-    return_float(UNDEFINED);
+    return_float(YR_UNDEFINED);
 
   foreach_memory_block(iterator, block)
   {
-    if (offset >= block->base &&
-        offset < block->base + block->size)
+    if (offset >= block->base && offset < block->base + block->size)
     {
       data_offset = (size_t)(offset - block->base);
-      data_len = (size_t)yr_min(
-          length, (size_t)(block->size - data_offset));
+      data_len = (size_t) yr_min(length, (size_t)(block->size - data_offset));
       block_data = block->fetch_data(block);
 
       if (block_data == NULL)
-        return_float(UNDEFINED);
+        return_float(YR_UNDEFINED);
 
       total_len += data_len;
       offset += data_len;
       length -= data_len;
 
       for (i = 0; i < data_len; i++)
-        sum += fabs(((double)* (block_data + data_offset + i)) - mean);
+        sum += fabs(((double) *(block_data + data_offset + i)) - mean);
 
       past_first_block = true;
     }
@@ -238,7 +233,7 @@ define_function(data_deviation)
       // the checksum over a range of non contiguous blocks. As
       // range contains gaps of undefined data the checksum is
       // undefined.
-      return_float(UNDEFINED);
+      return_float(YR_UNDEFINED);
     }
 
     if (block->base + block->size > offset + length)
@@ -246,7 +241,7 @@ define_function(data_deviation)
   }
 
   if (!past_first_block)
-    return_float(UNDEFINED);
+    return_float(YR_UNDEFINED);
 
   return_float(sum / total_len);
 }
@@ -259,8 +254,7 @@ define_function(string_mean)
 
   SIZED_STRING* s = sized_string_argument(1);
 
-  for (i = 0; i < s->length; i++)
-    sum += (double) s->c_string[i];
+  for (i = 0; i < s->length; i++) sum += (double) s->c_string[i];
 
   return_float(sum / s->length);
 }
@@ -282,28 +276,27 @@ define_function(data_mean)
   size_t i;
 
   if (offset < 0 || length < 0 || offset < block->base)
-    return_float(UNDEFINED);
+    return_float(YR_UNDEFINED);
 
   foreach_memory_block(iterator, block)
   {
-    if (offset >= block->base &&
-        offset < block->base + block->size)
+    if (offset >= block->base && offset < block->base + block->size)
     {
-      size_t data_offset = (size_t) (offset - block->base);
+      size_t data_offset = (size_t)(offset - block->base);
       size_t data_len = (size_t) yr_min(
-          length, (size_t) (block->size - data_offset));
+          length, (size_t)(block->size - data_offset));
 
       const uint8_t* block_data = block->fetch_data(block);
 
       if (block_data == NULL)
-        return_float(UNDEFINED);
+        return_float(YR_UNDEFINED);
 
       total_len += data_len;
       offset += data_len;
       length -= data_len;
 
       for (i = 0; i < data_len; i++)
-        sum += (double)* (block_data + data_offset + i);
+        sum += (double) *(block_data + data_offset + i);
 
       past_first_block = true;
     }
@@ -314,7 +307,7 @@ define_function(data_mean)
       // the checksum over a range of non contiguous blocks. As
       // range contains gaps of undefined data the checksum is
       // undefined.
-      return_float(UNDEFINED);
+      return_float(YR_UNDEFINED);
     }
 
     if (block->base + block->size > offset + length)
@@ -322,7 +315,7 @@ define_function(data_mean)
   }
 
   if (!past_first_block)
-    return_float(UNDEFINED);
+    return_float(YR_UNDEFINED);
 
   return_float(sum / total_len);
 }
@@ -350,21 +343,20 @@ define_function(data_serial_correlation)
   double scc = 0;
 
   if (offset < 0 || length < 0 || offset < block->base)
-    return_float(UNDEFINED);
+    return_float(YR_UNDEFINED);
 
   foreach_memory_block(iterator, block)
   {
-    if (offset >= block->base &&
-        offset < block->base + block->size)
+    if (offset >= block->base && offset < block->base + block->size)
     {
       size_t data_offset = (size_t)(offset - block->base);
       size_t data_len = (size_t) yr_min(
-          length, (size_t) (block->size - data_offset));
+          length, (size_t)(block->size - data_offset));
 
       const uint8_t* block_data = block->fetch_data(block);
 
       if (block_data == NULL)
-        return_float(UNDEFINED);
+        return_float(YR_UNDEFINED);
 
       total_len += data_len;
       offset += data_len;
@@ -372,7 +364,7 @@ define_function(data_serial_correlation)
 
       for (i = 0; i < data_len; i++)
       {
-        sccun = (double)* (block_data + data_offset + i);
+        sccun = (double) *(block_data + data_offset + i);
         scct1 += scclast * sccun;
         scct2 += sccun;
         scct3 += sccun * sccun;
@@ -388,7 +380,7 @@ define_function(data_serial_correlation)
       // the checksum over a range of non contiguous blocks. As
       // range contains gaps of undefined data the checksum is
       // undefined.
-      return_float(UNDEFINED);
+      return_float(YR_UNDEFINED);
     }
 
     if (block->base + block->size > offset + length)
@@ -396,7 +388,7 @@ define_function(data_serial_correlation)
   }
 
   if (!past_first_block)
-    return_float(UNDEFINED);
+    return_float(YR_UNDEFINED);
 
   scct1 += scclast * sccun;
   scct2 *= scct2;
@@ -467,30 +459,29 @@ define_function(data_monte_carlo_pi)
   YR_MEMORY_BLOCK_ITERATOR* iterator = context->iterator;
 
   if (offset < 0 || length < 0 || offset < block->base)
-    return_float(UNDEFINED);
+    return_float(YR_UNDEFINED);
 
   foreach_memory_block(iterator, block)
   {
-    if (offset >= block->base &&
-        offset < block->base + block->size)
+    if (offset >= block->base && offset < block->base + block->size)
     {
       unsigned int monte[6];
 
-      size_t data_offset = (size_t) (offset - block->base);
+      size_t data_offset = (size_t)(offset - block->base);
       size_t data_len = (size_t) yr_min(
-          length, (size_t) (block->size - data_offset));
+          length, (size_t)(block->size - data_offset));
 
       const uint8_t* block_data = block->fetch_data(block);
 
       if (block_data == NULL)
-        return_float(UNDEFINED);
+        return_float(YR_UNDEFINED);
 
       offset += data_len;
       length -= data_len;
 
       for (i = 0; i < data_len; i++)
       {
-        monte[i % 6] = (unsigned int)* (block_data + data_offset + i);
+        monte[i % 6] = (unsigned int) *(block_data + data_offset + i);
 
         if (i % 6 == 5)
         {
@@ -520,7 +511,7 @@ define_function(data_monte_carlo_pi)
       // the checksum over a range of non contiguous blocks. As
       // range contains gaps of undefined data the checksum is
       // undefined.
-      return_float(UNDEFINED);
+      return_float(YR_UNDEFINED);
     }
 
     if (block->base + block->size > offset + length)
@@ -528,7 +519,7 @@ define_function(data_monte_carlo_pi)
   }
 
   if (!past_first_block || mcount == 0)
-    return_float(UNDEFINED);
+    return_float(YR_UNDEFINED);
 
   mpi = 4.0 * ((double) inmont / mcount);
 
@@ -575,7 +566,7 @@ define_function(string_monte_carlo_pi)
   }
 
   if (mcount == 0)
-    return_float(UNDEFINED);
+    return_float(YR_UNDEFINED);
 
   mpi = 4.0 * ((double) inmont / mcount);
   return_float(fabs((mpi - PI) / PI));
@@ -615,8 +606,7 @@ define_function(max)
 }
 
 
-begin_declarations;
-
+begin_declarations
   declare_float("MEAN_BYTES");
   declare_function("in_range", "fff", "i", in_range);
   declare_function("deviation", "iif", "f", data_deviation);
@@ -631,19 +621,16 @@ begin_declarations;
   declare_function("entropy", "s", "f", string_entropy);
   declare_function("min", "ii", "i", min);
   declare_function("max", "ii", "i", max);
+end_declarations
 
-end_declarations;
 
-
-int module_initialize(
-    YR_MODULE* module)
+int module_initialize(YR_MODULE* module)
 {
   return ERROR_SUCCESS;
 }
 
 
-int module_finalize(
-    YR_MODULE* module)
+int module_finalize(YR_MODULE* module)
 {
   return ERROR_SUCCESS;
 }
@@ -660,8 +647,7 @@ int module_load(
 }
 
 
-int module_unload(
-    YR_OBJECT* module_object)
+int module_unload(YR_OBJECT* module_object)
 {
   return ERROR_SUCCESS;
 }

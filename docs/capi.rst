@@ -30,7 +30,7 @@ with :c:func:`yr_compiler_destroy`.
 
 You can use :c:func:`yr_compiler_add_file`, :c:func:`yr_compiler_add_fd`, or
 :c:func:`yr_compiler_add_string` to add one or more input sources to be
-compiled. Both of these functions receive an optional namespace. Rules added
+compiler. Both of these functions receive an optional namespace. Rules added
 under the same namespace behave as if they were contained within the same
 source file or string, so, rule identifiers must be unique among all the sources
 sharing a namespace. If the namespace argument is ``NULL`` the rules are put
@@ -52,18 +52,21 @@ functions. The callback function has the following prototype:
       int error_level,
       const char* file_name,
       int line_number,
+      const YR_RULE* rule,
       const char* message,
       void* user_data)
 
-.. versionchanged:: 3.3.0
+.. versionchanged:: 4.0.0
 
 Possible values for ``error_level`` are ``YARA_ERROR_LEVEL_ERROR`` and
 ``YARA_ERROR_LEVEL_WARNING``. The arguments ``file_name`` and ``line_number``
 contains the file name and line number where the error or warning occurs.
 ``file_name`` is the one passed to :c:func:`yr_compiler_add_file` or
 :c:func:`yr_compiler_add_fd`. It can be ``NULL`` if you passed ``NULL`` or if
-you're using :c:func:`yr_compiler_add_string`. The ``user_data`` pointer is the
-same you passed to :c:func:`yr_compiler_set_callback`.
+you're using :c:func:`yr_compiler_add_string`. `rule` is a pointer to the
+`YR_RULE` structure representing the rule that contained the error, but it can
+be `NULL` it the error is not contained in a specific rule. The ``user_data``
+pointer is the same you passed to :c:func:`yr_compiler_set_callback`.
 
 By default, for rules containing references to other files
 (``include "filename.yara"``), YARA will try to find those files on disk.
@@ -71,11 +74,11 @@ However, if you want to fetch the imported rules from another source (eg: from a
 database or remote service), a callback function can be set with
 :c:func:`yr_compiler_set_include_callback`.
 
-The callback receives the following parameters:
+This callback receives the following parameters:
  * ``include_name``: name of the requested file.
  * ``calling_rule_filename``: the requesting file name (NULL if not a file).
  * ``calling_rule_namespace``: namespace (NULL if undefined).
- * ``user_data`` pointer is the same you passed to :c:func:`yr_compiler_set_include_callback`.
+ * ``user_data`` same pointer passed to :c:func:`yr_compiler_set_include_callback`.
 
 It should return the requested file's content as a null-terminated string. The
 memory for this string should be allocated by the callback function. Once it is
@@ -107,12 +110,13 @@ After you successfully added some sources you can get the compiled rules
 using the :c:func:`yr_compiler_get_rules` function. You'll get a pointer to
 a :c:type:`YR_RULES` structure which can be used to scan your data as
 described in :ref:`scanning-data`. Once :c:func:`yr_compiler_get_rules` is
-invoked you can not add more sources to the compiler, but you can get multiple
-instances of the compiled rules by calling :c:func:`yr_compiler_get_rules`
-multiple times.
+invoked you can not add more sources to the compiler, but you can call
+:c:func:`yr_compiler_get_rules` multiple times. Each time this function is called
+it returns a pointer to the same :c:type:`YR_RULES` structure. Notice that this
+behaviour is new in YARA 4.0.0, in YARA 3.X and 2.X :c:func:`yr_compiler_get_rules`
+returned a new copy the :c:type:`YR_RULES` structure.
 
-Each instance of :c:type:`YR_RULES` must be destroyed with
-:c:func:`yr_rules_destroy`.
+Instances of :c:type:`YR_RULES` must be destroyed with :c:func:`yr_rules_destroy`.
 
 Defining external variables
 ===========================
@@ -209,6 +213,7 @@ a callback function. The callback has the following prototype:
 .. code-block:: c
 
   int callback_function(
+      YR_SCAN_CONTEXT* context,
       int message,
       void* message_data,
       void* user_data);
@@ -226,7 +231,11 @@ a ``CALLBACK_MSG_RULE_MATCHING`` or ``CALLBACK_MSG_RULE_NOT_MATCHING`` message,
 depending if the rule is matching or not. In both cases a pointer to the
 :c:type:`YR_RULE` structure associated with the rule is passed in the
 ``message_data`` argument. You just need to perform a typecast from
-``void*`` to ``YR_RULE*`` to access the structure.
+``void*`` to ``YR_RULE*`` to access the structure. You can control whether or
+not YARA calls your callback function with ``CALLBACK_MSG_RULE_MATCHING`` and
+``CALLBACK_MSG_RULE_NOT_MATCHING`` messages by using the
+``SCAN_FLAGS_REPORT_RULES_MATCHING`` and ``SCAN_FLAGS_REPORT_RULES_NOT_MATCHING``
+as described later in this section.
 
 This callback is also called with the ``CALLBACK_MSG_IMPORT_MODULE`` message.
 All modules referenced by an ``import`` statement in the rules are imported
@@ -248,6 +257,9 @@ Lastly, the callback function is also called with the
 ``CALLBACK_MSG_SCAN_FINISHED`` message when the scan is finished. In this case
 ``message_data`` is ``NULL``.
 
+Notice that you shouldn't call any of the ``yr_rules_scan_XXXX`` functions from
+within the callback as those functions are not re-entrant.
+
 Your callback function must return one of the following values::
 
   CALLBACK_CONTINUE
@@ -260,16 +272,19 @@ If it returns ``CALLBACK_CONTINUE`` YARA will continue normally,
 ``CALLBACK_ERROR`` will abort the scanning too, but the result from
 ``yr_rules_scan_XXXX`` will be ``ERROR_CALLBACK_ERROR``.
 
-
 The ``user_data`` argument passed to your callback function is the same you
 passed ``yr_rules_scan_XXXX``. This pointer is not touched by YARA, it's just a
 way for your program to pass arbitrary data to the callback function.
 
-All ``yr_rules_scan_XXXX`` functions receive a ``flags`` argument and a
-``timeout`` argument. The only flag defined at this time is
-``SCAN_FLAGS_FAST_MODE``, so you must pass either this flag or a zero value.
-The ``timeout`` argument forces the function to return after the specified
-number of seconds approximately, with a zero meaning no timeout at all.
+All ``yr_rules_scan_XXXX`` functions receive a ``flags`` argument that allows
+to tweak some aspects of the scanning process. The supported flags are the following
+ones:
+
+ ``SCAN_FLAGS_FAST_MODE``
+ ``SCAN_FLAGS_NO_TRYCATCH``
+ ``SCAN_FLAGS_REPORT_RULES_MATCHING``
+ ``SCAN_FLAGS_REPORT_RULES_NOT_MATCHING``
+
 
 The ``SCAN_FLAGS_FAST_MODE`` flag makes the scanning a little faster by avoiding
 multiple matches of the same string when not necessary. Once the string was
@@ -278,8 +293,22 @@ single match for the string, even if it appears multiple times in the scanned
 data. This flag has the same effect of the ``-f`` command-line option described
 in :ref:`command-line`.
 
-Notice that you shouldn't call any of the ``yr_rules_scan_XXXX`` functions from
-within the callback as those functions are not re-entrant.
+``SCAN_FLAGS_REPORT_RULES_MATCHING`` and ``SCAN_FLAGS_REPORT_RULES_NOT_MATCHING``
+control whether the callback is invoked for rules that are matching or for rules
+that are not matching respectively. If ``SCAN_FLAGS_REPORT_RULES_MATCHING`` is
+specified alone, the callback will be called for matching rules with the
+``CALLBACK_MSG_RULE_MATCHING`` message but it won't be called for non-matching
+rules. If ``SCAN_FLAGS_REPORT_RULES_NOT_MATCHING`` is specified alone, the opposite
+happens, the callback will be called with ``CALLBACK_MSG_RULE_NOT_MATCHING``
+messages but not with ``CALLBACK_MSG_RULE_MATCHING`` messages. If both flags
+are combined together (the default) the callback will be called for both matching
+and non-matching rules. For backward compatibility, if none of these two flags
+are specified, the scanner will follow the default behavior.
+
+Additionally, ``yr_rules_scan_XXXX`` functions can receive a ``timeout`` argument
+which forces the scan to abort after the specified number of seconds (approximately).
+If ``timeout`` is 0 it means no timeout at all.
+
 
 Using a scanner
 ---------------
@@ -313,6 +342,12 @@ Data structures
 .. c:type:: YR_COMPILER
 
   Data structure representing a YARA compiler.
+
+.. c:type:: YR_SCAN_CONTEXT
+
+  Data structure that holds information about an on-going scan. A pointer to
+  this structure is passed to the callback function that receives notifications
+  about matches found. This structure is also used for iterating over the
 
 .. c:type:: YR_MATCH
 
@@ -355,7 +390,6 @@ Data structures
 
     One of the following metadata types:
 
-      ``META_TYPE_NULL``
       ``META_TYPE_INTEGER``
       ``META_TYPE_STRING``
       ``META_TYPE_BOOLEAN``
@@ -461,14 +495,6 @@ Functions
   resource allocated by the library. Return :c:macro:`ERROR_SUCCESS` on
   success another error code in case of error. The list of possible return
   codes vary according to the modules compiled into YARA.
-
-.. c:function:: void yr_finalize_thread(void)
-
-  .. deprecated:: 3.8.0
-
-  Any thread using the library, except the main thread, must call this
-  function when it finishes using the library. Since version 3.8.0 this calling
-  this function is not required anymore, and it's deprecated.
 
 .. c:function:: int yr_compiler_create(YR_COMPILER** compiler)
 
@@ -737,19 +763,21 @@ Functions
       ..do something with string
     }
 
-.. c:function:: yr_string_matches_foreach(string, match)
+.. c:function:: yr_string_matches_foreach(context, string, match)
 
-  Iterate over the :c:type:`YR_MATCH` structures associated with a given string
-  running the block of code that follows each time with a different value for
-  *match*. Example:
+  Iterate over the :c:type:`YR_MATCH` structures that represent the matches
+  found for a given string during a scan running the block of code that follows,
+  each time with a different value for *match*. The `context` argument is a
+  pointer to a :c:type:`YR_SCAN_CONTEXT` that is passed to the callback function
+  and `string` is a pointer to a :c:type:`YR_STRING`. Example:
 
   .. code-block:: c
 
     YR_MATCH* match;
 
-    /* string is a YR_STRING object */
+    /* context is a YR_SCAN_CONTEXT* and string is a YR_STRING*  */
 
-    yr_string_matches_foreach(string, match)
+    yr_string_matches_foreach(context, string, match)
     {
       ..do something with match
     }
@@ -825,7 +853,12 @@ Functions
 
   .. versionadded:: 3.8.0
 
-  Set the flags that will be used by any call to `yr_scanner_scan_xxx`.
+  Set the flags that will be used by any call to `yr_scanner_scan_xxx`. The supported flags are:
+
+ ``SCAN_FLAGS_FAST_MODE``: Enable fast scan mode.
+ ``SCAN_FLAGS_NO_TRYCATCH``: Disable exception handling.
+ ``SCAN_FLAGS_REPORT_RULES_MATCHING``: If this
+ ``SCAN_FLAGS_REPORT_RULES_NOT_MATCHING``
 
 .. c:function:: int yr_scanner_define_integer_variable(YR_SCANNER* scanner, const char* identifier, int64_t value)
 

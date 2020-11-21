@@ -49,6 +49,18 @@ cc_test(
     srcs = ["test-alignment.c"],
     copts = COPTS,
     deps = ["@//:libyara"],
+    linkstatic=True,
+)
+
+cc_test(
+    name = "test_arena",
+    srcs = ["test-arena.c"],
+    copts = COPTS,
+    deps = [
+        ":util",
+        "@//:libyara",
+    ],
+    linkstatic=True,
 )
 
 cc_test(
@@ -59,6 +71,7 @@ cc_test(
         ":util",
         "@//:libyara",
     ],
+    linkstatic=True,
 )
 
 cc_test(
@@ -66,6 +79,7 @@ cc_test(
     srcs = ["test-rules.c"],
     copts = COPTS,
     data = [
+        "data/base64",
         "data/baz.yar",
         "data/foo.yar",
         "data/include/bar.yar",
@@ -78,6 +92,7 @@ cc_test(
         ":util",
         "@//:libyara",
     ],
+    linkstatic=True,
 )
 
 cc_test(
@@ -86,16 +101,20 @@ cc_test(
     copts = COPTS,
     data = [
         "data/079a472d22290a94ebb212aa8015cdc8dd28a968c6b4d3b88acdd58ce2d3b885",
+        "data/079a472d22290a94ebb212aa8015cdc8dd28a968c6b4d3b88acdd58ce2d3b885.upx",
         "data/tiny",
         "data/tiny-idata-51ff",
         "data/tiny-idata-5200",
         "data/tiny-overlay",
         "data/weird_rich",
+        "data/mtxex.dll",
+        "data/mtxex_modified_rsrc_rva.dll",
     ],
     deps = [
         ":util",
         "@//:libyara",
     ],
+    linkstatic=True,
 )
 
 cc_test(
@@ -107,6 +126,7 @@ cc_test(
         ":util",
         "@//:libyara",
     ],
+    linkstatic=True,
 )
 
 cc_test(
@@ -118,6 +138,7 @@ cc_test(
         ":util",
         "@//:libyara",
     ],
+    linkstatic=True,
 )
 
 cc_test(
@@ -128,6 +149,7 @@ cc_test(
         ":util",
         "@//:libyara",
     ],
+    linkstatic=True,
 )
 
 cc_test(
@@ -138,6 +160,7 @@ cc_test(
         ":util",
         "@//:libyara",
     ],
+    linkstatic=True,
 )
 
 cc_test(
@@ -148,6 +171,7 @@ cc_test(
         ":util",
         "@//:libyara",
     ],
+    linkstatic=True,
 )
 
 # This test fails when running under ASAN
@@ -159,18 +183,23 @@ cc_test(
         ":util",
         "@//:libyara",
     ],
+    linkstatic=True,
 )
 
 cc_test(
     name = "test_macho",
     srcs = ["test-macho.c"],
-    data = ["data/tiny-universal"],
+    data = [
+        "data/tiny-universal",
+        "data/tiny-macho",
+    ],
     copts = COPTS,
     deps = [
         ":blob",
         ":util",
         "@//:libyara",
     ],
+    linkstatic=True,
 )
 
 cc_test(
@@ -182,6 +211,7 @@ cc_test(
         ":util",
         "@//:libyara",
     ],
+    linkstatic=True,
 )
 
 cc_test(
@@ -192,4 +222,5 @@ cc_test(
         ":util",
         "@//:libyara",
     ],
+    linkstatic=True,
 )

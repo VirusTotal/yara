@@ -77,10 +77,11 @@ matrix:
     - os: linux
       dist: xenial
       install: |
-         wget https://github.com/bazelbuild/bazel/releases/download/0.29.0/bazel_0.29.0-linux-x86_64.deb
-         sudo dpkg -i bazel_0.29.0-linux-x86_64.deb
+         wget https://github.com/bazelbuild/bazel/releases/download/2.1.0/bazel_2.1.0-linux-x86_64.deb
+         sudo dpkg -i bazel_2.1.0-linux-x86_64.deb
       before_script: bazel info
-      script: bazel test //tests/...
+      script: |
+        bazel test @jansson//... //tests/...
 
     # Build for OS X
     - os: osx

@@ -27,28 +27,25 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include <string.h>
 #include <assert.h>
-#include <math.h>
 #include <float.h>
-
-#include <yara/globals.h>
+#include <math.h>
+#include <string.h>
+#include <yara.h>
 #include <yara/arena.h>
 #include <yara/endian.h>
-#include <yara/exec.h>
-#include <yara/limits.h>
 #include <yara/error.h>
-#include <yara/object.h>
+#include <yara/exec.h>
+#include <yara/globals.h>
+#include <yara/limits.h>
+#include <yara/mem.h>
 #include <yara/modules.h>
+#include <yara/object.h>
 #include <yara/re.h>
+#include <yara/sizedstr.h>
+#include <yara/stopwatch.h>
 #include <yara/strutils.h>
 #include <yara/utils.h>
-#include <yara/mem.h>
-#include <yara/stopwatch.h>
-
-
-#include <yara.h>
-
 
 // Turn on paranoid mode by default if not defined otherwise. In paranoid
 // mode additional checks are performed in order to mitigate the effects of
@@ -60,143 +57,145 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // Paranoid mode does not guarantee that it's safe to load compiled rules from
 // third parties, it only prevents severe security issues. Maliciously crafted
 // compiled rules can still crash YARA. Loading third-party compiled rules is
-// *highly* undiscouraged. If you need to distribute YARA rules in compiled
+// *highly* discouraged. If you need to distribute YARA rules in compiled
 // form you should encapsulate them in some digitally-signed package that
 // ensure that they haven't been modified by someone else.
 
-#if !defined(PARANOID_EXEC)
-#define PARANOID_EXEC   1
+#if !defined(YR_PARANOID_EXEC)
+#define YR_PARANOID_EXEC 1
 #endif
 
+#define MEM_SIZE YR_MAX_LOOP_NESTING*(YR_MAX_LOOP_VARS + YR_INTERNAL_LOOP_VARS)
 
-#define MEM_SIZE   YR_MAX_LOOP_NESTING * YR_MAX_LOOP_VARS
+#define push(x)                         \
+  if (stack.sp < stack.capacity)        \
+  {                                     \
+    stack.items[stack.sp++] = (x);      \
+  }                                     \
+  else                                  \
+  {                                     \
+    result = ERROR_EXEC_STACK_OVERFLOW; \
+    stop = true;                        \
+    break;                              \
+  }
 
-
-#define push(x)  \
-    if (stack.sp < stack.capacity) \
-    { \
-      stack.items[stack.sp++] = (x); \
-    } \
-    else \
-    { \
-      result = ERROR_EXEC_STACK_OVERFLOW; \
-      stop = true; \
-      break; \
-    } \
-
-
-#define pop(x) { assert(stack.sp > 0); x = stack.items[--stack.sp]; }
+#define pop(x)                   \
+  {                              \
+    assert(stack.sp > 0);        \
+    x = stack.items[--stack.sp]; \
+  }
 
 #define is_undef(x) IS_UNDEFINED((x).i)
 
 #define ensure_defined(x) \
-    if (is_undef(x)) \
-    { \
-      r1.i = UNDEFINED; \
-      push(r1); \
-      break; \
-    }
+  if (is_undef(x))        \
+  {                       \
+    r1.i = YR_UNDEFINED;  \
+    push(r1);             \
+    break;                \
+  }
 
-#define ensure_within_mem(x) \
-    if (x < 0 || x >= MEM_SIZE) \
-    { \
-      stop = true; \
-      result = ERROR_INTERNAL_FATAL_ERROR; \
-      break; \
-    }
+#define ensure_within_mem(x)             \
+  if (x < 0 || x >= MEM_SIZE)            \
+  {                                      \
+    stop = true;                         \
+    result = ERROR_INTERNAL_FATAL_ERROR; \
+    break;                               \
+  }
 
 // Make sure that the string pointer is within the rules arena.
-#define ensure_within_rules_arena(x) \
-    if (yr_arena_page_for_address(context->rules->arena, x) == NULL) \
-    { \
-      stop = true; \
-      result = ERROR_INTERNAL_FATAL_ERROR; \
-      break; \
-    }
+#define ensure_within_rules_arena(x)                              \
+  {                                                               \
+    YR_ARENA_REF ref;                                             \
+    if (yr_arena_ptr_to_ref(context->rules->arena, x, &ref) == 0) \
+    {                                                             \
+      stop = true;                                                \
+      result = ERROR_INTERNAL_FATAL_ERROR;                        \
+      break;                                                      \
+    }                                                             \
+  }
 
-#define check_object_canary(o) \
-    if (o->canary != context->canary) \
-    { \
-      stop = true; \
-      result = ERROR_INTERNAL_FATAL_ERROR; \
-      break; \
-    }
+#define check_object_canary(o)           \
+  if (o->canary != context->canary)      \
+  {                                      \
+    stop = true;                         \
+    result = ERROR_INTERNAL_FATAL_ERROR; \
+    break;                               \
+  }
 
-#define little_endian_uint8_t(x)     (x)
-#define little_endian_int8_t(x)      (x)
-#define little_endian_uint16_t(x)    yr_le16toh(x)
-#define little_endian_int16_t(x)     yr_le16toh(x)
-#define little_endian_uint32_t(x)    yr_le32toh(x)
-#define little_endian_int32_t(x)     yr_le32toh(x)
+#define little_endian_uint8_t(x)  (x)
+#define little_endian_int8_t(x)   (x)
+#define little_endian_uint16_t(x) yr_le16toh(x)
+#define little_endian_int16_t(x)  yr_le16toh(x)
+#define little_endian_uint32_t(x) yr_le32toh(x)
+#define little_endian_int32_t(x)  yr_le32toh(x)
 
-#define big_endian_uint8_t(x)        (x)
-#define big_endian_int8_t(x)         (x)
-#define big_endian_uint16_t(x)       yr_be16toh(x)
-#define big_endian_int16_t(x)        yr_be16toh(x)
-#define big_endian_uint32_t(x)       yr_be32toh(x)
-#define big_endian_int32_t(x)        yr_be32toh(x)
+#define big_endian_uint8_t(x)  (x)
+#define big_endian_int8_t(x)   (x)
+#define big_endian_uint16_t(x) yr_be16toh(x)
+#define big_endian_int16_t(x)  yr_be16toh(x)
+#define big_endian_uint32_t(x) yr_be32toh(x)
+#define big_endian_int32_t(x)  yr_be32toh(x)
 
+#define function_read(type, endianess)                            \
+  int64_t read_##type##_##endianess(                              \
+      YR_MEMORY_BLOCK_ITERATOR* iterator, size_t offset)          \
+  {                                                               \
+    YR_MEMORY_BLOCK* block = iterator->first(iterator);           \
+    while (block != NULL)                                         \
+    {                                                             \
+      if (offset >= block->base && block->size >= sizeof(type) && \
+          offset <= block->base + block->size - sizeof(type))     \
+      {                                                           \
+        type result;                                              \
+        const uint8_t* data = block->fetch_data(block);           \
+        if (data == NULL)                                         \
+          return YR_UNDEFINED;                                    \
+        result = *(type*) (data + offset - block->base);          \
+        result = endianess##_##type(result);                      \
+        return result;                                            \
+      }                                                           \
+      block = iterator->next(iterator);                           \
+    }                                                             \
+    return YR_UNDEFINED;                                          \
+  };
 
-#define function_read(type, endianess) \
-    int64_t read_##type##_##endianess(YR_MEMORY_BLOCK_ITERATOR* iterator, size_t offset) \
-    { \
-      YR_MEMORY_BLOCK* block = iterator->first(iterator); \
-      while (block != NULL) \
-      { \
-        if (offset >= block->base && \
-            block->size >= sizeof(type) && \
-            offset <= block->base + block->size - sizeof(type)) \
-        { \
-          type result; \
-          const uint8_t* data = block->fetch_data(block); \
-          if (data == NULL) \
-            return UNDEFINED; \
-          result = *(type *)(data + offset - block->base); \
-          result = endianess##_##type(result); \
-          return result; \
-        } \
-        block = iterator->next(iterator); \
-      } \
-      return UNDEFINED; \
-    };
+function_read(uint8_t, little_endian);
+function_read(uint16_t, little_endian);
+function_read(uint32_t, little_endian);
+function_read(int8_t, little_endian);
+function_read(int16_t, little_endian);
+function_read(int32_t, little_endian);
+function_read(uint8_t, big_endian);
+function_read(uint16_t, big_endian);
+function_read(uint32_t, big_endian);
+function_read(int8_t, big_endian);
+function_read(int16_t, big_endian);
+function_read(int32_t, big_endian);
 
-
-function_read(uint8_t, little_endian)
-function_read(uint16_t, little_endian)
-function_read(uint32_t, little_endian)
-function_read(int8_t, little_endian)
-function_read(int16_t, little_endian)
-function_read(int32_t, little_endian)
-function_read(uint8_t, big_endian)
-function_read(uint16_t, big_endian)
-function_read(uint32_t, big_endian)
-function_read(int8_t, big_endian)
-function_read(int16_t, big_endian)
-function_read(int32_t, big_endian)
-
-
-static const uint8_t* jmp_if(
-    int condition,
-    const uint8_t* ip)
+static const uint8_t* jmp_if(int condition, const uint8_t* ip)
 {
-  const uint8_t* result;
+  size_t off;
 
   if (condition)
   {
-    result = *(const uint8_t**)(ip);
+    // The condition is true, the instruction pointer is incremented in the
+    // amount specified by the jump's offset. The offset is relative to the
+    // jump opcode, but now the instruction pointer is pointing past the opcode
+    // that's why we decrement the offset by 1.
+    off = *(int32_t*) (ip) -1;
   }
   else
   {
-    result = ip + sizeof(uint64_t);
+    // The condition is false, the execution flow proceeds with the instruction
+    // right after the jump.
+    off = sizeof(int32_t);
   }
 
-  return result;
+  return ip + off;
 }
 
-
-static int iter_array_next(
-    YR_ITERATOR* self,
-    YR_VALUE_STACK* stack)
+static int iter_array_next(YR_ITERATOR* self, YR_VALUE_STACK* stack)
 {
   YR_OBJECT* obj;
 
@@ -217,7 +216,7 @@ static int iter_array_next(
     if (obj != NULL)
       stack->items[stack->sp++].o = obj;
     else
-      stack->items[stack->sp++].i = UNDEFINED;
+      stack->items[stack->sp++].i = YR_UNDEFINED;
 
     self->array_it.index++;
   }
@@ -225,17 +224,14 @@ static int iter_array_next(
   {
     // Push true for indicating the iterator has been exhausted.
     stack->items[stack->sp++].i = 1;
-    // Push UNDEFINED as a placeholder for the next item.
-    stack->items[stack->sp++].i = UNDEFINED;
+    // Push YR_UNDEFINED as a placeholder for the next item.
+    stack->items[stack->sp++].i = YR_UNDEFINED;
   }
 
   return ERROR_SUCCESS;
 }
 
-
-static int iter_dict_next(
-    YR_ITERATOR* self,
-    YR_VALUE_STACK* stack)
+static int iter_dict_next(YR_ITERATOR* self, YR_VALUE_STACK* stack)
 {
   YR_DICTIONARY_ITEMS* items = object_as_dictionary(self->dict_it.dict)->items;
 
@@ -245,7 +241,17 @@ static int iter_dict_next(
   if (stack->sp + 2 >= stack->capacity)
     return ERROR_EXEC_STACK_OVERFLOW;
 
-  if (self->dict_it.index < items->used)
+  // If the dictionary has no items or the iterator reached the last item, abort
+  // the iteration, if not push the next key and value.
+  if (items == NULL || self->dict_it.index == items->used)
+  {
+    // Push true for indicating the iterator has been exhausted.
+    stack->items[stack->sp++].i = 1;
+    // Push YR_UNDEFINED as a placeholder for the next key and value.
+    stack->items[stack->sp++].i = YR_UNDEFINED;
+    stack->items[stack->sp++].i = YR_UNDEFINED;
+  }
+  else
   {
     // Push the false value that indicates that the iterator is not exhausted.
     stack->items[stack->sp++].i = 0;
@@ -257,28 +263,17 @@ static int iter_dict_next(
     }
     else
     {
-      stack->items[stack->sp++].i = UNDEFINED;
-      stack->items[stack->sp++].i = UNDEFINED;
+      stack->items[stack->sp++].i = YR_UNDEFINED;
+      stack->items[stack->sp++].i = YR_UNDEFINED;
     }
 
     self->dict_it.index++;
-  }
-  else
-  {
-    // Push true for indicating the iterator has been exhausted.
-    stack->items[stack->sp++].i = 1;
-    // Push UNDEFINED as a placeholder for the next key and value.
-    stack->items[stack->sp++].i = UNDEFINED;
-    stack->items[stack->sp++].i = UNDEFINED;
   }
 
   return ERROR_SUCCESS;
 }
 
-
-static int iter_int_range_next(
-    YR_ITERATOR* self,
-    YR_VALUE_STACK* stack)
+static int iter_int_range_next(YR_ITERATOR* self, YR_VALUE_STACK* stack)
 {
   // Check that there's two available slots in the stack, one for the next
   // item returned by the iterator and another one for the boolean that
@@ -286,7 +281,9 @@ static int iter_int_range_next(
   if (stack->sp + 1 >= stack->capacity)
     return ERROR_EXEC_STACK_OVERFLOW;
 
-  if (self->int_range_it.next <= self->int_range_it.last)
+  if (!IS_UNDEFINED(self->int_range_it.next) &&
+      !IS_UNDEFINED(self->int_range_it.last) &&
+      self->int_range_it.next <= self->int_range_it.last)
   {
     // Push the false value that indicates that the iterator is not exhausted.
     stack->items[stack->sp++].i = 0;
@@ -297,17 +294,14 @@ static int iter_int_range_next(
   {
     // Push true for indicating the iterator has been exhausted.
     stack->items[stack->sp++].i = 1;
-    // Push UNDEFINED as a placeholder for the next item.
-    stack->items[stack->sp++].i = UNDEFINED;
+    // Push YR_UNDEFINED as a placeholder for the next item.
+    stack->items[stack->sp++].i = YR_UNDEFINED;
   }
 
   return ERROR_SUCCESS;
 }
 
-
-static int iter_int_enum_next(
-    YR_ITERATOR* self,
-    YR_VALUE_STACK* stack)
+static int iter_int_enum_next(YR_ITERATOR* self, YR_VALUE_STACK* stack)
 {
   // Check that there's two available slots in the stack, one for the next
   // item returned by the iterator and another one for the boolean that
@@ -315,27 +309,28 @@ static int iter_int_enum_next(
   if (stack->sp + 1 >= stack->capacity)
     return ERROR_EXEC_STACK_OVERFLOW;
 
-  if (self->int_enum_it.next < self->int_enum_it.count)
+  if (!IS_UNDEFINED(self->int_enum_it.next) &&
+      !IS_UNDEFINED(self->int_enum_it.count) &&
+      self->int_enum_it.next < self->int_enum_it.count)
   {
     // Push the false value that indicates that the iterator is not exhausted.
     stack->items[stack->sp++].i = 0;
-    stack->items[stack->sp++].i = self->int_enum_it.items[self->int_enum_it.next];
+    stack->items[stack->sp++].i =
+        self->int_enum_it.items[self->int_enum_it.next];
     self->int_enum_it.next++;
   }
   else
   {
     // Push true for indicating the iterator has been exhausted.
     stack->items[stack->sp++].i = 1;
-    // Push UNDEFINED as a placeholder for the next item.
-    stack->items[stack->sp++].i = UNDEFINED;
+    // Push YR_UNDEFINED as a placeholder for the next item.
+    stack->items[stack->sp++].i = YR_UNDEFINED;
   }
 
   return ERROR_SUCCESS;
 }
 
-
-int yr_execute_code(
-    YR_SCAN_CONTEXT* context)
+int yr_execute_code(YR_SCAN_CONTEXT* context)
 {
   const uint8_t* ip = context->rules->code_start;
 
@@ -350,19 +345,18 @@ int yr_execute_code(
 
   uint64_t elapsed_time;
 
-  #ifdef PROFILING_ENABLED
+#ifdef YR_PROFILING_ENABLED
   uint64_t start_time;
+#endif
+
+  uint32_t current_rule_idx = 0;
   YR_RULE* current_rule = NULL;
-  #endif
-
-  YR_INIT_RULE_ARGS init_rule_args;
-
   YR_RULE* rule;
   YR_MATCH* match;
   YR_OBJECT_FUNCTION* function;
   YR_OBJECT** obj_ptr;
   YR_ARENA* obj_arena;
-  YR_ARENA* it_arena;
+  YR_NOTEBOOK* it_notebook;
 
   char* identifier;
   char* args_fmt;
@@ -372,7 +366,7 @@ int yr_execute_code(
   int count;
   int result = ERROR_SUCCESS;
   int cycle = 0;
-  int tidx = context->tidx;
+  int obj_count = 0;
 
   bool stop = false;
 
@@ -387,915 +381,965 @@ int yr_execute_code(
     return ERROR_INSUFFICIENT_MEMORY;
 
   FAIL_ON_ERROR_WITH_CLEANUP(
-      yr_arena_create(1024, 0, &obj_arena),
+      yr_arena_create(1, 512 * sizeof(YR_OBJECT*), &obj_arena),
       yr_free(stack.items));
 
   FAIL_ON_ERROR_WITH_CLEANUP(
-      yr_arena_create(64 * sizeof(YR_ITERATOR), 0, &it_arena),
-      yr_arena_destroy(obj_arena);
+      yr_notebook_create(512 * sizeof(YR_ITERATOR), &it_notebook),
+      yr_arena_release(obj_arena);
       yr_free(stack.items));
 
-  #ifdef PROFILING_ENABLED
-  start_time = yr_stopwatch_elapsed_us(&context->stopwatch);
-  #endif
+#ifdef YR_PROFILING_ENABLED
+  start_time = yr_stopwatch_elapsed_ns(&context->stopwatch);
+#endif
 
-  #if PARANOID_EXEC
+#if YR_PARANOID_EXEC
   memset(mem, 0, MEM_SIZE * sizeof(mem[0]));
-  #endif
+#endif
 
-  while(!stop)
+  while (!stop)
   {
+    // Read the opcode from the address indicated by the instruction pointer.
     opcode = *ip;
+
+    // Advance the instruction pointer, which now points past the opcode.
     ip++;
 
-    switch(opcode)
+    switch (opcode)
     {
-      case OP_NOP:
-        break;
+    case OP_NOP:
+      break;
 
-      case OP_HALT:
-        assert(stack.sp == 0); // When HALT is reached the stack should be empty.
-        stop = true;
-        break;
+    case OP_HALT:
+      assert(stack.sp == 0);  // When HALT is reached the stack should be empty.
+      stop = true;
+      break;
 
-      case OP_ITER_START_ARRAY:
-        result = yr_arena_allocate_struct(
-            it_arena, sizeof(YR_ITERATOR), &r2.p);
+    case OP_ITER_START_ARRAY:
+      r2.p = yr_notebook_alloc(it_notebook, sizeof(YR_ITERATOR));
 
-        if (result == ERROR_SUCCESS)
-        {
-          pop(r1);
-          r2.it->array_it.array = r1.o;
-          r2.it->array_it.index = 0;
-          r2.it->next = iter_array_next;
-          push(r2);
-        }
+      if (r2.p == NULL)
+      {
+        result = ERROR_INSUFFICIENT_MEMORY;
+      }
+      else
+      {
+        pop(r1);
+        r2.it->array_it.array = r1.o;
+        r2.it->array_it.index = 0;
+        r2.it->next = iter_array_next;
+        push(r2);
+      }
 
-        stop = (result != ERROR_SUCCESS);
-        break;
+      stop = (result != ERROR_SUCCESS);
+      break;
 
-      case OP_ITER_START_DICT:
-        result = yr_arena_allocate_struct(
-            it_arena, sizeof(YR_ITERATOR), &r2.p);
+    case OP_ITER_START_DICT:
+      r2.p = yr_notebook_alloc(it_notebook, sizeof(YR_ITERATOR));
 
-        if (result == ERROR_SUCCESS)
-        {
-          pop(r1);
-          r2.it->dict_it.dict = r1.o;
-          r2.it->dict_it.index = 0;
-          r2.it->next = iter_dict_next;
-          push(r2);
-        }
+      if (r2.p == NULL)
+      {
+        result = ERROR_INSUFFICIENT_MEMORY;
+      }
+      else
+      {
+        pop(r1);
+        r2.it->dict_it.dict = r1.o;
+        r2.it->dict_it.index = 0;
+        r2.it->next = iter_dict_next;
+        push(r2);
+      }
 
-        stop = (result != ERROR_SUCCESS);
-        break;
+      stop = (result != ERROR_SUCCESS);
+      break;
 
-      case OP_ITER_START_INT_RANGE:
-        // Creates an iterator for an integer range. The higher bound of the
-        // range is at the top of the stack followed by the lower bound.
-        result = yr_arena_allocate_struct(
-            it_arena, sizeof(YR_ITERATOR), &r3.p);
+    case OP_ITER_START_INT_RANGE:
+      // Creates an iterator for an integer range. The higher bound of the
+      // range is at the top of the stack followed by the lower bound.
+      r3.p = yr_notebook_alloc(it_notebook, sizeof(YR_ITERATOR));
 
-        if (result == ERROR_SUCCESS)
+      if (r3.p == NULL)
+      {
+        result = ERROR_INSUFFICIENT_MEMORY;
+      }
+      else
+      {
+        pop(r2);
+        pop(r1);
+        r3.it->int_range_it.next = r1.i;
+        r3.it->int_range_it.last = r2.i;
+        r3.it->next = iter_int_range_next;
+        push(r3);
+      }
+
+      stop = (result != ERROR_SUCCESS);
+      break;
+
+    case OP_ITER_START_INT_ENUM:
+      // Creates an iterator for an integer enumeration. The number of items
+      // in the enumeration is at the top of the stack, followed by the
+      // items in reverse order.
+      pop(r1);
+
+      r3.p = yr_notebook_alloc(
+          it_notebook, sizeof(YR_ITERATOR) + sizeof(uint64_t) * r1.i);
+
+      if (r3.p == NULL)
+      {
+        result = ERROR_INSUFFICIENT_MEMORY;
+      }
+      else
+      {
+        r3.it->int_enum_it.count = r1.i;
+        r3.it->int_enum_it.next = 0;
+        r3.it->next = iter_int_enum_next;
+
+        for (i = r1.i; i > 0; i--)
         {
           pop(r2);
-          pop(r1);
-          r3.it->int_range_it.next = r1.i;
-          r3.it->int_range_it.last = r2.i;
-          r3.it->next = iter_int_range_next;
-          push(r3);
+          r3.it->int_enum_it.items[i - 1] = r2.i;
         }
 
-        stop = (result != ERROR_SUCCESS);
-        break;
+        push(r3);
+      }
 
-      case OP_ITER_START_INT_ENUM:
-        // Creates an iterator for an integer enumeration. The number of items
-        // in the enumeration is at the top of the stack, followed by the
-        // items in reverse order.
-        pop(r1);
+      stop = (result != ERROR_SUCCESS);
+      break;
 
-        result = yr_arena_allocate_struct(
-            it_arena, sizeof(YR_ITERATOR) + sizeof(uint64_t) * r1.i, &r3.p);
+    case OP_ITER_NEXT:
+      // Loads the iterator in r1, but leaves the iterator in the stack.
+      pop(r1);
+      push(r1);
+      // The iterator's next function is responsible for pushing the next
+      // item in the stack, and a boolean indicating if there are more items
+      // to retrieve. The boolean will be at the top of the stack after
+      // calling "next".
+      result = r1.it->next(r1.it, &stack);
+      stop = (result != ERROR_SUCCESS);
+      break;
 
-        if (result == ERROR_SUCCESS)
-        {
-          r3.it->int_enum_it.count = r1.i;
-          r3.it->int_enum_it.next = 0;
-          r3.it->next = iter_int_enum_next;
+    case OP_PUSH:
+      memcpy(&r1.i, ip, sizeof(uint64_t));
+      ip += sizeof(uint64_t);
+      push(r1);
+      break;
 
-          for (i = r1.i; i > 0; i--)
-          {
-             pop(r2);
-             r3.it->int_enum_it.items[i - 1] = r2.i;
-          }
+    case OP_PUSH_8:
+      r1.i = *ip;
+      ip += sizeof(uint8_t);
+      push(r1);
+      break;
 
-          push(r3);
-        }
+    case OP_PUSH_16:
+      r1.i = *(uint16_t*) (ip);
+      ip += sizeof(uint16_t);
+      push(r1);
+      break;
 
-        stop = (result != ERROR_SUCCESS);
-        break;
+    case OP_PUSH_32:
+      r1.i = *(uint32_t*) (ip);
+      ip += sizeof(uint32_t);
+      push(r1);
+      break;
 
-      case OP_ITER_NEXT:
-        // Loads the iterator in r1, but leaves the iterator in the stack.
-        pop(r1);
-        push(r1);
-        // The iterator's next function is responsible for pushing the next
-        // item in the stack, and a boolean indicating if there are more items
-        // to retrieve. The boolean will be at the top of the stack after
-        // calling "next".
-        result = r1.it->next(r1.it, &stack);
-        stop = (result != ERROR_SUCCESS);
-        break;
+    case OP_PUSH_U:
+      r1.i = YR_UNDEFINED;
+      push(r1);
+      break;
 
-      case OP_PUSH:
-        r1.i = *(uint64_t*)(ip);
-        ip += sizeof(uint64_t);
-        push(r1);
-        break;
+    case OP_POP:
+      pop(r1);
+      break;
 
-      case OP_POP:
-        pop(r1);
-        break;
+    case OP_CLEAR_M:
+      memcpy(&r1.i, ip, sizeof(uint64_t));
+      ip += sizeof(uint64_t);
+#if YR_PARANOID_EXEC
+      ensure_within_mem(r1.i);
+#endif
+      mem[r1.i].i = 0;
+      break;
 
-      case OP_CLEAR_M:
-        r1.i = *(uint64_t*)(ip);
-        ip += sizeof(uint64_t);
-        #if PARANOID_EXEC
-        ensure_within_mem(r1.i);
-        #endif
-        mem[r1.i].i = 0;
-        break;
+    case OP_ADD_M:
+      memcpy(&r1.i, ip, sizeof(uint64_t));
+      ip += sizeof(uint64_t);
+#if YR_PARANOID_EXEC
+      ensure_within_mem(r1.i);
+#endif
+      pop(r2);
+      if (!is_undef(r2))
+        mem[r1.i].i += r2.i;
+      break;
 
-      case OP_ADD_M:
-        r1.i = *(uint64_t*)(ip);
-        ip += sizeof(uint64_t);
-        #if PARANOID_EXEC
-        ensure_within_mem(r1.i);
-        #endif
-        pop(r2);
-        if (!is_undef(r2))
-          mem[r1.i].i += r2.i;
-        break;
+    case OP_INCR_M:
+      memcpy(&r1.i, ip, sizeof(uint64_t));
+      ip += sizeof(uint64_t);
+#if YR_PARANOID_EXEC
+      ensure_within_mem(r1.i);
+#endif
+      mem[r1.i].i++;
+      break;
 
-      case OP_INCR_M:
-        r1.i = *(uint64_t*)(ip);
-        ip += sizeof(uint64_t);
-        #if PARANOID_EXEC
-        ensure_within_mem(r1.i);
-        #endif
-        mem[r1.i].i++;
-        break;
+    case OP_PUSH_M:
+      memcpy(&r1.i, ip, sizeof(uint64_t));
+      ip += sizeof(uint64_t);
+#if YR_PARANOID_EXEC
+      ensure_within_mem(r1.i);
+#endif
+      r1 = mem[r1.i];
+      push(r1);
+      break;
 
-      case OP_PUSH_M:
-        r1.i = *(uint64_t*)(ip);
-        ip += sizeof(uint64_t);
-        #if PARANOID_EXEC
-        ensure_within_mem(r1.i);
-        #endif
+    case OP_POP_M:
+      memcpy(&r1.i, ip, sizeof(uint64_t));
+      ip += sizeof(uint64_t);
+#if YR_PARANOID_EXEC
+      ensure_within_mem(r1.i);
+#endif
+      pop(r2);
+      mem[r1.i] = r2;
+      break;
+
+    case OP_SET_M:
+      memcpy(&r1.i, ip, sizeof(uint64_t));
+      ip += sizeof(uint64_t);
+#if YR_PARANOID_EXEC
+      ensure_within_mem(r1.i);
+#endif
+      pop(r2);
+      push(r2);
+      if (!is_undef(r2))
+        mem[r1.i] = r2;
+      break;
+
+    case OP_SWAPUNDEF:
+      memcpy(&r1.i, ip, sizeof(uint64_t));
+      ip += sizeof(uint64_t);
+#if YR_PARANOID_EXEC
+      ensure_within_mem(r1.i);
+#endif
+      pop(r2);
+
+      if (is_undef(r2))
+      {
         r1 = mem[r1.i];
         push(r1);
-        break;
-
-      case OP_POP_M:
-        r1.i = *(uint64_t*)(ip);
-        ip += sizeof(uint64_t);
-        #if PARANOID_EXEC
-        ensure_within_mem(r1.i);
-        #endif
-        pop(r2);
-        mem[r1.i] = r2;
-        break;
-
-      case OP_SET_M:
-        r1.i = *(uint64_t*)(ip);
-        ip += sizeof(uint64_t);
-        #if PARANOID_EXEC
-        ensure_within_mem(r1.i);
-        #endif
-        pop(r2);
+      }
+      else
+      {
         push(r2);
-        if (!is_undef(r2))
-          mem[r1.i] = r2;
-        break;
+      }
+      break;
 
-      case OP_SWAPUNDEF:
-        r1.i = *(uint64_t*)(ip);
-        ip += sizeof(uint64_t);
-        #if PARANOID_EXEC
-        ensure_within_mem(r1.i);
-        #endif
-        pop(r2);
+    case OP_JNUNDEF:
+      pop(r1);
+      push(r1);
+      ip = jmp_if(!is_undef(r1), ip);
+      break;
 
-        if (is_undef(r2))
-        {
-          r1 = mem[r1.i];
-          push(r1);
-        }
+    case OP_JUNDEF_P:
+      pop(r1);
+      ip = jmp_if(is_undef(r1), ip);
+      break;
+
+    case OP_JL_P:
+      pop(r2);
+      pop(r1);
+      ip = jmp_if(r1.i < r2.i, ip);
+      break;
+
+    case OP_JLE_P:
+      pop(r2);
+      pop(r1);
+      ip = jmp_if(r1.i <= r2.i, ip);
+      break;
+
+    case OP_JTRUE:
+      pop(r1);
+      push(r1);
+      ip = jmp_if(!is_undef(r1) && r1.i, ip);
+      break;
+
+    case OP_JTRUE_P:
+      pop(r1);
+      ip = jmp_if(!is_undef(r1) && r1.i, ip);
+      break;
+
+    case OP_JFALSE:
+      pop(r1);
+      push(r1);
+      ip = jmp_if(is_undef(r1) || !r1.i, ip);
+      break;
+
+    case OP_JFALSE_P:
+      pop(r1);
+      ip = jmp_if(is_undef(r1) || !r1.i, ip);
+      break;
+
+    case OP_JZ:
+      pop(r1);
+      push(r1);
+      ip = jmp_if(r1.i == 0, ip);
+      break;
+
+    case OP_JZ_P:
+      pop(r1);
+      ip = jmp_if(r1.i == 0, ip);
+      break;
+
+    case OP_AND:
+      pop(r2);
+      pop(r1);
+
+      if (is_undef(r1) || is_undef(r2))
+        r1.i = 0;
+      else
+        r1.i = r1.i && r2.i;
+
+      push(r1);
+      break;
+
+    case OP_OR:
+      pop(r2);
+      pop(r1);
+
+      if (is_undef(r1))
+      {
+        push(r2);
+      }
+      else if (is_undef(r2))
+      {
+        push(r1);
+      }
+      else
+      {
+        r1.i = r1.i || r2.i;
+        push(r1);
+      }
+      break;
+
+    case OP_NOT:
+      pop(r1);
+
+      if (is_undef(r1))
+        r1.i = YR_UNDEFINED;
+      else
+        r1.i = !r1.i;
+
+      push(r1);
+      break;
+
+    case OP_MOD:
+      pop(r2);
+      pop(r1);
+      ensure_defined(r2);
+      ensure_defined(r1);
+      if (r2.i != 0)
+        r1.i = r1.i % r2.i;
+      else
+        r1.i = YR_UNDEFINED;
+      push(r1);
+      break;
+
+    case OP_SHR:
+      pop(r2);
+      pop(r1);
+      ensure_defined(r2);
+      ensure_defined(r1);
+      if (r2.i < 0)
+        r1.i = YR_UNDEFINED;
+      else if (r2.i < 64)
+        r1.i = r1.i >> r2.i;
+      else
+        r1.i = 0;
+      push(r1);
+      break;
+
+    case OP_SHL:
+      pop(r2);
+      pop(r1);
+      ensure_defined(r2);
+      ensure_defined(r1);
+      if (r2.i < 0)
+        r1.i = YR_UNDEFINED;
+      else if (r2.i < 64)
+        r1.i = r1.i << r2.i;
+      else
+        r1.i = 0;
+      push(r1);
+      break;
+
+    case OP_BITWISE_NOT:
+      pop(r1);
+      ensure_defined(r1);
+      r1.i = ~r1.i;
+      push(r1);
+      break;
+
+    case OP_BITWISE_AND:
+      pop(r2);
+      pop(r1);
+      ensure_defined(r2);
+      ensure_defined(r1);
+      r1.i = r1.i & r2.i;
+      push(r1);
+      break;
+
+    case OP_BITWISE_OR:
+      pop(r2);
+      pop(r1);
+      ensure_defined(r2);
+      ensure_defined(r1);
+      r1.i = r1.i | r2.i;
+      push(r1);
+      break;
+
+    case OP_BITWISE_XOR:
+      pop(r2);
+      pop(r1);
+      ensure_defined(r2);
+      ensure_defined(r1);
+      r1.i = r1.i ^ r2.i;
+      push(r1);
+      break;
+
+    case OP_PUSH_RULE:
+      memcpy(&r1.i, ip, sizeof(uint64_t));
+      ip += sizeof(uint64_t);
+
+      rule = &context->rules->rules_list_head[r1.i];
+
+      if (RULE_IS_DISABLED(rule))
+      {
+        r2.i = YR_UNDEFINED;
+      }
+      else
+      {
+        if yr_bitmask_is_set (context->rule_matches_flags, r1.i)
+          r2.i = 1;
         else
-        {
-          push(r2);
-        }
+          r2.i = 0;
+      }
+
+      push(r2);
+      break;
+
+    case OP_INIT_RULE:
+      // After the opcode there's an int32_t corresponding to the jump's
+      // offset and an uint32_t corresponding to the rule's index.
+      current_rule_idx = *(uint32_t*) (ip + sizeof(int32_t));
+
+      assert(current_rule_idx < context->rules->num_rules);
+
+      current_rule = &context->rules->rules_list_head[current_rule_idx];
+
+      // If the rule is disabled let's skip its code.
+      ip = jmp_if(RULE_IS_DISABLED(current_rule), ip);
+
+      // Skip the bytes corresponding to the rule's index, but only if not
+      // taking the jump.
+      if (!RULE_IS_DISABLED(current_rule))
+        ip += sizeof(uint32_t);
+
+      break;
+
+    case OP_MATCH_RULE:
+      pop(r1);
+
+      memcpy(&r2.i, ip, sizeof(uint64_t));
+      ip += sizeof(uint64_t);
+
+      rule = &context->rules->rules_list_head[r2.i];
+
+#if YR_PARANOID_EXEC
+      ensure_within_rules_arena(rule);
+#endif
+
+      if (!is_undef(r1) && r1.i)
+        yr_bitmask_set(context->rule_matches_flags, r2.i);
+      else if (RULE_IS_GLOBAL(rule))
+        yr_bitmask_set(context->ns_unsatisfied_flags, rule->ns->idx);
+
+#ifdef YR_PROFILING_ENABLED
+      elapsed_time = yr_stopwatch_elapsed_ns(&context->stopwatch);
+      context->profiling_info[r2.i].exec_time += (elapsed_time - start_time);
+      start_time = elapsed_time;
+#endif
+
+      assert(stack.sp == 0);  // at this point the stack should be empty.
+      break;
+
+    case OP_OBJ_LOAD:
+      identifier = *(char**) (ip);
+      ip += sizeof(uint64_t);
+
+#if YR_PARANOID_EXEC
+      ensure_within_rules_arena(identifier);
+#endif
+
+      r1.o = (YR_OBJECT*) yr_hash_table_lookup(
+          context->objects_table, identifier, NULL);
+
+      assert(r1.o != NULL);
+      push(r1);
+      break;
+
+    case OP_OBJ_FIELD:
+      identifier = *(char**) (ip);
+      ip += sizeof(uint64_t);
+
+#if YR_PARANOID_EXEC
+      ensure_within_rules_arena(identifier);
+#endif
+
+      pop(r1);
+      ensure_defined(r1);
+
+      r1.o = yr_object_lookup_field(r1.o, identifier);
+
+      if (r1.o == NULL)
+      {
+        result = ERROR_INVALID_FIELD_NAME;
+        stop = true;
+        break;
+      }
+
+      push(r1);
+      break;
+
+    case OP_OBJ_VALUE:
+      pop(r1);
+      ensure_defined(r1);
+
+#if YR_PARANOID_EXEC
+      check_object_canary(r1.o);
+#endif
+
+      switch (r1.o->type)
+      {
+      case OBJECT_TYPE_INTEGER:
+        r1.i = r1.o->value.i;
         break;
 
-      case OP_JNUNDEF:
-        pop(r1);
-        push(r1);
-        ip = jmp_if(!is_undef(r1), ip);
-        break;
-
-      case OP_JUNDEF_P:
-        pop(r1);
-        ip = jmp_if(is_undef(r1), ip);
-        break;
-
-      case OP_JL_P:
-        pop(r2);
-        pop(r1);
-        ip = jmp_if(r1.i < r2.i, ip);
-        break;
-
-      case OP_JLE_P:
-        pop(r2);
-        pop(r1);
-        ip = jmp_if(r1.i <= r2.i, ip);
-        break;
-
-      case OP_JTRUE:
-        pop(r1);
-        push(r1);
-        ip = jmp_if(!is_undef(r1) && r1.i, ip);
-        break;
-
-      case OP_JTRUE_P:
-        pop(r1);
-        ip = jmp_if(!is_undef(r1) && r1.i, ip);
-        break;
-
-      case OP_JFALSE:
-        pop(r1);
-        push(r1);
-        ip = jmp_if(is_undef(r1) || !r1.i, ip);
-        break;
-
-      case OP_JFALSE_P:
-        pop(r1);
-        ip = jmp_if(is_undef(r1) || !r1.i, ip);
-        break;
-
-      case OP_AND:
-        pop(r2);
-        pop(r1);
-
-        if (is_undef(r1) || is_undef(r2))
-          r1.i = 0;
+      case OBJECT_TYPE_FLOAT:
+        if (isnan(r1.o->value.d))
+          r1.i = YR_UNDEFINED;
         else
-          r1.i = r1.i && r2.i;
-
-        push(r1);
+          r1.d = r1.o->value.d;
         break;
 
-      case OP_OR:
-        pop(r2);
-        pop(r1);
-
-        if (is_undef(r1))
-        {
-          push(r2);
-        }
-        else if (is_undef(r2))
-        {
-          push(r1);
-        }
+      case OBJECT_TYPE_STRING:
+        if (r1.o->value.ss == NULL)
+          r1.i = YR_UNDEFINED;
         else
-        {
-          r1.i = r1.i || r2.i;
-          push(r1);
-        }
+          r1.ss = r1.o->value.ss;
         break;
 
-      case OP_NOT:
-        pop(r1);
+      default:
+        assert(false);
+      }
 
-        if (is_undef(r1))
-          r1.i = UNDEFINED;
-        else
-          r1.i = !r1.i;
+      push(r1);
+      break;
 
-        push(r1);
-        break;
+    case OP_INDEX_ARRAY:
+      pop(r1);  // index
+      pop(r2);  // array
 
-      case OP_MOD:
-        pop(r2);
-        pop(r1);
-        ensure_defined(r2);
-        ensure_defined(r1);
-        if (r2.i != 0)
-          r1.i = r1.i % r2.i;
-        else
-          r1.i = UNDEFINED;
-        push(r1);
-        break;
+      ensure_defined(r1);
+      ensure_defined(r2);
 
-      case OP_SHR:
-        pop(r2);
-        pop(r1);
-        ensure_defined(r2);
-        ensure_defined(r1);
-        if (r2.i < 0)
-          r1.i = UNDEFINED;
-        else if (r2.i < 64)
-          r1.i = r1.i >> r2.i;
-        else
-          r1.i = 0;
-        push(r1);
-        break;
+      assert(r2.o->type == OBJECT_TYPE_ARRAY);
 
-      case OP_SHL:
-        pop(r2);
-        pop(r1);
-        ensure_defined(r2);
-        ensure_defined(r1);
-        if (r2.i < 0)
-          r1.i = UNDEFINED;
-        else if (r2.i < 64)
-          r1.i = r1.i << r2.i;
-        else
-          r1.i = 0;
-        push(r1);
-        break;
+#if YR_PARANOID_EXEC
+      check_object_canary(r2.o);
+#endif
 
-      case OP_BITWISE_NOT:
-        pop(r1);
-        ensure_defined(r1);
-        r1.i = ~r1.i;
-        push(r1);
-        break;
+      r1.o = yr_object_array_get_item(r2.o, 0, (int) r1.i);
 
-      case OP_BITWISE_AND:
-        pop(r2);
-        pop(r1);
-        ensure_defined(r2);
-        ensure_defined(r1);
-        r1.i = r1.i & r2.i;
-        push(r1);
-        break;
+      if (r1.o == NULL)
+        r1.i = YR_UNDEFINED;
 
-      case OP_BITWISE_OR:
-        pop(r2);
-        pop(r1);
-        ensure_defined(r2);
-        ensure_defined(r1);
-        r1.i = r1.i | r2.i;
-        push(r1);
-        break;
+      push(r1);
+      break;
 
-      case OP_BITWISE_XOR:
-        pop(r2);
-        pop(r1);
-        ensure_defined(r2);
-        ensure_defined(r1);
-        r1.i = r1.i ^ r2.i;
-        push(r1);
-        break;
+    case OP_LOOKUP_DICT:
+      pop(r1);  // key
+      pop(r2);  // dictionary
 
-      case OP_PUSH_RULE:
-        rule = *(YR_RULE**)(ip);
-        ip += sizeof(uint64_t);
-        if (RULE_IS_DISABLED(rule))
-          r1.i = UNDEFINED;
-        else
-          r1.i = rule->t_flags[tidx] & RULE_TFLAGS_MATCH ? 1 : 0;
-        push(r1);
-        break;
+      ensure_defined(r1);
+      ensure_defined(r2);
 
-      case OP_INIT_RULE:
-        memcpy(&init_rule_args, ip, sizeof(init_rule_args));
-        #ifdef PROFILING_ENABLED
-        current_rule = init_rule_args.rule;
-        #endif
-        if (RULE_IS_DISABLED(init_rule_args.rule))
-          ip = init_rule_args.jmp_addr;
-        else
-          ip += sizeof(init_rule_args);
-        break;
+      assert(r2.o->type == OBJECT_TYPE_DICTIONARY);
 
-      case OP_MATCH_RULE:
-        pop(r1);
-        rule = *(YR_RULE**)(ip);
+#if YR_PARANOID_EXEC
+      check_object_canary(r2.o);
+#endif
 
-        #if PARANOID_EXEC
-        ensure_within_rules_arena(rule);
-        #endif
+      r1.o = yr_object_dict_get_item(r2.o, 0, r1.ss->c_string);
 
-        ip += sizeof(uint64_t);
+      if (r1.o == NULL)
+        r1.i = YR_UNDEFINED;
 
-        if (!is_undef(r1) && r1.i)
-          rule->t_flags[tidx] |= RULE_TFLAGS_MATCH;
-        else if (RULE_IS_GLOBAL(rule))
-          rule->ns->t_flags[tidx] |= NAMESPACE_TFLAGS_UNSATISFIED_GLOBAL;
+      push(r1);
+      break;
 
-        #ifdef PROFILING_ENABLED
-        elapsed_time = yr_stopwatch_elapsed_us(&context->stopwatch);
-        rule->time_cost_per_thread[tidx] += (elapsed_time - start_time);
-        start_time = elapsed_time;
-        #endif
+    case OP_CALL:
+      args_fmt = *(char**) (ip);
+      ip += sizeof(uint64_t);
 
-        assert(stack.sp == 0); // at this point the stack should be empty.
-        break;
+      i = (int) strlen(args_fmt);
+      count = 0;
 
-      case OP_OBJ_LOAD:
-        identifier = *(char**)(ip);
-        ip += sizeof(uint64_t);
-
-        r1.o = (YR_OBJECT*) yr_hash_table_lookup(
-            context->objects_table,
-            identifier,
-            NULL);
-
-        assert(r1.o != NULL);
-        push(r1);
-        break;
-
-      case OP_OBJ_FIELD:
-        identifier = *(char**)(ip);
-        ip += sizeof(uint64_t);
-
-        pop(r1);
-        ensure_defined(r1);
-
-        r1.o = yr_object_lookup_field(r1.o, identifier);
-
-        assert(r1.o != NULL);
-        push(r1);
-        break;
-
-      case OP_OBJ_VALUE:
-        pop(r1);
-        ensure_defined(r1);
-
-        #if PARANOID_EXEC
-        check_object_canary(r1.o);
-        #endif
-
-        switch(r1.o->type)
-        {
-          case OBJECT_TYPE_INTEGER:
-            r1.i = r1.o->value.i;
-            break;
-
-          case OBJECT_TYPE_FLOAT:
-            if (isnan(r1.o->value.d))
-              r1.i = UNDEFINED;
-            else
-              r1.d = r1.o->value.d;
-            break;
-
-          case OBJECT_TYPE_STRING:
-            if (r1.o->value.ss == NULL)
-              r1.i = UNDEFINED;
-            else
-              r1.ss = r1.o->value.ss;
-            break;
-
-          default:
-            assert(false);
-        }
-
-        push(r1);
-        break;
-
-      case OP_INDEX_ARRAY:
-        pop(r1);  // index
-        pop(r2);  // array
-
-        ensure_defined(r1);
-        ensure_defined(r2);
-
-        assert(r2.o->type == OBJECT_TYPE_ARRAY);
-
-        #if PARANOID_EXEC
-        check_object_canary(r2.o);
-        #endif
-
-        r1.o = yr_object_array_get_item(r2.o, 0, (int) r1.i);
-
-        if (r1.o == NULL)
-          r1.i = UNDEFINED;
-
-        push(r1);
-        break;
-
-      case OP_LOOKUP_DICT:
-        pop(r1);  // key
-        pop(r2);  // dictionary
-
-        ensure_defined(r1);
-        ensure_defined(r2);
-
-        assert(r2.o->type == OBJECT_TYPE_DICTIONARY);
-
-        #if PARANOID_EXEC
-        check_object_canary(r2.o);
-        #endif
-
-        r1.o = yr_object_dict_get_item(
-            r2.o, 0, r1.ss->c_string);
-
-        if (r1.o == NULL)
-          r1.i = UNDEFINED;
-
-        push(r1);
-        break;
-
-      case OP_CALL:
-        args_fmt = *(char**)(ip);
-        ip += sizeof(uint64_t);
-
-        i = (int) strlen(args_fmt);
-        count = 0;
-
-        #if PARANOID_EXEC
-        if (i > YR_MAX_FUNCTION_ARGS)
-        {
-          stop = true;
-          result = ERROR_INTERNAL_FATAL_ERROR;
-          break;
-        }
-        #endif
-
-        // pop arguments from stack and copy them to args array
-
-        while (i > 0)
-        {
-          pop(r1);
-
-          if (is_undef(r1))  // count the number of undefined args
-            count++;
-
-          args[i - 1] = r1;
-          i--;
-        }
-
-        pop(r2);
-        ensure_defined(r2);
-
-        #if PARANOID_EXEC
-        check_object_canary(r2.o);
-        #endif
-
-        if (count > 0)
-        {
-          // if there are undefined args, result for function call
-          // is undefined as well.
-
-          r1.i = UNDEFINED;
-          push(r1);
-          break;
-        }
-
-        function = object_as_function(r2.o);
+#if YR_PARANOID_EXEC
+      if (i > YR_MAX_FUNCTION_ARGS)
+      {
+        stop = true;
         result = ERROR_INTERNAL_FATAL_ERROR;
-
-        for (i = 0; i < YR_MAX_OVERLOADED_FUNCTIONS; i++)
-        {
-          if (function->prototypes[i].arguments_fmt == NULL)
-            break;
-
-          if (strcmp(function->prototypes[i].arguments_fmt, args_fmt) == 0)
-          {
-            result = function->prototypes[i].code(args, context, function);
-            break;
-          }
-        }
-
-        // if i == YR_MAX_OVERLOADED_FUNCTIONS at this point no matching
-        // prototype was found, but this shouldn't happen.
-
-        assert(i < YR_MAX_OVERLOADED_FUNCTIONS);
-
-        // make a copy of the returned object and push the copy into the stack,
-        // function->return_obj can't be pushed because it can change in
-        // subsequent calls to the same function.
-
-        if (result == ERROR_SUCCESS)
-          result = yr_object_copy(function->return_obj, &r1.o);
-
-        // a pointer to the copied object is stored in a arena in order to
-        // free the object before exiting yr_execute_code
-
-        if (result == ERROR_SUCCESS)
-          result = yr_arena_write_data(obj_arena, &r1.o, sizeof(r1.o), NULL);
-
-        stop = (result != ERROR_SUCCESS);
-        push(r1);
         break;
+      }
+#endif
 
-      case OP_FOUND:
+      // pop arguments from stack and copy them to args array
+
+      while (i > 0)
+      {
         pop(r1);
 
-        if (STRING_IS_PRIVATE(r1.s))
-          r2.i = r1.s->private_matches[tidx].tail != NULL ? 1 : 0;
-        else
-          r2.i = r1.s->matches[tidx].tail != NULL ? 1 : 0;
-
-        push(r2);
-        break;
-
-      case OP_FOUND_AT:
-        pop(r2);
-        pop(r1);
-
-        if (is_undef(r1))
-        {
-          r1.i = 0;
-          push(r1);
-          break;
-        }
-
-        #if PARANOID_EXEC
-        ensure_within_rules_arena(r2.p);
-        #endif
-
-        if (STRING_IS_PRIVATE(r2.s))
-          match = r2.s->private_matches[tidx].head;
-        else
-          match = r2.s->matches[tidx].head;
-
-        r3.i = false;
-
-        while (match != NULL)
-        {
-          if (r1.i == match->base + match->offset)
-          {
-            r3.i = true;
-            break;
-          }
-
-          if (r1.i < match->base + match->offset)
-            break;
-
-          match = match->next;
-        }
-
-        push(r3);
-        break;
-
-      case OP_FOUND_IN:
-        pop(r3);
-        pop(r2);
-        pop(r1);
-
-        ensure_defined(r1);
-        ensure_defined(r2);
-
-        #if PARANOID_EXEC
-        ensure_within_rules_arena(r3.p);
-        #endif
-
-        if (STRING_IS_PRIVATE(r3.s))
-          match = r3.s->private_matches[tidx].head;
-        else
-          match = r3.s->matches[tidx].head;
-
-        r4.i = false;
-
-        while (match != NULL && !r4.i)
-        {
-          if (match->base + match->offset >= r1.i &&
-              match->base + match->offset <= r2.i)
-          {
-            r4.i = true;
-          }
-
-          if (match->base + match->offset > r2.i)
-            break;
-
-          match = match->next;
-        }
-
-        push(r4);
-        break;
-
-      case OP_COUNT:
-        pop(r1);
-
-        #if PARANOID_EXEC
-        ensure_within_rules_arena(r1.p);
-        #endif
-
-        if (STRING_IS_PRIVATE(r1.s))
-          r2.i = r1.s->private_matches[tidx].count;
-        else
-          r2.i = r1.s->matches[tidx].count;
-
-        push(r2);
-        break;
-
-      case OP_OFFSET:
-        pop(r2);
-        pop(r1);
-
-        ensure_defined(r1);
-
-        #if PARANOID_EXEC
-        ensure_within_rules_arena(r2.p);
-        #endif
-
-        if (STRING_IS_PRIVATE(r2.s))
-          match = r2.s->private_matches[tidx].head;
-        else
-          match = r2.s->matches[tidx].head;
-
-        i = 1;
-        r3.i = UNDEFINED;
-
-        while (match != NULL && r3.i == UNDEFINED)
-        {
-          if (r1.i == i)
-            r3.i = match->base + match->offset;
-
-          i++;
-          match = match->next;
-        }
-
-        push(r3);
-        break;
-
-      case OP_LENGTH:
-        pop(r2);
-        pop(r1);
-
-        ensure_defined(r1);
-
-        #if PARANOID_EXEC
-        ensure_within_rules_arena(r2.p);
-        #endif
-
-        if (STRING_IS_PRIVATE(r2.s))
-          match = r2.s->private_matches[tidx].head;
-        else
-          match = r2.s->matches[tidx].head;
-
-        i = 1;
-        r3.i = UNDEFINED;
-
-        while (match != NULL && r3.i == UNDEFINED)
-        {
-          if (r1.i == i)
-            r3.i = match->match_length;
-
-          i++;
-          match = match->next;
-        }
-
-        push(r3);
-        break;
-
-      case OP_OF:
-        found = 0;
-        count = 0;
-        pop(r1);
-
-        while (!is_undef(r1))
-        {
-          if (r1.s->matches[tidx].tail != NULL || r1.s->private_matches[tidx].tail != NULL)
-            found++;
+        if (is_undef(r1))  // count the number of undefined args
           count++;
-          pop(r1);
-        }
 
-        pop(r2);
+        args[i - 1] = r1;
+        i--;
+      }
 
-        if (is_undef(r2))
-          r1.i = found >= count ? 1 : 0;
-        else
-          r1.i = found >= r2.i ? 1 : 0;
+      pop(r2);
+      ensure_defined(r2);
 
+#if YR_PARANOID_EXEC
+      check_object_canary(r2.o);
+#endif
+
+      if (count > 0)
+      {
+        // If there are undefined args, result for function call
+        // is undefined as well.
+
+        r1.i = YR_UNDEFINED;
         push(r1);
         break;
+      }
 
-      case OP_FILESIZE:
-        r1.i = context->file_size;
-        push(r1);
-        break;
+      function = object_as_function(r2.o);
+      result = ERROR_INTERNAL_FATAL_ERROR;
 
-      case OP_ENTRYPOINT:
-        r1.i = context->entry_point;
-        push(r1);
-        break;
+      for (i = 0; i < YR_MAX_OVERLOADED_FUNCTIONS; i++)
+      {
+        if (function->prototypes[i].arguments_fmt == NULL)
+          break;
 
-      case OP_INT8:
-        pop(r1);
-        r1.i = read_int8_t_little_endian(context->iterator, (size_t) r1.i);
-        push(r1);
-        break;
-
-      case OP_INT16:
-        pop(r1);
-        r1.i = read_int16_t_little_endian(context->iterator, (size_t) r1.i);
-        push(r1);
-        break;
-
-      case OP_INT32:
-        pop(r1);
-        r1.i = read_int32_t_little_endian(context->iterator, (size_t) r1.i);
-        push(r1);
-        break;
-
-      case OP_UINT8:
-        pop(r1);
-        r1.i = read_uint8_t_little_endian(context->iterator, (size_t) r1.i);
-        push(r1);
-        break;
-
-      case OP_UINT16:
-        pop(r1);
-        r1.i = read_uint16_t_little_endian(context->iterator, (size_t) r1.i);
-        push(r1);
-        break;
-
-      case OP_UINT32:
-        pop(r1);
-        r1.i = read_uint32_t_little_endian(context->iterator, (size_t) r1.i);
-        push(r1);
-        break;
-
-      case OP_INT8BE:
-        pop(r1);
-        r1.i = read_int8_t_big_endian(context->iterator, (size_t) r1.i);
-        push(r1);
-        break;
-
-      case OP_INT16BE:
-        pop(r1);
-        r1.i = read_int16_t_big_endian(context->iterator, (size_t) r1.i);
-        push(r1);
-        break;
-
-      case OP_INT32BE:
-        pop(r1);
-        r1.i = read_int32_t_big_endian(context->iterator, (size_t) r1.i);
-        push(r1);
-        break;
-
-      case OP_UINT8BE:
-        pop(r1);
-        r1.i = read_uint8_t_big_endian(context->iterator, (size_t) r1.i);
-        push(r1);
-        break;
-
-      case OP_UINT16BE:
-        pop(r1);
-        r1.i = read_uint16_t_big_endian(context->iterator, (size_t) r1.i);
-        push(r1);
-        break;
-
-      case OP_UINT32BE:
-        pop(r1);
-        r1.i = read_uint32_t_big_endian(context->iterator, (size_t) r1.i);
-        push(r1);
-        break;
-
-      case OP_CONTAINS:
-        pop(r2);
-        pop(r1);
-
-        ensure_defined(r1);
-        ensure_defined(r2);
-
-        r1.i = memmem(r1.ss->c_string, r1.ss->length,
-                      r2.ss->c_string, r2.ss->length) != NULL;
-        push(r1);
-        break;
-
-      case OP_IMPORT:
-        r1.i = *(uint64_t*)(ip);
-        ip += sizeof(uint64_t);
-
-        result = yr_modules_load((char*) r1.p, context);
-
-        if (result != ERROR_SUCCESS)
-          stop = true;
-
-        break;
-
-      case OP_MATCHES:
-
-        pop(r2);
-        pop(r1);
-
-        ensure_defined(r2);
-        ensure_defined(r1);
-
-        if (r1.ss->length == 0)
+        if (strcmp(function->prototypes[i].arguments_fmt, args_fmt) == 0)
         {
-          r1.i = false;
-          push(r1);
+          result = function->prototypes[i].code(args, context, function);
+          break;
+        }
+      }
+
+      // If i == YR_MAX_OVERLOADED_FUNCTIONS at this point no matching
+      // prototype was found, but this shouldn't happen.
+      assert(i < YR_MAX_OVERLOADED_FUNCTIONS);
+
+      // Make a copy of the returned object and push the copy into the stack,
+      // function->return_obj can't be pushed because it can change in
+      // subsequent calls to the same function.
+      if (result == ERROR_SUCCESS)
+        result = yr_object_copy(function->return_obj, &r1.o);
+
+      // A pointer to the copied object is stored in a arena in order to
+      // free the object before exiting yr_execute_code, obj_count tracks
+      // the number of objects written.
+      if (result == ERROR_SUCCESS)
+      {
+        result = yr_arena_write_data(obj_arena, 0, &r1.o, sizeof(r1.o), NULL);
+        obj_count++;
+      }
+
+      stop = (result != ERROR_SUCCESS);
+      push(r1);
+      break;
+
+    case OP_FOUND:
+      pop(r1);
+      r2.i = context->matches[r1.s->idx].tail != NULL ? 1 : 0;
+      push(r2);
+      break;
+
+    case OP_FOUND_AT:
+      pop(r2);
+      pop(r1);
+
+      if (is_undef(r1))
+      {
+        r1.i = 0;
+        push(r1);
+        break;
+      }
+
+#if YR_PARANOID_EXEC
+      ensure_within_rules_arena(r2.p);
+#endif
+
+      match = context->matches[r2.s->idx].head;
+      r3.i = false;
+
+      while (match != NULL)
+      {
+        if (r1.i == match->base + match->offset)
+        {
+          r3.i = true;
           break;
         }
 
-        result = yr_re_exec(
+        if (r1.i < match->base + match->offset)
+          break;
+
+        match = match->next;
+      }
+
+      push(r3);
+      break;
+
+    case OP_FOUND_IN:
+      pop(r3);
+      pop(r2);
+      pop(r1);
+
+      ensure_defined(r1);
+      ensure_defined(r2);
+
+#if YR_PARANOID_EXEC
+      ensure_within_rules_arena(r3.p);
+#endif
+
+      match = context->matches[r3.s->idx].head;
+      r4.i = false;
+
+      while (match != NULL && !r4.i)
+      {
+        if (match->base + match->offset >= r1.i &&
+            match->base + match->offset <= r2.i)
+        {
+          r4.i = true;
+        }
+
+        if (match->base + match->offset > r2.i)
+          break;
+
+        match = match->next;
+      }
+
+      push(r4);
+      break;
+
+    case OP_COUNT:
+      pop(r1);
+
+#if YR_PARANOID_EXEC
+      ensure_within_rules_arena(r1.p);
+#endif
+
+      r2.i = context->matches[r1.s->idx].count;
+      push(r2);
+      break;
+
+    case OP_OFFSET:
+      pop(r2);
+      pop(r1);
+
+      ensure_defined(r1);
+
+#if YR_PARANOID_EXEC
+      ensure_within_rules_arena(r2.p);
+#endif
+
+      match = context->matches[r2.s->idx].head;
+
+      i = 1;
+      r3.i = YR_UNDEFINED;
+
+      while (match != NULL && r3.i == YR_UNDEFINED)
+      {
+        if (r1.i == i)
+          r3.i = match->base + match->offset;
+
+        i++;
+        match = match->next;
+      }
+
+      push(r3);
+      break;
+
+    case OP_LENGTH:
+      pop(r2);
+      pop(r1);
+
+      ensure_defined(r1);
+
+#if YR_PARANOID_EXEC
+      ensure_within_rules_arena(r2.p);
+#endif
+
+      match = context->matches[r2.s->idx].head;
+
+      i = 1;
+      r3.i = YR_UNDEFINED;
+
+      while (match != NULL && r3.i == YR_UNDEFINED)
+      {
+        if (r1.i == i)
+          r3.i = match->match_length;
+
+        i++;
+        match = match->next;
+      }
+
+      push(r3);
+      break;
+
+    case OP_OF:
+      found = 0;
+      count = 0;
+      pop(r1);
+
+      while (!is_undef(r1))
+      {
+        if (context->matches[r1.s->idx].tail != NULL)
+        {
+          found++;
+        }
+        count++;
+        pop(r1);
+      }
+
+      pop(r2);
+
+      if (is_undef(r2))
+        r1.i = found >= count ? 1 : 0;
+      else
+        r1.i = found >= r2.i ? 1 : 0;
+
+      push(r1);
+      break;
+
+    case OP_FILESIZE:
+      r1.i = context->file_size;
+      push(r1);
+      break;
+
+    case OP_ENTRYPOINT:
+      r1.i = context->entry_point;
+      push(r1);
+      break;
+
+    case OP_INT8:
+      pop(r1);
+      r1.i = read_int8_t_little_endian(context->iterator, (size_t) r1.i);
+      push(r1);
+      break;
+
+    case OP_INT16:
+      pop(r1);
+      r1.i = read_int16_t_little_endian(context->iterator, (size_t) r1.i);
+      push(r1);
+      break;
+
+    case OP_INT32:
+      pop(r1);
+      r1.i = read_int32_t_little_endian(context->iterator, (size_t) r1.i);
+      push(r1);
+      break;
+
+    case OP_UINT8:
+      pop(r1);
+      r1.i = read_uint8_t_little_endian(context->iterator, (size_t) r1.i);
+      push(r1);
+      break;
+
+    case OP_UINT16:
+      pop(r1);
+      r1.i = read_uint16_t_little_endian(context->iterator, (size_t) r1.i);
+      push(r1);
+      break;
+
+    case OP_UINT32:
+      pop(r1);
+      r1.i = read_uint32_t_little_endian(context->iterator, (size_t) r1.i);
+      push(r1);
+      break;
+
+    case OP_INT8BE:
+      pop(r1);
+      r1.i = read_int8_t_big_endian(context->iterator, (size_t) r1.i);
+      push(r1);
+      break;
+
+    case OP_INT16BE:
+      pop(r1);
+      r1.i = read_int16_t_big_endian(context->iterator, (size_t) r1.i);
+      push(r1);
+      break;
+
+    case OP_INT32BE:
+      pop(r1);
+      r1.i = read_int32_t_big_endian(context->iterator, (size_t) r1.i);
+      push(r1);
+      break;
+
+    case OP_UINT8BE:
+      pop(r1);
+      r1.i = read_uint8_t_big_endian(context->iterator, (size_t) r1.i);
+      push(r1);
+      break;
+
+    case OP_UINT16BE:
+      pop(r1);
+      r1.i = read_uint16_t_big_endian(context->iterator, (size_t) r1.i);
+      push(r1);
+      break;
+
+    case OP_UINT32BE:
+      pop(r1);
+      r1.i = read_uint32_t_big_endian(context->iterator, (size_t) r1.i);
+      push(r1);
+      break;
+
+    case OP_IMPORT:
+      memcpy(&r1.i, ip, sizeof(uint64_t));
+      ip += sizeof(uint64_t);
+
+#if YR_PARANOID_EXEC
+      ensure_within_rules_arena(r1.p);
+#endif
+
+      result = yr_modules_load((char*) r1.p, context);
+
+      if (result != ERROR_SUCCESS)
+        stop = true;
+
+      break;
+
+    case OP_MATCHES:
+      pop(r2);
+      pop(r1);
+
+      if (is_undef(r1) || is_undef(r2) || r1.ss->length == 0)
+      {
+        r1.i = false;
+        push(r1);
+        break;
+      }
+
+      result = yr_re_exec(
           context,
           (uint8_t*) r2.re->code,
           (uint8_t*) r1.ss->c_string,
@@ -1306,295 +1350,352 @@ int yr_execute_code(
           NULL,
           &found);
 
-        if (result != ERROR_SUCCESS)
-          stop = true;
+      if (result != ERROR_SUCCESS)
+        stop = true;
 
-        r1.i = found >= 0;
-        push(r1);
+      r1.i = found >= 0;
+      push(r1);
+      break;
+
+    case OP_INT_TO_DBL:
+      memcpy(&r1.i, ip, sizeof(uint64_t));
+      ip += sizeof(uint64_t);
+
+#if YR_PARANOID_EXEC
+      if (r1.i > stack.sp || stack.sp - r1.i >= stack.capacity)
+      {
+        stop = true;
+        result = ERROR_INTERNAL_FATAL_ERROR;
         break;
+      }
+#endif
 
-      case OP_INT_TO_DBL:
+      r2 = stack.items[stack.sp - r1.i];
 
-        r1.i = *(uint64_t*)(ip);
-        ip += sizeof(uint64_t);
+      if (is_undef(r2))
+        stack.items[stack.sp - r1.i].i = YR_UNDEFINED;
+      else
+        stack.items[stack.sp - r1.i].d = (double) r2.i;
+      break;
 
-        #if PARANOID_EXEC
-        if (r1.i > stack.sp || stack.sp - r1.i >= stack.capacity)
+    case OP_STR_TO_BOOL:
+      pop(r1);
+      ensure_defined(r1);
+      r1.i = r1.ss->length > 0;
+      push(r1);
+      break;
+
+    case OP_INT_EQ:
+      pop(r2);
+      pop(r1);
+      if (is_undef(r1) || is_undef(r2))
+        r1.i = false;
+      else
+        r1.i = r1.i == r2.i;
+      push(r1);
+      break;
+
+    case OP_INT_NEQ:
+      pop(r2);
+      pop(r1);
+      if (is_undef(r1) || is_undef(r2))
+        r1.i = false;
+      else
+        r1.i = r1.i != r2.i;
+      push(r1);
+      break;
+
+    case OP_INT_LT:
+      pop(r2);
+      pop(r1);
+      if (is_undef(r1) || is_undef(r2))
+        r1.i = false;
+      else
+        r1.i = r1.i < r2.i;
+      push(r1);
+      break;
+
+    case OP_INT_GT:
+      pop(r2);
+      pop(r1);
+      if (is_undef(r1) || is_undef(r2))
+        r1.i = false;
+      else
+        r1.i = r1.i > r2.i;
+      push(r1);
+      break;
+
+    case OP_INT_LE:
+      pop(r2);
+      pop(r1);
+      if (is_undef(r1) || is_undef(r2))
+        r1.i = false;
+      else
+        r1.i = r1.i <= r2.i;
+      push(r1);
+      break;
+
+    case OP_INT_GE:
+      pop(r2);
+      pop(r1);
+      if (is_undef(r1) || is_undef(r2))
+        r1.i = false;
+      else
+        r1.i = r1.i >= r2.i;
+      push(r1);
+      break;
+
+    case OP_INT_ADD:
+      pop(r2);
+      pop(r1);
+      ensure_defined(r2);
+      ensure_defined(r1);
+      r1.i = r1.i + r2.i;
+      push(r1);
+      break;
+
+    case OP_INT_SUB:
+      pop(r2);
+      pop(r1);
+      ensure_defined(r2);
+      ensure_defined(r1);
+      r1.i = r1.i - r2.i;
+      push(r1);
+      break;
+
+    case OP_INT_MUL:
+      pop(r2);
+      pop(r1);
+      ensure_defined(r2);
+      ensure_defined(r1);
+      r1.i = r1.i * r2.i;
+      push(r1);
+      break;
+
+    case OP_INT_DIV:
+      pop(r2);
+      pop(r1);
+      ensure_defined(r2);
+      ensure_defined(r1);
+      if (r2.i != 0)
+        r1.i = r1.i / r2.i;
+      else
+        r1.i = YR_UNDEFINED;
+      push(r1);
+      break;
+
+    case OP_INT_MINUS:
+      pop(r1);
+      ensure_defined(r1);
+      r1.i = -r1.i;
+      push(r1);
+      break;
+
+    case OP_DBL_LT:
+      pop(r2);
+      pop(r1);
+      if (is_undef(r1) || is_undef(r2))
+        r1.i = false;
+      else
+        r1.i = r1.d < r2.d;
+      push(r1);
+      break;
+
+    case OP_DBL_GT:
+      pop(r2);
+      pop(r1);
+      if (is_undef(r1) || is_undef(r2))
+        r1.i = false;
+      else
+        r1.i = r1.d > r2.d;
+      push(r1);
+      break;
+
+    case OP_DBL_LE:
+      pop(r2);
+      pop(r1);
+      if (is_undef(r1) || is_undef(r2))
+        r1.i = false;
+      else
+        r1.i = r1.d <= r2.d;
+      push(r1);
+      break;
+
+    case OP_DBL_GE:
+      pop(r2);
+      pop(r1);
+      if (is_undef(r1) || is_undef(r2))
+        r1.i = false;
+      else
+        r1.i = r1.d >= r2.d;
+      push(r1);
+      break;
+
+    case OP_DBL_EQ:
+      pop(r2);
+      pop(r1);
+      if (is_undef(r1) || is_undef(r2))
+        r1.i = false;
+      else
+        r1.i = fabs(r1.d - r2.d) < DBL_EPSILON;
+      push(r1);
+      break;
+
+    case OP_DBL_NEQ:
+      pop(r2);
+      pop(r1);
+      if (is_undef(r1) || is_undef(r2))
+        r1.i = false;
+      else
+        r1.i = fabs(r1.d - r2.d) >= DBL_EPSILON;
+      push(r1);
+      break;
+
+    case OP_DBL_ADD:
+      pop(r2);
+      pop(r1);
+      ensure_defined(r2);
+      ensure_defined(r1);
+      r1.d = r1.d + r2.d;
+      push(r1);
+      break;
+
+    case OP_DBL_SUB:
+      pop(r2);
+      pop(r1);
+      ensure_defined(r2);
+      ensure_defined(r1);
+      r1.d = r1.d - r2.d;
+      push(r1);
+      break;
+
+    case OP_DBL_MUL:
+      pop(r2);
+      pop(r1);
+      ensure_defined(r2);
+      ensure_defined(r1);
+      r1.d = r1.d * r2.d;
+      push(r1);
+      break;
+
+    case OP_DBL_DIV:
+      pop(r2);
+      pop(r1);
+      ensure_defined(r2);
+      ensure_defined(r1);
+      r1.d = r1.d / r2.d;
+      push(r1);
+      break;
+
+    case OP_DBL_MINUS:
+      pop(r1);
+      ensure_defined(r1);
+      r1.d = -r1.d;
+      push(r1);
+      break;
+
+    case OP_STR_EQ:
+    case OP_STR_NEQ:
+    case OP_STR_LT:
+    case OP_STR_LE:
+    case OP_STR_GT:
+    case OP_STR_GE:
+
+      pop(r2);
+      pop(r1);
+
+      if (is_undef(r1) || is_undef(r2))
+      {
+        r1.i = false;
+      }
+      else
+      {
+        switch (opcode)
         {
-          stop = true;
-          result = ERROR_INTERNAL_FATAL_ERROR;
+        case OP_STR_EQ:
+          r1.i = (ss_compare(r1.ss, r2.ss) == 0);
+          break;
+        case OP_STR_NEQ:
+          r1.i = (ss_compare(r1.ss, r2.ss) != 0);
+          break;
+        case OP_STR_LT:
+          r1.i = (ss_compare(r1.ss, r2.ss) < 0);
+          break;
+        case OP_STR_LE:
+          r1.i = (ss_compare(r1.ss, r2.ss) <= 0);
+          break;
+        case OP_STR_GT:
+          r1.i = (ss_compare(r1.ss, r2.ss) > 0);
+          break;
+        case OP_STR_GE:
+          r1.i = (ss_compare(r1.ss, r2.ss) >= 0);
           break;
         }
-        #endif
+      }
 
-        r2 = stack.items[stack.sp - r1.i];
+      push(r1);
+      break;
 
-        if (is_undef(r2))
-          stack.items[stack.sp - r1.i].i = UNDEFINED;
-        else
-          stack.items[stack.sp - r1.i].d = (double) r2.i;
-        break;
+    case OP_CONTAINS:
+    case OP_ICONTAINS:
+    case OP_STARTSWITH:
+    case OP_ISTARTSWITH:
+    case OP_ENDSWITH:
+    case OP_IENDSWITH:
 
-      case OP_STR_TO_BOOL:
-        pop(r1);
-        ensure_defined(r1);
-        r1.i = r1.ss->length > 0;
-        push(r1);
-        break;
+      pop(r2);
+      pop(r1);
 
-      case OP_INT_EQ:
-        pop(r2);
-        pop(r1);
-        ensure_defined(r2);
-        ensure_defined(r1);
-        r1.i = r1.i == r2.i;
-        push(r1);
-        break;
-
-      case OP_INT_NEQ:
-        pop(r2);
-        pop(r1);
-        ensure_defined(r2);
-        ensure_defined(r1);
-        r1.i = r1.i != r2.i;
-        push(r1);
-        break;
-
-      case OP_INT_LT:
-        pop(r2);
-        pop(r1);
-        ensure_defined(r2);
-        ensure_defined(r1);
-        r1.i = r1.i < r2.i;
-        push(r1);
-        break;
-
-      case OP_INT_GT:
-        pop(r2);
-        pop(r1);
-        ensure_defined(r2);
-        ensure_defined(r1);
-        r1.i = r1.i > r2.i;
-        push(r1);
-        break;
-
-      case OP_INT_LE:
-        pop(r2);
-        pop(r1);
-        ensure_defined(r2);
-        ensure_defined(r1);
-        r1.i = r1.i <= r2.i;
-        push(r1);
-        break;
-
-      case OP_INT_GE:
-        pop(r2);
-        pop(r1);
-        ensure_defined(r2);
-        ensure_defined(r1);
-        r1.i = r1.i >= r2.i;
-        push(r1);
-        break;
-
-      case OP_INT_ADD:
-        pop(r2);
-        pop(r1);
-        ensure_defined(r2);
-        ensure_defined(r1);
-        r1.i = r1.i + r2.i;
-        push(r1);
-        break;
-
-      case OP_INT_SUB:
-        pop(r2);
-        pop(r1);
-        ensure_defined(r2);
-        ensure_defined(r1);
-        r1.i = r1.i - r2.i;
-        push(r1);
-        break;
-
-      case OP_INT_MUL:
-        pop(r2);
-        pop(r1);
-        ensure_defined(r2);
-        ensure_defined(r1);
-        r1.i = r1.i * r2.i;
-        push(r1);
-        break;
-
-      case OP_INT_DIV:
-        pop(r2);
-        pop(r1);
-        ensure_defined(r2);
-        ensure_defined(r1);
-        if (r2.i != 0)
-          r1.i = r1.i / r2.i;
-        else
-          r1.i = UNDEFINED;
-        push(r1);
-        break;
-
-      case OP_INT_MINUS:
-        pop(r1);
-        ensure_defined(r1);
-        r1.i = -r1.i;
-        push(r1);
-        break;
-
-      case OP_DBL_LT:
-        pop(r2);
-        pop(r1);
-        ensure_defined(r2);
-        ensure_defined(r1);
-        r1.i = r1.d < r2.d;
-        push(r1);
-        break;
-
-      case OP_DBL_GT:
-        pop(r2);
-        pop(r1);
-        ensure_defined(r2);
-        ensure_defined(r1);
-        r1.i = r1.d > r2.d;
-        push(r1);
-        break;
-
-      case OP_DBL_LE:
-        pop(r2);
-        pop(r1);
-        ensure_defined(r2);
-        ensure_defined(r1);
-        r1.i = r1.d <= r2.d;
-        push(r1);
-        break;
-
-      case OP_DBL_GE:
-        pop(r2);
-        pop(r1);
-        ensure_defined(r2);
-        ensure_defined(r1);
-        r1.i = r1.d >= r2.d;
-        push(r1);
-        break;
-
-      case OP_DBL_EQ:
-        pop(r2);
-        pop(r1);
-        ensure_defined(r2);
-        ensure_defined(r1);
-        r1.i = fabs(r1.d - r2.d) < DBL_EPSILON;
-        push(r1);
-        break;
-
-      case OP_DBL_NEQ:
-        pop(r2);
-        pop(r1);
-        ensure_defined(r2);
-        ensure_defined(r1);
-        r1.i = fabs(r1.d - r2.d) >= DBL_EPSILON;
-        push(r1);
-        break;
-
-      case OP_DBL_ADD:
-        pop(r2);
-        pop(r1);
-        ensure_defined(r2);
-        ensure_defined(r1);
-        r1.d = r1.d + r2.d;
-        push(r1);
-        break;
-
-      case OP_DBL_SUB:
-        pop(r2);
-        pop(r1);
-        ensure_defined(r2);
-        ensure_defined(r1);
-        r1.d = r1.d - r2.d;
-        push(r1);
-        break;
-
-      case OP_DBL_MUL:
-        pop(r2);
-        pop(r1);
-        ensure_defined(r2);
-        ensure_defined(r1);
-        r1.d = r1.d * r2.d;
-        push(r1);
-        break;
-
-      case OP_DBL_DIV:
-        pop(r2);
-        pop(r1);
-        ensure_defined(r2);
-        ensure_defined(r1);
-        r1.d = r1.d / r2.d;
-        push(r1);
-        break;
-
-      case OP_DBL_MINUS:
-        pop(r1);
-        ensure_defined(r1);
-        r1.d = -r1.d;
-        push(r1);
-        break;
-
-      case OP_STR_EQ:
-      case OP_STR_NEQ:
-      case OP_STR_LT:
-      case OP_STR_LE:
-      case OP_STR_GT:
-      case OP_STR_GE:
-
-        pop(r2);
-        pop(r1);
-
-        ensure_defined(r1);
-        ensure_defined(r2);
-
-        switch(opcode)
+      if (is_undef(r1) || is_undef(r2))
+      {
+        r1.i = false;
+      }
+      else
+      {
+        switch (opcode)
         {
-          case OP_STR_EQ:
-            r1.i = (sized_string_cmp(r1.ss, r2.ss) == 0);
-            break;
-          case OP_STR_NEQ:
-            r1.i = (sized_string_cmp(r1.ss, r2.ss) != 0);
-            break;
-          case OP_STR_LT:
-            r1.i = (sized_string_cmp(r1.ss, r2.ss) < 0);
-            break;
-          case OP_STR_LE:
-            r1.i = (sized_string_cmp(r1.ss, r2.ss) <= 0);
-            break;
-          case OP_STR_GT:
-            r1.i = (sized_string_cmp(r1.ss, r2.ss) > 0);
-            break;
-          case OP_STR_GE:
-            r1.i = (sized_string_cmp(r1.ss, r2.ss) >= 0);
-            break;
+        case OP_CONTAINS:
+          r1.i = ss_contains(r1.ss, r2.ss);
+          break;
+        case OP_ICONTAINS:
+          r1.i = ss_icontains(r1.ss, r2.ss);
+          break;
+        case OP_STARTSWITH:
+          r1.i = ss_startswith(r1.ss, r2.ss);
+          break;
+        case OP_ISTARTSWITH:
+          r1.i = ss_istartswith(r1.ss, r2.ss);
+          break;
+        case OP_ENDSWITH:
+          r1.i = ss_endswith(r1.ss, r2.ss);
+          break;
+        case OP_IENDSWITH:
+          r1.i = ss_iendswith(r1.ss, r2.ss);
+          break;
         }
+      }
 
-        push(r1);
-        break;
+      push(r1);
+      break;
 
-      default:
-        // Unknown instruction, this shouldn't happen.
-        assert(false);
+    default:
+      // Unknown instruction, this shouldn't happen.
+      assert(false);
     }
 
-    // Check for timeout every 10 instruction cycles. If timeout == 0 it means
+    // Check for timeout every 100 instruction cycles. If timeout == 0 it means
     // no timeout at all.
 
-    if (context->timeout > 0L && ++cycle == 10)
+    if (context->timeout > 0ULL && ++cycle == 100)
     {
-      elapsed_time = yr_stopwatch_elapsed_us(&context->stopwatch);
+      elapsed_time = yr_stopwatch_elapsed_ns(&context->stopwatch);
 
       if (elapsed_time > context->timeout)
       {
-        #ifdef PROFILING_ENABLED
-        assert(current_rule != NULL);
-        current_rule->time_cost_per_thread[tidx] += elapsed_time - start_time;
-        #endif
+#ifdef YR_PROFILING_ENABLED
+        context->profiling_info[current_rule_idx].exec_time +=
+            (elapsed_time - start_time);
+#endif
         result = ERROR_SCAN_TIMEOUT;
         stop = true;
       }
@@ -1603,18 +1704,12 @@ int yr_execute_code(
     }
   }
 
-  obj_ptr = (YR_OBJECT**) yr_arena_base_address(obj_arena);
+  obj_ptr = yr_arena_get_ptr(obj_arena, 0, 0);
 
-  while (obj_ptr != NULL)
-  {
-    yr_object_destroy(*obj_ptr);
+  for (int i = 0; i < obj_count; i++) yr_object_destroy(obj_ptr[i]);
 
-    obj_ptr = (YR_OBJECT**) yr_arena_next_address(
-        obj_arena, obj_ptr, sizeof(YR_OBJECT*));
-  }
-
-  yr_arena_destroy(obj_arena);
-  yr_arena_destroy(it_arena);
+  yr_arena_release(obj_arena);
+  yr_notebook_destroy(it_notebook);
   yr_modules_unload_all(context);
   yr_free(stack.items);
 

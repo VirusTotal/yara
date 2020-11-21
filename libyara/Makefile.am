@@ -68,6 +68,11 @@ AM_CFLAGS=-Wall -Wno-deprecated-declarations \
 	-D_GNU_SOURCE \
 	-I$(srcdir)/include
 
+if GCOV
+MOSTLYCLEANFILES = {.,proc,modules/*}/*.gc{no,da,ov}
+AM_CFLAGS+=-O0 -g -ftest-coverage -fprofile-arcs
+else
+
 if DEBUG
 AM_CFLAGS+=-g
 endif
@@ -77,6 +82,9 @@ AM_CFLAGS+=-O3
 else
 AM_CFLAGS+=-O0
 endif
+
+endif
+
 
 if ADDRESS_SANITIZER
 AM_CFLAGS+=-fsanitize=address
@@ -95,6 +103,7 @@ yarainclude_HEADERS = \
 	include/yara/ahocorasick.h \
 	include/yara/arena.h \
 	include/yara/atoms.h \
+	include/yara/base64.h \
 	include/yara/bitmask.h \
 	include/yara/compiler.h \
 	include/yara/error.h \
@@ -107,6 +116,7 @@ yarainclude_HEADERS = \
 	include/yara/limits.h \
 	include/yara/mem.h \
 	include/yara/modules.h \
+	include/yara/notebook.h \
 	include/yara/object.h \
 	include/yara/parser.h \
 	include/yara/proc.h \
@@ -142,7 +152,7 @@ dist_noinst_DATA = pb/yara.proto
 
 lib_LTLIBRARIES = libyara.la
 
-libyara_la_LDFLAGS = -version-number 3:11:0
+libyara_la_LDFLAGS = -version-number 4:0:2
 
 BUILT_SOURCES = \
 	lexer.c \
@@ -158,6 +168,7 @@ libyara_la_SOURCES = \
 	ahocorasick.c \
 	arena.c \
 	atoms.c \
+	base64.c \
 	bitmask.c \
 	compiler.c \
 	endian.c \
@@ -171,6 +182,7 @@ libyara_la_SOURCES = \
 	libyara.c \
 	mem.c \
 	modules.c \
+	notebook.c \
 	object.c \
 	parser.c \
 	proc.c \

@@ -278,6 +278,11 @@ both ``stack_size`` and ``max_strings_per_rule`` provided as kwargs. At the time
 of this writing, the default stack size was ``16384`` and the default maximum
 strings per rule was ``10000``.
 
+Also, ``yara.set_config`` accepts the `max_match_data` argument for controlling
+the maximum number of bytes that will be returned for each matching string. This
+is equivalent to using ``YR_CONFIG_MAX_MATCH_DATA`` with the ``yr_set_configuration``
+in the C API. By the default this is set to 512.
+
 Here are a few example calls:
 
 .. code-block:: python
@@ -285,6 +290,7 @@ Here are a few example calls:
   yara.set_config(stack_size=65536)
   yara.set_config(max_strings_per_rule=50000, stack_size=65536)
   yara.set_config(max_strings_per_rule=20000)
+  yara.set_config(max_match_data=128)
 
 
 Reference
@@ -314,8 +320,8 @@ Reference
     raising an exception.
   :return: Compiled rules object.
   :rtype: :py:class:`yara.Rules`
-  :raises YaraSyntaxError: If a syntax error was found.
-  :raises YaraError: If an error occurred.
+  :raises yara.SyntaxError: If a syntax error was found.
+  :raises yara.Error: If an error occurred.
 
 .. py:function:: yara.load(...)
 
@@ -328,24 +334,26 @@ Reference
   :param file-object file: A file object supporting the ``read`` method.
   :return: Compiled rules object.
   :rtype: :py:class:`yara.Rules`
-  :raises: **YaraError**: If an error occurred while loading the file.
+  :raises: **yara.Error**: If an error occurred while loading the file.
 
 .. py:function:: yara.set_config(...)
 
   Set the configuration variables accessible through the yr_set_configuration
   API.
 
-  Provide either *stack_size* or *max_strings_per_rule*. These kwargs take
-  unsigned integer values as input and will assign the provided value to the
-  yr_set_configuration(...) variables ``YR_CONFIG_STACK_SIZE`` and
-  ``YR_CONFIG_MAX_STRINGS_PER_RULE``, respectively.
+  Provide either *stack_size*, *max_strings_per_rule*, or *max_match_data*. These kwargs
+  take unsigned integer values as input and will assign the provided value to the
+  yr_set_configuration(...) variables ``YR_CONFIG_STACK_SIZE``,
+  ``YR_CONFIG_MAX_STRINGS_PER_RULE``, and ``YR_CONFIG_MAX_MATCH_DATA`` respectively.
 
   :param int stack_size: Stack size to use for ``YR_CONFIG_STACK_SIZE``
   :param int max_strings_per_rule: Maximum number of strings to allow per
     yara rule. Will be mapped to ``YR_CONFIG_MAX_STRINGS_PER_RULE``.
+  :param int max_match_data: Maximum number of bytes to allow per
+    yara match. Will be mapped to ``YR_CONFIG_MAX_MATCH_DATA``.
   :return: None
   :rtype: **NoneType**
-  :raises: **YaraError**: If an error occurred.
+  :raises: **yara.Error**: If an error occurred.
 
 .. py:class:: Rules
 
@@ -375,8 +383,8 @@ Reference
     :param int which_callbacks: An integer that indicates in which cases the
       callback function must be called. Possible values are ``yara.CALLBACK_ALL``,
       ``yara.CALLBACK_MATCHES`` and ``yara.CALLBACK_NON_MATCHES``.
-    :raises YaraTimeoutError: If the timeout was reached.
-    :raises YaraError: If an error occurred during the scan.
+    :raises yara.TimeoutError: If the timeout was reached.
+    :raises yara.Error: If an error occurred during the scan.
 
   .. py:method:: save(...)
 
@@ -386,11 +394,11 @@ Reference
 
     :param str filepath: Path to the file.
     :param file-object file: A file object supporting the ``write`` method.
-    :raises: **YaraError**: If an error occurred while saving the file.
+    :raises: **yara.Error**: If an error occurred while saving the file.
 
 .. py:class:: Match
 
-  Objects returned by :py:func:`yara.match`, representing a match.
+  Objects returned by :py:meth:`yara.Rules.match`, representing a match.
 
   .. py:attribute:: rule
 

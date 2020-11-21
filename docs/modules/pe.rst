@@ -32,6 +32,12 @@ write more expressive and targeted rules. Let's see some examples:
             pe.characteristics & pe.DLL
     }
 
+    rule is_pe
+    {
+        condition:
+            pe.is_pe
+    }
+
 Reference
 ---------
 
@@ -602,9 +608,14 @@ Reference
     Individual resources can be accessed by using the [] operator. Each
     resource object has the following attributes:
 
+    .. c:member:: rva
+
+        The RVA of the resource data.
+
     .. c:member:: offset
 
-        Offset for the resource data.
+        Offset for the resource data. This can be undefined if the RVA is
+        invalid.
 
     .. c:member:: length
 
@@ -813,6 +824,14 @@ Reference
 
         *Example: pe.rich_signature.toolid(170, 40219) >= 99*
 
+.. c:type:: pdb_path
+
+    .. versionadded:: 4.0.0
+
+    Path of the PDB file for this PE if present.
+
+    *Example: pe.pdb_path == "D:\\workspace\\2018_R9_RelBld\\target\\checkout\\custprof\\Release\\custprof.pdb"*
+
 .. c:function:: exports(function_name)
 
     Function returning true if the PE exports *function_name* or
@@ -838,11 +857,75 @@ Reference
 
     *Example:  pe.exports(/^AXS@@/)*
 
+.. c:function:: exports_index(function_name)
+
+    .. versionadded:: 4.0.0
+
+    Function returning the index into the export_details array where the named
+    function is, undefined otherwise.
+
+    *Example:  pe.exports_index("CPlApplet")*
+
+.. c:function:: exports_index(ordinal)
+
+    .. versionadded:: 4.0.0
+
+    Function returning the index into the export_details array where the
+    exported ordinal is, undefined otherwise.
+
+    *Example:  pe.exports_index(72)*
+
+.. c:function:: exports_index(/regular_expression/)
+
+    .. versionadded:: 4.0.0
+
+    Function returning the first index into the export_details array where the
+    regular expression matches the exported name, undefined otherwise.
+
+    *Example:  pe.exports_index(/^ERS@@/)*
+
 .. c:type:: number_of_exports
 
     .. versionadded:: 3.6.0
 
     Number of exports in the PE.
+
+.. c:type:: export_details
+
+    .. versionadded:: 4.0.0
+
+    Array of structures containing information about the PE's exports.
+
+    .. c:member:: offset
+
+        Offset where the exported function starts.
+
+    .. c:member:: name
+
+        Name of the exported function. It will be undefined if the function has
+        no name.
+
+    .. c:member:: forward_name
+
+        The name of the function where this export forwards to. It will be
+        undefined if the export is not a forwarding export.
+
+    .. c:member:: ordinal
+
+        The ordinal of the exported function, after the ordinal base has been
+        applied to it.
+
+.. c:type:: dll_name
+
+    .. versionadded:: 4.0.0
+
+    The name of the DLL, if it exists in the export directory.
+
+.. c:type:: export_timestamp
+
+    .. versionadded:: 4.0.0
+
+    The timestamp the export data was created..
 
 .. c:type:: number_of_imports
 
@@ -860,12 +943,12 @@ Reference
 .. c:function:: imports(dll_name)
 
     .. versionadded:: 3.5.0
-    .. versionchanged:: 3.12.0
+    .. versionchanged:: 4.0.0
 
     Function returning the number of functions from the *dll_name*, in the PE
     imports. *dll_name* is case insensitive.
 
-    Note: Prior to version 3.12.0, this function returned only a boolean value
+    Note: Prior to version 4.0.0, this function returned only a boolean value
     indicating if the given DLL name was found in the PE imports. This change
     is backward compatible, as any number larger than 0 also evaluates as
     true.
@@ -884,7 +967,7 @@ Reference
 .. c:function:: imports(dll_regexp, function_regexp)
 
     .. versionadded:: 3.8.0
-    .. versionchanged:: 3.12.0
+    .. versionchanged:: 4.0.0
 
     Function returning the number of functions from the PE imports where a
     function name matches *function_regexp* and a DLL name matches
@@ -892,7 +975,7 @@ Reference
     unless you use the "/i" modifier in the regexp, as shown in the example
     below.
 
-    Note: Prior to version 3.12.0, this function returned only a boolean value
+    Note: Prior to version 4.0.0, this function returned only a boolean value
     indicating if matching import was found or not. This change is backward
     compatible, as any number larger than 0 also evaluates as true.
 
@@ -947,6 +1030,14 @@ Reference
 
     *Example: pe.section_index(pe.entry_point)*
 
+.. c:function:: is_pe()
+
+    .. versionadded:: 3.8.0
+
+    Return true if the file is a PE.
+
+    *Example: pe.is_pe()*
+       
 .. c:function:: is_dll()
 
     .. versionadded:: 3.5.0
