@@ -931,7 +931,13 @@ Reference
 
     .. versionadded:: 3.6.0
 
-    Number of imports in the PE.
+    Number of imported DLLs in the PE.
+
+.. c:type:: number_of_imported_functions
+
+    .. versionadded:: 4.1.0
+
+    Number of imported functions in the PE.
 
 .. c:function:: imports(dll_name, function_name)
 
