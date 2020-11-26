@@ -341,12 +341,15 @@ SIZED_STRING* yr_re_ast_extract_literal(RE_AST* re_ast)
   return string;
 }
 
-int _yr_re_node_contains_dot_star(RE_NODE* re_node)
+int _yr_re_node_has_unbounded_quantifier_for_dot(RE_NODE* re_node)
 {
   RE_NODE* child;
 
   if ((re_node->type == RE_NODE_STAR || re_node->type == RE_NODE_PLUS) &&
       re_node->children_head->type == RE_NODE_ANY)
+    return true;
+
+  if (re_node->type == RE_NODE_RANGE_ANY && re_node->end == RE_MAX_RANGE)
     return true;
 
   if (re_node->type == RE_NODE_CONCAT)
@@ -355,7 +358,7 @@ int _yr_re_node_contains_dot_star(RE_NODE* re_node)
 
     while (child != NULL)
     {
-      if (_yr_re_node_contains_dot_star(child))
+      if (_yr_re_node_has_unbounded_quantifier_for_dot(child))
         return true;
 
       child = child->prev_sibling;
@@ -365,9 +368,15 @@ int _yr_re_node_contains_dot_star(RE_NODE* re_node)
   return false;
 }
 
-int yr_re_ast_contains_dot_star(RE_AST* re_ast)
+////////////////////////////////////////////////////////////////////////////////
+// Detects the use of .*, .+ or .{x,} in a regexp. The use of wildcards with
+// quantifiers that don't have a reasonably small upper bound causes a
+// performance penalty. This function dectects such cases in orde to warn the
+// user about this.
+//
+int yr_re_ast_has_unbounded_quantifier_for_dot(RE_AST* re_ast)
 {
-  return _yr_re_node_contains_dot_star(re_ast->root_node);
+  return _yr_re_node_has_unbounded_quantifier_for_dot(re_ast->root_node);
 }
 
 ////////////////////////////////////////////////////////////////////////////////

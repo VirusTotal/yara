@@ -122,11 +122,11 @@ hex_digit     [0-9a-fA-F]
   if (comma - yytext == strlen(yytext) - 2)
     // if comma is followed by the closing curly bracket
     // (example: {2,}) set high bound value to maximum.
-    hi_bound = INT16_MAX;
+    hi_bound = RE_MAX_RANGE;
   else
     hi_bound = atoi(comma + 1);
 
-  if (hi_bound > INT16_MAX)
+  if (hi_bound > RE_MAX_RANGE)
   {
     yyerror(yyscanner, lex_env, "repeat interval too large");
     yyterminate();
@@ -159,7 +159,7 @@ hex_digit     [0-9a-fA-F]
   // atoi can return a negative value if the input string represents a number
   // too large to fit in an integer.
 
-  if (value > INT16_MAX || value < 0)
+  if (value > RE_MAX_RANGE || value < 0)
   {
     yyerror(yyscanner, lex_env, "repeat interval too large");
     yyterminate();
