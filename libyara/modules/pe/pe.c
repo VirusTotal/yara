@@ -266,7 +266,6 @@ static void pe_parse_rich_signature(PE* pe, uint64_t base_address)
 
   yr_free(raw_data);
   yr_free(clear_data);
-  return;
 }
 
 static void pe_parse_debug_directory(PE* pe)
@@ -352,8 +351,6 @@ static void pe_parse_debug_directory(PE* pe)
       }
     }
   }
-
-  return;
 }
 
 // Return a pointer to the resource directory string or NULL.
@@ -1233,7 +1230,6 @@ static void pe_parse_exports(PE* pe)
   }
 
   set_integer(exp_sz, pe->object, "number_of_exports");
-  return;
 }
 
 // BoringSSL (https://boringssl.googlesource.com/boringssl/) doesn't support

@@ -34,7 +34,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <yara/re.h>
 #include <yara/sizedstr.h>
 
-
 ////////////////////////////////////////////////////////////////////////////////
 // Given a pointer to a SIZED_STRING append 0, 1 or 2 bytes and base64 encode
 // the string. The number of padding bytes is returned in "pad" and the caller
@@ -65,6 +64,7 @@ static SIZED_STRING* _yr_modified_base64_encode(
   // Add "i" for the number of prepended bytes.
   out = (SIZED_STRING*) yr_malloc(
       sizeof(SIZED_STRING) + i + ((len * 4 + 3) / 3) + *pad);
+
   if (out == NULL)
     return NULL;
 
@@ -84,6 +84,7 @@ static SIZED_STRING* _yr_modified_base64_encode(
 
   p = (uint8_t*) out->c_string;
   end = src + len + j;
+
   while (end - src >= 3)
   {
     *p++ = alphabet_str[src[0] >> 2];
@@ -112,6 +113,7 @@ static SIZED_STRING* _yr_modified_base64_encode(
 
   yr_free(tmp);
   out->length = p - (uint8_t*) out->c_string;
+
   return out;
 }
 
@@ -167,13 +169,11 @@ static SIZED_STRING* _yr_base64_get_base64_substring(
   return final_str;
 }
 
-
 // RE metacharacters which need to be escaped when generating the final RE.
 #define IS_METACHAR(x)                                                      \
   (x == '\\' || x == '^' || x == '$' || x == '|' || x == '(' || x == ')' || \
    x == '[' || x == ']' || x == '*' || x == '?' || x == '{' || x == ',' ||  \
    x == '.' || x == '+' || x == '}')
-
 
 ////////////////////////////////////////////////////////////////////////////////
 // Given a SIZED_STRING return the number of characters which will need to be
@@ -181,10 +181,9 @@ static SIZED_STRING* _yr_base64_get_base64_substring(
 //
 static int _yr_base64_count_escaped(SIZED_STRING* str)
 {
-  uint32_t i;
   int c = 0;
 
-  for (i = 0; i < str->length; i++)
+  for (uint32_t i = 0; i < str->length; i++)
   {
     // We must be careful to escape null bytes because they break the RE lexer.
     if (IS_METACHAR(str->c_string[i]))
@@ -209,10 +208,10 @@ static int _yr_base64_create_nodes(
   SIZED_STRING* encoded_str;
   SIZED_STRING* final_str;
   BASE64_NODE* node;
-  int i;
+
   int pad;
 
-  for (i = 0; i <= 2; i++)
+  for (int i = 0; i <= 2; i++)
   {
     if (i == 1 && str->length == 1)
       continue;
@@ -262,12 +261,11 @@ static int _yr_base64_create_nodes(
 //
 void _yr_base64_print_nodes(BASE64_NODE* head)
 {
-  size_t i;
   BASE64_NODE* p = head;
 
   while (p != NULL)
   {
-    for (i = 0; i < p->str->length; i++)
+    for (size_t i = 0; i < p->str->length; i++)
     {
       if (p->str->c_string[i] >= 32 && p->str->c_string[i] <= 126)
         printf("%c", p->str->c_string[i]);
@@ -278,8 +276,6 @@ void _yr_base64_print_nodes(BASE64_NODE* head)
 
     p = p->next;
   }
-
-  return;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -297,8 +293,6 @@ static void _yr_base64_destroy_nodes(BASE64_NODE* head)
     yr_free(p);
     p = next;
   }
-
-  return;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -313,7 +307,6 @@ int _yr_base64_create_regexp(
   BASE64_NODE* p = head;
   char* re_str;
   char* s;
-  uint32_t i;
   uint32_t length = 0;
 
   // The number of nodes in the list, used to know how many '|'.
@@ -340,7 +333,7 @@ int _yr_base64_create_regexp(
   *s++ = '(';
   while (p != NULL)
   {
-    for (i = 0; i < p->str->length; i++)
+    for (uint32_t i = 0; i < p->str->length; i++)
     {
       if (IS_METACHAR(p->str->c_string[i]))
         *s++ = '\\';
@@ -371,6 +364,7 @@ int _yr_base64_create_regexp(
       yr_re_parse(re_str, re_ast, re_error), yr_free(re_str));
 
   yr_free(re_str);
+
   return ERROR_SUCCESS;
 }
 
