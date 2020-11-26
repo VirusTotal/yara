@@ -2830,6 +2830,22 @@ void test_performance_warnings()
   assert_warning("rule test { \
         strings: $a = \"AAAAAAAAAAAAAAAAAAAA\" xor \
         condition: $a }");
+
+  assert_warning("rule test { \
+        strings: $a = /abcd.*efgh/ \
+        condition: $a }");
+
+  assert_warning("rule test { \
+        strings: $a = /abcd.+efgh/ \
+        condition: $a }");
+
+  assert_warning("rule test { \
+        strings: $a = /abcd.{1,}efgh/ \
+        condition: $a }");
+
+  assert_warning("rule test { \
+        strings: $a = /abcd.{10,}efgh/ \
+        condition: $a }");
 }
 
 int main(int argc, char** argv)
