@@ -93,6 +93,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define MAX_PE_IMPORTS         16384
 #define MAX_PE_EXPORTS         8192
 #define MAX_EXPORT_NAME_LENGTH 512
+#define MAX_RESOURCES          65536
 
 #define IS_RESOURCE_SUBDIRECTORY(entry) \
   (yr_le32toh((entry)->OffsetToData) & 0x80000000)
@@ -673,6 +674,10 @@ static int pe_collect_resources(
     PE* pe)
 {
   DWORD length;
+
+  // Don't collect too many resources.
+  if (pe->resources > MAX_RESOURCES)
+    return RESOURCE_CALLBACK_CONTINUE;
 
   set_integer(
       yr_le32toh(rsrc_data->OffsetToData),
