@@ -711,12 +711,12 @@ int yr_parser_reduce_string_declaration(
           goto _exit;
     }
 
-    if (yr_re_ast_contains_dot_star(re_ast))
+    if (yr_re_ast_has_unbounded_quantifier_for_dot(re_ast))
     {
       yywarning(
           yyscanner,
-          "%s contains .* or .+, consider using .{,N} or .{1,N} with a "
-          "reasonable value for N",
+          "%s contains .*, .+ or .{x,} consider using .{,N}, .{1,N} or {x,N} "
+          "with a reasonable value for N",
           identifier);
     }
 
