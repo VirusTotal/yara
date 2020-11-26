@@ -33,7 +33,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <sys/wait.h>
 #include <unistd.h>
 #include <yara.h>
-#include <yara/globals.h>
 
 #include "blob.h"
 #include "util.h"
@@ -1236,7 +1235,7 @@ static void test_hex_strings()
 
 static void test_count()
 {
-  YR_DEBUG_FPRINTF(1, stderr, "+ %s() {}\n", __FUNCTION__);
+//fixme  YR_DEBUG_FPRINTF(1, stderr, "+ %s() {}\n", __FUNCTION__);
 
   assert_true_rule(
       "rule test { strings: $a = \"ssi\" condition: #a == 2 }",
@@ -2852,15 +2851,14 @@ void test_performance_warnings()
 
 int main(int argc, char** argv)
 {
+  int result = 0;
+
+  YR_DEBUG_INITIALIZE();
+  YR_DEBUG_FPRINTF(1, stderr, "+ %s() { // in %s\n", __FUNCTION__, __FILE__);
+
   chdir_if_env_top_srcdir();
 
   yr_initialize();
-
-#if YR_DEBUG_VERBOSITY > 0
-  yr_debug_verbosity = getenv("YR_DEBUG_VERBOSITY")
-                           ? atoi(getenv("YR_DEBUG_VERBOSITY"))
-                           : 0;
-#endif
 
   assert_true_expr(strlen(TEXT_1024_BYTES) == 1024);
 
@@ -2978,5 +2976,8 @@ int main(int argc, char** argv)
   }
 
   yr_finalize();
-  return 0;
+
+  YR_DEBUG_FPRINTF(1, stderr, "} = %d // %s() in %s\n", result, __FUNCTION__, __FILE__);
+
+  return result;
 }

@@ -98,7 +98,7 @@ void* crasher_func(void* x)
 {
   sleep(1);
   int* i = 0;
-  puts("crashing process...");
+  fputs("crashing process...\n", stderr);
   *i = 0;
   return NULL;
 }
@@ -124,7 +124,7 @@ int delay_callback(
   {
     (*(int*) user_data)++;
   }
-  puts("callback: delaying execution...");
+  fputs("callback: delaying execution...\n", stderr);
   sleep(2);
   return CALLBACK_CONTINUE;
 }
@@ -136,7 +136,7 @@ int test_crash(int handle_exceptions)
   setup_mmap();
   setup_rules();
 
-  puts("Scanning for \"aaaa\"...");
+  fputs("Scanning for \"aaaa\"...\n", stderr);
 
   struct COUNTERS counters;
 
@@ -170,7 +170,7 @@ int test_crash_other_thread()
   uint8_t mem[4096];
   memset(mem, 'a', sizeof(mem));
 
-  puts("Scanning for \"aaaa\"...");
+  fputs("Scanning for \"aaaa\"...\n", stderr);
   int matches = 0;
 
   int rc = yr_rules_scan_mem(
@@ -193,7 +193,7 @@ int test_blocked_signal()
   setup_mmap();
   setup_rules();
 
-  puts("Sending blocked SIGUSR1 to ourselves...");
+  fputs("Sending blocked SIGUSR1 to ourselves...\n", stderr);
 
   sigset_t set;
   sigemptyset(&set);
@@ -201,7 +201,7 @@ int test_blocked_signal()
   sigprocmask(SIG_BLOCK, &set, NULL);
   kill(getpid(), SIGUSR1);
 
-  puts("Scanning for {00 00 00 00}...");
+  fputs("Scanning for {00 00 00 00}...\n", stderr);
 
   struct COUNTERS counters;
 
@@ -237,54 +237,85 @@ int reexec(char* program)
 
 int main(int argc, char** argv)
 {
+  int result = 0;
+
+  YR_DEBUG_INITIALIZE();
+  YR_DEBUG_FPRINTF(1, stderr, "+ %s() { // in %s\n", __FUNCTION__, __FILE__);
+
   char* op = getenv("TEST_OP");
   if (op == NULL)
   {
     int status;
-    puts("Test: crash");
+    fputs("Test: crash\n", stderr);
     setenv("TEST_OP", "CRASH", 1);
     status = reexec(argv[0]);
     if (status != 0)
-      return 1;
+    {
+      result = 1;
+      goto _exit;
+    }
 
-    puts("Test: crash-no-handle");
+    fputs("Test: crash-no-handle\n", stderr);
     setenv("TEST_OP", "CRASH-NO-HANDLE", 1);
     status = reexec(argv[0]);
     if (!WIFSIGNALED(status))
     {
       fputs("Expected subprocess to be terminated by signal\n", stderr);
-      return 1;
+      result = 1;
+      goto _exit;
     }
 
-    puts("Test: blocked-signal");
+    fputs("Test: blocked-signal\n", stderr);
     setenv("TEST_OP", "BLOCKED-SIGNAL", 1);
     status = reexec(argv[0]);
     if (status != 0)
-      return 1;
+    {
+      result = 1;
+      goto _exit;
+    }
 
-    puts("Test: crash-other-thread");
+    fputs("Test: crash-other-thread\n", stderr);
     setenv("TEST_OP", "CRASH-OTHER-THREAD", 1);
     status = reexec(argv[0]);
     if (!WIFSIGNALED(status))
     {
       fputs("Expected subprocess to be terminated by signal\n", stderr);
-      return 1;
+      result = 1;
+      goto _exit;
     }
 
-    puts("Done.");
+    fputs("Done.\n", stderr);
   }
   else if (!strcmp(op, "CRASH"))
-    return test_crash(1);
+  {
+    result = test_crash(1);
+    goto _exit;
+  }
   else if (!strcmp(op, "CRASH-NO-HANDLE"))
-    return test_crash(0);
+  {
+    result = test_crash(0);
+    goto _exit;
+  }
   else if (!strcmp(op, "BLOCKED-SIGNAL"))
-    return test_blocked_signal();
+  {
+    result = test_blocked_signal();
+    goto _exit;
+  }
   else if (!strcmp(op, "CRASH-OTHER-THREAD"))
-    return test_crash_other_thread();
+  {
+    result = test_crash_other_thread();
+    goto _exit;
+  }
   else
   {
     fprintf(stderr, "wrong op '%s'\n", op);
-    return 77;
+    result = 77;
+    goto _exit;
   }
-  return 0;
+
+_exit:
+
+  YR_DEBUG_FPRINTF(1, stderr, "} = %d // %s() in %s\n", result, __FUNCTION__, __FILE__);
+
+  return result;
 }

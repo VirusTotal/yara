@@ -30,10 +30,19 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <strings.h>
 #include <yara.h>
 
+#include "util.h"
+
 int main(int argc, char **argv)
 {
+  YR_DEBUG_INITIALIZE();
+  YR_DEBUG_FPRINTF(1, stderr, "+ %s() { // in %s\n", __FUNCTION__, __FILE__);
+
   // make sure that versions defined in configure.ac and in
   // libyara/include/yara/libyara.h are in sync.
 
-  return strcmp(PACKAGE_VERSION, YR_VERSION);
+  int result = strcmp(PACKAGE_VERSION, YR_VERSION);
+
+  YR_DEBUG_FPRINTF(1, stderr, "} = %d // %s() in %s\n", result, __FUNCTION__, __FILE__);
+
+  return result;
 }

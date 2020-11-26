@@ -740,3 +740,4 @@ void assert_hex_atoms(char* hex, int expected_atom_count, atom* expected_atoms)
   if (exit_code != EXIT_SUCCESS)
     exit(exit_code);
 }
+

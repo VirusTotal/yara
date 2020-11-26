@@ -32,6 +32,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #undef NDEBUG
 #include <assert.h>
 
+#include "util.h"
+
 int err = 0;
 
 #define CHECK_SIZE(expr, size)                           \
@@ -69,6 +71,11 @@ int err = 0;
 
 int main(int argc, char **argv)
 {
+  int result = err;
+
+  YR_DEBUG_INITIALIZE();
+  YR_DEBUG_FPRINTF(1, stderr, "+ %s() { // in %s\n", __FUNCTION__, __FILE__);
+
   CHECK_SIZE(YR_NAMESPACE, 16);
   CHECK_OFFSET(YR_NAMESPACE, 0, name);
   CHECK_OFFSET(YR_NAMESPACE, 8, idx);
@@ -121,5 +128,7 @@ int main(int argc, char **argv)
   CHECK_OFFSET(SIZED_STRING, 4, flags);
   CHECK_OFFSET(SIZED_STRING, 8, c_string);
 
-  return err;
+  YR_DEBUG_FPRINTF(1, stderr, "} = %d // %s() in %s\n", result, __FUNCTION__, __FILE__);
+
+  return result;
 }

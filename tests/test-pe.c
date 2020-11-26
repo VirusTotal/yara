@@ -7,6 +7,11 @@
 
 int main(int argc, char** argv)
 {
+  int result = 0;
+
+  YR_DEBUG_INITIALIZE();
+  YR_DEBUG_FPRINTF(1, stderr, "+ %s() { // in %s\n", __FUNCTION__, __FILE__);
+
   chdir_if_env_top_srcdir();
 
   yr_initialize();
@@ -339,5 +344,8 @@ int main(int argc, char** argv)
       "tests/data/mtxex.dll");
 
   yr_finalize();
-  return 0;
+
+  YR_DEBUG_FPRINTF(1, stderr, "} = %d // %s() in %s\n", result, __FUNCTION__, __FILE__);
+
+  return result;
 }

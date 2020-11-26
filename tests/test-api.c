@@ -785,6 +785,11 @@ void test_issue_920()
 
 int main(int argc, char** argv)
 {
+  int result = 0;
+
+  YR_DEBUG_INITIALIZE();
+  YR_DEBUG_FPRINTF(1, stderr, "+ %s() { // in %s\n", __FUNCTION__, __FILE__);
+
   chdir_if_env_top_srcdir();
 
   test_disabled_rules();
@@ -799,5 +804,7 @@ int main(int argc, char** argv)
   test_issue_834();
   test_issue_920();
 
-  return 0;
+  YR_DEBUG_FPRINTF(1, stderr, "} = %d // %s() in %s\n", result, __FUNCTION__, __FILE__);
+
+  return result;
 }

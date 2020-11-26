@@ -41,18 +41,30 @@ extern uint8_t yr_altercase[256];
 
 #if 0 == YR_DEBUG_VERBOSITY
 
+#define YR_DEBUG_INITIALIZE()
+
 #define YR_DEBUG_FPRINTF(VERBOSITY, FORMAT, ...)
 
 #else
 
-#define YR_DEBUG_FPRINTF(VERBOSITY, FORMAT, ...) \
-  if (yr_debug_verbosity >= VERBOSITY)           \
-  {                                              \
-    fprintf(FORMAT, __VA_ARGS__);                \
-  }
+// for getpid()
+#include <sys/types.h>
+#include <unistd.h>
+
+extern double yr_debug_get_time_in_seconds(void);
 
 // Default is 0 for production, which means be silent, else verbose.
 extern uint64_t yr_debug_verbosity;
+
+#define YR_DEBUG_INITIALIZE() \
+  yr_debug_verbosity = getenv("YR_DEBUG_VERBOSITY") ? atoi(getenv("YR_DEBUG_VERBOSITY")) : 0
+
+#define YR_DEBUG_FPRINTF(VERBOSITY, STREAM, FORMAT, ...)                   \
+  if (yr_debug_verbosity >= VERBOSITY)                                     \
+  {                                                                        \
+    fprintf(STREAM, "%f %06u ", yr_debug_get_time_in_seconds(), getpid()); \
+    fprintf(STREAM, FORMAT, __VA_ARGS__);                                  \
+  }
 
 #endif
 

@@ -263,11 +263,12 @@ static void test_parallel_strings()
 
 int main(int argc, char** argv)
 {
-  chdir_if_env_top_srcdir();
+  int result = 0;
 
-  #if YR_DEBUG_VERBOSITY > 0
-  yr_debug_verbosity = getenv("YR_DEBUG_VERBOSITY") ? atoi(getenv("YR_DEBUG_VERBOSITY")) : 0;
-  #endif
+  YR_DEBUG_INITIALIZE();
+  YR_DEBUG_FPRINTF(1, stderr, "+ %s() { // in %s\n", __FUNCTION__, __FILE__);
+
+  chdir_if_env_top_srcdir();
 
   yr_initialize();
 
@@ -290,5 +291,8 @@ int main(int argc, char** argv)
   test_parallel_strings();
 
   yr_finalize();
-  return 0;
+
+  YR_DEBUG_FPRINTF(1, stderr, "} = %d // %s() in %s\n", result, __FUNCTION__, __FILE__);
+
+  return result;
 }

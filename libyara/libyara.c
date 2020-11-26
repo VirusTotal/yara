@@ -77,6 +77,14 @@ uint8_t yr_altercase[256];
 
 uint64_t yr_debug_verbosity = YR_DEBUG_VERBOSITY;
 
+double yr_debug_get_time_in_seconds(void)
+{
+    struct timeval tv;
+
+    assert(gettimeofday(&tv, NULL) >= 0);
+    return (double)tv.tv_sec + 1.e-6 * (double)tv.tv_usec;
+}
+
 #endif
 
 #if defined(HAVE_LIBCRYPTO) && OPENSSL_VERSION_NUMBER < 0x10100000L
@@ -108,6 +116,8 @@ static void _locking_function(int mode, int n, const char *file, int line)
 //
 YR_API int yr_initialize(void)
 {
+  YR_DEBUG_FPRINTF(2, stderr, "+ %s() {\n", __FUNCTION__);
+
   uint32_t def_stack_size = DEFAULT_STACK_SIZE;
   uint32_t def_max_strings_per_rule = DEFAULT_MAX_STRINGS_PER_RULE;
   uint32_t def_max_match_data = DEFAULT_MAX_MATCH_DATA;
@@ -174,6 +184,8 @@ YR_API int yr_initialize(void)
   FAIL_ON_ERROR(
       yr_set_configuration(YR_CONFIG_MAX_MATCH_DATA, &def_max_match_data));
 
+  YR_DEBUG_FPRINTF(2, stderr, "} // %s()\n", __FUNCTION__);
+
   return ERROR_SUCCESS;
 }
 
@@ -182,6 +194,8 @@ YR_API int yr_initialize(void)
 //
 YR_API int yr_finalize(void)
 {
+  YR_DEBUG_FPRINTF(2, stderr, "+ %s() {\n", __FUNCTION__);
+
 #if defined HAVE_LIBCRYPTO && OPENSSL_VERSION_NUMBER < 0x10100000L
   int i;
 #endif
@@ -219,6 +233,8 @@ YR_API int yr_finalize(void)
   malloc_stats_print(NULL, NULL, NULL);
   mallctl("prof.dump", NULL, NULL, NULL, 0);
 #endif
+
+  YR_DEBUG_FPRINTF(2, stderr, "} // %s()\n", __FUNCTION__);
 
   return ERROR_SUCCESS;
 }
