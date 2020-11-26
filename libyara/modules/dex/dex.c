@@ -39,16 +39,15 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 define_function(has_method_string)
 {
-  int i;
   SIZED_STRING* parsed_name;
   SIZED_STRING* method_name = sized_string_argument(1);
   YR_OBJECT* module = module();
   int64_t number_of_methods = get_integer(module, "number_of_methods");
 
-  if (number_of_methods == UNDEFINED)
-    return_integer(UNDEFINED);
+  if (number_of_methods == YR_UNDEFINED)
+    return_integer(YR_UNDEFINED);
 
-  for (i = 0; i < number_of_methods; i++)
+  for (int i = 0; i < number_of_methods; i++)
   {
     parsed_name = get_string(module, "method[%i].name", i);
     if (parsed_name != NULL &&
@@ -63,7 +62,6 @@ define_function(has_method_string)
 
 define_function(has_method_and_class_string)
 {
-  int i;
   SIZED_STRING* parsed_class;
   SIZED_STRING* parsed_name;
   SIZED_STRING* class_name = sized_string_argument(1);
@@ -71,10 +69,10 @@ define_function(has_method_and_class_string)
   YR_OBJECT* module = module();
   int64_t number_of_methods = get_integer(module, "number_of_methods");
 
-  if (number_of_methods == UNDEFINED)
-    return_integer(UNDEFINED);
+  if (number_of_methods == YR_UNDEFINED)
+    return_integer(YR_UNDEFINED);
 
-  for (i = 0; i < number_of_methods; i++)
+  for (int i = 0; i < number_of_methods; i++)
   {
     parsed_class = get_string(module, "method[%i].class_name", i);
     if (parsed_class != NULL &&
@@ -96,16 +94,15 @@ define_function(has_method_and_class_string)
 
 define_function(has_method_regexp)
 {
-  int i;
   SIZED_STRING* parsed_name;
   RE* regex = regexp_argument(1);
   YR_OBJECT* module = module();
   int64_t number_of_methods = get_integer(module, "number_of_methods");
 
-  if (number_of_methods == UNDEFINED)
-    return_integer(UNDEFINED);
+  if (number_of_methods == YR_UNDEFINED)
+    return_integer(YR_UNDEFINED);
 
-  for (i = 0; i < number_of_methods; i++)
+  for (int i = 0; i < number_of_methods; i++)
   {
     parsed_name = get_string(module, "method[%i].name", i);
     if (parsed_name != NULL &&
@@ -119,7 +116,6 @@ define_function(has_method_regexp)
 
 define_function(has_method_and_class_regexp)
 {
-  int i;
   SIZED_STRING* parsed_class;
   SIZED_STRING* parsed_name;
   RE* class_regex = regexp_argument(1);
@@ -127,14 +123,14 @@ define_function(has_method_and_class_regexp)
   YR_OBJECT* module = module();
   int64_t number_of_methods = get_integer(module, "number_of_methods");
 
-  if (number_of_methods == UNDEFINED)
-    return_integer(UNDEFINED);
+  if (number_of_methods == YR_UNDEFINED)
+    return_integer(YR_UNDEFINED);
 
-  for (i = 0; i < number_of_methods; i++)
+  for (int i = 0; i < number_of_methods; i++)
   {
     parsed_class = get_string(module, "method[%i].class_name", i);
     if (parsed_class != NULL &&
-        yr_re_match(scan_context(), class_regex, parsed_class->c_string) != -1)
+        yr_re_match(scan_context(), class_regex, parsed_class->c_string) == -1)
     {
       continue;
     }
@@ -151,16 +147,15 @@ define_function(has_method_and_class_regexp)
 
 define_function(has_class_string)
 {
-  int i;
   SIZED_STRING* parsed_class;
   SIZED_STRING* class_name = sized_string_argument(1);
   YR_OBJECT* module = module();
   int64_t number_of_methods = get_integer(module, "number_of_methods");
 
-  if (number_of_methods == UNDEFINED)
-    return_integer(UNDEFINED);
+  if (number_of_methods == YR_UNDEFINED)
+    return_integer(YR_UNDEFINED);
 
-  for (i = 0; i < number_of_methods; i++)
+  for (int i = 0; i < number_of_methods; i++)
   {
     parsed_class = get_string(module, "method[%i].class_name", i);
     if (parsed_class != NULL &&
@@ -175,16 +170,15 @@ define_function(has_class_string)
 
 define_function(has_class_regexp)
 {
-  int i;
   SIZED_STRING* parsed_class;
   RE* regex = regexp_argument(1);
   YR_OBJECT* module = module();
   int64_t number_of_methods = get_integer(module, "number_of_methods");
 
-  if (number_of_methods == UNDEFINED)
-    return_integer(UNDEFINED);
+  if (number_of_methods == YR_UNDEFINED)
+    return_integer(YR_UNDEFINED);
 
-  for (i = 0; i < number_of_methods; i++)
+  for (int i = 0; i < number_of_methods; i++)
   {
     parsed_class = get_string(module, "method[%i].class_name", i);
     if (parsed_class != NULL &&
