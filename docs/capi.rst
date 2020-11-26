@@ -888,10 +888,10 @@ Functions
 
   .. versionadded:: 3.8.0
 
-  Scan a memory buffer divided into one or more overlapping memory blocks
-  accesssed via :c:type:`YR_MEMORY_BLOCK_ITERATOR`. Called automatically by
-  ``yr_scanner_scan_XXXX`` functions, or call directly if using custom
-  iterator. Returns one of the following error codes:
+  Scan a memory buffer divided into one or more memory blocks (posssibly
+  overlapping) accessed via :c:type:`YR_MEMORY_BLOCK_ITERATOR`. Called
+  automatically by ``yr_scanner_scan_XXXX`` functions, or call directly
+  if using custom iterator. Returns one of the following error codes:
 
     :c:macro:`ERROR_SUCCESS`
 
@@ -913,7 +913,7 @@ Functions
 
   .. versionadded:: 3.8.0
 
-  Scan a memory buffer using default single memory block iterator.
+  Scan a memory buffer.
   Returns one of the following error codes:
 
     :c:macro:`ERROR_SUCCESS`
@@ -932,7 +932,7 @@ Functions
 
   .. versionadded:: 3.8.0
 
-  Scan a file using default single memory block iterator.
+  Scan a file.
   Returns one of the following error codes:
 
     :c:macro:`ERROR_SUCCESS`
@@ -951,10 +951,9 @@ Functions
 
   .. versionadded:: 3.8.0
 
-  Scan a file descriptor using default single memory block iterator. In POSIX
-  systems ``YR_FILE_DESCRIPTOR`` is an ``int``, as returned by the `open()`
-  function. In Windows ``YR_FILE_DESCRIPTOR`` is a ``HANDLE`` as returned by
-  `CreateFile()`.
+  Scan a file descriptor. In POSIX systems ``YR_FILE_DESCRIPTOR`` is an ``int``,
+  as returned by the `open()` function. In Windows ``YR_FILE_DESCRIPTOR`` is a
+  ``HANDLE`` as returned by `CreateFile()`.
 
   Returns one of the following error codes:
 
