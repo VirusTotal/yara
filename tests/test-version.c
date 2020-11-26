@@ -30,6 +30,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <strings.h>
 #include <yara.h>
 
+
 #include "util.h"
 
 int main(int argc, char **argv)
