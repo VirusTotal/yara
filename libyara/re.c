@@ -371,7 +371,7 @@ int _yr_re_node_has_unbounded_quantifier_for_dot(RE_NODE* re_node)
 ////////////////////////////////////////////////////////////////////////////////
 // Detects the use of .*, .+ or .{x,} in a regexp. The use of wildcards with
 // quantifiers that don't have a reasonably small upper bound causes a
-// performance penalty. This function dectects such cases in orde to warn the
+// performance penalty. This function dectects such cases in order to warn the
 // user about this.
 //
 int yr_re_ast_has_unbounded_quantifier_for_dot(RE_AST* re_ast)
