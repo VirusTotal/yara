@@ -2862,8 +2862,11 @@ int main(int argc, char** argv)
 
   assert_true_expr(strlen(TEXT_1024_BYTES) == 1024);
 
+  // e.g. ./test-rules-pass-1 or test-rules-pass-1.exe
+  char *test_rules_pass = strstr(argv[0], "test-rules-pass-");
+  assert(test_rules_pass != NULL);
   int pass;
-  assert(1 == sscanf(argv[0], "./test-rules-pass-%d", &pass)); // e.g. test-rules-pass-1.c
+  assert(1 == sscanf(test_rules_pass, "test-rules-pass-%d", &pass));
 
   switch (pass)
   {
