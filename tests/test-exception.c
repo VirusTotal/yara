@@ -240,7 +240,7 @@ int main(int argc, char** argv)
   int result = 0;
 
   YR_DEBUG_INITIALIZE();
-  YR_DEBUG_FPRINTF(1, stderr, "+ %s() { // in %s\n", __FUNCTION__, __FILE__);
+  YR_DEBUG_FPRINTF(1, stderr, "+ %s() { // in %s\n", __FUNCTION__, argv[0]);
 
   char* op = getenv("TEST_OP");
   if (op == NULL)
@@ -315,7 +315,7 @@ int main(int argc, char** argv)
 
 _exit:
 
-  YR_DEBUG_FPRINTF(1, stderr, "} = %d // %s() in %s\n", result, __FUNCTION__, __FILE__);
+  YR_DEBUG_FPRINTF(1, stderr, "} = %d // %s() in %s\n", result, __FUNCTION__, argv[0]);
 
   return result;
 }

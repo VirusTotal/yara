@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2019. The YARA Authors. All Rights Reserved.
+Copyright (c) 2020. The YARA Authors. All Rights Reserved.
 
 Redistribution and use in source and binary forms, with or without modification,
 are permitted provided that the following conditions are met:
@@ -27,64 +27,5 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include <stdio.h>
-#include <yara.h>
+#include "test-rules.c"
 
-#include "util.h"
-
-
-int main(int argc, char** argv)
-{
-  int result = 0;
-
-  YR_DEBUG_INITIALIZE();
-  YR_DEBUG_FPRINTF(1, stderr, "+ %s() { // in %s\n", __FUNCTION__, argv[0]);
-
-  RE_AST* re_ast;
-  RE_AST* re_ast_remain;
-
-  RE_ERROR re_error;
-
-  int32_t min_gap;
-  int32_t max_gap;
-
-  yr_initialize();
-  yr_re_parse_hex(
-      "{ 01 02 03 04 [0-300] 05 06 07 08 [1-400] 09 0A 0B 0C }",
-      &re_ast,
-      &re_error);
-
-  assert(re_ast != NULL);
-
-  yr_re_ast_split_at_chaining_point(re_ast, &re_ast_remain, &min_gap, &max_gap);
-
-  assert(re_ast != NULL);
-  assert(re_ast_remain != NULL);
-  assert(min_gap == 0);
-  assert(max_gap == 300);
-
-  yr_re_ast_destroy(re_ast);
-  re_ast = re_ast_remain;
-
-  yr_re_ast_split_at_chaining_point(re_ast, &re_ast_remain, &min_gap, &max_gap);
-
-  assert(re_ast != NULL);
-  assert(re_ast_remain != NULL);
-  assert(min_gap == 1);
-  assert(max_gap == 400);
-
-  yr_re_ast_destroy(re_ast);
-  re_ast = re_ast_remain;
-
-  yr_re_ast_split_at_chaining_point(re_ast, &re_ast_remain, &min_gap, &max_gap);
-
-  assert(re_ast != NULL);
-  assert(re_ast_remain == NULL);
-
-  yr_re_ast_destroy(re_ast);
-  yr_finalize();
-
-  YR_DEBUG_FPRINTF(1, stderr, "} = %d // %s() in %s\n", result, __FUNCTION__, argv[0]);
-
-  return result;
-}

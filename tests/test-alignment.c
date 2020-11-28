@@ -74,7 +74,7 @@ int main(int argc, char **argv)
   int result = err;
 
   YR_DEBUG_INITIALIZE();
-  YR_DEBUG_FPRINTF(1, stderr, "+ %s() { // in %s\n", __FUNCTION__, __FILE__);
+  YR_DEBUG_FPRINTF(1, stderr, "+ %s() { // in %s\n", __FUNCTION__, argv[0]);
 
   CHECK_SIZE(YR_NAMESPACE, 16);
   CHECK_OFFSET(YR_NAMESPACE, 0, name);
@@ -128,7 +128,7 @@ int main(int argc, char **argv)
   CHECK_OFFSET(SIZED_STRING, 4, flags);
   CHECK_OFFSET(SIZED_STRING, 8, c_string);
 
-  YR_DEBUG_FPRINTF(1, stderr, "} = %d // %s() in %s\n", result, __FUNCTION__, __FILE__);
+  YR_DEBUG_FPRINTF(1, stderr, "} = %d // %s() in %s\n", result, __FUNCTION__, argv[0]);
 
   return result;
 }

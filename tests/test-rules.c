@@ -1235,7 +1235,7 @@ static void test_hex_strings()
 
 static void test_count()
 {
-//fixme  YR_DEBUG_FPRINTF(1, stderr, "+ %s() {}\n", __FUNCTION__);
+  YR_DEBUG_FPRINTF(1, stderr, "+ %s() {}\n", __FUNCTION__);
 
   assert_true_rule(
       "rule test { strings: $a = \"ssi\" condition: #a == 2 }",
@@ -2854,7 +2854,7 @@ int main(int argc, char** argv)
   int result = 0;
 
   YR_DEBUG_INITIALIZE();
-  YR_DEBUG_FPRINTF(1, stderr, "+ %s() { // in %s\n", __FUNCTION__, __FILE__);
+  YR_DEBUG_FPRINTF(1, stderr, "+ %s() { // in %s\n", __FUNCTION__, argv[0]);
 
   chdir_if_env_top_srcdir();
 
@@ -2862,122 +2862,115 @@ int main(int argc, char** argv)
 
   assert_true_expr(strlen(TEXT_1024_BYTES) == 1024);
 
-  uint64_t last_yr_test_count_get_block;
+  int pass;
+  assert(1 == sscanf(argv[0], "./test-rules-pass-%d", &pass)); // e.g. test-rules-pass-1.c
 
-  for (int pass = 1; pass <= 3; pass++)
+  switch (pass)
   {
-    switch (pass)
-    {
-    case 1:
-      // Come here to test with default libyara iterator which creates a single block.
-      matches_blob_uses_default_iterator = 1;
-      break;
-    case 2:
-      // Come here to test with test libyara iterator which is:
-      // Like default libyara iterator, plus records block stats.
-      matches_blob_uses_default_iterator = 0;
-      break;
-    case 3:
-      // Come here to test with test libyara iterator which is:
-      // Like default libyara iterator, plus records block stats, plus splits into multiple blocks:
-      matches_blob_uses_default_iterator = 0;
-      // "Actually, a single block will contain the whole file's content in most cases,
-      //  but you can't rely on that while writing your code. For very big files YARA
-      //  could eventually split the file into two or more blocks, and your module
-      //  should be prepared to handle that." [1]
-      // [1] https://yara.readthedocs.io/en/stable/writingmodules.html#accessing-the-scanned-data
-      yr_test_mem_block_size = getenv("YR_TEST_MEM_BLOCK_SIZE")
-                                   ? atoi(getenv("YR_TEST_MEM_BLOCK_SIZE"))
-                                   : 1024;
-      yr_test_mem_block_size_overlap =
-          getenv("YR_TEST_MEM_BLOCK_SIZE_OVERLAP")
-              ? atoi(getenv("YR_TEST_MEM_BLOCK_SIZE_OVERLAP"))
-              : 256;
-      assert(yr_test_mem_block_size_overlap <= yr_test_mem_block_size);
-      break;
-    }
-
+  case 1:
+    // Come here to test with default libyara iterator which creates a single block.
+    matches_blob_uses_default_iterator = 1;
+    break;
+  case 2:
+    // Come here to test with test libyara iterator which is:
+    // Like default libyara iterator, plus records block stats.
+    matches_blob_uses_default_iterator = 0;
+    break;
+  case 3:
+    // Come here to test with test libyara iterator which is:
+    // Like default libyara iterator, plus records block stats, plus splits into multiple blocks:
+    matches_blob_uses_default_iterator = 0;
+    // "Actually, a single block will contain the whole file's content in most cases,
+    //  but you can't rely on that while writing your code. For very big files YARA
+    //  could eventually split the file into two or more blocks, and your module
+    //  should be prepared to handle that." [1]
+    // [1] https://yara.readthedocs.io/en/stable/writingmodules.html#accessing-the-scanned-data
+    yr_test_mem_block_size = getenv("YR_TEST_MEM_BLOCK_SIZE")
+                                 ? atoi(getenv("YR_TEST_MEM_BLOCK_SIZE"))
+                                 : 1024;
+    yr_test_mem_block_size_overlap =
+        getenv("YR_TEST_MEM_BLOCK_SIZE_OVERLAP")
+            ? atoi(getenv("YR_TEST_MEM_BLOCK_SIZE_OVERLAP"))
+            : 256;
+    assert(yr_test_mem_block_size_overlap <= yr_test_mem_block_size);
+    break;
+  }
+  
+  YR_DEBUG_FPRINTF(
+      1,
+      stderr,
+      "- // pass %d: run all rule tests: using %s iterator "
+      "split data into blocks of max %" PRId64 " bytes "
+      "(0 means single / unlimited block size; default) "
+      "with %" PRId64 " bytes overlapping the previous block\n",
+      pass,
+      pass == 1 ? "default" : "test",
+      yr_test_mem_block_size,
+      yr_test_mem_block_size_overlap);
+  
+  yr_test_count_get_block = 0;
+  
+  test_boolean_operators();
+  test_comparison_operators();
+  test_arithmetic_operators();
+  test_bitwise_operators();
+  test_string_operators();
+  test_matches_operator();
+  test_syntax();
+  test_anonymous_strings();
+  test_strings();
+  test_wildcard_strings();
+  test_hex_strings();
+  test_count();
+  test_at();
+  test_in();
+  test_offset();
+  test_length();
+  test_of();
+  test_for();
+  test_re();
+  test_filesize();
+  test_include_files();
+  // test_compile_file();
+  // test_compile_files();
+  
+  // test_externals();
+  // test_callback();
+  // test_compare();
+  test_comments();
+  test_modules();
+  test_integer_functions();
+  // test_string_io();
+  test_entrypoint();
+  test_global_rules();
+  test_tags();
+  
+#if !defined(USE_WINDOWS_PROC) && !defined(USE_NO_PROC)
+  test_process_scan();
+#endif
+  
+#if defined(HASH_MODULE)
+  test_hash_module();
+#endif
+  
+  test_time_module();
+  test_performance_warnings();
+  
+  if (pass >= 2)
+  {
     YR_DEBUG_FPRINTF(
         1,
         stderr,
-        "- // pass %d: run all rule tests: using %s iterator "
-        "split data into blocks of max %" PRId64 " bytes "
-        "(0 means single / unlimited block size; default) "
-        "with %" PRId64 " bytes overlapping the previous block\n",
+        "- // pass %d: yr_test_count_get_block=%" PRId64
+        " is the number of times the above tests got a "
+        "first or next block via the test iterator\n",
         pass,
-        pass == 1 ? "default" : "test",
-        yr_test_mem_block_size,
-        yr_test_mem_block_size_overlap);
-
-    yr_test_count_get_block = 0;
-
-    test_boolean_operators();
-    test_comparison_operators();
-    test_arithmetic_operators();
-    test_bitwise_operators();
-    test_string_operators();
-    test_matches_operator();
-    test_syntax();
-    test_anonymous_strings();
-    test_strings();
-    test_wildcard_strings();
-    test_hex_strings();
-    test_count();
-    test_at();
-    test_in();
-    test_offset();
-    test_length();
-    test_of();
-    test_for();
-    test_re();
-    test_filesize();
-    test_include_files();
-    // test_compile_file();
-    // test_compile_files();
-
-    // test_externals();
-    // test_callback();
-    // test_compare();
-    test_comments();
-    test_modules();
-    test_integer_functions();
-    // test_string_io();
-    test_entrypoint();
-    test_global_rules();
-    test_tags();
-
-#if !defined(USE_WINDOWS_PROC) && !defined(USE_NO_PROC)
-    test_process_scan();
-#endif
-
-#if defined(HASH_MODULE)
-    test_hash_module();
-#endif
-
-    test_time_module();
-    test_performance_warnings();
-
-    if (pass >= 2)
-    {
-      YR_DEBUG_FPRINTF(
-          1,
-          stderr,
-          "- // pass %d: yr_test_count_get_block=%" PRId64
-          " is the number of times the above tests got a "
-          "first or next block via the test iterator\n",
-          pass,
-          yr_test_count_get_block);
-    }
-
-    if (3 == pass)
-      assert(yr_test_count_get_block > last_yr_test_count_get_block);
-
-    last_yr_test_count_get_block = yr_test_count_get_block;
+        yr_test_count_get_block);
   }
 
   yr_finalize();
 
-  YR_DEBUG_FPRINTF(1, stderr, "} = %d // %s() in %s\n", result, __FUNCTION__, __FILE__);
+  YR_DEBUG_FPRINTF(1, stderr, "} = %d // %s() in %s\n", result, __FUNCTION__, argv[0]);
 
   return result;
 }
