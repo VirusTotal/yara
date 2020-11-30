@@ -402,11 +402,13 @@ YR_API int yr_scanner_scan_mem_blocks(
   scanner->iterator = iterator;
   rules = scanner->rules;
 
-  // If the matches notebook has not been created yet this is the first time
-  // yr_scanner_scan_mem_blocks is called for this scanner. If not, this
-  // function returned ERROR_BLOCK_NOT_READY in a previous call and the caller
-  // is retrying the call.
-  if (scanner->matches_notebook == NULL)
+  if (iterator->last_error == ERROR_BLOCK_NOT_READY)
+  {
+    // The caller is invoking yr_scanner_scan_mem_blocks again because the
+    // previous call returned ERROR_BLOCK_NOT_READY.
+    block = iterator->next(iterator);
+  }
+  else
   {
     // Create the notebook that will hold the YR_MATCH structures representing
     // each match found. This notebook will also contain snippets of the
@@ -424,22 +426,16 @@ YR_API int yr_scanner_scan_mem_blocks(
     if (result != ERROR_SUCCESS)
       goto _exit;
 
+    yr_stopwatch_start(&scanner->stopwatch);
+
     block = iterator->first(iterator);
   }
-  else
-  {
-    // This call is a retry after a ERROR_BLOCK_NOT_READY in a previous call,
-    // so we try to get the next block again.
-    block = iterator->next(iterator);
-  }
-
-  yr_stopwatch_start(&scanner->stopwatch);
 
   while (block != NULL)
   {
     const uint8_t* data = block->fetch_data(block);
 
-    // fetch may fail
+    // fetch_data may fail and return NULL.
     if (data == NULL)
     {
       block = iterator->next(iterator);
@@ -472,75 +468,75 @@ YR_API int yr_scanner_scan_mem_blocks(
     block = iterator->next(iterator);
   }
 
-  if (ERROR_BLOCK_NOT_READY == iterator->last_error)
-  {
-    // Come here if no next block because currently unavailable.
-    result = ERROR_BLOCK_NOT_READY;
-  }
-  else
-  {
-    // Come here if no next block beceause no more blocks.
-    YR_DEBUG_FPRINTF(
-        2,
-        stderr,
-        "- last block; finishing up; %s file_size is %zu // %s()\n",
-        scanner->file_size == YR_DYNAMIC_BUFFER_SIZE ? "iterator says"
-                                                     : "caller said",
-        scanner->file_size == YR_DYNAMIC_BUFFER_SIZE ? iterator->buffer_size
-                                                     : scanner->file_size,
-        __FUNCTION__);
+  result = iterator->last_error;
 
-    if (scanner->file_size == YR_DYNAMIC_BUFFER_SIZE)
+  if (result != ERROR_SUCCESS)
+    goto _exit;
+
+  // Come here if no next block beceause no more blocks.
+  YR_DEBUG_FPRINTF(
+      2,
+      stderr,
+      "- last block; finishing up; %s file_size is %zu // %s()\n",
+      scanner->file_size == YR_DYNAMIC_BUFFER_SIZE ? "iterator says"
+                                                   : "caller said",
+      scanner->file_size == YR_DYNAMIC_BUFFER_SIZE ? iterator->buffer_size
+                                                   : scanner->file_size,
+      __FUNCTION__);
+
+  if (scanner->file_size == YR_DYNAMIC_BUFFER_SIZE)
+  {
+    // Grab total buffer size from iterator.
+    scanner->file_size = iterator->buffer_size;
+  }
+
+  YR_TRYCATCH(
+      !(scanner->flags & SCAN_FLAGS_NO_TRYCATCH),
+      { result = yr_execute_code(scanner); },
+      { result = ERROR_COULD_NOT_MAP_FILE; });
+
+  if (result != ERROR_SUCCESS)
+    goto _exit;
+
+  for (i = 0, rule = rules->rules_list_head; !RULE_IS_NULL(rule); i++, rule++)
+  {
+    int message = 0;
+
+    if (yr_bitmask_is_set(scanner->rule_matches_flags, i) &&
+        yr_bitmask_is_not_set(scanner->ns_unsatisfied_flags, rule->ns->idx))
     {
-      // Grab total buffer size from iterator.
-      scanner->file_size = iterator->buffer_size;
+      if (scanner->flags & SCAN_FLAGS_REPORT_RULES_MATCHING)
+        message = CALLBACK_MSG_RULE_MATCHING;
+    }
+    else
+    {
+      if (scanner->flags & SCAN_FLAGS_REPORT_RULES_NOT_MATCHING)
+        message = CALLBACK_MSG_RULE_NOT_MATCHING;
     }
 
-    YR_TRYCATCH(
-        !(scanner->flags & SCAN_FLAGS_NO_TRYCATCH),
-        { result = yr_execute_code(scanner); },
-        { result = ERROR_COULD_NOT_MAP_FILE; });
-
-    if (result != ERROR_SUCCESS)
-      goto _exit;
-
-    for (i = 0, rule = rules->rules_list_head; !RULE_IS_NULL(rule); i++, rule++)
+    if (message != 0 && !RULE_IS_PRIVATE(rule))
     {
-      int message = 0;
-
-      if (yr_bitmask_is_set(scanner->rule_matches_flags, i) &&
-          yr_bitmask_is_not_set(scanner->ns_unsatisfied_flags, rule->ns->idx))
+      switch (scanner->callback(scanner, message, rule, scanner->user_data))
       {
-        if (scanner->flags & SCAN_FLAGS_REPORT_RULES_MATCHING)
-          message = CALLBACK_MSG_RULE_MATCHING;
-      }
-      else
-      {
-        if (scanner->flags & SCAN_FLAGS_REPORT_RULES_NOT_MATCHING)
-          message = CALLBACK_MSG_RULE_NOT_MATCHING;
-      }
+      case CALLBACK_ABORT:
+        result = ERROR_SUCCESS;
+        goto _exit;
 
-      if (message != 0 && !RULE_IS_PRIVATE(rule))
-      {
-        switch (scanner->callback(scanner, message, rule, scanner->user_data))
-        {
-        case CALLBACK_ABORT:
-          result = ERROR_SUCCESS;
-          goto _exit;
-
-        case CALLBACK_ERROR:
-          result = ERROR_CALLBACK_ERROR;
-          goto _exit;
-        }
+      case CALLBACK_ERROR:
+        result = ERROR_CALLBACK_ERROR;
+        goto _exit;
       }
     }
-
-    scanner->callback(
-        scanner, CALLBACK_MSG_SCAN_FINISHED, NULL, scanner->user_data);
   }
+
+  scanner->callback(
+      scanner, CALLBACK_MSG_SCAN_FINISHED, NULL, scanner->user_data);
 
 _exit:
 
+  // If error is ERROR_BLOCK_NOT_READY we don't clean the matches and don't
+  // destroy the notebook yet. ERROR_BLOCK_NOT_READY is not a permament error,
+  // the caller can still call this function again for a retry.
   if (result != ERROR_BLOCK_NOT_READY)
   {
     _yr_scanner_clean_matches(scanner);
@@ -577,6 +573,8 @@ static YR_MEMORY_BLOCK* _yr_get_first_block(YR_MEMORY_BLOCK_ITERATOR* iterator)
       __FUNCTION__,
       result);
 
+  iterator->last_error = ERROR_SUCCESS;
+
   return result;
 }
 
@@ -590,6 +588,8 @@ static YR_MEMORY_BLOCK* _yr_get_next_block(YR_MEMORY_BLOCK_ITERATOR* iterator)
       "+ %s() {} = %p // test iterator; single memory block, non-blocking\n",
       __FUNCTION__,
       result);
+
+  iterator->last_error = ERROR_SUCCESS;
 
   return result;
 }
