@@ -884,11 +884,37 @@ Functions
 
   Define a string external variable.
 
+.. c:function:: int yr_scanner_scan_mem_blocks(YR_SCANNER* scanner, YR_MEMORY_BLOCK_ITERATOR* iterator)
+
+  .. versionadded:: 3.8.0
+
+  Scan a memory buffer divided into one or more memory blocks (posssibly
+  overlapping) accessed via :c:type:`YR_MEMORY_BLOCK_ITERATOR`. Called
+  automatically by ``yr_scanner_scan_XXXX`` functions, or call directly
+  if using custom iterator. Returns one of the following error codes:
+
+    :c:macro:`ERROR_SUCCESS`
+
+    :c:macro:`ERROR_INSUFFICIENT_MEMORY`
+
+    :c:macro:`ERROR_TOO_MANY_SCAN_THREADS`
+
+    :c:macro:`ERROR_SCAN_TIMEOUT`
+
+    :c:macro:`ERROR_CALLBACK_ERROR`
+
+    :c:macro:`ERROR_TOO_MANY_MATCHES`
+
+  Custom iterator may return the following error code:
+
+    :c:macro:`ERROR_BLOCK_NOT_READY`
+
 .. c:function:: int yr_scanner_scan_mem(YR_SCANNER* scanner, const uint8_t* buffer, size_t buffer_size)
 
   .. versionadded:: 3.8.0
 
-  Scan a memory buffer. Returns one of the following error codes:
+  Scan a memory buffer.
+  Returns one of the following error codes:
 
     :c:macro:`ERROR_SUCCESS`
 
@@ -906,7 +932,8 @@ Functions
 
   .. versionadded:: 3.8.0
 
-  Scan a file. Returns one of the following error codes:
+  Scan a file.
+  Returns one of the following error codes:
 
     :c:macro:`ERROR_SUCCESS`
 
@@ -993,3 +1020,7 @@ Error codes
   your rules contains very short or very common strings like ``01 02`` or
   ``FF FF FF FF``. The limit is defined by ``YR_MAX_STRING_MATCHES`` in
   *./include/yara/limits.h*
+
+.. c:macro:: ERROR_BLOCK_NOT_READY
+
+  Next memory block to scan is not ready; custom iterators may return this.

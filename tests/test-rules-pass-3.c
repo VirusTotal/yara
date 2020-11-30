@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2019. The YARA Authors. All Rights Reserved.
+Copyright (c) 2020. The YARA Authors. All Rights Reserved.
 
 Redistribution and use in source and binary forms, with or without modification,
 are permitted provided that the following conditions are met:
@@ -27,44 +27,5 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include <yara.h>
+#include "test-rules.c"
 
-#include "util.h"
-
-
-int main(int argc, char** argv)
-{
-  int result = 0;
-
-  YR_DEBUG_INITIALIZE();
-  YR_DEBUG_FPRINTF(1, stderr, "+ %s() { // in %s\n", __FUNCTION__, __FILE__);
-
-  yr_initialize();
-
-  assert_true_rule_module_data_file(
-      "import \"pb_tests\" \
-      rule test { \
-        condition: \
-          pb_tests.f_int32 == 1111 and \
-          pb_tests.f_int64 == 2222 and \
-          pb_tests.f_string == \"foo\" and \
-          pb_tests.f_struct_array[0].f_enum == pb_tests.struct.enum.SECOND \
-      }",
-      "tests/data/test-pb.data.bin");
-
-  assert_true_rule_module_data_file(
-      "import \"pb_tests\" \
-      rule test { \
-        condition: \
-          for any s in pb_tests.f_struct_array : ( \
-            s.f_nested_struct.f_int32 == 3333 \
-          ) \
-      }",
-      "tests/data/test-pb.data.bin");
-
-  yr_finalize();
-
-  YR_DEBUG_FPRINTF(1, stderr, "} = %d // %s() in %s\n", result, __FUNCTION__, __FILE__);
-
-  return result;
-}

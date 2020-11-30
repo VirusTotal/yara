@@ -31,6 +31,16 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define _UTIL_H
 
 #include <yara.h>
+#include <yara/globals.h>
+
+
+#define TEXT_0063_BYTES     "[ 987654321 987654321 987654321 987654321 987654321 987654321 ]"
+#define TEXT_0256_BYTES_001 "001" TEXT_0063_BYTES TEXT_0063_BYTES TEXT_0063_BYTES TEXT_0063_BYTES "\n"
+#define TEXT_0256_BYTES_002 "002" TEXT_0063_BYTES TEXT_0063_BYTES TEXT_0063_BYTES TEXT_0063_BYTES "\n"
+#define TEXT_0256_BYTES_003 "003" TEXT_0063_BYTES TEXT_0063_BYTES TEXT_0063_BYTES TEXT_0063_BYTES "\n"
+#define TEXT_0256_BYTES_004 "004" TEXT_0063_BYTES TEXT_0063_BYTES TEXT_0063_BYTES TEXT_0063_BYTES "\n"
+#define TEXT_1024_BYTES     TEXT_0256_BYTES_001 TEXT_0256_BYTES_002 TEXT_0256_BYTES_003 TEXT_0256_BYTES_004
+
 
 extern char compile_error[1024];
 extern int warnings;
@@ -44,13 +54,34 @@ extern uint64_t yr_test_mem_block_size;
 // previous memory block to include in the current memory block.
 extern uint64_t yr_test_mem_block_size_overlap;
 
+// Decrement and if yr_test_mem_block_not_ready_if_zero is zero, pretend ERROR_BLOCK_NOT_READY.
+extern int64_t yr_test_mem_block_not_ready_if_zero;
+extern int64_t yr_test_mem_block_not_ready_if_zero_init_value;
+
 // Counts calls to 'get first / next block' function for testing purposes.
 extern uint64_t yr_test_count_get_block;
 
-extern YR_API int _yr_test_single_or_multi_block_scan_mem(
+
+typedef struct YR_TEST_ITERATOR_CTX YR_TEST_ITERATOR_CTX;
+
+struct YR_TEST_ITERATOR_CTX {
+  const uint8_t* buffer;
+  size_t buffer_size;
+  YR_MEMORY_BLOCK current_block;
+  void* proc_info;
+
+  // Used by test iterator if buffer size not known in advance.
+  size_t buffer_size_of_all_blocks;
+};
+
+
+extern int _yr_test_single_or_multi_block_scan_mem(
     YR_SCANNER* scanner,
     const uint8_t* buffer,
-    size_t buffer_size);
+    size_t buffer_size,
+    YR_MEMORY_BLOCK_ITERATOR* iterator,
+    YR_TEST_ITERATOR_CTX* context,
+    int previous_calls);
 
 extern void chdir_if_env_top_srcdir(void);
 
@@ -63,6 +94,22 @@ struct COUNTERS
 int compile_rule(
     char* string,
     YR_RULES** rules);
+
+
+typedef struct SCAN_CALLBACK_CTX SCAN_CALLBACK_CTX;
+
+struct SCAN_CALLBACK_CTX {
+  int matches;
+  void* module_data;
+  size_t module_data_size;
+};
+
+
+int _scan_callback(
+    YR_SCAN_CONTEXT* context,
+    int message,
+    void* message_data,
+    void* user_data);
 
 
 int count(
@@ -78,6 +125,8 @@ int do_nothing(
     void* message_data,
     void* user_data);
 
+
+int matches_blob_uses_default_iterator;
 
 int matches_blob(
     char* rule,
