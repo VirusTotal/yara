@@ -402,6 +402,10 @@ YR_API int yr_scanner_scan_mem_blocks(
   scanner->iterator = iterator;
   rules = scanner->rules;
 
+  // If the matches notebook has not been created yet this is the first time
+  // yr_scanner_scan_mem_blocks is called for this scanner. If not, this
+  // function returned ERROR_BLOCK_NOT_READY in a previous call and the caller
+  // is retrying the call.
   if (scanner->matches_notebook == NULL)
   {
     // Create the notebook that will hold the YR_MATCH structures representing
@@ -424,6 +428,8 @@ YR_API int yr_scanner_scan_mem_blocks(
   }
   else
   {
+    // This call is a retry after a ERROR_BLOCK_NOT_READY in a previous call,
+    // so we try to get the next block again.
     block = iterator->next(iterator);
   }
 

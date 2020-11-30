@@ -888,10 +888,12 @@ Functions
 
   .. versionadded:: 3.8.0
 
-  Scan a memory buffer divided into one or more memory blocks (posssibly
-  overlapping) accessed via :c:type:`YR_MEMORY_BLOCK_ITERATOR`. Called
-  automatically by ``yr_scanner_scan_XXXX`` functions, or call directly
-  if using custom iterator. Returns one of the following error codes:
+  Scan a serie of memory blocks that are provided by a :c:type:`YR_MEMORY_BLOCK_ITERATOR`.
+  The iterator has a pair of `first` and `next` functions, that must return
+  the first and next blocks respectively. The how the data is split in blocks is
+  up to the iterator implementation.
+
+  Returns one of the following error codes:
 
     :c:macro:`ERROR_SUCCESS`
 
@@ -905,16 +907,13 @@ Functions
 
     :c:macro:`ERROR_TOO_MANY_MATCHES`
 
-  Custom iterator may return the following error code:
-
     :c:macro:`ERROR_BLOCK_NOT_READY`
 
 .. c:function:: int yr_scanner_scan_mem(YR_SCANNER* scanner, const uint8_t* buffer, size_t buffer_size)
 
   .. versionadded:: 3.8.0
 
-  Scan a memory buffer.
-  Returns one of the following error codes:
+  Scan a memory buffer. Returns one of the following error codes:
 
     :c:macro:`ERROR_SUCCESS`
 
@@ -932,8 +931,7 @@ Functions
 
   .. versionadded:: 3.8.0
 
-  Scan a file.
-  Returns one of the following error codes:
+  Scan a file. Returns one of the following error codes:
 
     :c:macro:`ERROR_SUCCESS`
 

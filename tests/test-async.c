@@ -108,8 +108,8 @@ static void test_parallel_triple_scan(
     int timeout = 0;
 
     // Note: yr_rules_scan_mem() incompatible with ERROR_BLOCK_NOT_READY
-    // iterator return code,
-    //       therefore create & configure scanner, but do not scan:
+    // iterator return code, therefore create & configure scanner, but do not
+    // scan
     assert_true_expr(
         ERROR_SUCCESS == yr_scanner_create(rules, &scanner_instance[i]));
 
@@ -177,11 +177,11 @@ static void test_parallel_triple_scan(
       stderr,
       "- after loop; destroy scanner instances // %s()\n",
       __FUNCTION__);
+
   for (int i = 0; i < PARALLEL_SCANS; i++)
   {
     // Note: yr_rules_scan_mem() incompatible with ERROR_BLOCK_NOT_READY return
-    // code,
-    //       therefore its teardown code is here instead:
+    // code, therefore its teardown code is here instead:
     yr_scanner_destroy(scanner_instance[i]);
   }
 
@@ -228,6 +228,7 @@ static void test_parallel_strings()
 
   char* rule = "rule test { strings: $a = \"a\" condition: $a } rule test2 { "
                "condition: filesize > 10 }";
+
   YR_RULES* rules;
 
   if (compile_rule(rule, &rules) != ERROR_SUCCESS)
@@ -253,8 +254,8 @@ static void test_parallel_strings()
   // - Scan block 2 of text string 3, scan block 2 of text string 2, scan block
   // 2 of text string 1.
 
-  yr_test_mem_block_not_ready_if_zero_init_value =
-      2;  // get next block, but block block after :-)
+  // get next block, but block block after :-)
+  yr_test_mem_block_not_ready_if_zero_init_value = 2;
 
   test_parallel_triple_scan(
       rules,
@@ -318,14 +319,13 @@ static void test_parallel_strings()
 }
 
 // "Actually, a single block will contain the whole file's content in most
-// cases, but you
-//  can't rely on that while writing your code. For very big files YARA could
-//  eventually split the file into two or more blocks, and your module should be
-//  prepared to handle that." [1]
+// cases, but you can't rely on that while writing your code. For very big files
+// YARA could eventually split the file into two or more blocks, and your module
+// should be prepared to handle that." [1]
 //
-// For testing two or more blocks with  synchronous access    , see the
-// test-rules.c file. For testing two or more blocks with asynchronous access
-// [2], this is the right file.
+// For testing two or more blocks with synchronous access, see the test-rules.c
+// file. For testing two or more blocks with asynchronous acces [2], this is the
+// right file.
 //
 // [1]
 // https://yara.readthedocs.io/en/stable/writingmodules.html#accessing-the-scanned-data
