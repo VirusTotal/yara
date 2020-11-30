@@ -50,10 +50,9 @@ int warnings;
 
 uint64_t yr_test_mem_block_size = 0;
 uint64_t yr_test_mem_block_size_overlap = 0;
-int64_t  yr_test_mem_block_not_ready_if_zero = -1;
-int64_t  yr_test_mem_block_not_ready_if_zero_init_value = -1;
+int64_t yr_test_mem_block_not_ready_if_zero = -1;
+int64_t yr_test_mem_block_not_ready_if_zero_init_value = -1;
 uint64_t yr_test_count_get_block = 0;
-
 
 static YR_MEMORY_BLOCK* _yr_test_single_block_get_first_block(
     YR_MEMORY_BLOCK_ITERATOR* iterator)
@@ -75,7 +74,6 @@ static YR_MEMORY_BLOCK* _yr_test_single_block_get_first_block(
   return result;
 }
 
-
 static YR_MEMORY_BLOCK* _yr_test_single_block_get_next_block(
     YR_MEMORY_BLOCK_ITERATOR* iterator)
 {
@@ -93,7 +91,6 @@ static YR_MEMORY_BLOCK* _yr_test_single_block_get_next_block(
   return result;
 }
 
-
 static const uint8_t* _yr_test_single_block_fetch_block_data(
     YR_MEMORY_BLOCK* block)
 {
@@ -108,7 +105,6 @@ static const uint8_t* _yr_test_single_block_fetch_block_data(
 
   return context->buffer;
 }
-
 
 static YR_MEMORY_BLOCK* _yr_test_multi_block_get_next_block(
     YR_MEMORY_BLOCK_ITERATOR* iterator)
@@ -127,7 +123,8 @@ static YR_MEMORY_BLOCK* _yr_test_multi_block_get_next_block(
   {
     overlap = 0;
     result = NULL;
-    yr_test_mem_block_not_ready_if_zero = yr_test_mem_block_not_ready_if_zero_init_value;
+    yr_test_mem_block_not_ready_if_zero =
+        yr_test_mem_block_not_ready_if_zero_init_value;
     iterator->last_error = ERROR_BLOCK_NOT_READY;
   }
   else if (0 == context->current_block.size)
@@ -148,21 +145,26 @@ static YR_MEMORY_BLOCK* _yr_test_multi_block_get_next_block(
                                     context->buffer_size)
                                        ? yr_test_mem_block_size
                                        : 0;
+
     result = (context->current_block.base < context->buffer_size)
                  ? &context->current_block
                  : NULL;
+
     context->current_block.size =
         ((context->buffer_size - context->current_block.base) <
          yr_test_mem_block_size)
             ? context->buffer_size - context->current_block.base + overlap
             : yr_test_mem_block_size + overlap;
+
     context->current_block.base -= overlap;
 
     if (result == NULL)
     {
-      yr_test_mem_block_not_ready_if_zero = -1; // never report block not ready because end of blocks
+      // never report block not ready because end of blocks
+      yr_test_mem_block_not_ready_if_zero = -1;
 
-      iterator->buffer_size = context->buffer_size; // last block, so tell scanner total buffer size
+      // last block, so tell scanner total buffer size
+      iterator->buffer_size = context->buffer_size;
     }
   }
 
@@ -186,7 +188,6 @@ static YR_MEMORY_BLOCK* _yr_test_multi_block_get_next_block(
   return result;
 }
 
-
 static YR_MEMORY_BLOCK* _yr_test_multi_block_get_first_block(
     YR_MEMORY_BLOCK_ITERATOR* iterator)
 {
@@ -199,9 +200,9 @@ static YR_MEMORY_BLOCK* _yr_test_multi_block_get_first_block(
   YR_TEST_ITERATOR_CTX* context = (YR_TEST_ITERATOR_CTX*) iterator->context;
   context->current_block.base = 0;
   context->current_block.size = 0;
+
   return _yr_test_multi_block_get_next_block(iterator);
 }
-
 
 static const uint8_t* _yr_test_multi_block_fetch_block_data(
     YR_MEMORY_BLOCK* block)
@@ -228,7 +229,6 @@ static const uint8_t* _yr_test_multi_block_fetch_block_data(
   return context->buffer + context->current_block.base;
 }
 
-
 int _yr_test_single_or_multi_block_scan_mem(
     YR_SCANNER* scanner,
     const uint8_t* buffer,
@@ -249,7 +249,8 @@ int _yr_test_single_or_multi_block_scan_mem(
       __FUNCTION__,
       buffer,
       buffer_size,
-      buffer_size == YR_DYNAMIC_BUFFER_SIZE ? " AKA YR_DYNAMIC_BUFFER_SIZE" : "",
+      buffer_size == YR_DYNAMIC_BUFFER_SIZE ? " AKA YR_DYNAMIC_BUFFER_SIZE"
+                                            : "",
       previous_calls,
       yr_test_mem_block_size);
 
@@ -262,8 +263,9 @@ int _yr_test_single_or_multi_block_scan_mem(
     // Come here for initialization of iterator and context
 
     iterator_ctx->buffer = buffer;
-    iterator_ctx->buffer_size =
-        (buffer_size == YR_DYNAMIC_BUFFER_SIZE) ? iterator_ctx->buffer_size_of_all_blocks : buffer_size;
+    iterator_ctx->buffer_size = (buffer_size == YR_DYNAMIC_BUFFER_SIZE)
+                                    ? iterator_ctx->buffer_size_of_all_blocks
+                                    : buffer_size;
     iterator_ctx->current_block.base = 0;
     iterator_ctx->current_block.size = 0;
     iterator_ctx->current_block.context = iterator_ctx;
@@ -274,14 +276,16 @@ int _yr_test_single_or_multi_block_scan_mem(
     if (yr_test_mem_block_size)
     {
       // Come here for callbacks which dish up the buffer as multi blocks
-      iterator_ctx->current_block.fetch_data = _yr_test_multi_block_fetch_block_data;
+      iterator_ctx->current_block.fetch_data =
+          _yr_test_multi_block_fetch_block_data;
       iterator->first = _yr_test_multi_block_get_first_block;
       iterator->next = _yr_test_multi_block_get_next_block;
     }
     else
     {
       // Come here for callbacks which dish up the buffer as a single block
-      iterator_ctx->current_block.fetch_data = _yr_test_single_block_fetch_block_data;
+      iterator_ctx->current_block.fetch_data =
+          _yr_test_single_block_fetch_block_data;
       iterator->first = _yr_test_single_block_get_first_block;
       iterator->next = _yr_test_single_block_get_next_block;
     }
@@ -294,14 +298,16 @@ int _yr_test_single_or_multi_block_scan_mem(
       stderr,
       "} = %d AKA %s // %s()\n",
       result,
-      ERROR_SUCCESS             == result ? "ERROR_SUCCESS"             :
-      ERROR_INSUFFICIENT_MEMORY == result ? "ERROR_INSUFFICIENT_MEMORY" :
-      ERROR_BLOCK_NOT_READY     == result ? "ERROR_BLOCK_NOT_READY"     : "ERROR_?",
+      ERROR_SUCCESS == result
+          ? "ERROR_SUCCESS"
+          : ERROR_INSUFFICIENT_MEMORY == result
+                ? "ERROR_INSUFFICIENT_MEMORY"
+                : ERROR_BLOCK_NOT_READY == result ? "ERROR_BLOCK_NOT_READY"
+                                                  : "ERROR_?",
       __FUNCTION__);
 
   return result;
 }
-
 
 void chdir_if_env_top_srcdir(void)
 {
@@ -312,7 +318,6 @@ void chdir_if_env_top_srcdir(void)
     assert_true_expr(0 == result);
   }
 }
-
 
 //
 // A YR_CALLBACK_FUNC that counts the number of matching and non-matching rules
@@ -335,7 +340,6 @@ int count(
   }
   return CALLBACK_CONTINUE;
 }
-
 
 int count_non_matches(
     YR_SCAN_CONTEXT* context,
@@ -363,7 +367,6 @@ int do_nothing(
   return CALLBACK_CONTINUE;
 }
 
-
 static void _compiler_callback(
     int error_level,
     const char* file_name,
@@ -382,7 +385,6 @@ static void _compiler_callback(
       line_number,
       message);
 }
-
 
 int compile_rule(char* string, YR_RULES** rules)
 {
@@ -413,7 +415,6 @@ _exit:
   return result;
 }
 
-
 int _scan_callback(
     YR_SCAN_CONTEXT* context,
     int message,
@@ -426,11 +427,17 @@ int _scan_callback(
       "+ %s(message=%d AKA %s) {}\n",
       __FUNCTION__,
       message,
-      message == CALLBACK_MSG_RULE_MATCHING     ? "CALLBACK_MSG_RULE_MATCHING"     :
-      message == CALLBACK_MSG_RULE_NOT_MATCHING ? "CALLBACK_MSG_RULE_NOT_MATCHING" :
-      message == CALLBACK_MSG_SCAN_FINISHED     ? "CALLBACK_MSG_SCAN_FINISHED"     :
-      message == CALLBACK_MSG_IMPORT_MODULE     ? "CALLBACK_MSG_IMPORT_MODULE"     :
-      message == CALLBACK_MSG_MODULE_IMPORTED   ? "CALLBACK_MSG_MODULE_IMPORTED"   : "CALLBACK_MSG_?");
+      message == CALLBACK_MSG_RULE_MATCHING
+          ? "CALLBACK_MSG_RULE_MATCHING"
+          : message == CALLBACK_MSG_RULE_NOT_MATCHING
+                ? "CALLBACK_MSG_RULE_NOT_MATCHING"
+                : message == CALLBACK_MSG_SCAN_FINISHED
+                      ? "CALLBACK_MSG_SCAN_FINISHED"
+                      : message == CALLBACK_MSG_IMPORT_MODULE
+                            ? "CALLBACK_MSG_IMPORT_MODULE"
+                            : message == CALLBACK_MSG_MODULE_IMPORTED
+                                  ? "CALLBACK_MSG_MODULE_IMPORTED"
+                                  : "CALLBACK_MSG_?");
 
   SCAN_CALLBACK_CTX* ctx = (SCAN_CALLBACK_CTX*) user_data;
   YR_MODULE_IMPORT* mi;
@@ -450,7 +457,6 @@ int _scan_callback(
   return CALLBACK_CONTINUE;
 }
 
-
 int matches_blob_uses_default_iterator = 1;
 
 int matches_blob(
@@ -460,7 +466,8 @@ int matches_blob(
     uint8_t* module_data,
     size_t module_data_size)
 {
-  YR_DEBUG_FPRINTF(2, stderr, "+ %s(blob_size=%zu) {\n", __FUNCTION__, blob_size);
+  YR_DEBUG_FPRINTF(
+      2, stderr, "+ %s(blob_size=%zu) {\n", __FUNCTION__, blob_size);
 
   YR_RULES* rules;
 
@@ -491,9 +498,10 @@ int matches_blob(
 
   if (matches_blob_uses_default_iterator)
   {
-    // Call   yr_rules_scan_mem()                      <- Create & config scanner, and
-    // calls  yr_scanner_scan_mem()                    <- Create default iterator, and
-    // calls  yr_scanner_scan_mem_blocks()             <- Scan
+    // Call   yr_rules_scan_mem()                      <- Create & config
+    // scanner, and calls  yr_scanner_scan_mem()                    <- Create
+    // default iterator, and calls  yr_scanner_scan_mem_blocks()             <-
+    // Scan
 
     scan_result = yr_rules_scan_mem(
         rules, blob, blob_size, flags, callback, user_data, timeout);
@@ -502,9 +510,9 @@ int matches_blob(
   {
     // Call   yr_scanner_create()                      <- Create scanner
     // Call   yr_scanner_set_*()                       <- Config scanner
-    // Call  _yr_test_single_or_multi_block_scan_mem() <- Create test iterator, and
-    // calls  yr_scanner_scan_mem_blocks()             <- Scan
-    // Call   yr_scanner_destroy()                     <- Destroy scanner
+    // Call  _yr_test_single_or_multi_block_scan_mem() <- Create test iterator,
+    // and calls  yr_scanner_scan_mem_blocks()             <- Scan Call
+    // yr_scanner_destroy()                     <- Destroy scanner
 
     YR_SCANNER* scanner;
 
@@ -532,11 +540,11 @@ int matches_blob(
 
   yr_rules_destroy(rules);
 
-  YR_DEBUG_FPRINTF(2, stderr, "} = %u AKA ctx.matches // %s()\n", ctx.matches, __FUNCTION__);
+  YR_DEBUG_FPRINTF(
+      2, stderr, "} = %u AKA ctx.matches // %s()\n", ctx.matches, __FUNCTION__);
 
   return ctx.matches;
 }
-
 
 int matches_string(char* rule, char* string)
 {
@@ -554,7 +562,6 @@ typedef struct
   int found;
 
 } find_string_t;
-
 
 static int capture_matches(
     YR_SCAN_CONTEXT* context,
@@ -587,7 +594,6 @@ static int capture_matches(
 
   return CALLBACK_CONTINUE;
 }
-
 
 int capture_string(char* rule, char* string, char* expected_string)
 {
@@ -623,7 +629,6 @@ int capture_string(char* rule, char* string, char* expected_string)
   return f.found;
 }
 
-
 int read_file(char* filename, char** buf)
 {
   int fd;
@@ -653,7 +658,6 @@ _exit:
   close(fd);
   return rc;
 }
-
 
 int _assert_atoms(RE_AST* re_ast, int expected_atom_count, atom* expected_atoms)
 {
@@ -705,7 +709,6 @@ int _assert_atoms(RE_AST* re_ast, int expected_atom_count, atom* expected_atoms)
   return exit_code;
 }
 
-
 void assert_re_atoms(char* re, int expected_atom_count, atom* expected_atoms)
 {
   RE_AST* re_ast;
@@ -723,7 +726,6 @@ void assert_re_atoms(char* re, int expected_atom_count, atom* expected_atoms)
     exit(exit_code);
 }
 
-
 void assert_hex_atoms(char* hex, int expected_atom_count, atom* expected_atoms)
 {
   RE_AST* re_ast;
@@ -740,4 +742,3 @@ void assert_hex_atoms(char* hex, int expected_atom_count, atom* expected_atoms)
   if (exit_code != EXIT_SUCCESS)
     exit(exit_code);
 }
-

@@ -72,7 +72,6 @@ static void basic_tests()
   yr_finalize();
 }
 
-
 typedef struct TEST_STRUCT TEST_STRUCT;
 
 struct TEST_STRUCT
@@ -80,7 +79,6 @@ struct TEST_STRUCT
   DECLARE_REFERENCE(char*, str1);
   DECLARE_REFERENCE(char*, str2);
 };
-
 
 static void advanced_tests()
 {
@@ -186,7 +184,8 @@ int main(int argc, char** argv)
   basic_tests();
   advanced_tests();
 
-  YR_DEBUG_FPRINTF(1, stderr, "} = %d // %s() in %s\n", result, __FUNCTION__, argv[0]);
+  YR_DEBUG_FPRINTF(
+      1, stderr, "} = %d // %s() in %s\n", result, __FUNCTION__, argv[0]);
 
   return result;
 }

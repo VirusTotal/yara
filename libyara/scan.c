@@ -41,7 +41,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <yara/types.h>
 #include <yara/utils.h>
 
-
 typedef struct _CALLBACK_ARGS
 {
   YR_STRING* string;
@@ -55,7 +54,6 @@ typedef struct _CALLBACK_ARGS
   int full_word;
 
 } CALLBACK_ARGS;
-
 
 static int _yr_scan_xor_compare(
     const uint8_t* data,
@@ -126,7 +124,6 @@ static int _yr_scan_xor_wcompare(
   return (int) ((i == string_length) ? i * 2 : 0);
 }
 
-
 static int _yr_scan_compare(
     const uint8_t* data,
     size_t data_size,
@@ -146,7 +143,6 @@ static int _yr_scan_compare(
   return (int) ((i == string_length) ? i : 0);
 }
 
-
 static int _yr_scan_icompare(
     const uint8_t* data,
     size_t data_size,
@@ -165,7 +161,6 @@ static int _yr_scan_icompare(
 
   return (int) ((i == string_length) ? i : 0);
 }
-
 
 static int _yr_scan_wcompare(
     const uint8_t* data,
@@ -204,7 +199,6 @@ _exit:;
 
   return result;
 }
-
 
 static int _yr_scan_wicompare(
     const uint8_t* data,
@@ -245,7 +239,6 @@ _exit:;
   return result;
 }
 
-
 static void _yr_scan_update_match_chain_length(
     YR_SCAN_CONTEXT* context,
     YR_STRING* string,
@@ -278,7 +271,6 @@ static void _yr_scan_update_match_chain_length(
     match = match->next;
   }
 }
-
 
 static int _yr_scan_add_match_to_list(
     YR_MATCH* match,
@@ -359,7 +351,6 @@ _exit:;
 
   return result;
 }
-
 
 static void _yr_scan_remove_match_from_list(
     YR_MATCH* match,
@@ -622,7 +613,6 @@ static int _yr_scan_verify_chained_string_match(
   return ERROR_SUCCESS;
 }
 
-
 static int _yr_scan_match_callback(
     const uint8_t* match_data,
     int32_t match_length,
@@ -668,7 +658,6 @@ static int _yr_scan_match_callback(
       if (match_offset >= 2 && *(match_data - 1) == 0 &&
           isalnum(*(match_data - 2)))
         goto _exit;  // return ERROR_SUCCESS;
-
 
       if (match_offset + match_length + 1 < callback_args->data_size &&
           *(match_data + match_length + 1) == 0 &&
@@ -755,7 +744,6 @@ _exit:;
   return result;
 }
 
-
 typedef int (*RE_EXEC_FUNC)(
     YR_SCAN_CONTEXT* context,
     const uint8_t* code,
@@ -766,7 +754,6 @@ typedef int (*RE_EXEC_FUNC)(
     RE_MATCH_CALLBACK_FUNC callback,
     void* callback_args,
     int* matches);
-
 
 static int _yr_scan_verify_re_match(
     YR_SCAN_CONTEXT* context,
@@ -969,7 +956,6 @@ static int _yr_scan_verify_literal_match(
 
   return ERROR_SUCCESS;
 }
-
 
 int yr_scan_verify_match(
     YR_SCAN_CONTEXT* context,

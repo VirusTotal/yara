@@ -32,7 +32,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "util.h"
 
-
 int main(int argc, char** argv)
 {
   int result = 0;
@@ -84,7 +83,8 @@ int main(int argc, char** argv)
   yr_re_ast_destroy(re_ast);
   yr_finalize();
 
-  YR_DEBUG_FPRINTF(1, stderr, "} = %d // %s() in %s\n", result, __FUNCTION__, argv[0]);
+  YR_DEBUG_FPRINTF(
+      1, stderr, "} = %d // %s() in %s\n", result, __FUNCTION__, argv[0]);
 
   return result;
 }

@@ -308,7 +308,6 @@ int main(int argc, char** argv)
       "tests/data/"
       "079a472d22290a94ebb212aa8015cdc8dd28a968c6b4d3b88acdd58ce2d3b885.upx");
 
-
   assert_true_rule_file(
       "import \"pe\" \
       rule test { \
@@ -345,7 +344,8 @@ int main(int argc, char** argv)
 
   yr_finalize();
 
-  YR_DEBUG_FPRINTF(1, stderr, "} = %d // %s() in %s\n", result, __FUNCTION__, argv[0]);
+  YR_DEBUG_FPRINTF(
+      1, stderr, "} = %d // %s() in %s\n", result, __FUNCTION__, argv[0]);
 
   return result;
 }

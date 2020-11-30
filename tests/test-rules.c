@@ -998,10 +998,9 @@ static void test_wildcard_strings()
          condition:\n\
              for all of ($*) : ($)\n\
       }",
-      TEXT_1024_BYTES
-      "---- abc ---- A\x00"
-      "B\x00"
-      "C\x00 ---- xyz");
+      TEXT_1024_BYTES "---- abc ---- A\x00"
+                      "B\x00"
+                      "C\x00 ---- xyz");
 }
 
 static void test_hex_strings()
@@ -2879,15 +2878,18 @@ int main(int argc, char** argv)
   assert_true_expr(strlen(TEXT_1024_BYTES) == 1024);
 
   // e.g. ./test-rules-pass-1 or test-rules-pass-1.exe
-  char *test_rules_pass = strstr(argv[0], "test-rules-pass-");
+  char* test_rules_pass = strstr(argv[0], "test-rules-pass-");
   assert(test_rules_pass != NULL);
+
   int pass;
+
   assert(1 == sscanf(test_rules_pass, "test-rules-pass-%d", &pass));
 
   switch (pass)
   {
   case 1:
-    // Come here to test with default libyara iterator which creates a single block.
+    // Come here to test with default libyara iterator which creates a single
+    // block.
     matches_blob_uses_default_iterator = 1;
     break;
   case 2:
@@ -2897,13 +2899,15 @@ int main(int argc, char** argv)
     break;
   case 3:
     // Come here to test with test libyara iterator which is:
-    // Like default libyara iterator, plus records block stats, plus splits into multiple blocks:
+    // Like default libyara iterator, plus records block stats, plus splits into
+    // multiple blocks:
     matches_blob_uses_default_iterator = 0;
-    // "Actually, a single block will contain the whole file's content in most cases,
-    //  but you can't rely on that while writing your code. For very big files YARA
-    //  could eventually split the file into two or more blocks, and your module
-    //  should be prepared to handle that." [1]
-    // [1] https://yara.readthedocs.io/en/stable/writingmodules.html#accessing-the-scanned-data
+    // "Actually, a single block will contain the whole file's content in most
+    // cases, but you can't rely on that while writing your code. For very big
+    // files YARA could eventually split the file into two or more blocks, and
+    // your module should be prepared to handle that." [1]
+    // [1]
+    // https://yara.readthedocs.io/en/stable/writingmodules.html#accessing-the-scanned-data
     yr_test_mem_block_size = getenv("YR_TEST_MEM_BLOCK_SIZE")
                                  ? atoi(getenv("YR_TEST_MEM_BLOCK_SIZE"))
                                  : 1024;
@@ -2914,7 +2918,7 @@ int main(int argc, char** argv)
     assert(yr_test_mem_block_size_overlap <= yr_test_mem_block_size);
     break;
   }
-  
+
   YR_DEBUG_FPRINTF(
       1,
       stderr,
@@ -2926,9 +2930,9 @@ int main(int argc, char** argv)
       pass == 1 ? "default" : "test",
       yr_test_mem_block_size,
       yr_test_mem_block_size_overlap);
-  
+
   yr_test_count_get_block = 0;
-  
+
   test_boolean_operators();
   test_comparison_operators();
   test_arithmetic_operators();
@@ -2952,7 +2956,7 @@ int main(int argc, char** argv)
   test_include_files();
   // test_compile_file();
   // test_compile_files();
-  
+
   // test_externals();
   // test_callback();
   // test_compare();
@@ -2963,18 +2967,18 @@ int main(int argc, char** argv)
   test_entrypoint();
   test_global_rules();
   test_tags();
-  
+
 #if !defined(USE_WINDOWS_PROC) && !defined(USE_NO_PROC)
   test_process_scan();
 #endif
-  
+
 #if defined(HASH_MODULE)
   test_hash_module();
 #endif
-  
+
   test_time_module();
   test_performance_warnings();
-  
+
   if (pass >= 2)
   {
     YR_DEBUG_FPRINTF(
@@ -2989,7 +2993,8 @@ int main(int argc, char** argv)
 
   yr_finalize();
 
-  YR_DEBUG_FPRINTF(1, stderr, "} = %d // %s() in %s\n", result, __FUNCTION__, argv[0]);
+  YR_DEBUG_FPRINTF(
+      1, stderr, "} = %d // %s() in %s\n", result, __FUNCTION__, argv[0]);
 
   return result;
 }

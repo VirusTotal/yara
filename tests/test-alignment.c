@@ -68,7 +68,6 @@ int err = 0;
     }                                                  \
   } while (0)
 
-
 int main(int argc, char **argv)
 {
   int result = err;
@@ -128,7 +127,8 @@ int main(int argc, char **argv)
   CHECK_OFFSET(SIZED_STRING, 4, flags);
   CHECK_OFFSET(SIZED_STRING, 8, c_string);
 
-  YR_DEBUG_FPRINTF(1, stderr, "} = %d // %s() in %s\n", result, __FUNCTION__, argv[0]);
+  YR_DEBUG_FPRINTF(
+      1, stderr, "} = %d // %s() in %s\n", result, __FUNCTION__, argv[0]);
 
   return result;
 }

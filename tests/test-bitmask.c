@@ -27,14 +27,12 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-
 #include <yara.h>
 #include <yara/bitmask.h>
 
 #include "util.h"
 
 #define BITMAP_SIZE 512
-
 
 void assert_clear_all(YR_BITMASK* bitmask)
 {
@@ -111,7 +109,6 @@ void test_set_clear()
   assert_clear_all(bitmask);
 }
 
-
 void test_find_non_colliding_offsets_1()
 {
   uint32_t o = 0;
@@ -158,7 +155,6 @@ void test_find_non_colliding_offsets_1()
   if (yr_bitmask_find_non_colliding_offset(a, b, 18, 13, &o) != 4)
     exit(EXIT_FAILURE);
 
-
   // Set the A to:
   // 1 0 1 0   0 0 0 1   0 0 0 0   0 0 1 1   1 0
   yr_bitmask_set(a, 16);
@@ -166,7 +162,6 @@ void test_find_non_colliding_offsets_1()
   // Bitmask A can accommodate B at offset 10.
   if (yr_bitmask_find_non_colliding_offset(a, b, 18, 13, &o) != 10)
     exit(EXIT_FAILURE);
-
 
   yr_bitmask_clear_all(a);
   yr_bitmask_clear_all(b);
@@ -192,7 +187,6 @@ void test_find_non_colliding_offsets_1()
   if (yr_bitmask_find_non_colliding_offset(a, b, 4, 4, &o) != 1)
     exit(EXIT_FAILURE);
 }
-
 
 void test_find_non_colliding_offsets_2()
 {
@@ -229,7 +223,6 @@ void test_find_non_colliding_offsets_2()
     exit(EXIT_FAILURE);
 }
 
-
 int main(int argc, char** argv)
 {
   int result = 0;
@@ -241,7 +234,8 @@ int main(int argc, char** argv)
   test_find_non_colliding_offsets_1();
   test_find_non_colliding_offsets_2();
 
-  YR_DEBUG_FPRINTF(1, stderr, "} = %d // %s() in %s\n", result, __FUNCTION__, argv[0]);
+  YR_DEBUG_FPRINTF(
+      1, stderr, "} = %d // %s() in %s\n", result, __FUNCTION__, argv[0]);
 
   return result;
 }
