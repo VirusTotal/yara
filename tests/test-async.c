@@ -100,7 +100,6 @@ static void test_parallel_triple_scan(
     scan_not_complete[i] = 1;
     scan_complete_loops[i] = 0;
     len_text[i] = strlen(text[i]);
-    iterator_ctx[i].buffer_size_of_all_blocks = len_text[i];
 
     int flags = SCAN_FLAGS_NO_TRYCATCH;
     YR_CALLBACK_FUNC callback = _scan_callback;
@@ -151,7 +150,7 @@ static void test_parallel_triple_scan(
         int scan_result = _yr_test_single_or_multi_block_scan_mem(
             scanner_instance[i],
             (uint8_t*) text[i],
-            YR_DYNAMIC_BUFFER_SIZE,
+            strlen(text[i]),
             &iterator[i],
             &iterator_ctx[i],
             loop);

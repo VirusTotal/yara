@@ -473,22 +473,8 @@ YR_API int yr_scanner_scan_mem_blocks(
   if (result != ERROR_SUCCESS)
     goto _exit;
 
-  // Come here if no next block beceause no more blocks.
-  YR_DEBUG_FPRINTF(
-      2,
-      stderr,
-      "- last block; finishing up; %s file_size is %zu // %s()\n",
-      scanner->file_size == YR_DYNAMIC_BUFFER_SIZE ? "iterator says"
-                                                   : "caller said",
-      scanner->file_size == YR_DYNAMIC_BUFFER_SIZE ? iterator->buffer_size
-                                                   : scanner->file_size,
-      __FUNCTION__);
-
-  if (scanner->file_size == YR_DYNAMIC_BUFFER_SIZE)
-  {
-    // Grab total buffer size from iterator.
-    scanner->file_size = iterator->buffer_size;
-  }
+  // Ask the iterator for the file size.
+  scanner->file_size = iterator->file_size(iterator);
 
   YR_TRYCATCH(
       !(scanner->flags & SCAN_FLAGS_NO_TRYCATCH),
@@ -594,6 +580,11 @@ static YR_MEMORY_BLOCK* _yr_get_next_block(YR_MEMORY_BLOCK_ITERATOR* iterator)
   return result;
 }
 
+static uint64_t _yr_get_file_size(YR_MEMORY_BLOCK_ITERATOR* iterator)
+{
+  return ((YR_MEMORY_BLOCK*) iterator->context)->size;
+}
+
 static const uint8_t* _yr_fetch_block_data(YR_MEMORY_BLOCK* block)
 {
   return (const uint8_t*) block->context;
@@ -607,17 +598,13 @@ YR_API int yr_scanner_scan_mem(
   YR_DEBUG_FPRINTF(
       2,
       stderr,
-      "+ %s(buffer=%p buffer_size=%zu%s) {\n",
+      "+ %s(buffer=%p buffer_size=%zu) {\n",
       __FUNCTION__,
       buffer,
-      buffer_size,
-      buffer_size == YR_DYNAMIC_BUFFER_SIZE ? " AKA YR_DYNAMIC_BUFFER_SIZE"
-                                            : "");
+      buffer_size);
 
   YR_MEMORY_BLOCK block;
   YR_MEMORY_BLOCK_ITERATOR iterator;
-
-  scanner->file_size = buffer_size;
 
   block.size = buffer_size;
   block.base = 0;
@@ -627,6 +614,7 @@ YR_API int yr_scanner_scan_mem(
   iterator.context = &block;
   iterator.first = _yr_get_first_block;
   iterator.next = _yr_get_next_block;
+  iterator.file_size = _yr_get_file_size;
 
   int result = yr_scanner_scan_mem_blocks(scanner, &iterator);
 

@@ -64,14 +64,11 @@ extern uint64_t yr_test_count_get_block;
 
 typedef struct YR_TEST_ITERATOR_CTX YR_TEST_ITERATOR_CTX;
 
-struct YR_TEST_ITERATOR_CTX {
+struct YR_TEST_ITERATOR_CTX
+{
   const uint8_t* buffer;
   size_t buffer_size;
   YR_MEMORY_BLOCK current_block;
-  void* proc_info;
-
-  // Used by test iterator if buffer size not known in advance.
-  size_t buffer_size_of_all_blocks;
 };
 
 

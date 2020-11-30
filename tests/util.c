@@ -54,6 +54,13 @@ int64_t yr_test_mem_block_not_ready_if_zero = -1;
 int64_t yr_test_mem_block_not_ready_if_zero_init_value = -1;
 uint64_t yr_test_count_get_block = 0;
 
+static uint64_t _yr_test_single_block_file_size(
+    YR_MEMORY_BLOCK_ITERATOR* iterator)
+{
+  YR_TEST_ITERATOR_CTX* context = (YR_TEST_ITERATOR_CTX*) iterator->context;
+  return context->current_block.size;
+}
+
 static YR_MEMORY_BLOCK* _yr_test_single_block_get_first_block(
     YR_MEMORY_BLOCK_ITERATOR* iterator)
 {
@@ -104,6 +111,13 @@ static const uint8_t* _yr_test_single_block_fetch_block_data(
       context->buffer);
 
   return context->buffer;
+}
+
+static uint64_t _yr_test_multi_block_file_size(
+    YR_MEMORY_BLOCK_ITERATOR* iterator)
+{
+  YR_TEST_ITERATOR_CTX* context = (YR_TEST_ITERATOR_CTX*) iterator->context;
+  return context->buffer_size;
 }
 
 static YR_MEMORY_BLOCK* _yr_test_multi_block_get_next_block(
@@ -162,9 +176,6 @@ static YR_MEMORY_BLOCK* _yr_test_multi_block_get_next_block(
     {
       // never report block not ready because end of blocks
       yr_test_mem_block_not_ready_if_zero = -1;
-
-      // last block, so tell scanner total buffer size
-      iterator->buffer_size = context->buffer_size;
     }
   }
 
@@ -239,18 +250,14 @@ int _yr_test_single_or_multi_block_scan_mem(
 {
   int result;
 
-  scanner->file_size = buffer_size;
-
   YR_DEBUG_FPRINTF(
       2,
       stderr,
-      "+ %s(buffer=%p buffer_size=%zu%s previous_calls=%d) {"
+      "+ %s(buffer=%p buffer_size=%zu previous_calls=%d) {"
       " // yr_test_mem_block_size=%" PRId64 "\n",
       __FUNCTION__,
       buffer,
       buffer_size,
-      buffer_size == YR_DYNAMIC_BUFFER_SIZE ? " AKA YR_DYNAMIC_BUFFER_SIZE"
-                                            : "",
       previous_calls,
       yr_test_mem_block_size);
 
@@ -263,9 +270,7 @@ int _yr_test_single_or_multi_block_scan_mem(
     // Come here for initialization of iterator and context
 
     iterator_ctx->buffer = buffer;
-    iterator_ctx->buffer_size = (buffer_size == YR_DYNAMIC_BUFFER_SIZE)
-                                    ? iterator_ctx->buffer_size_of_all_blocks
-                                    : buffer_size;
+    iterator_ctx->buffer_size = buffer_size;
     iterator_ctx->current_block.base = 0;
     iterator_ctx->current_block.size = 0;
     iterator_ctx->current_block.context = iterator_ctx;
@@ -280,6 +285,7 @@ int _yr_test_single_or_multi_block_scan_mem(
           _yr_test_multi_block_fetch_block_data;
       iterator->first = _yr_test_multi_block_get_first_block;
       iterator->next = _yr_test_multi_block_get_next_block;
+      iterator->file_size = _yr_test_multi_block_file_size;
     }
     else
     {
@@ -288,6 +294,7 @@ int _yr_test_single_or_multi_block_scan_mem(
           _yr_test_single_block_fetch_block_data;
       iterator->first = _yr_test_single_block_get_first_block;
       iterator->next = _yr_test_single_block_get_next_block;
+      iterator->file_size = _yr_test_single_block_file_size;
     }
   }
 

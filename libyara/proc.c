@@ -28,12 +28,18 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include <yara/error.h>
+#include <yara/exec.h>
 #include <yara/globals.h>
 #include <yara/mem.h>
 #include <yara/proc.h>
 
 int _yr_process_attach(int, YR_PROC_ITERATOR_CTX*);
 int _yr_process_detach(YR_PROC_ITERATOR_CTX*);
+
+static uint64_t _undefined_file_size(YR_MEMORY_BLOCK_ITERATOR* iterator)
+{
+  return YR_UNDEFINED;
+}
 
 YR_API int yr_process_open_iterator(int pid, YR_MEMORY_BLOCK_ITERATOR* iterator)
 {
@@ -48,6 +54,8 @@ YR_API int yr_process_open_iterator(int pid, YR_MEMORY_BLOCK_ITERATOR* iterator)
   iterator->context = context;
   iterator->first = yr_process_get_first_memory_block;
   iterator->next = yr_process_get_next_memory_block;
+  // File size is undefined in process scan.
+  iterator->file_size = _undefined_file_size;
 
   context->buffer = NULL;
   context->buffer_size = 0;
@@ -62,7 +70,6 @@ YR_API int yr_process_open_iterator(int pid, YR_MEMORY_BLOCK_ITERATOR* iterator)
 
   return ERROR_SUCCESS;
 }
-
 
 YR_API int yr_process_close_iterator(YR_MEMORY_BLOCK_ITERATOR* iterator)
 {

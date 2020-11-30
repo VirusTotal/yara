@@ -34,9 +34,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <yara/types.h>
 #include <yara/utils.h>
 
-// If buffer size dynamic then calc file size at end of all mem blocks.
-#define YR_DYNAMIC_BUFFER_SIZE (0)
-
 typedef YR_SCAN_CONTEXT YR_SCANNER;
 
 YR_API int yr_scanner_create(YR_RULES* rules, YR_SCANNER** scanner);
