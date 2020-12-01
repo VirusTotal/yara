@@ -72,14 +72,6 @@ struct YR_TEST_ITERATOR_CTX
 };
 
 
-extern int _yr_test_single_or_multi_block_scan_mem(
-    YR_SCANNER* scanner,
-    const uint8_t* buffer,
-    size_t buffer_size,
-    YR_MEMORY_BLOCK_ITERATOR* iterator,
-    YR_TEST_ITERATOR_CTX* context,
-    int previous_calls);
-
 extern void chdir_if_env_top_srcdir(void);
 
 struct COUNTERS
@@ -102,12 +94,17 @@ struct SCAN_CALLBACK_CTX {
 };
 
 
+void init_iterator(
+    YR_MEMORY_BLOCK_ITERATOR* iterator,
+    YR_TEST_ITERATOR_CTX* ctx,
+    const uint8_t* buffer,
+    size_t buffer_size);
+
 int _scan_callback(
     YR_SCAN_CONTEXT* context,
     int message,
     void* message_data,
     void* user_data);
-
 
 int count(
     YR_SCAN_CONTEXT* context,
@@ -115,13 +112,11 @@ int count(
     void* message_data,
     void* user_data);
 
-
 int do_nothing(
     YR_SCAN_CONTEXT* context,
     int message,
     void* message_data,
     void* user_data);
-
 
 int matches_blob_uses_default_iterator;
 
@@ -132,11 +127,9 @@ int matches_blob(
     uint8_t* module_data,
     size_t module_data_size);
 
-
 int matches_string(
     char* rule,
     char* string);
-
 
 int capture_string(
     char* rule,

@@ -61,7 +61,7 @@ static void test_parallel_triple_scan(
   int scan_complete_loops[PARALLEL_SCANS];
   char* text[PARALLEL_SCANS];
 
-  YR_SCANNER* scanner_instance[PARALLEL_SCANS];
+  YR_SCANNER* scanner[PARALLEL_SCANS];
 
   int mem_block_not_ready_if_zero[PARALLEL_SCANS];
   int scan_not_complete[PARALLEL_SCANS];
@@ -99,20 +99,18 @@ static void test_parallel_triple_scan(
     scan_not_complete[i] = 1;
     scan_complete_loops[i] = 0;
 
-    int flags = SCAN_FLAGS_NO_TRYCATCH;
-    YR_CALLBACK_FUNC callback = _scan_callback;
-    void* user_data = &callback_ctx[i];
-    int timeout = 0;
+    assert_true_expr(ERROR_SUCCESS == yr_scanner_create(rules, &scanner[i]));
 
-    // Note: yr_rules_scan_mem() incompatible with ERROR_BLOCK_NOT_READY
-    // iterator return code, therefore create & configure scanner, but do not
-    // scan
-    assert_true_expr(
-        ERROR_SUCCESS == yr_scanner_create(rules, &scanner_instance[i]));
+    yr_scanner_set_flags(scanner[i], SCAN_FLAGS_NO_TRYCATCH);
 
-    yr_scanner_set_callback(scanner_instance[i], callback, user_data);
-    yr_scanner_set_timeout(scanner_instance[i], timeout);
-    yr_scanner_set_flags(scanner_instance[i], flags);
+    yr_scanner_set_callback(
+        scanner[i], _scan_callback, (void*) &callback_ctx[i]);
+
+    init_iterator(
+        &iterator[i],
+        &iterator_ctx[i],
+        (const uint8_t*) text[i],
+        strlen(text[i]));
   }
 
   int total_scans_not_complete;
@@ -141,31 +139,24 @@ static void test_parallel_triple_scan(
 
         yr_test_mem_block_not_ready_if_zero = mem_block_not_ready_if_zero[i];
 
-        // Note: yr_scanner_scan_mem() incompatible with ERROR_BLOCK_NOT_READY
-        // iterator return code, therefore use test
-        // _yr_test_single_or_multi_block_scan_mem() instead:
-        int scan_result = _yr_test_single_or_multi_block_scan_mem(
-            scanner_instance[i],
-            (uint8_t*) text[i],
-            strlen(text[i]),
-            &iterator[i],
-            &iterator_ctx[i],
-            loop);
+        int result = yr_scanner_scan_mem_blocks(scanner[i], &iterator[i]);
 
-        if (ERROR_BLOCK_NOT_READY == scan_result)
+        if (ERROR_BLOCK_NOT_READY == result)
         {
           // Come here due to test iterator returning ERROR_BLOCK_NOT_READY.
           mem_block_not_ready_if_zero[i] = yr_test_mem_block_not_ready_if_zero;
           continue;
         }
 
-        assert_true_expr(ERROR_SUCCESS == scan_result);
+        assert_true_expr(ERROR_SUCCESS == result);
 
         scan_not_complete[i] = 0;
         scan_complete_loops[i] = loop;
       }
     }
+
     loop++;
+
   } while (total_scans_not_complete);
 
   YR_DEBUG_FPRINTF(
@@ -176,9 +167,7 @@ static void test_parallel_triple_scan(
 
   for (int i = 0; i < PARALLEL_SCANS; i++)
   {
-    // Note: yr_rules_scan_mem() incompatible with ERROR_BLOCK_NOT_READY return
-    // code, therefore its teardown code is here instead:
-    yr_scanner_destroy(scanner_instance[i]);
+    yr_scanner_destroy(scanner[i]);
   }
 
   if ((callback_ctx[0].matches != 2) || (callback_ctx[1].matches != 2) ||
@@ -216,23 +205,23 @@ static void test_parallel_triple_scan(
   YR_DEBUG_FPRINTF(1, stderr, "} // %s()\n", __FUNCTION__);
 }
 
-#define X0_TEXT_1024_BYTES__ABC_XYZ__X0_TEXT_1024_BYTES \
-    "---- abc ---- xyz"
+#define X0_TEXT_1024_BYTES__ABC_XYZ__X0_TEXT_1024_BYTES "---- abc ---- xyz"
 
 #define X0_TEXT_1024_BYTES__ABC_XYZ__X1_TEXT_1024_BYTES \
-    "---- abc ---- xyz" TEXT_1024_BYTES
+  "---- abc ---- xyz" TEXT_1024_BYTES
 
 #define X1_TEXT_1024_BYTES__ABC_XYZ__X0_TEXT_1024_BYTES \
-    TEXT_1024_BYTES "---- abc ---- xyz"
+  TEXT_1024_BYTES "---- abc ---- xyz"
 
 #define X1_TEXT_1024_BYTES__ABC_XYZ__X1_TEXT_1024_BYTES \
-    TEXT_1024_BYTES "---- abc ---- xyz" TEXT_1024_BYTES
+  TEXT_1024_BYTES "---- abc ---- xyz" TEXT_1024_BYTES
 
 #define X2_TEXT_1024_BYTES__ABC_XYZ__X1_TEXT_1024_BYTES \
-    TEXT_1024_BYTES TEXT_1024_BYTES "---- abc ---- xyz" TEXT_1024_BYTES
+  TEXT_1024_BYTES TEXT_1024_BYTES "---- abc ---- xyz" TEXT_1024_BYTES
 
 #define X3_TEXT_1024_BYTES__ABC_XYZ__X1_TEXT_1024_BYTES \
-    TEXT_1024_BYTES TEXT_1024_BYTES TEXT_1024_BYTES "---- abc ---- xyz" TEXT_1024_BYTES
+  TEXT_1024_BYTES TEXT_1024_BYTES TEXT_1024_BYTES       \
+      "---- abc ---- xyz" TEXT_1024_BYTES
 
 static void test_parallel_strings()
 {

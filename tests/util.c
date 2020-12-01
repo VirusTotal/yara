@@ -240,75 +240,37 @@ static const uint8_t* _yr_test_multi_block_fetch_block_data(
   return context->buffer + context->current_block.base;
 }
 
-int _yr_test_single_or_multi_block_scan_mem(
-    YR_SCANNER* scanner,
-    const uint8_t* buffer,
-    size_t buffer_size,
+void init_iterator(
     YR_MEMORY_BLOCK_ITERATOR* iterator,
-    YR_TEST_ITERATOR_CTX* iterator_ctx,
-    int previous_calls)
+    YR_TEST_ITERATOR_CTX* ctx,
+    const uint8_t* buffer,
+    size_t buffer_size)
 {
-  int result;
+  ctx->buffer = buffer;
+  ctx->buffer_size = buffer_size;
+  ctx->current_block.base = 0;
+  ctx->current_block.size = 0;
+  ctx->current_block.context = ctx;
 
-  YR_DEBUG_FPRINTF(
-      2,
-      stderr,
-      "+ %s(buffer=%p buffer_size=%zu previous_calls=%d) {"
-      " // yr_test_mem_block_size=%" PRId64 "\n",
-      __FUNCTION__,
-      buffer,
-      buffer_size,
-      previous_calls,
-      yr_test_mem_block_size);
+  iterator->context = ctx;
+  iterator->last_error = ERROR_SUCCESS;
 
-  if (previous_calls)
+  if (yr_test_mem_block_size)
   {
-    // Come here to skip initialization of iterator and context
+    // Come here for callbacks which dish up the buffer as multi blocks
+    ctx->current_block.fetch_data = _yr_test_multi_block_fetch_block_data;
+    iterator->first = _yr_test_multi_block_get_first_block;
+    iterator->next = _yr_test_multi_block_get_next_block;
+    iterator->file_size = _yr_test_multi_block_file_size;
   }
   else
   {
-    // Come here for initialization of iterator and context
-
-    iterator_ctx->buffer = buffer;
-    iterator_ctx->buffer_size = buffer_size;
-    iterator_ctx->current_block.base = 0;
-    iterator_ctx->current_block.size = 0;
-    iterator_ctx->current_block.context = iterator_ctx;
-
-    iterator->context = iterator_ctx;
-    iterator->last_error = ERROR_SUCCESS;
-
-    if (yr_test_mem_block_size)
-    {
-      // Come here for callbacks which dish up the buffer as multi blocks
-      iterator_ctx->current_block.fetch_data =
-          _yr_test_multi_block_fetch_block_data;
-      iterator->first = _yr_test_multi_block_get_first_block;
-      iterator->next = _yr_test_multi_block_get_next_block;
-      iterator->file_size = _yr_test_multi_block_file_size;
-    }
-    else
-    {
-      // Come here for callbacks which dish up the buffer as a single block
-      iterator_ctx->current_block.fetch_data =
-          _yr_test_single_block_fetch_block_data;
-      iterator->first = _yr_test_single_block_get_first_block;
-      iterator->next = _yr_test_single_block_get_next_block;
-      iterator->file_size = _yr_test_single_block_file_size;
-    }
+    // Come here for callbacks which dish up the buffer as a single block
+    ctx->current_block.fetch_data = _yr_test_single_block_fetch_block_data;
+    iterator->first = _yr_test_single_block_get_first_block;
+    iterator->next = _yr_test_single_block_get_next_block;
+    iterator->file_size = _yr_test_single_block_file_size;
   }
-
-  result = yr_scanner_scan_mem_blocks(scanner, iterator);
-
-  YR_DEBUG_FPRINTF(
-      2,
-      stderr,
-      "} = %d AKA %s // %s()\n",
-      result,
-      yr_debug_error_as_string(result),
-      __FUNCTION__);
-
-  return result;
 }
 
 void chdir_if_env_top_srcdir(void)
@@ -492,35 +454,18 @@ int matches_blob(
 
   int flags = SCAN_FLAGS_NO_TRYCATCH;
   YR_CALLBACK_FUNC callback = _scan_callback;
+
   void* user_data = &ctx;
   int timeout = 0;
   int scan_result;
 
   if (matches_blob_uses_default_iterator)
   {
-    // clang format off
-    //
-    // Call   yr_rules_scan_mem()                      <- Create & config scanner, and
-    // calls  yr_scanner_scan_mem()                    <- Create default iterator, and
-    // calls  yr_scanner_scan_mem_blocks()             <- Scan
-    //
-    // clang format on
-
     scan_result = yr_rules_scan_mem(
         rules, blob, blob_size, flags, callback, user_data, timeout);
   }
   else
   {
-    // clang format off
-    //
-    // Call   yr_scanner_create()                      <- Create scanner
-    // Call   yr_scanner_set_*()                       <- Config scanner
-    // Call  _yr_test_single_or_multi_block_scan_mem() <- Create test iterator, and
-    // calls  yr_scanner_scan_mem_blocks()             <- Scan
-    // Call   yr_scanner_destroy()                     <- Destroy scanner
-    //
-    // clang format on
-
     YR_SCANNER* scanner;
 
     assert_true_expr(ERROR_SUCCESS == yr_scanner_create(rules, &scanner));
@@ -531,10 +476,10 @@ int matches_blob(
 
     YR_MEMORY_BLOCK_ITERATOR iterator;
     YR_TEST_ITERATOR_CTX iterator_ctx;
-    int previous_calls = 0;
 
-    scan_result = _yr_test_single_or_multi_block_scan_mem(
-        scanner, blob, blob_size, &iterator, &iterator_ctx, previous_calls);
+    init_iterator(&iterator, &iterator_ctx, blob, blob_size);
+
+    scan_result = yr_scanner_scan_mem_blocks(scanner, &iterator);
 
     yr_scanner_destroy(scanner);
   }
