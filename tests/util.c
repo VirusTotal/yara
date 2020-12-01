@@ -72,7 +72,7 @@ static YR_MEMORY_BLOCK* _yr_test_single_block_get_first_block(
   YR_DEBUG_FPRINTF(
       2,
       stderr,
-      "+ %s() {} = %p // test iterator; single memory block, non-blocking\n",
+      "- %s() {} = %p // test iterator; single memory block, non-blocking\n",
       __FUNCTION__,
       result);
 
@@ -89,7 +89,7 @@ static YR_MEMORY_BLOCK* _yr_test_single_block_get_next_block(
   YR_DEBUG_FPRINTF(
       2,
       stderr,
-      "+ %s() {} = %p // test iterator; single memory block, non-blocking\n",
+      "- %s() {} = %p // test iterator; single memory block, non-blocking\n",
       __FUNCTION__,
       result);
 
@@ -104,7 +104,7 @@ static const uint8_t* _yr_test_single_block_fetch_block_data(
   YR_DEBUG_FPRINTF(
       2,
       stderr,
-      "+ %s() {} = %p // test iterator; single memory block, non-blocking\n",
+      "- %s() {} = %p // test iterator; single memory block, non-blocking\n",
       __FUNCTION__,
       context->buffer);
 
@@ -175,7 +175,7 @@ static YR_MEMORY_BLOCK* _yr_test_multi_block_get_next_block(
   YR_DEBUG_FPRINTF(
       2,
       stderr,
-      "+ %s() {} = %p // "
+      "- %s() {} = %p // "
       ".base=(0x%" PRIx64 " or %" PRId64 ") of "
       "(0x%lx or %'lu) .size=%'lu, both including %" PRId64
       " block overlap%s\n",
@@ -198,7 +198,7 @@ static YR_MEMORY_BLOCK* _yr_test_multi_block_get_first_block(
   YR_DEBUG_FPRINTF(
       2,
       stderr,
-      "+ %s() {} // wrapping _yr_test_multi_block_get_next_block()\n",
+      "- %s() {} // wrapping _yr_test_multi_block_get_next_block()\n",
       __FUNCTION__);
 
   YR_TEST_ITERATOR_CTX* context = (YR_TEST_ITERATOR_CTX*) iterator->context;
@@ -221,7 +221,7 @@ static const uint8_t* _yr_test_multi_block_fetch_block_data(
   YR_DEBUG_FPRINTF(
       2,
       stderr,
-      "+ %s() {} = %p = %p + 0x%" PRIx64 " base including %" PRId64
+      "- %s() {} = %p = %p + 0x%" PRIx64 " base including %" PRId64
       " overlap%s\n",
       __FUNCTION__,
       context->buffer + context->current_block.base - overlap,
@@ -291,7 +291,7 @@ int count(
   YR_DEBUG_FPRINTF(
       2,
       stderr,
-      "+ %s(message=%d AKA %s) {}\n",
+      "- %s(message=%d AKA %s) {}\n",
       __FUNCTION__,
       message,
       yr_debug_callback_message_as_string(message));
@@ -391,7 +391,7 @@ int _scan_callback(
   YR_DEBUG_FPRINTF(
       2,
       stderr,
-      "+ %s(message=%d AKA %s) {}\n",
+      "- %s(message=%d AKA %s) {}\n",
       __FUNCTION__,
       message,
       yr_debug_callback_message_as_string(message));

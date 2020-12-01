@@ -77,96 +77,110 @@ uint8_t yr_altercase[256];
 
 uint64_t yr_debug_verbosity = YR_DEBUG_VERBOSITY;
 
+__thread int yr_debug_indent = 0;
+
+const char yr_debug_spaces[] = \
+    "                " /* 16 spaces * 1 */ \
+    "                " /* 16 spaces * 2 */ \
+    "                " /* 16 spaces * 3 */ \
+    "                " /* 16 spaces * 4 */ \
+    "                " /* 16 spaces * 5 */ \
+    "                " /* 16 spaces * 6 */ \
+    "                " /* 16 spaces * 7 */ \
+    "                " /* 16 spaces * 8 */ ;
+
+size_t yr_debug_spaces_len = sizeof(yr_debug_spaces);
+
 double yr_debug_get_time_in_seconds(void)
 {
-    struct timeval tv;
+  struct timeval tv;
 
-    assert(gettimeofday(&tv, NULL) >= 0);
-    return (double)tv.tv_sec + 1.e-6 * (double)tv.tv_usec;
+  assert(gettimeofday(&tv, NULL) >= 0);
+  return (double)tv.tv_sec + 1.e-6 * (double)tv.tv_usec;
 }
 
 char* yr_debug_callback_message_as_string(int message)
 {
-    char* s = "CALLBACK_MSG_?";
-    switch (message)
-    { // clang-format off
-    case CALLBACK_MSG_RULE_MATCHING    : s = "CALLBACK_MSG_RULE_MATCHING"    ; break;
-    case CALLBACK_MSG_RULE_NOT_MATCHING: s = "CALLBACK_MSG_RULE_NOT_MATCHING"; break;
-    case CALLBACK_MSG_SCAN_FINISHED    : s = "CALLBACK_MSG_SCAN_FINISHED"    ; break;
-    case CALLBACK_MSG_IMPORT_MODULE    : s = "CALLBACK_MSG_IMPORT_MODULE"    ; break;
-    case CALLBACK_MSG_MODULE_IMPORTED  : s = "CALLBACK_MSG_MODULE_IMPORTED"  ; break;
-    } // clang-format on
-    return s;
+  char* s = "CALLBACK_MSG_?";
+  switch (message)
+  { // clang-format off
+  case CALLBACK_MSG_RULE_MATCHING    : s = "CALLBACK_MSG_RULE_MATCHING"    ; break;
+  case CALLBACK_MSG_RULE_NOT_MATCHING: s = "CALLBACK_MSG_RULE_NOT_MATCHING"; break;
+  case CALLBACK_MSG_SCAN_FINISHED    : s = "CALLBACK_MSG_SCAN_FINISHED"    ; break;
+  case CALLBACK_MSG_IMPORT_MODULE    : s = "CALLBACK_MSG_IMPORT_MODULE"    ; break;
+  case CALLBACK_MSG_MODULE_IMPORTED  : s = "CALLBACK_MSG_MODULE_IMPORTED"  ; break;
+  } // clang-format on
+  return s;
 }
 
 char* yr_debug_error_as_string(int error)
 {
-    char* s = "ERROR_?";
-    switch (error)
-    { // clang-format off
-    case ERROR_SUCCESS                       : s = "ERROR_SUCCESS 0"                     ; break;
-    case ERROR_INSUFFICIENT_MEMORY           : s = "ERROR_INSUFFICIENT_MEMORY"           ; break;
-    case ERROR_COULD_NOT_ATTACH_TO_PROCESS   : s = "ERROR_COULD_NOT_ATTACH_TO_PROCESS"   ; break;
-    case ERROR_COULD_NOT_OPEN_FILE           : s = "ERROR_COULD_NOT_OPEN_FILE"           ; break;
-    case ERROR_COULD_NOT_MAP_FILE            : s = "ERROR_COULD_NOT_MAP_FILE"            ; break;
-    case ERROR_INVALID_FILE                  : s = "ERROR_INVALID_FILE"                  ; break;
-    case ERROR_CORRUPT_FILE                  : s = "ERROR_CORRUPT_FILE"                  ; break;
-    case ERROR_UNSUPPORTED_FILE_VERSION      : s = "ERROR_UNSUPPORTED_FILE_VERSION"      ; break;
-    case ERROR_INVALID_REGULAR_EXPRESSION    : s = "ERROR_INVALID_REGULAR_EXPRESSION"    ; break;
-    case ERROR_INVALID_HEX_STRING            : s = "ERROR_INVALID_HEX_STRING"            ; break;
-    case ERROR_SYNTAX_ERROR                  : s = "ERROR_SYNTAX_ERROR"                  ; break;
-    case ERROR_LOOP_NESTING_LIMIT_EXCEEDED   : s = "ERROR_LOOP_NESTING_LIMIT_EXCEEDED"   ; break;
-    case ERROR_DUPLICATED_LOOP_IDENTIFIER    : s = "ERROR_DUPLICATED_LOOP_IDENTIFIER"    ; break;
-    case ERROR_DUPLICATED_IDENTIFIER         : s = "ERROR_DUPLICATED_IDENTIFIER"         ; break;
-    case ERROR_DUPLICATED_TAG_IDENTIFIER     : s = "ERROR_DUPLICATED_TAG_IDENTIFIER"     ; break;
-    case ERROR_DUPLICATED_META_IDENTIFIER    : s = "ERROR_DUPLICATED_META_IDENTIFIER"    ; break;
-    case ERROR_DUPLICATED_STRING_IDENTIFIER  : s = "ERROR_DUPLICATED_STRING_IDENTIFIER"  ; break;
-    case ERROR_UNREFERENCED_STRING           : s = "ERROR_UNREFERENCED_STRING"           ; break;
-    case ERROR_UNDEFINED_STRING              : s = "ERROR_UNDEFINED_STRING"              ; break;
-    case ERROR_UNDEFINED_IDENTIFIER          : s = "ERROR_UNDEFINED_IDENTIFIER"          ; break;
-    case ERROR_MISPLACED_ANONYMOUS_STRING    : s = "ERROR_MISPLACED_ANONYMOUS_STRING"    ; break;
-    case ERROR_INCLUDES_CIRCULAR_REFERENCE   : s = "ERROR_INCLUDES_CIRCULAR_REFERENCE"   ; break;
-    case ERROR_INCLUDE_DEPTH_EXCEEDED        : s = "ERROR_INCLUDE_DEPTH_EXCEEDED"        ; break;
-    case ERROR_WRONG_TYPE                    : s = "ERROR_WRONG_TYPE"                    ; break;
-    case ERROR_EXEC_STACK_OVERFLOW           : s = "ERROR_EXEC_STACK_OVERFLOW"           ; break;
-    case ERROR_SCAN_TIMEOUT                  : s = "ERROR_SCAN_TIMEOUT"                  ; break;
-    case ERROR_TOO_MANY_SCAN_THREADS         : s = "ERROR_TOO_MANY_SCAN_THREADS"         ; break;
-    case ERROR_CALLBACK_ERROR                : s = "ERROR_CALLBACK_ERROR"                ; break;
-    case ERROR_INVALID_ARGUMENT              : s = "ERROR_INVALID_ARGUMENT"              ; break;
-    case ERROR_TOO_MANY_MATCHES              : s = "ERROR_TOO_MANY_MATCHES"              ; break;
-    case ERROR_INTERNAL_FATAL_ERROR          : s = "ERROR_INTERNAL_FATAL_ERROR"          ; break;
-    case ERROR_NESTED_FOR_OF_LOOP            : s = "ERROR_NESTED_FOR_OF_LOOP"            ; break;
-    case ERROR_INVALID_FIELD_NAME            : s = "ERROR_INVALID_FIELD_NAME"            ; break;
-    case ERROR_UNKNOWN_MODULE                : s = "ERROR_UNKNOWN_MODULE"                ; break;
-    case ERROR_NOT_A_STRUCTURE               : s = "ERROR_NOT_A_STRUCTURE"               ; break;
-    case ERROR_NOT_INDEXABLE                 : s = "ERROR_NOT_INDEXABLE"                 ; break;
-    case ERROR_NOT_A_FUNCTION                : s = "ERROR_NOT_A_FUNCTION"                ; break;
-    case ERROR_INVALID_FORMAT                : s = "ERROR_INVALID_FORMAT"                ; break;
-    case ERROR_TOO_MANY_ARGUMENTS            : s = "ERROR_TOO_MANY_ARGUMENTS"            ; break;
-    case ERROR_WRONG_ARGUMENTS               : s = "ERROR_WRONG_ARGUMENTS"               ; break;
-    case ERROR_WRONG_RETURN_TYPE             : s = "ERROR_WRONG_RETURN_TYPE"             ; break;
-    case ERROR_DUPLICATED_STRUCTURE_MEMBER   : s = "ERROR_DUPLICATED_STRUCTURE_MEMBER"   ; break;
-    case ERROR_EMPTY_STRING                  : s = "ERROR_EMPTY_STRING"                  ; break;
-    case ERROR_DIVISION_BY_ZERO              : s = "ERROR_DIVISION_BY_ZERO"              ; break;
-    case ERROR_REGULAR_EXPRESSION_TOO_LARGE  : s = "ERROR_REGULAR_EXPRESSION_TOO_LARGE"  ; break;
-    case ERROR_TOO_MANY_RE_FIBERS            : s = "ERROR_TOO_MANY_RE_FIBERS"            ; break;
-    case ERROR_COULD_NOT_READ_PROCESS_MEMORY : s = "ERROR_COULD_NOT_READ_PROCESS_MEMORY" ; break;
-    case ERROR_INVALID_EXTERNAL_VARIABLE_TYPE: s = "ERROR_INVALID_EXTERNAL_VARIABLE_TYPE"; break;
-    case ERROR_REGULAR_EXPRESSION_TOO_COMPLEX: s = "ERROR_REGULAR_EXPRESSION_TOO_COMPLEX"; break;
-    case ERROR_INVALID_MODULE_NAME           : s = "ERROR_INVALID_MODULE_NAME"           ; break;
-    case ERROR_TOO_MANY_STRINGS              : s = "ERROR_TOO_MANY_STRINGS"              ; break;
-    case ERROR_INTEGER_OVERFLOW              : s = "ERROR_INTEGER_OVERFLOW"              ; break;
-    case ERROR_CALLBACK_REQUIRED             : s = "ERROR_CALLBACK_REQUIRED"             ; break;
-    case ERROR_INVALID_OPERAND               : s = "ERROR_INVALID_OPERAND"               ; break;
-    case ERROR_COULD_NOT_READ_FILE           : s = "ERROR_COULD_NOT_READ_FILE"           ; break;
-    case ERROR_DUPLICATED_EXTERNAL_VARIABLE  : s = "ERROR_DUPLICATED_EXTERNAL_VARIABLE"  ; break;
-    case ERROR_INVALID_MODULE_DATA           : s = "ERROR_INVALID_MODULE_DATA"           ; break;
-    case ERROR_WRITING_FILE                  : s = "ERROR_WRITING_FILE"                  ; break;
-    case ERROR_INVALID_MODIFIER              : s = "ERROR_INVALID_MODIFIER"              ; break;
-    case ERROR_DUPLICATED_MODIFIER           : s = "ERROR_DUPLICATED_MODIFIER"           ; break;
-    case ERROR_BLOCK_NOT_READY               : s = "ERROR_BLOCK_NOT_READY"               ; break;
-    } // clang-format on
-    return s;
+  char* s = "ERROR_?";
+  switch (error)
+  { // clang-format off
+  case ERROR_SUCCESS                       : s = "ERROR_SUCCESS 0"                     ; break;
+  case ERROR_INSUFFICIENT_MEMORY           : s = "ERROR_INSUFFICIENT_MEMORY"           ; break;
+  case ERROR_COULD_NOT_ATTACH_TO_PROCESS   : s = "ERROR_COULD_NOT_ATTACH_TO_PROCESS"   ; break;
+  case ERROR_COULD_NOT_OPEN_FILE           : s = "ERROR_COULD_NOT_OPEN_FILE"           ; break;
+  case ERROR_COULD_NOT_MAP_FILE            : s = "ERROR_COULD_NOT_MAP_FILE"            ; break;
+  case ERROR_INVALID_FILE                  : s = "ERROR_INVALID_FILE"                  ; break;
+  case ERROR_CORRUPT_FILE                  : s = "ERROR_CORRUPT_FILE"                  ; break;
+  case ERROR_UNSUPPORTED_FILE_VERSION      : s = "ERROR_UNSUPPORTED_FILE_VERSION"      ; break;
+  case ERROR_INVALID_REGULAR_EXPRESSION    : s = "ERROR_INVALID_REGULAR_EXPRESSION"    ; break;
+  case ERROR_INVALID_HEX_STRING            : s = "ERROR_INVALID_HEX_STRING"            ; break;
+  case ERROR_SYNTAX_ERROR                  : s = "ERROR_SYNTAX_ERROR"                  ; break;
+  case ERROR_LOOP_NESTING_LIMIT_EXCEEDED   : s = "ERROR_LOOP_NESTING_LIMIT_EXCEEDED"   ; break;
+  case ERROR_DUPLICATED_LOOP_IDENTIFIER    : s = "ERROR_DUPLICATED_LOOP_IDENTIFIER"    ; break;
+  case ERROR_DUPLICATED_IDENTIFIER         : s = "ERROR_DUPLICATED_IDENTIFIER"         ; break;
+  case ERROR_DUPLICATED_TAG_IDENTIFIER     : s = "ERROR_DUPLICATED_TAG_IDENTIFIER"     ; break;
+  case ERROR_DUPLICATED_META_IDENTIFIER    : s = "ERROR_DUPLICATED_META_IDENTIFIER"    ; break;
+  case ERROR_DUPLICATED_STRING_IDENTIFIER  : s = "ERROR_DUPLICATED_STRING_IDENTIFIER"  ; break;
+  case ERROR_UNREFERENCED_STRING           : s = "ERROR_UNREFERENCED_STRING"           ; break;
+  case ERROR_UNDEFINED_STRING              : s = "ERROR_UNDEFINED_STRING"              ; break;
+  case ERROR_UNDEFINED_IDENTIFIER          : s = "ERROR_UNDEFINED_IDENTIFIER"          ; break;
+  case ERROR_MISPLACED_ANONYMOUS_STRING    : s = "ERROR_MISPLACED_ANONYMOUS_STRING"    ; break;
+  case ERROR_INCLUDES_CIRCULAR_REFERENCE   : s = "ERROR_INCLUDES_CIRCULAR_REFERENCE"   ; break;
+  case ERROR_INCLUDE_DEPTH_EXCEEDED        : s = "ERROR_INCLUDE_DEPTH_EXCEEDED"        ; break;
+  case ERROR_WRONG_TYPE                    : s = "ERROR_WRONG_TYPE"                    ; break;
+  case ERROR_EXEC_STACK_OVERFLOW           : s = "ERROR_EXEC_STACK_OVERFLOW"           ; break;
+  case ERROR_SCAN_TIMEOUT                  : s = "ERROR_SCAN_TIMEOUT"                  ; break;
+  case ERROR_TOO_MANY_SCAN_THREADS         : s = "ERROR_TOO_MANY_SCAN_THREADS"         ; break;
+  case ERROR_CALLBACK_ERROR                : s = "ERROR_CALLBACK_ERROR"                ; break;
+  case ERROR_INVALID_ARGUMENT              : s = "ERROR_INVALID_ARGUMENT"              ; break;
+  case ERROR_TOO_MANY_MATCHES              : s = "ERROR_TOO_MANY_MATCHES"              ; break;
+  case ERROR_INTERNAL_FATAL_ERROR          : s = "ERROR_INTERNAL_FATAL_ERROR"          ; break;
+  case ERROR_NESTED_FOR_OF_LOOP            : s = "ERROR_NESTED_FOR_OF_LOOP"            ; break;
+  case ERROR_INVALID_FIELD_NAME            : s = "ERROR_INVALID_FIELD_NAME"            ; break;
+  case ERROR_UNKNOWN_MODULE                : s = "ERROR_UNKNOWN_MODULE"                ; break;
+  case ERROR_NOT_A_STRUCTURE               : s = "ERROR_NOT_A_STRUCTURE"               ; break;
+  case ERROR_NOT_INDEXABLE                 : s = "ERROR_NOT_INDEXABLE"                 ; break;
+  case ERROR_NOT_A_FUNCTION                : s = "ERROR_NOT_A_FUNCTION"                ; break;
+  case ERROR_INVALID_FORMAT                : s = "ERROR_INVALID_FORMAT"                ; break;
+  case ERROR_TOO_MANY_ARGUMENTS            : s = "ERROR_TOO_MANY_ARGUMENTS"            ; break;
+  case ERROR_WRONG_ARGUMENTS               : s = "ERROR_WRONG_ARGUMENTS"               ; break;
+  case ERROR_WRONG_RETURN_TYPE             : s = "ERROR_WRONG_RETURN_TYPE"             ; break;
+  case ERROR_DUPLICATED_STRUCTURE_MEMBER   : s = "ERROR_DUPLICATED_STRUCTURE_MEMBER"   ; break;
+  case ERROR_EMPTY_STRING                  : s = "ERROR_EMPTY_STRING"                  ; break;
+  case ERROR_DIVISION_BY_ZERO              : s = "ERROR_DIVISION_BY_ZERO"              ; break;
+  case ERROR_REGULAR_EXPRESSION_TOO_LARGE  : s = "ERROR_REGULAR_EXPRESSION_TOO_LARGE"  ; break;
+  case ERROR_TOO_MANY_RE_FIBERS            : s = "ERROR_TOO_MANY_RE_FIBERS"            ; break;
+  case ERROR_COULD_NOT_READ_PROCESS_MEMORY : s = "ERROR_COULD_NOT_READ_PROCESS_MEMORY" ; break;
+  case ERROR_INVALID_EXTERNAL_VARIABLE_TYPE: s = "ERROR_INVALID_EXTERNAL_VARIABLE_TYPE"; break;
+  case ERROR_REGULAR_EXPRESSION_TOO_COMPLEX: s = "ERROR_REGULAR_EXPRESSION_TOO_COMPLEX"; break;
+  case ERROR_INVALID_MODULE_NAME           : s = "ERROR_INVALID_MODULE_NAME"           ; break;
+  case ERROR_TOO_MANY_STRINGS              : s = "ERROR_TOO_MANY_STRINGS"              ; break;
+  case ERROR_INTEGER_OVERFLOW              : s = "ERROR_INTEGER_OVERFLOW"              ; break;
+  case ERROR_CALLBACK_REQUIRED             : s = "ERROR_CALLBACK_REQUIRED"             ; break;
+  case ERROR_INVALID_OPERAND               : s = "ERROR_INVALID_OPERAND"               ; break;
+  case ERROR_COULD_NOT_READ_FILE           : s = "ERROR_COULD_NOT_READ_FILE"           ; break;
+  case ERROR_DUPLICATED_EXTERNAL_VARIABLE  : s = "ERROR_DUPLICATED_EXTERNAL_VARIABLE"  ; break;
+  case ERROR_INVALID_MODULE_DATA           : s = "ERROR_INVALID_MODULE_DATA"           ; break;
+  case ERROR_WRITING_FILE                  : s = "ERROR_WRITING_FILE"                  ; break;
+  case ERROR_INVALID_MODIFIER              : s = "ERROR_INVALID_MODIFIER"              ; break;
+  case ERROR_DUPLICATED_MODIFIER           : s = "ERROR_DUPLICATED_MODIFIER"           ; break;
+  case ERROR_BLOCK_NOT_READY               : s = "ERROR_BLOCK_NOT_READY"               ; break;
+  } // clang-format on
+  return s;
 }
 
 #endif

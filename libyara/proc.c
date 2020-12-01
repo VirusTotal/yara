@@ -41,7 +41,7 @@ static uint64_t _undefined_file_size(YR_MEMORY_BLOCK_ITERATOR* iterator)
   YR_DEBUG_FPRINTF(
       2,
       stderr,
-      "+ %s() {} = %s\n",
+      "- %s() {} = %s\n",
       __FUNCTION__,
       "YR_UNDEFINED");
 
@@ -91,7 +91,7 @@ _exit:
 
 YR_API int yr_process_close_iterator(YR_MEMORY_BLOCK_ITERATOR* iterator)
 {
-  YR_DEBUG_FPRINTF(2, stderr, "+ %s() {}\n", __FUNCTION__);
+  YR_DEBUG_FPRINTF(2, stderr, "- %s() {}\n", __FUNCTION__);
 
   YR_PROC_ITERATOR_CTX* context = (YR_PROC_ITERATOR_CTX*) iterator->context;
 

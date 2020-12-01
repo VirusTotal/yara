@@ -49,11 +49,13 @@ static int _yr_scanner_scan_mem_block(
   YR_DEBUG_FPRINTF(
       2,
       stderr,
-      "+ %s(block_data=%p block->base=0x%" PRIx64 " block->size=%zu) {}\n",
+      "+ %s(block_data=%p block->base=0x%" PRIx64 " block->size=%zu) {\n",
       __FUNCTION__,
       block_data,
       block->base,
       block->size);
+
+  int result = ERROR_SUCCESS;
 
   YR_RULES* rules = scanner->rules;
   YR_AC_TRANSITION* transition_table = rules->ac_transition_table;
@@ -71,7 +73,10 @@ static int _yr_scanner_scan_mem_block(
     if (i % 4096 == 0 && scanner->timeout > 0)
     {
       if (yr_stopwatch_elapsed_ns(&scanner->stopwatch) > scanner->timeout)
-        return ERROR_SCAN_TIMEOUT;
+      {
+        result = ERROR_SCAN_TIMEOUT;
+        goto _exit;
+      }
     }
 
 #if 2 == YR_DEBUG_VERBOSITY
@@ -80,7 +85,7 @@ static int _yr_scanner_scan_mem_block(
           2,
           stderr,
           "- match_table[state=%u]=%'u i=%'ld "
-          "block_data=%p block->base=0x%" PRIx64 " // %s() {}\n",
+          "block_data=%p block->base=0x%" PRIx64 " // %s()\n",
           state,
           match_table[state],
           i,
@@ -102,7 +107,7 @@ static int _yr_scanner_scan_mem_block(
       {
         if (match->backtrack <= i)
         {
-          FAIL_ON_ERROR(yr_scan_verify_match(
+          GOTO_EXIT_ON_ERROR(yr_scan_verify_match(
               scanner,
               match,
               block_data,
@@ -143,7 +148,7 @@ static int _yr_scanner_scan_mem_block(
     {
       if (match->backtrack <= i)
       {
-        FAIL_ON_ERROR(yr_scan_verify_match(
+        GOTO_EXIT_ON_ERROR(yr_scan_verify_match(
             scanner,
             match,
             block_data,
@@ -156,12 +161,22 @@ static int _yr_scanner_scan_mem_block(
     }
   }
 
-  return ERROR_SUCCESS;
+_exit:
+
+  YR_DEBUG_FPRINTF(
+      2,
+      stderr,
+      "} = %d AKA %s // %s()\n",
+      result,
+      yr_debug_error_as_string(result),
+      __FUNCTION__);
+
+  return result;
 }
 
 static void _yr_scanner_clean_matches(YR_SCANNER* scanner)
 {
-  YR_DEBUG_FPRINTF(2, stderr, "+ %s() {} \n", __FUNCTION__);
+  YR_DEBUG_FPRINTF(2, stderr, "- %s() {} \n", __FUNCTION__);
 
   memset(
       scanner->rule_matches_flags,
@@ -183,7 +198,7 @@ static void _yr_scanner_clean_matches(YR_SCANNER* scanner)
 
 YR_API int yr_scanner_create(YR_RULES* rules, YR_SCANNER** scanner)
 {
-  YR_DEBUG_FPRINTF(2, stderr, "+ %s() {} \n", __FUNCTION__);
+  YR_DEBUG_FPRINTF(2, stderr, "- %s() {} \n", __FUNCTION__);
 
   YR_EXTERNAL_VARIABLE* external;
   YR_SCANNER* new_scanner;
@@ -262,7 +277,7 @@ YR_API int yr_scanner_create(YR_RULES* rules, YR_SCANNER** scanner)
 
 YR_API void yr_scanner_destroy(YR_SCANNER* scanner)
 {
-  YR_DEBUG_FPRINTF(2, stderr, "+ %s() {} \n", __FUNCTION__);
+  YR_DEBUG_FPRINTF(2, stderr, "- %s() {} \n", __FUNCTION__);
 
   RE_FIBER* fiber;
   RE_FIBER* next_fiber;
@@ -554,7 +569,7 @@ static YR_MEMORY_BLOCK* _yr_get_first_block(YR_MEMORY_BLOCK_ITERATOR* iterator)
   YR_DEBUG_FPRINTF(
       2,
       stderr,
-      "+ %s() {} = %p // default iterator; single memory block, non-blocking\n",
+      "- %s() {} = %p // default iterator; single memory block, non-blocking\n",
       __FUNCTION__,
       result);
 
@@ -570,7 +585,7 @@ static YR_MEMORY_BLOCK* _yr_get_next_block(YR_MEMORY_BLOCK_ITERATOR* iterator)
   YR_DEBUG_FPRINTF(
       2,
       stderr,
-      "+ %s() {} = %p // test iterator; single memory block, non-blocking\n",
+      "- %s() {} = %p // test iterator; single memory block, non-blocking\n",
       __FUNCTION__,
       result);
 
@@ -586,7 +601,7 @@ static uint64_t _yr_get_file_size(YR_MEMORY_BLOCK_ITERATOR* iterator)
   YR_DEBUG_FPRINTF(
       2,
       stderr,
-      "+ %s() {} = %lu\n",
+      "- %s() {} = %lu\n",
       __FUNCTION__,
       file_size);
 

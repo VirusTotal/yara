@@ -39,7 +39,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 static void test_boolean_operators()
 {
-  YR_DEBUG_FPRINTF(1, stderr, "+ %s() {}\n", __FUNCTION__);
+  YR_DEBUG_FPRINTF(1, stderr, "+ %s() {\n", __FUNCTION__);
 
   assert_true_rule("rule test { condition: true }", NULL);
 
@@ -54,11 +54,13 @@ static void test_boolean_operators()
   assert_false_rule("rule test { condition: true and false }", NULL);
 
   assert_false_rule("rule test { condition: false or false }", NULL);
+
+  YR_DEBUG_FPRINTF(1, stderr, "} // %s()\n", __FUNCTION__);
 }
 
 static void test_comparison_operators()
 {
-  YR_DEBUG_FPRINTF(1, stderr, "+ %s() {}\n", __FUNCTION__);
+  YR_DEBUG_FPRINTF(1, stderr, "+ %s() {\n", __FUNCTION__);
 
   assert_true_rule("rule test { condition: 2 > 1 }", NULL);
 
@@ -127,11 +129,13 @@ static void test_comparison_operators()
   assert_false_rule("rule test { condition: \"abc\" > \"abc\"}", NULL);
 
   assert_false_rule("rule test { condition: \"abc\" < \"abc\"}", NULL);
+
+  YR_DEBUG_FPRINTF(1, stderr, "} // %s()\n", __FUNCTION__);
 }
 
 static void test_arithmetic_operators()
 {
-  YR_DEBUG_FPRINTF(1, stderr, "+ %s() {}\n", __FUNCTION__);
+  YR_DEBUG_FPRINTF(1, stderr, "+ %s() {\n", __FUNCTION__);
 
   assert_true_rule(
       "rule test { condition: (1 + 1) * 2 == (9 - 1) \\ 2 }", NULL);
@@ -235,11 +239,13 @@ static void test_arithmetic_operators()
   assert_error(
       "rule test { condition: -4611686018427387904 * -2 }",
       ERROR_INTEGER_OVERFLOW);
+
+  YR_DEBUG_FPRINTF(1, stderr, "} // %s()\n", __FUNCTION__);
 }
 
 static void test_bitwise_operators()
 {
-  YR_DEBUG_FPRINTF(1, stderr, "+ %s() {}\n", __FUNCTION__);
+  YR_DEBUG_FPRINTF(1, stderr, "+ %s() {\n", __FUNCTION__);
 
   assert_true_rule("rule test { condition: 0x55 | 0xAA == 0xFF }", NULL);
 
@@ -267,11 +273,13 @@ static void test_bitwise_operators()
       "rule test { condition: ~0xAA ^ 0x5A & 0xFF == 0x0F }", NULL);
 
   assert_false_rule("rule test { condition: 1 | 3 ^ 3 == (1 | 3) ^ 3}", NULL);
+
+  YR_DEBUG_FPRINTF(1, stderr, "} // %s()\n", __FUNCTION__);
 }
 
 static void test_string_operators()
 {
-  YR_DEBUG_FPRINTF(1, stderr, "+ %s() {}\n", __FUNCTION__);
+  YR_DEBUG_FPRINTF(1, stderr, "+ %s() {\n", __FUNCTION__);
 
   assert_true_rule(
       "rule test { condition: \"foobarbaz\" contains \"bar\" }", NULL);
@@ -331,11 +339,13 @@ static void test_string_operators()
 
   assert_false_rule(
       "rule test { condition: \"foobarbaz\" endswith \"ba\" }", NULL);
+
+  YR_DEBUG_FPRINTF(1, stderr, "} // %s()\n", __FUNCTION__);
 }
 
 static void test_syntax()
 {
-  YR_DEBUG_FPRINTF(1, stderr, "+ %s() {}\n", __FUNCTION__);
+  YR_DEBUG_FPRINTF(1, stderr, "+ %s() {\n", __FUNCTION__);
 
   assert_error(
       "rule test { strings: $a = \"a\" $a = \"a\" condition: all of them }",
@@ -363,20 +373,24 @@ static void test_syntax()
 
   // Test case for issue #1295
   assert_error("rule test rule test", ERROR_DUPLICATED_IDENTIFIER);
+
+  YR_DEBUG_FPRINTF(1, stderr, "} // %s()\n", __FUNCTION__);
 }
 
 static void test_anonymous_strings()
 {
-  YR_DEBUG_FPRINTF(1, stderr, "+ %s() {}\n", __FUNCTION__);
+  YR_DEBUG_FPRINTF(1, stderr, "+ %s() {\n", __FUNCTION__);
 
   assert_true_rule(
       "rule test { strings: $ = \"a\" $ = \"b\" condition: all of them }",
       "ab");
+
+  YR_DEBUG_FPRINTF(1, stderr, "} // %s()\n", __FUNCTION__);
 }
 
 static void test_strings()
 {
-  YR_DEBUG_FPRINTF(1, stderr, "+ %s() {}\n", __FUNCTION__);
+  YR_DEBUG_FPRINTF(1, stderr, "+ %s() {\n", __FUNCTION__);
 
   char* str = TEXT_1024_BYTES "---- abc ---- xyz";
   uint8_t blob[] = TEXT_1024_BYTES "---- a\0b\0c\0 -\0-\0-\0-\0x\0y\0z\0";
@@ -984,11 +998,13 @@ static void test_strings()
           !a[3] == 25\n\
       }",
       "tests/data/base64");
+
+  YR_DEBUG_FPRINTF(1, stderr, "} // %s()\n", __FUNCTION__);
 }
 
 static void test_wildcard_strings()
 {
-  YR_DEBUG_FPRINTF(1, stderr, "+ %s() {}\n", __FUNCTION__);
+  YR_DEBUG_FPRINTF(1, stderr, "+ %s() {\n", __FUNCTION__);
 
   assert_true_rule_blob(
       "rule test {\n\
@@ -1001,11 +1017,13 @@ static void test_wildcard_strings()
       TEXT_1024_BYTES "---- abc ---- A\x00"
                       "B\x00"
                       "C\x00 ---- xyz");
+
+  YR_DEBUG_FPRINTF(1, stderr, "} // %s()\n", __FUNCTION__);
 }
 
 static void test_hex_strings()
 {
-  YR_DEBUG_FPRINTF(1, stderr, "+ %s() {}\n", __FUNCTION__);
+  YR_DEBUG_FPRINTF(1, stderr, "+ %s() {\n", __FUNCTION__);
 
   assert_true_rule_blob(
       "rule test { \
@@ -1230,11 +1248,13 @@ static void test_hex_strings()
       ERROR_INVALID_HEX_STRING);
 
   /* TODO: tests.py:551 ff. */
+
+  YR_DEBUG_FPRINTF(1, stderr, "} // %s()\n", __FUNCTION__);
 }
 
 static void test_count()
 {
-  YR_DEBUG_FPRINTF(1, stderr, "+ %s() {}\n", __FUNCTION__);
+  YR_DEBUG_FPRINTF(1, stderr, "+ %s() {\n", __FUNCTION__);
 
   assert_true_rule(
       "rule test { strings: $a = \"ssi\" condition: #a == 2 }",
@@ -1243,11 +1263,13 @@ static void test_count()
   assert_true_rule(
       "rule test { strings: $a = \"ssi\" private condition: #a == 2 }",
       TEXT_1024_BYTES "mississippi");
+
+  YR_DEBUG_FPRINTF(1, stderr, "} // %s()\n", __FUNCTION__);
 }
 
 static void test_at()
 {
-  YR_DEBUG_FPRINTF(1, stderr, "+ %s() {}\n", __FUNCTION__);
+  YR_DEBUG_FPRINTF(1, stderr, "+ %s() {\n", __FUNCTION__);
 
   assert_true_rule(
       "rule test { \
@@ -1272,11 +1294,13 @@ static void test_at()
         strings: $a = { 00 00 00 00 ?? 74 65 78 74 } \
         condition: $a at 308}",
       PE32_FILE);
+
+  YR_DEBUG_FPRINTF(1, stderr, "} // %s()\n", __FUNCTION__);
 }
 
 static void test_in()
 {
-  YR_DEBUG_FPRINTF(1, stderr, "+ %s() {}\n", __FUNCTION__);
+  YR_DEBUG_FPRINTF(1, stderr, "+ %s() {\n", __FUNCTION__);
 
   assert_true_rule_blob(
       "rule test { \
@@ -1289,11 +1313,13 @@ static void test_in()
         strings: $a = { 6a 2a 58 c3 } private \
         condition: $a in (entrypoint .. entrypoint + 1) }",
       PE32_FILE);
+
+  YR_DEBUG_FPRINTF(1, stderr, "} // %s()\n", __FUNCTION__);
 }
 
 static void test_offset()
 {
-  YR_DEBUG_FPRINTF(1, stderr, "+ %s() {}\n", __FUNCTION__);
+  YR_DEBUG_FPRINTF(1, stderr, "+ %s() {\n", __FUNCTION__);
 
   assert_true_rule(
       "rule test { strings: $a = \"ssi\" condition: @a == (1024+2) }",
@@ -1310,11 +1336,13 @@ static void test_offset()
   assert_true_rule(
       "rule test { strings: $a = \"ssi\" condition: @a[2] == (1024+5) }",
       TEXT_1024_BYTES "mississippi");
+
+  YR_DEBUG_FPRINTF(1, stderr, "} // %s()\n", __FUNCTION__);
 }
 
 static void test_length()
 {
-  YR_DEBUG_FPRINTF(1, stderr, "+ %s() {}\n", __FUNCTION__);
+  YR_DEBUG_FPRINTF(1, stderr, "+ %s() {\n", __FUNCTION__);
 
   assert_true_rule(
       "rule test { strings: $a = /m.*?ssi/ condition: !a == 5 }",
@@ -1360,11 +1388,13 @@ static void test_length()
       "rule test { strings: $a = { 6D 69 73 73 [-] 70 69 } condition: !a == "
       "11}",
       TEXT_1024_BYTES "mississippi");
+
+  YR_DEBUG_FPRINTF(1, stderr, "} // %s()\n", __FUNCTION__);
 }
 
 static void test_of()
 {
-  YR_DEBUG_FPRINTF(1, stderr, "+ %s() {}\n", __FUNCTION__);
+  YR_DEBUG_FPRINTF(1, stderr, "+ %s() {\n", __FUNCTION__);
 
   assert_true_rule(
       "rule test { strings: $a = \"ssi\" $b = \"mis\" $c = \"oops\" "
@@ -1411,11 +1441,13 @@ static void test_of()
   assert_error("rule test { condition: all of ($a*) }", ERROR_UNDEFINED_STRING);
 
   assert_error("rule test { condition: all of them }", ERROR_UNDEFINED_STRING);
+
+  YR_DEBUG_FPRINTF(1, stderr, "} // %s()\n", __FUNCTION__);
 }
 
 void test_for()
 {
-  YR_DEBUG_FPRINTF(1, stderr, "+ %s() {}\n", __FUNCTION__);
+  YR_DEBUG_FPRINTF(1, stderr, "+ %s() {\n", __FUNCTION__);
 
   assert_true_rule(
       "rule test { \
@@ -1663,11 +1695,13 @@ void test_for()
         ) \
       }",
       NULL);
+
+  YR_DEBUG_FPRINTF(1, stderr, "} // %s()\n", __FUNCTION__);
 }
 
 void test_re()
 {
-  YR_DEBUG_FPRINTF(1, stderr, "+ %s() {}\n", __FUNCTION__);
+  YR_DEBUG_FPRINTF(1, stderr, "+ %s() {\n", __FUNCTION__);
 
   assert_true_rule(
       "rule test { strings: $a = /ssi/ condition: $a }",
@@ -2128,11 +2162,13 @@ void test_re()
   assert_true_rule_blob(
       "rule test { strings: $a =/abc([^\"\\\\])*\"/ nocase condition: $a }",
       TEXT_1024_BYTES "abc\xE0\x22");
+
+  YR_DEBUG_FPRINTF(1, stderr, "} // %s()\n", __FUNCTION__);
 }
 
 static void test_entrypoint()
 {
-  YR_DEBUG_FPRINTF(1, stderr, "+ %s() {}\n", __FUNCTION__);
+  YR_DEBUG_FPRINTF(1, stderr, "+ %s() {\n", __FUNCTION__);
 
   assert_true_rule_blob(
       "rule test { \
@@ -2153,11 +2189,13 @@ static void test_entrypoint()
       ELF64_FILE);
 
   assert_false_rule("rule test { condition: entrypoint >= 0 }", NULL);
+
+  YR_DEBUG_FPRINTF(1, stderr, "} // %s()\n", __FUNCTION__);
 }
 
 static void test_filesize()
 {
-  YR_DEBUG_FPRINTF(1, stderr, "+ %s() {}\n", __FUNCTION__);
+  YR_DEBUG_FPRINTF(1, stderr, "+ %s() {\n", __FUNCTION__);
 
   char rule[80];
 
@@ -2168,11 +2206,13 @@ static void test_filesize()
       sizeof(PE32_FILE));
 
   assert_true_rule_blob(rule, PE32_FILE);
+
+  YR_DEBUG_FPRINTF(1, stderr, "} // %s()\n", __FUNCTION__);
 }
 
 static void test_comments()
 {
-  YR_DEBUG_FPRINTF(1, stderr, "+ %s() {}\n", __FUNCTION__);
+  YR_DEBUG_FPRINTF(1, stderr, "+ %s() {\n", __FUNCTION__);
 
   assert_true_rule(
       "rule test {\n\
@@ -2224,11 +2264,13 @@ static void test_comments()
         strings: $a = { /*Some*/ 31 /*interleaved*/ [-] /*comments*/ 38 39 } \
         condition: !a == 9 }",
       "1234567890" TEXT_1024_BYTES);
+
+  YR_DEBUG_FPRINTF(1, stderr, "} // %s()\n", __FUNCTION__);
 }
 
 static void test_matches_operator()
 {
-  YR_DEBUG_FPRINTF(1, stderr, "+ %s() {}\n", __FUNCTION__);
+  YR_DEBUG_FPRINTF(1, stderr, "+ %s() {\n", __FUNCTION__);
 
   assert_true_rule("rule test { condition: \"foo\" matches /foo/ }", NULL);
 
@@ -2251,11 +2293,13 @@ static void test_matches_operator()
 
   assert_false_rule(
       "rule test { condition: \"foo\\nbar\" matches /foo.*bar/ }", NULL);
+
+  YR_DEBUG_FPRINTF(1, stderr, "} // %s()\n", __FUNCTION__);
 }
 
 static void test_global_rules()
 {
-  YR_DEBUG_FPRINTF(1, stderr, "+ %s() {}\n", __FUNCTION__);
+  YR_DEBUG_FPRINTF(1, stderr, "+ %s() {\n", __FUNCTION__);
 
   assert_true_rule(
       "global private rule global_rule { \
@@ -2276,11 +2320,13 @@ static void test_global_rules()
         condition: true \
       }",
       NULL);
+
+  YR_DEBUG_FPRINTF(1, stderr, "} // %s()\n", __FUNCTION__);
 }
 
 static void test_modules()
 {
-  YR_DEBUG_FPRINTF(1, stderr, "+ %s() {}\n", __FUNCTION__);
+  YR_DEBUG_FPRINTF(1, stderr, "+ %s() {\n", __FUNCTION__);
 
   assert_true_rule(
       "import \"tests\" \
@@ -2467,22 +2513,26 @@ static void test_modules()
   assert_error("import \"\\x00\"", ERROR_INVALID_MODULE_NAME);
 
   assert_error("import \"\"", ERROR_INVALID_MODULE_NAME);
+
+  YR_DEBUG_FPRINTF(1, stderr, "} // %s()\n", __FUNCTION__);
 }
 
 static void test_time_module()
 {
-  YR_DEBUG_FPRINTF(1, stderr, "+ %s() {}\n", __FUNCTION__);
+  YR_DEBUG_FPRINTF(1, stderr, "+ %s() {\n", __FUNCTION__);
 
   assert_true_rule(
       "import \"time\" \
         rule test { condition: time.now() > 0 }",
       NULL);
+
+  YR_DEBUG_FPRINTF(1, stderr, "} // %s()\n", __FUNCTION__);
 }
 
 #if defined(HASH_MODULE)
 static void test_hash_module()
 {
-  YR_DEBUG_FPRINTF(1, stderr, "+ %s() {}\n", __FUNCTION__);
+  YR_DEBUG_FPRINTF(1, stderr, "+ %s() {\n", __FUNCTION__);
 
   uint8_t blob[] = {
       0x61, 0x62, 0x63, 0x64, 0x65};  // abcde without trailing zero
@@ -2582,12 +2632,14 @@ static void test_hash_module()
           hash.crc32(\"TEST STRING\") == 0x51f9be31 \
       }",
       multi_block_blob);
+
+  YR_DEBUG_FPRINTF(1, stderr, "} // %s()\n", __FUNCTION__);
 }
 #endif
 
 void test_integer_functions()
 {
-  YR_DEBUG_FPRINTF(1, stderr, "+ %s() {}\n", __FUNCTION__);
+  YR_DEBUG_FPRINTF(1, stderr, "+ %s() {\n", __FUNCTION__);
 
   assert_true_rule(
       "rule test { condition: uint8(1024) == 0xAA}",
@@ -2612,22 +2664,26 @@ void test_integer_functions()
   assert_true_rule(
       "rule test { condition: uint32be(1024) == 0xAABBCCDD}",
       TEXT_1024_BYTES "\xaa\xbb\xcc\xdd");
+
+  YR_DEBUG_FPRINTF(1, stderr, "} // %s()\n", __FUNCTION__);
 }
 
 void test_include_files()
 {
-  YR_DEBUG_FPRINTF(1, stderr, "+ %s() {}\n", __FUNCTION__);
+  YR_DEBUG_FPRINTF(1, stderr, "+ %s() {\n", __FUNCTION__);
 
   assert_true_rule(
       "include \"tests/data/baz.yar\" rule t { condition: baz }", NULL);
 
   assert_true_rule(
       "include \"tests/data/foo.yar\" rule t { condition: foo }", NULL);
+
+  YR_DEBUG_FPRINTF(1, stderr, "} // %s()\n", __FUNCTION__);
 }
 
 void test_tags()
 {
-  YR_DEBUG_FPRINTF(1, stderr, "+ %s() {}\n", __FUNCTION__);
+  YR_DEBUG_FPRINTF(1, stderr, "+ %s() {\n", __FUNCTION__);
 
   assert_true_rule("rule test : tag1 { condition: true}", NULL);
 
@@ -2636,11 +2692,13 @@ void test_tags()
   assert_error(
       "rule test : tag1 tag1 { condition: true}",
       ERROR_DUPLICATED_TAG_IDENTIFIER);
+
+  YR_DEBUG_FPRINTF(1, stderr, "} // %s()\n", __FUNCTION__);
 }
 
 void test_process_scan()
 {
-  YR_DEBUG_FPRINTF(1, stderr, "+ %s() {}\n", __FUNCTION__);
+  YR_DEBUG_FPRINTF(1, stderr, "+ %s() {\n", __FUNCTION__);
 
   int pid = fork();
   int status = 0;
@@ -2732,11 +2790,13 @@ void test_process_scan()
     fprintf(stderr, "yr_rules_scan_proc: Got unexpected error %d\n", rc1);
     exit(EXIT_FAILURE);
   }
+
+  YR_DEBUG_FPRINTF(1, stderr, "} // %s()\n", __FUNCTION__);
 }
 
 void test_performance_warnings()
 {
-  YR_DEBUG_FPRINTF(1, stderr, "+ %s() {}\n", __FUNCTION__);
+  YR_DEBUG_FPRINTF(1, stderr, "+ %s() {\n", __FUNCTION__);
 
   assert_warning("rule test { \
         strings: $a = { 01 } \
@@ -2862,6 +2922,8 @@ void test_performance_warnings()
   assert_warning("rule test { \
         strings: $a = /abcd.{10,}efgh/ \
         condition: $a }");
+
+  YR_DEBUG_FPRINTF(1, stderr, "} // %s()\n", __FUNCTION__);
 }
 
 int main(int argc, char** argv)
