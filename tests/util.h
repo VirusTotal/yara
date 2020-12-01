@@ -54,10 +54,6 @@ extern uint64_t yr_test_mem_block_size;
 // previous memory block to include in the current memory block.
 extern uint64_t yr_test_mem_block_size_overlap;
 
-// Decrement and if yr_test_mem_block_not_ready_if_zero is zero, pretend ERROR_BLOCK_NOT_READY.
-extern int64_t yr_test_mem_block_not_ready_if_zero;
-extern int64_t yr_test_mem_block_not_ready_if_zero_init_value;
-
 // Counts calls to 'get first / next block' function for testing purposes.
 extern uint64_t yr_test_count_get_block;
 
@@ -68,7 +64,20 @@ struct YR_TEST_ITERATOR_CTX
 {
   const uint8_t* buffer;
   size_t buffer_size;
+
   YR_MEMORY_BLOCK current_block;
+
+  // Indicates the frequency in which the iterator returns ERROR_BLOCK_NOT_READY
+  // errors. For example, if the frequency is 2, the iterator will return an
+  // ERROR_BLOCK_NOT_READY every two blocks succesfully returned. If the value
+  // is 1, it will return an ERROR_BLOCK_NOT_READY after every block that was
+  // returned succesfully. With a value of 0 the iterator won't ever return
+  // ERROR_BLOCK_NOT_READY.
+  int block_not_ready_frequency;
+
+  // Number of blocks that has been returned successfully so far. When this
+  // reaches block_not_ready_frequency an ERROR_BLOCK_NOT_READY is returned.
+  int blocks_returned_successfully;
 };
 
 

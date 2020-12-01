@@ -58,13 +58,11 @@ static void test_parallel_triple_scan(
       expected_scan_complete_loops_1,
       expected_scan_complete_loops_2);
 
-  int scan_complete_loops[PARALLEL_SCANS];
-  char* text[PARALLEL_SCANS];
-
   YR_SCANNER* scanner[PARALLEL_SCANS];
 
-  int mem_block_not_ready_if_zero[PARALLEL_SCANS];
+  char* text[PARALLEL_SCANS];
   int scan_not_complete[PARALLEL_SCANS];
+  int scan_complete_loops[PARALLEL_SCANS];
 
   YR_MEMORY_BLOCK_ITERATOR iterator[PARALLEL_SCANS];
   YR_TEST_ITERATOR_CTX iterator_ctx[PARALLEL_SCANS];
@@ -93,9 +91,6 @@ static void test_parallel_triple_scan(
 
   for (int i = 0; i < PARALLEL_SCANS; i++)
   {
-    mem_block_not_ready_if_zero[i] =
-        yr_test_mem_block_not_ready_if_zero_init_value;
-
     scan_not_complete[i] = 1;
     scan_complete_loops[i] = 0;
 
@@ -111,6 +106,8 @@ static void test_parallel_triple_scan(
         &iterator_ctx[i],
         (const uint8_t*) text[i],
         strlen(text[i]));
+
+    iterator_ctx[i].block_not_ready_frequency = 1;
   }
 
   int total_scans_not_complete;
@@ -137,21 +134,14 @@ static void test_parallel_triple_scan(
       {
         total_scans_not_complete++;
 
-        yr_test_mem_block_not_ready_if_zero = mem_block_not_ready_if_zero[i];
-
         int result = yr_scanner_scan_mem_blocks(scanner[i], &iterator[i]);
 
-        if (ERROR_BLOCK_NOT_READY == result)
+        if (result != ERROR_BLOCK_NOT_READY)
         {
-          // Come here due to test iterator returning ERROR_BLOCK_NOT_READY.
-          mem_block_not_ready_if_zero[i] = yr_test_mem_block_not_ready_if_zero;
-          continue;
+          assert_true_expr(ERROR_SUCCESS == result);
+          scan_not_complete[i] = 0;
+          scan_complete_loops[i] = loop;
         }
-
-        assert_true_expr(ERROR_SUCCESS == result);
-
-        scan_not_complete[i] = 0;
-        scan_complete_loops[i] = loop;
       }
     }
 
@@ -256,9 +246,6 @@ static void test_parallel_strings()
   // 1 of text string 3.
   // - Scan block 2 of text string 3, scan block 2 of text string 2, scan block
   // 2 of text string 1.
-
-  // get next block, but block block after :-)
-  yr_test_mem_block_not_ready_if_zero_init_value = 2;
 
   int expected_scan_complete_loops_1 = 1;
   int expected_scan_complete_loops_2 = 2;

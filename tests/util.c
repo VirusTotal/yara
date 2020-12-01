@@ -50,8 +50,6 @@ int warnings;
 
 uint64_t yr_test_mem_block_size = 0;
 uint64_t yr_test_mem_block_size_overlap = 0;
-int64_t yr_test_mem_block_not_ready_if_zero = -1;
-int64_t yr_test_mem_block_not_ready_if_zero_init_value = -1;
 uint64_t yr_test_count_get_block = 0;
 
 static uint64_t _yr_test_single_block_file_size(
@@ -129,21 +127,21 @@ static YR_MEMORY_BLOCK* _yr_test_multi_block_get_next_block(
   uint64_t overlap;
 
   yr_test_count_get_block++;
-  yr_test_mem_block_not_ready_if_zero--;
 
   iterator->last_error = ERROR_SUCCESS;
 
-  if (yr_test_mem_block_not_ready_if_zero == 0)
+  if (context->block_not_ready_frequency > 0 &&
+      context->block_not_ready_frequency == context->blocks_returned_successfully)
   {
     overlap = 0;
-    result = NULL;
-    yr_test_mem_block_not_ready_if_zero =
-        yr_test_mem_block_not_ready_if_zero_init_value;
+    context->blocks_returned_successfully = 0;
     iterator->last_error = ERROR_BLOCK_NOT_READY;
+    result = NULL;
   }
   else if (0 == context->current_block.size)
   {
     overlap = 0;
+    context->blocks_returned_successfully++;
     context->current_block.size = (context->buffer_size <
                                    yr_test_mem_block_size)
                                       ? context->buffer_size
@@ -153,6 +151,7 @@ static YR_MEMORY_BLOCK* _yr_test_multi_block_get_next_block(
   else
   {
     overlap = yr_test_mem_block_size_overlap;
+    context->blocks_returned_successfully++;
     context->current_block.base += (0 == context->current_block.base) ? 0
                                                                       : overlap;
     context->current_block.base += (context->current_block.base <
@@ -171,12 +170,6 @@ static YR_MEMORY_BLOCK* _yr_test_multi_block_get_next_block(
             : yr_test_mem_block_size + overlap;
 
     context->current_block.base -= overlap;
-
-    if (result == NULL)
-    {
-      // never report block not ready because end of blocks
-      yr_test_mem_block_not_ready_if_zero = -1;
-    }
   }
 
   YR_DEBUG_FPRINTF(
@@ -251,6 +244,8 @@ void init_iterator(
   ctx->current_block.base = 0;
   ctx->current_block.size = 0;
   ctx->current_block.context = ctx;
+  ctx->block_not_ready_frequency = 0;
+  ctx->blocks_returned_successfully = 0;
 
   iterator->context = ctx;
   iterator->last_error = ERROR_SUCCESS;
