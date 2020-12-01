@@ -1814,9 +1814,7 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
 
   YR_DEBUG_FPRINTF(2, stderr, "} = %d AKA %s // %s()\n",
       result,
-      ERROR_SUCCESS             == result ? "ERROR_SUCCESS"             :
-      ERROR_INSUFFICIENT_MEMORY == result ? "ERROR_INSUFFICIENT_MEMORY" :
-      ERROR_BLOCK_NOT_READY     == result ? "ERROR_BLOCK_NOT_READY"     : "ERROR_?",
+      yr_debug_error_as_string(result),
       __FUNCTION__);
 
   return result;

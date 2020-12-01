@@ -229,12 +229,10 @@ _exit:
   YR_DEBUG_FPRINTF(
       2,
       stderr,
+      ""
       "} = %d AKA %s // %s()\n",
       result,
-      ERROR_SUCCESS == result
-          ? "ERROR_SUCCESS"
-          : ERROR_BLOCK_NOT_READY == result ? "ERROR_BLOCK_NOT_READY"
-                                            : "ERROR_?",
+      yr_debug_error_as_string(result),
       __FUNCTION__);
 
   return result;
@@ -319,10 +317,7 @@ YR_API int yr_rules_scan_proc(
       stderr,
       "} = %d AKA %s // %s()\n",
       result,
-      ERROR_SUCCESS == result
-          ? "ERROR_SUCCESS"
-          : ERROR_BLOCK_NOT_READY == result ? "ERROR_BLOCK_NOT_READY"
-                                            : "ERROR_?",
+      yr_debug_error_as_string(result),
       __FUNCTION__);
 
   return result;

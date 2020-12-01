@@ -60,7 +60,6 @@ static void test_parallel_triple_scan(
 
   int scan_complete_loops[PARALLEL_SCANS];
   char* text[PARALLEL_SCANS];
-  size_t len_text[PARALLEL_SCANS];
 
   YR_SCANNER* scanner_instance[PARALLEL_SCANS];
 
@@ -99,7 +98,6 @@ static void test_parallel_triple_scan(
 
     scan_not_complete[i] = 1;
     scan_complete_loops[i] = 0;
-    len_text[i] = strlen(text[i]);
 
     int flags = SCAN_FLAGS_NO_TRYCATCH;
     YR_CALLBACK_FUNC callback = _scan_callback;
@@ -129,11 +127,10 @@ static void test_parallel_triple_scan(
       YR_DEBUG_FPRINTF(
           1,
           stderr,
-          "- loop=%d i=%d strlen(text[i])=%ld callback_ctx[i].matches=%d"
+          "- loop=%d i=%d callback_ctx[i].matches=%d"
           " scan_not_complete[i]=%d // %s()\n",
           loop,
           i,
-          len_text[i],
           callback_ctx[i].matches,
           scan_not_complete[i],
           __FUNCTION__);
@@ -219,6 +216,24 @@ static void test_parallel_triple_scan(
   YR_DEBUG_FPRINTF(1, stderr, "} // %s()\n", __FUNCTION__);
 }
 
+#define X0_TEXT_1024_BYTES__ABC_XYZ__X0_TEXT_1024_BYTES \
+    "---- abc ---- xyz"
+
+#define X0_TEXT_1024_BYTES__ABC_XYZ__X1_TEXT_1024_BYTES \
+    "---- abc ---- xyz" TEXT_1024_BYTES
+
+#define X1_TEXT_1024_BYTES__ABC_XYZ__X0_TEXT_1024_BYTES \
+    TEXT_1024_BYTES "---- abc ---- xyz"
+
+#define X1_TEXT_1024_BYTES__ABC_XYZ__X1_TEXT_1024_BYTES \
+    TEXT_1024_BYTES "---- abc ---- xyz" TEXT_1024_BYTES
+
+#define X2_TEXT_1024_BYTES__ABC_XYZ__X1_TEXT_1024_BYTES \
+    TEXT_1024_BYTES TEXT_1024_BYTES "---- abc ---- xyz" TEXT_1024_BYTES
+
+#define X3_TEXT_1024_BYTES__ABC_XYZ__X1_TEXT_1024_BYTES \
+    TEXT_1024_BYTES TEXT_1024_BYTES TEXT_1024_BYTES "---- abc ---- xyz" TEXT_1024_BYTES
+
 static void test_parallel_strings()
 {
   YR_DEBUG_FPRINTF(1, stderr, "+ %s() {\n", __FUNCTION__);
@@ -256,61 +271,65 @@ static void test_parallel_strings()
   // get next block, but block block after :-)
   yr_test_mem_block_not_ready_if_zero_init_value = 2;
 
-  test_parallel_triple_scan(
-      rules,
-      /* loops: */ 1,
-      1,
-      1,
-      "---- abc ---- xyz",
-      "---- abc ---- xyz",
-      "---- abc ---- xyz");
+  int expected_scan_complete_loops_1 = 1;
+  int expected_scan_complete_loops_2 = 2;
+  int expected_scan_complete_loops_3 = 3;
+  int expected_scan_complete_loops_4 = 4;
+  int expected_scan_complete_loops_5 = 5;
 
   test_parallel_triple_scan(
       rules,
-      /* loops: */ 2,
-      2,
-      2,
-      "---- abc ---- xyz" TEXT_1024_BYTES,
-      "---- abc ---- xyz" TEXT_1024_BYTES,
-      "---- abc ---- xyz" TEXT_1024_BYTES);
+      expected_scan_complete_loops_1,
+      expected_scan_complete_loops_1,
+      expected_scan_complete_loops_1,
+      X0_TEXT_1024_BYTES__ABC_XYZ__X0_TEXT_1024_BYTES,
+      X0_TEXT_1024_BYTES__ABC_XYZ__X0_TEXT_1024_BYTES,
+      X0_TEXT_1024_BYTES__ABC_XYZ__X0_TEXT_1024_BYTES);
 
   test_parallel_triple_scan(
       rules,
-      /* loops: */ 2,
-      2,
-      2,
-      TEXT_1024_BYTES "---- abc ---- xyz",
-      TEXT_1024_BYTES "---- abc ---- xyz",
-      TEXT_1024_BYTES "---- abc ---- xyz");
+      expected_scan_complete_loops_2,
+      expected_scan_complete_loops_2,
+      expected_scan_complete_loops_2,
+      X0_TEXT_1024_BYTES__ABC_XYZ__X1_TEXT_1024_BYTES,
+      X0_TEXT_1024_BYTES__ABC_XYZ__X1_TEXT_1024_BYTES,
+      X0_TEXT_1024_BYTES__ABC_XYZ__X1_TEXT_1024_BYTES);
 
   test_parallel_triple_scan(
       rules,
-      /* loops: */ 3,
-      3,
-      3,
-      TEXT_1024_BYTES "---- abc ---- xyz" TEXT_1024_BYTES,
-      TEXT_1024_BYTES "---- abc ---- xyz" TEXT_1024_BYTES,
-      TEXT_1024_BYTES "---- abc ---- xyz" TEXT_1024_BYTES);
+      expected_scan_complete_loops_2,
+      expected_scan_complete_loops_2,
+      expected_scan_complete_loops_2,
+      X1_TEXT_1024_BYTES__ABC_XYZ__X0_TEXT_1024_BYTES,
+      X1_TEXT_1024_BYTES__ABC_XYZ__X0_TEXT_1024_BYTES,
+      X1_TEXT_1024_BYTES__ABC_XYZ__X0_TEXT_1024_BYTES);
 
   test_parallel_triple_scan(
       rules,
-      /* loops: */ 3,
-      4,
-      5,
-      TEXT_1024_BYTES "---- abc ---- xyz" TEXT_1024_BYTES,
-      TEXT_1024_BYTES TEXT_1024_BYTES "---- abc ---- xyz" TEXT_1024_BYTES,
-      TEXT_1024_BYTES TEXT_1024_BYTES TEXT_1024_BYTES
-      "---- abc ---- xyz" TEXT_1024_BYTES);
+      expected_scan_complete_loops_3,
+      expected_scan_complete_loops_3,
+      expected_scan_complete_loops_3,
+      X1_TEXT_1024_BYTES__ABC_XYZ__X1_TEXT_1024_BYTES,
+      X1_TEXT_1024_BYTES__ABC_XYZ__X1_TEXT_1024_BYTES,
+      X1_TEXT_1024_BYTES__ABC_XYZ__X1_TEXT_1024_BYTES);
 
   test_parallel_triple_scan(
       rules,
-      /* loops: */ 5,
-      4,
-      3,
-      TEXT_1024_BYTES TEXT_1024_BYTES TEXT_1024_BYTES
-      "---- abc ---- xyz" TEXT_1024_BYTES,
-      TEXT_1024_BYTES TEXT_1024_BYTES "---- abc ---- xyz" TEXT_1024_BYTES,
-      TEXT_1024_BYTES "---- abc ---- xyz" TEXT_1024_BYTES);
+      expected_scan_complete_loops_3,
+      expected_scan_complete_loops_4,
+      expected_scan_complete_loops_5,
+      X1_TEXT_1024_BYTES__ABC_XYZ__X1_TEXT_1024_BYTES,
+      X2_TEXT_1024_BYTES__ABC_XYZ__X1_TEXT_1024_BYTES,
+      X3_TEXT_1024_BYTES__ABC_XYZ__X1_TEXT_1024_BYTES);
+
+  test_parallel_triple_scan(
+      rules,
+      expected_scan_complete_loops_5,
+      expected_scan_complete_loops_4,
+      expected_scan_complete_loops_3,
+      X3_TEXT_1024_BYTES__ABC_XYZ__X1_TEXT_1024_BYTES,
+      X2_TEXT_1024_BYTES__ABC_XYZ__X1_TEXT_1024_BYTES,
+      X1_TEXT_1024_BYTES__ABC_XYZ__X1_TEXT_1024_BYTES);
 
   yr_rules_destroy(rules);
 

@@ -541,10 +541,7 @@ _exit:
       stderr,
       "} = %d AKA %s // %s()\n",
       result,
-      ERROR_SUCCESS == result
-          ? "ERROR_SUCCESS"
-          : ERROR_BLOCK_NOT_READY == result ? "ERROR_BLOCK_NOT_READY"
-                                            : "ERROR_?",
+      yr_debug_error_as_string(result),
       __FUNCTION__);
 
   return result;
@@ -634,10 +631,7 @@ YR_API int yr_scanner_scan_mem(
       stderr,
       "} = %d AKA %s // %s()\n",
       result,
-      ERROR_SUCCESS == result
-          ? "ERROR_SUCCESS"
-          : ERROR_BLOCK_NOT_READY == result ? "ERROR_BLOCK_NOT_READY"
-                                            : "ERROR_?",
+      yr_debug_error_as_string(result),
       __FUNCTION__);
 
   return result;
