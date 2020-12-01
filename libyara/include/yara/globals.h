@@ -53,6 +53,11 @@ extern uint8_t yr_altercase[256];
 
 extern double yr_debug_get_time_in_seconds(void);
 
+extern char* yr_debug_callback_message_as_string(int message);
+
+extern char* yr_debug_error_as_string(int error);
+
+
 // Default is 0 for production, which means be silent, else verbose.
 extern uint64_t yr_debug_verbosity;
 

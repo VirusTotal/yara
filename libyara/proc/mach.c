@@ -129,6 +129,8 @@ YR_API YR_MEMORY_BLOCK* yr_process_get_next_memory_block(
   vm_address_t address = (vm_address_t) context->current_block.base +
                          context->current_block.size;
 
+  iterator->last_error = ERROR_SUCCESS;
+
   do
   {
     info_count = VM_REGION_BASIC_INFO_COUNT_64;

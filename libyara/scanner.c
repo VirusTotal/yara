@@ -161,6 +161,8 @@ static int _yr_scanner_scan_mem_block(
 
 static void _yr_scanner_clean_matches(YR_SCANNER* scanner)
 {
+  YR_DEBUG_FPRINTF(2, stderr, "+ %s() {} \n", __FUNCTION__);
+
   memset(
       scanner->rule_matches_flags,
       0,
@@ -539,10 +541,7 @@ _exit:
       stderr,
       "} = %d AKA %s // %s()\n",
       result,
-      ERROR_SUCCESS == result
-          ? "ERROR_SUCCESS"
-          : ERROR_BLOCK_NOT_READY == result ? "ERROR_BLOCK_NOT_READY"
-                                            : "ERROR_?",
+      yr_debug_error_as_string(result),
       __FUNCTION__);
 
   return result;
@@ -582,7 +581,16 @@ static YR_MEMORY_BLOCK* _yr_get_next_block(YR_MEMORY_BLOCK_ITERATOR* iterator)
 
 static uint64_t _yr_get_file_size(YR_MEMORY_BLOCK_ITERATOR* iterator)
 {
-  return ((YR_MEMORY_BLOCK*) iterator->context)->size;
+  uint64_t file_size = ((YR_MEMORY_BLOCK*) iterator->context)->size;
+
+  YR_DEBUG_FPRINTF(
+      2,
+      stderr,
+      "+ %s() {} = %lu\n",
+      __FUNCTION__,
+      file_size);
+
+  return file_size;
 }
 
 static const uint8_t* _yr_fetch_block_data(YR_MEMORY_BLOCK* block)
@@ -623,10 +631,7 @@ YR_API int yr_scanner_scan_mem(
       stderr,
       "} = %d AKA %s // %s()\n",
       result,
-      ERROR_SUCCESS == result
-          ? "ERROR_SUCCESS"
-          : ERROR_BLOCK_NOT_READY == result ? "ERROR_BLOCK_NOT_READY"
-                                            : "ERROR_?",
+      yr_debug_error_as_string(result),
       __FUNCTION__);
 
   return result;

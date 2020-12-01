@@ -1273,7 +1273,13 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
 
     case OP_FILESIZE:
       r1.i = context->file_size;
-      YR_DEBUG_FPRINTF(2, stderr, "- case OP_FILESIZE: r1.i=%ld // %s()\n", r1.i, __FUNCTION__);
+      YR_DEBUG_FPRINTF(
+          2,
+          stderr,
+          "- case OP_FILESIZE: r1.i=%ld%s // %s()\n",
+          r1.i,
+          r1.i == YR_UNDEFINED ? " AKA YR_UNDEFINED" : "",
+          __FUNCTION__);
       push(r1);
       break;
 
@@ -1808,9 +1814,7 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
 
   YR_DEBUG_FPRINTF(2, stderr, "} = %d AKA %s // %s()\n",
       result,
-      ERROR_SUCCESS             == result ? "ERROR_SUCCESS"             :
-      ERROR_INSUFFICIENT_MEMORY == result ? "ERROR_INSUFFICIENT_MEMORY" :
-      ERROR_BLOCK_NOT_READY     == result ? "ERROR_BLOCK_NOT_READY"     : "ERROR_?",
+      yr_debug_error_as_string(result),
       __FUNCTION__);
 
   return result;

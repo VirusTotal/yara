@@ -140,6 +140,8 @@ YR_API YR_MEMORY_BLOCK* yr_process_get_next_memory_block(
   proc_info->vm_entry.pve_path = buf;
   proc_info->vm_entry.pve_pathlen = sizeof(buf);
 
+  iterator->last_error = ERROR_SUCCESS;
+
   if (ptrace(PT_VM_ENTRY, proc_info->pid, (char*) (&proc_info->vm_entry), 0) ==
       -1)
   {

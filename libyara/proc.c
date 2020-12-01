@@ -38,18 +38,30 @@ int _yr_process_detach(YR_PROC_ITERATOR_CTX*);
 
 static uint64_t _undefined_file_size(YR_MEMORY_BLOCK_ITERATOR* iterator)
 {
+  YR_DEBUG_FPRINTF(
+      2,
+      stderr,
+      "+ %s() {} = %s\n",
+      __FUNCTION__,
+      "YR_UNDEFINED");
+
   return YR_UNDEFINED;
 }
 
 YR_API int yr_process_open_iterator(int pid, YR_MEMORY_BLOCK_ITERATOR* iterator)
 {
-  YR_DEBUG_FPRINTF(2, stderr, "+ %s(pid=%d) {}\n", __FUNCTION__, pid);
+  YR_DEBUG_FPRINTF(2, stderr, "+ %s(pid=%d) {\n", __FUNCTION__, pid);
+
+  int result = ERROR_INTERNAL_FATAL_ERROR;
 
   YR_PROC_ITERATOR_CTX* context = (YR_PROC_ITERATOR_CTX*) yr_malloc(
       sizeof(YR_PROC_ITERATOR_CTX));
 
   if (context == NULL)
-    return ERROR_INSUFFICIENT_MEMORY;
+  {
+    result = ERROR_INSUFFICIENT_MEMORY;
+    goto _exit;
+  }
 
   iterator->context = context;
   iterator->first = yr_process_get_first_memory_block;
@@ -65,10 +77,16 @@ YR_API int yr_process_open_iterator(int pid, YR_MEMORY_BLOCK_ITERATOR* iterator)
   context->current_block.fetch_data = yr_process_fetch_memory_block_data;
   context->proc_info = NULL;
 
-  FAIL_ON_ERROR_WITH_CLEANUP(
+  GOTO_EXIT_ON_ERROR_WITH_CLEANUP(
       _yr_process_attach(pid, context), yr_free(context));
 
-  return ERROR_SUCCESS;
+  result = ERROR_SUCCESS;
+
+_exit:
+
+  YR_DEBUG_FPRINTF(2, stderr, "} = %d // %s()\n", result, __FUNCTION__);
+
+  return result;
 }
 
 YR_API int yr_process_close_iterator(YR_MEMORY_BLOCK_ITERATOR* iterator)

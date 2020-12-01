@@ -305,12 +305,7 @@ int _yr_test_single_or_multi_block_scan_mem(
       stderr,
       "} = %d AKA %s // %s()\n",
       result,
-      ERROR_SUCCESS == result
-          ? "ERROR_SUCCESS"
-          : ERROR_INSUFFICIENT_MEMORY == result
-                ? "ERROR_INSUFFICIENT_MEMORY"
-                : ERROR_BLOCK_NOT_READY == result ? "ERROR_BLOCK_NOT_READY"
-                                                  : "ERROR_?",
+      yr_debug_error_as_string(result),
       __FUNCTION__);
 
   return result;
@@ -336,6 +331,14 @@ int count(
     void* message_data,
     void* user_data)
 {
+  YR_DEBUG_FPRINTF(
+      2,
+      stderr,
+      "+ %s(message=%d AKA %s) {}\n",
+      __FUNCTION__,
+      message,
+      yr_debug_callback_message_as_string(message));
+
   switch (message)
   {
   case CALLBACK_MSG_RULE_MATCHING:
@@ -434,17 +437,7 @@ int _scan_callback(
       "+ %s(message=%d AKA %s) {}\n",
       __FUNCTION__,
       message,
-      message == CALLBACK_MSG_RULE_MATCHING
-          ? "CALLBACK_MSG_RULE_MATCHING"
-          : message == CALLBACK_MSG_RULE_NOT_MATCHING
-                ? "CALLBACK_MSG_RULE_NOT_MATCHING"
-                : message == CALLBACK_MSG_SCAN_FINISHED
-                      ? "CALLBACK_MSG_SCAN_FINISHED"
-                      : message == CALLBACK_MSG_IMPORT_MODULE
-                            ? "CALLBACK_MSG_IMPORT_MODULE"
-                            : message == CALLBACK_MSG_MODULE_IMPORTED
-                                  ? "CALLBACK_MSG_MODULE_IMPORTED"
-                                  : "CALLBACK_MSG_?");
+      yr_debug_callback_message_as_string(message));
 
   SCAN_CALLBACK_CTX* ctx = (SCAN_CALLBACK_CTX*) user_data;
   YR_MODULE_IMPORT* mi;
@@ -505,21 +498,28 @@ int matches_blob(
 
   if (matches_blob_uses_default_iterator)
   {
-    // Call   yr_rules_scan_mem()                      <- Create & config
-    // scanner, and calls  yr_scanner_scan_mem()                    <- Create
-    // default iterator, and calls  yr_scanner_scan_mem_blocks()             <-
-    // Scan
+    // clang format off
+    //
+    // Call   yr_rules_scan_mem()                      <- Create & config scanner, and
+    // calls  yr_scanner_scan_mem()                    <- Create default iterator, and
+    // calls  yr_scanner_scan_mem_blocks()             <- Scan
+    //
+    // clang format on
 
     scan_result = yr_rules_scan_mem(
         rules, blob, blob_size, flags, callback, user_data, timeout);
   }
   else
   {
+    // clang format off
+    //
     // Call   yr_scanner_create()                      <- Create scanner
     // Call   yr_scanner_set_*()                       <- Config scanner
-    // Call  _yr_test_single_or_multi_block_scan_mem() <- Create test iterator,
-    // and calls  yr_scanner_scan_mem_blocks()             <- Scan Call
-    // yr_scanner_destroy()                     <- Destroy scanner
+    // Call  _yr_test_single_or_multi_block_scan_mem() <- Create test iterator, and
+    // calls  yr_scanner_scan_mem_blocks()             <- Scan
+    // Call   yr_scanner_destroy()                     <- Destroy scanner
+    //
+    // clang format on
 
     YR_SCANNER* scanner;
 
