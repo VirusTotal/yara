@@ -85,7 +85,7 @@ ACX_PTHREAD(
 AC_CHECK_LIB(m, isnan)
 AC_CHECK_LIB(m, log2)
 AS_IF([test "ac_cv_lib_m_isnan" = yes || test "$ac_cv_lib_m_log2" = yes],
-    [PC_REQUIRES_PRIVATE="$PC_REQUIRES_PRIVATE m"])
+    [PC_LIBS_PRIVATE="$PC_LIBS_PRIVATE -lm"])
 AC_CHECK_FUNCS([strlcpy strlcat memmem timegm _mkgmtime clock_gettime])
 AC_CHECK_HEADERS([stdbool.h])
 
