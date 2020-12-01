@@ -569,7 +569,7 @@ static YR_MEMORY_BLOCK* _yr_get_first_block(YR_MEMORY_BLOCK_ITERATOR* iterator)
   YR_DEBUG_FPRINTF(
       2,
       stderr,
-      "- %s() {} = %p // default iterator; single memory block, non-blocking\n",
+      "- %s() {} = %p // default iterator; single memory block, blocking\n",
       __FUNCTION__,
       result);
 
@@ -585,7 +585,7 @@ static YR_MEMORY_BLOCK* _yr_get_next_block(YR_MEMORY_BLOCK_ITERATOR* iterator)
   YR_DEBUG_FPRINTF(
       2,
       stderr,
-      "- %s() {} = %p // test iterator; single memory block, non-blocking\n",
+      "- %s() {} = %p // default iterator; single memory block, blocking\n",
       __FUNCTION__,
       result);
 
@@ -601,7 +601,7 @@ static uint64_t _yr_get_file_size(YR_MEMORY_BLOCK_ITERATOR* iterator)
   YR_DEBUG_FPRINTF(
       2,
       stderr,
-      "- %s() {} = %lu\n",
+      "- %s() {} = %'lu // default iterator; single memory block, blocking\n",
       __FUNCTION__,
       file_size);
 

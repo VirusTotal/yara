@@ -103,7 +103,7 @@ struct SCAN_CALLBACK_CTX {
 };
 
 
-void init_iterator(
+void init_test_iterator(
     YR_MEMORY_BLOCK_ITERATOR* iterator,
     YR_TEST_ITERATOR_CTX* ctx,
     const uint8_t* buffer,
