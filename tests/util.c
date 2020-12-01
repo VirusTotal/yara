@@ -336,6 +336,24 @@ int count(
     void* message_data,
     void* user_data)
 {
+  YR_DEBUG_FPRINTF(
+      2,
+      stderr,
+      "+ %s(message=%d AKA %s) {}\n",
+      __FUNCTION__,
+      message,
+      message == CALLBACK_MSG_RULE_MATCHING
+          ? "CALLBACK_MSG_RULE_MATCHING"
+          : message == CALLBACK_MSG_RULE_NOT_MATCHING
+                ? "CALLBACK_MSG_RULE_NOT_MATCHING"
+                : message == CALLBACK_MSG_SCAN_FINISHED
+                      ? "CALLBACK_MSG_SCAN_FINISHED"
+                      : message == CALLBACK_MSG_IMPORT_MODULE
+                            ? "CALLBACK_MSG_IMPORT_MODULE"
+                            : message == CALLBACK_MSG_MODULE_IMPORTED
+                                  ? "CALLBACK_MSG_MODULE_IMPORTED"
+                                  : "CALLBACK_MSG_?");
+
   switch (message)
   {
   case CALLBACK_MSG_RULE_MATCHING:

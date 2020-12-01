@@ -1273,7 +1273,13 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
 
     case OP_FILESIZE:
       r1.i = context->file_size;
-      YR_DEBUG_FPRINTF(2, stderr, "- case OP_FILESIZE: r1.i=%ld // %s()\n", r1.i, __FUNCTION__);
+      YR_DEBUG_FPRINTF(
+          2,
+          stderr,
+          "- case OP_FILESIZE: r1.i=%ld%s // %s()\n",
+          r1.i,
+          r1.i == YR_UNDEFINED ? " AKA YR_UNDEFINED" : "",
+          __FUNCTION__);
       push(r1);
       break;
 

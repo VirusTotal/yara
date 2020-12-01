@@ -119,6 +119,16 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
       return result;             \
   }
 
+#define GOTO_EXIT_ON_ERROR_WITH_CLEANUP(x, cleanup) \
+  {                                                 \
+    result = (x);                                   \
+    if (result != ERROR_SUCCESS)                    \
+    {                                               \
+      cleanup;                                      \
+      goto _exit;                                   \
+    }                                               \
+  }
+
 #define FAIL_ON_ERROR_WITH_CLEANUP(x, cleanup) \
   {                                            \
     int result = (x);                          \
