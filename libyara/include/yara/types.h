@@ -625,7 +625,7 @@ struct YR_MEMORY_BLOCK
 };
 
 ///////////////////////////////////////////////////////////////////////////////
-// YR_MEMORY_BLOCK_ITERATOR represents an iterator that returns a serie of
+// YR_MEMORY_BLOCK_ITERATOR represents an iterator that returns a series of
 // memory blocks to be scanned by yr_scanner_scan_mem_blocks. The iterator have
 // pointers to three functions: "first", "next" and "file_size". The "first"
 // function is invoked for retrieving the first memory block, followed by calls

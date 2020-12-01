@@ -318,8 +318,8 @@ static void test_parallel_strings()
 // should be prepared to handle that." [1]
 //
 // For testing two or more blocks with synchronous access, see the test-rules.c
-// file. For testing two or more blocks with asynchronous acces [2], this is the
-// right file.
+// file. For testing two or more blocks with asynchronous access [2], this is
+// the right file.
 //
 // [1]
 // https://yara.readthedocs.io/en/stable/writingmodules.html#accessing-the-scanned-data
