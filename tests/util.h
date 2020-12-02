@@ -45,7 +45,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 extern char compile_error[1024];
 extern int warnings;
 
-// Default is 0 for production, which means use 1 block for contiguous memory.
 // For testing, 1024 means split contiguous memory into max 1024 byte blocks.
 // See https://github.com/VirusTotal/yara/issues/1356
 extern uint64_t yr_test_mem_block_size;
