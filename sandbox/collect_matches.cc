@@ -71,7 +71,6 @@ int CollectMatches(
       meta->set_bytes_value(rule_meta->string);
       break;
     }
-    ++rule_meta;
   }
 
   return ERROR_SUCCESS;
