@@ -37,6 +37,159 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // DEX File layout information:
 // https://source.android.com/devices/tech/dalvik/dex-format
 
+define_function(has_method_string)
+{
+  SIZED_STRING* parsed_name;
+  SIZED_STRING* method_name = sized_string_argument(1);
+  YR_OBJECT* module = module();
+  int64_t number_of_methods = get_integer(module, "number_of_methods");
+
+  if (number_of_methods == YR_UNDEFINED)
+    return_integer(YR_UNDEFINED);
+
+  for (int i = 0; i < number_of_methods; i++)
+  {
+    parsed_name = get_string(module, "method[%i].name", i);
+    if (parsed_name != NULL &&
+        strcmp(parsed_name->c_string, method_name->c_string) == 0)
+    {
+      return_integer(1);
+    }
+  }
+
+  return_integer(0);
+}
+
+define_function(has_method_and_class_string)
+{
+  SIZED_STRING* parsed_class;
+  SIZED_STRING* parsed_name;
+  SIZED_STRING* class_name = sized_string_argument(1);
+  SIZED_STRING* method_name = sized_string_argument(2);
+  YR_OBJECT* module = module();
+  int64_t number_of_methods = get_integer(module, "number_of_methods");
+
+  if (number_of_methods == YR_UNDEFINED)
+    return_integer(YR_UNDEFINED);
+
+  for (int i = 0; i < number_of_methods; i++)
+  {
+    parsed_class = get_string(module, "method[%i].class_name", i);
+    if (parsed_class != NULL &&
+        strcmp(parsed_class->c_string, class_name->c_string) != 0)
+    {
+      continue;
+    }
+
+    parsed_name = get_string(module, "method[%i].name", i);
+    if (parsed_name != NULL &&
+        strcmp(parsed_name->c_string, method_name->c_string) == 0)
+    {
+      return_integer(1);
+    }
+  }
+
+  return_integer(0);
+}
+
+define_function(has_method_regexp)
+{
+  SIZED_STRING* parsed_name;
+  RE* regex = regexp_argument(1);
+  YR_OBJECT* module = module();
+  int64_t number_of_methods = get_integer(module, "number_of_methods");
+
+  if (number_of_methods == YR_UNDEFINED)
+    return_integer(YR_UNDEFINED);
+
+  for (int i = 0; i < number_of_methods; i++)
+  {
+    parsed_name = get_string(module, "method[%i].name", i);
+    if (parsed_name != NULL &&
+        yr_re_match(scan_context(), regex, parsed_name->c_string) != -1)
+    {
+      return_integer(1);
+    }
+  }
+  return_integer(0);
+}
+
+define_function(has_method_and_class_regexp)
+{
+  SIZED_STRING* parsed_class;
+  SIZED_STRING* parsed_name;
+  RE* class_regex = regexp_argument(1);
+  RE* name_regex = regexp_argument(2);
+  YR_OBJECT* module = module();
+  int64_t number_of_methods = get_integer(module, "number_of_methods");
+
+  if (number_of_methods == YR_UNDEFINED)
+    return_integer(YR_UNDEFINED);
+
+  for (int i = 0; i < number_of_methods; i++)
+  {
+    parsed_class = get_string(module, "method[%i].class_name", i);
+    if (parsed_class != NULL &&
+        yr_re_match(scan_context(), class_regex, parsed_class->c_string) == -1)
+    {
+      continue;
+    }
+
+    parsed_name = get_string(module, "method[%i].name", i);
+    if (parsed_name != NULL &&
+        yr_re_match(scan_context(), name_regex, parsed_name->c_string) != -1)
+    {
+      return_integer(1);
+    }
+  }
+  return_integer(0);
+}
+
+define_function(has_class_string)
+{
+  SIZED_STRING* parsed_class;
+  SIZED_STRING* class_name = sized_string_argument(1);
+  YR_OBJECT* module = module();
+  int64_t number_of_methods = get_integer(module, "number_of_methods");
+
+  if (number_of_methods == YR_UNDEFINED)
+    return_integer(YR_UNDEFINED);
+
+  for (int i = 0; i < number_of_methods; i++)
+  {
+    parsed_class = get_string(module, "method[%i].class_name", i);
+    if (parsed_class != NULL &&
+        strcmp(parsed_class->c_string, class_name->c_string) == 0)
+    {
+      return_integer(1);
+    }
+  }
+
+  return_integer(0);
+}
+
+define_function(has_class_regexp)
+{
+  SIZED_STRING* parsed_class;
+  RE* regex = regexp_argument(1);
+  YR_OBJECT* module = module();
+  int64_t number_of_methods = get_integer(module, "number_of_methods");
+
+  if (number_of_methods == YR_UNDEFINED)
+    return_integer(YR_UNDEFINED);
+
+  for (int i = 0; i < number_of_methods; i++)
+  {
+    parsed_class = get_string(module, "method[%i].class_name", i);
+    if (parsed_class != NULL &&
+        yr_re_match(scan_context(), regex, parsed_class->c_string) != -1)
+    {
+      return_integer(1);
+    }
+  }
+  return_integer(0);
+}
+
 begin_declarations
   declare_string("DEX_FILE_MAGIC_035");
   declare_string("DEX_FILE_MAGIC_036");
@@ -178,6 +331,13 @@ begin_declarations
     declare_integer("field_idx_diff");
     declare_integer("access_flags");
   end_struct_array("field")
+
+  declare_function("has_method", "s", "i", has_method_string);
+  declare_function("has_method", "ss", "i", has_method_and_class_string);
+  declare_function("has_method", "r", "i", has_method_regexp);
+  declare_function("has_method", "rr", "i", has_method_and_class_regexp);
+  declare_function("has_class", "s", "i", has_class_string);
+  declare_function("has_class", "r", "i", has_class_regexp);
 
   declare_integer("number_of_methods");
   begin_struct_array("method")

@@ -71,7 +71,8 @@ int main(int argc, char** argv)
       "import \"pe\" \
       rule test { \
         condition: \
-          pe.number_of_imports == 2 \
+          pe.number_of_imports == 2 and\
+          pe.number_of_imported_functions == 48\
       }",
       "tests/data/tiny");
 
@@ -90,6 +91,14 @@ int main(int argc, char** argv)
           pe.entry_point == 0x14E0 \
       }",
       "tests/data/tiny");
+
+  assert_true_rule_file(
+      "import \"pe\" \
+      rule test { \
+        condition: \
+          pe.entry_point_raw == 0x1380 \
+      }",
+      "tests/data/mtxex.dll");
 
   assert_true_rule_file(
       "import \"pe\" \

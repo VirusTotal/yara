@@ -84,26 +84,21 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define RESOURCE_TYPE_HTML       23
 #define RESOURCE_TYPE_MANIFEST   24
 
-
 #define RESOURCE_CALLBACK_CONTINUE 0
 #define RESOURCE_CALLBACK_ABORT    1
-
 
 #define RESOURCE_ITERATOR_FINISHED 0
 #define RESOURCE_ITERATOR_ABORTED  1
 
-
 #define MAX_PE_IMPORTS         16384
 #define MAX_PE_EXPORTS         8192
 #define MAX_EXPORT_NAME_LENGTH 512
-
+#define MAX_RESOURCES          65536
 
 #define IS_RESOURCE_SUBDIRECTORY(entry) \
   (yr_le32toh((entry)->OffsetToData) & 0x80000000)
 
-
 #define RESOURCE_OFFSET(entry) (yr_le32toh((entry)->OffsetToData) & 0x7FFFFFFF)
-
 
 typedef int (*RESOURCE_CALLBACK_FUNC)(
     PIMAGE_RESOURCE_DATA_ENTRY rsrc_data,
@@ -115,7 +110,6 @@ typedef int (*RESOURCE_CALLBACK_FUNC)(
     const uint8_t* lang_string,
     void* cb_data);
 
-
 static size_t available_space(PE* pe, void* pointer)
 {
   if ((uint8_t*) pointer < pe->data)
@@ -126,7 +120,6 @@ static size_t available_space(PE* pe, void* pointer)
 
   return pe->data + pe->data_size - (uint8_t*) pointer;
 }
-
 
 static int wide_string_fits_in_pe(PE* pe, char* data)
 {
@@ -143,7 +136,6 @@ static int wide_string_fits_in_pe(PE* pe, char* data)
 
   return 0;
 }
-
 
 // Parse the rich signature.
 // http://www.ntcore.com/files/richsign.htm
@@ -274,9 +266,7 @@ static void pe_parse_rich_signature(PE* pe, uint64_t base_address)
 
   yr_free(raw_data);
   yr_free(clear_data);
-  return;
 }
-
 
 static void pe_parse_debug_directory(PE* pe)
 {
@@ -361,8 +351,6 @@ static void pe_parse_debug_directory(PE* pe)
       }
     }
   }
-
-  return;
 }
 
 // Return a pointer to the resource directory string or NULL.
@@ -401,7 +389,6 @@ static const uint8_t* parse_resource_name(
 
   return NULL;
 }
-
 
 static int _pe_iterate_resources(
     PE* pe,
@@ -525,7 +512,6 @@ static int _pe_iterate_resources(
   return result;
 }
 
-
 static int pe_iterate_resources(
     PE* pe,
     RESOURCE_CALLBACK_FUNC callback,
@@ -596,12 +582,10 @@ static int pe_iterate_resources(
   return 0;
 }
 
-
 // Align offset to a 32-bit boundary and add it to a pointer
 
 #define ADD_OFFSET(ptr, offset) \
   (PVERSION_INFO)((uint8_t*) (ptr) + ((offset + 3) & ~3))
-
 
 static void pe_parse_version_info(PIMAGE_RESOURCE_DATA_ENTRY rsrc_data, PE* pe)
 {
@@ -679,7 +663,6 @@ static void pe_parse_version_info(PIMAGE_RESOURCE_DATA_ENTRY rsrc_data, PE* pe)
   }
 }
 
-
 static int pe_collect_resources(
     PIMAGE_RESOURCE_DATA_ENTRY rsrc_data,
     int rsrc_type,
@@ -691,6 +674,10 @@ static int pe_collect_resources(
     PE* pe)
 {
   DWORD length;
+
+  // Don't collect too many resources.
+  if (pe->resources > MAX_RESOURCES)
+    return RESOURCE_CALLBACK_CONTINUE;
 
   set_integer(
       yr_le32toh(rsrc_data->OffsetToData),
@@ -771,7 +758,6 @@ static int pe_collect_resources(
   pe->resources += 1;
   return RESOURCE_CALLBACK_CONTINUE;
 }
-
 
 static IMPORT_FUNCTION* pe_parse_import_descriptor(
     PE* pe,
@@ -934,7 +920,6 @@ static IMPORT_FUNCTION* pe_parse_import_descriptor(
   return head;
 }
 
-
 static int pe_valid_dll_name(const char* dll_name, size_t n)
 {
   const char* c = dll_name;
@@ -956,7 +941,6 @@ static int pe_valid_dll_name(const char* dll_name, size_t n)
 
   return (l > 0 && l < n);
 }
-
 
 //
 // Walk the imports and collect relevant information. It is used in the
@@ -1045,6 +1029,7 @@ static IMPORTED_DLL* pe_parse_imports(PE* pe)
   }
 
   set_integer(num_imports, pe->object, "number_of_imports");
+  set_integer(num_function_imports, pe->object, "number_of_imported_functions");
   return head;
 }
 
@@ -1245,7 +1230,6 @@ static void pe_parse_exports(PE* pe)
   }
 
   set_integer(exp_sz, pe->object, "number_of_exports");
-  return;
 }
 
 // BoringSSL (https://boringssl.googlesource.com/boringssl/) doesn't support
@@ -1443,7 +1427,6 @@ void _parse_pkcs7(PE* pe, PKCS7* pkcs7, int* counter)
   sk_X509_free(certs);
 }
 
-
 static void pe_parse_certificates(PE* pe)
 {
   int counter = 0;
@@ -1543,7 +1526,6 @@ static void pe_parse_certificates(PE* pe)
 
 #endif  // defined(HAVE_LIBCRYPTO)
 
-
 static void pe_parse_header(PE* pe, uint64_t base_address, int flags)
 {
   PIMAGE_SECTION_HEADER section;
@@ -1556,7 +1538,6 @@ static void pe_parse_header(PE* pe, uint64_t base_address, int flags)
   uint64_t highest_sec_ofs = 0;
   uint64_t section_end;
   uint64_t last_section_end;
-
 
   set_integer(1, pe->object, "is_pe");
 
@@ -1600,6 +1581,11 @@ static void pe_parse_header(PE* pe, uint64_t base_address, int flags)
                 pe, yr_le32toh(OptionalHeader(pe, AddressOfEntryPoint))),
       pe->object,
       "entry_point");
+
+  set_integer(
+      yr_le32toh(OptionalHeader(pe, AddressOfEntryPoint)),
+      pe->object,
+      "entry_point_raw");
 
   set_integer(
       IS_64BITS_PE(pe) ? yr_le64toh(OptionalHeader(pe, ImageBase))
@@ -1892,7 +1878,6 @@ define_function(valid_on)
   return_integer(timestamp >= not_before && timestamp <= not_after);
 }
 
-
 define_function(section_index_addr)
 {
   YR_OBJECT* module = module();
@@ -1928,7 +1913,6 @@ define_function(section_index_addr)
   return_integer(YR_UNDEFINED);
 }
 
-
 define_function(section_index_name)
 {
   YR_OBJECT* module = module();
@@ -1951,7 +1935,6 @@ define_function(section_index_name)
 
   return_integer(YR_UNDEFINED);
 }
-
 
 define_function(exports)
 {
@@ -1987,7 +1970,6 @@ define_function(exports)
   return_integer(0);
 }
 
-
 define_function(exports_regexp)
 {
   RE* regex = regexp_argument(1);
@@ -2022,7 +2004,6 @@ define_function(exports_regexp)
   return_integer(0);
 }
 
-
 define_function(exports_ordinal)
 {
   uint64_t ordinal = integer_argument(1);
@@ -2053,7 +2034,6 @@ define_function(exports_ordinal)
 
   return_integer(0);
 }
-
 
 define_function(exports_index_name)
 {
@@ -2089,7 +2069,6 @@ define_function(exports_index_name)
   return_integer(YR_UNDEFINED);
 }
 
-
 define_function(exports_index_ordinal)
 {
   uint64_t ordinal = integer_argument(1);
@@ -2120,7 +2099,6 @@ define_function(exports_index_ordinal)
 
   return_integer(YR_UNDEFINED);
 }
-
 
 define_function(exports_index_regex)
 {
@@ -2155,7 +2133,6 @@ define_function(exports_index_regex)
 
   return_integer(YR_UNDEFINED);
 }
-
 
 #if defined(HAVE_LIBCRYPTO) || defined(HAVE_WINCRYPT_H) || \
     defined(HAVE_COMMONCRYPTO_COMMONCRYPTO_H)
@@ -2285,7 +2262,6 @@ define_function(imphash)
 }
 
 #endif  // defined(HAVE_LIBCRYPTO) || defined(HAVE_WINCRYPT_H)
-
 
 define_function(imports)
 {
@@ -2458,7 +2434,6 @@ define_function(locale)
   return_integer(0);
 }
 
-
 define_function(language)
 {
   YR_OBJECT* module = module();
@@ -2489,7 +2464,6 @@ define_function(language)
   return_integer(0);
 }
 
-
 define_function(is_dll)
 {
   int64_t characteristics;
@@ -2502,7 +2476,6 @@ define_function(is_dll)
   return_integer(characteristics & IMAGE_FILE_DLL);
 }
 
-
 define_function(is_32bit)
 {
   YR_OBJECT* module = module();
@@ -2514,7 +2487,6 @@ define_function(is_32bit)
   return_integer(IS_64BITS_PE(pe) ? 0 : 1);
 }
 
-
 define_function(is_64bit)
 {
   YR_OBJECT* module = module();
@@ -2525,7 +2497,6 @@ define_function(is_64bit)
 
   return_integer(IS_64BITS_PE(pe) ? 1 : 0);
 }
-
 
 // _rich_version
 //
@@ -2585,12 +2556,10 @@ static uint64_t _rich_version(
   return result;
 }
 
-
 define_function(rich_version)
 {
   return_integer(_rich_version(module(), integer_argument(1), YR_UNDEFINED));
 }
-
 
 define_function(rich_version_toolid)
 {
@@ -2598,19 +2567,16 @@ define_function(rich_version_toolid)
       _rich_version(module(), integer_argument(1), integer_argument(2)));
 }
 
-
 define_function(rich_toolid)
 {
   return_integer(_rich_version(module(), YR_UNDEFINED, integer_argument(1)));
 }
-
 
 define_function(rich_toolid_version)
 {
   return_integer(
       _rich_version(module(), integer_argument(2), integer_argument(1)));
 }
-
 
 define_function(calculate_checksum)
 {
@@ -2661,7 +2627,6 @@ define_function(calculate_checksum)
   return_integer(csum);
 }
 
-
 define_function(rva_to_offset)
 {
   YR_OBJECT* module = module();
@@ -2679,7 +2644,6 @@ define_function(rva_to_offset)
 
   return_integer(offset);
 }
-
 
 begin_declarations
   declare_integer("MACHINE_UNKNOWN");
@@ -2806,6 +2770,7 @@ begin_declarations
   declare_integer("characteristics");
 
   declare_integer("entry_point");
+  declare_integer("entry_point_raw");
   declare_integer("image_base");
   declare_integer("number_of_rva_and_sizes");
 
@@ -2914,6 +2879,7 @@ begin_declarations
   declare_function("is_64bit", "", "i", is_64bit);
 
   declare_integer("number_of_imports");
+  declare_integer("number_of_imported_functions");
   declare_integer("number_of_exports");
 
   declare_string("dll_name");
@@ -2966,7 +2932,6 @@ begin_declarations
   declare_function("rva_to_offset", "i", "i", rva_to_offset);
 end_declarations
 
-
 int module_initialize(YR_MODULE* module)
 {
 #if defined(HAVE_LIBCRYPTO)
@@ -2977,12 +2942,10 @@ int module_initialize(YR_MODULE* module)
   return ERROR_SUCCESS;
 }
 
-
 int module_finalize(YR_MODULE* module)
 {
   return ERROR_SUCCESS;
 }
-
 
 int module_load(
     YR_SCAN_CONTEXT* context,
@@ -3252,7 +3215,6 @@ int module_load(
 
   return ERROR_SUCCESS;
 }
-
 
 int module_unload(YR_OBJECT* module_object)
 {

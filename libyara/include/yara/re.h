@@ -36,6 +36,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <yara/types.h>
 #include <yara/utils.h>
 
+#define RE_MAX_RANGE              INT16_MAX
+
 #define RE_NODE_LITERAL           1
 #define RE_NODE_MASKED_LITERAL    2
 #define RE_NODE_ANY               3
@@ -109,7 +111,7 @@ void yr_re_ast_print(RE_AST* re_ast);
 
 SIZED_STRING* yr_re_ast_extract_literal(RE_AST* re_ast);
 
-int yr_re_ast_contains_dot_star(RE_AST* re_ast);
+int yr_re_ast_has_unbounded_quantifier_for_dot(RE_AST* re_ast);
 
 int yr_re_ast_split_at_chaining_point(
     RE_AST* re_ast,

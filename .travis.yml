@@ -5,7 +5,7 @@ matrix:
 
     # Build for 64-bit Linux without profiling enabled
     - os: linux
-      dist: xenial
+      dist: focal
       sudo: required
       env: CONFIGFLAGS="CFLAGS=-m64 --enable-cuckoo --enable-magic --enable-pb-tests --enable-address-sanitizer"
       # The certificate for scan.coverity.com is too new and is not recognized by
@@ -27,7 +27,7 @@ matrix:
 
     # Build for 64-bit Linux with profiling enabled
     - os: linux
-      dist: xenial
+      dist: focal
       sudo: required
       env: CONFIGFLAGS="CFLAGS=-m64 --enable-cuckoo --enable-magic --enable-pb-tests -enable-address-sanitizer --enable-profiling"
       install: |
@@ -57,7 +57,7 @@ matrix:
 
     # Build for 64-bit Window using MinGW cross-compiler
     - os: linux
-      dist: xenial
+      dist: focal
       sudo: required
       env: CONFIGFLAGS=--host=x86_64-w64-mingw32
       install: |
@@ -66,7 +66,7 @@ matrix:
 
     # Build for 64-bit Window using MinGW cross-compiler
     - os: linux
-      dist: xenial
+      dist: focal
       sudo: required
       env: CONFIGFLAGS=--host=i686-w64-mingw32
       install: |
@@ -75,7 +75,7 @@ matrix:
 
     # Build for 64-bit Linux using Bazel instead of make.
     - os: linux
-      dist: xenial
+      dist: focal
       install: |
          wget https://github.com/bazelbuild/bazel/releases/download/2.1.0/bazel_2.1.0-linux-x86_64.deb
          sudo dpkg -i bazel_2.1.0-linux-x86_64.deb
