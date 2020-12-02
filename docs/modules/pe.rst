@@ -165,6 +165,8 @@ Reference
 
     Entry point raw value from the optional header of the PE. This value is not
     converted to a file offset or an RVA.
+    
+    .. versionadded:: 4.1.0
 
 .. c:type:: base_of_code
 
