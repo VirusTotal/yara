@@ -1583,6 +1583,11 @@ static void pe_parse_header(PE* pe, uint64_t base_address, int flags)
       "entry_point");
 
   set_integer(
+      yr_le32toh(OptionalHeader(pe, AddressOfEntryPoint)),
+      pe->object,
+      "entry_point_raw");
+
+  set_integer(
       IS_64BITS_PE(pe) ? yr_le64toh(OptionalHeader(pe, ImageBase))
                        : yr_le32toh(OptionalHeader(pe, ImageBase)),
       pe->object,
@@ -2765,6 +2770,7 @@ begin_declarations
   declare_integer("characteristics");
 
   declare_integer("entry_point");
+  declare_integer("entry_point_raw");
   declare_integer("image_base");
   declare_integer("number_of_rva_and_sizes");
 
