@@ -60,7 +60,7 @@ extern char* yr_debug_error_as_string(int error);
 // Default is 0 for production, which means be silent, else verbose.
 extern uint64_t yr_debug_verbosity;
 
-extern __thread int yr_debug_indent;
+extern YR_TLS int yr_debug_indent;
 
 extern const char yr_debug_spaces[];
 

@@ -77,7 +77,7 @@ uint8_t yr_altercase[256];
 
 uint64_t yr_debug_verbosity = YR_DEBUG_VERBOSITY;
 
-__thread int yr_debug_indent = 0;
+YR_TLS int yr_debug_indent = 0;
 
 const char yr_debug_spaces[] = \
     "                " /* 16 spaces * 1 */ \
