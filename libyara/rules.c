@@ -41,7 +41,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <yara/scanner.h>
 #include <yara/utils.h>
 
-
 YR_API int yr_rules_define_integer_variable(
     YR_RULES* rules,
     const char* identifier,
@@ -52,7 +51,7 @@ YR_API int yr_rules_define_integer_variable(
   if (identifier == NULL)
     return ERROR_INVALID_ARGUMENT;
 
-  external = rules->externals_list_head;
+  external = rules->ext_vars_table;
 
   while (!EXTERNAL_VARIABLE_IS_NULL(external))
   {
@@ -71,7 +70,6 @@ YR_API int yr_rules_define_integer_variable(
   return ERROR_INVALID_ARGUMENT;
 }
 
-
 YR_API int yr_rules_define_boolean_variable(
     YR_RULES* rules,
     const char* identifier,
@@ -82,7 +80,7 @@ YR_API int yr_rules_define_boolean_variable(
   if (identifier == NULL)
     return ERROR_INVALID_ARGUMENT;
 
-  external = rules->externals_list_head;
+  external = rules->ext_vars_table;
 
   while (!EXTERNAL_VARIABLE_IS_NULL(external))
   {
@@ -101,7 +99,6 @@ YR_API int yr_rules_define_boolean_variable(
   return ERROR_INVALID_ARGUMENT;
 }
 
-
 YR_API int yr_rules_define_float_variable(
     YR_RULES* rules,
     const char* identifier,
@@ -112,7 +109,7 @@ YR_API int yr_rules_define_float_variable(
   if (identifier == NULL)
     return ERROR_INVALID_ARGUMENT;
 
-  external = rules->externals_list_head;
+  external = rules->ext_vars_table;
 
   while (!EXTERNAL_VARIABLE_IS_NULL(external))
   {
@@ -131,7 +128,6 @@ YR_API int yr_rules_define_float_variable(
   return ERROR_INVALID_ARGUMENT;
 }
 
-
 YR_API int yr_rules_define_string_variable(
     YR_RULES* rules,
     const char* identifier,
@@ -142,7 +138,7 @@ YR_API int yr_rules_define_string_variable(
   if (identifier == NULL || value == NULL)
     return ERROR_INVALID_ARGUMENT;
 
-  external = rules->externals_list_head;
+  external = rules->ext_vars_table;
 
   while (!EXTERNAL_VARIABLE_IS_NULL(external))
   {
@@ -173,7 +169,6 @@ YR_API int yr_rules_define_string_variable(
   return ERROR_INVALID_ARGUMENT;
 }
 
-
 YR_API int yr_rules_scan_mem_blocks(
     YR_RULES* rules,
     YR_MEMORY_BLOCK_ITERATOR* iterator,
@@ -197,7 +192,6 @@ YR_API int yr_rules_scan_mem_blocks(
 
   return result;
 }
-
 
 YR_API int yr_rules_scan_mem(
     YR_RULES* rules,
@@ -233,7 +227,6 @@ YR_API int yr_rules_scan_mem(
   return result;
 }
 
-
 YR_API int yr_rules_scan_file(
     YR_RULES* rules,
     const char* filename,
@@ -257,7 +250,6 @@ YR_API int yr_rules_scan_file(
   return result;
 }
 
-
 YR_API int yr_rules_scan_fd(
     YR_RULES* rules,
     YR_FILE_DESCRIPTOR fd,
@@ -280,7 +272,6 @@ YR_API int yr_rules_scan_fd(
 
   return result;
 }
-
 
 YR_API int yr_rules_scan_proc(
     YR_RULES* rules,
@@ -313,7 +304,6 @@ YR_API int yr_rules_scan_proc(
   return result;
 }
 
-
 int yr_rules_from_arena(YR_ARENA* arena, YR_RULES** rules)
 {
   YR_RULES* new_rules = (YR_RULES*) yr_malloc(sizeof(YR_RULES));
@@ -334,11 +324,11 @@ int yr_rules_from_arena(YR_ARENA* arena, YR_RULES** rules)
   new_rules->num_strings = summary->num_strings;
   new_rules->num_namespaces = summary->num_namespaces;
 
-  new_rules->rules_list_head = yr_arena_get_ptr(arena, YR_RULES_TABLE, 0);
+  new_rules->rules_table = yr_arena_get_ptr(arena, YR_RULES_TABLE, 0);
 
-  new_rules->strings_list_head = yr_arena_get_ptr(arena, YR_STRINGS_TABLE, 0);
+  new_rules->strings_table = yr_arena_get_ptr(arena, YR_STRINGS_TABLE, 0);
 
-  new_rules->externals_list_head = yr_arena_get_ptr(
+  new_rules->ext_vars_table = yr_arena_get_ptr(
       arena, YR_EXTERNAL_VARIABLES_TABLE, 0);
 
   new_rules->ac_transition_table = yr_arena_get_ptr(
@@ -357,7 +347,6 @@ int yr_rules_from_arena(YR_ARENA* arena, YR_RULES** rules)
   return ERROR_SUCCESS;
 }
 
-
 YR_API int yr_rules_load_stream(YR_STREAM* stream, YR_RULES** rules)
 {
   YR_ARENA* arena;
@@ -375,7 +364,6 @@ YR_API int yr_rules_load_stream(YR_STREAM* stream, YR_RULES** rules)
 
   return ERROR_SUCCESS;
 }
-
 
 YR_API int yr_rules_load(const char* filename, YR_RULES** rules)
 {
@@ -396,12 +384,10 @@ YR_API int yr_rules_load(const char* filename, YR_RULES** rules)
   return result;
 }
 
-
 YR_API int yr_rules_save_stream(YR_RULES* rules, YR_STREAM* stream)
 {
   return yr_arena_save_stream(rules->arena, stream);
 }
-
 
 YR_API int yr_rules_save(YR_RULES* rules, const char* filename)
 {
@@ -421,7 +407,6 @@ YR_API int yr_rules_save(YR_RULES* rules, const char* filename)
   fclose(fh);
   return result;
 }
-
 
 static int _uint32_cmp(const void* a, const void* b)
 {
@@ -505,10 +490,9 @@ YR_API int yr_rules_get_stats(YR_RULES* rules, YR_RULES_STATS* stats)
   return ERROR_SUCCESS;
 }
 
-
 YR_API int yr_rules_destroy(YR_RULES* rules)
 {
-  YR_EXTERNAL_VARIABLE* external = rules->externals_list_head;
+  YR_EXTERNAL_VARIABLE* external = rules->ext_vars_table;
 
   while (!EXTERNAL_VARIABLE_IS_NULL(external))
   {
@@ -535,7 +519,6 @@ YR_API void yr_rule_disable(YR_RULE* rule)
     string->flags |= STRING_FLAGS_DISABLED;
   }
 }
-
 
 YR_API void yr_rule_enable(YR_RULE* rule)
 {
