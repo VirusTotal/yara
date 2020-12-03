@@ -67,7 +67,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
     else /* user code block goes here */
 
 #define yr_rules_foreach(rules, rule) \
-  for (rule = rules->rules_list_head; !RULE_IS_NULL(rule); rule++)
+  for (rule = rules->rules_table; !RULE_IS_NULL(rule); rule++)
 
 YR_API int yr_rules_scan_mem_blocks(
     YR_RULES* rules,
