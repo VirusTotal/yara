@@ -2908,13 +2908,8 @@ int main(int argc, char** argv)
     // your module should be prepared to handle that." [1]
     // [1]
     // https://yara.readthedocs.io/en/stable/writingmodules.html#accessing-the-scanned-data
-    yr_test_mem_block_size = getenv("YR_TEST_MEM_BLOCK_SIZE")
-                                 ? atoi(getenv("YR_TEST_MEM_BLOCK_SIZE"))
-                                 : 1024;
-    yr_test_mem_block_size_overlap =
-        getenv("YR_TEST_MEM_BLOCK_SIZE_OVERLAP")
-            ? atoi(getenv("YR_TEST_MEM_BLOCK_SIZE_OVERLAP"))
-            : 256;
+    yr_test_mem_block_size = 1024;
+    yr_test_mem_block_size_overlap = 256;
     assert(yr_test_mem_block_size_overlap <= yr_test_mem_block_size);
     break;
   }
