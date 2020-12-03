@@ -79,6 +79,10 @@ uint64_t yr_debug_verbosity = YR_DEBUG_VERBOSITY;
 
 YR_TLS int yr_debug_indent = 0;
 
+YR_TLS int yr_debug_stopwatch_unstarted = 1;
+
+YR_TLS YR_STOPWATCH yr_debug_stopwatch;
+
 const char yr_debug_spaces[] = \
     "                " /* 16 spaces * 1 */ \
     "                " /* 16 spaces * 2 */ \
@@ -91,12 +95,18 @@ const char yr_debug_spaces[] = \
 
 size_t yr_debug_spaces_len = sizeof(yr_debug_spaces);
 
-double yr_debug_get_time_in_seconds(void)
+double yr_debug_get_elapsed_seconds(void)
 {
-  struct timeval tv;
+  if (yr_debug_stopwatch_unstarted) {
+    yr_debug_stopwatch_unstarted = 0;
+    yr_stopwatch_start(&yr_debug_stopwatch);
+  }
 
-  assert(gettimeofday(&tv, NULL) >= 0);
-  return (double)tv.tv_sec + 1.e-6 * (double)tv.tv_usec;
+  uint64_t elapsed_ns = yr_stopwatch_elapsed_ns(&yr_debug_stopwatch);
+
+  double seconds = (double)elapsed_ns / 1000000000;
+
+  return seconds;
 }
 
 char* yr_debug_callback_message_as_string(int message)

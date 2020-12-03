@@ -61,7 +61,7 @@ extern YR_THREAD_STORAGE_KEY yr_trycatch_trampoline_tls;
 #include <sys/types.h>
 #include <unistd.h>
 
-extern double yr_debug_get_time_in_seconds(void);
+extern double yr_debug_get_elapsed_seconds(void);
 
 extern char* yr_debug_callback_message_as_string(int message);
 
@@ -93,7 +93,7 @@ extern size_t yr_debug_spaces_len;
     fprintf(                                                   \
         STREAM,                                                \
         "%f %06u %.*s",                                        \
-        yr_debug_get_time_in_seconds(),                        \
+        yr_debug_get_elapsed_seconds(),                        \
         getpid(),                                              \
         (2 * yr_debug_indent),                                 \
         yr_debug_spaces);                                      \
