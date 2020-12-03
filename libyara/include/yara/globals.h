@@ -39,10 +39,20 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 extern uint8_t yr_lowercase[256];
 extern uint8_t yr_altercase[256];
 
+// Thread-local storage (TLS) key used by the regexp and hex string parsers.
+// Each thread calling yr_parse_re_string/yr_parse_hex_string stores a pointer
+// to a jmp_buf struct used by setjmp/longjmp for recovering when a fatal error
+// occurs in the parser.
+extern YR_THREAD_STORAGE_KEY yr_yyfatal_trampoline_tls;
+
+// Thread-local storage (TLS) key used by YR_TRYCATCH.
+extern YR_THREAD_STORAGE_KEY yr_trycatch_trampoline_tls;
+
+// When YARA is built with YR_DEBUG_VERBOSITY defined as larger than 0 it can
+// print debug information to stdout. Besides being
 #if 0 == YR_DEBUG_VERBOSITY
 
 #define YR_DEBUG_INITIALIZE()
-
 #define YR_DEBUG_FPRINTF(VERBOSITY, FORMAT, ...)
 
 #else
@@ -66,13 +76,18 @@ extern const char yr_debug_spaces[];
 
 extern size_t yr_debug_spaces_len;
 
-#define YR_DEBUG_INITIALIZE() \
-  yr_debug_verbosity = getenv("YR_DEBUG_VERBOSITY") ? atoi(getenv("YR_DEBUG_VERBOSITY")) : 0
+#define YR_DEBUG_INITIALIZE()                                   \
+  yr_debug_verbosity = getenv("YR_DEBUG_VERBOSITY")             \
+                           ? atoi(getenv("YR_DEBUG_VERBOSITY")) \
+                           : YR_DEBUG_VERBOSITY
 
 #define YR_DEBUG_FPRINTF(VERBOSITY, STREAM, FORMAT, ...)       \
   if (yr_debug_verbosity >= VERBOSITY)                         \
   {                                                            \
-    if (FORMAT[0] == '}') { yr_debug_indent --; }              \
+    if (FORMAT[0] == '}')                                      \
+    {                                                          \
+      yr_debug_indent--;                                       \
+    }                                                          \
     assert((2 * yr_debug_indent) >= 0);                        \
     assert((2 * yr_debug_indent) < (yr_debug_spaces_len - 2)); \
     fprintf(                                                   \
@@ -83,18 +98,12 @@ extern size_t yr_debug_spaces_len;
         (2 * yr_debug_indent),                                 \
         yr_debug_spaces);                                      \
     fprintf(STREAM, FORMAT, __VA_ARGS__);                      \
-    if (FORMAT[0] == '+') { yr_debug_indent ++; }              \
+    if (FORMAT[0] == '+')                                      \
+    {                                                          \
+      yr_debug_indent++;                                       \
+    }                                                          \
   }
 
 #endif
-
-// Thread-local storage (TLS) key used by the regexp and hex string parsers.
-// Each thread calling yr_parse_re_string/yr_parse_hex_string stores a pointer
-// to a jmp_buf struct used by setjmp/longjmp for recovering when a fatal error
-// occurs in the parser.
-extern YR_THREAD_STORAGE_KEY yr_yyfatal_trampoline_tls;
-
-// Thread-local storage (TLS) key used by YR_TRYCATCH.
-extern YR_THREAD_STORAGE_KEY yr_trycatch_trampoline_tls;
 
 #endif
