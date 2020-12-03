@@ -57,18 +57,33 @@ extern char* yr_debug_callback_message_as_string(int message);
 
 extern char* yr_debug_error_as_string(int error);
 
-
 // Default is 0 for production, which means be silent, else verbose.
 extern uint64_t yr_debug_verbosity;
+
+extern YR_TLS int yr_debug_indent;
+
+extern const char yr_debug_spaces[];
+
+extern size_t yr_debug_spaces_len;
 
 #define YR_DEBUG_INITIALIZE() \
   yr_debug_verbosity = getenv("YR_DEBUG_VERBOSITY") ? atoi(getenv("YR_DEBUG_VERBOSITY")) : 0
 
-#define YR_DEBUG_FPRINTF(VERBOSITY, STREAM, FORMAT, ...)                   \
-  if (yr_debug_verbosity >= VERBOSITY)                                     \
-  {                                                                        \
-    fprintf(STREAM, "%f %06u ", yr_debug_get_time_in_seconds(), getpid()); \
-    fprintf(STREAM, FORMAT, __VA_ARGS__);                                  \
+#define YR_DEBUG_FPRINTF(VERBOSITY, STREAM, FORMAT, ...)       \
+  if (yr_debug_verbosity >= VERBOSITY)                         \
+  {                                                            \
+    if (FORMAT[0] == '}') { yr_debug_indent --; }              \
+    assert((2 * yr_debug_indent) >= 0);                        \
+    assert((2 * yr_debug_indent) < (yr_debug_spaces_len - 2)); \
+    fprintf(                                                   \
+        STREAM,                                                \
+        "%f %06u %.*s",                                        \
+        yr_debug_get_time_in_seconds(),                        \
+        getpid(),                                              \
+        (2 * yr_debug_indent),                                 \
+        yr_debug_spaces);                                      \
+    fprintf(STREAM, FORMAT, __VA_ARGS__);                      \
+    if (FORMAT[0] == '+') { yr_debug_indent ++; }              \
   }
 
 #endif

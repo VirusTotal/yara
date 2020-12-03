@@ -56,7 +56,16 @@ static uint64_t _yr_test_single_block_file_size(
     YR_MEMORY_BLOCK_ITERATOR* iterator)
 {
   YR_TEST_ITERATOR_CTX* context = (YR_TEST_ITERATOR_CTX*) iterator->context;
-  return context->current_block.size;
+  uint64_t file_size = context->current_block.size;
+
+  YR_DEBUG_FPRINTF(
+      2,
+      stderr,
+      "- %s() {} = %'lu // test iterator; single memory block, blocking\n",
+      __FUNCTION__,
+      file_size);
+
+  return file_size;
 }
 
 static YR_MEMORY_BLOCK* _yr_test_single_block_get_first_block(
@@ -72,7 +81,7 @@ static YR_MEMORY_BLOCK* _yr_test_single_block_get_first_block(
   YR_DEBUG_FPRINTF(
       2,
       stderr,
-      "+ %s() {} = %p // test iterator; single memory block, non-blocking\n",
+      "- %s() {} = %p // test iterator; single memory block, blocking\n",
       __FUNCTION__,
       result);
 
@@ -89,7 +98,7 @@ static YR_MEMORY_BLOCK* _yr_test_single_block_get_next_block(
   YR_DEBUG_FPRINTF(
       2,
       stderr,
-      "+ %s() {} = %p // test iterator; single memory block, non-blocking\n",
+      "- %s() {} = %p // test iterator; single memory block, blocking\n",
       __FUNCTION__,
       result);
 
@@ -104,7 +113,7 @@ static const uint8_t* _yr_test_single_block_fetch_block_data(
   YR_DEBUG_FPRINTF(
       2,
       stderr,
-      "+ %s() {} = %p // test iterator; single memory block, non-blocking\n",
+      "- %s() {} = %p // test iterator; single memory block, blocking\n",
       __FUNCTION__,
       context->buffer);
 
@@ -115,7 +124,16 @@ static uint64_t _yr_test_multi_block_file_size(
     YR_MEMORY_BLOCK_ITERATOR* iterator)
 {
   YR_TEST_ITERATOR_CTX* context = (YR_TEST_ITERATOR_CTX*) iterator->context;
-  return context->buffer_size;
+  uint64_t file_size = context->buffer_size;
+
+  YR_DEBUG_FPRINTF(
+      2,
+      stderr,
+      "- %s() {} = %'lu\n",
+      __FUNCTION__,
+      file_size);
+
+  return file_size;
 }
 
 static YR_MEMORY_BLOCK* _yr_test_multi_block_get_next_block(
@@ -175,7 +193,7 @@ static YR_MEMORY_BLOCK* _yr_test_multi_block_get_next_block(
   YR_DEBUG_FPRINTF(
       2,
       stderr,
-      "+ %s() {} = %p // "
+      "- %s() {} = %p // "
       ".base=(0x%" PRIx64 " or %" PRId64 ") of "
       "(0x%lx or %'lu) .size=%'lu, both including %" PRId64
       " block overlap%s\n",
@@ -198,7 +216,7 @@ static YR_MEMORY_BLOCK* _yr_test_multi_block_get_first_block(
   YR_DEBUG_FPRINTF(
       2,
       stderr,
-      "+ %s() {} // wrapping _yr_test_multi_block_get_next_block()\n",
+      "- %s() {} // wrapping _yr_test_multi_block_get_next_block()\n",
       __FUNCTION__);
 
   YR_TEST_ITERATOR_CTX* context = (YR_TEST_ITERATOR_CTX*) iterator->context;
@@ -221,7 +239,7 @@ static const uint8_t* _yr_test_multi_block_fetch_block_data(
   YR_DEBUG_FPRINTF(
       2,
       stderr,
-      "+ %s() {} = %p = %p + 0x%" PRIx64 " base including %" PRId64
+      "- %s() {} = %p = %p + 0x%" PRIx64 " base including %" PRId64
       " overlap%s\n",
       __FUNCTION__,
       context->buffer + context->current_block.base - overlap,
@@ -233,12 +251,20 @@ static const uint8_t* _yr_test_multi_block_fetch_block_data(
   return context->buffer + context->current_block.base;
 }
 
-void init_iterator(
+void init_test_iterator(
     YR_MEMORY_BLOCK_ITERATOR* iterator,
     YR_TEST_ITERATOR_CTX* ctx,
     const uint8_t* buffer,
     size_t buffer_size)
 {
+  YR_DEBUG_FPRINTF(
+      2,
+      stderr,
+      "- %s(buffer_size=%'lu) {} // yr_test_mem_block_size=%" PRId64 "\n",
+      __FUNCTION__,
+      buffer_size,
+      yr_test_mem_block_size);
+
   ctx->buffer = buffer;
   ctx->buffer_size = buffer_size;
   ctx->current_block.base = 0;
@@ -291,7 +317,7 @@ int count(
   YR_DEBUG_FPRINTF(
       2,
       stderr,
-      "+ %s(message=%d AKA %s) {}\n",
+      "- %s(message=%d AKA %s) {}\n",
       __FUNCTION__,
       message,
       yr_debug_callback_message_as_string(message));
@@ -391,7 +417,7 @@ int _scan_callback(
   YR_DEBUG_FPRINTF(
       2,
       stderr,
-      "+ %s(message=%d AKA %s) {}\n",
+      "- %s(message=%d AKA %s) {}\n",
       __FUNCTION__,
       message,
       yr_debug_callback_message_as_string(message));
@@ -472,7 +498,7 @@ int matches_blob(
     YR_MEMORY_BLOCK_ITERATOR iterator;
     YR_TEST_ITERATOR_CTX iterator_ctx;
 
-    init_iterator(&iterator, &iterator_ctx, blob, blob_size);
+    init_test_iterator(&iterator, &iterator_ctx, blob, blob_size);
 
     scan_result = yr_scanner_scan_mem_blocks(scanner, &iterator);
 

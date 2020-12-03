@@ -139,7 +139,7 @@ YR_API const uint8_t* yr_process_fetch_memory_block_data(YR_MEMORY_BLOCK* block)
 
 _exit:;
 
-  YR_DEBUG_FPRINTF(2, stderr, "+ %s() {} = %p\n", __FUNCTION__, result);
+  YR_DEBUG_FPRINTF(2, stderr, "- %s() {} = %p\n", __FUNCTION__, result);
 
   return result;
 }
@@ -169,7 +169,7 @@ YR_API YR_MEMORY_BLOCK* yr_process_get_next_memory_block(
   YR_DEBUG_FPRINTF(
       2,
       stderr,
-      "+ %s() {} = %p // .base=0x%" PRIx64 " .size=%lu\n",
+      "- %s() {} = %p // .base=0x%" PRIx64 " .size=%lu\n",
       __FUNCTION__,
       result,
       context->current_block.base,

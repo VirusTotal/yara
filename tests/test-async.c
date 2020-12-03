@@ -101,7 +101,7 @@ static void test_parallel_triple_scan(
     yr_scanner_set_callback(
         scanner[i], _scan_callback, (void*) &callback_ctx[i]);
 
-    init_iterator(
+    init_test_iterator(
         &iterator[i],
         &iterator_ctx[i],
         (const uint8_t*) text[i],
@@ -231,21 +231,16 @@ static void test_parallel_strings()
     exit(EXIT_FAILURE);
   }
 
-  // Scan groups of 3 text strings in "parallel" using the same rule. Algorithm:
-  // - Scan block 1 of text string 1, scan block 1 of text string 2, scan block
-  // 1 of text string 3.
-  // - Scan block 2 of text string 1, scan block 2 of text string 2, scan block
-  // 2 of text string 3.
+  // Scan groups of 3 strings in "parallel" using the same rule. Algorithm:
+  // - Scan 1st block of string 1, string 2, and string 3.
+  // - Scan 2nd block of string 1, string 2, and string 3.
   // - And so on, until rule is fulfilled.
-  // - Finally assert on match count, and expected number of loops for each text
-  // string.
+  // - Finally assert on match count, & expected # loops for each string.
   //
-  // Note: In the real world subsequent blocks for a text string must come in
-  // order, but the text strings themselves may be processed in any order, e.g.:
-  // - Scan block 1 of text string 2, scan block 1 of text string 1, scan block
-  // 1 of text string 3.
-  // - Scan block 2 of text string 3, scan block 2 of text string 2, scan block
-  // 2 of text string 1.
+  // Note: In the real world subsequent blocks for a string must come in order,
+  // but the strings themselves may be processed in any order, e.g.:
+  // - Scan 1st block of string 2, string 1, and string 3.
+  // - Scan 2nd block of string 3, string 2, and string 1.
 
   int expected_scan_complete_loops_1 = 1;
   int expected_scan_complete_loops_2 = 2;

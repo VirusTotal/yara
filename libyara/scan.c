@@ -85,7 +85,7 @@ _exit:;
   YR_DEBUG_FPRINTF(
       2,
       stderr,
-      "+ %s(data_size=%zu string_length=%zu) {} = %d\n",
+      "- %s(data_size=%zu string_length=%zu) {} = %d\n",
       __FUNCTION__,
       data_size,
       string_length,
@@ -191,7 +191,7 @@ _exit:;
   YR_DEBUG_FPRINTF(
       2,
       stderr,
-      "+ %s(data_size=%zu string_length=%zu) {} = %d\n",
+      "- %s(data_size=%zu string_length=%zu) {} = %d\n",
       __FUNCTION__,
       data_size,
       string_length,
@@ -230,7 +230,7 @@ _exit:;
   YR_DEBUG_FPRINTF(
       2,
       stderr,
-      "+ %s(data_size=%zu string_length=%zu) {} = %d\n",
+      "- %s(data_size=%zu string_length=%zu) {} = %d\n",
       __FUNCTION__,
       data_size,
       string_length,
@@ -338,7 +338,7 @@ _exit:;
   YR_DEBUG_FPRINTF(
       2,
       stderr,
-      "+ %s(replace_if_exists=%d) {} = %d //"
+      "- %s(replace_if_exists=%d) {} = %d //"
       " match->base=0x%" PRIx64 " match->offset=%" PRIi64
       " matches_list->count=%u += %u\n",
       __FUNCTION__,
@@ -399,7 +399,7 @@ static int _yr_scan_verify_chained_string_match(
   YR_DEBUG_FPRINTF(
       2,
       stderr,
-      "+ %s (match_data=%p match_base=%" PRIx64 " match_offset=0x%" PRIx64
+      "- %s (match_data=%p match_base=%" PRIx64 " match_offset=0x%" PRIx64
       " match_length=%'d) {} \n",
       __FUNCTION__,
       match_data,
@@ -739,7 +739,7 @@ static int _yr_scan_match_callback(
 
 _exit:;
 
-  YR_DEBUG_FPRINTF(2, stderr, "} = %d // %s() {}\n", result, __FUNCTION__);
+  YR_DEBUG_FPRINTF(2, stderr, "} = %d // %s()\n", result, __FUNCTION__);
 
   return result;
 }
@@ -766,7 +766,7 @@ static int _yr_scan_verify_re_match(
   YR_DEBUG_FPRINTF(
       2,
       stderr,
-      "+ %s(data=%p data_size=%zu data_base=0x%" PRIx64 " offset=%zu) {}\n",
+      "- %s(data=%p data_size=%zu data_base=0x%" PRIx64 " offset=%zu) {}\n",
       __FUNCTION__,
       data,
       data_size,
@@ -873,7 +873,7 @@ static int _yr_scan_verify_literal_match(
   YR_DEBUG_FPRINTF(
       2,
       stderr,
-      "+ %s(data=%p data_size=%zu data_base=0x%" PRIx64 " offset=%zu) {}\n",
+      "- %s(data=%p data_size=%zu data_base=0x%" PRIx64 " offset=%zu) {}\n",
       __FUNCTION__,
       data,
       data_size,
@@ -968,7 +968,7 @@ int yr_scan_verify_match(
   YR_DEBUG_FPRINTF(
       2,
       stderr,
-      "+ %s(data=%p data_size=%zu data_base=0x%" PRIx64 " offset=%zu) {}\n",
+      "- %s(data=%p data_size=%zu data_base=0x%" PRIx64 " offset=%zu) {}\n",
       __FUNCTION__,
       data,
       data_size,
