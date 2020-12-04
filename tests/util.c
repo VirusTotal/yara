@@ -61,7 +61,8 @@ static uint64_t _yr_test_single_block_file_size(
   YR_DEBUG_FPRINTF(
       2,
       stderr,
-      "- %s() {} = %'lu // test iterator; single memory block, blocking\n",
+      "- %s() {} = %" PRIu64
+      " // test iterator; single memory block, blocking\n",
       __FUNCTION__,
       file_size);
 
@@ -127,11 +128,7 @@ static uint64_t _yr_test_multi_block_file_size(
   uint64_t file_size = context->buffer_size;
 
   YR_DEBUG_FPRINTF(
-      2,
-      stderr,
-      "- %s() {} = %'lu\n",
-      __FUNCTION__,
-      file_size);
+      2, stderr, "- %s() {} = %" PRIu64 "\n", __FUNCTION__, file_size);
 
   return file_size;
 }
@@ -149,7 +146,8 @@ static YR_MEMORY_BLOCK* _yr_test_multi_block_get_next_block(
   iterator->last_error = ERROR_SUCCESS;
 
   if (context->block_not_ready_frequency > 0 &&
-      context->block_not_ready_frequency == context->blocks_returned_successfully)
+      context->block_not_ready_frequency ==
+          context->blocks_returned_successfully)
   {
     overlap = 0;
     context->blocks_returned_successfully = 0;

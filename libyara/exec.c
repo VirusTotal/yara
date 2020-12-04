@@ -1318,7 +1318,7 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
       YR_DEBUG_FPRINTF(
           2,
           stderr,
-          "- case OP_FILESIZE: r1.i=%ld%s // %s()\n",
+          "- case OP_FILESIZE: r1.i=%" PRId64 "%s // %s()\n",
           r1.i,
           r1.i == YR_UNDEFINED ? " AKA YR_UNDEFINED" : "",
           __FUNCTION__);
