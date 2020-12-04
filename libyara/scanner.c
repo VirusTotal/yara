@@ -41,7 +41,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "exception.h"
 
-
 static int _yr_scanner_scan_mem_block(
     YR_SCANNER* scanner,
     const uint8_t* block_data,
@@ -160,7 +159,6 @@ static int _yr_scanner_scan_mem_block(
   return ERROR_SUCCESS;
 }
 
-
 static void _yr_scanner_clean_matches(YR_SCANNER* scanner)
 {
   memset(
@@ -180,7 +178,6 @@ static void _yr_scanner_clean_matches(YR_SCANNER* scanner)
       0,
       sizeof(YR_MATCHES) * scanner->rules->num_strings);
 }
-
 
 YR_API int yr_scanner_create(YR_RULES* rules, YR_SCANNER** scanner)
 {
@@ -232,7 +229,7 @@ YR_API int yr_scanner_create(YR_RULES* rules, YR_SCANNER** scanner)
   new_scanner->profiling_info = NULL;
 #endif
 
-  external = rules->externals_list_head;
+  external = rules->ext_vars_table;
 
   while (!EXTERNAL_VARIABLE_IS_NULL(external))
   {
@@ -260,7 +257,6 @@ YR_API int yr_scanner_create(YR_RULES* rules, YR_SCANNER** scanner)
 
   return ERROR_SUCCESS;
 }
-
 
 YR_API void yr_scanner_destroy(YR_SCANNER* scanner)
 {
@@ -296,7 +292,6 @@ YR_API void yr_scanner_destroy(YR_SCANNER* scanner)
   yr_free(scanner);
 }
 
-
 YR_API void yr_scanner_set_callback(
     YR_SCANNER* scanner,
     YR_CALLBACK_FUNC callback,
@@ -305,7 +300,6 @@ YR_API void yr_scanner_set_callback(
   scanner->callback = callback;
   scanner->user_data = user_data;
 }
-
 
 YR_API void yr_scanner_set_timeout(YR_SCANNER* scanner, int timeout)
 {
@@ -328,7 +322,6 @@ YR_API void yr_scanner_set_flags(YR_SCANNER* scanner, int flags)
   scanner->flags = flags;
 }
 
-
 YR_API int yr_scanner_define_integer_variable(
     YR_SCANNER* scanner,
     const char* identifier,
@@ -346,7 +339,6 @@ YR_API int yr_scanner_define_integer_variable(
   return yr_object_set_integer(value, obj, NULL);
 }
 
-
 YR_API int yr_scanner_define_boolean_variable(
     YR_SCANNER* scanner,
     const char* identifier,
@@ -354,7 +346,6 @@ YR_API int yr_scanner_define_boolean_variable(
 {
   return yr_scanner_define_integer_variable(scanner, identifier, value);
 }
-
 
 YR_API int yr_scanner_define_float_variable(
     YR_SCANNER* scanner,
@@ -373,7 +364,6 @@ YR_API int yr_scanner_define_float_variable(
   return yr_object_set_float(value, obj, NULL);
 }
 
-
 YR_API int yr_scanner_define_string_variable(
     YR_SCANNER* scanner,
     const char* identifier,
@@ -390,7 +380,6 @@ YR_API int yr_scanner_define_string_variable(
 
   return yr_object_set_string(value, strlen(value), obj, NULL);
 }
-
 
 YR_API int yr_scanner_scan_mem_blocks(
     YR_SCANNER* scanner,
@@ -475,7 +464,7 @@ YR_API int yr_scanner_scan_mem_blocks(
   if (result != ERROR_SUCCESS)
     goto _exit;
 
-  for (i = 0, rule = rules->rules_list_head; !RULE_IS_NULL(rule); i++, rule++)
+  for (i = 0, rule = rules->rules_table; !RULE_IS_NULL(rule); i++, rule++)
   {
     int message = 0;
 
@@ -522,24 +511,20 @@ _exit:
   return result;
 }
 
-
 static YR_MEMORY_BLOCK* _yr_get_first_block(YR_MEMORY_BLOCK_ITERATOR* iterator)
 {
   return (YR_MEMORY_BLOCK*) iterator->context;
 }
-
 
 static YR_MEMORY_BLOCK* _yr_get_next_block(YR_MEMORY_BLOCK_ITERATOR* iterator)
 {
   return NULL;
 }
 
-
 static const uint8_t* _yr_fetch_block_data(YR_MEMORY_BLOCK* block)
 {
   return (const uint8_t*) block->context;
 }
-
 
 static int __yr_scanner_scan_mem(
     YR_SCANNER* scanner,
@@ -571,7 +556,6 @@ static int __yr_scanner_scan_mem(
   return yr_scanner_scan_mem_blocks(scanner, &iterator);
 }
 
-
 //
 // Tests may override this default with their own iterator, e.g. for testing
 // multiple blocks.
@@ -581,7 +565,6 @@ YR_API int (*_yr_scanner_scan_mem)(
     const uint8_t* buffer,
     size_t buffer_size) = &__yr_scanner_scan_mem;
 
-
 YR_API int yr_scanner_scan_mem(
     YR_SCANNER* scanner,
     const uint8_t* buffer,
@@ -589,7 +572,6 @@ YR_API int yr_scanner_scan_mem(
 {
   return _yr_scanner_scan_mem(scanner, buffer, buffer_size);
 }
-
 
 YR_API int yr_scanner_scan_file(YR_SCANNER* scanner, const char* filename)
 {
@@ -606,7 +588,6 @@ YR_API int yr_scanner_scan_file(YR_SCANNER* scanner, const char* filename)
   return result;
 }
 
-
 YR_API int yr_scanner_scan_fd(YR_SCANNER* scanner, YR_FILE_DESCRIPTOR fd)
 {
   YR_MAPPED_FILE mfile;
@@ -621,7 +602,6 @@ YR_API int yr_scanner_scan_fd(YR_SCANNER* scanner, YR_FILE_DESCRIPTOR fd)
 
   return result;
 }
-
 
 YR_API int yr_scanner_scan_proc(YR_SCANNER* scanner, int pid)
 {
@@ -641,21 +621,18 @@ YR_API int yr_scanner_scan_proc(YR_SCANNER* scanner, int pid)
   return result;
 }
 
-
 YR_API YR_STRING* yr_scanner_last_error_string(YR_SCANNER* scanner)
 {
   return scanner->last_error_string;
 }
-
 
 YR_API YR_RULE* yr_scanner_last_error_rule(YR_SCANNER* scanner)
 {
   if (scanner->last_error_string == NULL)
     return NULL;
 
-  return &scanner->rules->rules_list_head[scanner->last_error_string->rule_idx];
+  return &scanner->rules->rules_table[scanner->last_error_string->rule_idx];
 }
-
 
 static int sort_by_cost_desc(
     const struct YR_RULE_PROFILING_INFO* r1,
@@ -692,7 +669,7 @@ YR_API YR_RULE_PROFILING_INFO* yr_scanner_get_profiling_info(
 
   for (uint32_t i = 0; i < scanner->rules->num_rules; i++)
   {
-    profiling_info[i].rule = &scanner->rules->rules_list_head[i];
+    profiling_info[i].rule = &scanner->rules->rules_table[i];
 #ifdef YR_PROFILING_ENABLED
     profiling_info[i].cost = scanner->profiling_info[i].exec_time +
                              (scanner->profiling_info[i].atom_matches *
@@ -714,7 +691,6 @@ YR_API YR_RULE_PROFILING_INFO* yr_scanner_get_profiling_info(
 
   return profiling_info;
 }
-
 
 YR_API void yr_scanner_reset_profiling_info(YR_SCANNER* scanner)
 {
