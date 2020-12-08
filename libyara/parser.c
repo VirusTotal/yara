@@ -596,7 +596,8 @@ int yr_parser_reduce_string_declaration(
       modifier.flags & STRING_FLAGS_NO_CASE)
   {
     result = ERROR_INVALID_MODIFIER;
-    yr_compiler_set_error_extra_info(compiler, "xor nocase") goto _exit;
+    yr_compiler_set_error_extra_info(
+        compiler, "invalid modifier combination: xor nocase") goto _exit;
   }
 
   // base64 and nocase together is not implemented.
@@ -607,8 +608,9 @@ int yr_parser_reduce_string_declaration(
     result = ERROR_INVALID_MODIFIER;
     yr_compiler_set_error_extra_info(
         compiler,
-        modifier.flags & STRING_FLAGS_BASE64 ? "base64 nocase"
-                                             : "base64wide nocase") goto _exit;
+        modifier.flags & STRING_FLAGS_BASE64
+            ? "invalid modifier combination: base64 nocase"
+            : "invalid modifier combination: base64wide nocase") goto _exit;
   }
 
   // base64 and fullword together is not implemented.
@@ -620,8 +622,8 @@ int yr_parser_reduce_string_declaration(
     yr_compiler_set_error_extra_info(
         compiler,
         modifier.flags & STRING_FLAGS_BASE64
-            ? "base64 fullword"
-            : "base64wide fullword") goto _exit;
+            ? "invalid modifier combination: base64 fullword"
+            : "invalid modifier combination: base64wide fullword") goto _exit;
   }
 
   // base64 and xor together is not implemented.
@@ -632,8 +634,9 @@ int yr_parser_reduce_string_declaration(
     result = ERROR_INVALID_MODIFIER;
     yr_compiler_set_error_extra_info(
         compiler,
-        modifier.flags & STRING_FLAGS_BASE64 ? "base64 xor"
-                                             : "base64wide xor") goto _exit;
+        modifier.flags & STRING_FLAGS_BASE64
+            ? "invalid modifier combination: base64 xor"
+            : "invalid modifier combination: base64wide xor") goto _exit;
   }
 
   if (!(modifier.flags & STRING_FLAGS_WIDE) &&
