@@ -1009,11 +1009,11 @@ int yr_scan_verify_match(
         (void*) string,
         context->user_data);
 
-    // Bump the counter so we don't call the callback again.
-    context->matches[string->idx].count++;
-
     if (result == CALLBACK_CONTINUE)
+    {
+      string->flags |= STRING_FLAGS_DISABLED;
       return ERROR_SUCCESS;
+    }
     else if (result == CALLBACK_ABORT || result == CALLBACK_ERROR)
       return ERROR_TOO_MANY_MATCHES;
     else

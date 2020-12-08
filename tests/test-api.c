@@ -26,6 +26,7 @@ void test_disabled_rules()
 
   counters.rules_not_matching = 0;
   counters.rules_matching = 0;
+  counters.rules_warning = 0;
 
   yr_initialize();
 
@@ -281,6 +282,7 @@ void test_save_load_rules()
 
   counters.rules_not_matching = 0;
   counters.rules_matching = 0;
+  counters.rules_warning = 0;
 
   char* rules_str = "rule t {condition: bool_var and str_var == \"foobar\"}";
 
@@ -446,6 +448,7 @@ void test_scanner()
 
   counters.rules_not_matching = 0;
   counters.rules_matching = 0;
+  counters.rules_warning = 0;
 
   // Set the callback and the correct variable values for the rule to match.
   yr_scanner_set_callback(scanner1, count, &counters);
@@ -480,6 +483,7 @@ void test_scanner()
 
   counters.rules_matching = 0;
   counters.rules_not_matching = 0;
+  counters.rules_warning = 0;
 
   yr_scanner_set_flags(scanner1, SCAN_FLAGS_REPORT_RULES_MATCHING);
   yr_scanner_set_callback(scanner1, count, &counters);
@@ -495,6 +499,7 @@ void test_scanner()
 
   counters.rules_matching = 0;
   counters.rules_not_matching = 0;
+  counters.rules_warning = 0;
 
   yr_scanner_set_flags(scanner2, SCAN_FLAGS_REPORT_RULES_NOT_MATCHING);
   yr_scanner_set_callback(scanner2, count, &counters);
@@ -783,6 +788,64 @@ void test_issue_920()
   yr_finalize();
 }
 
+
+void test_runtime_warnings() {
+  // This rule should never match since it will hit the maximum number of
+  // matches (see YR_MAX_STRING_MATCHES) and a warning will be issued, and any
+  // further matches no longer count.
+  const char* rules_str = "rule test { \
+    strings: \
+      $x = \"X\" \
+    condition: \
+      #x > 1000000 \
+    }";
+
+  YR_COMPILER* compiler = NULL;
+  YR_RULES* rules = NULL;
+  struct COUNTERS counters;
+
+  counters.rules_not_matching = 0;
+  counters.rules_matching = 0;
+  counters.rules_warning = 0;
+
+  yr_initialize();
+
+  if (yr_compiler_create(&compiler) != ERROR_SUCCESS) {
+    perror("yr_compiler_create");
+    exit(EXIT_FAILURE);
+  }
+
+  if (yr_compiler_add_string(compiler, rules_str, NULL) != ERROR_SUCCESS) {
+    yr_compiler_destroy(compiler);
+    perror("yr_compiler_add_string");
+    exit(EXIT_FAILURE);
+  }
+
+  if (yr_compiler_get_rules(compiler, &rules) != ERROR_SUCCESS)
+  {
+    yr_compiler_destroy(compiler);
+    perror("yr_compiler_get_rules");
+    exit(EXIT_FAILURE);
+  }
+
+  yr_compiler_destroy(compiler);
+
+  if (yr_rules_scan_file(rules, "tests/data/x.txt", 0, count, &counters, 0) != ERROR_SUCCESS) {
+    yr_rules_destroy(rules);
+    perror("yr_rules_scan_file");
+    exit(EXIT_FAILURE);
+  }
+
+  // There should only be a single warning issued since the string is disabled
+  // after the callback returns CALLBACK_CONTINUE.
+  assert_true_expr(counters.rules_warning == 1);
+  assert_true_expr(counters.rules_matching == 0);
+  assert_true_expr(counters.rules_not_matching == 1);
+
+  yr_rules_destroy(rules);
+  yr_finalize();
+}
+
 int main(int argc, char** argv)
 {
   chdir_if_env_top_srcdir();
@@ -798,6 +861,7 @@ int main(int argc, char** argv)
   test_rules_stats();
   test_issue_834();
   test_issue_920();
+  test_runtime_warnings();
 
   return 0;
 }
