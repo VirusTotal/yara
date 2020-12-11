@@ -169,7 +169,7 @@ YR_API YR_MEMORY_BLOCK* yr_process_get_next_memory_block(
   YR_DEBUG_FPRINTF(
       2,
       stderr,
-      "- %s() {} = %p // .base=0x%" PRIx64 " .size=%lu\n",
+      "- %s() {} = %p // .base=0x%" PRIx64 " .size=%" PRIu64 "\n",
       __FUNCTION__,
       result,
       context->current_block.base,
