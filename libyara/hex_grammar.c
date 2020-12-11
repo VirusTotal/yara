@@ -705,7 +705,7 @@ static void yy_reduce_print(
   int yynrhs = yyr2[yyrule];
   int yyi;
   YYFPRINTF(
-      stderr, "Reducing stack by rule %d (line %lu):\n", yyrule - 1, yylno);
+      stderr, "Reducing stack by rule %d (line %" PRIu64 "):\n", yyrule - 1, yylno);
   /* The symbols being reduced.  */
   for (yyi = 0; yyi < yynrhs; yyi++)
   {
@@ -1213,7 +1213,7 @@ yysetstate:
 
     YYDPRINTF(
         (stderr,
-         "Stack size increased to %lu\n",
+         "Stack size increased to %" PRIu64 "\n",
          (unsigned long int) yystacksize));
 
     if (yyss + yystacksize - 1 <= yyssp)

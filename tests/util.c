@@ -193,7 +193,8 @@ static YR_MEMORY_BLOCK* _yr_test_multi_block_get_next_block(
       stderr,
       "- %s() {} = %p // "
       ".base=(0x%" PRIx64 " or %" PRId64 ") of "
-      "(0x%lx or %'lu) .size=%'lu, both including %" PRId64
+      "(0x%" PRIx64 " or %" PRIu64 ") .size=%" PRIu64
+      ", both including %" PRId64
       " block overlap%s\n",
       __FUNCTION__,
       result,
