@@ -102,6 +102,12 @@ static void _locking_function(int mode, int n, const char *file, int line)
 
 #endif
 
+#if defined(HAVE_WINCRYPT_H)
+
+HCRYPTPROV yr_cryptprov;
+
+#endif
+
 ////////////////////////////////////////////////////////////////////////////////
 // Should be called by main thread before using any other
 // function from libyara.
