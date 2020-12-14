@@ -60,7 +60,7 @@ typedef SHA256_CTX yr_sha256_ctx;
 
 #include <wincrypt.h>
 
-HCRYPTPROV yr_cryptprov;
+extern HCRYPTPROV yr_cryptprov;
 
 typedef HCRYPTHASH yr_md5_ctx;
 typedef HCRYPTHASH yr_sha1_ctx;
