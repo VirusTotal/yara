@@ -1,0 +1,76 @@
+#!/bin/sh
+
+# pseudo code:
+# - find all .[ch] source files
+# - filter e.g. auto generated source files via hard-coded regex below
+# - generate a single clang-format command to dry run on all remaining  source files; much faster than n invocations
+# - count how many times clang-format mentions each source file
+# - pass convention if clang mentions nothing about all source files
+
+set -e
+find . -type f | egrep "\.[ch]$" | sort --reverse | perl -lane '
+  use Time::HiRes;
+  $file = $_;
+  if ($file =~ m~(libyara|tests)/(re_lexer|hex_lexer|lexer|re_grammar|hex_grammar|grammar|blob|pb_tests.pb-c)\.(c|h)$~) {
+    printf qq[- convention: clang-format: skipping source file %s\n], $file;
+    push @files_skipped, $file;
+    next;
+  }
+  push @files, $file;
+  sub END {
+    printf qq[- convention: clang-format: running on %u non-skipped source files\n], scalar @files;
+    $cmd = sprintf qq[clang-format --verbose --dry-run --style=file @files 2>&1];
+    $t1 = Time::HiRes::time();
+    $lines = `$cmd`;
+    $t2 = Time::HiRes::time();
+    @lines = split(m~[\n\r]+~, $lines);
+    push @lines, qq[Formatting dummy-last-file.c];
+    undef $file;
+    foreach $line (@lines) {
+      if ($skip_next_n_lines > 0) {
+        $skip_next_n_lines --;
+        next;
+      }
+      if ($line =~ m~^Formatting (.*)$~) {
+        #printf qq[- convention: clang-format: debug: %s\n], $line;
+        if (0 == $file_mentions) {
+          push @files_with_no_mentions, $file if (defined $file);
+        }
+        else {
+          printf qq[- convention: clang-format: %3u mentions for %s\n], $file_mentions, $file;
+          push @files_with_mentions, $file;
+        }
+        $file = $1;
+        $file_mentions = 0;
+        next;
+      }
+      # come here if clang-format mentionned something about the file
+      $file_mentions ++;
+      if ($line =~ m~^$file:\d+:\d+: warning: code should be clang-formatted~) {
+        #printf qq[- convention: clang-format: debug: %s\n], $line;
+        $skip_next_n_lines = 2;
+        next;
+      }
+      # come here if unrecognized clang-format line
+      printf qq[- convention: clang-format: INTERNAL ERROR: unrecognized clang-format out:\n%s\n], $line;
+      exit(1);
+    }
+    printf qq[- convention: clang-format: source files: %u skipped, %u with no mentions, %u with mentions in %f seconds\n],
+      scalar @files_skipped, scalar @files_with_no_mentions, scalar @files_with_mentions, $t2 - $t1;
+    if (scalar @files != scalar @files_with_no_mentions + scalar @files_with_mentions) {
+      printf qq[- convention: clang-format: INTERNAL ERROR: file math borked;\n\n];
+      printf qq[%u files: [@files]\n\n], scalar @files;
+      printf qq[%u files_with_no_mentions: [@files_with_no_mentions]\n\n], scalar @files_with_no_mentions;
+      printf qq[%u files_with_mentions: [@files_with_mentions]\n], scalar @files_with_mentions;
+      exit(1);
+    }
+    if (scalar @files_with_mentions > 0) {
+      printf qq[- convention: clang-format: %u source files found with mentions; please fix\n], scalar @files_with_mentions;
+      #fixme: uncomment to enforce formatting: exit(1);
+    }
+    else {
+      printf qq[- convention: clang-format: no source files found with mentions; well done!\n];
+    }
+  }'
+
+exit 0
