@@ -1046,7 +1046,7 @@ static int callback(
 
       return CALLBACK_CONTINUE;
 
-    case CALLBACK_MSG_SCAN_WARNING_MATCH_LIMIT:
+    case CALLBACK_MSG_TOO_MANY_MATCHES:
       fprintf(
           stderr,
           "Warning: maximum matches for string %s. Results may be invalid.\n",

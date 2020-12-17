@@ -253,7 +253,7 @@ int count(
 {
   switch (message)
   {
-  case CALLBACK_MSG_SCAN_WARNING_MATCH_LIMIT:
+  case CALLBACK_MSG_TOO_MANY_MATCHES:
     (*(struct COUNTERS*) user_data).rules_warning++;
     break;
 

@@ -1005,7 +1005,7 @@ int yr_scan_verify_match(
   {
     result = callback(
         context,
-        CALLBACK_MSG_SCAN_WARNING_MATCH_LIMIT,
+        CALLBACK_MSG_TOO_MANY_MATCHES,
         (void*) string,
         context->user_data);
 

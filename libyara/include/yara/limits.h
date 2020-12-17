@@ -109,7 +109,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #endif
 
 // Maximum number of matches allowed for a string. If more matches are found
-// the scan will have a CALLBACK_MSG_SCAN_WARNING_MATCH_LIMIT.
+// the scan will have a CALLBACK_MSG_TOO_MANY_MATCHES.
 #ifndef YR_MAX_STRING_MATCHES
 #define YR_MAX_STRING_MATCHES 1000000
 #endif

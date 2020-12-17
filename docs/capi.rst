@@ -225,7 +225,7 @@ Possible values for ``message`` are::
   CALLBACK_MSG_SCAN_FINISHED
   CALLBACK_MSG_IMPORT_MODULE
   CALLBACK_MSG_MODULE_IMPORTED
-  CALLBACK_MSG_SCAN_WARNING_MATCH_LIMIT
+  CALLBACK_MSG_TOO_MANY_MATCHES
 
 Your callback function will be called once for each rule with either
 a ``CALLBACK_MSG_RULE_MATCHING`` or ``CALLBACK_MSG_RULE_NOT_MATCHING`` message,
