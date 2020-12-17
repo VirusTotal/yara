@@ -255,10 +255,10 @@ CALLBACK_MSG_MODULE_IMPORTED. When this happens ``message_data`` points to a
 information provided by the module about the currently scanned file.
 
 If during the scan a string hits the maximum number of matches your callback
-will be called once with the CALLBACK_MESSAGE_SCAN_WARNING_MATCH_LIMIT. When
-this happens, `message_data` is a `YR_STRING*` which points to the string
-which caused the warning. If your callback returns CALLBACK_CONTINUE the string
-will be disabled and scanning will continue, otherwise scanning will be halted.
+will be called once with the CALLBACK_MSG_TOO_MANY_MATCHES. When this happens,
+`message_data` is a `YR_STRING*` which points to the string which caused the
+warning. If your callback returns CALLBACK_CONTINUE the string will be disabled
+and scanning will continue, otherwise scanning will be halted.
 
 Lastly, the callback function is also called with the
 ``CALLBACK_MSG_SCAN_FINISHED`` message when the scan is finished. In this case
