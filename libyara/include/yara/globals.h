@@ -49,7 +49,7 @@ extern YR_THREAD_STORAGE_KEY yr_yyfatal_trampoline_tls;
 extern YR_THREAD_STORAGE_KEY yr_trycatch_trampoline_tls;
 
 // When YARA is built with YR_DEBUG_VERBOSITY defined as larger than 0 it can
-// print debug information to stdout. Besides being
+// print debug information to stdout.
 #if 0 == YR_DEBUG_VERBOSITY
 
 #define YR_DEBUG_INITIALIZE()
