@@ -38,6 +38,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <yara/re.h>
 #include <yara/scan.h>
 #include <yara/stopwatch.h>
+#include <yara/rules.h>
 #include <yara/types.h>
 #include <yara/utils.h>
 
@@ -990,6 +991,7 @@ int yr_scan_verify_match(
       offset);
 
   YR_STRING* string = ac_match->string;
+  YR_CALLBACK_FUNC callback = context->callback;
 
   int result;
 
@@ -998,6 +1000,25 @@ int yr_scan_verify_match(
 
   if (STRING_IS_DISABLED(string))
     return ERROR_SUCCESS;
+
+  if (context->matches[string->idx].count == YR_MAX_STRING_MATCHES)
+  {
+    result = callback(
+        context,
+        CALLBACK_MSG_TOO_MANY_MATCHES,
+        (void*) string,
+        context->user_data);
+
+    if (result == CALLBACK_CONTINUE)
+    {
+      string->flags |= STRING_FLAGS_DISABLED;
+      return ERROR_SUCCESS;
+    }
+    else if (result == CALLBACK_ABORT || result == CALLBACK_ERROR)
+      return ERROR_TOO_MANY_MATCHES;
+    else
+      return ERROR_INTERNAL_FATAL_ERROR;
+  }
 
   if (context->flags & SCAN_FLAGS_FAST_MODE && STRING_IS_SINGLE_MATCH(string) &&
       context->matches[string->idx].head != NULL)

@@ -34,6 +34,14 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <yara/types.h>
 #include <yara/utils.h>
 
+
+#define CALLBACK_MSG_RULE_MATCHING              1
+#define CALLBACK_MSG_RULE_NOT_MATCHING          2
+#define CALLBACK_MSG_SCAN_FINISHED              3
+#define CALLBACK_MSG_IMPORT_MODULE              4
+#define CALLBACK_MSG_MODULE_IMPORTED            5
+#define CALLBACK_MSG_TOO_MANY_MATCHES           6
+
 #define CALLBACK_MSG_RULE_MATCHING     1
 #define CALLBACK_MSG_RULE_NOT_MATCHING 2
 #define CALLBACK_MSG_SCAN_FINISHED     3
