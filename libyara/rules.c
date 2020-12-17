@@ -51,7 +51,7 @@ YR_API int yr_rules_define_integer_variable(
   if (identifier == NULL)
     return ERROR_INVALID_ARGUMENT;
 
-  external = rules->externals_list_head;
+  external = rules->ext_vars_table;
 
   while (!EXTERNAL_VARIABLE_IS_NULL(external))
   {
@@ -80,7 +80,7 @@ YR_API int yr_rules_define_boolean_variable(
   if (identifier == NULL)
     return ERROR_INVALID_ARGUMENT;
 
-  external = rules->externals_list_head;
+  external = rules->ext_vars_table;
 
   while (!EXTERNAL_VARIABLE_IS_NULL(external))
   {
@@ -109,7 +109,7 @@ YR_API int yr_rules_define_float_variable(
   if (identifier == NULL)
     return ERROR_INVALID_ARGUMENT;
 
-  external = rules->externals_list_head;
+  external = rules->ext_vars_table;
 
   while (!EXTERNAL_VARIABLE_IS_NULL(external))
   {
@@ -138,7 +138,7 @@ YR_API int yr_rules_define_string_variable(
   if (identifier == NULL || value == NULL)
     return ERROR_INVALID_ARGUMENT;
 
-  external = rules->externals_list_head;
+  external = rules->ext_vars_table;
 
   while (!EXTERNAL_VARIABLE_IS_NULL(external))
   {
@@ -343,11 +343,11 @@ int yr_rules_from_arena(YR_ARENA* arena, YR_RULES** rules)
   new_rules->num_strings = summary->num_strings;
   new_rules->num_namespaces = summary->num_namespaces;
 
-  new_rules->rules_list_head = yr_arena_get_ptr(arena, YR_RULES_TABLE, 0);
+  new_rules->rules_table = yr_arena_get_ptr(arena, YR_RULES_TABLE, 0);
 
-  new_rules->strings_list_head = yr_arena_get_ptr(arena, YR_STRINGS_TABLE, 0);
+  new_rules->strings_table = yr_arena_get_ptr(arena, YR_STRINGS_TABLE, 0);
 
-  new_rules->externals_list_head = yr_arena_get_ptr(
+  new_rules->ext_vars_table = yr_arena_get_ptr(
       arena, YR_EXTERNAL_VARIABLES_TABLE, 0);
 
   new_rules->ac_transition_table = yr_arena_get_ptr(
@@ -511,7 +511,7 @@ YR_API int yr_rules_get_stats(YR_RULES* rules, YR_RULES_STATS* stats)
 
 YR_API int yr_rules_destroy(YR_RULES* rules)
 {
-  YR_EXTERNAL_VARIABLE* external = rules->externals_list_head;
+  YR_EXTERNAL_VARIABLE* external = rules->ext_vars_table;
 
   while (!EXTERNAL_VARIABLE_IS_NULL(external))
   {

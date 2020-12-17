@@ -323,6 +323,10 @@ int count(
 
   switch (message)
   {
+  case CALLBACK_MSG_TOO_MANY_MATCHES:
+    (*(struct COUNTERS*) user_data).rules_warning++;
+    break;
+
   case CALLBACK_MSG_RULE_MATCHING:
     (*(struct COUNTERS*) user_data).rules_matching++;
     break;

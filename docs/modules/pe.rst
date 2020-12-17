@@ -157,9 +157,16 @@ Reference
 
 .. c:type:: entry_point
 
-    Entry point raw offset or virtual address depending on whether YARA is
+    Entry point file offset or virtual address depending on whether YARA is
     scanning a file or process memory respectively. This is equivalent to the
     deprecated ``entrypoint`` keyword.
+
+.. c:type:: entry_point_raw
+
+    Entry point raw value from the optional header of the PE. This value is not
+    converted to a file offset or an RVA.
+    
+    .. versionadded:: 4.1.0
 
 .. c:type:: base_of_code
 

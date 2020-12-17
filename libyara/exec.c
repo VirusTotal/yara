@@ -860,7 +860,7 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
       memcpy(&r1.i, ip, sizeof(uint64_t));
       ip += sizeof(uint64_t);
 
-      rule = &context->rules->rules_list_head[r1.i];
+      rule = &context->rules->rules_table[r1.i];
 
       if (RULE_IS_DISABLED(rule))
       {
@@ -886,7 +886,7 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
 
       assert(current_rule_idx < context->rules->num_rules);
 
-      current_rule = &context->rules->rules_list_head[current_rule_idx];
+      current_rule = &context->rules->rules_table[current_rule_idx];
 
       // If the rule is disabled let's skip its code.
       ip = jmp_if(RULE_IS_DISABLED(current_rule), ip);
@@ -906,7 +906,7 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
       memcpy(&r2.i, ip, sizeof(uint64_t));
       ip += sizeof(uint64_t);
 
-      rule = &context->rules->rules_list_head[r2.i];
+      rule = &context->rules->rules_table[r2.i];
 
 #if YR_PARANOID_EXEC
       ensure_within_rules_arena(rule);

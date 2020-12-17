@@ -35,6 +35,14 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <yara/utils.h>
 #include <yara/scanner.h>
 
+
+#define CALLBACK_MSG_RULE_MATCHING              1
+#define CALLBACK_MSG_RULE_NOT_MATCHING          2
+#define CALLBACK_MSG_SCAN_FINISHED              3
+#define CALLBACK_MSG_IMPORT_MODULE              4
+#define CALLBACK_MSG_MODULE_IMPORTED            5
+#define CALLBACK_MSG_TOO_MANY_MATCHES           6
+
 #define CALLBACK_MSG_RULE_MATCHING     1
 #define CALLBACK_MSG_RULE_NOT_MATCHING 2
 #define CALLBACK_MSG_SCAN_FINISHED     3
@@ -68,7 +76,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
     else /* user code block goes here */
 
 #define yr_rules_foreach(rules, rule) \
-  for (rule = rules->rules_list_head; !RULE_IS_NULL(rule); rule++)
+  for (rule = rules->rules_table; !RULE_IS_NULL(rule); rule++)
 
 YR_API int yr_rules_scan_mem_blocks(
     YR_RULES* rules,

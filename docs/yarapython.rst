@@ -266,6 +266,33 @@ Here is an example:
 
 The passed dictionary will contain the information from the module.
 
+You can also specify a warning callback function when invoking the ``match``
+method.  The provided function will be called for every runtime warning.
+Your callback function should expect two parameters. The first is an integer
+which contains the type of warning and the second is a string with the warning
+message. Your callback should return ``CALLBACK_CONTINUE`` to proceed with the
+scan or ``CALLBACK_ABORT`` to stop.
+
+Possible values for the type are::
+
+  CALLBACK_TOO_MANY_MATCHES
+
+Here is an example:
+
+.. code-block:: python
+
+  import yara
+
+  def warning_callback(warning_type, message):
+    if warning_type == yara.CALLBACK_TOO_MANY_MATCHES:
+        print(message)
+    return yara.CALLBACK_CONTINUE
+
+  matches = rules.match('/foo/bar/my_file', warning_callback=warning_callback)
+
+If you do not use a warning callback a warning message will be sent to the
+normal python warning system for you and scanning will continue.
+
 
 You may also find that the default sizes for the stack for the matching engine in
 yara or the default size for the maximum number of strings per rule is too low. In

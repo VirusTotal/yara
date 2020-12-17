@@ -83,51 +83,51 @@ YR_TLS int yr_debug_stopwatch_unstarted = 1;
 
 YR_TLS YR_STOPWATCH yr_debug_stopwatch;
 
-const char yr_debug_spaces[] = \
-    "                " /* 16 spaces * 1 */ \
-    "                " /* 16 spaces * 2 */ \
-    "                " /* 16 spaces * 3 */ \
-    "                " /* 16 spaces * 4 */ \
-    "                " /* 16 spaces * 5 */ \
-    "                " /* 16 spaces * 6 */ \
-    "                " /* 16 spaces * 7 */ \
-    "                " /* 16 spaces * 8 */ ;
+const char yr_debug_spaces[] = "                " /* 16 spaces * 1 */
+                               "                " /* 16 spaces * 2 */
+                               "                " /* 16 spaces * 3 */
+                               "                " /* 16 spaces * 4 */
+                               "                " /* 16 spaces * 5 */
+                               "                " /* 16 spaces * 6 */
+                               "                " /* 16 spaces * 7 */
+                               "                " /* 16 spaces * 8 */;
 
 size_t yr_debug_spaces_len = sizeof(yr_debug_spaces);
 
 double yr_debug_get_elapsed_seconds(void)
 {
-  if (yr_debug_stopwatch_unstarted) {
+  if (yr_debug_stopwatch_unstarted)
+  {
     yr_debug_stopwatch_unstarted = 0;
     yr_stopwatch_start(&yr_debug_stopwatch);
   }
 
   uint64_t elapsed_ns = yr_stopwatch_elapsed_ns(&yr_debug_stopwatch);
 
-  double seconds = (double)elapsed_ns / 1000000000;
+  double seconds = (double) elapsed_ns / 1000000000;
 
   return seconds;
 }
 
-char* yr_debug_callback_message_as_string(int message)
+char *yr_debug_callback_message_as_string(int message)
 {
-  char* s = "CALLBACK_MSG_?";
+  char *s = "CALLBACK_MSG_?";
   switch (message)
-  { // clang-format off
+  {  // clang-format off
   case CALLBACK_MSG_RULE_MATCHING    : s = "CALLBACK_MSG_RULE_MATCHING"    ; break;
   case CALLBACK_MSG_RULE_NOT_MATCHING: s = "CALLBACK_MSG_RULE_NOT_MATCHING"; break;
   case CALLBACK_MSG_SCAN_FINISHED    : s = "CALLBACK_MSG_SCAN_FINISHED"    ; break;
   case CALLBACK_MSG_IMPORT_MODULE    : s = "CALLBACK_MSG_IMPORT_MODULE"    ; break;
   case CALLBACK_MSG_MODULE_IMPORTED  : s = "CALLBACK_MSG_MODULE_IMPORTED"  ; break;
-  } // clang-format on
+  }  // clang-format on
   return s;
 }
 
-char* yr_debug_error_as_string(int error)
+char *yr_debug_error_as_string(int error)
 {
-  char* s = "ERROR_?";
+  char *s = "ERROR_?";
   switch (error)
-  { // clang-format off
+  {  // clang-format off
   case ERROR_SUCCESS                       : s = "ERROR_SUCCESS 0"                     ; break;
   case ERROR_INSUFFICIENT_MEMORY           : s = "ERROR_INSUFFICIENT_MEMORY"           ; break;
   case ERROR_COULD_NOT_ATTACH_TO_PROCESS   : s = "ERROR_COULD_NOT_ATTACH_TO_PROCESS"   ; break;
@@ -189,7 +189,7 @@ char* yr_debug_error_as_string(int error)
   case ERROR_INVALID_MODIFIER              : s = "ERROR_INVALID_MODIFIER"              ; break;
   case ERROR_DUPLICATED_MODIFIER           : s = "ERROR_DUPLICATED_MODIFIER"           ; break;
   case ERROR_BLOCK_NOT_READY               : s = "ERROR_BLOCK_NOT_READY"               ; break;
-  } // clang-format on
+  }  // clang-format on
   return s;
 }
 
@@ -215,6 +215,12 @@ static void _locking_function(int mode, int n, const char *file, int line)
   else
     yr_mutex_unlock(&openssl_locks[n]);
 }
+
+#endif
+
+#if defined(HAVE_WINCRYPT_H)
+
+HCRYPTPROV yr_cryptprov;
 
 #endif
 

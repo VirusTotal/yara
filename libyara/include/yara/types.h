@@ -525,14 +525,35 @@ struct YR_RULES
 {
   YR_ARENA* arena;
 
-  YR_RULE* rules_list_head;
-  YR_STRING* strings_list_head;
-  YR_EXTERNAL_VARIABLE* externals_list_head;
+  // Array of pointers with an entry for each rule. The rule_idx field in the
+  // YR_STRING structure is an index within this array.
+  YR_RULE* rules_table;
 
+  // Array of pointers with an entry for each of the defined strings. The idx
+  // field in the YR_STRING structure is an index within this array.
+  YR_STRING* strings_table;
+
+  // Array of pointers with an entry for each external variable.
+  YR_EXTERNAL_VARIABLE* ext_vars_table;
+
+  // Pointer to the Aho-Corasick transition table.
   YR_AC_TRANSITION* ac_transition_table;
+
+  // A pointer to the arena where YR_AC_MATCH structures are allocated.
   YR_AC_MATCH* ac_match_pool;
+
+  // Table that translates from Aho-Corasick states (which are identified by
+  // numbers 0, 1, 2.. and so on) to the index in ac_match_pool where the
+  // YR_AC_MATCH structures for the corresponding state start.
+  // If the entry corresponding to state N in ac_match_table is zero, it
+  // means that there's no match associated to the state. If it's non-zero,
+  // its value is the 1-based index within ac_match_pool where the first
+  // match resides.
   uint32_t* ac_match_table;
 
+  // Pointer to the first instruction that is executed whan evaluating the
+  // conditions for all rules. The code is executed by yr_execute_code and
+  // the instructions are defined by the OP_X macros in exec.h.
   const uint8_t* code_start;
 
   // Total number of rules.

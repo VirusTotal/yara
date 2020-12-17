@@ -86,6 +86,7 @@ struct COUNTERS
 {
   int rules_matching;
   int rules_not_matching;
+  int rules_warning;
 };
 
 int compile_rule(

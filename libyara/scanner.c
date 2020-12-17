@@ -246,7 +246,7 @@ YR_API int yr_scanner_create(YR_RULES* rules, YR_SCANNER** scanner)
   new_scanner->profiling_info = NULL;
 #endif
 
-  external = rules->externals_list_head;
+  external = rules->ext_vars_table;
 
   while (!EXTERNAL_VARIABLE_IS_NULL(external))
   {
@@ -501,7 +501,7 @@ YR_API int yr_scanner_scan_mem_blocks(
   if (result != ERROR_SUCCESS)
     goto _exit;
 
-  for (i = 0, rule = rules->rules_list_head; !RULE_IS_NULL(rule); i++, rule++)
+  for (i = 0, rule = rules->rules_table; !RULE_IS_NULL(rule); i++, rule++)
   {
     int message = 0;
 
@@ -711,7 +711,7 @@ YR_API YR_RULE* yr_scanner_last_error_rule(YR_SCANNER* scanner)
   if (scanner->last_error_string == NULL)
     return NULL;
 
-  return &scanner->rules->rules_list_head[scanner->last_error_string->rule_idx];
+  return &scanner->rules->rules_table[scanner->last_error_string->rule_idx];
 }
 
 static int sort_by_cost_desc(
@@ -749,7 +749,7 @@ YR_API YR_RULE_PROFILING_INFO* yr_scanner_get_profiling_info(
 
   for (uint32_t i = 0; i < scanner->rules->num_rules; i++)
   {
-    profiling_info[i].rule = &scanner->rules->rules_list_head[i];
+    profiling_info[i].rule = &scanner->rules->rules_table[i];
 #ifdef YR_PROFILING_ENABLED
     profiling_info[i].cost = scanner->profiling_info[i].exec_time +
                              (scanner->profiling_info[i].atom_matches *

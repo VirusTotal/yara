@@ -14,7 +14,6 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-
 #include <ctype.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -27,7 +26,6 @@ limitations under the License.
 #include <yara/strutils.h>
 
 #define MODULE_NAME dotnet
-
 
 char* pe_get_dotnet_string(
     PE* pe,
@@ -57,7 +55,6 @@ char* pe_get_dotnet_string(
   return start;
 }
 
-
 uint32_t max_rows(int count, ...)
 {
   va_list ap;
@@ -80,7 +77,6 @@ uint32_t max_rows(int count, ...)
   va_end(ap);
   return biggest;
 }
-
 
 void dotnet_parse_guid(
     PE* pe,
@@ -128,7 +124,6 @@ void dotnet_parse_guid(
 
   set_integer(i, pe->object, "number_of_guids");
 }
-
 
 // Given an offset into a #US or #Blob stream, parse the entry at that position.
 // The offset is relative to the start of the PE file.
@@ -203,7 +198,6 @@ BLOB_PARSE_RESULT dotnet_parse_blob_entry(PE* pe, const uint8_t* offset)
   return result;
 }
 
-
 void dotnet_parse_us(PE* pe, int64_t metadata_root, PSTREAM_HEADER us_header)
 {
   BLOB_PARSE_RESULT blob_result;
@@ -253,7 +247,6 @@ void dotnet_parse_us(PE* pe, int64_t metadata_root, PSTREAM_HEADER us_header)
 
   set_integer(i, pe->object, "number_of_user_strings");
 }
-
 
 STREAMS dotnet_parse_stream_headers(
     PE* pe,
@@ -333,7 +326,6 @@ STREAMS dotnet_parse_stream_headers(
 
   return headers;
 }
-
 
 // This is the second pass through the data for #~. The first pass collects
 // information on the number of rows for tables which have coded indexes.
@@ -466,6 +458,9 @@ void dotnet_parse_tilde_2(
     case BIT_MODULE:
       module_table = (PMODULE_TABLE) table_offset;
 
+      if (!struct_fits_in_pe(pe, module_table, MODULE_TABLE))
+        break;
+
       name = pe_get_dotnet_string(
           pe, string_offset, DOTNET_STRING_INDEX(module_table->Name));
 
@@ -474,7 +469,6 @@ void dotnet_parse_tilde_2(
 
       table_offset += (2 + index_sizes.string + (index_sizes.guid * 3)) *
                       num_rows;
-
       break;
 
     case BIT_TYPEREF:
@@ -1443,7 +1437,6 @@ void dotnet_parse_tilde_2(
   }
 }
 
-
 // Parsing the #~ stream is done in two parts. The first part (this function)
 // parses enough of the Stream to provide context for the second pass. In
 // particular it is collecting the number of rows for each of the tables. The
@@ -1612,7 +1605,6 @@ void dotnet_parse_tilde(
       streams);
 }
 
-
 void dotnet_parse_com(PE* pe, size_t base_address)
 {
   PIMAGE_DATA_DIRECTORY directory;
@@ -1691,7 +1683,6 @@ void dotnet_parse_com(PE* pe, size_t base_address)
     dotnet_parse_us(pe, metadata_root, headers.us);
 }
 
-
 begin_declarations
   declare_string("version");
   declare_string("module_name");
@@ -1751,18 +1742,15 @@ begin_declarations
   declare_integer("number_of_field_offsets");
 end_declarations
 
-
 int module_initialize(YR_MODULE* module)
 {
   return ERROR_SUCCESS;
 }
 
-
 int module_finalize(YR_MODULE* module)
 {
   return ERROR_SUCCESS;
 }
-
 
 int module_load(
     YR_SCAN_CONTEXT* context,
@@ -1813,7 +1801,6 @@ int module_load(
 
   return ERROR_SUCCESS;
 }
-
 
 int module_unload(YR_OBJECT* module_object)
 {

@@ -101,6 +101,14 @@ int main(int argc, char** argv)
       "import \"pe\" \
       rule test { \
         condition: \
+          pe.entry_point_raw == 0x1380 \
+      }",
+      "tests/data/mtxex.dll");
+
+  assert_true_rule_file(
+      "import \"pe\" \
+      rule test { \
+        condition: \
           pe.linker_version.major == 2 and \
           pe.linker_version.minor == 26 \
       }",
