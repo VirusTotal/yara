@@ -1246,7 +1246,7 @@ void _parse_pkcs7(PE* pe, PKCS7* pkcs7, int* counter)
 {
   int i, j;
   time_t date_time;
-  const char* sig_alg;
+  int sig_nid;
   char buffer[256];
   int bytes;
   int idx;
@@ -1302,9 +1302,10 @@ void _parse_pkcs7(PE* pe, PKCS7* pkcs7, int* counter)
         "signatures[%i].version",
         *counter);
 
-    sig_alg = OBJ_nid2ln(X509_get_signature_nid(cert));
-
-    set_string(sig_alg, pe->object, "signatures[%i].algorithm", *counter);
+    sig_nid = X509_get_signature_nid(cert);
+    set_string(OBJ_nid2ln(sig_nid), pe->object, "signatures[%i].algorithm", *counter);
+    OBJ_obj2txt(buffer, sizeof(buffer), OBJ_nid2obj(sig_nid), 1);
+    set_string(buffer, pe->object, "signatures[%i].algorithm_oid", *counter);
 
     serial = X509_get_serialNumber(cert);
 
@@ -2920,6 +2921,7 @@ begin_declarations
     declare_string("subject");
     declare_integer("version");
     declare_string("algorithm");
+    declare_string("algorithm_oid");
     declare_string("serial");
     declare_integer("not_before");
     declare_integer("not_after");
