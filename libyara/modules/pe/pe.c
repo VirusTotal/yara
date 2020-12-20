@@ -1607,7 +1607,11 @@ static void pe_parse_exports(PE* pe)
 // Parse a PKCS7 blob, looking for certs and nested PKCS7 blobs.
 //
 
-void _parse_pkcs7(PE* pe, PKCS7* pkcs7, int* counter)
+int _parse_pkcs7(
+    PE* pe,
+    const unsigned char** ptr,
+    uintptr_t size,
+    int* counter)
 {
   int i, j;
   time_t date_time;
@@ -1621,7 +1625,6 @@ void _parse_pkcs7(PE* pe, PKCS7* pkcs7, int* counter)
   char thumbprint_ascii[YR_SHA1_LEN * 2 + 1];
 
   PKCS7_SIGNER_INFO* signer_info = NULL;
-  PKCS7* nested_pkcs7 = NULL;
   ASN1_INTEGER* serial = NULL;
   ASN1_TYPE* nested = NULL;
   ASN1_STRING* value = NULL;
@@ -1631,12 +1634,20 @@ void _parse_pkcs7(PE* pe, PKCS7* pkcs7, int* counter)
   STACK_OF(X509_ATTRIBUTE)* attrs = NULL;
 
   if (*counter >= MAX_PE_CERTS)
-    return;
+    return 0;
+
+  PKCS7* pkcs7 = d2i_PKCS7(NULL, ptr, size);
+
+  if (pkcs7 == NULL)
+    return 0;
 
   certs = PKCS7_get0_signers(pkcs7, NULL, 0);
 
   if (!certs)
-    return;
+  {
+    PKCS7_free(pkcs7);
+    return 0;
+  }
 
   for (i = 0; i < sk_X509_num(certs) && *counter < MAX_PE_CERTS; i++)
   {
@@ -1782,16 +1793,13 @@ void _parse_pkcs7(PE* pe, PKCS7* pkcs7, int* counter)
         break;
       value = nested->value.sequence;
       p = value->data;
-      nested_pkcs7 = d2i_PKCS7(NULL, &p, value->length);
-      if (nested_pkcs7 != NULL)
-      {
-        _parse_pkcs7(pe, nested_pkcs7, counter);
-        PKCS7_free(nested_pkcs7);
-      }
+      _parse_pkcs7(pe, (const unsigned char**) &p, value->length, counter);
     }
   }
 
   sk_X509_free(certs);
+  PKCS7_free(pkcs7);
+  return 1;
 }
 
 static void pe_parse_certificates(PE* pe)
@@ -1847,8 +1855,6 @@ static void pe_parse_certificates(PE* pe)
          (uint8_t*) win_cert + sizeof(WIN_CERTIFICATE) < eod &&
          (uint8_t*) win_cert + yr_le32toh(win_cert->Length) <= eod)
   {
-    PKCS7* pkcs7;
-
     // Some sanity checks
 
     if (yr_le32toh(win_cert->Length) == 0 ||
@@ -1876,14 +1882,8 @@ static void pe_parse_certificates(PE* pe)
 
     while ((uintptr_t) cert_p < end && counter < MAX_PE_CERTS)
     {
-      pkcs7 = d2i_PKCS7(NULL, &cert_p, (uint32_t)(end - (uintptr_t) cert_p));
-
-      if (pkcs7 == NULL)
+      if (!_parse_pkcs7(pe, &cert_p, end - (uintptr_t) cert_p, &counter))
         break;
-
-      _parse_pkcs7(pe, pkcs7, &counter);
-      PKCS7_free(pkcs7);
-      pkcs7 = NULL;
     }
 
     // Next certificate is aligned to the next 8-bytes boundary.
