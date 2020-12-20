@@ -1802,6 +1802,184 @@ int _parse_pkcs7(
   return 1;
 }
 
+#elif defined(HAVE_WINCRYPT_H)
+
+#define FILETIME_TO_EPOCH(t)                                          \
+  ((t.dwLowDateTime | (uint64_t) t.dwHighDateTime << 32) / 10000000 - \
+   11644473600LL)
+
+int _parse_pkcs7(
+    PE* pe,
+    const unsigned char** ptr,
+    uintptr_t size,
+    int* counter)
+{
+  CERT_BLOB blob = {.pbData = (BYTE*) *ptr, .cbData = size};
+  HCERTSTORE cert_store = NULL;
+  HCRYPTMSG cert_msg = NULL;
+  CERT_INFO lookup_cert_info;
+  DWORD signer_count;
+  CMSG_SIGNER_INFO* signer_info = NULL;
+  char buffer[1024];
+  char thumbprint_ascii[YR_SHA1_LEN * 2 + 1];
+  DWORD buffer_sz;
+  int rc = 0;
+
+  if (!CryptQueryObject(
+          CERT_QUERY_OBJECT_BLOB,
+          &blob,
+          CERT_QUERY_CONTENT_FLAG_PKCS7_SIGNED,
+          CERT_QUERY_FORMAT_FLAG_BINARY,
+          0,
+          NULL,
+          NULL,
+          NULL,
+          &cert_store,
+          &cert_msg,
+          NULL))
+    return 0;
+
+  buffer_sz = sizeof(DWORD);
+  if (!CryptMsgGetParam(
+          cert_msg, CMSG_SIGNER_COUNT_PARAM, 0, &signer_count, &buffer_sz))
+    goto _exit;
+
+  for (DWORD i = 0; i < signer_count && *counter < MAX_PE_CERTS; i++)
+  {
+    if (!CryptMsgGetParam(
+            cert_msg, CMSG_SIGNER_INFO_PARAM, i, NULL, &buffer_sz))
+      goto _exit;
+    signer_info = realloc(signer_info, buffer_sz);
+    if (!CryptMsgGetParam(
+            cert_msg, CMSG_SIGNER_INFO_PARAM, i, signer_info, &buffer_sz))
+      goto _exit;
+
+    /* Use (issuer, serialnumber) from signerinfo to look up certificate from
+     * store */
+    lookup_cert_info.Issuer = signer_info->Issuer;
+    lookup_cert_info.SerialNumber = signer_info->SerialNumber;
+    const CERT_CONTEXT* cert = CertFindCertificateInStore(
+        cert_store,
+        X509_ASN_ENCODING | PKCS_7_ASN_ENCODING,
+        0,
+        CERT_FIND_SUBJECT_CERT,
+        &lookup_cert_info,
+        NULL);
+
+    if (!cert)
+      goto _exit;
+
+    buffer_sz = sizeof(buffer);
+    CryptHashCertificate(
+        0,
+        CALG_SHA1,
+        0,
+        cert->pbCertEncoded,
+        cert->cbCertEncoded,
+        (BYTE*) buffer,
+        &buffer_sz);
+
+    for (int j = 0; j < YR_SHA1_LEN; j++)
+      sprintf(thumbprint_ascii + (j * 2), "%02x", (unsigned char) buffer[j]);
+    set_string(
+        thumbprint_ascii, pe->object, "signatures[%i].thumbprint", *counter);
+
+    // FIXME: Find a way to separate DN elements by forward slashes (/)
+    buffer_sz = sizeof(buffer);
+    CertNameToStrA(
+        X509_ASN_ENCODING,
+        &(cert->pCertInfo->Issuer),
+        CERT_X500_NAME_STR | CERT_NAME_STR_NO_QUOTING_FLAG,
+        buffer,
+        sizeof(buffer));
+    set_string(buffer, pe->object, "signatures[%i].issuer", *counter);
+
+    buffer_sz = sizeof(buffer);
+    CertNameToStrA(
+        X509_ASN_ENCODING,
+        &(cert->pCertInfo->Subject),
+        CERT_X500_NAME_STR | CERT_NAME_STR_NO_QUOTING_FLAG,
+        buffer,
+        sizeof(buffer));
+    set_string(buffer, pe->object, "signatures[%i].subject", *counter);
+
+    set_integer(
+        cert->pCertInfo->dwVersion + 1,
+        pe->object,
+        "signatures[%i].version",
+        *counter);
+
+    // FIXME: Find a way to output
+    // ${hash_alg}With${enc_alg}Encryption, not only ${hash_alg}${enc_alg}
+    // e.g. sha256WithRSAEncryption instead of sha256RSA
+    const CRYPT_OID_INFO* oid_info = CryptFindOIDInfo(
+        CRYPT_OID_INFO_OID_KEY,
+        cert->pCertInfo->SignatureAlgorithm.pszObjId,
+        0);
+    if (oid_info)
+      wcstombs(buffer, oid_info->pwszName, sizeof(buffer));
+    else
+      strncpy(
+          buffer,
+          cert->pCertInfo->SignatureAlgorithm.pszObjId,
+          sizeof(buffer) - 1);
+
+    set_string(buffer, pe->object, "signatures[%i].algorithm", *counter);
+
+    if (signer_info->SerialNumber.cbData <= (sizeof(buffer) - 1) / 3)
+    {
+      /* Apparently CRYPT_INTEGER_BLOB contains an little-endian-encoded
+       * integer. */
+      int len = signer_info->SerialNumber.cbData - 1;
+      for (int j = len; j >= 0; j--)
+      {
+        if (j > 0)
+          snprintf(
+              (char*) buffer + 3 * (len - j),
+              4,
+              "%02x:",
+              signer_info->SerialNumber.pbData[j]);
+        else
+          snprintf(
+              (char*) buffer + 3 * (len - j),
+              3,
+              "%02x",
+              signer_info->SerialNumber.pbData[j]);
+      }
+      set_string(buffer, pe->object, "signatures[%i].serial", *counter);
+    }
+
+    set_integer(
+        FILETIME_TO_EPOCH(cert->pCertInfo->NotBefore),
+        pe->object,
+        "signatures[%i].not_before",
+        *counter);
+    set_integer(
+        FILETIME_TO_EPOCH(cert->pCertInfo->NotAfter),
+        pe->object,
+        "signatures[%i].not_after",
+        *counter);
+
+    (*counter)++;
+  }
+  rc = 1;
+
+_exit:
+
+  if (cert_store)
+    CertCloseStore(cert_store, CERT_CLOSE_STORE_FORCE_FLAG);
+  if (cert_msg)
+    CryptMsgClose(cert_msg);
+
+  *ptr += size;
+
+  return rc;
+}
+
+#endif
+
+#if (defined(HAVE_LIBCRYPTO) && !defined(BORINGSSL)) || defined(HAVE_WINCRYPT_H)
+
 static void pe_parse_certificates(PE* pe)
 {
   int counter = 0;
@@ -3563,7 +3741,7 @@ begin_declarations
   declare_integer("number_of_resources");
   declare_string("pdb_path");
 
-#if defined(HAVE_LIBCRYPTO) && !defined(BORINGSSL)
+#if defined(HAVE_LIBCRYPTO) && !defined(BORINGSSL) || defined(HAVE_WINCRYPT_H)
   begin_struct_array("signatures")
     declare_string("thumbprint");
     declare_string("issuer");
@@ -3963,7 +4141,7 @@ int module_load(
         pe_parse_rich_signature(pe, block->base);
         pe_parse_debug_directory(pe);
 
-#if defined(HAVE_LIBCRYPTO) && !defined(BORINGSSL)
+#if (defined(HAVE_LIBCRYPTO) && !defined(BORINGSSL)) || defined(HAVE_WINCRYPT_H)
         pe_parse_certificates(pe);
 #endif
 

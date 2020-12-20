@@ -279,6 +279,7 @@ AS_IF([test "x$have_crypto" = "xno"],
 	          AC_MSG_RESULT([The "hash" module functions will be provided through the Microsoft Crypto API])
             # FIXME: Add PC_LIBS_PRIVATE entries?
             build_hash_module=true
+	    LIBS="$LIBS -lcrypt32"
           ],
           [],
           [#include <windows.h>])
