@@ -30,10 +30,13 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <signal.h>
 #include <stdlib.h>
 #include <sys/types.h>
-#include <sys/wait.h>
 #include <unistd.h>
 #include <yara.h>
 #include <yara/globals.h>
+
+#if !defined(_WIN32) && !defined(__CYGWIN__)
+#include <sys/wait.h>
+#endif
 
 #include "blob.h"
 #include "util.h"
@@ -2622,6 +2625,7 @@ void test_tags()
       ERROR_DUPLICATED_TAG_IDENTIFIER);
 }
 
+#if !defined(_WIN32) && !defined(__CYGWIN__)
 void test_process_scan()
 {
   YR_DEBUG_FPRINTF(1, stderr, "+ %s() {}\n", __FUNCTION__);
@@ -2717,6 +2721,7 @@ void test_process_scan()
     exit(EXIT_FAILURE);
   }
 }
+#endif
 
 void test_performance_warnings()
 {
@@ -2935,7 +2940,7 @@ int main(int argc, char** argv)
     test_global_rules();
     test_tags();
 
-#if !defined(USE_WINDOWS_PROC) && !defined(USE_NO_PROC)
+#if !defined(USE_NO_PROC) && !defined(_WIN32) && !defined(__CYGWIN__)
     test_process_scan();
 #endif
 
