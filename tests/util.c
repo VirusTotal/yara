@@ -512,7 +512,11 @@ int read_file(char* filename, char** buf)
 {
   int fd;
 
+#if defined(_WIN32) || defined(__CYGWIN__)
+  if ((fd = open(filename, O_RDONLY | O_BINARY)) < 0)
+#else
   if ((fd = open(filename, O_RDONLY)) < 0)
+#endif
     return -1;
 
   size_t sz = lseek(fd, 0, SEEK_END);
