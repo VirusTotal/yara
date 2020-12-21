@@ -746,7 +746,26 @@ Reference
 
     .. c:member:: algorithm
 
-        Algorithm used for this signature. Usually "sha1WithRSAEncryption".
+        String representation of the algorithm used for this
+	signature. Usually "sha1WithRSAEncryption". It depends on the
+	X.509 and PKCS#7 implementationss and possibly their versions,
+	consider using algorithm_oid instead.
+
+    .. c:member:: algorithm_oid
+
+        Object ID of the algorithm used for this signature, expressed
+        in numeric ASN.1 dot notation. The name contained in
+        algorithm is derived from this value. The object id is
+        expected to be stable across X.509 and PKCS#7 implementations
+        and their versions.
+
+	For example, when using the current OpenSSL-based implementation::
+
+	    algorithm_oid == "1.2.840.113549.1.1.11"
+
+	is functionally equivalent to::
+
+            algorithm == "sha1WithRSAEncryption"
 
     .. c:member:: serial
 
