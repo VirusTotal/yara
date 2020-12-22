@@ -879,16 +879,19 @@ void dotnet_parse_tilde_2(
             continue;
           }
 
-          // The next byte is the length of the string.
+          // The next byte after the 16 bit prolog is the length of the string.
           blob_offset += 2;
+          uint8_t str_len = *blob_offset;
 
-          if (blob_offset + *blob_offset >= pe->data + pe->data_size)
+          // Increment blob_offset so that it points to the first byte of the
+          // string.
+          blob_offset += 1;
+
+          if (blob_offset + str_len > pe->data + pe->data_size)
           {
             row_ptr += row_size;
             continue;
           }
-
-          blob_offset += 1;
 
           if (*blob_offset == 0xFF || *blob_offset == 0x00)
           {
@@ -896,8 +899,8 @@ void dotnet_parse_tilde_2(
           }
           else
           {
-            strncpy(typelib, (char*) blob_offset, MAX_TYPELIB_SIZE);
-            typelib[MAX_TYPELIB_SIZE] = '\0';
+            strncpy(typelib, (char*) blob_offset, str_len);
+            typelib[str_len] = '\0';
           }
 
           set_string(typelib, pe->object, "typelib");
