@@ -1044,15 +1044,15 @@ static int callback(
       mutex_unlock(&output_mutex);
     }
 
-      return CALLBACK_CONTINUE;
+    return CALLBACK_CONTINUE;
 
-    case CALLBACK_MSG_TOO_MANY_MATCHES:
-      fprintf(
-          stderr,
-          "Warning: maximum matches for string %s. Results may be invalid.\n",
-          ((YR_STRING*) message_data)->identifier);
+  case CALLBACK_MSG_TOO_MANY_MATCHES:
+    fprintf(
+        stderr,
+        "Warning: maximum matches for string %s. Results may be invalid.\n",
+        ((YR_STRING*) message_data)->identifier);
 
-      return CALLBACK_CONTINUE;
+    return CALLBACK_CONTINUE;
   }
 
   return CALLBACK_ERROR;

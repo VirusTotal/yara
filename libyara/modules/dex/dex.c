@@ -412,7 +412,6 @@ static int32_t read_uleb128(const uint8_t* pStream, uint32_t* size)
   return result;
 }
 
-
 static int64_t dex_get_integer(
     YR_OBJECT* object,
     const char* pattern,
@@ -428,7 +427,6 @@ static int64_t dex_get_integer(
   return get_integer(object, pattern, (int) index);
 }
 
-
 static SIZED_STRING* dex_get_string(
     YR_OBJECT* object,
     const char* pattern,
@@ -443,7 +441,6 @@ static SIZED_STRING* dex_get_string(
 
   return get_string(object, pattern, (int) index);
 }
-
 
 dex_header_t* dex_get_header(const uint8_t* data, size_t data_size)
 {
@@ -466,7 +463,6 @@ dex_header_t* dex_get_header(const uint8_t* data, size_t data_size)
 
   return dex_header;
 }
-
 
 void dex_parse_header(dex_header_t* dex_header, YR_OBJECT* module_object)
 {
@@ -550,7 +546,6 @@ void dex_parse_header(dex_header_t* dex_header, YR_OBJECT* module_object)
   set_integer(
       yr_le32toh(dex_header->data_offset), module_object, "header.data_offset");
 }
-
 
 uint32_t load_encoded_field(
     DEX* dex,
@@ -686,7 +681,6 @@ uint32_t load_encoded_field(
 
   return current_size;
 }
-
 
 uint32_t load_encoded_method(
     DEX* dex,
@@ -895,7 +889,6 @@ uint32_t load_encoded_method(
 
   return current_size;
 }
-
 
 void dex_parse(DEX* dex, uint64_t base_address)
 {
@@ -1382,18 +1375,15 @@ void dex_parse(DEX* dex, uint64_t base_address)
   set_integer(index_encoded_field, dex->object, "number_of_fields");
 }
 
-
 int module_initialize(YR_MODULE* module)
 {
   return ERROR_SUCCESS;
 }
 
-
 int module_finalize(YR_MODULE* module)
 {
   return ERROR_SUCCESS;
 }
-
 
 int module_load(
     YR_SCAN_CONTEXT* context,
@@ -1487,7 +1477,6 @@ int module_load(
 
   return ERROR_SUCCESS;
 }
-
 
 int module_unload(YR_OBJECT* module_object)
 {

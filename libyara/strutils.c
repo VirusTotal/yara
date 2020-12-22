@@ -121,7 +121,6 @@ size_t strlcpy(char* dst, const char* src, size_t size)
 
 #endif
 
-
 #if !HAVE_STRLCAT && !defined(strlcat)
 
 size_t strlcat(char* dst, const char* src, size_t size)
@@ -158,7 +157,6 @@ size_t strlcat(char* dst, const char* src, size_t size)
 
 #endif
 
-
 int strnlen_w(const char* w_str)
 {
   int len = 0;
@@ -171,7 +169,6 @@ int strnlen_w(const char* w_str)
 
   return len;
 }
-
 
 int strcmp_w(const char* w_str, const char* str)
 {
@@ -188,7 +185,6 @@ int strcmp_w(const char* w_str, const char* str)
 
   return w_str[0] - *str;
 }
-
 
 size_t strlcpy_w(char* dst, const char* w_src, size_t n)
 {
@@ -209,7 +205,6 @@ size_t strlcpy_w(char* dst, const char* w_src, size_t n)
 
   return (s - w_src) / 2;
 }
-
 
 #if !HAVE_MEMMEM && !defined(memmem)
 void* memmem(

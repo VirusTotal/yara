@@ -35,7 +35,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <yara/modules.h>
 #include <yara/utils.h>
 
-
 #define MODULE_NAME elf
 
 #define CLASS_DATA(c, d) ((c << 8) | d)
@@ -437,7 +436,6 @@ PARSE_ELF_HEADER(64, le);
 PARSE_ELF_HEADER(32, be);
 PARSE_ELF_HEADER(64, be);
 
-
 begin_declarations
   declare_integer("ET_NONE");
   declare_integer("ET_REL");
@@ -587,18 +585,15 @@ begin_declarations
 
 end_declarations
 
-
 int module_initialize(YR_MODULE* module)
 {
   return ERROR_SUCCESS;
 }
 
-
 int module_finalize(YR_MODULE* module)
 {
   return ERROR_SUCCESS;
 }
-
 
 int module_load(
     YR_SCAN_CONTEXT* context,
@@ -803,7 +798,6 @@ int module_load(
 
   return ERROR_SUCCESS;
 }
-
 
 int module_unload(YR_OBJECT* module_object)
 {

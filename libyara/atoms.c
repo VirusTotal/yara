@@ -411,7 +411,6 @@ static YR_ATOM_LIST_ITEM* _yr_atoms_list_concat(
   return list1;
 }
 
-
 ////////////////////////////////////////////////////////////////////////////////
 // If the atom starts or ends with an unknown byte (mask == 0x00), trim
 // those bytes out of the atom. We don't want to expand an atom like
@@ -720,7 +719,6 @@ static int _yr_atoms_case_insensitive(
   return ERROR_SUCCESS;
 }
 
-
 ////////////////////////////////////////////////////////////////////////////////
 // For a given list of atoms returns another list after a single byte xor
 // has been applied to it.
@@ -766,7 +764,6 @@ static int _yr_atoms_xor(
   }
   return ERROR_SUCCESS;
 }
-
 
 ////////////////////////////////////////////////////////////////////////////////
 // For a given list of atoms returns another list with the corresponding
@@ -820,13 +817,11 @@ static int _yr_atoms_wide(
   return ERROR_SUCCESS;
 }
 
-
 struct STACK_ITEM
 {
   RE_NODE* re_node;
   YR_ATOM_TREE_NODE* new_appending_node;
 };
-
 
 #define make_atom_from_re_nodes(atom, nodes_length, nodes)  \
   {                                                         \
@@ -837,7 +832,6 @@ struct STACK_ITEM
       atom.mask[i] = (uint8_t)(recent_re_nodes)[i]->mask;   \
     }                                                       \
   }
-
 
 ////////////////////////////////////////////////////////////////////////////////
 // Extract atoms from a regular expression. This is a helper function used by
@@ -1136,7 +1130,6 @@ static int _yr_atoms_extract_from_re(
   return ERROR_SUCCESS;
 }
 
-
 ////////////////////////////////////////////////////////////////////////////////
 // Makes an exact copy of an YR_ATOM_LIST_ITEM.
 //
@@ -1152,7 +1145,6 @@ static YR_ATOM_LIST_ITEM* _yr_atoms_clone_list_item(YR_ATOM_LIST_ITEM* item)
 
   return clone;
 }
-
 
 ////////////////////////////////////////////////////////////////////////////////
 // Given list of atoms that may contain wildcards, replace those wildcarded
@@ -1240,7 +1232,6 @@ static int _yr_atoms_expand_wildcards(YR_ATOM_LIST_ITEM* atoms)
 
   return ERROR_SUCCESS;
 }
-
 
 ////////////////////////////////////////////////////////////////////////////////
 // Extract atoms from a regular expression. This function receives the abstract

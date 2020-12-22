@@ -45,7 +45,6 @@ typedef struct _YR_HASH_TABLE_ENTRY
 
 } YR_HASH_TABLE_ENTRY;
 
-
 typedef struct _YR_HASH_TABLE
 {
   int size;
@@ -54,37 +53,29 @@ typedef struct _YR_HASH_TABLE
 
 } YR_HASH_TABLE;
 
-
 typedef int (*YR_HASH_TABLE_FREE_VALUE_FUNC)(void* value);
-
 
 uint32_t yr_hash(uint32_t seed, const void* buffer, size_t len);
 
-
 YR_API int yr_hash_table_create(int size, YR_HASH_TABLE** table);
-
 
 YR_API void yr_hash_table_clean(
     YR_HASH_TABLE* table,
     YR_HASH_TABLE_FREE_VALUE_FUNC free_value);
 
-
 YR_API void yr_hash_table_destroy(
     YR_HASH_TABLE* table,
     YR_HASH_TABLE_FREE_VALUE_FUNC free_value);
-
 
 YR_API void* yr_hash_table_lookup(
     YR_HASH_TABLE* table,
     const char* key,
     const char* ns);
 
-
 YR_API void* yr_hash_table_remove(
     YR_HASH_TABLE* table,
     const char* key,
     const char* ns);
-
 
 YR_API int yr_hash_table_add(
     YR_HASH_TABLE* table,
@@ -92,19 +83,16 @@ YR_API int yr_hash_table_add(
     const char* ns,
     void* value);
 
-
 YR_API int yr_hash_table_add_uint32(
     YR_HASH_TABLE* table,
     const char* key,
     const char* ns,
     uint32_t value);
 
-
 YR_API uint32_t yr_hash_table_lookup_uint32(
     YR_HASH_TABLE* table,
     const char* key,
     const char* ns);
-
 
 YR_API void* yr_hash_table_lookup_raw_key(
     YR_HASH_TABLE* table,
@@ -112,13 +100,11 @@ YR_API void* yr_hash_table_lookup_raw_key(
     size_t key_length,
     const char* ns);
 
-
 YR_API void* yr_hash_table_remove_raw_key(
     YR_HASH_TABLE* table,
     const void* key,
     size_t key_length,
     const char* ns);
-
 
 YR_API int yr_hash_table_add_raw_key(
     YR_HASH_TABLE* table,
@@ -127,14 +113,12 @@ YR_API int yr_hash_table_add_raw_key(
     const char* ns,
     void* value);
 
-
 YR_API int yr_hash_table_add_uint32_raw_key(
     YR_HASH_TABLE* table,
     const void* key,
     size_t key_length,
     const char* ns,
     uint32_t value);
-
 
 YR_API uint32_t yr_hash_table_lookup_uint32_raw_key(
     YR_HASH_TABLE* table,
