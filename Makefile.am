@@ -43,6 +43,7 @@ yara_SOURCES = \
   cli/yara.c
 
 yara_LDADD = -Llibyara/.libs -lyara
+yara_DEPENDENCIES = libyara/.libs/libyara.la
 
 yarac_SOURCES = \
    cli/args.c \
@@ -51,6 +52,7 @@ yarac_SOURCES = \
    cli/yarac.c
 
 yarac_LDADD = -Llibyara/.libs -lyara
+yarac_DEPENDENCIES = libyara/.libs/libyara.la
 
 test_alignment_SOURCES = tests/test-alignment.c tests/util.c
 test_alignment_LDADD = libyara/.libs/libyara.a
