@@ -29,7 +29,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <yara/compiler.h>
 
-
 #undef yyparse
 #undef yylex
 #undef yyerror
@@ -55,7 +54,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define yyget_extra  yara_yyget_extra
 #define yyget_lineno yara_yyget_lineno
 
-
 #ifndef YY_TYPEDEF_YY_SCANNER_T
 #define YY_TYPEDEF_YY_SCANNER_T
 typedef void* yyscan_t;
@@ -67,13 +65,10 @@ union YYSTYPE;
   int yylex(    \
       union YYSTYPE* yylval_param, yyscan_t yyscanner, YR_COMPILER* compiler)
 
-
 #define YY_FATAL_ERROR(msg) yara_yyfatal(yyscanner, msg)
-
 
 #define YY_EXTRA_TYPE YR_COMPILER*
 #define YY_USE_CONST
-
 
 int yyget_lineno(yyscan_t yyscanner);
 

@@ -112,7 +112,6 @@ PIMAGE_NT_HEADERS32 pe_get_header(const uint8_t* data, size_t data_size)
   return pe_header;
 }
 
-
 PIMAGE_DATA_DIRECTORY pe_get_directory_entry(PE* pe, int entry)
 {
   PIMAGE_DATA_DIRECTORY directory_start;
@@ -158,7 +157,6 @@ PIMAGE_DATA_DIRECTORY pe_get_directory_entry(PE* pe, int entry)
 
   return NULL;
 }
-
 
 int64_t pe_rva_to_offset(PE* pe, uint64_t rva)
 {
@@ -252,7 +250,6 @@ int64_t pe_rva_to_offset(PE* pe, uint64_t rva)
   return result;
 }
 
-
 #if !HAVE_TIMEGM
 #if HAVE__MKGMTIME
 #define timegm _mkgmtime
@@ -265,7 +262,6 @@ static bool is_leap(unsigned int year)
   year += 1900;
   return (year % 4) == 0 && ((year % 100) != 0 || (year % 400) == 0);
 }
-
 
 time_t timegm(struct tm* tm)
 {
@@ -340,7 +336,6 @@ time_t ASN1_get_time_t(const ASN1_TIME* time)
 }
 
 #endif
-
 
 // These ordinals are taken from pefile. If a lookup fails attempt to return
 // "ordN" and if that fails, return NULL. The caller is responsible for freeing

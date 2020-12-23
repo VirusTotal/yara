@@ -36,9 +36,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <yara/libyara.h>
 #include <yara/limits.h>
 #include <yara/re.h>
+#include <yara/rules.h>
 #include <yara/scan.h>
 #include <yara/stopwatch.h>
-#include <yara/rules.h>
 #include <yara/types.h>
 #include <yara/utils.h>
 

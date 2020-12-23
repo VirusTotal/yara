@@ -36,7 +36,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <yara/types.h>
 #include <yara/utils.h>
 
-#define RE_MAX_RANGE              INT16_MAX
+#define RE_MAX_RANGE INT16_MAX
 
 #define RE_NODE_LITERAL           1
 #define RE_NODE_MASKED_LITERAL    2

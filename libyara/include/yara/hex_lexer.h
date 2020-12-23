@@ -53,7 +53,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define yyget_extra  hex_yyget_extra
 #define yyget_lineno hex_yyget_lineno
 
-
 #ifndef YY_TYPEDEF_YY_SCANNER_T
 #define YY_TYPEDEF_YY_SCANNER_T
 typedef void* yyscan_t;
@@ -62,7 +61,6 @@ typedef void* yyscan_t;
 #define YY_EXTRA_TYPE RE_AST*
 #define YY_USE_CONST
 
-
 typedef struct _HEX_LEX_ENVIRONMENT
 {
   int inside_or;
@@ -70,7 +68,6 @@ typedef struct _HEX_LEX_ENVIRONMENT
   char last_error_message[256];
 
 } HEX_LEX_ENVIRONMENT;
-
 
 // The default behavior when a fatal error occurs in the parser is calling
 // exit(YY_EXIT_FAILURE) for terminating the process. This is not acceptable
@@ -86,7 +83,6 @@ typedef struct _HEX_LEX_ENVIRONMENT
 #define YY_DECL  \
   int hex_yylex( \
       YYSTYPE* yylval_param, yyscan_t yyscanner, HEX_LEX_ENVIRONMENT* lex_env)
-
 
 YY_EXTRA_TYPE yyget_extra(yyscan_t yyscanner);
 

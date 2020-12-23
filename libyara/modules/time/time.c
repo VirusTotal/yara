@@ -32,7 +32,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define MODULE_NAME time
 
-
 define_function(now)
 {
   time_t now = time(NULL);
@@ -41,23 +40,19 @@ define_function(now)
   return_integer((long) now);
 }
 
-
 begin_declarations
   declare_function("now", "", "i", now);
 end_declarations;
-
 
 int module_initialize(YR_MODULE* module)
 {
   return ERROR_SUCCESS;
 }
 
-
 int module_finalize(YR_MODULE* module)
 {
   return ERROR_SUCCESS;
 }
-
 
 int module_load(
     YR_SCAN_CONTEXT* context,
@@ -67,7 +62,6 @@ int module_load(
 {
   return ERROR_SUCCESS;
 }
-
 
 int module_unload(YR_OBJECT* module_object)
 {

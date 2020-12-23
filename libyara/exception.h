@@ -89,8 +89,8 @@ static LONG CALLBACK exception_handler(PEXCEPTION_POINTERS ExceptionInfo)
   {
   case EXCEPTION_IN_PAGE_ERROR:
   case EXCEPTION_ACCESS_VIOLATION:
-    jb_ptr =
-        (jmp_buf*) yr_thread_storage_get_value(&yr_trycatch_trampoline_tls);
+    jb_ptr = (jmp_buf*) yr_thread_storage_get_value(
+        &yr_trycatch_trampoline_tls);
 
     if (jb_ptr != NULL)
       longjmp(*jb_ptr, 1);
@@ -137,8 +137,8 @@ static void exception_handler(int sig)
 {
   if (sig == SIGBUS || sig == SIGSEGV)
   {
-    jmp_buf* jb_ptr =
-        (jmp_buf*) yr_thread_storage_get_value(&yr_trycatch_trampoline_tls);
+    jmp_buf* jb_ptr = (jmp_buf*) yr_thread_storage_get_value(
+        &yr_trycatch_trampoline_tls);
 
     if (jb_ptr != NULL)
       siglongjmp(*jb_ptr, 1);

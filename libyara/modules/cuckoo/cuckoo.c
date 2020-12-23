@@ -27,19 +27,16 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-
 #include <jansson.h>
 #include <string.h>
 #include <yara/modules.h>
 #include <yara/re.h>
-
 
 #if defined(_WIN32) || defined(__CYGWIN__)
 #define strcasecmp _stricmp
 #endif
 
 #define MODULE_NAME cuckoo
-
 
 define_function(network_dns_lookup)
 {
@@ -102,10 +99,8 @@ define_function(network_dns_lookup)
   return_integer(result);
 }
 
-
 #define METHOD_GET  0x01
 #define METHOD_POST 0x02
-
 
 uint64_t http_request(
     YR_SCAN_CONTEXT* context,
@@ -140,13 +135,11 @@ uint64_t http_request(
   return result;
 }
 
-
 define_function(network_http_request)
 {
   return_integer(http_request(
       scan_context(), parent(), regexp_argument(1), METHOD_GET | METHOD_POST));
 }
-
 
 define_function(network_http_get)
 {
@@ -154,13 +147,11 @@ define_function(network_http_get)
       http_request(scan_context(), parent(), regexp_argument(1), METHOD_GET));
 }
 
-
 define_function(network_http_post)
 {
   return_integer(
       http_request(scan_context(), parent(), regexp_argument(1), METHOD_POST));
 }
-
 
 // checks the host array in network JSON
 // loops through array and checks value for argument
@@ -225,7 +216,6 @@ define_function(network_tcp)
   return_integer(result);
 }
 
-
 // loops through UDP array in network JSON
 // checks for dest IP regex and dest port integer match
 define_function(network_udp)
@@ -262,7 +252,6 @@ define_function(network_udp)
   return_integer(result);
 }
 
-
 // loops through http array in network JSON
 // checks for regex match on user-agent
 define_function(network_http_user_agent)
@@ -294,7 +283,6 @@ define_function(network_http_user_agent)
   return_integer(result);
 }
 
-
 define_function(registry_key_access)
 {
   YR_SCAN_CONTEXT* context = scan_context();
@@ -317,7 +305,6 @@ define_function(registry_key_access)
 
   return_integer(result);
 }
-
 
 define_function(filesystem_file_access)
 {
@@ -342,7 +329,6 @@ define_function(filesystem_file_access)
   return_integer(result);
 }
 
-
 define_function(sync_mutex)
 {
   YR_SCAN_CONTEXT* context = scan_context();
@@ -365,7 +351,6 @@ define_function(sync_mutex)
 
   return_integer(result);
 }
-
 
 begin_declarations
   begin_struct("network")
@@ -392,18 +377,15 @@ begin_declarations
   end_struct("sync")
 end_declarations
 
-
 int module_initialize(YR_MODULE* module)
 {
   return ERROR_SUCCESS;
 }
 
-
 int module_finalize(YR_MODULE* module)
 {
   return ERROR_SUCCESS;
 }
-
 
 int module_load(
     YR_SCAN_CONTEXT* context,
@@ -455,7 +437,6 @@ int module_load(
 
   return ERROR_SUCCESS;
 }
-
 
 int module_unload(YR_OBJECT* module)
 {
