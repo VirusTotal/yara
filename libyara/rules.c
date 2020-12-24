@@ -205,16 +205,16 @@ YR_API int yr_rules_scan_mem(
   YR_DEBUG_FPRINTF(
       2,
       stderr,
-      "+ %s(buffer=%p buffer_size=%zu timeout=%d) {}\n",
+      "+ %s(buffer=%p buffer_size=%zu timeout=%d) {\n",
       __FUNCTION__,
       buffer,
       buffer_size,
       timeout);
 
   YR_SCANNER* scanner;
-  int result;
+  int result = ERROR_INTERNAL_FATAL_ERROR;
 
-  FAIL_ON_ERROR(yr_scanner_create(rules, &scanner));
+  GOTO_EXIT_ON_ERROR(yr_scanner_create(rules, &scanner));
 
   yr_scanner_set_callback(scanner, callback, user_data);
   yr_scanner_set_timeout(scanner, timeout);
@@ -223,6 +223,17 @@ YR_API int yr_rules_scan_mem(
   result = yr_scanner_scan_mem(scanner, buffer, buffer_size);
 
   yr_scanner_destroy(scanner);
+
+_exit:
+
+  YR_DEBUG_FPRINTF(
+      2,
+      stderr,
+      ""
+      "} = %d AKA %s // %s()\n",
+      result,
+      yr_debug_error_as_string(result),
+      __FUNCTION__);
 
   return result;
 }
@@ -282,7 +293,7 @@ YR_API int yr_rules_scan_proc(
     int timeout)
 {
   YR_DEBUG_FPRINTF(
-      2, stderr, "+ %s(pid=%d timeout=%d) {}\n", __FUNCTION__, pid, timeout);
+      2, stderr, "+ %s(pid=%d timeout=%d) {\n", __FUNCTION__, pid, timeout);
 
   YR_MEMORY_BLOCK_ITERATOR iterator;
 
@@ -300,6 +311,14 @@ YR_API int yr_rules_scan_proc(
 
     yr_process_close_iterator(&iterator);
   }
+
+  YR_DEBUG_FPRINTF(
+      2,
+      stderr,
+      "} = %d AKA %s // %s()\n",
+      result,
+      yr_debug_error_as_string(result),
+      __FUNCTION__);
 
   return result;
 }

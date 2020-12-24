@@ -122,7 +122,7 @@ static char* get_from_cache(
   YR_DEBUG_FPRINTF(
       2,
       stderr,
-      "+ %s(offset=%" PRIi64 " length=%" PRIi64 ") {} = %p\n",
+      "- %s(offset=%" PRIi64 " length=%" PRIi64 ") {} = %p\n",
       __FUNCTION__,
       offset,
       length,
@@ -156,7 +156,7 @@ static int add_to_cache(
   YR_DEBUG_FPRINTF(
       2,
       stderr,
-      "+ %s(offset=%" PRIi64 " length=%" PRIi64 " digest=%s) {} = %d\n",
+      "- %s(offset=%" PRIi64 " length=%" PRIi64 " digest=%s) {} = %d\n",
       __FUNCTION__,
       offset,
       length,
@@ -184,7 +184,7 @@ define_function(string_md5)
   YR_DEBUG_FPRINTF(
       2,
       stderr,
-      "+ %s() {} = 0x%s // s->length=%u\n",
+      "- %s() {} = 0x%s // s->length=%u\n",
       __FUNCTION__,
       digest_ascii,
       s->length);
@@ -210,7 +210,7 @@ define_function(string_sha256)
   YR_DEBUG_FPRINTF(
       2,
       stderr,
-      "+ %s() {} = 0x%s // s->length=%u\n",
+      "- %s() {} = 0x%s // s->length=%u\n",
       __FUNCTION__,
       digest_ascii,
       s->length);
@@ -236,7 +236,7 @@ define_function(string_sha1)
   YR_DEBUG_FPRINTF(
       2,
       stderr,
-      "+ %s() {} = 0x%s // s->length=%u\n",
+      "- %s() {} = 0x%s // s->length=%u\n",
       __FUNCTION__,
       digest_ascii,
       s->length);
@@ -257,7 +257,7 @@ define_function(string_checksum32)
   YR_DEBUG_FPRINTF(
       2,
       stderr,
-      "+ %s() {} = 0x%x // s->length=%u\n",
+      "- %s() {} = 0x%x // s->length=%u\n",
       __FUNCTION__,
       checksum,
       s->length);
@@ -721,7 +721,7 @@ define_function(string_crc32)
   YR_DEBUG_FPRINTF(
       2,
       stderr,
-      "+ %s() {} = 0x%x // s->length=%u\n",
+      "- %s() {} = 0x%x // s->length=%u\n",
       __FUNCTION__,
       checksum ^ 0xFFFFFFFF,
       s->length);
@@ -824,7 +824,7 @@ end_declarations
 
 int module_initialize(YR_MODULE* module)
 {
-  YR_DEBUG_FPRINTF(2, stderr, "+ %s() {}\n", __FUNCTION__);
+  YR_DEBUG_FPRINTF(2, stderr, "- %s() {}\n", __FUNCTION__);
 
   return ERROR_SUCCESS;
 }
@@ -832,7 +832,7 @@ int module_initialize(YR_MODULE* module)
 
 int module_finalize(YR_MODULE* module)
 {
-  YR_DEBUG_FPRINTF(2, stderr, "+ %s() {}\n", __FUNCTION__);
+  YR_DEBUG_FPRINTF(2, stderr, "- %s() {}\n", __FUNCTION__);
 
   return ERROR_SUCCESS;
 }
@@ -844,7 +844,7 @@ int module_load(
     void* module_data,
     size_t module_data_size)
 {
-  YR_DEBUG_FPRINTF(2, stderr, "+ %s() {}\n", __FUNCTION__);
+  YR_DEBUG_FPRINTF(2, stderr, "- %s() {}\n", __FUNCTION__);
 
   YR_HASH_TABLE* hash_table;
 
@@ -858,7 +858,7 @@ int module_load(
 
 int module_unload(YR_OBJECT* module_object)
 {
-  YR_DEBUG_FPRINTF(2, stderr, "+ %s() {}\n", __FUNCTION__);
+  YR_DEBUG_FPRINTF(2, stderr, "- %s() {}\n", __FUNCTION__);
 
   YR_HASH_TABLE* hash_table = (YR_HASH_TABLE*) module_object->data;
 

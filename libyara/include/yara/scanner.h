@@ -73,11 +73,6 @@ YR_API int yr_scanner_scan_mem_blocks(
     YR_SCANNER* scanner,
     YR_MEMORY_BLOCK_ITERATOR* iterator);
 
-extern int (*_yr_scanner_scan_mem)(
-    YR_SCANNER* scanner,
-    const uint8_t* buffer,
-    size_t buffer_size);
-
 YR_API int yr_scanner_scan_mem(
     YR_SCANNER* scanner,
     const uint8_t* buffer,

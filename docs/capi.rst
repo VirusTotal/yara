@@ -891,6 +891,31 @@ Functions
 
   Define a string external variable.
 
+.. c:function:: int yr_scanner_scan_mem_blocks(YR_SCANNER* scanner, YR_MEMORY_BLOCK_ITERATOR* iterator)
+
+  .. versionadded:: 3.8.0
+
+  Scan a serie of memory blocks that are provided by a :c:type:`YR_MEMORY_BLOCK_ITERATOR`.
+  The iterator has a pair of `first` and `next` functions, that must return
+  the first and next blocks respectively. The how the data is split in blocks is
+  up to the iterator implementation.
+
+  Returns one of the following error codes:
+
+    :c:macro:`ERROR_SUCCESS`
+
+    :c:macro:`ERROR_INSUFFICIENT_MEMORY`
+
+    :c:macro:`ERROR_TOO_MANY_SCAN_THREADS`
+
+    :c:macro:`ERROR_SCAN_TIMEOUT`
+
+    :c:macro:`ERROR_CALLBACK_ERROR`
+
+    :c:macro:`ERROR_TOO_MANY_MATCHES`
+
+    :c:macro:`ERROR_BLOCK_NOT_READY`
+
 .. c:function:: int yr_scanner_scan_mem(YR_SCANNER* scanner, const uint8_t* buffer, size_t buffer_size)
 
   .. versionadded:: 3.8.0
@@ -1000,3 +1025,7 @@ Error codes
   your rules contains very short or very common strings like ``01 02`` or
   ``FF FF FF FF``. The limit is defined by ``YR_MAX_STRING_MATCHES`` in
   *./include/yara/limits.h*
+
+.. c:macro:: ERROR_BLOCK_NOT_READY
+
+  Next memory block to scan is not ready; custom iterators may return this.
