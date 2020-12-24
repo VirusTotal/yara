@@ -527,14 +527,41 @@ struct YR_RULES
 
   // Array of pointers with an entry for each rule. The rule_idx field in the
   // YR_STRING structure is an index within this array.
-  YR_RULE* rules_table;
+  union
+  {
+    YR_RULE* rules_table;
+    // The previous name for rules_table was rules_list_head, because this
+    // was previously a linked list. The old name is maintained but marked as
+    // deprecated, which will raise a warning if used.
+    // TODO(vmalvarez): Remove this field when a reasonable a few versions
+    // after 4.1 has been released.
+    YR_RULE* rules_list_head YR_DEPRECATED_API;
+  };
 
   // Array of pointers with an entry for each of the defined strings. The idx
   // field in the YR_STRING structure is an index within this array.
-  YR_STRING* strings_table;
+  union
+  {
+    YR_STRING* strings_table;
+    // The previous name for strings_table was strings_list_head, because this
+    // was previously a linked list. The old name is maintained but marked as
+    // deprecated, which will raise a warning if used.
+    // TODO(vmalvarez): Remove this field when a reasonable a few versions
+    // after 4.1 has been released.
+    YR_STRING* strings_list_head YR_DEPRECATED_API;
+  };
 
   // Array of pointers with an entry for each external variable.
-  YR_EXTERNAL_VARIABLE* ext_vars_table;
+  union
+  {
+    YR_EXTERNAL_VARIABLE* ext_vars_table;
+    // The previous name for ext_vars_table was externals_list_head, because
+    // this was previously a linked list. The old name is maintained but marked
+    // as deprecated, which will raise a warning if used.
+    // TODO(vmalvarez): Remove this field when a reasonable a few versions
+    // after 4.1 has been released.
+    YR_EXTERNAL_VARIABLE* externals_list_head YR_DEPRECATED_API;
+  };
 
   // Pointer to the Aho-Corasick transition table.
   YR_AC_TRANSITION* ac_transition_table;
