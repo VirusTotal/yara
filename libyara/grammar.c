@@ -1142,7 +1142,7 @@ yy_reduce_print (yytype_int16 *yyssp, YYSTYPE *yyvsp, int yyrule, void *yyscanne
   unsigned long int yylno = yyrline[yyrule];
   int yynrhs = yyr2[yyrule];
   int yyi;
-  YYFPRINTF (stderr, "Reducing stack by rule %d (line %" PRIu64 "):\n",
+  YYFPRINTF (stderr, "Reducing stack by rule %d (line %lu):\n",
              yyrule - 1, yylno);
   /* The symbols being reduced.  */
   for (yyi = 0; yyi < yynrhs; yyi++)
@@ -1671,7 +1671,7 @@ YYSTYPE yylval YY_INITIAL_VALUE (= yyval_default);
       yyssp = yyss + yysize - 1;
       yyvsp = yyvs + yysize - 1;
 
-      YYDPRINTF ((stderr, "Stack size increased to %" PRIu64 "\n",
+      YYDPRINTF ((stderr, "Stack size increased to %lu\n",
                   (unsigned long int) yystacksize));
 
       if (yyss + yystacksize - 1 <= yyssp)
@@ -2370,7 +2370,7 @@ yyreduce:
         if ((yyvsp[-1].sized_string)->length != 64)
         {
           yr_free((yyvsp[-1].sized_string));
-          result = yr_compiler_set_error_extra_info(
+          yr_compiler_set_error_extra_info(
               compiler, "length of base64 alphabet must be 64");
           result = ERROR_INVALID_MODIFIER;
         }
@@ -2400,7 +2400,7 @@ yyreduce:
         if ((yyvsp[-1].sized_string)->length != 64)
         {
           yr_free((yyvsp[-1].sized_string));
-          result = yr_compiler_set_error_extra_info(
+          yr_compiler_set_error_extra_info(
               compiler, "length of base64 alphabet must be 64");
           result = ERROR_INVALID_MODIFIER;
         }
