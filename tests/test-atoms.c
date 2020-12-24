@@ -31,7 +31,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "util.h"
 
-
 void test_table_quality()
 {
   YR_ATOM_QUALITY_TABLE_ENTRY l1[] = {
@@ -77,7 +76,6 @@ void test_table_quality()
   assert_true_expr(yr_atoms_table_quality(&c, &a3) == 4);
   assert_true_expr(yr_atoms_table_quality(&c, &a4) == 1);
 }
-
 
 void test_heuristic_quality()
 {
@@ -149,7 +147,6 @@ void test_heuristic_quality()
   int q01020000 = yr_atoms_heuristic_quality(&c, &a01020000);
   int q0102XX04 = yr_atoms_heuristic_quality(&c, &a0102XX04);
 
-
   a010203.mask[1] = 0x00;
 
   int q01XX03 = yr_atoms_heuristic_quality(&c, &a010203);
@@ -190,7 +187,6 @@ void test_heuristic_quality()
 
   assert_true_expr(q01020304 == YR_MAX_ATOM_QUALITY);
 }
-
 
 void test_atom_choose()
 {
@@ -473,9 +469,13 @@ void test_atom_choose()
       });
 }
 
-
 int main(int argc, char** argv)
 {
+  int result = 0;
+
+  YR_DEBUG_INITIALIZE();
+  YR_DEBUG_FPRINTF(1, stderr, "+ %s() { // in %s\n", __FUNCTION__, argv[0]);
+
   yr_initialize();
 
   test_table_quality();
@@ -483,5 +483,9 @@ int main(int argc, char** argv)
   test_atom_choose();
 
   yr_finalize();
-  return 0;
+
+  YR_DEBUG_FPRINTF(
+      1, stderr, "} = %d // %s() in %s\n", result, __FUNCTION__, argv[0]);
+
+  return result;
 }

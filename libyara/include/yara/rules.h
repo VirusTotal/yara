@@ -33,6 +33,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <yara/filemap.h>
 #include <yara/types.h>
 #include <yara/utils.h>
+#include <yara/scanner.h>
 
 
 #define CALLBACK_MSG_RULE_MATCHING              1

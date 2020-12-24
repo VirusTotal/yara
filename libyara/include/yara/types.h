@@ -616,7 +616,7 @@ struct YR_PROFILING_INFO
   uint64_t exec_time;
 };
 
-//
+////////////////////////////////////////////////////////////////////////////////
 // YR_RULE_PROFILING_INFO is the structure returned by
 // yr_scanner_get_profiling_info
 //
@@ -632,6 +632,9 @@ typedef const uint8_t* (*YR_MEMORY_BLOCK_FETCH_DATA_FUNC)(
 typedef YR_MEMORY_BLOCK* (*YR_MEMORY_BLOCK_ITERATOR_FUNC)(
     YR_MEMORY_BLOCK_ITERATOR* self);
 
+typedef uint64_t (*YR_MEMORY_BLOCK_ITERATOR_SIZE_FUNC)(
+    YR_MEMORY_BLOCK_ITERATOR* self);
+
 struct YR_MEMORY_BLOCK
 {
   size_t size;
@@ -642,12 +645,30 @@ struct YR_MEMORY_BLOCK
   YR_MEMORY_BLOCK_FETCH_DATA_FUNC fetch_data;
 };
 
+///////////////////////////////////////////////////////////////////////////////
+// YR_MEMORY_BLOCK_ITERATOR represents an iterator that returns a series of
+// memory blocks to be scanned by yr_scanner_scan_mem_blocks. The iterator have
+// pointers to three functions: "first", "next" and "file_size". The "first"
+// function is invoked for retrieving the first memory block, followed by calls
+// to "next" for retrieving the following blocks until "next" returns a NULL
+// pointer. The "file_size" function is called for obtaining the size of the
+// file.
 struct YR_MEMORY_BLOCK_ITERATOR
 {
+  // A pointer that can be used by specific implementations of an iterator for
+  // storing the iterator's state.
   void* context;
 
+  // Pointers to functions for iterating over the memory blocks and getting
+  // the total file size.
   YR_MEMORY_BLOCK_ITERATOR_FUNC first;
   YR_MEMORY_BLOCK_ITERATOR_FUNC next;
+  YR_MEMORY_BLOCK_ITERATOR_SIZE_FUNC file_size;
+
+  // Error occurred during the last call to "first" or "next" functions. These
+  // functions must set the value of last_error to ERROR_SUCCESS or to some
+  // other error code if appropriate.
+  int last_error;
 };
 
 typedef int (*YR_CALLBACK_FUNC)(
