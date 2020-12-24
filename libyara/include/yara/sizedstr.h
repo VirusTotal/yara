@@ -30,9 +30,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef _SIZEDSTR_H
 #define _SIZEDSTR_H
 
-#include <stdbool.h>
-#include <stddef.h>
 #include <yara/integers.h>
+#include <yara/utils.h>
 
 #define SIZED_STRING_FLAGS_NO_CASE 1
 #define SIZED_STRING_FLAGS_DOT_ALL 2
