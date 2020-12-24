@@ -432,7 +432,8 @@ int yr_arena_ptr_to_ref(YR_ARENA* arena, const void* address, YR_ARENA_REF* ref)
         (uint8_t*) address < arena->buffers[i].data + arena->buffers[i].used)
     {
       ref->buffer_id = i;
-      ref->offset = (uint8_t*) address - arena->buffers[i].data;
+      ref->offset = (yr_arena_off_t)(
+          (uint8_t*) address - arena->buffers[i].data);
       return 1;
     }
   }
@@ -542,7 +543,7 @@ int yr_arena_load_stream(YR_STREAM* stream, YR_ARENA** arena)
 
   YR_ARENA_FILE_BUFFER buffers[YR_MAX_ARENA_BUFFERS];
 
-  int read = yr_stream_read(
+  size_t read = yr_stream_read(
       buffers, sizeof(buffers[0]), hdr.num_buffers, stream);
 
   if (read != hdr.num_buffers)
@@ -625,7 +626,7 @@ int yr_arena_save_stream(YR_ARENA* arena, YR_STREAM* stream)
   {
     YR_ARENA_FILE_BUFFER buffer = {
         .offset = offset,
-        .size = arena->buffers[i].used,
+        .size = (uint32_t) arena->buffers[i].used,
     };
 
     if (yr_stream_write(&buffer, sizeof(buffer), 1, stream) != 1)
