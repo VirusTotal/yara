@@ -345,7 +345,6 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
   char* identifier;
   char* args_fmt;
 
-  int i;
   int found;
   int count;
   int result = ERROR_SUCCESS;
@@ -488,7 +487,7 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
         r3.it->int_enum_it.next = 0;
         r3.it->next = iter_int_enum_next;
 
-        for (i = r1.i; i > 0; i--)
+        for (int64_t i = r1.i; i > 0; i--)
         {
           pop(r2);
           r3.it->int_enum_it.items[i - 1] = r2.i;
@@ -1056,7 +1055,7 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
       args_fmt = *(char**) (ip);
       ip += sizeof(uint64_t);
 
-      i = (int) strlen(args_fmt);
+      int i = (int) strlen(args_fmt);
       count = 0;
 
 #if YR_PARANOID_EXEC
@@ -1101,7 +1100,7 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
       function = object_as_function(r2.o);
       result = ERROR_INTERNAL_FATAL_ERROR;
 
-      for (i = 0; i < YR_MAX_OVERLOADED_FUNCTIONS; i++)
+      for (int i = 0; i < YR_MAX_OVERLOADED_FUNCTIONS; i++)
       {
         if (function->prototypes[i].arguments_fmt == NULL)
           break;

@@ -81,7 +81,7 @@ static int _yr_arena_make_ptr_relocatable(
 
   int result = ERROR_SUCCESS;
 
-  offset = va_arg(offsets, yr_arena_off_t);
+  offset = (yr_arena_off_t) va_arg(offsets, yr_arena_off_t);
 
   while (offset != EOL)
   {
@@ -101,7 +101,7 @@ static int _yr_arena_make_ptr_relocatable(
       arena->reloc_list_tail->next = reloc;
 
     arena->reloc_list_tail = reloc;
-    offset = va_arg(offsets, size_t);
+    offset = (yr_arena_off_t) va_arg(offsets, size_t);
   }
 
   return result;
@@ -198,7 +198,7 @@ static int _yr_arena_allocate_memory(
   if (ref != NULL)
   {
     ref->buffer_id = buffer_id;
-    ref->offset = b->used;
+    ref->offset = (uint32_t) b->used;
   }
 
   b->used += size;
@@ -412,7 +412,7 @@ yr_arena_off_t yr_arena_get_current_offset(YR_ARENA* arena, uint32_t buffer_id)
 {
   assert(buffer_id < arena->num_buffers);
 
-  return arena->buffers[buffer_id].used;
+  return (yr_arena_off_t) arena->buffers[buffer_id].used;
 }
 
 int yr_arena_ptr_to_ref(YR_ARENA* arena, const void* address, YR_ARENA_REF* ref)

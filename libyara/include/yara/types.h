@@ -944,8 +944,8 @@ struct YR_INT_RANGE_ITERATOR
 
 struct YR_INT_ENUM_ITERATOR
 {
-  int next;
-  int count;
+  int64_t next;
+  int64_t count;
   int64_t items[1];
 };
 
