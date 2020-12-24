@@ -77,7 +77,9 @@ struct YR_ARENA_BUFFER
   // Pointer the buffer's data.
   uint8_t* data;
 
-  // Total buffer size, including the used and unused areas.
+  // Total buffer size, including the used and unused areas. The maximum size
+  // allowed for a buffer is 4GB because offsets in YR_ARENA_REF are 32-bit
+  // integers.
   size_t size;
 
   // Number of bytes that are actually used (equal to or lower than size).
