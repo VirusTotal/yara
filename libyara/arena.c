@@ -120,7 +120,7 @@ static int _yr_arena_make_ptr_relocatable(
 //   size : Size of the region to be allocated.
 //   [out] ref: Pointer to a YR_ARENA_REF that will be updated with the
 //              reference to the newly allocated region. The pointer can be
-///             NULL.
+//              NULL.
 // Returns:
 //   ERROR_SUCCESS
 //   ERROR_INVALID_ARGUMENT
@@ -147,6 +147,10 @@ static int _yr_arena_allocate_memory(
     size_t new_size = (b->size == 0) ? arena->initial_buffer_size : b->size * 2;
 
     while (new_size < b->used + size) new_size *= 2;
+
+    // Make sure that buffer size if not larger than 4GB.
+    if (new_size > 1L << 32)
+      return ERROR_INSUFFICIENT_MEMORY;
 
     uint8_t* new_data = yr_realloc(b->data, new_size);
 
