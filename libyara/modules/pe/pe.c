@@ -1980,7 +1980,7 @@ define_function(exports_regexp)
     return_integer(YR_UNDEFINED);
 
   // If PE, but no exported functions, return false.
-  int n = get_integer(module, "number_of_exports");
+  int n = (int) get_integer(module, "number_of_exports");
 
   if (n == 0)
     return_integer(0);
@@ -2010,7 +2010,7 @@ define_function(exports_ordinal)
     return_integer(YR_UNDEFINED);
 
   // If PE, but no exported functions, return false.
-  int n = get_integer(module, "number_of_exports");
+  int n = (int) get_integer(module, "number_of_exports");
 
   if (n == 0)
     return_integer(0);
@@ -2043,7 +2043,7 @@ define_function(exports_index_name)
     return_integer(YR_UNDEFINED);
 
   // If PE, but no exported functions, return false.
-  int n = get_integer(module, "number_of_exports");
+  int n = (int) get_integer(module, "number_of_exports");
 
   if (n == 0)
     return_integer(YR_UNDEFINED);
@@ -2074,7 +2074,7 @@ define_function(exports_index_ordinal)
     return_integer(YR_UNDEFINED);
 
   // If PE, but no exported functions, return false.
-  int n = get_integer(module, "number_of_exports");
+  int n = (int) get_integer(module, "number_of_exports");
 
   if (n == 0)
     return_integer(YR_UNDEFINED);
@@ -2102,18 +2102,17 @@ define_function(exports_index_regex)
   YR_OBJECT* module = module();
   PE* pe = (PE*) module->data;
 
-  int i, n;
-
   // If not a PE, return YR_UNDEFINED.
   if (pe == NULL)
     return_integer(YR_UNDEFINED);
 
   // If PE, but no exported functions, return false.
-  n = get_integer(module, "number_of_exports");
+  int n = (int) get_integer(module, "number_of_exports");
+
   if (n == 0)
     return_integer(YR_UNDEFINED);
 
-  for (i = 0; i < n; i++)
+  for (int i = 0; i < n; i++)
   {
     function_name = get_string(module, "export_details[%i].name", i);
     if (function_name == NULL)
@@ -2404,7 +2403,6 @@ define_function(locale)
   PE* pe = (PE*) module->data;
 
   uint64_t locale = integer_argument(1);
-  int64_t n, i;
 
   if (is_undefined(module, "number_of_resources"))
     return_integer(YR_UNDEFINED);
@@ -2414,12 +2412,11 @@ define_function(locale)
   if (pe == NULL)
     return_integer(YR_UNDEFINED);
 
-  n = get_integer(module, "number_of_resources");
+  int n = (int) get_integer(module, "number_of_resources");
 
-  for (i = 0; i < n; i++)
+  for (int i = 0; i < n; i++)
   {
-    uint64_t rsrc_language = get_integer(
-        module, "resources[%i].language", (int32_t) i);
+    uint64_t rsrc_language = get_integer(module, "resources[%i].language", i);
 
     if ((rsrc_language & 0xFFFF) == locale)
       return_integer(1);
@@ -2434,7 +2431,6 @@ define_function(language)
   PE* pe = (PE*) module->data;
 
   uint64_t language = integer_argument(1);
-  int64_t n, i;
 
   if (is_undefined(module, "number_of_resources"))
     return_integer(YR_UNDEFINED);
@@ -2444,12 +2440,11 @@ define_function(language)
   if (pe == NULL)
     return_integer(YR_UNDEFINED);
 
-  n = get_integer(module, "number_of_resources");
+  int n = (int) get_integer(module, "number_of_resources");
 
-  for (i = 0; i < n; i++)
+  for (int i = 0; i < n; i++)
   {
-    uint64_t rsrc_language = get_integer(
-        module, "resources[%i].language", (int32_t) i);
+    uint64_t rsrc_language = get_integer(module, "resources[%i].language", i);
 
     if ((rsrc_language & 0xFF) == language)
       return_integer(1);
@@ -2505,8 +2500,6 @@ static uint64_t _rich_version(
   int64_t rich_length;
   int64_t rich_count;
 
-  int i;
-
   PRICH_SIGNATURE clear_rich_signature;
   SIZED_STRING* rich_string;
 
@@ -2533,7 +2526,7 @@ static uint64_t _rich_version(
   rich_count = (rich_length - sizeof(RICH_SIGNATURE)) /
                sizeof(RICH_VERSION_INFO);
 
-  for (i = 0; i < rich_count; i++)
+  for (int i = 0; i < rich_count; i++)
   {
     DWORD id_version = yr_le32toh(clear_rich_signature->versions[i].id_version);
 
@@ -2579,7 +2572,6 @@ define_function(calculate_checksum)
 
   uint64_t csum = 0;
   size_t csum_offset;
-  size_t i, j;
 
   if (pe == NULL)
     return_integer(YR_UNDEFINED);
@@ -2588,7 +2580,7 @@ define_function(calculate_checksum)
                  offsetof(IMAGE_OPTIONAL_HEADER32, CheckSum)) -
                 pe->data;
 
-  for (i = 0; i <= pe->data_size / 4; i++)
+  for (size_t i = 0; i <= pe->data_size / 4; i++)
   {
     // Treat the CheckSum field as 0 -- the offset is the same for
     // PE32 and PE64.
@@ -2605,7 +2597,7 @@ define_function(calculate_checksum)
     }
     else
     {
-      for (j = 0; j < pe->data_size % 4; j++)
+      for (size_t j = 0; j < pe->data_size % 4; j++)
         csum += (uint64_t) pe->data[4 * i + j] << (8 * j);
     }
 
@@ -2633,6 +2625,7 @@ define_function(rva_to_offset)
 
   rva = integer_argument(1);
   offset = pe_rva_to_offset(pe, rva);
+
   if (offset == -1)
     return_integer(YR_UNDEFINED);
 
