@@ -1903,7 +1903,7 @@ int yr_re_exec(
       case RE_OPCODE_MATCH:
 
         if (matches != NULL)
-          *matches = bytes_matched;
+          *matches = (int) bytes_matched;
 
         if (flags & RE_FLAGS_EXHAUSTIVE)
         {
@@ -2027,11 +2027,11 @@ int yr_re_fast_exec(
   int input_incr;
   int sp = 0;
 
-  size_t bytes_matched;
-  size_t max_bytes_matched;
+  int bytes_matched;
+  int max_bytes_matched;
 
-  max_bytes_matched = flags & RE_FLAGS_BACKWARDS ? input_backwards_size
-                                                 : input_forwards_size;
+  max_bytes_matched = flags & RE_FLAGS_BACKWARDS ? (int) input_backwards_size
+                                                 : (int) input_forwards_size;
 
   input_incr = flags & RE_FLAGS_BACKWARDS ? -1 : 1;
 

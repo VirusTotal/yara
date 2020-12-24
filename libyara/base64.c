@@ -112,7 +112,7 @@ static SIZED_STRING* _yr_modified_base64_encode(
   }
 
   yr_free(tmp);
-  out->length = p - (uint8_t*) out->c_string;
+  out->length = (uint32_t)(p - (uint8_t*) out->c_string);
 
   return out;
 }

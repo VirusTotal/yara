@@ -67,7 +67,7 @@ typedef struct YR_RELOC YR_RELOC;
 struct YR_ARENA_REF
 {
   uint32_t buffer_id;
-  uint32_t offset;
+  yr_arena_off_t offset;
 };
 
 #pragma pack(pop)
