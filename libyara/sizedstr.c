@@ -206,14 +206,14 @@ SIZED_STRING* ss_new(const char* s)
 {
   SIZED_STRING* result;
 
-  int length = strlen(s);
+  size_t length = strlen(s);
 
   result = (SIZED_STRING*) yr_malloc(sizeof(SIZED_STRING) + length);
 
   if (result == NULL)
     return NULL;
 
-  result->length = length;
+  result->length = (uint32_t) length;
   result->flags = 0;
 
   // Copy the string and the null terminator.

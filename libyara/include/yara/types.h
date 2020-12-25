@@ -527,14 +527,41 @@ struct YR_RULES
 
   // Array of pointers with an entry for each rule. The rule_idx field in the
   // YR_STRING structure is an index within this array.
-  YR_RULE* rules_table;
+  union
+  {
+    YR_RULE* rules_table;
+    // The previous name for rules_table was rules_list_head, because this
+    // was previously a linked list. The old name is maintained but marked as
+    // deprecated, which will raise a warning if used.
+    // TODO(vmalvarez): Remove this field when a reasonable a few versions
+    // after 4.1 has been released.
+    YR_RULE* rules_list_head YR_DEPRECATED_API;
+  };
 
   // Array of pointers with an entry for each of the defined strings. The idx
   // field in the YR_STRING structure is an index within this array.
-  YR_STRING* strings_table;
+  union
+  {
+    YR_STRING* strings_table;
+    // The previous name for strings_table was strings_list_head, because this
+    // was previously a linked list. The old name is maintained but marked as
+    // deprecated, which will raise a warning if used.
+    // TODO(vmalvarez): Remove this field when a reasonable a few versions
+    // after 4.1 has been released.
+    YR_STRING* strings_list_head YR_DEPRECATED_API;
+  };
 
   // Array of pointers with an entry for each external variable.
-  YR_EXTERNAL_VARIABLE* ext_vars_table;
+  union
+  {
+    YR_EXTERNAL_VARIABLE* ext_vars_table;
+    // The previous name for ext_vars_table was externals_list_head, because
+    // this was previously a linked list. The old name is maintained but marked
+    // as deprecated, which will raise a warning if used.
+    // TODO(vmalvarez): Remove this field when a reasonable a few versions
+    // after 4.1 has been released.
+    YR_EXTERNAL_VARIABLE* externals_list_head YR_DEPRECATED_API;
+  };
 
   // Pointer to the Aho-Corasick transition table.
   YR_AC_TRANSITION* ac_transition_table;
@@ -616,7 +643,7 @@ struct YR_PROFILING_INFO
   uint64_t exec_time;
 };
 
-//
+////////////////////////////////////////////////////////////////////////////////
 // YR_RULE_PROFILING_INFO is the structure returned by
 // yr_scanner_get_profiling_info
 //
@@ -632,6 +659,9 @@ typedef const uint8_t* (*YR_MEMORY_BLOCK_FETCH_DATA_FUNC)(
 typedef YR_MEMORY_BLOCK* (*YR_MEMORY_BLOCK_ITERATOR_FUNC)(
     YR_MEMORY_BLOCK_ITERATOR* self);
 
+typedef uint64_t (*YR_MEMORY_BLOCK_ITERATOR_SIZE_FUNC)(
+    YR_MEMORY_BLOCK_ITERATOR* self);
+
 struct YR_MEMORY_BLOCK
 {
   size_t size;
@@ -642,12 +672,30 @@ struct YR_MEMORY_BLOCK
   YR_MEMORY_BLOCK_FETCH_DATA_FUNC fetch_data;
 };
 
+///////////////////////////////////////////////////////////////////////////////
+// YR_MEMORY_BLOCK_ITERATOR represents an iterator that returns a series of
+// memory blocks to be scanned by yr_scanner_scan_mem_blocks. The iterator have
+// pointers to three functions: "first", "next" and "file_size". The "first"
+// function is invoked for retrieving the first memory block, followed by calls
+// to "next" for retrieving the following blocks until "next" returns a NULL
+// pointer. The "file_size" function is called for obtaining the size of the
+// file.
 struct YR_MEMORY_BLOCK_ITERATOR
 {
+  // A pointer that can be used by specific implementations of an iterator for
+  // storing the iterator's state.
   void* context;
 
+  // Pointers to functions for iterating over the memory blocks and getting
+  // the total file size.
   YR_MEMORY_BLOCK_ITERATOR_FUNC first;
   YR_MEMORY_BLOCK_ITERATOR_FUNC next;
+  YR_MEMORY_BLOCK_ITERATOR_SIZE_FUNC file_size;
+
+  // Error occurred during the last call to "first" or "next" functions. These
+  // functions must set the value of last_error to ERROR_SUCCESS or to some
+  // other error code if appropriate.
+  int last_error;
 };
 
 typedef int (*YR_CALLBACK_FUNC)(
@@ -896,8 +944,8 @@ struct YR_INT_RANGE_ITERATOR
 
 struct YR_INT_ENUM_ITERATOR
 {
-  int next;
-  int count;
+  int64_t next;
+  int64_t count;
   int64_t items[1];
 };
 

@@ -5,6 +5,11 @@
 
 int main(int argc, char** argv)
 {
+  int result = 0;
+
+  YR_DEBUG_INITIALIZE();
+  YR_DEBUG_FPRINTF(1, stderr, "+ %s() { // in %s\n", __FUNCTION__, argv[0]);
+
   yr_initialize();
 
   assert_true_rule_blob(
@@ -126,6 +131,29 @@ int main(int argc, char** argv)
       "import \"elf\" \
       rule test { \
         condition: \
+          for any i in (0..elf.dynsym_entries): ( \
+            elf.dynsym[i].shndx == 11 and \
+            elf.dynsym[i].value == 0x400910 and \
+            elf.dynsym[i].name == \"_fini\") \
+      }",
+      ELF32_MIPS_FILE);
+
+  assert_true_rule_blob(
+      "import \"elf\" \
+      rule test { \
+        condition: \
+          elf.dynsym[9].name == \"__RLD_MAP\" and \
+          elf.dynsym[9].type == elf.STT_OBJECT and \
+          elf.dynsym[9].bind == elf.STB_GLOBAL and \
+          elf.dynsym[9].value == 0x411000 and \
+          elf.dynsym[9].size == 0 \
+      }",
+      ELF32_MIPS_FILE);
+
+  assert_true_rule_blob(
+      "import \"elf\" \
+      rule test { \
+        condition: \
           elf.dynamic[4].type == elf.DT_STRTAB and \
           elf.dynamic[4].val == 0x400484\
       }",
@@ -231,5 +259,9 @@ int main(int argc, char** argv)
       ELF_x64_FILE);
 
   yr_finalize();
-  return 0;
+
+  YR_DEBUG_FPRINTF(
+      1, stderr, "} = %d // %s() in %s\n", result, __FUNCTION__, argv[0]);
+
+  return result;
 }

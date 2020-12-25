@@ -314,6 +314,8 @@ static int iter_int_enum_next(YR_ITERATOR* self, YR_VALUE_STACK* stack)
 
 int yr_execute_code(YR_SCAN_CONTEXT* context)
 {
+  YR_DEBUG_FPRINTF(2, stderr, "+ %s() {\n", __FUNCTION__);
+
   const uint8_t* ip = context->rules->code_start;
 
   YR_VALUE mem[MEM_SIZE];
@@ -343,7 +345,6 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
   char* identifier;
   char* args_fmt;
 
-  int i;
   int found;
   int count;
   int result = ERROR_SUCCESS;
@@ -390,14 +391,18 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
     switch (opcode)
     {
     case OP_NOP:
+      YR_DEBUG_FPRINTF(2, stderr, "- case OP_NOP: // %s()\n", __FUNCTION__);
       break;
 
     case OP_HALT:
+      YR_DEBUG_FPRINTF(2, stderr, "- case OP_HALT: // %s()\n", __FUNCTION__);
       assert(stack.sp == 0);  // When HALT is reached the stack should be empty.
       stop = true;
       break;
 
     case OP_ITER_START_ARRAY:
+      YR_DEBUG_FPRINTF(
+          2, stderr, "- case OP_ITER_START_ARRAY: // %s()\n", __FUNCTION__);
       r2.p = yr_notebook_alloc(it_notebook, sizeof(YR_ITERATOR));
 
       if (r2.p == NULL)
@@ -417,6 +422,8 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
       break;
 
     case OP_ITER_START_DICT:
+      YR_DEBUG_FPRINTF(
+          2, stderr, "- case OP_ITER_START_DICT: // %s()\n", __FUNCTION__);
       r2.p = yr_notebook_alloc(it_notebook, sizeof(YR_ITERATOR));
 
       if (r2.p == NULL)
@@ -436,6 +443,8 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
       break;
 
     case OP_ITER_START_INT_RANGE:
+      YR_DEBUG_FPRINTF(
+          2, stderr, "- case OP_ITER_START_INT_RANGE: // %s()\n", __FUNCTION__);
       // Creates an iterator for an integer range. The higher bound of the
       // range is at the top of the stack followed by the lower bound.
       r3.p = yr_notebook_alloc(it_notebook, sizeof(YR_ITERATOR));
@@ -458,6 +467,8 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
       break;
 
     case OP_ITER_START_INT_ENUM:
+      YR_DEBUG_FPRINTF(
+          2, stderr, "- case OP_ITER_START_INT_ENUM: // %s()\n", __FUNCTION__);
       // Creates an iterator for an integer enumeration. The number of items
       // in the enumeration is at the top of the stack, followed by the
       // items in reverse order.
@@ -476,7 +487,7 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
         r3.it->int_enum_it.next = 0;
         r3.it->next = iter_int_enum_next;
 
-        for (i = r1.i; i > 0; i--)
+        for (int64_t i = r1.i; i > 0; i--)
         {
           pop(r2);
           r3.it->int_enum_it.items[i - 1] = r2.i;
@@ -489,6 +500,8 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
       break;
 
     case OP_ITER_NEXT:
+      YR_DEBUG_FPRINTF(
+          2, stderr, "- case OP_ITER_NEXT: // %s()\n", __FUNCTION__);
       // Loads the iterator in r1, but leaves the iterator in the stack.
       pop(r1);
       push(r1);
@@ -501,6 +514,7 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
       break;
 
     case OP_PUSH:
+      YR_DEBUG_FPRINTF(2, stderr, "- case OP_PUSH: // %s()\n", __FUNCTION__);
       memcpy(&r1.i, ip, sizeof(uint64_t));
       ip += sizeof(uint64_t);
       push(r1);
@@ -508,32 +522,53 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
 
     case OP_PUSH_8:
       r1.i = *ip;
+      YR_DEBUG_FPRINTF(
+          2,
+          stderr,
+          "- case OP_PUSH_8: r1.i=%" PRId64 " // %s()\n",
+          r1.i,
+          __FUNCTION__);
       ip += sizeof(uint8_t);
       push(r1);
       break;
 
     case OP_PUSH_16:
       r1.i = *(uint16_t*) (ip);
+      YR_DEBUG_FPRINTF(
+          2,
+          stderr,
+          "- case OP_PUSH_16: r1.i=%" PRId64 " // %s()\n",
+          r1.i,
+          __FUNCTION__);
       ip += sizeof(uint16_t);
       push(r1);
       break;
 
     case OP_PUSH_32:
       r1.i = *(uint32_t*) (ip);
+      YR_DEBUG_FPRINTF(
+          2,
+          stderr,
+          "- case OP_PUSH_32: r1.i=%" PRId64 " // %s()\n",
+          r1.i,
+          __FUNCTION__);
       ip += sizeof(uint32_t);
       push(r1);
       break;
 
     case OP_PUSH_U:
+      YR_DEBUG_FPRINTF(2, stderr, "- case OP_PUSH_U: // %s()\n", __FUNCTION__);
       r1.i = YR_UNDEFINED;
       push(r1);
       break;
 
     case OP_POP:
+      YR_DEBUG_FPRINTF(2, stderr, "- case OP_POP: // %s()\n", __FUNCTION__);
       pop(r1);
       break;
 
     case OP_CLEAR_M:
+      YR_DEBUG_FPRINTF(2, stderr, "- case OP_CLEAR_M: // %s()\n", __FUNCTION__);
       memcpy(&r1.i, ip, sizeof(uint64_t));
       ip += sizeof(uint64_t);
 #if YR_PARANOID_EXEC
@@ -543,6 +578,7 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
       break;
 
     case OP_ADD_M:
+      YR_DEBUG_FPRINTF(2, stderr, "- case OP_ADD_M: // %s()\n", __FUNCTION__);
       memcpy(&r1.i, ip, sizeof(uint64_t));
       ip += sizeof(uint64_t);
 #if YR_PARANOID_EXEC
@@ -554,6 +590,7 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
       break;
 
     case OP_INCR_M:
+      YR_DEBUG_FPRINTF(2, stderr, "- case OP_INCR_M: // %s()\n", __FUNCTION__);
       memcpy(&r1.i, ip, sizeof(uint64_t));
       ip += sizeof(uint64_t);
 #if YR_PARANOID_EXEC
@@ -563,6 +600,7 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
       break;
 
     case OP_PUSH_M:
+      YR_DEBUG_FPRINTF(2, stderr, "- case OP_PUSH_M: // %s()\n", __FUNCTION__);
       memcpy(&r1.i, ip, sizeof(uint64_t));
       ip += sizeof(uint64_t);
 #if YR_PARANOID_EXEC
@@ -573,6 +611,7 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
       break;
 
     case OP_POP_M:
+      YR_DEBUG_FPRINTF(2, stderr, "- case OP_POP_M: // %s()\n", __FUNCTION__);
       memcpy(&r1.i, ip, sizeof(uint64_t));
       ip += sizeof(uint64_t);
 #if YR_PARANOID_EXEC
@@ -583,6 +622,7 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
       break;
 
     case OP_SET_M:
+      YR_DEBUG_FPRINTF(2, stderr, "- case OP_SET_M: // %s()\n", __FUNCTION__);
       memcpy(&r1.i, ip, sizeof(uint64_t));
       ip += sizeof(uint64_t);
 #if YR_PARANOID_EXEC
@@ -595,6 +635,8 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
       break;
 
     case OP_SWAPUNDEF:
+      YR_DEBUG_FPRINTF(
+          2, stderr, "- case OP_SWAPUNDEF: // %s()\n", __FUNCTION__);
       memcpy(&r1.i, ip, sizeof(uint64_t));
       ip += sizeof(uint64_t);
 #if YR_PARANOID_EXEC
@@ -614,62 +656,75 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
       break;
 
     case OP_JNUNDEF:
+      YR_DEBUG_FPRINTF(2, stderr, "- case OP_JNUNDEF: // %s()\n", __FUNCTION__);
       pop(r1);
       push(r1);
       ip = jmp_if(!is_undef(r1), ip);
       break;
 
     case OP_JUNDEF_P:
+      YR_DEBUG_FPRINTF(
+          2, stderr, "- case OP_JUNDEF_P: // %s()\n", __FUNCTION__);
       pop(r1);
       ip = jmp_if(is_undef(r1), ip);
       break;
 
     case OP_JL_P:
+      YR_DEBUG_FPRINTF(2, stderr, "- case OP_JL_P: // %s()\n", __FUNCTION__);
       pop(r2);
       pop(r1);
       ip = jmp_if(r1.i < r2.i, ip);
       break;
 
     case OP_JLE_P:
+      YR_DEBUG_FPRINTF(2, stderr, "- case OP_JLE_P: // %s()\n", __FUNCTION__);
       pop(r2);
       pop(r1);
       ip = jmp_if(r1.i <= r2.i, ip);
       break;
 
     case OP_JTRUE:
+      YR_DEBUG_FPRINTF(2, stderr, "- case OP_JTRUE: // %s()\n", __FUNCTION__);
       pop(r1);
       push(r1);
       ip = jmp_if(!is_undef(r1) && r1.i, ip);
       break;
 
     case OP_JTRUE_P:
+      YR_DEBUG_FPRINTF(2, stderr, "- case OP_JTRUE_P: // %s()\n", __FUNCTION__);
       pop(r1);
       ip = jmp_if(!is_undef(r1) && r1.i, ip);
       break;
 
     case OP_JFALSE:
+      YR_DEBUG_FPRINTF(2, stderr, "- case OP_JFALSE: // %s()\n", __FUNCTION__);
       pop(r1);
       push(r1);
       ip = jmp_if(is_undef(r1) || !r1.i, ip);
       break;
 
     case OP_JFALSE_P:
+      YR_DEBUG_FPRINTF(
+          2, stderr, "- case OP_JFALSE_P: // %s()\n", __FUNCTION__);
       pop(r1);
       ip = jmp_if(is_undef(r1) || !r1.i, ip);
       break;
 
     case OP_JZ:
+      YR_DEBUG_FPRINTF(2, stderr, "- case OP_JZ: // %s()\n", __FUNCTION__);
       pop(r1);
       push(r1);
       ip = jmp_if(r1.i == 0, ip);
       break;
 
     case OP_JZ_P:
+      YR_DEBUG_FPRINTF(2, stderr, "- case OP_JZ_P: // %s()\n", __FUNCTION__);
       pop(r1);
       ip = jmp_if(r1.i == 0, ip);
       break;
 
     case OP_AND:
+      YR_DEBUG_FPRINTF(2, stderr, "- case OP_AND: // %s()\n", __FUNCTION__);
       pop(r2);
       pop(r1);
 
@@ -682,6 +737,7 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
       break;
 
     case OP_OR:
+      YR_DEBUG_FPRINTF(2, stderr, "- case OP_OR: // %s()\n", __FUNCTION__);
       pop(r2);
       pop(r1);
 
@@ -701,6 +757,7 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
       break;
 
     case OP_NOT:
+      YR_DEBUG_FPRINTF(2, stderr, "- case OP_NOT: // %s()\n", __FUNCTION__);
       pop(r1);
 
       if (is_undef(r1))
@@ -712,6 +769,7 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
       break;
 
     case OP_MOD:
+      YR_DEBUG_FPRINTF(2, stderr, "- case OP_MOD: // %s()\n", __FUNCTION__);
       pop(r2);
       pop(r1);
       ensure_defined(r2);
@@ -724,6 +782,7 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
       break;
 
     case OP_SHR:
+      YR_DEBUG_FPRINTF(2, stderr, "- case OP_SHR: // %s()\n", __FUNCTION__);
       pop(r2);
       pop(r1);
       ensure_defined(r2);
@@ -738,6 +797,7 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
       break;
 
     case OP_SHL:
+      YR_DEBUG_FPRINTF(2, stderr, "- case OP_SHL: // %s()\n", __FUNCTION__);
       pop(r2);
       pop(r1);
       ensure_defined(r2);
@@ -752,6 +812,8 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
       break;
 
     case OP_BITWISE_NOT:
+      YR_DEBUG_FPRINTF(
+          2, stderr, "- case OP_BITWISE_NOT: // %s()\n", __FUNCTION__);
       pop(r1);
       ensure_defined(r1);
       r1.i = ~r1.i;
@@ -759,6 +821,8 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
       break;
 
     case OP_BITWISE_AND:
+      YR_DEBUG_FPRINTF(
+          2, stderr, "- case OP_BITWISE_AND: // %s()\n", __FUNCTION__);
       pop(r2);
       pop(r1);
       ensure_defined(r2);
@@ -768,6 +832,8 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
       break;
 
     case OP_BITWISE_OR:
+      YR_DEBUG_FPRINTF(
+          2, stderr, "- case OP_BITWISE_OR: // %s()\n", __FUNCTION__);
       pop(r2);
       pop(r1);
       ensure_defined(r2);
@@ -777,6 +843,8 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
       break;
 
     case OP_BITWISE_XOR:
+      YR_DEBUG_FPRINTF(
+          2, stderr, "- case OP_BITWISE_XOR: // %s()\n", __FUNCTION__);
       pop(r2);
       pop(r1);
       ensure_defined(r2);
@@ -786,6 +854,8 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
       break;
 
     case OP_PUSH_RULE:
+      YR_DEBUG_FPRINTF(
+          2, stderr, "- case OP_PUSH_RULE: // %s()\n", __FUNCTION__);
       memcpy(&r1.i, ip, sizeof(uint64_t));
       ip += sizeof(uint64_t);
 
@@ -807,6 +877,8 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
       break;
 
     case OP_INIT_RULE:
+      YR_DEBUG_FPRINTF(
+          2, stderr, "- case OP_INIT_RULE: // %s()\n", __FUNCTION__);
       // After the opcode there's an int32_t corresponding to the jump's
       // offset and an uint32_t corresponding to the rule's index.
       current_rule_idx = *(uint32_t*) (ip + sizeof(int32_t));
@@ -826,6 +898,8 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
       break;
 
     case OP_MATCH_RULE:
+      YR_DEBUG_FPRINTF(
+          2, stderr, "- case OP_MATCH_RULE: // %s()\n", __FUNCTION__);
       pop(r1);
 
       memcpy(&r2.i, ip, sizeof(uint64_t));
@@ -852,6 +926,8 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
       break;
 
     case OP_OBJ_LOAD:
+      YR_DEBUG_FPRINTF(
+          2, stderr, "- case OP_OBJ_LOAD: // %s()\n", __FUNCTION__);
       identifier = *(char**) (ip);
       ip += sizeof(uint64_t);
 
@@ -867,6 +943,8 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
       break;
 
     case OP_OBJ_FIELD:
+      YR_DEBUG_FPRINTF(
+          2, stderr, "- case OP_OBJ_FIELD: // %s()\n", __FUNCTION__);
       identifier = *(char**) (ip);
       ip += sizeof(uint64_t);
 
@@ -890,6 +968,8 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
       break;
 
     case OP_OBJ_VALUE:
+      YR_DEBUG_FPRINTF(
+          2, stderr, "- case OP_OBJ_VALUE: // %s()\n", __FUNCTION__);
       pop(r1);
       ensure_defined(r1);
 
@@ -925,6 +1005,8 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
       break;
 
     case OP_INDEX_ARRAY:
+      YR_DEBUG_FPRINTF(
+          2, stderr, "- case OP_INDEX_ARRAY: // %s()\n", __FUNCTION__);
       pop(r1);  // index
       pop(r2);  // array
 
@@ -946,6 +1028,8 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
       break;
 
     case OP_LOOKUP_DICT:
+      YR_DEBUG_FPRINTF(
+          2, stderr, "- case OP_LOOKUP_DICT: // %s()\n", __FUNCTION__);
       pop(r1);  // key
       pop(r2);  // dictionary
 
@@ -967,10 +1051,11 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
       break;
 
     case OP_CALL:
+      YR_DEBUG_FPRINTF(2, stderr, "- case OP_CALL: // %s()\n", __FUNCTION__);
       args_fmt = *(char**) (ip);
       ip += sizeof(uint64_t);
 
-      i = (int) strlen(args_fmt);
+      int i = (int) strlen(args_fmt);
       count = 0;
 
 #if YR_PARANOID_EXEC
@@ -1015,7 +1100,7 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
       function = object_as_function(r2.o);
       result = ERROR_INTERNAL_FATAL_ERROR;
 
-      for (i = 0; i < YR_MAX_OVERLOADED_FUNCTIONS; i++)
+      for (int i = 0; i < YR_MAX_OVERLOADED_FUNCTIONS; i++)
       {
         if (function->prototypes[i].arguments_fmt == NULL)
           break;
@@ -1053,10 +1138,18 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
     case OP_FOUND:
       pop(r1);
       r2.i = context->matches[r1.s->idx].tail != NULL ? 1 : 0;
+      YR_DEBUG_FPRINTF(
+          2,
+          stderr,
+          "- case OP_FOUND: r2.i=%" PRId64 " // %s()\n",
+          r2.i,
+          __FUNCTION__);
       push(r2);
       break;
 
     case OP_FOUND_AT:
+      YR_DEBUG_FPRINTF(
+          2, stderr, "- case OP_FOUND_AT: // %s()\n", __FUNCTION__);
       pop(r2);
       pop(r1);
 
@@ -1092,6 +1185,8 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
       break;
 
     case OP_FOUND_IN:
+      YR_DEBUG_FPRINTF(
+          2, stderr, "- case OP_FOUND_IN: // %s()\n", __FUNCTION__);
       pop(r3);
       pop(r2);
       pop(r1);
@@ -1124,6 +1219,7 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
       break;
 
     case OP_COUNT:
+      YR_DEBUG_FPRINTF(2, stderr, "- case OP_COUNT: // %s()\n", __FUNCTION__);
       pop(r1);
 
 #if YR_PARANOID_EXEC
@@ -1135,6 +1231,7 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
       break;
 
     case OP_OFFSET:
+      YR_DEBUG_FPRINTF(2, stderr, "- case OP_OFFSET: // %s()\n", __FUNCTION__);
       pop(r2);
       pop(r1);
 
@@ -1162,6 +1259,7 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
       break;
 
     case OP_LENGTH:
+      YR_DEBUG_FPRINTF(2, stderr, "- case OP_LENGTH: // %s()\n", __FUNCTION__);
       pop(r2);
       pop(r1);
 
@@ -1216,6 +1314,7 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
       break;
 
     case OP_OF:
+      YR_DEBUG_FPRINTF(2, stderr, "- case OP_OF: // %s()\n", __FUNCTION__);
       found = 0;
       count = 0;
       pop(r1);
@@ -1242,87 +1341,111 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
 
     case OP_FILESIZE:
       r1.i = context->file_size;
+      YR_DEBUG_FPRINTF(
+          2,
+          stderr,
+          "- case OP_FILESIZE: r1.i=%" PRId64 "%s // %s()\n",
+          r1.i,
+          r1.i == YR_UNDEFINED ? " AKA YR_UNDEFINED" : "",
+          __FUNCTION__);
       push(r1);
       break;
 
     case OP_ENTRYPOINT:
+      YR_DEBUG_FPRINTF(
+          2, stderr, "- case OP_ENTRYPOINT: // %s()\n", __FUNCTION__);
       r1.i = context->entry_point;
       push(r1);
       break;
 
     case OP_INT8:
+      YR_DEBUG_FPRINTF(2, stderr, "- case OP_INT8: // %s()\n", __FUNCTION__);
       pop(r1);
       r1.i = read_int8_t_little_endian(context->iterator, (size_t) r1.i);
       push(r1);
       break;
 
     case OP_INT16:
+      YR_DEBUG_FPRINTF(2, stderr, "- case OP_INT16: // %s()\n", __FUNCTION__);
       pop(r1);
       r1.i = read_int16_t_little_endian(context->iterator, (size_t) r1.i);
       push(r1);
       break;
 
     case OP_INT32:
+      YR_DEBUG_FPRINTF(2, stderr, "- case OP_INT32: // %s()\n", __FUNCTION__);
       pop(r1);
       r1.i = read_int32_t_little_endian(context->iterator, (size_t) r1.i);
       push(r1);
       break;
 
     case OP_UINT8:
+      YR_DEBUG_FPRINTF(2, stderr, "- case OP_UINT8: // %s()\n", __FUNCTION__);
       pop(r1);
       r1.i = read_uint8_t_little_endian(context->iterator, (size_t) r1.i);
       push(r1);
       break;
 
     case OP_UINT16:
+      YR_DEBUG_FPRINTF(2, stderr, "- case OP_UINT16: // %s()\n", __FUNCTION__);
       pop(r1);
       r1.i = read_uint16_t_little_endian(context->iterator, (size_t) r1.i);
       push(r1);
       break;
 
     case OP_UINT32:
+      YR_DEBUG_FPRINTF(2, stderr, "- case OP_UINT32: // %s()\n", __FUNCTION__);
       pop(r1);
       r1.i = read_uint32_t_little_endian(context->iterator, (size_t) r1.i);
       push(r1);
       break;
 
     case OP_INT8BE:
+      YR_DEBUG_FPRINTF(2, stderr, "- case OP_INT8BE: // %s()\n", __FUNCTION__);
       pop(r1);
       r1.i = read_int8_t_big_endian(context->iterator, (size_t) r1.i);
       push(r1);
       break;
 
     case OP_INT16BE:
+      YR_DEBUG_FPRINTF(2, stderr, "- case OP_INT16BE: // %s()\n", __FUNCTION__);
       pop(r1);
       r1.i = read_int16_t_big_endian(context->iterator, (size_t) r1.i);
       push(r1);
       break;
 
     case OP_INT32BE:
+      YR_DEBUG_FPRINTF(2, stderr, "- case OP_INT32BE: // %s()\n", __FUNCTION__);
       pop(r1);
       r1.i = read_int32_t_big_endian(context->iterator, (size_t) r1.i);
       push(r1);
       break;
 
     case OP_UINT8BE:
+      YR_DEBUG_FPRINTF(2, stderr, "- case OP_UINT8BE: // %s()\n", __FUNCTION__);
       pop(r1);
       r1.i = read_uint8_t_big_endian(context->iterator, (size_t) r1.i);
       push(r1);
       break;
 
     case OP_UINT16BE:
+      YR_DEBUG_FPRINTF(
+          2, stderr, "- case OP_UINT16BE: // %s()\n", __FUNCTION__);
       pop(r1);
       r1.i = read_uint16_t_big_endian(context->iterator, (size_t) r1.i);
       push(r1);
       break;
 
     case OP_UINT32BE:
+      YR_DEBUG_FPRINTF(
+          2, stderr, "- case OP_UINT32BE: // %s()\n", __FUNCTION__);
       pop(r1);
       r1.i = read_uint32_t_big_endian(context->iterator, (size_t) r1.i);
       push(r1);
       break;
 
     case OP_IMPORT:
+      YR_DEBUG_FPRINTF(2, stderr, "- case OP_IMPORT: // %s()\n", __FUNCTION__);
       memcpy(&r1.i, ip, sizeof(uint64_t));
       ip += sizeof(uint64_t);
 
@@ -1338,6 +1461,7 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
       break;
 
     case OP_MATCHES:
+      YR_DEBUG_FPRINTF(2, stderr, "- case OP_MATCHES: // %s()\n", __FUNCTION__);
       pop(r2);
       pop(r1);
 
@@ -1367,6 +1491,8 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
       break;
 
     case OP_INT_TO_DBL:
+      YR_DEBUG_FPRINTF(
+          2, stderr, "- case OP_INT_TO_DBL: // %s()\n", __FUNCTION__);
       memcpy(&r1.i, ip, sizeof(uint64_t));
       ip += sizeof(uint64_t);
 
@@ -1388,6 +1514,8 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
       break;
 
     case OP_STR_TO_BOOL:
+      YR_DEBUG_FPRINTF(
+          2, stderr, "- case OP_STR_TO_BOOL: // %s()\n", __FUNCTION__);
       pop(r1);
       ensure_defined(r1);
       r1.i = r1.ss->length > 0;
@@ -1395,6 +1523,7 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
       break;
 
     case OP_INT_EQ:
+      YR_DEBUG_FPRINTF(2, stderr, "- case OP_INT_EQ: // %s()\n", __FUNCTION__);
       pop(r2);
       pop(r1);
       if (is_undef(r1) || is_undef(r2))
@@ -1405,6 +1534,7 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
       break;
 
     case OP_INT_NEQ:
+      YR_DEBUG_FPRINTF(2, stderr, "- case OP_INT_NEQ: // %s()\n", __FUNCTION__);
       pop(r2);
       pop(r1);
       if (is_undef(r1) || is_undef(r2))
@@ -1415,6 +1545,7 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
       break;
 
     case OP_INT_LT:
+      YR_DEBUG_FPRINTF(2, stderr, "- case OP_INT_LT: // %s()\n", __FUNCTION__);
       pop(r2);
       pop(r1);
       if (is_undef(r1) || is_undef(r2))
@@ -1425,6 +1556,7 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
       break;
 
     case OP_INT_GT:
+      YR_DEBUG_FPRINTF(2, stderr, "- case OP_INT_GT: // %s()\n", __FUNCTION__);
       pop(r2);
       pop(r1);
       if (is_undef(r1) || is_undef(r2))
@@ -1435,6 +1567,7 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
       break;
 
     case OP_INT_LE:
+      YR_DEBUG_FPRINTF(2, stderr, "- case OP_INT_LE: // %s()\n", __FUNCTION__);
       pop(r2);
       pop(r1);
       if (is_undef(r1) || is_undef(r2))
@@ -1445,6 +1578,7 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
       break;
 
     case OP_INT_GE:
+      YR_DEBUG_FPRINTF(2, stderr, "- case OP_INT_GE: // %s()\n", __FUNCTION__);
       pop(r2);
       pop(r1);
       if (is_undef(r1) || is_undef(r2))
@@ -1455,6 +1589,7 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
       break;
 
     case OP_INT_ADD:
+      YR_DEBUG_FPRINTF(2, stderr, "- case OP_INT_ADD: // %s()\n", __FUNCTION__);
       pop(r2);
       pop(r1);
       ensure_defined(r2);
@@ -1464,6 +1599,7 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
       break;
 
     case OP_INT_SUB:
+      YR_DEBUG_FPRINTF(2, stderr, "- case OP_INT_SUB: // %s()\n", __FUNCTION__);
       pop(r2);
       pop(r1);
       ensure_defined(r2);
@@ -1473,6 +1609,7 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
       break;
 
     case OP_INT_MUL:
+      YR_DEBUG_FPRINTF(2, stderr, "- case OP_INT_MUL: // %s()\n", __FUNCTION__);
       pop(r2);
       pop(r1);
       ensure_defined(r2);
@@ -1482,6 +1619,7 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
       break;
 
     case OP_INT_DIV:
+      YR_DEBUG_FPRINTF(2, stderr, "- case OP_INT_DIV: // %s()\n", __FUNCTION__);
       pop(r2);
       pop(r1);
       ensure_defined(r2);
@@ -1494,6 +1632,8 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
       break;
 
     case OP_INT_MINUS:
+      YR_DEBUG_FPRINTF(
+          2, stderr, "- case OP_INT_MINUS: // %s()\n", __FUNCTION__);
       pop(r1);
       ensure_defined(r1);
       r1.i = -r1.i;
@@ -1501,6 +1641,7 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
       break;
 
     case OP_DBL_LT:
+      YR_DEBUG_FPRINTF(2, stderr, "- case OP_DBL_LT: // %s()\n", __FUNCTION__);
       pop(r2);
       pop(r1);
       if (is_undef(r1) || is_undef(r2))
@@ -1511,6 +1652,7 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
       break;
 
     case OP_DBL_GT:
+      YR_DEBUG_FPRINTF(2, stderr, "- case OP_DBL_GT: // %s()\n", __FUNCTION__);
       pop(r2);
       pop(r1);
       if (is_undef(r1) || is_undef(r2))
@@ -1521,6 +1663,7 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
       break;
 
     case OP_DBL_LE:
+      YR_DEBUG_FPRINTF(2, stderr, "- case OP_DBL_LE: // %s()\n", __FUNCTION__);
       pop(r2);
       pop(r1);
       if (is_undef(r1) || is_undef(r2))
@@ -1531,6 +1674,7 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
       break;
 
     case OP_DBL_GE:
+      YR_DEBUG_FPRINTF(2, stderr, "- case OP_DBL_GE: // %s()\n", __FUNCTION__);
       pop(r2);
       pop(r1);
       if (is_undef(r1) || is_undef(r2))
@@ -1541,6 +1685,7 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
       break;
 
     case OP_DBL_EQ:
+      YR_DEBUG_FPRINTF(2, stderr, "- case OP_DBL_EQ: // %s()\n", __FUNCTION__);
       pop(r2);
       pop(r1);
       if (is_undef(r1) || is_undef(r2))
@@ -1551,6 +1696,7 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
       break;
 
     case OP_DBL_NEQ:
+      YR_DEBUG_FPRINTF(2, stderr, "- case OP_DBL_NEQ: // %s()\n", __FUNCTION__);
       pop(r2);
       pop(r1);
       if (is_undef(r1) || is_undef(r2))
@@ -1561,6 +1707,7 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
       break;
 
     case OP_DBL_ADD:
+      YR_DEBUG_FPRINTF(2, stderr, "- case OP_DBL_ADD: // %s()\n", __FUNCTION__);
       pop(r2);
       pop(r1);
       ensure_defined(r2);
@@ -1570,6 +1717,7 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
       break;
 
     case OP_DBL_SUB:
+      YR_DEBUG_FPRINTF(2, stderr, "- case OP_DBL_SUB: // %s()\n", __FUNCTION__);
       pop(r2);
       pop(r1);
       ensure_defined(r2);
@@ -1579,6 +1727,7 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
       break;
 
     case OP_DBL_MUL:
+      YR_DEBUG_FPRINTF(2, stderr, "- case OP_DBL_MUL: // %s()\n", __FUNCTION__);
       pop(r2);
       pop(r1);
       ensure_defined(r2);
@@ -1588,6 +1737,7 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
       break;
 
     case OP_DBL_DIV:
+      YR_DEBUG_FPRINTF(2, stderr, "- case OP_DBL_DIV: // %s()\n", __FUNCTION__);
       pop(r2);
       pop(r1);
       ensure_defined(r2);
@@ -1597,6 +1747,8 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
       break;
 
     case OP_DBL_MINUS:
+      YR_DEBUG_FPRINTF(
+          2, stderr, "- case OP_DBL_MINUS: // %s()\n", __FUNCTION__);
       pop(r1);
       ensure_defined(r1);
       r1.d = -r1.d;
@@ -1622,21 +1774,33 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
         switch (opcode)
         {
         case OP_STR_EQ:
+          YR_DEBUG_FPRINTF(
+              2, stderr, "- case OP_STR_EQ: // %s()\n", __FUNCTION__);
           r1.i = (ss_compare(r1.ss, r2.ss) == 0);
           break;
         case OP_STR_NEQ:
+          YR_DEBUG_FPRINTF(
+              2, stderr, "- case OP_STR_NEQ: // %s()\n", __FUNCTION__);
           r1.i = (ss_compare(r1.ss, r2.ss) != 0);
           break;
         case OP_STR_LT:
+          YR_DEBUG_FPRINTF(
+              2, stderr, "- case OP_STR_LT: // %s()\n", __FUNCTION__);
           r1.i = (ss_compare(r1.ss, r2.ss) < 0);
           break;
         case OP_STR_LE:
+          YR_DEBUG_FPRINTF(
+              2, stderr, "- case OP_STR_LE: // %s()\n", __FUNCTION__);
           r1.i = (ss_compare(r1.ss, r2.ss) <= 0);
           break;
         case OP_STR_GT:
+          YR_DEBUG_FPRINTF(
+              2, stderr, "- case OP_STR_GT: // %s()\n", __FUNCTION__);
           r1.i = (ss_compare(r1.ss, r2.ss) > 0);
           break;
         case OP_STR_GE:
+          YR_DEBUG_FPRINTF(
+              2, stderr, "- case OP_STR_GE: // %s()\n", __FUNCTION__);
           r1.i = (ss_compare(r1.ss, r2.ss) >= 0);
           break;
         }
@@ -1664,21 +1828,33 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
         switch (opcode)
         {
         case OP_CONTAINS:
+          YR_DEBUG_FPRINTF(
+              2, stderr, "- case OP_CONTAINS: // %s()\n", __FUNCTION__);
           r1.i = ss_contains(r1.ss, r2.ss);
           break;
         case OP_ICONTAINS:
+          YR_DEBUG_FPRINTF(
+              2, stderr, "- case OP_ICONTAINS: // %s()\n", __FUNCTION__);
           r1.i = ss_icontains(r1.ss, r2.ss);
           break;
         case OP_STARTSWITH:
+          YR_DEBUG_FPRINTF(
+              2, stderr, "- case OP_STARTSWITH: // %s()\n", __FUNCTION__);
           r1.i = ss_startswith(r1.ss, r2.ss);
           break;
         case OP_ISTARTSWITH:
+          YR_DEBUG_FPRINTF(
+              2, stderr, "- case OP_ISTARTSWITH: // %s()\n", __FUNCTION__);
           r1.i = ss_istartswith(r1.ss, r2.ss);
           break;
         case OP_ENDSWITH:
+          YR_DEBUG_FPRINTF(
+              2, stderr, "- case OP_ENDSWITH: // %s()\n", __FUNCTION__);
           r1.i = ss_endswith(r1.ss, r2.ss);
           break;
         case OP_IENDSWITH:
+          YR_DEBUG_FPRINTF(
+              2, stderr, "- case OP_IENDSWITH: // %s()\n", __FUNCTION__);
           r1.i = ss_iendswith(r1.ss, r2.ss);
           break;
         }
@@ -1688,6 +1864,8 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
       break;
 
     default:
+      YR_DEBUG_FPRINTF(
+          2, stderr, "- case <unknown instruction>: // %s()\n", __FUNCTION__);
       // Unknown instruction, this shouldn't happen.
       assert(false);
     }
@@ -1721,6 +1899,14 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
   yr_notebook_destroy(it_notebook);
   yr_modules_unload_all(context);
   yr_free(stack.items);
+
+  YR_DEBUG_FPRINTF(
+      2,
+      stderr,
+      "} = %d AKA %s // %s()\n",
+      result,
+      yr_debug_error_as_string(result),
+      __FUNCTION__);
 
   return result;
 }

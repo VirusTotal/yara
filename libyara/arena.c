@@ -81,7 +81,7 @@ static int _yr_arena_make_ptr_relocatable(
 
   int result = ERROR_SUCCESS;
 
-  offset = va_arg(offsets, yr_arena_off_t);
+  offset = (yr_arena_off_t) va_arg(offsets, yr_arena_off_t);
 
   while (offset != EOL)
   {
@@ -101,7 +101,7 @@ static int _yr_arena_make_ptr_relocatable(
       arena->reloc_list_tail->next = reloc;
 
     arena->reloc_list_tail = reloc;
-    offset = va_arg(offsets, size_t);
+    offset = (yr_arena_off_t) va_arg(offsets, size_t);
   }
 
   return result;
@@ -120,7 +120,7 @@ static int _yr_arena_make_ptr_relocatable(
 //   size : Size of the region to be allocated.
 //   [out] ref: Pointer to a YR_ARENA_REF that will be updated with the
 //              reference to the newly allocated region. The pointer can be
-///             NULL.
+//              NULL.
 // Returns:
 //   ERROR_SUCCESS
 //   ERROR_INVALID_ARGUMENT
@@ -147,6 +147,10 @@ static int _yr_arena_allocate_memory(
     size_t new_size = (b->size == 0) ? arena->initial_buffer_size : b->size * 2;
 
     while (new_size < b->used + size) new_size *= 2;
+
+    // Make sure that buffer size if not larger than 4GB.
+    if (new_size > 1L << 32)
+      return ERROR_INSUFFICIENT_MEMORY;
 
     uint8_t* new_data = yr_realloc(b->data, new_size);
 
@@ -198,7 +202,7 @@ static int _yr_arena_allocate_memory(
   if (ref != NULL)
   {
     ref->buffer_id = buffer_id;
-    ref->offset = b->used;
+    ref->offset = (uint32_t) b->used;
   }
 
   b->used += size;
@@ -412,7 +416,7 @@ yr_arena_off_t yr_arena_get_current_offset(YR_ARENA* arena, uint32_t buffer_id)
 {
   assert(buffer_id < arena->num_buffers);
 
-  return arena->buffers[buffer_id].used;
+  return (yr_arena_off_t) arena->buffers[buffer_id].used;
 }
 
 int yr_arena_ptr_to_ref(YR_ARENA* arena, const void* address, YR_ARENA_REF* ref)
@@ -428,7 +432,8 @@ int yr_arena_ptr_to_ref(YR_ARENA* arena, const void* address, YR_ARENA_REF* ref)
         (uint8_t*) address < arena->buffers[i].data + arena->buffers[i].used)
     {
       ref->buffer_id = i;
-      ref->offset = (uint8_t*) address - arena->buffers[i].data;
+      ref->offset = (yr_arena_off_t)(
+          (uint8_t*) address - arena->buffers[i].data);
       return 1;
     }
   }
@@ -538,7 +543,7 @@ int yr_arena_load_stream(YR_STREAM* stream, YR_ARENA** arena)
 
   YR_ARENA_FILE_BUFFER buffers[YR_MAX_ARENA_BUFFERS];
 
-  int read = yr_stream_read(
+  size_t read = yr_stream_read(
       buffers, sizeof(buffers[0]), hdr.num_buffers, stream);
 
   if (read != hdr.num_buffers)
@@ -621,7 +626,7 @@ int yr_arena_save_stream(YR_ARENA* arena, YR_STREAM* stream)
   {
     YR_ARENA_FILE_BUFFER buffer = {
         .offset = offset,
-        .size = arena->buffers[i].used,
+        .size = (uint32_t) arena->buffers[i].used,
     };
 
     if (yr_stream_write(&buffer, sizeof(buffer), 1, stream) != 1)

@@ -848,6 +848,11 @@ void test_runtime_warnings() {
 
 int main(int argc, char** argv)
 {
+  int result = 0;
+
+  YR_DEBUG_INITIALIZE();
+  YR_DEBUG_FPRINTF(1, stderr, "+ %s() { // in %s\n", __FUNCTION__, argv[0]);
+
   chdir_if_env_top_srcdir();
 
   test_disabled_rules();
@@ -863,5 +868,7 @@ int main(int argc, char** argv)
   test_issue_920();
   test_runtime_warnings();
 
-  return 0;
+  YR_DEBUG_FPRINTF(1, stderr, "} = %d // %s() in %s\n", result, __FUNCTION__, argv[0]);
+
+  return result;
 }

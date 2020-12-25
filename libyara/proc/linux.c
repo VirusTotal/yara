@@ -139,7 +139,7 @@ YR_API const uint8_t* yr_process_fetch_memory_block_data(YR_MEMORY_BLOCK* block)
 
 _exit:;
 
-  YR_DEBUG_FPRINTF(2, stderr, "+ %s() {} = %p\n", __FUNCTION__, result);
+  YR_DEBUG_FPRINTF(2, stderr, "- %s() {} = %p\n", __FUNCTION__, result);
 
   return result;
 }
@@ -148,6 +148,7 @@ _exit:;
 YR_API YR_MEMORY_BLOCK* yr_process_get_next_memory_block(
     YR_MEMORY_BLOCK_ITERATOR* iterator)
 {
+  YR_MEMORY_BLOCK* result = NULL;
   YR_PROC_ITERATOR_CTX* context = (YR_PROC_ITERATOR_CTX*) iterator->context;
   YR_PROC_INFO* proc_info = (YR_PROC_INFO*) context->proc_info;
 
@@ -160,36 +161,51 @@ YR_API YR_MEMORY_BLOCK* yr_process_get_next_memory_block(
 
     context->current_block.base = begin;
     context->current_block.size = end - begin;
-
-    YR_DEBUG_FPRINTF(
-        2,
-        stderr,
-        "+ %s() {} // .base=0x%" PRIx64 " .size=%lu\n",
-        __FUNCTION__,
-        context->current_block.base,
-        context->current_block.size);
-
-    return &context->current_block;
+    result = &context->current_block;
   }
 
-  YR_DEBUG_FPRINTF(2, stderr, "+ %s() = NULL\n", __FUNCTION__);
+  iterator->last_error = ERROR_SUCCESS;
 
-  return NULL;
+  YR_DEBUG_FPRINTF(
+      2,
+      stderr,
+      "- %s() {} = %p // .base=0x%" PRIx64 " .size=%" PRIu64 "\n",
+      __FUNCTION__,
+      result,
+      context->current_block.base,
+      context->current_block.size);
+
+  return result;
 }
 
 
 YR_API YR_MEMORY_BLOCK* yr_process_get_first_memory_block(
     YR_MEMORY_BLOCK_ITERATOR* iterator)
 {
-  YR_DEBUG_FPRINTF(2, stderr, "+ %s() {} \n", __FUNCTION__);
+  YR_DEBUG_FPRINTF(2, stderr, "+ %s() {\n", __FUNCTION__);
 
+  YR_MEMORY_BLOCK* result = NULL;
   YR_PROC_ITERATOR_CTX* context = (YR_PROC_ITERATOR_CTX*) iterator->context;
   YR_PROC_INFO* proc_info = (YR_PROC_INFO*) context->proc_info;
 
   if (fseek(proc_info->maps, 0, SEEK_SET) != 0)
-    return NULL;
+  {
+    result = NULL;
+    goto _exit;
+  }
 
-  return yr_process_get_next_memory_block(iterator);
+  result = yr_process_get_next_memory_block(iterator);
+
+_exit:
+
+  YR_DEBUG_FPRINTF(
+      2,
+      stderr,
+      "} = %p // %s()\n",
+      result,
+      __FUNCTION__);
+
+  return result;
 }
 
 #endif

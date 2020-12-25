@@ -145,6 +145,8 @@ YR_API YR_MEMORY_BLOCK* yr_process_get_next_memory_block(
   int mib[] = {CTL_KERN, KERN_PROC_VMMAP, proc_info->pid};
   size_t len = sizeof(struct kinfo_vmentry);
 
+  iterator->last_error = ERROR_SUCCESS;
+
   if (sysctl(mib, 3, &proc_info->vm_entry, &len, NULL, 0) < 0)
     return NULL;
 

@@ -214,15 +214,19 @@ static const char* str_table_entry(
       int flags,                                                                          \
       YR_OBJECT* elf_obj)                                                                 \
   {                                                                                       \
-    unsigned int i, j;                                                                    \
+    unsigned int i, j, m;                                                                 \
     const char* elf_raw = (const char*) elf;                                              \
     uint16_t str_table_index = yr_##bo##16toh(elf->sh_str_table_index);                   \
                                                                                           \
     const char* sym_table = NULL;                                                         \
     const char* sym_str_table = NULL;                                                     \
+    const char* dyn_sym_table = NULL;                                                     \
+    const char* dyn_sym_str_table = NULL;                                                 \
                                                                                           \
     uint##bits##_t sym_table_size = 0;                                                    \
     uint##bits##_t sym_str_table_size = 0;                                                \
+    uint##bits##_t dyn_sym_table_size = 0;                                                \
+    uint##bits##_t dyn_sym_str_table_size = 0;                                            \
                                                                                           \
     elf##bits##_section_header_t* section_table;                                          \
     elf##bits##_section_header_t* section;                                                \
@@ -323,6 +327,24 @@ static const char* str_table_entry(
             sym_str_table_size = yr_##bo##bits##toh(string_section->size);                \
           }                                                                               \
         }                                                                                 \
+                                                                                          \
+        if (yr_##bo##32toh(section->type) == ELF_SHT_DYNSYM &&                            \
+            yr_##bo##32toh(section->link) < elf->sh_entry_count)                          \
+        {                                                                                 \
+          elf##bits##_section_header_t* dynstr_section = section_table +                  \
+                                                         yr_##bo##32toh(                  \
+                                                             section->link);              \
+                                                                                          \
+          if (IS_VALID_PTR(elf, elf_size, dynstr_section) &&                              \
+              yr_##bo##32toh(dynstr_section->type) == ELF_SHT_STRTAB)                     \
+          {                                                                               \
+            dyn_sym_table = elf_raw + yr_##bo##bits##toh(section->offset);                \
+            dyn_sym_str_table = elf_raw +                                                 \
+                            yr_##bo##bits##toh(dynstr_section->offset);                   \
+            dyn_sym_table_size = yr_##bo##bits##toh(section->size);                       \
+            dyn_sym_str_table_size = yr_##bo##bits##toh(dynstr_section->size);            \
+          }                                                                               \
+        }                                                                                 \
       }                                                                                   \
                                                                                           \
       if (is_valid_ptr(elf, elf_size, sym_str_table, sym_str_table_size) &&               \
@@ -352,6 +374,35 @@ static const char* str_table_entry(
         }                                                                                 \
                                                                                           \
         set_integer(j, elf_obj, "symtab_entries");                                        \
+      }                                                                                   \
+                                                                                          \
+      if (is_valid_ptr(elf, elf_size, dyn_sym_str_table, dyn_sym_str_table_size) &&       \
+          is_valid_ptr(elf, elf_size, dyn_sym_table, dyn_sym_table_size))                 \
+      {                                                                                   \
+        elf##bits##_sym_t* dynsym = (elf##bits##_sym_t*) dyn_sym_table;                   \
+                                                                                          \
+        for (m = 0; m < dyn_sym_table_size / sizeof(elf##bits##_sym_t);                   \
+             m++, dynsym++)                                                               \
+        {                                                                                 \
+          const char* dynsym_name = str_table_entry(                                      \
+              dyn_sym_str_table,                                                          \
+              dyn_sym_str_table + dyn_sym_str_table_size,                                 \
+              yr_##bo##32toh(dynsym->name));                                              \
+                                                                                          \
+          if (dynsym_name)                                                                \
+            set_string(dynsym_name, elf_obj, "dynsym[%i].name", m);                       \
+                                                                                          \
+          set_integer(dynsym->info >> 4, elf_obj, "dynsym[%i].bind", m);                  \
+          set_integer(dynsym->info & 0xf, elf_obj, "dynsym[%i].type", m);                 \
+          set_integer(                                                                    \
+              yr_##bo##16toh(dynsym->shndx), elf_obj, "dynsym[%i].shndx", m);             \
+          set_integer(                                                                    \
+              yr_##bo##bits##toh(dynsym->value), elf_obj, "dynsym[%i].value", m);         \
+          set_integer(                                                                    \
+              yr_##bo##bits##toh(dynsym->size), elf_obj, "dynsym[%i].size", m);           \
+        }                                                                                 \
+                                                                                          \
+        set_integer(m, elf_obj, "dynsym_entries");                                        \
       }                                                                                   \
     }                                                                                     \
                                                                                           \
@@ -584,6 +635,16 @@ begin_declarations
     declare_integer("bind");
     declare_integer("shndx");
   end_struct_array("symtab")
+
+  declare_integer("dynsym_entries");
+  begin_struct_array("dynsym")
+    declare_string("name");
+    declare_integer("value");
+    declare_integer("size");
+    declare_integer("type");
+    declare_integer("bind");
+    declare_integer("shndx");
+  end_struct_array("dynsym")
 
 end_declarations
 

@@ -141,6 +141,8 @@ YR_API YR_MEMORY_BLOCK* yr_process_get_next_memory_block(
   PVOID address = (PVOID)(
       context->current_block.base + context->current_block.size);
 
+  iterator->last_error = ERROR_SUCCESS;
+
   while (address < proc_info->si.lpMaximumApplicationAddress &&
          VirtualQueryEx(proc_info->hProcess, address, &mbi, sizeof(mbi)) != 0)
   {

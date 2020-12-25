@@ -793,7 +793,7 @@ string_modifier
         if ($3->length != 64)
         {
           yr_free($3);
-          result = yr_compiler_set_error_extra_info(
+          yr_compiler_set_error_extra_info(
               compiler, "length of base64 alphabet must be 64");
           result = ERROR_INVALID_MODIFIER;
         }
@@ -815,7 +815,7 @@ string_modifier
         if ($3->length != 64)
         {
           yr_free($3);
-          result = yr_compiler_set_error_extra_info(
+          yr_compiler_set_error_extra_info(
               compiler, "length of base64 alphabet must be 64");
           result = ERROR_INVALID_MODIFIER;
         }
