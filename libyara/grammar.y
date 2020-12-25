@@ -217,6 +217,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 %token _GE_                                            ">="
 %token _SHIFT_LEFT_                                    "<<"
 %token _SHIFT_RIGHT_                                   ">>"
+%token _PERCENT_                                       "<percent>"
 
 // Operator precedence and associativity. Higher precedence operators are lower
 // in the list. Operators that appear in the same line have the same precedence.
@@ -1769,6 +1770,22 @@ expression
     | for_expression _OF_ string_set
       {
         yr_parser_emit(yyscanner, OP_OF, NULL);
+
+        $$.type = EXPRESSION_TYPE_BOOLEAN;
+      }
+    | _NUMBER_ _PERCENT_ _OF_ string_set
+      {
+        if ($1 < 1 || $1 > 100)
+        {
+          yr_compiler_set_error_extra_info(
+              compiler, "Percentage must be between 1 and 100 (inclusive)");
+          compiler->last_error = ERROR_INVALID_PERCENTAGE;
+          yyerror(yyscanner, compiler, NULL);
+          YYERROR;
+        }
+
+        fail_if_error(yr_parser_emit_push_const(yyscanner, $1));
+        yr_parser_emit(yyscanner, OP_OF_PERCENT, NULL);
 
         $$.type = EXPRESSION_TYPE_BOOLEAN;
       }

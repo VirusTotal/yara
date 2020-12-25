@@ -206,6 +206,7 @@ octdigit      [0-7]
 "istartswith"           { return _ISTARTSWITH_; }
 "iendswith"             { return _IENDSWITH_;   }
 "import"                { return _IMPORT_;      }
+"percent"               { return _PERCENT_;     }
 
 
 "/*"                    { BEGIN(comment);       }

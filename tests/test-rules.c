@@ -1419,6 +1419,22 @@ static void test_of()
   assert_error("rule test { condition: all of ($a*) }", ERROR_UNDEFINED_STRING);
 
   assert_error("rule test { condition: all of them }", ERROR_UNDEFINED_STRING);
+
+  assert_error(
+    "rule test { strings: $a = \"AXS\" condition: 101 percent of them }",
+    ERROR_INVALID_PERCENTAGE);
+
+  assert_error(
+    "rule test { strings: $a = \"ERS\" condition: 0 percent of them }",
+    ERROR_INVALID_PERCENTAGE);
+
+  assert_true_rule(
+    "rule test { strings: $a1 = \"dummy\" $a2 = \"issi\" condition: 50 percent of them }",
+    "mississippi");
+
+  assert_true_rule(
+    "rule test { strings: $a1 = \"miss\" $a2 = \"issi\" condition: 100 percent of them }",
+    "mississippi");
 }
 
 void test_for()

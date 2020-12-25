@@ -1188,6 +1188,33 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
       push(r3);
       break;
 
+    case OP_OF_PERCENT:
+      found = 0;
+      count = 0;
+      pop(r2); // percentage value
+      pop(r1);
+
+      while (!is_undef(r1))
+      {
+        if (context->matches[r1.s->idx].tail != NULL)
+        {
+          found++;
+        }
+        count++;
+        pop(r1);
+      }
+
+      // If, by some weird reason, we manage to get an undefined string
+      // reference as the first thing on the stack then count would be zero.
+      // I don't know how this could ever happen but better to check for it.
+      if (count == 0)
+        r1.i = YR_UNDEFINED;
+      else
+        r1.i = (((double) found / count) * 100) >= r2.i ? 1 : 0;
+
+      push(r1);
+      break;
+
     case OP_OF:
       found = 0;
       count = 0;

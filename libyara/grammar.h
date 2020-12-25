@@ -103,7 +103,8 @@ extern int yara_yydebug;
     _GE_ = 312,
     _SHIFT_LEFT_ = 313,
     _SHIFT_RIGHT_ = 314,
-    UNARY_MINUS = 315
+    _PERCENT_ = 315,
+    UNARY_MINUS = 316
   };
 #endif
 /* Tokens.  */
@@ -165,14 +166,15 @@ extern int yara_yydebug;
 #define _GE_ 312
 #define _SHIFT_LEFT_ 313
 #define _SHIFT_RIGHT_ 314
-#define UNARY_MINUS 315
+#define _PERCENT_ 315
+#define UNARY_MINUS 316
 
 /* Value type.  */
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 
 union YYSTYPE
 {
-#line 302 "grammar.y" /* yacc.c:1916  */
+#line 303 "grammar.y" /* yacc.c:1916  */
 
   YR_EXPRESSION   expression;
   SIZED_STRING*   sized_string;
@@ -186,7 +188,7 @@ union YYSTYPE
   YR_ARENA_REF meta;
   YR_ARENA_REF string;
 
-#line 190 "grammar.h" /* yacc.c:1916  */
+#line 192 "grammar.h" /* yacc.c:1916  */
 };
 
 typedef union YYSTYPE YYSTYPE;
