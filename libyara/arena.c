@@ -149,7 +149,7 @@ static int _yr_arena_allocate_memory(
     while (new_size < b->used + size) new_size *= 2;
 
     // Make sure that buffer size if not larger than 4GB.
-    if (new_size > 1L << 32)
+    if (new_size > 1ULL << 32)
       return ERROR_INSUFFICIENT_MEMORY;
 
     uint8_t* new_data = yr_realloc(b->data, new_size);
