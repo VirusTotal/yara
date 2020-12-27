@@ -64,7 +64,7 @@ YR_API int yr_filemap_map(const char* file_path, YR_MAPPED_FILE* pmapped_file)
 // Args:
 //   file: File descriptor representing the file to map.
 //   offset: File offset where the mapping will begin. This offset must be
-//           multiple of 1MB and not greater than the actualfile size.
+//           multiple of 1MB and not greater than the actual file size.
 //   size: Number of bytes that will be mapped. If zero or greater than the
 //         actual file size all content until the end of the file will be
 //         mapped.
@@ -241,7 +241,7 @@ YR_API int yr_filemap_map_fd(
 // Args:
 //   file_path: Path of the file to map.
 //   offset: File offset where the mapping will begin. This offset must be
-//           multiple of 1MB and not greater than the actualfile size.
+//           multiple of 1MB and not greater than the actual file size.
 //   size: Number of bytes that will be mapped. If zero or greater than the
 //         actual file size all content until the end of the file will be
 //         mapped.
