@@ -548,7 +548,7 @@ struct YR_RULES
     // deprecated, which will raise a warning if used.
     // TODO(vmalvarez): Remove this field when a reasonable a few versions
     // after 4.1 has been released.
-    YR_STRING* strings_list_head YR_DEPRECATED_API;
+    YR_STRING* strings_list_head YR_DEPRECATED;
   };
 
   // Array of pointers with an entry for each external variable.
@@ -560,7 +560,7 @@ struct YR_RULES
     // as deprecated, which will raise a warning if used.
     // TODO(vmalvarez): Remove this field when a reasonable a few versions
     // after 4.1 has been released.
-    YR_EXTERNAL_VARIABLE* externals_list_head YR_DEPRECATED_API;
+    YR_EXTERNAL_VARIABLE* externals_list_head YR_DEPRECATED;
   };
 
   // Pointer to the Aho-Corasick transition table.
