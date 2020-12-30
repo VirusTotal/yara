@@ -38,14 +38,12 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <yara/mem.h>
 #include <yara/proc.h>
 
-
 typedef struct _YR_PROC_INFO
 {
   int pid;
   uint64_t old_end;
   struct kinfo_vmentry vm_entry;
 } YR_PROC_INFO;
-
 
 int _yr_process_attach(int pid, YR_PROC_ITERATOR_CTX* context)
 {
@@ -88,7 +86,6 @@ int _yr_process_attach(int pid, YR_PROC_ITERATOR_CTX* context)
   return ERROR_SUCCESS;
 }
 
-
 int _yr_process_detach(YR_PROC_ITERATOR_CTX* context)
 {
   YR_PROC_INFO* proc_info = (YR_PROC_INFO*) context->proc_info;
@@ -97,7 +94,6 @@ int _yr_process_detach(YR_PROC_ITERATOR_CTX* context)
 
   return ERROR_SUCCESS;
 }
-
 
 YR_API const uint8_t* yr_process_fetch_memory_block_data(YR_MEMORY_BLOCK* block)
 {
@@ -135,7 +131,6 @@ YR_API const uint8_t* yr_process_fetch_memory_block_data(YR_MEMORY_BLOCK* block)
   return context->buffer;
 }
 
-
 YR_API YR_MEMORY_BLOCK* yr_process_get_next_memory_block(
     YR_MEMORY_BLOCK_ITERATOR* iterator)
 {
@@ -163,7 +158,6 @@ YR_API YR_MEMORY_BLOCK* yr_process_get_next_memory_block(
 
   return &context->current_block;
 }
-
 
 YR_API YR_MEMORY_BLOCK* yr_process_get_first_memory_block(
     YR_MEMORY_BLOCK_ITERATOR* iterator)

@@ -30,7 +30,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef YR_INTEGERS_H
 #define YR_INTEGERS_H
 
-
 #if (defined(_MSC_VER) && (_MSC_VER < 1600)) || \
     (defined(__BORLANDC__) && (__BORLANDC__ <= 0x0560))
 
@@ -55,7 +54,6 @@ extern "C"
 #ifdef __cplusplus
 }
 #endif
-
 
 #ifndef INT8_MIN
 #define INT8_MIN (-127i8 - 1)

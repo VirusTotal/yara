@@ -47,12 +47,14 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "sandboxed_api/sandbox2/util/bpf_helper.h"
 #include "sandboxed_api/transaction.h"
 
-namespace yara {
-
-class YaraSandbox : public sandbox::YaraSandbox {
+namespace yara
+{
+class YaraSandbox : public sandbox::YaraSandbox
+{
  public:
   std::unique_ptr<sandbox2::Policy> ModifyPolicy(
-      sandbox2::PolicyBuilder* builder) override {
+      sandbox2::PolicyBuilder* builder) override
+  {
     return (*builder)
         .AllowStaticStartup()
         .AllowMmap()
@@ -69,7 +71,8 @@ class YaraSandbox : public sandbox::YaraSandbox {
         .BuildOrDie();
   }
 
-  void ModifyExecutor(sandbox2::Executor* executor) override {
+  void ModifyExecutor(sandbox2::Executor* executor) override
+  {
     (*executor->limits())
         // Remove limit on file descriptor bytes.
         .set_rlimit_fsize(RLIM64_INFINITY)
@@ -81,18 +84,22 @@ class YaraSandbox : public sandbox::YaraSandbox {
 // Transaction class to run sandboxed Yara scans of the contents of file
 // descriptors. This class is thread-safe and access to the sandboxee is
 // multiplexed so that multiple threads can share the transaction.
-class YaraTransaction : public ::sapi::Transaction {
+class YaraTransaction : public ::sapi::Transaction
+{
  public:
-  struct Options {
+  struct Options
+  {
     absl::Duration scan_timeout;
     int num_workers;
 
-    Options& set_scan_timeout(absl::Duration value) {
+    Options& set_scan_timeout(absl::Duration value)
+    {
       scan_timeout = value;
       return *this;
     }
 
-    Options& set_num_workers(int value) {
+    Options& set_num_workers(int value)
+    {
       num_workers = value;
       return *this;
     }
@@ -116,7 +123,9 @@ class YaraTransaction : public ::sapi::Transaction {
 
  private:
   explicit YaraTransaction(absl::Duration scan_timeout)
-      : ::sapi::Transaction(absl::make_unique<YaraSandbox>()) {}
+      : ::sapi::Transaction(absl::make_unique<YaraSandbox>())
+  {
+  }
 
   // Mutex to guard communication with the sandboxee
   static absl::Mutex mutex_;

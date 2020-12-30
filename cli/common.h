@@ -27,7 +27,6 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-
 #ifndef COMMON_H
 #define COMMON_H
 
@@ -45,7 +44,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
     result = code;           \
     goto _exit;              \
   }
-
 
 bool compile_files(YR_COMPILER* compiler, int argc, const char** argv)
 {
@@ -102,7 +100,6 @@ bool compile_files(YR_COMPILER* compiler, int argc, const char** argv)
   return true;
 }
 
-
 bool is_integer(const char* str)
 {
   if (*str == '-')
@@ -120,7 +117,6 @@ bool is_integer(const char* str)
 
   return true;
 }
-
 
 bool is_float(const char* str)
 {

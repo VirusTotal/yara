@@ -39,10 +39,8 @@ The original idea and inspiration for this module comes from Armin Buescher.
 
 #define MODULE_NAME magic
 
-
 // Thread-local storage key used to store a pointer to a MAGIC_CACHE struct.
 YR_THREAD_STORAGE_KEY magic_tls;
-
 
 typedef struct
 {
@@ -51,7 +49,6 @@ typedef struct
   const char* cached_mime_type;
 
 } MAGIC_CACHE;
-
 
 static int get_cache(MAGIC_CACHE** cache)
 {
@@ -83,7 +80,6 @@ static int get_cache(MAGIC_CACHE** cache)
 
   return ERROR_SUCCESS;
 }
-
 
 define_function(magic_mime_type)
 {
@@ -117,7 +113,6 @@ define_function(magic_mime_type)
 
   return_string((char*) cache->cached_mime_type);
 }
-
 
 define_function(magic_type)
 {
@@ -157,12 +152,10 @@ begin_declarations
   declare_function("type", "", "s", magic_type);
 end_declarations
 
-
 int module_initialize(YR_MODULE* module)
 {
   return yr_thread_storage_create(&magic_tls);
 }
-
 
 int module_finalize(YR_MODULE* module)
 {
@@ -177,7 +170,6 @@ int module_finalize(YR_MODULE* module)
   return yr_thread_storage_destroy(&magic_tls);
 }
 
-
 int module_load(
     YR_SCAN_CONTEXT* context,
     YR_OBJECT* module_object,
@@ -186,7 +178,6 @@ int module_load(
 {
   return ERROR_SUCCESS;
 }
-
 
 int module_unload(YR_OBJECT* module)
 {

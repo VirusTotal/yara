@@ -312,7 +312,6 @@ int module_load(
   }
   set_string(pb->f_renamed, module_object, "f_yara_name");
 
-
   test__root_message__free_unpacked(pb, &allocator);
 
   return ERROR_SUCCESS;

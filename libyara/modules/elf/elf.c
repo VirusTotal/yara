@@ -35,7 +35,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <yara/modules.h>
 #include <yara/utils.h>
 
-
 #define MODULE_NAME elf
 
 #define CLASS_DATA(c, d) ((c << 8) | d)
@@ -340,7 +339,7 @@ static const char* str_table_entry(
           {                                                                               \
             dyn_sym_table = elf_raw + yr_##bo##bits##toh(section->offset);                \
             dyn_sym_str_table = elf_raw +                                                 \
-                            yr_##bo##bits##toh(dynstr_section->offset);                   \
+                                yr_##bo##bits##toh(dynstr_section->offset);               \
             dyn_sym_table_size = yr_##bo##bits##toh(section->size);                       \
             dyn_sym_str_table_size = yr_##bo##bits##toh(dynstr_section->size);            \
           }                                                                               \
@@ -376,7 +375,8 @@ static const char* str_table_entry(
         set_integer(j, elf_obj, "symtab_entries");                                        \
       }                                                                                   \
                                                                                           \
-      if (is_valid_ptr(elf, elf_size, dyn_sym_str_table, dyn_sym_str_table_size) &&       \
+      if (is_valid_ptr(                                                                   \
+              elf, elf_size, dyn_sym_str_table, dyn_sym_str_table_size) &&                \
           is_valid_ptr(elf, elf_size, dyn_sym_table, dyn_sym_table_size))                 \
       {                                                                                   \
         elf##bits##_sym_t* dynsym = (elf##bits##_sym_t*) dyn_sym_table;                   \
@@ -397,9 +397,15 @@ static const char* str_table_entry(
           set_integer(                                                                    \
               yr_##bo##16toh(dynsym->shndx), elf_obj, "dynsym[%i].shndx", m);             \
           set_integer(                                                                    \
-              yr_##bo##bits##toh(dynsym->value), elf_obj, "dynsym[%i].value", m);         \
+              yr_##bo##bits##toh(dynsym->value),                                          \
+              elf_obj,                                                                    \
+              "dynsym[%i].value",                                                         \
+              m);                                                                         \
           set_integer(                                                                    \
-              yr_##bo##bits##toh(dynsym->size), elf_obj, "dynsym[%i].size", m);           \
+              yr_##bo##bits##toh(dynsym->size),                                           \
+              elf_obj,                                                                    \
+              "dynsym[%i].size",                                                          \
+              m);                                                                         \
         }                                                                                 \
                                                                                           \
         set_integer(m, elf_obj, "dynsym_entries");                                        \
@@ -487,7 +493,6 @@ PARSE_ELF_HEADER(32, le);
 PARSE_ELF_HEADER(64, le);
 PARSE_ELF_HEADER(32, be);
 PARSE_ELF_HEADER(64, be);
-
 
 begin_declarations
   declare_integer("ET_NONE");
@@ -648,18 +653,15 @@ begin_declarations
 
 end_declarations
 
-
 int module_initialize(YR_MODULE* module)
 {
   return ERROR_SUCCESS;
 }
 
-
 int module_finalize(YR_MODULE* module)
 {
   return ERROR_SUCCESS;
 }
-
 
 int module_load(
     YR_SCAN_CONTEXT* context,
@@ -864,7 +866,6 @@ int module_load(
 
   return ERROR_SUCCESS;
 }
-
 
 int module_unload(YR_OBJECT* module_object)
 {

@@ -36,10 +36,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define args_is_long_arg(arg) (arg[0] == '-' && arg[1] == '-' && arg[2] != '\0')
 
-
 #define args_is_short_arg(arg) \
   (arg[0] == '-' && arg[1] != '-' && arg[1] != '\0')
-
 
 args_option_t* args_get_short_option(args_option_t* options, const char opt)
 {
@@ -53,7 +51,6 @@ args_option_t* args_get_short_option(args_option_t* options, const char opt)
 
   return NULL;
 }
-
 
 args_option_t* args_get_long_option(args_option_t* options, const char* arg)
 {
@@ -77,7 +74,6 @@ args_option_t* args_get_long_option(args_option_t* options, const char* arg)
 
   return NULL;
 }
-
 
 args_error_type_t args_parse_option(
     args_option_t* opt,
@@ -137,7 +133,6 @@ args_error_type_t args_parse_option(
   return ARGS_ERROR_OK;
 }
 
-
 void args_print_error(args_error_type_t error, const char* option)
 {
   switch (error)
@@ -161,7 +156,6 @@ void args_print_error(args_error_type_t error, const char* option)
     return;
   }
 }
-
 
 int args_parse(args_option_t* options, int argc, const char** argv)
 {
@@ -244,7 +238,6 @@ int args_parse(args_option_t* options, int argc, const char** argv)
 
   return o;
 }
-
 
 void args_print_usage(args_option_t* options, int help_alignment)
 {

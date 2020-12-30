@@ -57,7 +57,6 @@ void test_disabled_rules()
   yr_finalize();
 }
 
-
 const char* _include_callback(
     const char* include_name,
     const char* calling_rule_filename,
@@ -69,7 +68,6 @@ const char* _include_callback(
   else
     return NULL;
 }
-
 
 void test_include_callback()
 {
@@ -102,7 +100,6 @@ void test_include_callback()
   yr_compiler_destroy(compiler);
   yr_finalize();
 }
-
 
 void test_file_descriptor()
 {
@@ -205,7 +202,6 @@ void test_max_string_per_rules()
   yr_finalize();
 }
 
-
 int test_max_match_data_callback(
     YR_SCAN_CONTEXT* context,
     int message,
@@ -271,7 +267,6 @@ void test_max_match_data()
   yr_rules_destroy(rules);
   yr_finalize();
 }
-
 
 void test_save_load_rules()
 {
@@ -350,7 +345,6 @@ void test_save_load_rules()
   yr_finalize();
 }
 
-
 void test_scanner()
 {
   const char* buf = "dummy";
@@ -384,7 +378,6 @@ void test_scanner()
   yr_compiler_define_integer_variable(compiler, "int_var", 0);
   yr_compiler_define_boolean_variable(compiler, "bool_var", 0);
   yr_compiler_define_string_variable(compiler, "str_var", "");
-
 
   if (yr_compiler_define_string_variable(compiler, "str_var", "") !=
       ERROR_DUPLICATED_EXTERNAL_VARIABLE)
@@ -574,7 +567,6 @@ void test_issue_834()
   yr_finalize();
 }
 
-
 void ast_callback(
     const YR_RULE* rule,
     const char* string_identifier,
@@ -627,7 +619,6 @@ void test_ast_callback()
   yr_finalize();
 }
 
-
 void stats_for_rules(const char* rules_str, YR_RULES_STATS* stats)
 {
   YR_COMPILER* compiler = NULL;
@@ -661,7 +652,6 @@ void stats_for_rules(const char* rules_str, YR_RULES_STATS* stats)
   yr_rules_destroy(rules);
   yr_finalize();
 }
-
 
 void test_rules_stats()
 {
@@ -749,7 +739,6 @@ void test_rules_stats()
   assert_true_expr(stats.ac_root_match_list_length == 0);
 }
 
-
 void test_issue_920()
 {
   const char* rules_str = "\
@@ -788,8 +777,8 @@ void test_issue_920()
   yr_finalize();
 }
 
-
-void test_runtime_warnings() {
+void test_runtime_warnings()
+{
   // This rule should never match since it will hit the maximum number of
   // matches (see YR_MAX_STRING_MATCHES) and a warning will be issued, and any
   // further matches no longer count.
@@ -810,12 +799,14 @@ void test_runtime_warnings() {
 
   yr_initialize();
 
-  if (yr_compiler_create(&compiler) != ERROR_SUCCESS) {
+  if (yr_compiler_create(&compiler) != ERROR_SUCCESS)
+  {
     perror("yr_compiler_create");
     exit(EXIT_FAILURE);
   }
 
-  if (yr_compiler_add_string(compiler, rules_str, NULL) != ERROR_SUCCESS) {
+  if (yr_compiler_add_string(compiler, rules_str, NULL) != ERROR_SUCCESS)
+  {
     yr_compiler_destroy(compiler);
     perror("yr_compiler_add_string");
     exit(EXIT_FAILURE);
@@ -830,7 +821,9 @@ void test_runtime_warnings() {
 
   yr_compiler_destroy(compiler);
 
-  if (yr_rules_scan_file(rules, "tests/data/x.txt", 0, count, &counters, 0) != ERROR_SUCCESS) {
+  if (yr_rules_scan_file(rules, "tests/data/x.txt", 0, count, &counters, 0) !=
+      ERROR_SUCCESS)
+  {
     yr_rules_destroy(rules);
     perror("yr_rules_scan_file");
     exit(EXIT_FAILURE);
@@ -868,7 +861,8 @@ int main(int argc, char** argv)
   test_issue_920();
   test_runtime_warnings();
 
-  YR_DEBUG_FPRINTF(1, stderr, "} = %d // %s() in %s\n", result, __FUNCTION__, argv[0]);
+  YR_DEBUG_FPRINTF(
+      1, stderr, "} = %d // %s() in %s\n", result, __FUNCTION__, argv[0]);
 
   return result;
 }

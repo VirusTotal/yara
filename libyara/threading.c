@@ -37,7 +37,6 @@ YR_THREAD_ID yr_current_thread_id(void)
   return GetCurrentThreadId();
 }
 
-
 int yr_mutex_create(YR_MUTEX* mutex)
 {
   *mutex = CreateMutex(NULL, FALSE, NULL);
@@ -48,7 +47,6 @@ int yr_mutex_create(YR_MUTEX* mutex)
   return ERROR_SUCCESS;
 }
 
-
 int yr_mutex_destroy(YR_MUTEX* mutex)
 {
   if (CloseHandle(*mutex) == FALSE)
@@ -56,7 +54,6 @@ int yr_mutex_destroy(YR_MUTEX* mutex)
 
   return ERROR_SUCCESS;
 }
-
 
 int yr_mutex_lock(YR_MUTEX* mutex)
 {
@@ -66,7 +63,6 @@ int yr_mutex_lock(YR_MUTEX* mutex)
   return ERROR_SUCCESS;
 }
 
-
 int yr_mutex_unlock(YR_MUTEX* mutex)
 {
   if (ReleaseMutex(*mutex) == FALSE)
@@ -74,7 +70,6 @@ int yr_mutex_unlock(YR_MUTEX* mutex)
 
   return ERROR_SUCCESS;
 }
-
 
 int yr_thread_storage_create(YR_THREAD_STORAGE_KEY* storage)
 {
@@ -86,7 +81,6 @@ int yr_thread_storage_create(YR_THREAD_STORAGE_KEY* storage)
   return ERROR_SUCCESS;
 }
 
-
 int yr_thread_storage_destroy(YR_THREAD_STORAGE_KEY* storage)
 {
   if (TlsFree(*storage) == FALSE)
@@ -94,7 +88,6 @@ int yr_thread_storage_destroy(YR_THREAD_STORAGE_KEY* storage)
 
   return ERROR_SUCCESS;
 }
-
 
 int yr_thread_storage_set_value(YR_THREAD_STORAGE_KEY* storage, void* value)
 {
@@ -104,21 +97,17 @@ int yr_thread_storage_set_value(YR_THREAD_STORAGE_KEY* storage, void* value)
   return ERROR_SUCCESS;
 }
 
-
 void* yr_thread_storage_get_value(YR_THREAD_STORAGE_KEY* storage)
 {
   return TlsGetValue(*storage);
 }
 
-
 #else  // POSIX implementation
-
 
 YR_THREAD_ID yr_current_thread_id(void)
 {
   return pthread_self();
 }
-
 
 int yr_mutex_create(YR_MUTEX* mutex)
 {
@@ -128,7 +117,6 @@ int yr_mutex_create(YR_MUTEX* mutex)
   return ERROR_SUCCESS;
 }
 
-
 int yr_mutex_destroy(YR_MUTEX* mutex)
 {
   if (pthread_mutex_destroy(mutex) != 0)
@@ -136,7 +124,6 @@ int yr_mutex_destroy(YR_MUTEX* mutex)
 
   return ERROR_SUCCESS;
 }
-
 
 int yr_mutex_lock(YR_MUTEX* mutex)
 {
@@ -146,7 +133,6 @@ int yr_mutex_lock(YR_MUTEX* mutex)
   return ERROR_SUCCESS;
 }
 
-
 int yr_mutex_unlock(YR_MUTEX* mutex)
 {
   if (pthread_mutex_unlock(mutex) != 0)
@@ -154,7 +140,6 @@ int yr_mutex_unlock(YR_MUTEX* mutex)
 
   return ERROR_SUCCESS;
 }
-
 
 int yr_thread_storage_create(YR_THREAD_STORAGE_KEY* storage)
 {
@@ -164,7 +149,6 @@ int yr_thread_storage_create(YR_THREAD_STORAGE_KEY* storage)
   return ERROR_SUCCESS;
 }
 
-
 int yr_thread_storage_destroy(YR_THREAD_STORAGE_KEY* storage)
 {
   if (pthread_key_delete(*storage) != 0)
@@ -173,7 +157,6 @@ int yr_thread_storage_destroy(YR_THREAD_STORAGE_KEY* storage)
   return ERROR_SUCCESS;
 }
 
-
 int yr_thread_storage_set_value(YR_THREAD_STORAGE_KEY* storage, void* value)
 {
   if (pthread_setspecific(*storage, value) != 0)
@@ -181,7 +164,6 @@ int yr_thread_storage_set_value(YR_THREAD_STORAGE_KEY* storage, void* value)
 
   return ERROR_SUCCESS;
 }
-
 
 void* yr_thread_storage_get_value(YR_THREAD_STORAGE_KEY* storage)
 {

@@ -38,12 +38,7 @@ int _yr_process_detach(YR_PROC_ITERATOR_CTX*);
 
 static uint64_t _undefined_file_size(YR_MEMORY_BLOCK_ITERATOR* iterator)
 {
-  YR_DEBUG_FPRINTF(
-      2,
-      stderr,
-      "- %s() {} = %s\n",
-      __FUNCTION__,
-      "YR_UNDEFINED");
+  YR_DEBUG_FPRINTF(2, stderr, "- %s() {} = %s\n", __FUNCTION__, "YR_UNDEFINED");
 
   return YR_UNDEFINED;
 }

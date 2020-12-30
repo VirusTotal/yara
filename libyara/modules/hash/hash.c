@@ -35,14 +35,12 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define MODULE_NAME hash
 
-
 typedef struct _CACHE_KEY
 {
   int64_t offset;
   int64_t length;
 
 } CACHE_KEY;
-
 
 const uint32_t crc32_tab[] = {
     0x00000000, 0x77073096, 0xee0e612c, 0x990951ba, 0x076dc419, 0x706af48f,
@@ -89,7 +87,6 @@ const uint32_t crc32_tab[] = {
     0x54de5729, 0x23d967bf, 0xb3667a2e, 0xc4614ab8, 0x5d681b02, 0x2a6f2b94,
     0xb40bbe37, 0xc30c8ea1, 0x5a05df1b, 0x2d02ef8d};
 
-
 static void digest_to_ascii(
     unsigned char* digest,
     char* digest_ascii,
@@ -102,7 +99,6 @@ static void digest_to_ascii(
 
   digest_ascii[digest_length * 2] = '\0';
 }
-
 
 static char* get_from_cache(
     YR_OBJECT* module_object,
@@ -130,7 +126,6 @@ static char* get_from_cache(
 
   return result;
 }
-
 
 static int add_to_cache(
     YR_OBJECT* module_object,
@@ -166,7 +161,6 @@ static int add_to_cache(
   return result;
 }
 
-
 define_function(string_md5)
 {
   unsigned char digest[YR_MD5_LEN];
@@ -191,7 +185,6 @@ define_function(string_md5)
 
   return_string(digest_ascii);
 }
-
 
 define_function(string_sha256)
 {
@@ -218,7 +211,6 @@ define_function(string_sha256)
   return_string(digest_ascii);
 }
 
-
 define_function(string_sha1)
 {
   unsigned char digest[YR_SHA1_LEN];
@@ -244,7 +236,6 @@ define_function(string_sha1)
   return_string(digest_ascii);
 }
 
-
 define_function(string_checksum32)
 {
   size_t i;
@@ -264,7 +255,6 @@ define_function(string_checksum32)
 
   return_integer(checksum);
 }
-
 
 define_function(data_md5)
 {
@@ -389,7 +379,6 @@ define_function(data_md5)
   return_string(digest_ascii);
 }
 
-
 define_function(data_sha1)
 {
   yr_sha1_ctx sha_context;
@@ -513,7 +502,6 @@ define_function(data_sha1)
   return_string(digest_ascii);
 }
 
-
 define_function(data_sha256)
 {
   yr_sha256_ctx sha256_context;
@@ -636,7 +624,6 @@ define_function(data_sha256)
   return_string(digest_ascii);
 }
 
-
 define_function(data_checksum32)
 {
   int64_t offset = integer_argument(1);  // offset where to start
@@ -707,7 +694,6 @@ define_function(data_checksum32)
   return_integer(checksum);
 }
 
-
 define_function(string_crc32)
 {
   size_t i;
@@ -728,7 +714,6 @@ define_function(string_crc32)
 
   return_integer(checksum ^ 0xFFFFFFFF);
 }
-
 
 define_function(data_crc32)
 {
@@ -803,7 +788,6 @@ define_function(data_crc32)
   return_integer(checksum ^ 0xFFFFFFFF);
 }
 
-
 begin_declarations
   declare_function("md5", "ii", "s", data_md5);
   declare_function("md5", "s", "s", string_md5);
@@ -821,7 +805,6 @@ begin_declarations
   declare_function("crc32", "s", "i", string_crc32);
 end_declarations
 
-
 int module_initialize(YR_MODULE* module)
 {
   YR_DEBUG_FPRINTF(2, stderr, "- %s() {}\n", __FUNCTION__);
@@ -829,14 +812,12 @@ int module_initialize(YR_MODULE* module)
   return ERROR_SUCCESS;
 }
 
-
 int module_finalize(YR_MODULE* module)
 {
   YR_DEBUG_FPRINTF(2, stderr, "- %s() {}\n", __FUNCTION__);
 
   return ERROR_SUCCESS;
 }
-
 
 int module_load(
     YR_SCAN_CONTEXT* context,
@@ -854,7 +835,6 @@ int module_load(
 
   return ERROR_SUCCESS;
 }
-
 
 int module_unload(YR_OBJECT* module_object)
 {

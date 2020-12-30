@@ -32,12 +32,15 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 struct YR_SCAN_CONTEXT;
 
-namespace yara {
-
+namespace yara
+{
 // Callback function for yr_scan_mem() that collects YARA matches in a
 // YaraMatches proto given in user_data.
-int CollectMatches(YR_SCAN_CONTEXT*, int message, void* message_data,
-                   void* user_data);
+int CollectMatches(
+    YR_SCAN_CONTEXT*,
+    int message,
+    void* message_data,
+    void* user_data);
 
 }  // namespace yara
 

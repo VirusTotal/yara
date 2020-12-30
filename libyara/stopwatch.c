@@ -37,7 +37,6 @@ void yr_stopwatch_start(YR_STOPWATCH* sw)
   QueryPerformanceCounter(&sw->start);
 }
 
-
 uint64_t yr_stopwatch_elapsed_ns(YR_STOPWATCH* sw)
 {
   LARGE_INTEGER li;
@@ -48,7 +47,6 @@ uint64_t yr_stopwatch_elapsed_ns(YR_STOPWATCH* sw)
          sw->frequency.QuadPart;
 }
 
-
 #elif defined(__APPLE__) && defined(__MACH__)
 
 void yr_stopwatch_start(YR_STOPWATCH* sw)
@@ -57,13 +55,11 @@ void yr_stopwatch_start(YR_STOPWATCH* sw)
   sw->start = mach_absolute_time();
 }
 
-
 uint64_t yr_stopwatch_elapsed_ns(YR_STOPWATCH* sw)
 {
   uint64_t now = mach_absolute_time();
   return ((now - sw->start) * sw->timebase.numer) / sw->timebase.denom;
 }
-
 
 #elif defined(HAVE_CLOCK_GETTIME)
 
@@ -79,12 +75,10 @@ uint64_t yr_stopwatch_elapsed_ns(YR_STOPWATCH* sw)
     }                                                 \
   } while (0)
 
-
 void yr_stopwatch_start(YR_STOPWATCH* stopwatch)
 {
   clock_gettime(CLOCK_MONOTONIC, &stopwatch->ts_start);
 }
-
 
 uint64_t yr_stopwatch_elapsed_ns(YR_STOPWATCH* stopwatch)
 {
@@ -95,7 +89,6 @@ uint64_t yr_stopwatch_elapsed_ns(YR_STOPWATCH* stopwatch)
   timespecsub(&ts_stop, &stopwatch->ts_start, &ts_elapsed);
   return ts_elapsed.tv_sec * 1000000000ULL + ts_elapsed.tv_nsec;
 }
-
 
 #else
 
@@ -113,12 +106,10 @@ uint64_t yr_stopwatch_elapsed_ns(YR_STOPWATCH* stopwatch)
     }                                                 \
   } while (0)
 
-
 void yr_stopwatch_start(YR_STOPWATCH* stopwatch)
 {
   gettimeofday(&stopwatch->tv_start, NULL);
 }
-
 
 uint64_t yr_stopwatch_elapsed_ns(YR_STOPWATCH* stopwatch)
 {

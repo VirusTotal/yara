@@ -1304,7 +1304,8 @@ void _parse_pkcs7(PE* pe, PKCS7* pkcs7, int* counter)
         *counter);
 
     sig_nid = X509_get_signature_nid(cert);
-    set_string(OBJ_nid2ln(sig_nid), pe->object, "signatures[%i].algorithm", *counter);
+    set_string(
+        OBJ_nid2ln(sig_nid), pe->object, "signatures[%i].algorithm", *counter);
     OBJ_obj2txt(buffer, sizeof(buffer), OBJ_nid2obj(sig_nid), 1);
     set_string(buffer, pe->object, "signatures[%i].algorithm_oid", *counter);
 

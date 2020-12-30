@@ -32,12 +32,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <stdio.h>
 
-
 #ifdef __cplusplus
 extern "C"
 {
 #endif
-
 
   typedef enum _args_error_type
   {
@@ -48,7 +46,6 @@ extern "C"
     ARGS_ERROR_REQUIRED_STRING_ARG,
     ARGS_ERROR_UNEXPECTED_ARG,
   } args_error_type_t;
-
 
   typedef enum _args_option_type
   {
@@ -62,7 +59,6 @@ extern "C"
     ARGS_OPT_STRING,
   } args_option_type_t;
 
-
   typedef struct _args_option
   {
     args_option_type_t type;
@@ -74,7 +70,6 @@ extern "C"
     const char *type_help;
     int count;
   } args_option_t;
-
 
 #define OPT_BOOLEAN(short_name, long_name, value, ...)             \
   {                                                                \
@@ -99,12 +94,9 @@ extern "C"
     ARGS_OPT_END, 0 \
   }
 
-
   int args_parse(args_option_t *options, int argc, const char **argv);
 
-
   void args_print_usage(args_option_t *options, int alignment);
-
 
 #ifdef __cplusplus
 }
