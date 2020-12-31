@@ -535,7 +535,7 @@ struct YR_RULES
     // deprecated, which will raise a warning if used.
     // TODO(vmalvarez): Remove this field when a reasonable a few versions
     // after 4.1 has been released.
-    YR_RULE* rules_list_head YR_DEPRECATED_API;
+    YR_RULE* rules_list_head YR_DEPRECATED;
   };
 
   // Array of pointers with an entry for each of the defined strings. The idx
