@@ -58,21 +58,26 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifdef __GNUC__
 #define YR_API            EXTERNC __attribute__((dllexport))
 #define YR_DEPRECATED_API EXTERNC __attribute__((deprecated))
+#define YR_DEPRECATED     __attribute__((deprecated))
 #else
 #define YR_API            EXTERNC __declspec(dllexport)
 #define YR_DEPRECATED_API EXTERNC __declspec(deprecated)
+#define YR_DEPRECATED     __declspec(deprecated)
 #endif
 #elif defined(YR_IMPORTING_DLL)
 #ifdef __GNUC__
 #define YR_API            EXTERNC __attribute__((dllimport))
 #define YR_DEPRECATED_API EXTERNC __attribute__((deprecated))
+#define YR_DEPRECATED     __attribute__((deprecated))
 #else
 #define YR_API            EXTERNC __declspec(dllimport)
 #define YR_DEPRECATED_API EXTERNC __declspec(deprecated)
+#define YR_DEPRECATED     __declspec(deprecated)
 #endif
 #else
 #define YR_API            EXTERNC
 #define YR_DEPRECATED_API EXTERNC
+#define YR_DEPRECATED
 #endif
 #else
 #if __GNUC__ >= 4
