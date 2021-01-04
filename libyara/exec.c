@@ -1287,9 +1287,9 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
       break;
 
     case OP_OF_PERCENT:
+      YR_DEBUG_FPRINTF(2, stderr, "- case OP_OF_PERCENT: // %s()\n", __FUNCTION__);
       found = 0;
       count = 0;
-      pop(r2); // percentage value
       pop(r1);
 
       while (!is_undef(r1))
@@ -1301,6 +1301,9 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
         count++;
         pop(r1);
       }
+            
+      pop(r2); // percentage value
+
 
       // If, by some weird reason, we manage to get an undefined string
       // reference as the first thing on the stack then count would be zero.
