@@ -1301,20 +1301,19 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
         count++;
         pop(r1);
       }
-            
+
       pop(r2);
 
       if (opcode == OP_OF)
       {
-        YR_DEBUG_FPRINTF(
-            2, stderr, "- case OP_OF: // %s()\n", __FUNCTION__);
+        YR_DEBUG_FPRINTF(2, stderr, "- case OP_OF: // %s()\n", __FUNCTION__);
 
         if (is_undef(r2))
           r1.i = found >= count ? 1 : 0;
         else
           r1.i = found >= r2.i ? 1 : 0;
       }
-      else // OP_OF_PERCENT
+      else  // OP_OF_PERCENT
       {
         YR_DEBUG_FPRINTF(
             2, stderr, "- case OP_OF_PERCENT: // %s()\n", __FUNCTION__);
