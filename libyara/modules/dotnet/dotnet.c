@@ -1608,7 +1608,7 @@ void dotnet_parse_tilde(
       streams);
 }
 
-void dotnet_parse_com(PE* pe, size_t base_address)
+void dotnet_parse_com(PE* pe)
 {
   PIMAGE_DATA_DIRECTORY directory;
   PCLI_HEADER cli_header;
@@ -1795,7 +1795,7 @@ int module_load(
 
         module_object->data = pe;
 
-        dotnet_parse_com(pe, block->base);
+        dotnet_parse_com(pe);
 
         break;
       }

@@ -452,7 +452,7 @@ YR_API int yr_rules_get_stats(YR_RULES* rules, YR_RULES_STATS* stats)
   float match_list_length_sum = 0;
   int c = 0;
 
-  for (int i = 0; i < stats->ac_tables_size; i++)
+  for (uint32_t i = 0; i < stats->ac_tables_size; i++)
   {
     int match_list_length = 0;
 

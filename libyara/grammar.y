@@ -741,8 +741,8 @@ string_modifier
         fail_if_error(result);
 
         $$.flags = STRING_FLAGS_XOR;
-        $$.xor_min = $3;
-        $$.xor_max = $3;
+        $$.xor_min = (uint8_t) $3;
+        $$.xor_max = (uint8_t) $3;
       }
     /*
      * Would love to use range here for consistency in the language but that
@@ -777,8 +777,8 @@ string_modifier
         fail_if_error(result);
 
         $$.flags = STRING_FLAGS_XOR;
-        $$.xor_min = $3;
-        $$.xor_max = $5;
+        $$.xor_min = (uint8_t) $3;
+        $$.xor_max = (uint8_t) $5;
       }
     | _BASE64_
       {

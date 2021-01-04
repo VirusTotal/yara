@@ -2312,8 +2312,8 @@ yyreduce:
         fail_if_error(result);
 
         (yyval.modifier).flags = STRING_FLAGS_XOR;
-        (yyval.modifier).xor_min = (yyvsp[-1].integer);
-        (yyval.modifier).xor_max = (yyvsp[-1].integer);
+        (yyval.modifier).xor_min = (uint8_t) (yyvsp[-1].integer);
+        (yyval.modifier).xor_max = (uint8_t) (yyvsp[-1].integer);
       }
 #line 2319 "grammar.c" /* yacc.c:1663  */
     break;
@@ -2347,8 +2347,8 @@ yyreduce:
         fail_if_error(result);
 
         (yyval.modifier).flags = STRING_FLAGS_XOR;
-        (yyval.modifier).xor_min = (yyvsp[-3].integer);
-        (yyval.modifier).xor_max = (yyvsp[-1].integer);
+        (yyval.modifier).xor_min = (uint8_t) (yyvsp[-3].integer);
+        (yyval.modifier).xor_max = (uint8_t) (yyvsp[-1].integer);
       }
 #line 2354 "grammar.c" /* yacc.c:1663  */
     break;
