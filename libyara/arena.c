@@ -223,7 +223,7 @@ static int _yr_arena_allocate_memory(
 //   ERROR_INSUFFICIENT_MEMORY
 //
 int yr_arena_create(
-    int number_of_buffers,
+    uint32_t num_buffers,
     size_t initial_buffer_size,
     YR_ARENA** arena)
 {
@@ -233,7 +233,7 @@ int yr_arena_create(
     return ERROR_INSUFFICIENT_MEMORY;
 
   new_arena->xrefs = 1;
-  new_arena->num_buffers = number_of_buffers;
+  new_arena->num_buffers = num_buffers;
   new_arena->initial_buffer_size = initial_buffer_size;
 
   *arena = new_arena;

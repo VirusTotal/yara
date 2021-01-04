@@ -143,10 +143,10 @@ struct YR_ARENA
   // created, and can be incremented by calling yr_arena_acquire. On each call
   // to yr_arena_release it gets decremented by one, if xrefs reaches zero
   // the buffers and the YR_ARENA structures are freed.
-  int xrefs;
+  uint32_t xrefs;
 
   // Number of buffers in this arena.
-  int num_buffers;
+  uint32_t num_buffers;
 
   // Status of individual buffers.
   YR_ARENA_BUFFER buffers[YR_MAX_ARENA_BUFFERS];
@@ -165,7 +165,7 @@ struct YR_ARENA
 // it. Initially each buffer is empty, the first time that some data is written
 // into a buffer at least initial_buffer_size are reserved for the buffer.
 int yr_arena_create(
-    int num_buffers,
+    uint32_t num_buffers,
     size_t initial_buffer_size,
     YR_ARENA** arena);
 

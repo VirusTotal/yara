@@ -110,7 +110,7 @@ YR_API int yr_filemap_map_fd(
     return ERROR_COULD_NOT_OPEN_FILE;
   }
 
-  if (offset > file_size)
+  if (offset > (off_t) file_size)
     return ERROR_COULD_NOT_MAP_FILE;
 
   if (size == 0)

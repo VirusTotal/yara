@@ -36,9 +36,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <yara/libyara.h>
 #include <yara/limits.h>
 #include <yara/re.h>
+#include <yara/rules.h>
 #include <yara/scan.h>
 #include <yara/stopwatch.h>
-#include <yara/rules.h>
 #include <yara/types.h>
 #include <yara/utils.h>
 
@@ -546,7 +546,8 @@ static int _yr_scan_verify_chained_string_match(
           match->match_length = (int32_t)(
               match_offset - match->offset + match_length);
 
-          match->data_length = yr_min(match->match_length, max_match_data);
+          match->data_length = yr_min(
+              match->match_length, (int32_t) max_match_data);
 
           match->data = yr_notebook_alloc(
               context->matches_notebook, match->data_length);
@@ -584,7 +585,7 @@ static int _yr_scan_verify_chained_string_match(
 
       // A copy of the matching data is written to the matches_arena, the
       // amount of data copies is limited by YR_CONFIG_MAX_MATCH_DATA.
-      new_match->data_length = yr_min(match_length, max_match_data);
+      new_match->data_length = yr_min(match_length, (int32_t) max_match_data);
 
       if (new_match->data_length > 0)
       {
@@ -702,7 +703,7 @@ static int _yr_scan_match_callback(
       goto _exit;
     }
 
-    new_match->data_length = yr_min(match_length, max_match_data);
+    new_match->data_length = yr_min(match_length, (int32_t) max_match_data);
 
     if (new_match->data_length > 0)
     {

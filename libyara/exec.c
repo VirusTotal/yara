@@ -475,7 +475,7 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
       pop(r1);
 
       r3.p = yr_notebook_alloc(
-          it_notebook, sizeof(YR_ITERATOR) + sizeof(uint64_t) * r1.i);
+          it_notebook, sizeof(YR_ITERATOR) + sizeof(uint64_t) * (size_t) r1.i);
 
       if (r3.p == NULL)
       {
