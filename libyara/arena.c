@@ -267,7 +267,7 @@ int yr_arena_release(YR_ARENA* arena)
   if (arena->xrefs > 0)
     return ERROR_SUCCESS;
 
-  for (int i = 0; i < arena->num_buffers; i++)
+  for (uint32_t i = 0; i < arena->num_buffers; i++)
   {
     if (arena->buffers[i].data != NULL)
       yr_free(arena->buffers[i].data);
@@ -426,7 +426,7 @@ int yr_arena_ptr_to_ref(YR_ARENA* arena, const void* address, YR_ARENA_REF* ref)
   if (address == NULL)
     return 1;
 
-  for (int i = 0; i < arena->num_buffers; ++i)
+  for (uint32_t i = 0; i < arena->num_buffers; ++i)
   {
     if ((uint8_t*) address >= arena->buffers[i].data &&
         (uint8_t*) address < arena->buffers[i].data + arena->buffers[i].used)
@@ -434,6 +434,7 @@ int yr_arena_ptr_to_ref(YR_ARENA* arena, const void* address, YR_ARENA_REF* ref)
       ref->buffer_id = i;
       ref->offset = (yr_arena_off_t)(
           (uint8_t*) address - arena->buffers[i].data);
+
       return 1;
     }
   }
@@ -622,7 +623,7 @@ int yr_arena_save_stream(YR_ARENA* arena, YR_STREAM* stream)
   uint64_t offset = sizeof(YR_ARENA_FILE_HEADER) +
                     sizeof(YR_ARENA_FILE_BUFFER) * arena->num_buffers;
 
-  for (int i = 0; i < arena->num_buffers; ++i)
+  for (uint32_t i = 0; i < arena->num_buffers; ++i)
   {
     YR_ARENA_FILE_BUFFER buffer = {
         .offset = offset,
@@ -669,7 +670,7 @@ int yr_arena_save_stream(YR_ARENA* arena, YR_STREAM* stream)
 
   // Now that all relocatable pointers are converted to references, write the
   // buffers.
-  for (int i = 0; i < arena->num_buffers; ++i)
+  for (uint32_t i = 0; i < arena->num_buffers; ++i)
   {
     YR_ARENA_BUFFER* b = &arena->buffers[i];
 
