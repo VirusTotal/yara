@@ -1043,14 +1043,15 @@ static void pe_parse_exports(PE* pe)
   PIMAGE_DATA_DIRECTORY directory;
   PIMAGE_EXPORT_DIRECTORY exports;
 
+  int64_t offset;
+  int64_t export_start;
+
   uint32_t i, j;
   uint32_t number_of_exports;
   uint32_t number_of_names;
   uint32_t ordinal_base;
 
-  size_t export_start;
   size_t export_size;
-  size_t offset;
   size_t remaining;
   size_t name_len;
 
@@ -1211,6 +1212,7 @@ static void pe_parse_exports(PE* pe)
         if (yr_le16toh(ordinals[j]) == i && j < number_of_names)
         {
           offset = pe_rva_to_offset(pe, yr_le32toh(names[j]));
+
           if (offset > 0)
           {
             remaining = pe->data_size - (size_t) offset;
@@ -1304,7 +1306,8 @@ void _parse_pkcs7(PE* pe, PKCS7* pkcs7, int* counter)
         *counter);
 
     sig_nid = X509_get_signature_nid(cert);
-    set_string(OBJ_nid2ln(sig_nid), pe->object, "signatures[%i].algorithm", *counter);
+    set_string(
+        OBJ_nid2ln(sig_nid), pe->object, "signatures[%i].algorithm", *counter);
     OBJ_obj2txt(buffer, sizeof(buffer), OBJ_nid2obj(sig_nid), 1);
     set_string(buffer, pe->object, "signatures[%i].algorithm_oid", *counter);
 
@@ -2619,7 +2622,8 @@ define_function(rva_to_offset)
   YR_OBJECT* module = module();
   PE* pe = (PE*) module->data;
 
-  uint64_t rva, offset;
+  uint64_t rva;
+  int64_t offset;
 
   if (pe == NULL)
     return_integer(YR_UNDEFINED);
