@@ -1466,6 +1466,17 @@ static void test_of()
     "rule test { strings: $a1 = \"miss\" $a2 = \"issi\" condition: 100% of them }",
     "mississippi");
 
+  assert_true_rule(
+      "import \"tests\" \
+       rule test { \
+         strings: \
+           $a1 = \"miss\" \
+           $a2 = \"issi\" \
+         condition: \
+           (25*tests.constants.two)% of them \
+       }",
+      "mississippi");
+
   YR_DEBUG_FPRINTF(1, stderr, "} // %s()\n", __FUNCTION__);
 }
 

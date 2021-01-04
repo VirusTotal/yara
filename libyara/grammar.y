@@ -1776,10 +1776,15 @@ expression
       {
         check_type($1, EXPRESSION_TYPE_INTEGER, "%");
 
-        if ($1.value.integer < 1 || $1.value.integer > 100)
+        // The value of primary_expression can be undefined because
+        // it could be a variable for which don't know the value during
+        // compiling time. However, if the value is defined it should be
+        // in the range [1,100].
+        if (!IS_UNDEFINED($1.value.integer) &&
+            ($1.value.integer < 1 || $1.value.integer > 100))
         {
           yr_compiler_set_error_extra_info(
-              compiler, "Percentage must be between 1 and 100 (inclusive)");
+              compiler, "percentage must be between 1 and 100 (inclusive)");
           compiler->last_error = ERROR_INVALID_PERCENTAGE;
           yyerror(yyscanner, compiler, NULL);
           YYERROR;
