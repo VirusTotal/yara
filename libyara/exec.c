@@ -1321,7 +1321,7 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
         // If, by some weird reason, we manage to get an undefined string
         // reference as the first thing on the stack then count would be zero.
         // I don't know how this could ever happen but better to check for it.
-        if (count == 0)
+        if (is_undef(r2) || count == 0)
           r1.i = YR_UNDEFINED;
         else
           r1.i = (((double) found / count) * 100) >= r2.i ? 1 : 0;

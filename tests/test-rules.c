@@ -1477,6 +1477,19 @@ static void test_of()
        }",
       "mississippi");
 
+  // tests.integer_array[5] is undefined, so the following rule must evaluate
+  // to false.
+  assert_false_rule(
+      "import \"tests\" \
+       rule test { \
+         strings: \
+           $a1 = \"miss\" \
+           $a2 = \"issi\" \
+         condition: \
+           tests.integer_array[5]% of them \
+       }",
+      "mississippi");
+
   YR_DEBUG_FPRINTF(1, stderr, "} // %s()\n", __FUNCTION__);
 }
 
