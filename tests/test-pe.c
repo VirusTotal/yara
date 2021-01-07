@@ -208,7 +208,7 @@ int main(int argc, char** argv)
       "import \"pe\" \
       rule test { \
         condition: \
-         pe.overlay.size == 0 \
+          pe.overlay.offset == 0 and pe.overlay.size == 0 \
       }",
       "tests/data/tiny");
 

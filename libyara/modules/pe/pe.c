@@ -1537,7 +1537,7 @@ static void pe_parse_header(PE* pe, uint64_t base_address, int flags)
   PIMAGE_DATA_DIRECTORY data_dir;
 
   char section_name[IMAGE_SIZEOF_SHORT_NAME + 1];
-  int i, scount, ddcount;
+  int scount, ddcount;
 
   uint64_t highest_sec_siz = 0;
   uint64_t highest_sec_ofs = 0;
@@ -1736,7 +1736,7 @@ static void pe_parse_header(PE* pe, uint64_t base_address, int flags)
   ddcount = yr_le16toh(OptionalHeader(pe, NumberOfRvaAndSizes));
   ddcount = yr_min(ddcount, IMAGE_NUMBEROF_DIRECTORY_ENTRIES);
 
-  for (i = 0; i < ddcount; i++)
+  for (int i = 0; i < ddcount; i++)
   {
     if (!struct_fits_in_pe(pe, data_dir, IMAGE_DATA_DIRECTORY))
       break;
@@ -1763,7 +1763,7 @@ static void pe_parse_header(PE* pe, uint64_t base_address, int flags)
   scount = yr_min(
       yr_le16toh(pe->header->FileHeader.NumberOfSections), MAX_PE_SECTIONS);
 
-  for (i = 0; i < scount; i++)
+  for (int i = 0; i < scount; i++)
   {
     if (!struct_fits_in_pe(pe, section, IMAGE_SECTION_HEADER))
       break;
@@ -1848,15 +1848,20 @@ static void pe_parse_header(PE* pe, uint64_t base_address, int flags)
   // RawData + RawOffset of the last section on the physical file
   last_section_end = highest_sec_siz + highest_sec_ofs;
 
-  // "overlay.offset" is set to YR_UNDEFINED for files that do not have an
-  // overlay
+  // For PE files that have overlaid data overlay.offset contains the offset
+  // within the file where the overlay starts and overlay.size contains the
+  // size. If the PE file doesn't have an overlay both fields are 0, if the
+  // file is not a PE file (or is a malformed PE) both fields are YR_UNDEFINED.
   if (last_section_end && (pe->data_size > last_section_end))
+  {
     set_integer(last_section_end, pe->object, "overlay.offset");
-
-  // "overlay.size" is zero for well formed PE files that do not have an
-  // overlay and YR_UNDEFINED for malformed PE files or non-PE files.
-  if (last_section_end && (pe->data_size >= last_section_end))
     set_integer(pe->data_size - last_section_end, pe->object, "overlay.size");
+  }
+  else
+  {
+    set_integer(0, pe->object, "overlay.offset");
+    set_integer(0, pe->object, "overlay.size");
+  }
 }
 
 //

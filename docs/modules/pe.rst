@@ -579,11 +579,13 @@ Reference
 
     .. c:member:: offset
 
-        Overlay section offset.
+        Overlay section offset. This is 0 for PE files that don't have overlaid
+        data and undefined for non-PE files.
 
     .. c:member:: size
 
-        Overlay section size.
+        Overlay section size. This is 0 for PE files that don't have overlaid
+        data and undefined for non-PE files.
 
     *Example: uint8(0x0d) at pe.overlay.offset and pe.overlay.size > 1024*
 
