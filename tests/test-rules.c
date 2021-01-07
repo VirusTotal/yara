@@ -97,11 +97,51 @@ static void test_boolean_operators()
       NULL);
 
   assert_true_rule(
-      "import \"tests\" rule test { condition: not (tests.undefined.i and true) }",
+      "import \"tests\" \
+      rule test { \
+        condition: \
+          not (tests.undefined.i and true) \
+      }",
       NULL);
 
   assert_true_rule(
-      "import \"tests\" rule test { condition: not (true and tests.undefined.i) }",
+      "import \"tests\" \
+      rule test { \
+        condition: \
+          not (true and tests.undefined.i) \
+      }",
+      NULL);
+
+  assert_false_rule(
+      "import \"tests\" \
+      rule test { \
+        condition: \
+          not tests.string_array[4] contains \"foo\" \
+      }",
+      NULL);
+
+  assert_false_rule(
+      "import \"tests\" \
+      rule test { \
+        condition: \
+          not tests.string_dict[\"undefined\"] matches /foo/ \
+      }",
+      NULL);
+
+  assert_false_rule(
+      "import \"tests\" \
+      rule test { \
+        condition: \
+          not tests.undefined.i \
+      }",
+      NULL);
+
+  assert_false_rule(
+      "import \"tests\" \
+      rule test { \
+        condition: \
+          not (tests.undefined.i) \
+      }",
       NULL);
 
   YR_DEBUG_FPRINTF(1, stderr, "} // %s()\n", __FUNCTION__);
@@ -1651,32 +1691,6 @@ void test_for()
           for all i in (1..tests.undefined.i) : ( \
             false \
           ) \
-      }",
-      NULL);
-
-  // Test case for issue #1180.
-  assert_true_rule(
-      "import \"tests\" \
-      rule test { \
-        condition: \
-          not tests.string_array[4] contains \"foo\" \
-      }",
-      NULL);
-
-  // Test case for issue #1180.
-  assert_true_rule(
-      "import \"tests\" \
-      rule test { \
-        condition: \
-          not tests.string_dict[\"undefined\"] matches /foo/ \
-      }",
-      NULL);
-
-  assert_false_rule(
-      "import \"tests\" \
-      rule test { \
-        condition: \
-          not tests.undefined.i \
       }",
       NULL);
 

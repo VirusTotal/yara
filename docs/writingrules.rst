@@ -1508,20 +1508,28 @@ You would expect the rule to match in this case if the file contains the string,
 even if it isn't a PE file. That's exactly how YARA behaves. The logic is as
 follows:
 
-* Arithmetic and bitwise operators return an undefined value if some of their
-  operands are undefined.
+* If the expression in the condition is undefined, it would be translated to
+  ``false`` and the rule won't match.
 
-* Boolean operators `and` and `or` will treat undefined operands as `false`.
+* Boolean operators ``and`` and ``or`` will treat undefined operands as ``false``,
+  Which means that:
 
-* Boolean `not` operator returns false if the operand is undefined.
+  * ``undefined and true`` is ``false``
+  * ``undefined and false`` is ``false``
+  * ``undefined or true`` is ``true``
+  * ``undefined or false`` is ``false``
 
-* Comparison operators and any other operator whose result is a boolean (like
-  the ``contains`` and ``matches`` operators) will return `false` if any of
-  their operands are undefined.
+* All the remaining operators, including the ``not`` operator, return undefined
+  if any of their operands is undefined.
 
-In the expression above, `pe.entry_point == 0x1000` will be false, because
-`pe.entry_point` is undefined, and the `==` operator returns false if any of its
-operands are undefined.
+In the expression above, ``pe.entry_point == 0x1000`` will be undefined for non-PE
+files, because ``pe.entry_point`` is undefined for those files. This implies that
+``$a or pe.entry_point == 0x1000`` will be ``true`` if and only if ``$a`` is ``true``.
+
+If the condition is ``pe.entry_point == 0x1000`` alone, it will evaluate to ``false``
+for non-PE files, and so will do ``pe.entry_point != 0x1000`` and
+``not pe.entry_point == 0x1000``, as non of these expressions make sense for non-PE
+files.
 
 
 External variables
