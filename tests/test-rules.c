@@ -44,6 +44,20 @@ static void test_boolean_operators()
 {
   YR_DEBUG_FPRINTF(1, stderr, "+ %s() {\n", __FUNCTION__);
 
+  assert_true_rule("rule test { condition: not false }", NULL);
+
+  assert_false_rule("rule test { condition: not true }", NULL);
+
+  assert_false_rule("rule test { condition: not (false or true) }", NULL);
+
+  assert_false_rule("rule test { condition: not (true or false) }", NULL);
+
+  assert_true_rule("rule test { condition: not (false and true) }", NULL);
+
+  assert_true_rule("rule test { condition: not (true and false) }", NULL);
+
+  assert_true_rule("rule test { condition: not (true and false) }", NULL);
+
   assert_true_rule("rule test { condition: true }", NULL);
 
   assert_true_rule("rule test { condition: true or false }", NULL);
@@ -57,6 +71,38 @@ static void test_boolean_operators()
   assert_false_rule("rule test { condition: true and false }", NULL);
 
   assert_false_rule("rule test { condition: false or false }", NULL);
+
+  assert_false_rule(
+      "import \"tests\" rule test { condition: not tests.undefined.i }",
+      NULL);
+
+  assert_false_rule(
+      "import \"tests\" rule test { condition: tests.undefined.i }",
+      NULL);
+
+  assert_false_rule(
+      "import \"tests\" rule test { condition: tests.undefined.i and true }",
+      NULL);
+
+  assert_false_rule(
+      "import \"tests\" rule test { condition: true and tests.undefined.i }",
+      NULL);
+
+  assert_true_rule(
+      "import \"tests\" rule test { condition: tests.undefined.i or true }",
+      NULL);
+
+  assert_true_rule(
+      "import \"tests\" rule test { condition: true or tests.undefined.i }",
+      NULL);
+
+  assert_true_rule(
+      "import \"tests\" rule test { condition: not (tests.undefined.i and true) }",
+      NULL);
+
+  assert_true_rule(
+      "import \"tests\" rule test { condition: not (true and tests.undefined.i) }",
+      NULL);
 
   YR_DEBUG_FPRINTF(1, stderr, "} // %s()\n", __FUNCTION__);
 }

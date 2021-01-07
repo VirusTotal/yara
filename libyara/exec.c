@@ -656,6 +656,7 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
       break;
 
     case OP_JNUNDEF:
+      // Jump if the top the stack is not undefined without modifying the stack.
       YR_DEBUG_FPRINTF(2, stderr, "- case OP_JNUNDEF: // %s()\n", __FUNCTION__);
       pop(r1);
       push(r1);
@@ -663,6 +664,8 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
       break;
 
     case OP_JUNDEF_P:
+      // Removes a value from the top of the stack and jump if the value is not
+      // undefined.
       YR_DEBUG_FPRINTF(
           2, stderr, "- case OP_JUNDEF_P: // %s()\n", __FUNCTION__);
       pop(r1);
@@ -670,6 +673,8 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
       break;
 
     case OP_JL_P:
+      // Pops two values A and B from the stack and jump if A < B. B is popped
+      // first, and then A.
       YR_DEBUG_FPRINTF(2, stderr, "- case OP_JL_P: // %s()\n", __FUNCTION__);
       pop(r2);
       pop(r1);
@@ -677,6 +682,8 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
       break;
 
     case OP_JLE_P:
+      // Pops two values A and B from the stack and jump if A <= B. B is popped
+      // first, and then A.
       YR_DEBUG_FPRINTF(2, stderr, "- case OP_JLE_P: // %s()\n", __FUNCTION__);
       pop(r2);
       pop(r1);
@@ -684,6 +691,8 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
       break;
 
     case OP_JTRUE:
+      // Jump if the top of the stack is true without modifying the stack. If
+      // the top of the stack is undefined the jump is not taken.
       YR_DEBUG_FPRINTF(2, stderr, "- case OP_JTRUE: // %s()\n", __FUNCTION__);
       pop(r1);
       push(r1);
@@ -691,26 +700,34 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
       break;
 
     case OP_JTRUE_P:
+      // Removes a value from the stack and jump if it is true. If the value
+      // is undefined the jump is not taken.
       YR_DEBUG_FPRINTF(2, stderr, "- case OP_JTRUE_P: // %s()\n", __FUNCTION__);
       pop(r1);
       ip = jmp_if(!is_undef(r1) && r1.i, ip);
       break;
 
     case OP_JFALSE:
+      // Jump if the top of the stack is false without modifying the stack. If
+      // the top of the stack is undefined the jump is not taken.
       YR_DEBUG_FPRINTF(2, stderr, "- case OP_JFALSE: // %s()\n", __FUNCTION__);
       pop(r1);
       push(r1);
-      ip = jmp_if(is_undef(r1) || !r1.i, ip);
+      ip = jmp_if(!is_undef(r1) && !r1.i, ip);
       break;
 
     case OP_JFALSE_P:
+      // Removes a value from the stack and jump if it is false. If the value
+      // is undefined the jump is not taken.
       YR_DEBUG_FPRINTF(
           2, stderr, "- case OP_JFALSE_P: // %s()\n", __FUNCTION__);
       pop(r1);
-      ip = jmp_if(is_undef(r1) || !r1.i, ip);
+      ip = jmp_if(!is_undef(r1) && !r1.i, ip);
       break;
 
     case OP_JZ:
+      // Jump if the value at the top of the stack is 0 without modifying the
+      // stack.
       YR_DEBUG_FPRINTF(2, stderr, "- case OP_JZ: // %s()\n", __FUNCTION__);
       pop(r1);
       push(r1);
@@ -718,6 +735,7 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
       break;
 
     case OP_JZ_P:
+      // Removes a value from the stack and jump if the value is 0.
       YR_DEBUG_FPRINTF(2, stderr, "- case OP_JZ_P: // %s()\n", __FUNCTION__);
       pop(r1);
       ip = jmp_if(r1.i == 0, ip);
@@ -728,11 +746,13 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
       pop(r2);
       pop(r1);
 
-      if (is_undef(r1) || is_undef(r2))
+      if (is_undef(r1))
         r1.i = 0;
-      else
-        r1.i = r1.i && r2.i;
 
+      if (is_undef(r2))
+        r2.i = 0;
+
+      r1.i = r1.i && r2.i;
       push(r1);
       break;
 
@@ -742,18 +762,13 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
       pop(r1);
 
       if (is_undef(r1))
-      {
-        push(r2);
-      }
-      else if (is_undef(r2))
-      {
-        push(r1);
-      }
-      else
-      {
-        r1.i = r1.i || r2.i;
-        push(r1);
-      }
+        r1.i = 0;
+
+      if (is_undef(r2))
+        r2.i = 0;
+
+      r1.i = r1.i || r2.i;
+      push(r1);
       break;
 
     case OP_NOT:
@@ -1866,7 +1881,8 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
 
   obj_ptr = yr_arena_get_ptr(obj_arena, 0, 0);
 
-  for (int i = 0; i < obj_count; i++) yr_object_destroy(obj_ptr[i]);
+  for (int i = 0; i < obj_count; i++)
+    yr_object_destroy(obj_ptr[i]);
 
   yr_arena_release(obj_arena);
   yr_notebook_destroy(it_notebook);
