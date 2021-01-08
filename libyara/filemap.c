@@ -270,7 +270,7 @@ YR_API int yr_filemap_map_ex(
   fd = CreateFileA(
       file_path,
       GENERIC_READ,
-      FILE_SHARE_READ,
+      FILE_SHARE_READ | FILE_SHARE_WRITE,
       NULL,
       OPEN_EXISTING,
       FILE_FLAG_SEQUENTIAL_SCAN,
