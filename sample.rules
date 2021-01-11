@@ -10,7 +10,5 @@ rule UPX : Packer
 }
 
 
-fksjd
-
 rule test {condition: false}
 
