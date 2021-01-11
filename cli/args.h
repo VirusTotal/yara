@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2014. The YARA Authors. All Rights Reserved.
+Copyright (c) 2014-2021. The YARA Authors. All Rights Reserved.
 
 Redistribution and use in source and binary forms, with or without modification,
 are permitted provided that the following conditions are met:
@@ -31,6 +31,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define ARGPARSE_H
 
 #include <stdio.h>
+#include "unicode.h"
 
 
 #ifdef __cplusplus
@@ -63,17 +64,16 @@ extern "C"
   } args_option_type_t;
 
 
-  typedef struct _args_option
-  {
-    args_option_type_t type;
-    const char short_name;
-    const char *long_name;
-    void *value;
-    int max_count;
-    const char *help;
-    const char *type_help;
-    int count;
-  } args_option_t;
+typedef struct _args_option {
+  args_option_type_t type;
+  const char_t short_name;
+  const char_t *long_name;
+  void *value;
+  int max_count;
+  const char_t *help;
+  const char_t *type_help;
+  int count;
+} args_option_t;
 
 
 #define OPT_BOOLEAN(short_name, long_name, value, ...)             \
@@ -100,11 +100,17 @@ extern "C"
   }
 
 
-  int args_parse(args_option_t *options, int argc, const char **argv);
+int args_parse(
+    args_option_t *options,
+    int argc,
+    const char_t **argv);
 
 
   void args_print_usage(args_option_t *options, int alignment);
 
+
+void args_free(
+	args_option_t *options);
 
 #ifdef __cplusplus
 }

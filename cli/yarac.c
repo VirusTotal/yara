@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2013. The YARA Authors. All Rights Reserved.
+Copyright (c) 2013-2021. The YARA Authors. All Rights Reserved.
 
 Redistribution and use in source and binary forms, with or without modification,
 are permitted provided that the following conditions are met:
@@ -55,6 +55,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define MAX_ARGS_EXT_VAR 32
 
+
+#define exit_with_code(code) { result = code; goto _exit; }
+
+
 typedef struct COMPILER_RESULTS
 {
   int errors;
@@ -68,41 +72,43 @@ static bool ignore_warnings = false;
 static bool show_version = false;
 static bool show_help = false;
 static bool fail_on_warnings = false;
-static int max_strings_per_rule = DEFAULT_MAX_STRINGS_PER_RULE;
+static long max_strings_per_rule = DEFAULT_MAX_STRINGS_PER_RULE;
 
 #define USAGE_STRING \
   "Usage: yarac [OPTION]... [NAMESPACE:]SOURCE_FILE... OUTPUT_FILE"
 
-args_option_t options[] = {
-    OPT_STRING(
-        0,
-        "atom-quality-table",
-        &atom_quality_table,
-        "path to a file with the atom quality table",
-        "FILE"),
+args_option_t options[] =
+{
+  OPT_STRING(0,
+      _T("atom-quality-table"), &atom_quality_table,
+      _T("path to a file with the atom quality table"), 
+	  _T("FILE")),
 
-    OPT_STRING_MULTI(
-        'd',
-        "define",
-        &ext_vars,
-        MAX_ARGS_EXT_VAR,
-        "define external variable",
-        "VAR=VALUE"),
+  OPT_STRING_MULTI('d', 
+      _T("define"), &ext_vars, MAX_ARGS_EXT_VAR,
+      _T("define external variable"), 
+	  _T("VAR=VALUE")),
 
-    OPT_BOOLEAN(0, "fail-on-warnings", &fail_on_warnings, "fail on warnings"),
+  OPT_BOOLEAN(0, 
+      _T("fail-on-warnings"), &fail_on_warnings,
+      _T("fail on warnings")),
 
-    OPT_BOOLEAN('h', "help", &show_help, "show this help and exit"),
+  OPT_BOOLEAN('h', 
+      _T("help"), &show_help,
+      _T("show this help and exit")),
 
-    OPT_INTEGER(
-        0,
-        "max-strings-per-rule",
-        &max_strings_per_rule,
-        "set maximum number of strings per rule (default=10000)",
-        "NUMBER"),
+  OPT_INTEGER(0, 
+      _T("max-strings-per-rule"), &max_strings_per_rule,
+      _T("set maximum number of strings per rule (default=10000)"), 
+	  _T("NUMBER")),
 
-    OPT_BOOLEAN('w', "no-warnings", &ignore_warnings, "disable warnings"),
+  OPT_BOOLEAN('w', 
+      _T("no-warnings"), &ignore_warnings,
+      _T("disable warnings")),
 
-    OPT_BOOLEAN('v', "version", &show_version, "show version information"),
+  OPT_BOOLEAN('v', 
+      _T("version"), &show_version,
+      _T("show version information")),
 
     OPT_END()};
 
@@ -149,50 +155,10 @@ static void report_error(
   }
 }
 
-static bool define_external_variables(YR_COMPILER* compiler)
-{
-  for (int i = 0; ext_vars[i] != NULL; i++)
-  {
-    char* equal_sign = strchr(ext_vars[i], '=');
 
-    if (!equal_sign)
-    {
-      fprintf(stderr, "error: wrong syntax for `-d` option.\n");
-      return false;
-    }
-
-    // Replace the equal sign with null character to split the external
-    // variable definition (i.e: myvar=somevalue) in two strings: identifier
-    // and value.
-
-    *equal_sign = '\0';
-
-    char* identifier = ext_vars[i];
-    char* value = equal_sign + 1;
-
-    if (is_float(value))
-    {
-      yr_compiler_define_float_variable(compiler, identifier, atof(value));
-    }
-    else if (is_integer(value))
-    {
-      yr_compiler_define_integer_variable(compiler, identifier, atoi(value));
-    }
-    else if (strcmp(value, "true") == 0 || strcmp(value, "false") == 0)
-    {
-      yr_compiler_define_boolean_variable(
-          compiler, identifier, strcmp(value, "true") == 0);
-    }
-    else
-    {
-      yr_compiler_define_string_variable(compiler, identifier, value);
-    }
-  }
-
-  return true;
-}
-
-int main(int argc, const char** argv)
+int _tmain(
+	int argc,
+	const char_t** argv)
 {
   COMPILER_RESULTS cr;
 
@@ -236,7 +202,7 @@ int main(int argc, const char** argv)
   if (yr_compiler_create(&compiler) != ERROR_SUCCESS)
     exit_with_code(EXIT_FAILURE);
 
-  if (!define_external_variables(compiler))
+  if (!define_external_variables(ext_vars, NULL, compiler))
     exit_with_code(EXIT_FAILURE);
 
   if (atom_quality_table != NULL)
@@ -274,7 +240,24 @@ int main(int argc, const char** argv)
     exit_with_code(EXIT_FAILURE);
   }
 
-  result = yr_rules_save(rules, argv[argc - 1]);
+  // Not using yr_rules_save because it does not have support for unicode
+  // file names. Instead use open _tfopen for openning the file and 
+  // yr_rules_save_stream for writing the rules to it.
+
+  FILE* fh = _tfopen(argv[argc - 1], _T("wb"));
+
+  if (fh != NULL)
+  {
+	  YR_STREAM stream;
+
+	  stream.user_data = fh;
+	  stream.write = (YR_STREAM_WRITE_FUNC) fwrite;
+
+	  result = yr_rules_save_stream(rules, &stream);
+
+	  fclose(fh);
+  }
+
 
   if (result != ERROR_SUCCESS)
   {
@@ -293,6 +276,8 @@ _exit:
     yr_rules_destroy(rules);
 
   yr_finalize();
+
+  args_free(options);
 
   return result;
 }

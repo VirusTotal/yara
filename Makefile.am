@@ -37,6 +37,7 @@ bin_PROGRAMS = yara yarac
 yara_SOURCES = \
   cli/args.c \
   cli/args.h \
+  cli/common.c \
   cli/common.h \
   cli/threading.c \
   cli/threading.h \
@@ -48,6 +49,7 @@ yara_DEPENDENCIES = libyara/.libs/libyara.la
 yarac_SOURCES = \
    cli/args.c \
    cli/args.h \
+   cli/common.c \
    cli/common.h \
    cli/yarac.c
 

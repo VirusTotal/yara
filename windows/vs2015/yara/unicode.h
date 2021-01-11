@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2017-2021. The YARA Authors. All Rights Reserved.
+Copyright (c) 2021. The YARA Authors. All Rights Reserved.
 
 Redistribution and use in source and binary forms, with or without modification,
 are permitted provided that the following conditions are met:
@@ -27,31 +27,25 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+#ifndef YR_UNICODE_H
+#define YR_UNICODE_H
 
-#ifndef COMMON_H
-#define COMMON_H
-
-#include <yara.h>
-
-#include "unicode.h"
-
-
-#ifdef _UNICODE
-char* unicode_to_ansi(const char_t* str);
+#ifdef _MSC_VER
+#include <tchar.h>
+#define char_t TCHAR
+#else
+#define char_t char
+#define _T(x) x
+#define _tcscmp strcmp
+#define _tcsdup strdup
+#define _tcschr strchr
+#define _tcsstr strstr
+#define _tcslen strlen
+#define _tsctol strtol
+#define _tstoi atoi
+#define _tstof atof
+#define _tisdigit isdigit
+#define _ftprintf fprintf
 #endif
-
-bool compile_files(
-	YR_COMPILER* compiler,
-	int argc,
-	const char_t** argv);
-
-int define_external_variables(
-	char** ext_vars,
-	YR_RULES* rules,
-	YR_COMPILER* compiler);
-
-bool is_integer(const char *str);
-
-bool is_float(const char *str);
 
 #endif
