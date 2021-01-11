@@ -329,6 +329,8 @@ args_option_t options[] = {
         _T("version"),
         &show_version,
         _T("show version information")),
+
+    OPT_END(),
 };
 
 // file_queue is size-limited queue stored as a circular array, files are

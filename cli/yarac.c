@@ -55,9 +55,11 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define MAX_ARGS_EXT_VAR 32
 
-
-#define exit_with_code(code) { result = code; goto _exit; }
-
+#define exit_with_code(code) \
+  {                          \
+    result = code;           \
+    goto _exit;              \
+  }
 
 typedef struct COMPILER_RESULTS
 {
@@ -77,40 +79,51 @@ static long max_strings_per_rule = DEFAULT_MAX_STRINGS_PER_RULE;
 #define USAGE_STRING \
   "Usage: yarac [OPTION]... [NAMESPACE:]SOURCE_FILE... OUTPUT_FILE"
 
-args_option_t options[] =
-{
-  OPT_STRING(0,
-      _T("atom-quality-table"), &atom_quality_table,
-      _T("path to a file with the atom quality table"), 
-	  _T("FILE")),
+args_option_t options[] = {
+    OPT_STRING(
+        0,
+        _T("atom-quality-table"),
+        &atom_quality_table,
+        _T("path to a file with the atom quality table"),
+        _T("FILE")),
 
-  OPT_STRING_MULTI('d', 
-      _T("define"), &ext_vars, MAX_ARGS_EXT_VAR,
-      _T("define external variable"), 
-	  _T("VAR=VALUE")),
+    OPT_STRING_MULTI(
+        'd',
+        _T("define"),
+        &ext_vars,
+        MAX_ARGS_EXT_VAR,
+        _T("define external variable"),
+        _T("VAR=VALUE")),
 
-  OPT_BOOLEAN(0, 
-      _T("fail-on-warnings"), &fail_on_warnings,
-      _T("fail on warnings")),
+    OPT_BOOLEAN(
+        0,
+        _T("fail-on-warnings"),
+        &fail_on_warnings,
+        _T("fail on warnings")),
 
-  OPT_BOOLEAN('h', 
-      _T("help"), &show_help,
-      _T("show this help and exit")),
+    OPT_BOOLEAN('h', _T("help"), &show_help, _T("show this help and exit")),
 
-  OPT_INTEGER(0, 
-      _T("max-strings-per-rule"), &max_strings_per_rule,
-      _T("set maximum number of strings per rule (default=10000)"), 
-	  _T("NUMBER")),
+    OPT_INTEGER(
+        0,
+        _T("max-strings-per-rule"),
+        &max_strings_per_rule,
+        _T("set maximum number of strings per rule (default=10000)"),
+        _T("NUMBER")),
 
-  OPT_BOOLEAN('w', 
-      _T("no-warnings"), &ignore_warnings,
-      _T("disable warnings")),
+    OPT_BOOLEAN(
+        'w',
+        _T("no-warnings"),
+        &ignore_warnings,
+        _T("disable warnings")),
 
-  OPT_BOOLEAN('v', 
-      _T("version"), &show_version,
-      _T("show version information")),
+    OPT_BOOLEAN(
+        'v',
+        _T("version"),
+        &show_version,
+        _T("show version information")),
 
-    OPT_END()};
+    OPT_END(),
+};
 
 static void report_error(
     int error_level,
@@ -155,10 +168,7 @@ static void report_error(
   }
 }
 
-
-int _tmain(
-	int argc,
-	const char_t** argv)
+int _tmain(int argc, const char_t** argv)
 {
   COMPILER_RESULTS cr;
 
@@ -241,23 +251,22 @@ int _tmain(
   }
 
   // Not using yr_rules_save because it does not have support for unicode
-  // file names. Instead use open _tfopen for openning the file and 
+  // file names. Instead use open _tfopen for openning the file and
   // yr_rules_save_stream for writing the rules to it.
 
   FILE* fh = _tfopen(argv[argc - 1], _T("wb"));
 
   if (fh != NULL)
   {
-	  YR_STREAM stream;
+    YR_STREAM stream;
 
-	  stream.user_data = fh;
-	  stream.write = (YR_STREAM_WRITE_FUNC) fwrite;
+    stream.user_data = fh;
+    stream.write = (YR_STREAM_WRITE_FUNC) fwrite;
 
-	  result = yr_rules_save_stream(rules, &stream);
+    result = yr_rules_save_stream(rules, &stream);
 
-	  fclose(fh);
+    fclose(fh);
   }
-
 
   if (result != ERROR_SUCCESS)
   {
