@@ -39,10 +39,14 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define _tcscmp strcmp
 #define _tcsdup strdup
 #define _tcschr strchr
+#define _tcslen strlen
+#define _tcsstr strstr
+#define _tcstol strtol
 #define _tstoi atoi
 #define _tstof atof
 #define _tisdigit isdigit
 #define _tfopen fopen
+#define _ftprintf fprintf
 #define _stprintf sprintf
 #define _tprintf printf
 #define _tmain main

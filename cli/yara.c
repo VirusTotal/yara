@@ -58,7 +58,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "threading.h"
 #include "unicode.h"
 
-#define ERROR_COULD_NOT_CREATE_THREAD  100
+#define ERROR_COULD_NOT_CREATE_THREAD 100
 
 #ifndef MAX_PATH
 #define MAX_PATH 256
@@ -68,15 +68,17 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define min(x, y) ((x < y) ? (x) : (y))
 #endif
 
-#define MAX_ARGS_TAG            32
-#define MAX_ARGS_IDENTIFIER     32
-#define MAX_ARGS_EXT_VAR        32
-#define MAX_ARGS_MODULE_DATA    32
-#define MAX_QUEUED_FILES        64
+#define MAX_ARGS_TAG         32
+#define MAX_ARGS_IDENTIFIER  32
+#define MAX_ARGS_EXT_VAR     32
+#define MAX_ARGS_MODULE_DATA 32
+#define MAX_QUEUED_FILES     64
 
-
-#define exit_with_code(code) { result = code; goto _exit; }
-
+#define exit_with_code(code) \
+  {                          \
+    result = code;           \
+    goto _exit;              \
+  }
 
 typedef struct _MODULE_DATA
 {
@@ -163,135 +165,171 @@ static long max_strings_per_rule = DEFAULT_MAX_STRINGS_PER_RULE;
 args_option_t options[] = {
     OPT_STRING(
         0,
-        "atom-quality-table",
+        _T("atom-quality-table"),
         &atom_quality_table,
-        "path to a file with the atom quality table",
-        "FILE"),
+        _T("path to a file with the atom quality table"),
+        _T("FILE")),
 
-args_option_t options[] =
-{
-  OPT_STRING(0, 
-      _T("atom-quality-table"), &atom_quality_table,
-      _T("path to a file with the atom quality table"), 
-	  _T("FILE")),
+    OPT_BOOLEAN(
+        'C',
+        _T("compiled-rules"),
+        &rules_are_compiled,
+        _T("load compiled rules")),
 
-  OPT_BOOLEAN('C', 
-      _T("compiled-rules"), &rules_are_compiled,
-      _T("load compiled rules")),
+    OPT_BOOLEAN(
+        'c',
+        _T("count"),
+        &print_count_only,
+        _T("print only number of matches")),
 
-   OPT_BOOLEAN('c', 
-      _T("count"), &print_count_only,
-      _T("print only number of matches")),
+    OPT_STRING_MULTI(
+        'd',
+        _T("define"),
+        &ext_vars,
+        MAX_ARGS_EXT_VAR,
+        _T("define external variable"),
+        _T("VAR=VALUE")),
 
-  OPT_STRING_MULTI('d', 
-      _T("define"), &ext_vars, MAX_ARGS_EXT_VAR,
-      _T("define external variable"), 
-	  _T("VAR=VALUE")),
+    OPT_BOOLEAN(
+        0,
+        _T("fail-on-warnings"),
+        &fail_on_warnings,
+        _T("fail on warnings")),
 
-  OPT_BOOLEAN(0, 
-      _T("fail-on-warnings"), &fail_on_warnings,
-      _T("fail on warnings")),
+    OPT_BOOLEAN('f', _T("fast-scan"), &fast_scan, _T("fast matching mode")),
 
-  OPT_BOOLEAN('f', 
-      _T("fast-scan"), &fast_scan,
-      _T("fast matching mode")),
+    OPT_BOOLEAN('h', _T("help"), &show_help, _T("show this help and exit")),
 
-  OPT_BOOLEAN('h', 
-      _T("help"), &show_help,
-      _T("show this help and exit")),
+    OPT_STRING_MULTI(
+        'i',
+        _T("identifier"),
+        &identifiers,
+        MAX_ARGS_IDENTIFIER,
+        _T("print only rules named IDENTIFIER"),
+        _T("IDENTIFIER")),
 
-  OPT_STRING_MULTI('i', 
-      _T("identifier"), &identifiers, MAX_ARGS_IDENTIFIER,
-      _T("print only rules named IDENTIFIER"), 
-	  _T("IDENTIFIER")),
+    OPT_INTEGER(
+        'l',
+        _T("max-rules"),
+        &limit,
+        _T("abort scanning after matching a NUMBER of rules"),
+        _T("NUMBER")),
 
-  OPT_INTEGER('l', 
-      _T("max-rules"), &limit,
-      _T("abort scanning after matching a NUMBER of rules"), 
-	  _T("NUMBER")),
+    OPT_INTEGER(
+        0,
+        _T("max-strings-per-rule"),
+        &max_strings_per_rule,
+        _T("set maximum number of strings per rule (default=10000)"),
+        _T("NUMBER")),
 
-  OPT_INTEGER(0, 
-      _T("max-strings-per-rule"), &max_strings_per_rule,
-      _T("set maximum number of strings per rule (default=10000)"), 
-	  _T("NUMBER")),
+    OPT_STRING_MULTI(
+        'x',
+        _T("module-data"),
+        &modules_data,
+        MAX_ARGS_MODULE_DATA,
+        _T("pass FILE's content as extra data to MODULE"),
+        _T("MODULE=FILE")),
 
-  OPT_STRING_MULTI('x', 
-	  _T("module-data"), &modules_data, MAX_ARGS_MODULE_DATA,
-      _T("pass FILE's content as extra data to MODULE"), 
-	  _T("MODULE=FILE")),
+    OPT_BOOLEAN(
+        'n',
+        _T("negate"),
+        &negate,
+        _T("print only not satisfied rules (negate)"),
+        NULL),
 
-  OPT_BOOLEAN('n', 
-      _T("negate"), &negate,
-      _T("print only not satisfied rules (negate)"), 
-	  NULL),
+    OPT_BOOLEAN(
+        'w',
+        _T("no-warnings"),
+        &ignore_warnings,
+        _T("disable warnings")),
 
-  OPT_BOOLEAN('w', 
-      _T("no-warnings"), &ignore_warnings,
-      _T("disable warnings")),
+    OPT_BOOLEAN('m', _T("print-meta"), &show_meta, _T("print metadata")),
 
-  OPT_BOOLEAN('m', 
-      _T("print-meta"), &show_meta,
-      _T("print metadata")),
+    OPT_BOOLEAN(
+        'D',
+        _T("print-module-data"),
+        &show_module_data,
+        _T("print module data")),
 
-  OPT_BOOLEAN('D', 
-      _T("print-module-data"), &show_module_data,
-      _T("print module data")),
+    OPT_BOOLEAN(
+        'e',
+        _T("print-namespace"),
+        &show_namespace,
+        _T("print rules' namespace")),
 
-  OPT_BOOLEAN('e', 
-      _T("print-namespace"), &show_namespace,
-      _T("print rules' namespace")),
+    OPT_BOOLEAN(
+        'S',
+        _T("print-stats"),
+        &show_stats,
+        _T("print rules' statistics")),
 
-  OPT_BOOLEAN('S', 
-      _T("print-stats"), &show_stats,
-      _T("print rules' statistics")),
+    OPT_BOOLEAN(
+        's',
+        _T("print-strings"),
+        &show_strings,
+        _T("print matching strings")),
 
-  OPT_BOOLEAN('s', 
-      _T("print-strings"), &show_strings,
-      _T("print matching strings")),
+    OPT_BOOLEAN(
+        'L',
+        _T("print-string-length"),
+        &show_string_length,
+        _T("print length of matched strings")),
 
-  OPT_BOOLEAN('L', 
-      _T("print-string-length"), &show_string_length,
-      _T("print length of matched strings")),
+    OPT_BOOLEAN('g', _T("print-tags"), &show_tags, _T("print tags")),
 
-  OPT_BOOLEAN('g', 
-      _T("print-tags"), &show_tags,
-      _T("print tags")),
+    OPT_BOOLEAN(
+        'r',
+        _T("recursive"),
+        &recursive_search,
+        _T("recursively search directories")),
 
-  OPT_BOOLEAN('r', 
-      _T("recursive"), &recursive_search,
-      _T("recursively search directories")),
+    OPT_BOOLEAN(
+        'N',
+        _T("no-follow-symlinks"),
+        &follow_symlinks,
+        _T("do not follow symlinks when scanning")),
 
-  OPT_BOOLEAN('N', 
-      _T("no-follow-symlinks"), &follow_symlinks,
-      _T("do not follow symlinks when scanning")),
+    OPT_BOOLEAN(
+        0,
+        _T("scan-list"),
+        &scan_list_search,
+        _T("scan files listed in FILE, one per line")),
 
-  OPT_BOOLEAN(0, 
-      _T("scan-list"), &scan_list_search,
-      _T("scan files listed in FILE, one per line")),
+    OPT_INTEGER(
+        'k',
+        _T("stack-size"),
+        &stack_size,
+        _T("set maximum stack size (default=16384)"),
+        _T("SLOTS")),
 
-  OPT_INTEGER('k', 
-	  _T("stack-size"), &stack_size,
-      _T("set maximum stack size (default=16384)"), 
-	  _T("SLOTS")),
+    OPT_STRING_MULTI(
+        't',
+        _T("tag"),
+        &tags,
+        MAX_ARGS_TAG,
+        _T("print only rules tagged as TAG"),
+        _T("TAG")),
 
-  OPT_STRING_MULTI('t', 
-	  _T("tag"), &tags, MAX_ARGS_TAG,
-      _T("print only rules tagged as TAG"), 
-	  _T("TAG")),
+    OPT_INTEGER(
+        'p',
+        _T("threads"),
+        &threads,
+        _T("use the specified NUMBER of threads to scan a directory"),
+        _T("NUMBER")),
 
-  OPT_INTEGER('p', 
-	  _T("threads"), &threads,
-      _T("use the specified NUMBER of threads to scan a directory"), 
-	  _T("NUMBER")),
+    OPT_INTEGER(
+        'a',
+        _T("timeout"),
+        &timeout,
+        _T("abort scanning after the given number of SECONDS"),
+        _T("SECONDS")),
 
-  OPT_INTEGER('a', 
-	  _T("timeout"), &timeout,
-      _T("abort scanning after the given number of SECONDS"), 
-	  _T("SECONDS")),
-
-  OPT_BOOLEAN('v', 
-	  _T("version"), &show_version,
-      _T("show version information")),
+    OPT_BOOLEAN(
+        'v',
+        _T("version"),
+        &show_version,
+        _T("show version information")),
+};
 
 // file_queue is size-limited queue stored as a circular array, files are
 // removed from queue_head position and new files are added at queue_tail
@@ -346,9 +384,7 @@ static void file_queue_finish()
   for (i = 0; i < YR_MAX_THREADS; i++) semaphore_release(&used_slots);
 }
 
-
-static void file_queue_put(
-    const char_t* file_path)
+static void file_queue_put(const char_t* file_path)
 {
   semaphore_wait(&unused_slots);
   mutex_lock(&queue_mutex);
@@ -359,7 +395,6 @@ static void file_queue_put(
   mutex_unlock(&queue_mutex);
   semaphore_release(&used_slots);
 }
-
 
 static char_t* file_queue_get()
 {
@@ -386,8 +421,7 @@ static char_t* file_queue_get()
 
 #if defined(_WIN32) || defined(__CYGWIN__)
 
-static bool is_directory(
-    const char_t* path)
+static bool is_directory(const char_t* path)
 {
   DWORD attributes = GetFileAttributes(path);
 
@@ -414,17 +448,19 @@ static void scan_dir(
   {
     do
     {
-	  char_t full_path[MAX_PATH];
+      char_t full_path[MAX_PATH];
 
-      _sntprintf(full_path, MAX_PATH, _T("%s\\%s"), dir, FindFileData.cFileName);
+      _sntprintf(
+          full_path, MAX_PATH, _T("%s\\%s"), dir, FindFileData.cFileName);
 
       if (!(FindFileData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
       {
         file_queue_put(full_path);
       }
-      else if (scan_opts->recursive_search &&
-		       _tcscmp(FindFileData.cFileName, _T(".")) != 0 &&
-		       _tcscmp(FindFileData.cFileName, _T("..")) != 0)
+      else if (
+          scan_opts->recursive_search &&
+          _tcscmp(FindFileData.cFileName, _T(".")) != 0 &&
+          _tcscmp(FindFileData.cFileName, _T("..")) != 0)
       {
         scan_dir(full_path, scan_opts, start_time);
       }
@@ -435,41 +471,26 @@ static void scan_dir(
   }
 }
 
-static int scan_file(
-	YR_SCANNER* scanner, 
-	const char_t* filename)
+static int scan_file(YR_SCANNER* scanner, const char_t* filename)
 {
-	YR_FILE_DESCRIPTOR fd;
+  YR_FILE_DESCRIPTOR fd = CreateFile(
+      filename,
+      GENERIC_READ,
+      FILE_SHARE_READ | FILE_SHARE_WRITE,
+      NULL,
+      OPEN_EXISTING,
+      FILE_FLAG_SEQUENTIAL_SCAN,
+      NULL);
 
-#ifdef _WIN32
-	fd = CreateFile(
-		filename,
-		GENERIC_READ,
-		FILE_SHARE_READ | FILE_SHARE_WRITE,
-		NULL,
-		OPEN_EXISTING,
-		FILE_FLAG_SEQUENTIAL_SCAN,
-		NULL);
+  if (fd == INVALID_HANDLE_VALUE)
+    return ERROR_COULD_NOT_OPEN_FILE;
 
-	if (fd == INVALID_HANDLE_VALUE)
-		return ERROR_COULD_NOT_OPEN_FILE;
-#else
-	fd = open(filename, O_RDONLY);
+  int result = yr_scanner_scan_fd(scanner, fd);
 
-	if (fd == -1)
-		return ERROR_COULD_NOT_OPEN_FILE;
-#endif
-	int result = yr_scanner_scan_fd(scanner, fd);
+  CloseHandle(fd);
 
-#ifdef _WIN32
-	CloseHandle(fd);
-#else
-	close(fd);
-#endif
-
-	return result;
+  return result;
 }
-
 
 #if defined(__CYGWIN__)
 #define strtok_s strtok_r
@@ -502,8 +523,10 @@ static int populate_scan_list(
 
   if (fileSize == INVALID_FILE_SIZE)
   {
-    _ftprintf(stderr,
-      _T("error: could not determine size of file \"%s\".\n"), filename);
+    _ftprintf(
+        stderr,
+        _T("error: could not determine size of file \"%s\".\n"),
+        filename);
     CloseHandle(hFile);
     return ERROR_COULD_NOT_READ_FILE;
   }
@@ -514,8 +537,10 @@ static int populate_scan_list(
 
   if (buf == NULL)
   {
-    _ftprintf(stderr,
-       _T("error: could not allocate memory for file \"%s\".\n"), filename);
+    _ftprintf(
+        stderr,
+        _T("error: could not allocate memory for file \"%s\".\n"),
+        filename);
     CloseHandle(hFile);
     return ERROR_INSUFFICIENT_MEMORY;
   }
@@ -541,12 +566,12 @@ static int populate_scan_list(
     if (*path != '\0')
     {
       char_t* final = path + _tcslen(path) - 1;
-      
-	  if (*final == '\r')
+
+      if (*final == '\r')
         *final = '\0';
     }
-    
-	if (is_directory(path))
+
+    if (is_directory(path))
       scan_dir(path, scan_opts, start_time);
     else
       file_queue_put(path);
@@ -616,6 +641,20 @@ static void scan_dir(
 
     closedir(dp);
   }
+}
+
+static int scan_file(YR_SCANNER* scanner, const char_t* filename)
+{
+  YR_FILE_DESCRIPTOR fd = open(filename, O_RDONLY);
+
+  if (fd == -1)
+    return ERROR_COULD_NOT_OPEN_FILE;
+
+  int result = yr_scanner_scan_fd(scanner, fd);
+
+  close(fd);
+
+  return result;
 }
 
 static int populate_scan_list(
@@ -1073,15 +1112,15 @@ static int callback(
       mutex_unlock(&output_mutex);
     }
 
-      return CALLBACK_CONTINUE;
+    return CALLBACK_CONTINUE;
 
-    case CALLBACK_MSG_TOO_MANY_MATCHES:
-      fprintf(
-          stderr,
-          "Warning: maximum matches for string %s. Results may be invalid.\n",
-          ((YR_STRING*) message_data)->identifier);
+  case CALLBACK_MSG_TOO_MANY_MATCHES:
+    fprintf(
+        stderr,
+        "Warning: maximum matches for string %s. Results may be invalid.\n",
+        ((YR_STRING*) message_data)->identifier);
 
-      return CALLBACK_CONTINUE;
+    return CALLBACK_CONTINUE;
   }
 
   return CALLBACK_ERROR;
@@ -1137,7 +1176,6 @@ static void* scanning_thread(void* param)
   return 0;
 }
 
-
 static int load_modules_data()
 {
   for (int i = 0; modules_data[i] != NULL; i++)
@@ -1162,10 +1200,9 @@ static int load_modules_data()
       {
         free(module_data);
 
-        fprintf(stderr, 
-		  "error: could not open file \"%s\".\n", equal_sign + 1);
-        
-		return false;
+        fprintf(stderr, "error: could not open file \"%s\".\n", equal_sign + 1);
+
+        return false;
       }
 
       module_data->next = modules_data_list;
@@ -1193,10 +1230,7 @@ static void unload_modules_data()
   modules_data_list = NULL;
 }
 
-
-int _tmain(
-    int argc,
-    const char_t** argv)
+int _tmain(int argc, const char_t** argv)
 {
   COMPILER_RESULTS cr;
 
@@ -1287,30 +1321,30 @@ int _tmain(
       exit_with_code(EXIT_FAILURE);
     }
 
-	// Not using yr_rules_load because it does not have support for unicode
-	// file names. Instead use open _tfopen for openning the file and 
-	// yr_rules_load_stream for loading the rules from it.
+    // Not using yr_rules_load because it does not have support for unicode
+    // file names. Instead use open _tfopen for openning the file and
+    // yr_rules_load_stream for loading the rules from it.
 
-	FILE* fh = _tfopen(argv[0], _T("rb"));
+    FILE* fh = _tfopen(argv[0], _T("rb"));
 
-	if (fh != NULL)
-	{ 
-	  YR_STREAM stream;
+    if (fh != NULL)
+    {
+      YR_STREAM stream;
 
-	  stream.user_data = fh;
-	  stream.read = (YR_STREAM_READ_FUNC) fread;
+      stream.user_data = fh;
+      stream.read = (YR_STREAM_READ_FUNC) fread;
 
-	  result = yr_rules_load_stream(&stream, &rules);
+      result = yr_rules_load_stream(&stream, &rules);
 
-	  fclose(fh);
+      fclose(fh);
 
-	  if (result == ERROR_SUCCESS)
-	    result = define_external_variables(ext_vars, rules, NULL);
-	}
-	else
-	{
-	  result = ERROR_COULD_NOT_OPEN_FILE;
-	}
+      if (result == ERROR_SUCCESS)
+        result = define_external_variables(ext_vars, rules, NULL);
+    }
+    else
+    {
+      result = ERROR_COULD_NOT_OPEN_FILE;
+    }
   }
 
   else
@@ -1451,7 +1485,7 @@ int _tmain(
 
     if (result != ERROR_SUCCESS)
     {
-	  _ftprintf(stderr, _T("error: %d\n"), result);
+      _ftprintf(stderr, _T("error: %d\n"), result);
       exit_with_code(EXIT_FAILURE);
     }
 
@@ -1459,7 +1493,7 @@ int _tmain(
     yr_scanner_set_flags(scanner, flags);
     yr_scanner_set_timeout(scanner, timeout);
 
-	long pid = _tcstol(argv[argc - 1], NULL, 10);
+    long pid = _tcstol(argv[argc - 1], NULL, 10);
 
     if (pid != 0)
       result = yr_scanner_scan_proc(scanner, (int) pid);

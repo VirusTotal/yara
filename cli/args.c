@@ -36,16 +36,14 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "args.h"
 #include "common.h"
+#include "unicode.h"
 
+#define args_is_long_arg(arg) (arg[0] == '-' && arg[1] == '-' && arg[2] != '\0')
 
 #define args_is_short_arg(arg) \
   (arg[0] == '-' && arg[1] != '-' && arg[1] != '\0')
 
-
-
-args_option_t* args_get_short_option(
-    args_option_t *options,
-    const char_t opt)
+args_option_t* args_get_short_option(args_option_t* options, const char_t opt)
 {
   while (options->type != ARGS_OPT_END)
   {
@@ -58,10 +56,7 @@ args_option_t* args_get_short_option(
   return NULL;
 }
 
-
-args_option_t* args_get_long_option(
-    args_option_t *options,
-    const char_t* arg)
+args_option_t* args_get_long_option(args_option_t* options, const char_t* arg)
 {
   arg += 2;  // skip starting --
 
@@ -84,13 +79,12 @@ args_option_t* args_get_long_option(
   return NULL;
 }
 
-
 args_error_type_t args_parse_option(
     args_option_t* opt,
     const char_t* opt_arg,
     int* opt_arg_was_used)
 {
-  char_t *endptr = NULL;
+  char_t* endptr = NULL;
 
   if (opt_arg_was_used != NULL)
     *opt_arg_was_used = 0;
@@ -104,11 +98,11 @@ args_error_type_t args_parse_option(
     *(bool*) opt->value = !(*(bool*) opt->value);
     break;
 
-    case ARGS_OPT_INTEGER:
-      if (opt_arg == NULL)
-        return ARGS_ERROR_REQUIRED_INTEGER_ARG;
+  case ARGS_OPT_INTEGER:
+    if (opt_arg == NULL)
+      return ARGS_ERROR_REQUIRED_INTEGER_ARG;
 
-      *(long*) opt->value = _tcstol(opt_arg, &endptr, 0);
+    *(long*) opt->value = _tcstol(opt_arg, &endptr, 0);
 
     if (*endptr != '\0')
       return ARGS_ERROR_REQUIRED_INTEGER_ARG;
@@ -118,20 +112,20 @@ args_error_type_t args_parse_option(
 
     break;
 
-    case ARGS_OPT_STRING:
-      if (opt_arg == NULL)
-        return ARGS_ERROR_REQUIRED_STRING_ARG;
+  case ARGS_OPT_STRING:
+    if (opt_arg == NULL)
+      return ARGS_ERROR_REQUIRED_STRING_ARG;
 
 #ifdef _UNICODE
-	  if (opt->max_count > 1)
-		  ((const char**) opt->value)[opt->count] = unicode_to_ansi(opt_arg);
-	  else
-		  *(const char**) opt->value = unicode_to_ansi(opt_arg);
+    if (opt->max_count > 1)
+      ((const char**) opt->value)[opt->count] = unicode_to_ansi(opt_arg);
+    else
+      *(const char**) opt->value = unicode_to_ansi(opt_arg);
 #else
-	  if (opt->max_count > 1)
-		  ((const char**) opt->value)[opt->count] = opt_arg;
-	  else
-		  *(const char**) opt->value = opt_arg;
+    if (opt->max_count > 1)
+      ((const char**) opt->value)[opt->count] = opt_arg;
+    else
+      *(const char**) opt->value = opt_arg;
 #endif
 
     if (opt_arg_was_used != NULL)
@@ -148,38 +142,31 @@ args_error_type_t args_parse_option(
   return ARGS_ERROR_OK;
 }
 
-
-void args_print_error(
-    args_error_type_t error,
-    const char_t* option)
+void args_print_error(args_error_type_t error, const char_t* option)
 {
   switch (error)
   {
-    case ARGS_ERROR_UNKNOWN_OPT:
-      _ftprintf(stderr, _T("unknown option `%s`\n"), option);
-      break;
-    case ARGS_ERROR_TOO_MANY:
-	  _ftprintf(stderr, _T("too many `%s` options\n"), option);
-      break;
-    case ARGS_ERROR_REQUIRED_INTEGER_ARG:
-      _ftprintf(stderr, _T("option `%s` requires an integer argument\n"), option);
-      break;
-    case ARGS_ERROR_REQUIRED_STRING_ARG:
-      _ftprintf(stderr, _T("option `%s` requires a string argument\n"), option);
-      break;
-    case ARGS_ERROR_UNEXPECTED_ARG:
-      _ftprintf(stderr, _T("option `%s` doesn't expect an argument\n"), option);
-      break;
-    default:
-      return;
+  case ARGS_ERROR_UNKNOWN_OPT:
+    _ftprintf(stderr, _T("unknown option `%s`\n"), option);
+    break;
+  case ARGS_ERROR_TOO_MANY:
+    _ftprintf(stderr, _T("too many `%s` options\n"), option);
+    break;
+  case ARGS_ERROR_REQUIRED_INTEGER_ARG:
+    _ftprintf(stderr, _T("option `%s` requires an integer argument\n"), option);
+    break;
+  case ARGS_ERROR_REQUIRED_STRING_ARG:
+    _ftprintf(stderr, _T("option `%s` requires a string argument\n"), option);
+    break;
+  case ARGS_ERROR_UNEXPECTED_ARG:
+    _ftprintf(stderr, _T("option `%s` doesn't expect an argument\n"), option);
+    break;
+  default:
+    return;
   }
 }
 
-
-int args_parse(
-    args_option_t *options,
-    int argc,
-    const char_t **argv)
+int args_parse(args_option_t* options, int argc, const char_t** argv)
 {
   args_error_type_t error = ARGS_ERROR_OK;
 
@@ -259,12 +246,10 @@ int args_parse(
   }
 
   // Initialize to NULL the value pointers for all options.
-  for (; options->type != ARGS_OPT_END; options++)
-	  options->value = NULL;
+  for (; options->type != ARGS_OPT_END; options++) options->value = NULL;
 
   return o;
 }
-
 
 void args_print_usage(args_option_t* options, int help_alignment)
 {
@@ -298,15 +283,13 @@ void args_print_usage(args_option_t* options, int help_alignment)
   }
 }
 
-
-void args_free(
-	args_option_t *options)
+void args_free(args_option_t* options)
 {
-	for (; options->type != ARGS_OPT_END; options++)
-	{
-		if (options->type == ARGS_OPT_STRING && options->value != NULL)
-		{
-		  free(options->value);
-		}
-	}
+  for (; options->type != ARGS_OPT_END; options++)
+  {
+    if (options->type == ARGS_OPT_STRING && options->value != NULL)
+    {
+      free(options->value);
+    }
+  }
 }

@@ -38,7 +38,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <yara.h>
 
 #include "common.h"
-
+#include "unicode.h"
 
 #define exit_with_code(code) { result = code; goto _exit; }
 
