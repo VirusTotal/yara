@@ -30,11 +30,11 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #if defined(_WIN32)
 #include <io.h>
 
-// In Visual C++ use _taccess_s, in MinGW use access_s.
+// In Visual C++ use _taccess_s, in MinGW use _access_s.
 #if defined(_MSC_VER)
 #define access _taccess_s
 #else
-#define access access_s
+#define access _access_s
 #endif
 
 #else  // not _WIN32
