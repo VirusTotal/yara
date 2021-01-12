@@ -36,6 +36,13 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #else
 #define char_t char
 #define _T(x) x
+
+#ifdef __CYGWIN__
+#define _tcstok_s strtok_r
+#else
+#define _tcstok_s strtok_s
+#endif
+
 #define _tcscmp strcmp
 #define _tcsdup strdup
 #define _tcschr strchr
@@ -50,6 +57,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define _stprintf sprintf
 #define _tprintf printf
 #define _tmain main
+#define _sntprintf snprintf
 #endif
 
 #endif

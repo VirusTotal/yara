@@ -439,32 +439,30 @@ static void scan_dir(
     SCAN_OPTIONS* scan_opts,
     time_t start_time)
 {
-  static char_t path_and_mask[MAX_PATH];
+  char_t path[MAX_PATH];
 
-  _sntprintf(path_and_mask, MAX_PATH, _T("%s\\*"), dir);
+  _sntprintf(path, MAX_PATH, _T("%s\\*"), dir);
 
   WIN32_FIND_DATA FindFileData;
-  HANDLE hFind = FindFirstFile(path_and_mask, &FindFileData);
+  HANDLE hFind = FindFirstFile(path, &FindFileData);
 
   if (hFind != INVALID_HANDLE_VALUE)
   {
     do
     {
-      char_t full_path[MAX_PATH];
-
       _sntprintf(
-          full_path, MAX_PATH, _T("%s\\%s"), dir, FindFileData.cFileName);
+          path, MAX_PATH, _T("%s\\%s"), dir, FindFileData.cFileName);
 
       if (!(FindFileData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
       {
-        file_queue_put(full_path);
+        file_queue_put(path);
       }
       else if (
           scan_opts->recursive_search &&
           _tcscmp(FindFileData.cFileName, _T(".")) != 0 &&
           _tcscmp(FindFileData.cFileName, _T("..")) != 0)
       {
-        scan_dir(full_path, scan_opts, start_time);
+        scan_dir(path, scan_opts, start_time);
       }
 
     } while (FindNextFile(hFind, &FindFileData));
@@ -494,9 +492,6 @@ static int scan_file(YR_SCANNER* scanner, const char_t* filename)
   return result;
 }
 
-#if defined(__CYGWIN__)
-#define strtok_s strtok_r
-#endif
 
 static int populate_scan_list(
     const char_t* filename,
