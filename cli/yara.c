@@ -33,6 +33,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define _POSIX_C_SOURCE 200809L
 
 #include <dirent.h>
+#include <fcntl.h>
 #include <inttypes.h>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -450,8 +451,7 @@ static void scan_dir(
   {
     do
     {
-      _sntprintf(
-          path, MAX_PATH, _T("%s\\%s"), dir, FindFileData.cFileName);
+      _sntprintf(path, MAX_PATH, _T("%s\\%s"), dir, FindFileData.cFileName);
 
       if (!(FindFileData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
       {
@@ -491,7 +491,6 @@ static int scan_file(YR_SCANNER* scanner, const char_t* filename)
 
   return result;
 }
-
 
 static int populate_scan_list(
     const char_t* filename,
