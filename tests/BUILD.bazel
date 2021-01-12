@@ -27,6 +27,7 @@
 
 COPTS = [
     "-D_GNU_SOURCE",
+    "-DHAVE_STDBOOL_H=1",
     # Tell the compiler we want the C99 standard.
     "-std=c99",
 ]
@@ -39,6 +40,7 @@ cc_library(
 cc_library(
     name = "util",
     srcs = ["util.c"],
+    copts = COPTS,
     textual_hdrs = ["util.h"],
     deps = ["@//:libyara"],
 )
