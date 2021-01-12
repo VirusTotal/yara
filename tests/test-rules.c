@@ -73,12 +73,10 @@ static void test_boolean_operators()
   assert_false_rule("rule test { condition: false or false }", NULL);
 
   assert_false_rule(
-      "import \"tests\" rule test { condition: not tests.undefined.i }",
-      NULL);
+      "import \"tests\" rule test { condition: not tests.undefined.i }", NULL);
 
   assert_false_rule(
-      "import \"tests\" rule test { condition: tests.undefined.i }",
-      NULL);
+      "import \"tests\" rule test { condition: tests.undefined.i }", NULL);
 
   assert_false_rule(
       "import \"tests\" rule test { condition: tests.undefined.i and true }",
@@ -1811,7 +1809,7 @@ void test_re()
       "mississippi\tmississippi.mississippi\nmississippi" TEXT_1024_BYTES);
 
   assert_true_rule(
-      "rule test { strings: $a = /mississippi.*mississippi$/s condition: $a }",
+      "rule test { strings: $a = /mississippi.*mississippi$/s condition: $a}",
       TEXT_1024_BYTES "mississippi\tmississippi.mississippi\nmississippi");
 
   assert_false_rule(
@@ -2115,8 +2113,8 @@ void test_re()
   assert_false_regexp("^abc$", "aabc");
   assert_false_regexp("abc^", "abc");
   assert_false_regexp("ab^c", "abc");
-  assert_false_regexp("a^bcdef", "abcdef")
-      assert_true_regexp("abc$", "aabc", "abc");
+  assert_false_regexp("a^bcdef", "abcdef");
+  assert_true_regexp("abc$", "aabc", "abc");
   assert_false_regexp("$abc", "abc");
   assert_true_regexp("(a|a$)bcd", "abcd", "abcd");
   assert_false_regexp("(a$|a$)bcd", "abcd");
@@ -2148,16 +2146,20 @@ void test_re()
       "(ba{4}){4,10}",
       "baaaabaaaabaaaabaaaabaaaa",
       "baaaabaaaabaaaabaaaabaaaa");
+
   assert_true_regexp(
       "(ba{2}a{2}){5,10}",
       "baaaabaaaabaaaabaaaabaaaa",
       "baaaabaaaabaaaabaaaabaaaa");
+
   assert_true_regexp(
       "(ba{3}){4,10}", "baaabaaabaaabaaabaaa", "baaabaaabaaabaaabaaa");
+
   assert_true_regexp(
       "(ba{4}){5,10}",
       "baaaabaaaabaaaabaaaabaaaa",
       "baaaabaaaabaaaabaaaabaaaa");
+
   assert_false_regexp("(ba{4}){4,10}", "baaaabaaaabaaaa");
 
   // Test for integer overflow in repeat interval
@@ -2945,9 +2947,9 @@ void test_performance_warnings()
 
   assert_no_warnings("rule test { \
         strings: $a = { 01 02 03 } \
-        condition: $a }")
+        condition: $a }");
 
-      assert_no_warnings("rule test { \
+  assert_no_warnings("rule test { \
         strings: $a = { 20 01 02 } \
         condition: $a }");
 
@@ -2991,27 +2993,8 @@ void test_performance_warnings()
   YR_DEBUG_FPRINTF(1, stderr, "} // %s()\n", __FUNCTION__);
 }
 
-int main(int argc, char** argv)
+static void test_pass(int pass)
 {
-  int result = 0;
-
-  YR_DEBUG_INITIALIZE();
-  YR_DEBUG_FPRINTF(1, stderr, "+ %s() { // in %s\n", __FUNCTION__, argv[0]);
-
-  chdir_if_env_top_srcdir();
-
-  yr_initialize();
-
-  assert_true_expr(strlen(TEXT_1024_BYTES) == 1024);
-
-  // e.g. ./test-rules-pass-1 or test-rules-pass-1.exe
-  char* test_rules_pass = strstr(argv[0], "test-rules-pass-");
-  assert(test_rules_pass != NULL);
-
-  int pass;
-
-  assert(1 == sscanf(test_rules_pass, "test-rules-pass-%d", &pass));
-
   switch (pass)
   {
   case 1:
@@ -3026,8 +3009,8 @@ int main(int argc, char** argv)
     break;
   case 3:
     // Come here to test with test libyara iterator which is:
-    // Like default libyara iterator, plus records block stats, plus splits into
-    // multiple blocks:
+    // Like default libyara iterator, plus records block stats, plus splits
+    // into multiple blocks:
     matches_blob_uses_default_iterator = 0;
     // "Actually, a single block will contain the whole file's content in most
     // cases, but you can't rely on that while writing your code. For very big
@@ -3113,10 +3096,28 @@ int main(int argc, char** argv)
         yr_test_count_get_block);
   }
 
+  YR_DEBUG_FPRINTF(1, stderr, "} // %s()\n", __FUNCTION__);
+}
+
+int main(int argc, char** argv)
+{
+  YR_DEBUG_INITIALIZE();
+  YR_DEBUG_FPRINTF(1, stderr, "+ %s() { \n", __FUNCTION__);
+
+  chdir_if_env_top_srcdir();
+  yr_initialize();
+
+  assert_true_expr(strlen(TEXT_1024_BYTES) == 1024);
+
+  for (int i = 1; i <= 3; i++)
+  {
+    printf("--- PASS %d ---\n", i);
+    test_pass(i);
+  }
+
   yr_finalize();
 
-  YR_DEBUG_FPRINTF(
-      1, stderr, "} = %d // %s() in %s\n", result, __FUNCTION__, argv[0]);
+  YR_DEBUG_FPRINTF(1, stderr, "} // %s()\n", __FUNCTION__);
 
-  return result;
+  return 0;
 }
