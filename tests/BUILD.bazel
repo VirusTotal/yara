@@ -50,7 +50,10 @@ cc_test(
     srcs = ["test-alignment.c"],
     copts = COPTS,
     linkstatic = True,
-    deps = ["@//:libyara"],
+    deps = [
+        ":util",
+        "@//:libyara",
+    ],
 )
 
 cc_test(
