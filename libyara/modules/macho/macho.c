@@ -623,6 +623,7 @@ void macho_load_fat_arch_header(
     yr_fat_arch_32_t* arch32 =
         (yr_fat_arch_32_t*) (data + sizeof(yr_fat_header_t) + (num * sizeof(yr_fat_arch_32_t)));
 
+    arch->cputype = yr_be32toh(arch32->cputype);
     arch->cpusubtype = yr_be32toh(arch32->cpusubtype);
     arch->offset = yr_be32toh(arch32->offset);
     arch->size = yr_be32toh(arch32->size);
