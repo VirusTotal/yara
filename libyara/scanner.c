@@ -639,6 +639,7 @@ YR_API int yr_scanner_scan_mem(
   iterator.first = _yr_get_first_block;
   iterator.next = _yr_get_next_block;
   iterator.file_size = _yr_get_file_size;
+  iterator.last_error = ERROR_SUCCESS;
 
   int result = yr_scanner_scan_mem_blocks(scanner, &iterator);
 
