@@ -108,7 +108,9 @@ Reference
 
 .. c:type:: timestamp
 
-    PE timestamp.
+    PE timestamp, as an epoch integer.
+    
+    *Example: pe.timestamp >= 1424563200*
 
 .. c:type:: pointer_to_symbol_table
 
