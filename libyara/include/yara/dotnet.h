@@ -1,6 +1,8 @@
 #ifndef YR_DOTNET_H
 #define YR_DOTNET_H
 
+#include <yara/pe.h>
+
 #pragma pack(push, 1)
 
 //
