@@ -36,7 +36,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 // Check for Mach-O binary magic constant.
 
-int is_macho_file_block(const uint32_t* magic)
+int is_macho_file_block(const uint32_t *magic)
 {
   return *magic == MH_MAGIC || *magic == MH_CIGAM || *magic == MH_MAGIC_64 ||
          *magic == MH_CIGAM_64;
@@ -44,7 +44,7 @@ int is_macho_file_block(const uint32_t* magic)
 
 // Check if file is for 32-bit architecture.
 
-int macho_is_32(const uint8_t* magic)
+int macho_is_32(const uint8_t *magic)
 {
   // Magic must be [CE]FAEDFE or FEEDFA[CE].
   return magic[0] == 0xce || magic[3] == 0xce;
@@ -52,7 +52,7 @@ int macho_is_32(const uint8_t* magic)
 
 // Check if file is for big-endian architecture.
 
-int macho_is_big(const uint8_t* magic)
+int macho_is_big(const uint8_t *magic)
 {
   // Magic must be [FE]EDFACE or [FE]EDFACF.
   return magic[0] == 0xfe;
@@ -60,14 +60,15 @@ int macho_is_big(const uint8_t* magic)
 
 // Check for Mach-O fat binary magic constant.
 
-int is_fat_macho_file_block(const uint32_t* magic)
+int is_fat_macho_file_block(const uint32_t *magic)
 {
   return *magic == FAT_MAGIC || *magic == FAT_CIGAM || *magic == FAT_MAGIC_64 ||
          *magic == FAT_CIGAM_64;
 }
 
 // Check if file is 32-bit fat file.
-int macho_fat_is_32(const uint8_t* magic)
+
+int macho_fat_is_32(const uint8_t *magic)
 {
   // Magic must be CAFEBA[BE].
   return magic[3] == 0xbe;
@@ -79,7 +80,7 @@ static int should_swap_bytes(const uint32_t magic)
          magic == FAT_CIGAM_64;
 }
 
-static void swap_mach_header(yr_mach_header_64_t* mh)
+static void swap_mach_header(yr_mach_header_64_t *mh)
 {
   // Don't swap the magic number so we can tell if swapping is needed
   mh->cputype = yr_bswap32(mh->cputype);
@@ -89,17 +90,17 @@ static void swap_mach_header(yr_mach_header_64_t* mh)
   mh->sizeofcmds = yr_bswap32(mh->sizeofcmds);
   mh->flags = yr_bswap32(mh->flags);
 
-  if (!macho_is_32((const uint8_t*) &mh->magic))
+  if (!macho_is_32((const uint8_t *) &mh->magic))
     mh->reserved = yr_bswap32(mh->reserved);
 }
 
-static void swap_load_command(yr_load_command_t* lc)
+static void swap_load_command(yr_load_command_t *lc)
 {
   lc->cmd = yr_bswap32(lc->cmd);
   lc->cmdsize = yr_bswap32(lc->cmdsize);
 }
 
-static void swap_segment_command(yr_segment_command_32_t* sg)
+static void swap_segment_command(yr_segment_command_32_t *sg)
 {
   sg->cmd = yr_bswap32(sg->cmd);
   sg->cmdsize = yr_bswap32(sg->cmdsize);
@@ -113,7 +114,7 @@ static void swap_segment_command(yr_segment_command_32_t* sg)
   sg->flags = yr_bswap32(sg->flags);
 }
 
-static void swap_segment_command_64(yr_segment_command_64_t* sg)
+static void swap_segment_command_64(yr_segment_command_64_t *sg)
 {
   sg->cmd = yr_bswap32(sg->cmd);
   sg->cmdsize = yr_bswap32(sg->cmdsize);
@@ -127,7 +128,7 @@ static void swap_segment_command_64(yr_segment_command_64_t* sg)
   sg->flags = yr_bswap32(sg->flags);
 }
 
-static void swap_section(yr_section_32_t* sec)
+static void swap_section(yr_section_32_t *sec)
 {
   sec->addr = yr_bswap32(sec->addr);
   sec->size = yr_bswap32(sec->size);
@@ -140,7 +141,7 @@ static void swap_section(yr_section_32_t* sec)
   sec->reserved2 = yr_bswap32(sec->reserved2);
 }
 
-static void swap_section_64(yr_section_64_t* sec)
+static void swap_section_64(yr_section_64_t *sec)
 {
   sec->addr = yr_bswap64(sec->addr);
   sec->size = yr_bswap64(sec->size);
@@ -154,7 +155,7 @@ static void swap_section_64(yr_section_64_t* sec)
   sec->reserved3 = yr_bswap32(sec->reserved3);
 }
 
-static void swap_entry_point_command(yr_entry_point_command_t* ep_command)
+static void swap_entry_point_command(yr_entry_point_command_t *ep_command)
 {
   ep_command->cmd = yr_bswap32(ep_command->cmd);
   ep_command->cmdsize = yr_bswap32(ep_command->cmdsize);
@@ -164,7 +165,7 @@ static void swap_entry_point_command(yr_entry_point_command_t* ep_command)
 
 // Convert virtual address to file offset. Segments have to be already loaded.
 
-bool macho_rva_to_offset(uint64_t address, uint64_t* result, YR_OBJECT* object)
+bool macho_rva_to_offset(uint64_t address, uint64_t *result, YR_OBJECT *object)
 {
   uint64_t segment_count = get_integer(object, "number_of_segments");
 
@@ -186,7 +187,7 @@ bool macho_rva_to_offset(uint64_t address, uint64_t* result, YR_OBJECT* object)
 
 // Convert file offset to virtual address. Segments have to be already loaded.
 
-int macho_offset_to_rva(uint64_t offset, uint64_t* result, YR_OBJECT* object)
+int macho_offset_to_rva(uint64_t offset, uint64_t *result, YR_OBJECT *object)
 {
   uint64_t segment_count = get_integer(object, "number_of_segments");
 
@@ -207,73 +208,83 @@ int macho_offset_to_rva(uint64_t offset, uint64_t* result, YR_OBJECT* object)
 }
 
 // Get entry point address from LC_UNIXTHREAD load command.
-
 void macho_handle_unixthread(
-    void* command,
-    YR_OBJECT* object,
-    YR_SCAN_CONTEXT* context)
+    const uint8_t *command,
+    YR_OBJECT *object,
+    YR_SCAN_CONTEXT *context)
 {
   int should_swap = should_swap_bytes(get_integer(object, "magic"));
   bool is64 = false;
-  command = (void*) ((uint8_t*) command + sizeof(yr_thread_command_t));
+
+  uint32_t command_size = ((yr_thread_command_t *) command)->cmdsize;
+
+  // cmd_size includes the size of yr_thread_command_t and the thread
+  // state structure that follows, let's compute the size of the thread state
+  // structure.
+  size_t thread_state_size = command_size - sizeof(yr_thread_command_t);
+
+  // The structure that contains the thread state starts where
+  // yr_thread_command_t ends.
+  const void *thread_state = command + sizeof(yr_thread_command_t);
+
   uint64_t address = 0;
 
   switch (get_integer(object, "cputype"))
   {
   case CPU_TYPE_MC680X0:
   {
-    yr_m68k_thread_state_t* m68k_state = (yr_m68k_thread_state_t*) command;
-    address = m68k_state->pc;
+    if (thread_state_size >= sizeof(yr_m68k_thread_state_t))
+      address = ((yr_m68k_thread_state_t *) thread_state)->pc;
     break;
   }
   case CPU_TYPE_MC88000:
   {
-    yr_m88k_thread_state_t* m88k_state = (yr_m88k_thread_state_t*) command;
-    address = m88k_state->xip;
+    if (thread_state_size >= sizeof(yr_m88k_thread_state_t))
+      address = ((yr_m88k_thread_state_t *) thread_state)->xip;
     break;
   }
   case CPU_TYPE_SPARC:
   {
-    yr_sparc_thread_state_t* sparc_state = (yr_sparc_thread_state_t*) command;
-    address = sparc_state->pc;
+    if (thread_state_size >= sizeof(yr_sparc_thread_state_t))
+      address = ((yr_sparc_thread_state_t *) thread_state)->pc;
     break;
   }
   case CPU_TYPE_POWERPC:
   {
-    yr_ppc_thread_state_t* ppc_state = (yr_ppc_thread_state_t*) command;
-    address = ppc_state->srr0;
+    if (thread_state_size >= sizeof(yr_ppc_thread_state_t))
+      address = ((yr_ppc_thread_state_t *) thread_state)->srr0;
     break;
   }
   case CPU_TYPE_X86:
   {
-    yr_x86_thread_state_t* x86_state = (yr_x86_thread_state_t*) command;
-    address = x86_state->eip;
+    if (thread_state_size >= sizeof(yr_x86_thread_state_t))
+      address = ((yr_x86_thread_state_t *) thread_state)->eip;
     break;
   }
   case CPU_TYPE_ARM:
   {
-    yr_arm_thread_state_t* arm_state = (yr_arm_thread_state_t*) command;
-    address = arm_state->pc;
+    if (thread_state_size >= sizeof(yr_arm_thread_state_t))
+      address = ((yr_arm_thread_state_t *) thread_state)->pc;
     break;
   }
   case CPU_TYPE_X86_64:
   {
-    yr_x86_thread_state64_t* x64_state = (yr_x86_thread_state64_t*) command;
-    address = x64_state->rip;
+    if (thread_state_size >= sizeof(yr_x86_thread_state64_t))
+      address = ((yr_x86_thread_state64_t *) thread_state)->rip;
     is64 = true;
     break;
   }
   case CPU_TYPE_ARM64:
   {
-    yr_arm_thread_state64_t* arm64_state = (yr_arm_thread_state64_t*) command;
-    address = arm64_state->pc;
+    if (thread_state_size >= sizeof(yr_arm_thread_state64_t))
+      address = ((yr_arm_thread_state64_t *) thread_state)->pc;
     is64 = true;
     break;
   }
   case CPU_TYPE_POWERPC64:
   {
-    yr_ppc_thread_state64_t* ppc64_state = (yr_ppc_thread_state64_t*) command;
-    address = ppc64_state->srr0;
+    if (thread_state_size >= sizeof(yr_ppc_thread_state64_t))
+      address = ((yr_ppc_thread_state64_t *) thread_state)->srr0;
     is64 = true;
     break;
   }
@@ -307,9 +318,9 @@ void macho_handle_unixthread(
 // Get entry point offset and stack-size from LC_MAIN load command.
 
 void macho_handle_main(
-    void* command,
-    YR_OBJECT* object,
-    YR_SCAN_CONTEXT* context)
+    void *command,
+    YR_OBJECT *object,
+    YR_SCAN_CONTEXT *context)
 {
   yr_entry_point_command_t ep_command;
 
@@ -336,9 +347,9 @@ void macho_handle_main(
 // Load segment and its sections.
 
 void macho_handle_segment(
-    const uint8_t* command,
+    const uint8_t *command,
     const unsigned i,
-    YR_OBJECT* object)
+    YR_OBJECT *object)
 {
   int should_swap = should_swap_bytes(get_integer(object, "magic"));
 
@@ -362,19 +373,21 @@ void macho_handle_segment(
   set_integer(sg.flags, object, "segments[%i].flags", i);
 
   uint64_t parsed_size = sizeof(yr_segment_command_32_t);
-  yr_section_32_t sec;
+
+  // The array of yr_section_32_t starts where yr_segment_command_32_t ends.
+  yr_section_32_t *sections =
+      (yr_section_32_t *) (command + sizeof(yr_segment_command_32_t));
 
   for (unsigned j = 0; j < sg.nsects; ++j)
   {
+    yr_section_32_t sec;
+
     parsed_size += sizeof(yr_section_32_t);
+
     if (sg.cmdsize < parsed_size)
       break;
 
-    memcpy(
-        &sec,
-        command + sizeof(yr_segment_command_32_t) +
-            (j * sizeof(yr_section_32_t)),
-        sizeof(yr_section_32_t));
+    memcpy(&sec, &sections[j], sizeof(yr_section_32_t));
 
     if (should_swap)
       swap_section(&sec);
@@ -418,9 +431,9 @@ void macho_handle_segment(
 }
 
 void macho_handle_segment_64(
-    const uint8_t* command,
+    const uint8_t *command,
     const unsigned i,
-    YR_OBJECT* object)
+    YR_OBJECT *object)
 {
   int should_swap = should_swap_bytes(get_integer(object, "magic"));
 
@@ -506,16 +519,18 @@ void macho_handle_segment_64(
 // Parse Mach-O file.
 
 void macho_parse_file(
-    const uint8_t* data,
+    const uint8_t *data,
     const uint64_t size,
-    YR_OBJECT* object,
-    YR_SCAN_CONTEXT* context)
+    YR_OBJECT *object,
+    YR_SCAN_CONTEXT *context)
 {
+  // Size must be large enough the hold yr_mach_header_64_t, which is larger
+  // than yr_mach_header_32_t.
+  if (size < sizeof(yr_mach_header_64_t))
+    return;
+
   size_t header_size = macho_is_32(data) ? sizeof(yr_mach_header_32_t)
                                          : sizeof(yr_mach_header_64_t);
-
-  if (size < header_size)
-    return;
 
   // yr_mach_header_64_t is used for storing the header for both for 32-bits and
   // 64-bits files. yr_mach_header_64_t is exactly like yr_mach_header_32_t
@@ -539,19 +554,23 @@ void macho_parse_file(
 
   // The "reserved" field exists only in 64 bits files.
   if (!macho_is_32(data))
-    set_integer(header.reserved, object, "reserved");
+  {
+    yr_mach_header_64_t *header64 = (yr_mach_header_64_t *) data;
+    if (should_swap)
+      header64->reserved = yr_bswap32(header64->reserved);
+    set_integer(header64->reserved, object, "reserved");
+  }
 
-  // The first command parsing pass handles only segments.
+  /* The first command parsing pass handles only segments. */
   uint64_t seg_count = 0;
   uint64_t parsed_size = header_size;
-
-  uint8_t* command = (uint8_t*) (data + header_size);
+  uint8_t *command = (uint8_t *) (data + header_size);
 
   yr_load_command_t command_struct;
 
   for (unsigned i = 0; i < header.ncmds; i++)
   {
-    if (command - data < sizeof(yr_load_command_t))
+    if (data + size < command + sizeof(yr_load_command_t))
       break;
 
     memcpy(&command_struct, command, sizeof(yr_load_command_t));
@@ -559,16 +578,21 @@ void macho_parse_file(
     if (should_swap)
       swap_load_command(&command_struct);
 
-    if (size < header_size + command_struct.cmdsize)
+    if (size - parsed_size < command_struct.cmdsize)
+      break;
+
+    if (command_struct.cmdsize < sizeof(yr_load_command_t))
       break;
 
     switch (command_struct.cmd)
     {
     case LC_SEGMENT:
-      macho_handle_segment(command, seg_count++, object);
+      if (command_struct.cmdsize >= sizeof(yr_segment_command_32_t))
+        macho_handle_segment(command, seg_count++, object);
       break;
     case LC_SEGMENT_64:
-      macho_handle_segment_64(command, seg_count++, object);
+      if (command_struct.cmdsize >= sizeof(yr_segment_command_64_t))
+        macho_handle_segment_64(command, seg_count++, object);
       break;
     }
 
@@ -580,11 +604,11 @@ void macho_parse_file(
 
   // The second command parsing pass handles others, who use segment count.
   parsed_size = header_size;
-  command = (uint8_t*) (data + header_size);
+  command = (uint8_t *) (data + header_size);
 
   for (unsigned i = 0; i < header.ncmds; i++)
   {
-    if (command - data < sizeof(yr_load_command_t))
+    if (data + size < command + sizeof(yr_load_command_t))
       break;
 
     memcpy(&command_struct, command, sizeof(yr_load_command_t));
@@ -592,16 +616,21 @@ void macho_parse_file(
     if (should_swap)
       swap_load_command(&command_struct);
 
-    if (size < header_size + command_struct.cmdsize)
+    if (size - parsed_size < command_struct.cmdsize)
+      break;
+
+    if (command_struct.cmdsize < sizeof(yr_load_command_t))
       break;
 
     switch (command_struct.cmd)
     {
     case LC_UNIXTHREAD:
-      macho_handle_unixthread(command, object, context);
+      if (command_struct.cmdsize >= sizeof(yr_thread_command_t))
+        macho_handle_unixthread(command, object, context);
       break;
     case LC_MAIN:
-      macho_handle_main(command, object, context);
+      if (command_struct.cmdsize >= sizeof(yr_entry_point_command_t))
+        macho_handle_main(command, object, context);
       break;
     }
 
@@ -613,15 +642,16 @@ void macho_parse_file(
 // Parse Mach-O fat file.
 
 void macho_load_fat_arch_header(
-    const uint8_t* data,
+    const uint8_t *data,
     const uint64_t size,
     uint32_t num,
-    yr_fat_arch_64_t* arch)
+    yr_fat_arch_64_t *arch)
 {
   if (macho_fat_is_32(data))
   {
-    yr_fat_arch_32_t* arch32 =
-        (yr_fat_arch_32_t*) (data + sizeof(yr_fat_header_t) + (num * sizeof(yr_fat_arch_32_t)));
+    yr_fat_arch_32_t *arch32 =
+        (yr_fat_arch_32_t
+             *) (data + sizeof(yr_fat_header_t) + (num * sizeof(yr_fat_arch_32_t)));
 
     arch->cputype = yr_be32toh(arch32->cputype);
     arch->cpusubtype = yr_be32toh(arch32->cpusubtype);
@@ -632,8 +662,9 @@ void macho_load_fat_arch_header(
   }
   else
   {
-    yr_fat_arch_64_t* arch64 =
-        (yr_fat_arch_64_t*) (data + sizeof(yr_fat_header_t) + (num * sizeof(yr_fat_arch_64_t)));
+    yr_fat_arch_64_t *arch64 =
+        (yr_fat_arch_64_t
+             *) (data + sizeof(yr_fat_header_t) + (num * sizeof(yr_fat_arch_64_t)));
 
     arch->cputype = yr_be32toh(arch64->cputype);
     arch->cpusubtype = yr_be32toh(arch64->cpusubtype);
@@ -645,10 +676,10 @@ void macho_load_fat_arch_header(
 }
 
 void macho_parse_fat_file(
-    const uint8_t* data,
+    const uint8_t *data,
     const uint64_t size,
-    YR_OBJECT* object,
-    YR_SCAN_CONTEXT* context)
+    YR_OBJECT *object,
+    YR_SCAN_CONTEXT *context)
 {
   size_t fat_arch_sz = sizeof(yr_fat_arch_64_t);
 
@@ -660,7 +691,7 @@ void macho_parse_fat_file(
 
   /* All data in Mach-O fat binary headers are in big-endian byte order. */
 
-  const yr_fat_header_t* header = (yr_fat_header_t*) data;
+  const yr_fat_header_t *header = (yr_fat_header_t *) data;
   set_integer(yr_be32toh(header->magic), object, "fat_magic");
 
   uint32_t count = yr_be32toh(header->nfat_arch);
@@ -682,13 +713,17 @@ void macho_parse_fat_file(
     set_integer(arch.align, object, "fat_arch[%i].align", i);
     set_integer(arch.reserved, object, "fat_arch[%i].reserved", i);
 
+    // Check for integer overflow.
+    if (arch.offset + arch.size < arch.offset)
+      continue;
+
     if (size < arch.offset + arch.size)
       continue;
 
-    /* Force 'file' array entry creation. */
+    // Force 'file' array entry creation.
     set_integer(YR_UNDEFINED, object, "file[%i].magic", i);
 
-    /* Get specific Mach-O file data. */
+    // Get specific Mach-O file data.
     macho_parse_file(
         data + arch.offset,
         arch.size,
@@ -699,7 +734,7 @@ void macho_parse_fat_file(
 
 // Sets all necessary Mach-O constants and definitions.
 
-void macho_set_definitions(YR_OBJECT* object)
+void macho_set_definitions(YR_OBJECT *object)
 {
   // Magic constants
 
@@ -897,7 +932,7 @@ void macho_set_definitions(YR_OBJECT* object)
 
 define_function(file_index_type)
 {
-  YR_OBJECT* module = module();
+  YR_OBJECT *module = module();
   int64_t type_arg = integer_argument(1);
 
   uint64_t nfat = get_integer(module, "nfat_arch");
@@ -919,7 +954,7 @@ define_function(file_index_type)
 
 define_function(file_index_subtype)
 {
-  YR_OBJECT* module = module();
+  YR_OBJECT *module = module();
   int64_t type_arg = integer_argument(1);
   int64_t subtype_arg = integer_argument(2);
   uint64_t nfat = get_integer(module, "nfat_arch");
@@ -945,7 +980,7 @@ define_function(file_index_subtype)
 
 define_function(ep_for_arch_type)
 {
-  YR_OBJECT* module = module();
+  YR_OBJECT *module = module();
   int64_t type_arg = integer_argument(1);
   uint64_t nfat = get_integer(module, "nfat_arch");
 
@@ -970,7 +1005,7 @@ define_function(ep_for_arch_type)
 
 define_function(ep_for_arch_subtype)
 {
-  YR_OBJECT* module = module();
+  YR_OBJECT *module = module();
   int64_t type_arg = integer_argument(1);
   int64_t subtype_arg = integer_argument(2);
   uint64_t nfat = get_integer(module, "nfat_arch");
@@ -1190,7 +1225,6 @@ begin_declarations
     declare_integer("initprot");
     declare_integer("nsects");
     declare_integer("flags");
-
     begin_struct_array("sections")
       declare_string("sectname");
       declare_string("segname");
@@ -1278,40 +1312,40 @@ begin_declarations
   declare_function("entry_point_for_arch", "ii", "i", ep_for_arch_subtype);
 end_declarations
 
-int module_initialize(YR_MODULE* module)
+int module_initialize(YR_MODULE *module)
 {
   return ERROR_SUCCESS;
 }
 
-int module_finalize(YR_MODULE* module)
+int module_finalize(YR_MODULE *module)
 {
   return ERROR_SUCCESS;
 }
 
 int module_load(
-    YR_SCAN_CONTEXT* context,
-    YR_OBJECT* module_object,
-    void* module_data,
+    YR_SCAN_CONTEXT *context,
+    YR_OBJECT *module_object,
+    void *module_data,
     size_t module_data_size)
 {
-  YR_MEMORY_BLOCK* block;
-  YR_MEMORY_BLOCK_ITERATOR* iterator = context->iterator;
+  YR_MEMORY_BLOCK *block;
+  YR_MEMORY_BLOCK_ITERATOR *iterator = context->iterator;
 
   foreach_memory_block(iterator, block)
   {
-    const uint8_t* block_data = block->fetch_data(block);
+    const uint8_t *block_data = block->fetch_data(block);
     if (block_data == NULL || block->size < 4)
       continue;
 
     // Parse Mach-O binary.
-    if (is_macho_file_block((uint32_t*) block_data))
+    if (is_macho_file_block((uint32_t *) block_data))
     {
       macho_parse_file(block_data, block->size, module_object, context);
       break;
     }
 
     // Parse fat Mach-O binary.
-    if (is_fat_macho_file_block((uint32_t*) block_data))
+    if (is_fat_macho_file_block((uint32_t *) block_data))
     {
       macho_parse_fat_file(block_data, block->size, module_object, context);
       break;
@@ -1322,7 +1356,7 @@ int module_load(
   return ERROR_SUCCESS;
 }
 
-int module_unload(YR_OBJECT* module_object)
+int module_unload(YR_OBJECT *module_object)
 {
   return ERROR_SUCCESS;
 }
