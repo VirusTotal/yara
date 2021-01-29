@@ -554,14 +554,9 @@ void macho_parse_file(
 
   // The "reserved" field exists only in 64 bits files.
   if (!macho_is_32(data))
-  {
-    yr_mach_header_64_t* header64 = (yr_mach_header_64_t*) data;
-    if (should_swap)
-      header64->reserved = yr_bswap32(header64->reserved);
-    set_integer(header64->reserved, object, "reserved");
-  }
+    set_integer(header.reserved, object, "reserved");
 
-  /* The first command parsing pass handles only segments. */
+  // The first command parsing pass handles only segments.
   uint64_t seg_count = 0;
   uint64_t parsed_size = header_size;
   uint8_t* command = (uint8_t*) (data + header_size);
