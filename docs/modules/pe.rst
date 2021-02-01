@@ -1044,9 +1044,11 @@ Reference
     .. versionadded:: 3.2.0
 
     Function returning the import hash or imphash for the PE. The imphash is
-    a MD5 hash of the PE's import table after some normalization. The imphash
+    an MD5 hash of the PE's import table after some normalization. The imphash
     for a PE can be also computed with `pefile <http://code.google.com/p/pefile/>`_
-    and you can find more information in `Mandiant's blog <https://www.mandiant.com/blog/tracking-malware-import-hashing/>`_.
+    and you can find more information in `Mandiant's blog
+    <https://www.mandiant.com/blog/tracking-malware-import-hashing/>`_. The hash 
+    string passed to, or returned by, this function is always in lowercase.
 
     *Example: pe.imphash() == "b8bb385806b89680e13fc0cf24f4431e"*
 
