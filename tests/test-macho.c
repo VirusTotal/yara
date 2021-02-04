@@ -151,7 +151,7 @@ int main(int argc, char** argv)
 
   assert_true_rule_blob(
       "import \"macho\" rule test { condition: \
-    macho.flags == 0x000002000 }",
+    macho.flags == 0x0000100085 }",
       MACHO_X86_64_DYLIB_FILE);
 
   assert_true_rule_blob(
