@@ -106,6 +106,7 @@ cc_test(
     data = [
         "data/079a472d22290a94ebb212aa8015cdc8dd28a968c6b4d3b88acdd58ce2d3b885",
         "data/079a472d22290a94ebb212aa8015cdc8dd28a968c6b4d3b88acdd58ce2d3b885.upx",
+        "data/3b8b90159fa9b6048cc5410c5d53f116943564e4d05b04a843f9b3d0540d0c1c",
         "data/mtxex.dll",
         "data/mtxex_modified_rsrc_rva.dll",
         "data/tiny",

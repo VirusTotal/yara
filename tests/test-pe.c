@@ -154,6 +154,15 @@ int main(int argc, char** argv)
       "tests/data/"
       "079a472d22290a94ebb212aa8015cdc8dd28a968c6b4d3b88acdd58ce2d3b885");
 
+  assert_true_rule_file(
+      "import \"pe\" \
+      rule test { \
+        condition: \
+          pe.number_of_signatures == 2 \
+      }",
+      "tests/data/"
+      "3b8b90159fa9b6048cc5410c5d53f116943564e4d05b04a843f9b3d0540d0c1c");
+
 #endif
 
   assert_true_rule_file(
