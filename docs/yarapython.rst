@@ -437,7 +437,7 @@ Reference
 
   .. py:attribute:: tags
 
-    Array of strings containig the tags associated to the matching rule.
+    Array of strings containing the tags associated to the matching rule.
 
   .. py:attribute:: meta
 
