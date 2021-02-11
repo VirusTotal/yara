@@ -111,6 +111,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define OP_ICONTAINS            67
 #define OP_ISTARTSWITH          68
 #define OP_IENDSWITH            69
+#define OP_OF_PERCENT           70
 
 #define _OP_EQ    0
 #define _OP_NEQ   1
