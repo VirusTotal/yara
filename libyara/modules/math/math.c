@@ -605,6 +605,10 @@ define_function(max)
   return_integer(i > j ? i : j);
 }
 
+define_function(tonumber)
+{
+  return_integer(integer_argument(1) ? 1 : 0);
+}
 
 begin_declarations
   declare_float("MEAN_BYTES");
@@ -621,6 +625,7 @@ begin_declarations
   declare_function("entropy", "s", "f", string_entropy);
   declare_function("min", "ii", "i", min);
   declare_function("max", "ii", "i", max);
+  declare_function("tonumber", "b", "i", tonumber);
 end_declarations
 
 
