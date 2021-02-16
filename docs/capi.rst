@@ -895,7 +895,7 @@ Functions
 
   .. versionadded:: 3.8.0
 
-  Scan a serie of memory blocks that are provided by a :c:type:`YR_MEMORY_BLOCK_ITERATOR`.
+  Scan a series of memory blocks that are provided by a :c:type:`YR_MEMORY_BLOCK_ITERATOR`.
   The iterator has a pair of `first` and `next` functions, that must return
   the first and next blocks respectively. The how the data is split in blocks is
   up to the iterator implementation.
@@ -973,6 +973,19 @@ Functions
     :c:macro:`ERROR_CALLBACK_ERROR`
 
     :c:macro:`ERROR_TOO_MANY_MATCHES`
+
+.. c:function:: YR_RULE* yr_scanner_last_error_rule(YR_SCANNER* scanner)
+
+  .. versionadded:: 3.8.0
+
+  Return a pointer to the ``YR_RULE`` which triggered a scanning error. In the
+  case where the rule is unable to be determined, NULL is returned.
+
+.. c:function:: YR_RULE* yr_scanner_last_error_string(YR_SCANNER* scanner)
+
+  .. versionadded:: 3.8.0
+
+  Return a pointer to the ``YR_STRING`` which triggered a scanning error.
 
 Error codes
 -----------
