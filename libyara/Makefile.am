@@ -152,7 +152,7 @@ dist_noinst_DATA = pb/yara.proto
 
 lib_LTLIBRARIES = libyara.la
 
-libyara_la_LDFLAGS = -version-number 4:0:2
+libyara_la_LDFLAGS = -version-number 4:1:0
 
 BUILT_SOURCES = \
 	lexer.c \
