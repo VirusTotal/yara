@@ -2993,6 +2993,24 @@ void test_performance_warnings()
   YR_DEBUG_FPRINTF(1, stderr, "} // %s()\n", __FUNCTION__);
 }
 
+static void test_non_ascii_warnings()
+{
+  YR_DEBUG_FPRINTF(1, stderr, "+ %s() {\n", __FUNCTION__);
+
+  assert_warning("rule test { \
+        strings: $a = \"★\" \
+        condition: $a }");
+
+  assert_warning("rule test { \
+        strings: $a = \"foo\" base64wide(\"abcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXY★\") \
+        condition: $a }");
+
+  assert_warning("rule test { \
+        condition: \"★foo★\" contains \"foo\" }");
+
+  YR_DEBUG_FPRINTF(1, stderr, "} // %s()\n", __FUNCTION__);
+}
+
 static void test_pass(int pass)
 {
   switch (pass)
@@ -3083,6 +3101,7 @@ static void test_pass(int pass)
 
   test_time_module();
   test_performance_warnings();
+  test_non_ascii_warnings();
 
   if (pass >= 2)
   {

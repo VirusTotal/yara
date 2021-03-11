@@ -77,6 +77,13 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
     } \
 
 
+#define check_valid_ascii(s) \
+    if (!ss_is_valid_ascii(s)) \
+    { \
+      yywarning(yyscanner, \
+          "non-ascii character in string \"%s\".", (s)->c_string); \
+    }
+
 #define check_type_with_cleanup(expression, expected_type, op, cleanup) \
     if (((expression.type) & (expected_type)) == 0) \
     { \
@@ -333,6 +340,8 @@ rules
 import
     : _IMPORT_ _TEXT_STRING_
       {
+        check_valid_ascii($2);
+
         int result = yr_parser_reduce_import(yyscanner, $2);
 
         yr_free($2);
@@ -596,6 +605,8 @@ string_declaration
       }
       _TEXT_STRING_ string_modifiers
       {
+        check_valid_ascii($4);
+
         int result = yr_parser_reduce_string_declaration(
             yyscanner, $5, $1, $4, &$<string>$);
 
@@ -789,6 +800,8 @@ string_modifier
       {
         int result = ERROR_SUCCESS;
 
+        check_valid_ascii($3);
+
         if ($3->length != 64)
         {
           yr_free($3);
@@ -810,6 +823,8 @@ string_modifier
     | _BASE64_WIDE_ '(' _TEXT_STRING_ ')'
       {
         int result = ERROR_SUCCESS;
+
+        check_valid_ascii($3);
 
         if ($3->length != 64)
         {
@@ -2260,6 +2275,8 @@ primary_expression
     | _TEXT_STRING_
       {
         YR_ARENA_REF ref;
+
+        check_valid_ascii($1);
 
         int result = _yr_compiler_store_data(
             compiler,
