@@ -897,8 +897,12 @@ Functions
 
   Scan a serie of memory blocks that are provided by a :c:type:`YR_MEMORY_BLOCK_ITERATOR`.
   The iterator has a pair of `first` and `next` functions, that must return
-  the first and next blocks respectively. The how the data is split in blocks is
-  up to the iterator implementation.
+  the first and next blocks respectively. If the iterator returns :c:macro:`ERROR_BLOCK_NOT_READY`
+  from `first` or `next`, `yr_scanner_scan_mem_blocks` also returns :c:macro:`ERROR_BLOCK_NOT_READY`,
+  but the scanner maintains its state and this function can be called again with
+  the same iterator for retrying the operation. This can be done multiple times
+  until the block is ready and the iterator is able to return it, which allows
+  `yr_scanner_scan_mem_blocks` finish the scanning.
 
   Returns one of the following error codes:
 
