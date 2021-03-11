@@ -71,6 +71,8 @@ bool ss_endswith(SIZED_STRING* s1, SIZED_STRING* s2);
 
 bool ss_iendswith(SIZED_STRING* s1, SIZED_STRING* s2);
 
+bool ss_is_valid_ascii(SIZED_STRING* s);
+
 SIZED_STRING* ss_dup(SIZED_STRING* s);
 
 SIZED_STRING* ss_new(const char* s);
