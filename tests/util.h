@@ -127,7 +127,7 @@ int do_nothing(
     void* message_data,
     void* user_data);
 
-int matches_blob_uses_default_iterator;
+extern int matches_blob_uses_default_iterator;
 
 int matches_blob(
     char* rule,
