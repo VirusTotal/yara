@@ -757,13 +757,13 @@ static void print_compiler_error(
 
   if (error_level == YARA_ERROR_LEVEL_ERROR)
   {
-    msg_type = "ERROR";
+    msg_type = "error";
   }
   else if (!ignore_warnings)
   {
     COMPILER_RESULTS* compiler_results = (COMPILER_RESULTS*) user_data;
     compiler_results->warnings++;
-    msg_type = "WARNING";
+    msg_type = "warning";
   }
   else
   {
@@ -1058,7 +1058,7 @@ static int callback(
 
     fprintf(
         stderr,
-        "WARNING: rule \"%s\": too many matches for %s, results for this rule "
+        "warning: rule \"%s\": too many matches for %s, results for this rule "
         "may be incorrect\n",
         rule->identifier,
         string->identifier);

@@ -135,17 +135,17 @@ static void report_error(
   {
     fprintf(
         stderr,
-        "%s(%d): %s in rule \"%s\": %s\n",
-        file_name,
-        line_number,
+        "%s: rule \"%s\" in %s(%d): %s\n",
         msg_type,
         rule->identifier,
+        file_name,
+        line_number,
         message);
   }
   else
   {
     fprintf(
-        stderr, "%s(%d): %s: %s\n", file_name, line_number, msg_type, message);
+        stderr, "%s: %s(%d): %s\n", msg_type, file_name, line_number, message);
   }
 }
 
