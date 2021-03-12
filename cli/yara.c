@@ -757,13 +757,13 @@ static void print_compiler_error(
 
   if (error_level == YARA_ERROR_LEVEL_ERROR)
   {
-    msg_type = "error";
+    msg_type = "ERROR";
   }
   else if (!ignore_warnings)
   {
     COMPILER_RESULTS* compiler_results = (COMPILER_RESULTS*) user_data;
     compiler_results->warnings++;
-    msg_type = "warning";
+    msg_type = "WARNING";
   }
   else
   {
@@ -774,11 +774,11 @@ static void print_compiler_error(
   {
     fprintf(
         stderr,
-        "%s(%d): %s in rule \"%s\": %s\n",
-        file_name,
-        line_number,
+        "%s: rule \"%s\" in %s(%d): %s\n",
         msg_type,
         rule->identifier,
+        file_name,
+        line_number,
         message);
   }
   else
@@ -1002,6 +1002,8 @@ static int callback(
     void* user_data)
 {
   YR_MODULE_IMPORT* mi;
+  YR_STRING* string;
+  YR_RULE* rule;
   YR_OBJECT* object;
   MODULE_DATA* module_data;
 
@@ -1044,15 +1046,27 @@ static int callback(
       mutex_unlock(&output_mutex);
     }
 
+    return CALLBACK_CONTINUE;
+
+  case CALLBACK_MSG_TOO_MANY_MATCHES:
+
+    if (ignore_warnings)
       return CALLBACK_CONTINUE;
 
-    case CALLBACK_MSG_TOO_MANY_MATCHES:
-      fprintf(
-          stderr,
-          "Warning: maximum matches for string %s. Results may be invalid.\n",
-          ((YR_STRING*) message_data)->identifier);
+    string = (YR_STRING*) message_data;
+    rule = &context->rules->rules_table[string->rule_idx];
 
-      return CALLBACK_CONTINUE;
+    fprintf(
+        stderr,
+        "WARNING: rule \"%s\": too many matches for %s, results for this rule "
+        "may be incorrect\n",
+        rule->identifier,
+        string->identifier);
+
+    if (fail_on_warnings)
+      return CALLBACK_ERROR;
+
+    return CALLBACK_CONTINUE;
   }
 
   return CALLBACK_ERROR;
