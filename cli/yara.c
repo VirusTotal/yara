@@ -566,6 +566,21 @@ static void scan_dir(
         de = readdir(dp);
         continue;
       }
+      else if (S_ISLNK(st.st_mode))
+      {
+        // always skip symlinks that point to . like /usr/bin/X11 -> . on debian
+        char buf[2]="";
+        int len;
+
+        len = readlink(full_path, buf, 2);
+
+        if ( len == 1 && strcmp(buf, ".") == 0 )
+        {
+            de = readdir(dp);
+            continue;
+        }
+      }
+
 
       err = stat(full_path, &st);
       if (err == 0)
@@ -673,10 +688,10 @@ static void print_escaped(const uint8_t* data, size_t length)
 
 static void print_hex_string(const uint8_t* data, int length)
 {
-  for (int i = 0; i < min(32, length); i++)
+  for (int i = 0; i < min(64, length); i++)
     printf("%s%02X", (i == 0 ? "" : " "), data[i]);
 
-  puts(length > 32 ? " ..." : "");
+  puts(length > 64 ? " ..." : "");
 }
 
 static void print_error(int error)
