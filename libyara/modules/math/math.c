@@ -45,7 +45,6 @@ static double log2(double n)
 }
 #endif
 
-
 define_function(string_entropy)
 {
   size_t i;
@@ -76,7 +75,6 @@ define_function(string_entropy)
   yr_free(data);
   return_float(entropy);
 }
-
 
 define_function(data_entropy)
 {
@@ -166,7 +164,6 @@ define_function(data_entropy)
   return_float(entropy);
 }
 
-
 define_function(string_deviation)
 {
   SIZED_STRING* s = sized_string_argument(1);
@@ -180,7 +177,6 @@ define_function(string_deviation)
 
   return_float(sum / s->length);
 }
-
 
 define_function(data_deviation)
 {
@@ -246,7 +242,6 @@ define_function(data_deviation)
   return_float(sum / total_len);
 }
 
-
 define_function(string_mean)
 {
   size_t i;
@@ -258,7 +253,6 @@ define_function(string_mean)
 
   return_float(sum / s->length);
 }
-
 
 define_function(data_mean)
 {
@@ -319,7 +313,6 @@ define_function(data_mean)
 
   return_float(sum / total_len);
 }
-
 
 define_function(data_serial_correlation)
 {
@@ -403,7 +396,6 @@ define_function(data_serial_correlation)
   return_float(scc);
 }
 
-
 define_function(string_serial_correlation)
 {
   SIZED_STRING* s = sized_string_argument(1);
@@ -438,7 +430,6 @@ define_function(string_serial_correlation)
 
   return_float(scc);
 }
-
 
 define_function(data_monte_carlo_pi)
 {
@@ -526,7 +517,6 @@ define_function(data_monte_carlo_pi)
   return_float(fabs((mpi - PI) / PI));
 }
 
-
 define_function(string_monte_carlo_pi)
 {
   SIZED_STRING* s = sized_string_argument(1);
@@ -572,7 +562,6 @@ define_function(string_monte_carlo_pi)
   return_float(fabs((mpi - PI) / PI));
 }
 
-
 define_function(in_range)
 {
   double test = float_argument(1);
@@ -581,7 +570,6 @@ define_function(in_range)
 
   return_integer((lower <= test && test <= upper) ? 1 : 0);
 }
-
 
 // Undefine existing "min" and "max" macros in order to avoid conflicts with
 // function names.
@@ -596,7 +584,6 @@ define_function(min)
   return_integer(i < j ? i : j);
 }
 
-
 define_function(max)
 {
   uint64_t i = integer_argument(1);
@@ -605,7 +592,7 @@ define_function(max)
   return_integer(i > j ? i : j);
 }
 
-define_function(tonumber)
+define_function(to_number)
 {
   return_integer(integer_argument(1) ? 1 : 0);
 }
@@ -625,21 +612,18 @@ begin_declarations
   declare_function("entropy", "s", "f", string_entropy);
   declare_function("min", "ii", "i", min);
   declare_function("max", "ii", "i", max);
-  declare_function("tonumber", "b", "i", tonumber);
+  declare_function("to_number", "b", "i", to_number);
 end_declarations
-
 
 int module_initialize(YR_MODULE* module)
 {
   return ERROR_SUCCESS;
 }
 
-
 int module_finalize(YR_MODULE* module)
 {
   return ERROR_SUCCESS;
 }
-
 
 int module_load(
     YR_SCAN_CONTEXT* context,
@@ -650,7 +634,6 @@ int module_load(
   set_float(127.5, module_object, "MEAN_BYTES");
   return ERROR_SUCCESS;
 }
-
 
 int module_unload(YR_OBJECT* module_object)
 {

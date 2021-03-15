@@ -111,10 +111,10 @@ file and create signatures based on those results.
 
     Returns the minimum of two unsigned integer values.
 
-.. c:function:: tonumber(bool)
+.. c:function:: to_number(bool)
 
-    .. versionadded:: 4.0.5
+    .. versionadded:: 4.1.0
 
     Returns 0 or 1, it's useful when writing a score based rule.
 
-    *Example: math.tonumber(SubRule1) \* 60 + math.tonumber(SubRule2) \* 20 + math.tonumber(SubRule3) \* 70 > 80*
+    *Example: math.to_number(SubRule1) \* 60 + math.to_number(SubRule2) \* 20 + math.to_number(SubRule3) \* 70 > 80*
