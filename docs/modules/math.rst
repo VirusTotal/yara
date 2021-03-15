@@ -110,3 +110,11 @@ file and create signatures based on those results.
     .. versionadded:: 3.8.0
 
     Returns the minimum of two unsigned integer values.
+
+.. c:function:: tonumber(bool)
+
+    .. versionadded:: 4.0.5
+
+    Returns 0 or 1, it's useful when writing a score based rule.
+
+    *Example: math.tonumber(SubRule1) \* 60 + math.tonumber(SubRule2) \* 20 + math.tonumber(SubRule3) \* 70 > 80*
