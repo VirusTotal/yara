@@ -212,7 +212,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 %token _IENDSWITH_                                     "<iendswith>"
 %token _IMPORT_                                        "<import>"
 %token _TRUE_                                          "<true>"
-%token _FALSE_                                         "<false"
+%token _FALSE_                                         "<false>"
 %token _OR_                                            "<or>"
 %token _AND_                                           "<and>"
 %token _NOT_                                           "<not>"
