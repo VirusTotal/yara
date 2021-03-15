@@ -32,7 +32,7 @@ int main(int argc, char** argv)
       "import \"math\" \
       rule test { \
         condition: \
-          math.tonumber(1 == 1) \
+          math.to_number(1 == 1) \
       }",
       "A");
 
@@ -40,7 +40,7 @@ int main(int argc, char** argv)
       "import \"math\" \
       rule test { \
         condition: \
-          math.tonumber(1 > 2) \
+          math.to_number(1 > 2) \
       }",
       "A");
 
