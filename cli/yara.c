@@ -561,28 +561,31 @@ static void scan_dir(
 
       int err = lstat(full_path, &st);
 
+      // If lstat returned error, or this directory entry is a symlink and the
+      // user doesn't want to follow symlinks, skip the entry and continue with
+      // the next one.
       if (err != 0 || (S_ISLNK(st.st_mode) && !scan_opts->follow_symlinks))
       {
         de = readdir(dp);
         continue;
       }
+      // If the directory entry is a symlink, check if it points to . and
+      // skip it in that case.
       else if (S_ISLNK(st.st_mode))
       {
-        // always skip symlinks that point to . like /usr/bin/X11 -> . on debian
-        char buf[2]="";
-        int len;
+        char buf[2];
 
-        len = readlink(full_path, buf, 2);
+        int len = readlink(full_path, buf, sizeof(buf));
 
-        if ( len == 1 && strcmp(buf, ".") == 0 )
+        if (len == 1 && strcmp(buf, ".") == 0)
         {
-            de = readdir(dp);
-            continue;
+          de = readdir(dp);
+          continue;
         }
       }
 
-
       err = stat(full_path, &st);
+
       if (err == 0)
       {
         if (S_ISREG(st.st_mode))
