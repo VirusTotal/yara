@@ -92,6 +92,7 @@ awesome list of [YARA-related stuff](https://github.com/InQuest/awesome-yara).
 * [Joe Security](https://www.joesecurity.org)
 * [jsunpack-n](http://jsunpack.jeek.org/)
 * [Kaspersky Lab](http://www.kaspersky.com)
+* [KnowBe4](https://www.knowbe4.com)
 * [Koodous](https://koodous.com/)
 * [Laika BOSS](https://github.com/lmco/laikaboss)
 * [Lastline, Inc.](http://www.lastline.com)
