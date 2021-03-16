@@ -283,12 +283,12 @@ Here is an example:
 
   import yara
 
-  def warning_callback(warning_type, message):
+  def warnings_callback(warning_type, message):
     if warning_type == yara.CALLBACK_TOO_MANY_MATCHES:
         print(message)
     return yara.CALLBACK_CONTINUE
 
-  matches = rules.match('/foo/bar/my_file', warning_callback=warning_callback)
+  matches = rules.match('/foo/bar/my_file', warnings_callback=warnings_callback)
 
 If you do not use a warning callback a warning message will be sent to the
 normal python warning system for you and scanning will continue.
