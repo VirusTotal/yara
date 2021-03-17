@@ -556,7 +556,7 @@ int yr_parser_reduce_string_declaration(
     yr_compiler_set_error_extra_info(compiler, identifier) goto _exit;
   }
 
-  // Empty strings are not allowed
+  // Empty strings are not allowed.
   if (str->length == 0)
   {
     result = ERROR_EMPTY_STRING;
@@ -824,7 +824,7 @@ int yr_parser_reduce_string_declaration(
 
   if (min_atom_quality < compiler->atoms_config.quality_warning_threshold)
   {
-    yywarning(yyscanner, "%s is slowing down scanning", identifier);
+    yywarning(yyscanner, "string \"%s\" may slow down scanning", identifier);
   }
 
 _exit:

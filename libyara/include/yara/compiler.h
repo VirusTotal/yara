@@ -251,9 +251,19 @@ typedef struct _YR_COMPILER
 
   char last_error_extra_info[YR_MAX_COMPILER_ERROR_EXTRA_INFO];
 
+  // This buffer is used by the lexer for accumulating text strings. Those
+  // strings are copied from flex's internal variables. lex_buf_ptr points to
+  // the end of the string and lex_buf_len contains the number of bytes that
+  // have been copied into lex_buf.
   char lex_buf[YR_LEX_BUF_SIZE];
   char* lex_buf_ptr;
   unsigned short lex_buf_len;
+
+  // lex_buf_unescaped_non_ascii is true if lex_buf contains a non-ASCII
+  // character that appeared in unescaped form in the source file. For example,
+  // the string "\x01foo" will contain a non-ASCII character, but it was
+  // escaped in the source file, so lex_buf_unescaped_non_ascii is false.
+  bool lex_buf_unescaped_non_ascii;
 
   char include_base_dir[MAX_PATH];
   void* user_data;

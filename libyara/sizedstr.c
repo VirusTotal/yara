@@ -190,21 +190,6 @@ bool ss_iendswith(SIZED_STRING* s1, SIZED_STRING* s2)
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-// ss_is_valid_ascii returns true if all the characters in the string are in
-// the printable ASCII range, of false if otherwise.
-//
-bool ss_is_valid_ascii(SIZED_STRING* s)
-{
-  for (uint32_t i = 0; i < s->length; i++)
-  {
-    if (s->c_string[i] < 32 || s->c_string[i] >= 127)
-      return false;
-  }
-
-  return true;
-}
-
-////////////////////////////////////////////////////////////////////////////////
 // ss_dup creates a new copy of a given SIZED_STRING.
 //
 SIZED_STRING* ss_dup(SIZED_STRING* s)

@@ -77,13 +77,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
     } \
 
 
-#define check_valid_ascii(s) \
-    if (!ss_is_valid_ascii(s)) \
-    { \
-      yywarning(yyscanner, \
-          "non-ascii character in string \"%s\".", (s)->c_string); \
-    }
-
 #define check_type_with_cleanup(expression, expected_type, op, cleanup) \
     if (((expression.type) & (expected_type)) == 0) \
     { \
@@ -340,7 +333,8 @@ rules
 import
     : _IMPORT_ _TEXT_STRING_
       {
-        check_valid_ascii($2);
+        if ($2->flags & SIZED_STRING_FLAGS_UNESCAPED_NON_ASCII)
+          yywarning(yyscanner, "non-ascii character in import statement");
 
         int result = yr_parser_reduce_import(yyscanner, $2);
 
@@ -605,7 +599,8 @@ string_declaration
       }
       _TEXT_STRING_ string_modifiers
       {
-        check_valid_ascii($4);
+        if ($4->flags & SIZED_STRING_FLAGS_UNESCAPED_NON_ASCII)
+          yywarning(yyscanner, "non-ascii character in string \"%s\"", $1);
 
         int result = yr_parser_reduce_string_declaration(
             yyscanner, $5, $1, $4, &$<string>$);
@@ -800,7 +795,8 @@ string_modifier
       {
         int result = ERROR_SUCCESS;
 
-        check_valid_ascii($3);
+        if ($3->flags & SIZED_STRING_FLAGS_UNESCAPED_NON_ASCII)
+          yywarning(yyscanner, "non-ascii character in base64 alphabet");
 
         if ($3->length != 64)
         {
@@ -824,7 +820,8 @@ string_modifier
       {
         int result = ERROR_SUCCESS;
 
-        check_valid_ascii($3);
+        if ($3->flags & SIZED_STRING_FLAGS_UNESCAPED_NON_ASCII)
+          yywarning(yyscanner, "non-ascii character in base64 alphabet");
 
         if ($3->length != 64)
         {
@@ -1230,21 +1227,20 @@ arguments_list
 regexp
     : _REGEXP_
       {
-        SIZED_STRING* sized_string = $1;
         YR_ARENA_REF re_ref;
         RE_ERROR error;
 
         int result = ERROR_SUCCESS;
         int re_flags = 0;
 
-        if (sized_string->flags & SIZED_STRING_FLAGS_NO_CASE)
+        if ($1->flags & SIZED_STRING_FLAGS_NO_CASE)
           re_flags |= RE_FLAGS_NO_CASE;
 
-        if (sized_string->flags & SIZED_STRING_FLAGS_DOT_ALL)
+        if ($1->flags & SIZED_STRING_FLAGS_DOT_ALL)
           re_flags |= RE_FLAGS_DOT_ALL;
 
         result = yr_re_compile(
-            sized_string->c_string,
+            $1->c_string,
             re_flags,
             compiler->arena,
             &re_ref,
@@ -1281,7 +1277,7 @@ boolean_expression
                 compiler->arena, &$1.value.sized_string_ref);
 
             yywarning(yyscanner,
-                "Using literal string \"%s\" in a boolean operation.",
+                "using literal string \"%s\" in a boolean operation.",
                 sized_string->c_string);
           }
 
@@ -2276,7 +2272,8 @@ primary_expression
       {
         YR_ARENA_REF ref;
 
-        check_valid_ascii($1);
+        if ($1->flags & SIZED_STRING_FLAGS_UNESCAPED_NON_ASCII)
+          yywarning(yyscanner, "non-ascii character in literal string");
 
         int result = _yr_compiler_store_data(
             compiler,

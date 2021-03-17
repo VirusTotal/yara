@@ -3008,6 +3008,12 @@ static void test_non_ascii_warnings()
   assert_warning("rule test { \
         condition: \"★foo★\" contains \"foo\" }");
 
+  assert_no_warnings("rule test { \
+        condition: \"foo\\x01\" contains \"foo\" }");
+
+  assert_no_warnings("rule test { \
+        condition: \"foo\\t\" contains \"foo\" }");
+
   YR_DEBUG_FPRINTF(1, stderr, "} // %s()\n", __FUNCTION__);
 }
 
