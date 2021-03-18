@@ -78,6 +78,12 @@ cc_test(
     ],
 )
 
+cc_binary(
+    name = "mapper",
+    srcs = ["mapper.c"],
+    copts = ["-O0"],
+)
+
 cc_test(
     name = "test_rules",
     srcs = ["test-rules.c"],
@@ -96,6 +102,7 @@ cc_test(
         ":blob",
         ":util",
         "@//:libyara",
+        ":mapper",
     ],
 )
 

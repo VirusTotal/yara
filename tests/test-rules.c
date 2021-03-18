@@ -27,11 +27,15 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+#include <fcntl.h>
 #include <signal.h>
 #include <stdlib.h>
+#include <sys/stat.h>
 #include <sys/types.h>
+#include <sys/wait.h>
 #include <unistd.h>
 #include <yara.h>
+#include <errno.h>
 
 #if !defined(_WIN32) && !defined(__CYGWIN__)
 #include <sys/wait.h>
@@ -2770,39 +2774,46 @@ void test_tags()
   YR_DEBUG_FPRINTF(1, stderr, "} // %s()\n", __FUNCTION__);
 }
 
-#if !defined(_WIN32) && !defined(__CYGWIN__)
+#if !defined(_WIN32) || defined(__CYGWIN__)
+
+#define spawn(cmd,rest...)                                      \
+  do                                                            \
+  {                                                             \
+    if ((pid = fork()) == 0)                                    \
+    {                                                           \
+      execl(cmd, cmd, rest, NULL);                              \
+      fprintf(stderr, "execl: %s: %s\n", cmd, strerror(errno)); \
+      exit(1);                                                  \
+    }                                                           \
+    if (pid <= 0)                                               \
+    {                                                           \
+      perror("fork");                                           \
+      abort();                                                  \
+    }                                                           \
+    sleep(1);                                                   \
+    if (waitpid(pid, NULL, WNOHANG) != 0)                       \
+    {                                                           \
+      fprintf(stderr, "%s did not live long enough\n", cmd);    \
+      abort();                                                  \
+    }                                                           \
+  } while (0)
+
 void test_process_scan()
 {
   YR_DEBUG_FPRINTF(1, stderr, "+ %s() {\n", __FUNCTION__);
 
-  int pid = fork();
+  int pid;
   int status = 0;
   YR_RULES* rules;
-  int rc1, rc2;
+  int rc;
+  int fd;
+  char* tf;
+  char buf[16384];
 
   struct COUNTERS counters;
 
-  counters.rules_not_matching = 0;
-  counters.rules_matching = 0;
-
-  if (pid == 0)
-  {
-    // The string should appear somewhere in the shell's process space.
-    if (execl(
-            "/bin/sh",
-            "/bin/sh",
-            "-c",
-            "VAR='Hello, world!'; sleep 600; true",
-            NULL) == -1)
-      exit(1);
-  }
-  assert(pid > 0);
-
-  // Give child process time to initialize.
-  sleep(1);
-
-  status = compile_rule(
-      "\
+  if (compile_rule(
+          "\
     rule should_match {\
       strings:\
         $a = { 48 65 6c 6c 6f 2c 20 77 6f 72 6c 64 21 }\
@@ -2813,58 +2824,74 @@ void test_process_scan()
       condition: \
         filesize < 100000000 \
     }",
-      &rules);
-
-  if (status != ERROR_SUCCESS)
+          &rules) != ERROR_SUCCESS)
   {
     perror("compile_rule");
     exit(EXIT_FAILURE);
   }
 
-  rc1 = yr_rules_scan_proc(rules, pid, 0, count, &counters, 0);
-  yr_rules_destroy(rules);
+  spawn("/bin/sh", "-c", "VAR='Hello, world!'; sleep 600; true");
+
+  counters.rules_matching = 0;
+  counters.rules_not_matching = 0;
+  rc = yr_rules_scan_proc(rules, pid, 0, count, &counters, 0);
   kill(pid, SIGALRM);
 
-  rc2 = waitpid(pid, &status, 0);
-  if (rc2 == -1)
-  {
-    perror("waitpid");
-    exit(EXIT_FAILURE);
-  }
-  if (status != SIGALRM)
-  {
-    fprintf(
-        stderr, "Scanned process exited with unexpected status %d\n", status);
-    exit(EXIT_FAILURE);
-  }
+  assert(rc == ERROR_SUCCESS);
 
-  switch (rc1)
-  {
-  case ERROR_SUCCESS:
-    if (counters.rules_matching != 1)
-    {
-      fprintf(
-          stderr,
-          "Expecting one rule matching in test_process_scan, found %d\n",
-          counters.rules_matching);
-      exit(EXIT_FAILURE);
-    }
-    if (counters.rules_not_matching != 1)
-    {
-      fprintf(
-          stderr,
-          "Expecting one rule not matching in test_process_scan, found %d\n",
-          counters.rules_not_matching);
-      exit(EXIT_FAILURE);
-    }
-    break;
-  case ERROR_COULD_NOT_ATTACH_TO_PROCESS:
-    fprintf(stderr, "Could not attach to process, ignoring this error\n");
-    break;
-  default:
-    fprintf(stderr, "yr_rules_scan_proc: Got unexpected error %d\n", rc1);
-    exit(EXIT_FAILURE);
-  }
+  assert(waitpid(pid, &status, 0) >= 0);
+  assert(status == SIGALRM);
+
+  assert(counters.rules_matching == 1);
+  assert(counters.rules_not_matching == 1);
+
+  tf = strdup("./map-XXXXXX");
+  fd = mkstemp(tf);
+  assert(fd >= 0);
+
+  // check for string in file that gets mapped by a process
+  bzero(buf, sizeof(buf));
+  sprintf(buf, "Hello, world!");
+  write(fd, buf, sizeof(buf));
+  lseek(fd, 0, SEEK_SET);
+
+  spawn("tests/mapper", "open", tf);
+
+  counters.rules_matching = 0;
+  rc = yr_rules_scan_proc(rules, pid, 0, count, &counters, 0);
+  kill(pid, SIGALRM);
+
+  fprintf(stderr, "scan: %d\n", rc);
+  assert(rc == ERROR_SUCCESS);
+
+  assert(waitpid(pid, &status, 0) >= 0);
+  assert(status == SIGALRM);
+
+  assert(counters.rules_matching == 1);
+
+  // check for string in blank mapping after process has overwritten
+  // the mapping.
+  bzero(buf, sizeof(buf));
+  write(fd, buf, sizeof(buf));
+
+  spawn("./tests/mapper", "patch", tf);
+
+  counters.rules_matching = 0;
+  rc = yr_rules_scan_proc(rules, pid, 0, count, &counters, 0);
+  kill(pid, SIGALRM);
+
+  fprintf(stderr, "scan: %d\n", rc);
+  assert(rc == ERROR_SUCCESS);
+
+  assert(waitpid(pid, &status, 0) >= 0);
+  assert(status == SIGALRM);
+
+  assert(counters.rules_matching == 1);
+
+  close(fd);
+  unlink(tf);
+  free(tf);
+  yr_rules_destroy(rules);
 
   YR_DEBUG_FPRINTF(1, stderr, "} // %s()\n", __FUNCTION__);
 }
