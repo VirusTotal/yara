@@ -2737,11 +2737,20 @@ void test_include_files()
 {
   YR_DEBUG_FPRINTF(1, stderr, "+ %s() {\n", __FUNCTION__);
 
-  assert_true_rule(
-      "include \"tests/data/baz.yar\" rule t { condition: baz }", NULL);
+  char rule[4096];
+  snprintf(
+      rule,
+      sizeof(rule),
+      "include \"%s/tests/data/baz.yar\" rule t { condition: baz }",
+      top_srcdir);
+  assert_true_rule(rule, NULL);
 
-  assert_true_rule(
-      "include \"tests/data/foo.yar\" rule t { condition: foo }", NULL);
+  snprintf(
+      rule,
+      sizeof(rule),
+      "include \"%s/tests/data/foo.yar\" rule t { condition: foo }",
+      top_srcdir);
+  assert_true_rule(rule, NULL);
 
   YR_DEBUG_FPRINTF(1, stderr, "} // %s()\n", __FUNCTION__);
 }
@@ -3129,7 +3138,7 @@ int main(int argc, char** argv)
   YR_DEBUG_INITIALIZE();
   YR_DEBUG_FPRINTF(1, stderr, "+ %s() { \n", __FUNCTION__);
 
-  chdir_if_env_top_srcdir();
+  init_top_srcdir();
   yr_initialize();
 
   assert_true_expr(strlen(TEXT_1024_BYTES) == 1024);

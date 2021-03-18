@@ -118,7 +118,7 @@ void test_file_descriptor()
     exit(1);
   }
 #else
-  int fd = open("tests/data/baz.yar", O_RDONLY);
+  int fd = open(prefix_top_srcdir("tests/data/baz.yar"), O_RDONLY);
   if (fd < 0)
   {
     perror("open");
@@ -830,7 +830,7 @@ void test_runtime_warnings() {
 
   yr_compiler_destroy(compiler);
 
-  if (yr_rules_scan_file(rules, "tests/data/x.txt", 0, count, &counters, 0) != ERROR_SUCCESS) {
+  if (yr_rules_scan_file(rules, prefix_top_srcdir("tests/data/x.txt"), 0, count, &counters, 0) != ERROR_SUCCESS) {
     yr_rules_destroy(rules);
     perror("yr_rules_scan_file");
     exit(EXIT_FAILURE);
@@ -853,7 +853,7 @@ int main(int argc, char** argv)
   YR_DEBUG_INITIALIZE();
   YR_DEBUG_FPRINTF(1, stderr, "+ %s() { // in %s\n", __FUNCTION__, argv[0]);
 
-  chdir_if_env_top_srcdir();
+  init_top_srcdir();
 
   test_disabled_rules();
   test_file_descriptor();
