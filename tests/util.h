@@ -79,8 +79,11 @@ struct YR_TEST_ITERATOR_CTX
   int blocks_returned_successfully;
 };
 
+extern char* top_srcdir;
 
-extern void chdir_if_env_top_srcdir(void);
+extern void init_top_srcdir(void);
+
+extern char* prefix_top_srcdir(char* dir);
 
 struct COUNTERS
 {
@@ -209,7 +212,7 @@ void assert_hex_atoms(
   do {                                                                  \
     char* buf;                                                          \
     size_t sz;                                                          \
-    if ((sz = read_file(filename, &buf)) == -1) {                       \
+    if ((sz = read_file(prefix_top_srcdir(filename), &buf)) == -1) {    \
       fprintf(stderr, "%s:%d: cannot read file '%s'\n",                 \
               __FILE__, __LINE__, filename);                            \
       exit(EXIT_FAILURE);                                               \
@@ -252,7 +255,7 @@ void assert_hex_atoms(
   do {                                                                  \
     char* buf;                                                          \
     size_t sz;                                                          \
-    if ((sz = read_file(filename, &buf)) == -1) {                       \
+    if ((sz = read_file(prefix_top_srcdir(filename), &buf)) == -1) {    \
       fprintf(stderr, "%s:%d: cannot read file '%s'\n",                 \
               __FILE__, __LINE__, filename);                            \
       exit(EXIT_FAILURE);                                               \
@@ -270,7 +273,7 @@ void assert_hex_atoms(
   do {                                                                  \
     char* buf;                                                          \
     size_t sz;                                                          \
-    if ((sz = read_file(filename, &buf)) == -1) {                       \
+    if ((sz = read_file(prefix_top_srcdir(filename), &buf)) == -1) {    \
       fprintf(stderr, "%s:%d: cannot read file '%s'\n",                 \
               __FILE__, __LINE__, filename);                            \
       exit(EXIT_FAILURE);                                               \
