@@ -37,6 +37,9 @@ for:
     only:
     - TARGET: cygwin
 
+  before_build:
+  - cmd: C:\cygwin64\setup-x86_64.exe --quiet-mode --no-desktop --no-shortcuts --no-startmenu --no-admin --packages flex,bison
+
   build_script:
   - cmd: C:\cygwin64\bin\bash -e -l -c "cd c:/projects/yara && ./build.sh"
 
