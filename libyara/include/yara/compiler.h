@@ -259,12 +259,6 @@ typedef struct _YR_COMPILER
   char* lex_buf_ptr;
   unsigned short lex_buf_len;
 
-  // lex_buf_unescaped_non_ascii is true if lex_buf contains a non-ASCII
-  // character that appeared in unescaped form in the source file. For example,
-  // the string "\x01foo" will contain a non-ASCII character, but it was
-  // escaped in the source file, so lex_buf_unescaped_non_ascii is false.
-  bool lex_buf_unescaped_non_ascii;
-
   char include_base_dir[MAX_PATH];
   void* user_data;
   void* incl_clbk_user_data;

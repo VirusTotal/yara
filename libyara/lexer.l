@@ -98,9 +98,6 @@ with noyywrap then we can remove this pragma.
       lex_check_space_ok(yptr, yyextra->lex_buf_len, YR_LEX_BUF_SIZE); \
       while(*yptr) \
       { \
-        if (*yptr < 32 || *yptr >= 127) { \
-            yyextra->lex_buf_unescaped_non_ascii = true; \
-        } \
         *yyextra->lex_buf_ptr++ = *yptr++; \
         yyextra->lex_buf_len++; \
       } \
@@ -222,7 +219,6 @@ octdigit      [0-7]
 include[ \t]+\"         {
                           yyextra->lex_buf_ptr = yyextra->lex_buf;
                           yyextra->lex_buf_len = 0;
-                          yyextra->lex_buf_unescaped_non_ascii = false;
                           BEGIN(include);
                         }
 
@@ -584,9 +580,6 @@ u?int(8|16|32)(be)? {
   *yyextra->lex_buf_ptr = '\0';
   memcpy(s->c_string, yyextra->lex_buf, yyextra->lex_buf_len + 1);
 
-  if (yyextra->lex_buf_unescaped_non_ascii)
-    s->flags |= SIZED_STRING_FLAGS_UNESCAPED_NON_ASCII;
-
   yylval->sized_string = s;
 
   BEGIN(INITIAL);
@@ -674,11 +667,7 @@ u?int(8|16|32)(be)? {
     *yyextra->lex_buf_ptr = '\0';
     strlcpy(s->c_string, yyextra->lex_buf, s->length + 1);
 
-    if (yyextra->lex_buf_unescaped_non_ascii)
-      s->flags |= SIZED_STRING_FLAGS_UNESCAPED_NON_ASCII;
-
     yylval->sized_string = s;
-
   }
   else
   {
@@ -724,7 +713,6 @@ u?int(8|16|32)(be)? {
   yylval->sized_string = NULL;
   yyextra->lex_buf_ptr = yyextra->lex_buf;
   yyextra->lex_buf_len = 0;
-  yyextra->lex_buf_unescaped_non_ascii = false;
   BEGIN(str);
 }
 
@@ -734,7 +722,6 @@ u?int(8|16|32)(be)? {
   yylval->sized_string = NULL;
   yyextra->lex_buf_ptr = yyextra->lex_buf;
   yyextra->lex_buf_len = 0;
-  yyextra->lex_buf_unescaped_non_ascii = false;
   BEGIN(regexp);
 }
 

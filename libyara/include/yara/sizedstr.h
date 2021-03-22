@@ -42,10 +42,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // expression that had the /s modifier.
 #define SIZED_STRING_FLAGS_DOT_ALL 2
 
-// SIZED_STRING_FLAGS_UNESCAPED_NON_ASCII that the string contains characters
-// outside the printable range [32,126] which did not appeared in escaped form
-// in the source file.
-#define SIZED_STRING_FLAGS_UNESCAPED_NON_ASCII 3
 
 #pragma pack(push)
 #pragma pack(1)

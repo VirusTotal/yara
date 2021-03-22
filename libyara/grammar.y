@@ -333,9 +333,6 @@ rules
 import
     : _IMPORT_ _TEXT_STRING_
       {
-        if ($2->flags & SIZED_STRING_FLAGS_UNESCAPED_NON_ASCII)
-          yywarning(yyscanner, "non-ascii character in import statement");
-
         int result = yr_parser_reduce_import(yyscanner, $2);
 
         yr_free($2);
@@ -599,9 +596,6 @@ string_declaration
       }
       _TEXT_STRING_ string_modifiers
       {
-        if ($4->flags & SIZED_STRING_FLAGS_UNESCAPED_NON_ASCII)
-          yywarning(yyscanner, "non-ascii character in string \"%s\"", $1);
-
         int result = yr_parser_reduce_string_declaration(
             yyscanner, $5, $1, $4, &$<string>$);
 
@@ -795,9 +789,6 @@ string_modifier
       {
         int result = ERROR_SUCCESS;
 
-        if ($3->flags & SIZED_STRING_FLAGS_UNESCAPED_NON_ASCII)
-          yywarning(yyscanner, "non-ascii character in base64 alphabet");
-
         if ($3->length != 64)
         {
           yr_free($3);
@@ -819,9 +810,6 @@ string_modifier
     | _BASE64_WIDE_ '(' _TEXT_STRING_ ')'
       {
         int result = ERROR_SUCCESS;
-
-        if ($3->flags & SIZED_STRING_FLAGS_UNESCAPED_NON_ASCII)
-          yywarning(yyscanner, "non-ascii character in base64 alphabet");
 
         if ($3->length != 64)
         {
@@ -2271,9 +2259,6 @@ primary_expression
     | _TEXT_STRING_
       {
         YR_ARENA_REF ref;
-
-        if ($1->flags & SIZED_STRING_FLAGS_UNESCAPED_NON_ASCII)
-          yywarning(yyscanner, "non-ascii character in literal string");
 
         int result = _yr_compiler_store_data(
             compiler,
