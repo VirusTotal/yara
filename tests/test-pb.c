@@ -38,6 +38,7 @@ int main(int argc, char** argv)
   YR_DEBUG_INITIALIZE();
   YR_DEBUG_FPRINTF(1, stderr, "+ %s() { // in %s\n", __FUNCTION__, __FILE__);
 
+  init_top_srcdir();
   yr_initialize();
 
   assert_true_rule_module_data_file(
