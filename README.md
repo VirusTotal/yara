@@ -43,7 +43,7 @@ yara-python extension.
 
 ## Additional resources
 
-Do you use GitHub for storing you YARA rules? [YARA-CI](https://yara-ci.cloud.virustotal.com)
+Do you use GitHub for storing your YARA rules? [YARA-CI](https://yara-ci.cloud.virustotal.com)
 may be a useful addition to your toolbelt. This is GitHub application that provides
 continuous testing for your rules, helping you to identify common mistakes and
 false positives.
