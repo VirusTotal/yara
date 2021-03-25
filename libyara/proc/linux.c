@@ -154,6 +154,7 @@ YR_API YR_MEMORY_BLOCK* yr_process_get_next_memory_block(
 
   char buffer[256];
   uint64_t begin, end;
+  int c;
 
   if (fgets(buffer, sizeof(buffer), proc_info->maps) != NULL)
   {
@@ -163,6 +164,12 @@ YR_API YR_MEMORY_BLOCK* yr_process_get_next_memory_block(
     context->current_block.size = end - begin;
     result = &context->current_block;
   }
+  /* if we haven't read the whole line, skip over the rest */
+  if (strrchr(buffer, '\n') == NULL)
+    do
+    {
+      c = fgetc(proc_info->maps);
+    } while (c >= 0 && c != '\n');
 
   iterator->last_error = ERROR_SUCCESS;
 
