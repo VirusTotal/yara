@@ -137,6 +137,7 @@ int _yr_process_detach(YR_PROC_ITERATOR_CTX* context)
 YR_API const uint8_t* yr_process_fetch_memory_block_data(YR_MEMORY_BLOCK* block)
 {
   const uint8_t* result = NULL;
+  uint64_t *pagemap = NULL;
 
   YR_PROC_ITERATOR_CTX* context = (YR_PROC_ITERATOR_CTX*) block->context;
   YR_PROC_INFO* proc_info = (YR_PROC_INFO*) context->proc_info;
@@ -236,31 +237,39 @@ YR_API const uint8_t* yr_process_fetch_memory_block_data(YR_MEMORY_BLOCK* block)
   }
   else
   {
-    for (uint64_t i = 0; i < block->size; i += page_size)
+    pagemap = calloc(block->size / page_size, sizeof(uint64_t));
+    if (pagemap == NULL)
     {
-      uint64_t pm_entry;
-      uint8_t buffer[page_size];
-      if (pread(
-              proc_info->pagemap_fd,
-              &pm_entry,
-              sizeof(pm_entry),
-              sizeof(pm_entry) * (block->base + i) / page_size) == -1)
-      {
-        goto _exit;
-      }
-      if ((pm_entry >> 61) == 0)
-      {
+      goto _exit;
+    }
+    if (pread(
+            proc_info->pagemap_fd,
+            pagemap,
+            sizeof(uint64_t) * block->size / page_size,
+            sizeof(uint64_t) * block->base / page_size) == -1)
+    {
+      goto _exit;
+    }
+
+    for (uint64_t i = 0; i < block->size / page_size; i++)
+    {
+      if (pagemap[i] >> 61 == 0) {
         continue;
       }
       /* Overwrite our mapping if the page is present, file-backed, or
        * swap-backed and if it differs from our mapping. */
-      if (pread(proc_info->mem_fd, buffer, page_size, block->base + i) == -1)
+      uint8_t buffer[page_size];
+      if (pread(
+              proc_info->mem_fd,
+              buffer,
+              page_size,
+              block->base + i * page_size) == -1)
       {
         goto _exit;
       }
-      if (memcmp((void*) context->buffer + i, (void*) buffer, page_size) != 0)
+      if (memcmp((void*) context->buffer + i * page_size, (void*) buffer, page_size) != 0)
       {
-        memcpy((void*) context->buffer + i, (void*) buffer, page_size);
+        memcpy((void*) context->buffer + i * page_size, (void*) buffer, page_size);
       }
     }
   }
@@ -268,6 +277,12 @@ YR_API const uint8_t* yr_process_fetch_memory_block_data(YR_MEMORY_BLOCK* block)
   result = context->buffer;
 
 _exit:;
+
+  if (pagemap)
+  {
+    free(pagemap);
+    pagemap = NULL;
+  }
 
   YR_DEBUG_FPRINTF(2, stderr, "- %s() {} = %p\n", __FUNCTION__, result);
 
