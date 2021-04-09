@@ -694,7 +694,9 @@ struct YR_MEMORY_BLOCK_ITERATOR
 
   // Error occurred during the last call to "first" or "next" functions. These
   // functions must set the value of last_error to ERROR_SUCCESS or to some
-  // other error code if appropriate.
+  // other error code if appropriate. Alternatively, last_error can be set to
+  // ERROR_SUCCESS before using the iterator and changed by "first" or "next"
+  // only when they want to report an error.
   int last_error;
 };
 
