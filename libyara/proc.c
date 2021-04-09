@@ -36,18 +36,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 int _yr_process_attach(int, YR_PROC_ITERATOR_CTX*);
 int _yr_process_detach(YR_PROC_ITERATOR_CTX*);
 
-static uint64_t _undefined_file_size(YR_MEMORY_BLOCK_ITERATOR* iterator)
-{
-  YR_DEBUG_FPRINTF(
-      2,
-      stderr,
-      "- %s() {} = %s\n",
-      __FUNCTION__,
-      "YR_UNDEFINED");
-
-  return YR_UNDEFINED;
-}
-
 YR_API int yr_process_open_iterator(int pid, YR_MEMORY_BLOCK_ITERATOR* iterator)
 {
   YR_DEBUG_FPRINTF(2, stderr, "+ %s(pid=%d) {\n", __FUNCTION__, pid);
@@ -66,8 +54,6 @@ YR_API int yr_process_open_iterator(int pid, YR_MEMORY_BLOCK_ITERATOR* iterator)
   iterator->context = context;
   iterator->first = yr_process_get_first_memory_block;
   iterator->next = yr_process_get_next_memory_block;
-  // File size is undefined in process scan.
-  iterator->file_size = _undefined_file_size;
 
   context->buffer = NULL;
   context->buffer_size = 0;
