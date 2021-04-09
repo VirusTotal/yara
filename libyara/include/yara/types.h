@@ -686,10 +686,13 @@ struct YR_MEMORY_BLOCK_ITERATOR
   // storing the iterator's state.
   void* context;
 
-  // Pointers to functions for iterating over the memory blocks and getting
-  // the total file size.
+  // Pointers to functions for iterating over the memory blocks.
   YR_MEMORY_BLOCK_ITERATOR_FUNC first;
   YR_MEMORY_BLOCK_ITERATOR_FUNC next;
+
+  // Pointer to a function that returns the file size as computed by the
+  // iterator. This is a the size returned by the filesize keyword in YARA
+  // rules. If this pointer is NULL the file size will be undefined.
   YR_MEMORY_BLOCK_ITERATOR_SIZE_FUNC file_size;
 
   // Error occurred during the last call to "first" or "next" functions. These
