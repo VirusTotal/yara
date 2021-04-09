@@ -1,3 +1,22 @@
+# ABI_VERSION is passed to libtool as --version-number $(ABI_VERSION). This is
+# not related to YARA's release version, this is used for tracking changes in
+# the ABI, not in the project as a whole.
+#
+# The three number mean [current]:[revision]:[age], and they should updated as
+# follow:
+#
+# 1. With every release increment "revision".
+#
+# 2. If any interfaces have been added, removed, or changed since the last
+#    update, increment "current" and set "revision" to 0.
+#
+# 3. If the changes in the interface were backward compatible (i.e: only adding
+#    new APIs) increment "age", or set it to 0 if otherwise.
+#
+# See https://autotools.io/libtool/version.html for more details.
+#
+ABI_VERSION = 8:0:0
+
 # Rules for generating YARA modules from .proto files. For each .proto file
 # three files are generated: .c, .pb-c.c, and .pb-c.h. The .c file is generated
 # by protoc-gen-yara and the other two by protoc-gen-c. This is done only if
@@ -152,7 +171,7 @@ dist_noinst_DATA = pb/yara.proto
 
 lib_LTLIBRARIES = libyara.la
 
-libyara_la_LDFLAGS = -version-number 4:1:0
+libyara_la_LDFLAGS = -version-number $(ABI_VERSION)
 
 BUILT_SOURCES = \
 	lexer.c \
