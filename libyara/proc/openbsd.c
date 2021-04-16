@@ -29,12 +29,14 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #if defined(USE_OPENBSD_PROC)
 
+#include <sys/types.h>
+
 #include <errno.h>
 #include <sys/ptrace.h>
 #include <sys/sysctl.h>
-#include <sys/types.h>
 #include <sys/wait.h>
 #include <yara/error.h>
+#include <yara/libyara.h>
 #include <yara/mem.h>
 #include <yara/proc.h>
 
@@ -57,6 +59,8 @@ int _yr_process_attach(int pid, YR_PROC_ITERATOR_CTX* context)
 
   if (proc_info == NULL)
     return ERROR_INSUFFICIENT_MEMORY;
+
+  memset(proc_info, 0, sizeof(YR_PROC_INFO));
 
   proc_info->pid = pid;
   if (ptrace(PT_ATTACH, pid, NULL, 0) == -1)
@@ -147,19 +151,37 @@ YR_API YR_MEMORY_BLOCK* yr_process_get_next_memory_block(
 
   iterator->last_error = ERROR_SUCCESS;
 
-  if (sysctl(mib, 3, &proc_info->vm_entry, &len, NULL, 0) < 0)
-    return NULL;
+  uint64_t current_begin = context->current_block.base +
+                           context->current_block.size;
+  uint64_t max_processmemory_chunk;
 
-  // no more blocks
-  if (proc_info->old_end == proc_info->vm_entry.kve_end)
-    return NULL;
+  yr_get_configuration(
+      YR_CONFIG_MAX_PROCESSMEMORY_CHUNK, (void*) &max_processmemory_chunk);
 
-  proc_info->old_end = proc_info->vm_entry.kve_end;
-  context->current_block.base = proc_info->vm_entry.kve_start;
-  context->current_block.size = proc_info->vm_entry.kve_end -
-                                proc_info->vm_entry.kve_start;
+  if (proc_info->old_end <= current_begin)
+  {
+    if (sysctl(mib, 3, &proc_info->vm_entry, &len, NULL, 0) < 0)
+      return NULL;
 
-  proc_info->vm_entry.kve_start = proc_info->vm_entry.kve_start + 1;
+    // no more blocks
+    if (proc_info->old_end == proc_info->vm_entry.kve_end)
+      return NULL;
+
+    current_begin = proc_info->vm_entry.kve_start;
+    proc_info->old_end = proc_info->vm_entry.kve_end;
+
+    proc_info->vm_entry.kve_start = proc_info->vm_entry.kve_start + 1;
+  }
+
+  context->current_block.base = current_begin;
+  if (proc_info->old_end - current_begin > max_processmemory_chunk)
+  {
+    context->current_block.size = max_processmemory_chunk;
+  }
+  else
+  {
+    context->current_block.size = proc_info->old_end - current_begin;
+  }
 
   return &context->current_block;
 }

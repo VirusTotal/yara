@@ -37,6 +37,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <unistd.h>
 #include <yara/error.h>
 #include <yara/globals.h>
+#include <yara/libyara.h>
 #include <yara/mem.h>
 #include <yara/proc.h>
 
@@ -45,6 +46,7 @@ typedef struct _YR_PROC_INFO
   int pid;
   int mem_fd;
   FILE* maps;
+  uint64_t next_block_end;
 } YR_PROC_INFO;
 
 int _yr_process_attach(int pid, YR_PROC_ITERATOR_CTX* context)
@@ -61,6 +63,7 @@ int _yr_process_attach(int pid, YR_PROC_ITERATOR_CTX* context)
   proc_info->pid = pid;
   proc_info->maps = NULL;
   proc_info->mem_fd = -1;
+  proc_info->next_block_end = 0;
 
   snprintf(buffer, sizeof(buffer), "/proc/%u/maps", pid);
   proc_info->maps = fopen(buffer, "r");
@@ -150,14 +153,38 @@ YR_API YR_MEMORY_BLOCK* yr_process_get_next_memory_block(
   char buffer[256];
   uint64_t begin, end;
 
-  if (fgets(buffer, sizeof(buffer), proc_info->maps) != NULL)
-  {
-    sscanf(buffer, "%" SCNx64 "-%" SCNx64, &begin, &end);
+  uint64_t current_begin = context->current_block.base +
+                           context->current_block.size;
+  uint64_t max_processmemory_chunk;
 
-    context->current_block.base = begin;
-    context->current_block.size = end - begin;
-    result = &context->current_block;
+  yr_get_configuration(
+      YR_CONFIG_MAX_PROCESSMEMORY_CHUNK, (void*) &max_processmemory_chunk);
+
+  if (proc_info->next_block_end <= current_begin)
+  {
+    if (fgets(buffer, sizeof(buffer), proc_info->maps) != NULL)
+    {
+      sscanf(buffer, "%" SCNx64 "-%" SCNx64, &begin, &end);
+
+      current_begin = begin;
+      proc_info->next_block_end = end;
+    }
+    else
+    {
+      YR_DEBUG_FPRINTF(2, stderr, "+ %s() = NULL\n", __FUNCTION__);
+      return NULL;
+    }
   }
+
+  if (proc_info->next_block_end - current_begin > max_processmemory_chunk)
+  {
+    context->current_block.size = max_processmemory_chunk;
+  }
+  else
+  {
+    context->current_block.size = proc_info->next_block_end - current_begin;
+  }
+  context->current_block.base = current_begin;
 
   // If we haven't read the whole line, skip over the rest.
   if (strrchr(buffer, '\n') == NULL)
@@ -180,7 +207,7 @@ YR_API YR_MEMORY_BLOCK* yr_process_get_next_memory_block(
       context->current_block.base,
       context->current_block.size);
 
-  return result;
+  return &context->current_block;
 }
 
 YR_API YR_MEMORY_BLOCK* yr_process_get_first_memory_block(
@@ -197,6 +224,8 @@ YR_API YR_MEMORY_BLOCK* yr_process_get_first_memory_block(
     result = NULL;
     goto _exit;
   }
+
+  proc_info->next_block_end = 0;
 
   result = yr_process_get_next_memory_block(iterator);
 
