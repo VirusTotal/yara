@@ -34,8 +34,12 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <windows.h>
 #else
 #include <pthread.h>
-#include <semaphore.h>
 #include <sys/stat.h>
+#if defined(__APPLE__)
+#include <mach/semaphore.h>
+#else
+#include <semaphore.h>
+#endif
 #endif
 
 #if defined(_WIN32) || defined(__CYGWIN__)
@@ -48,34 +52,39 @@ typedef LPTHREAD_START_ROUTINE THREAD_START_ROUTINE;
 
 #else
 
-typedef sem_t* SEMAPHORE;
 typedef pthread_mutex_t MUTEX;
 typedef pthread_t THREAD;
 typedef void* (*THREAD_START_ROUTINE)(void*);
 
+#if defined(__APPLE__)
+typedef semaphore_t SEMAPHORE;
+#else
+typedef sem_t* SEMAPHORE;
 #endif
 
-int mutex_init(MUTEX* mutex);
+#endif
 
-void mutex_destroy(MUTEX* mutex);
+int cli_mutex_init(MUTEX* mutex);
 
-void mutex_lock(MUTEX* mutex);
+void cli_mutex_destroy(MUTEX* mutex);
 
-void mutex_unlock(MUTEX* mutex);
+void cli_mutex_lock(MUTEX* mutex);
 
-int semaphore_init(SEMAPHORE* semaphore, int value);
+void cli_mutex_unlock(MUTEX* mutex);
 
-void semaphore_destroy(SEMAPHORE* semaphore);
+int cli_semaphore_init(SEMAPHORE* semaphore, int value);
 
-void semaphore_wait(SEMAPHORE* semaphore);
+void cli_semaphore_destroy(SEMAPHORE* semaphore);
 
-void semaphore_release(SEMAPHORE* semaphore);
+int cli_semaphore_wait(SEMAPHORE* semaphore, time_t abs_timeout);
 
-int create_thread(
+void cli_semaphore_release(SEMAPHORE* semaphore);
+
+int cli_create_thread(
     THREAD* thread,
     THREAD_START_ROUTINE start_routine,
     void* param);
 
-void thread_join(THREAD* thread);
+void cli_thread_join(THREAD* thread);
 
 #endif
