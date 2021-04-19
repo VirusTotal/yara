@@ -32,6 +32,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #if !defined(_WIN32) && !defined(__CYGWIN__)
 #include <errno.h>
 #include <stdio.h>
+#include <time.h>
 #include <unistd.h>
 #endif
 

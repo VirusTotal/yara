@@ -415,7 +415,7 @@ static bool is_directory(const char* path)
     return false;
 }
 
-static void scan_dir(const char* dir, SCAN_OPTIONS* scan_opts)
+static int scan_dir(const char* dir, SCAN_OPTIONS* scan_opts)
 {
   int result = ERROR_SUCCESS;
   static char path_and_mask[MAX_PATH];
