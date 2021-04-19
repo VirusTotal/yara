@@ -172,6 +172,17 @@ cc_test(
 )
 
 cc_test(
+    name = "test_stats",
+    srcs = ["test-stats.c"],
+    copts = COPTS,
+    linkstatic = True,
+    deps = [
+        ":util",
+        "@//:libyara",
+    ],
+)
+
+cc_test(
     name = "test_stack",
     srcs = ["test-stack.c"],
     copts = COPTS,
