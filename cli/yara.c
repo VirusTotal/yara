@@ -458,6 +458,7 @@ static int scan_dir(const char* dir, SCAN_OPTIONS* scan_opts)
 static int populate_scan_list(const char* filename, SCAN_OPTIONS* scan_opts)
 {
   DWORD nread;
+  int result = ERROR_SUCCESS;
 
   HANDLE hFile = CreateFile(
       filename,
