@@ -35,13 +35,18 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <unistd.h>
 #endif
 
-#if defined(__FreeBSD__)
+#if defined(__APPLE__)
+#include <mach/mach_init.h>
+#include <mach/task.h>
+#else
 #include <stdlib.h>
 #endif
 
+#include <time.h>
+#include <yara/error.h>
 #include "threading.h"
 
-int mutex_init(MUTEX* mutex)
+int cli_mutex_init(MUTEX* mutex)
 {
 #if defined(_WIN32) || defined(__CYGWIN__)
   InitializeCriticalSection(mutex);
@@ -51,7 +56,7 @@ int mutex_init(MUTEX* mutex)
 #endif
 }
 
-void mutex_destroy(MUTEX* mutex)
+void cli_mutex_destroy(MUTEX* mutex)
 {
 #if defined(_WIN32) || defined(__CYGWIN__)
   DeleteCriticalSection(mutex);
@@ -60,7 +65,7 @@ void mutex_destroy(MUTEX* mutex)
 #endif
 }
 
-void mutex_lock(MUTEX* mutex)
+void cli_mutex_lock(MUTEX* mutex)
 {
 #if defined(_WIN32) || defined(__CYGWIN__)
   EnterCriticalSection(mutex);
@@ -69,7 +74,7 @@ void mutex_lock(MUTEX* mutex)
 #endif
 }
 
-void mutex_unlock(MUTEX* mutex)
+void cli_mutex_unlock(MUTEX* mutex)
 {
 #if defined(_WIN32) || defined(__CYGWIN__)
   LeaveCriticalSection(mutex);
@@ -78,73 +83,85 @@ void mutex_unlock(MUTEX* mutex)
 #endif
 }
 
-int semaphore_init(SEMAPHORE* semaphore, int value)
+int cli_semaphore_init(SEMAPHORE* semaphore, int value)
 {
 #if defined(_WIN32) || defined(__CYGWIN__)
   *semaphore = CreateSemaphore(NULL, value, 65535, NULL);
   if (*semaphore == NULL)
     return GetLastError();
-#elif defined(__FreeBSD__)
+#elif defined(__APPLE__)
+  int result = semaphore_create(
+      mach_task_self(), semaphore, SYNC_POLICY_FIFO, value);
+  if (result != KERN_SUCCESS)
+    return result;
+#else
   *semaphore = malloc(sizeof(sem_t));
   if (*semaphore == NULL)
     return errno;
   return sem_init(*semaphore, 0, value);
-#else
-  // Mac OS X doesn't support unnamed semaphores via sem_init, that's why
-  // we use sem_open instead sem_init and immediately unlink the semaphore
-  // from the name. More info at:
-  //
-  // http://stackoverflow.com/questions/1413785/sem-init-on-os-x
-  //
-  // Also create name for semaphore from PID because running multiple instances
-  // of YARA at the same time can cause that sem_open() was called in two
-  // processes simultaneously while neither of them had chance to call
-  // sem_unlink() yet.
-  char name[20];
-  snprintf(name, sizeof(name), "/yara.sem.%i", (int) getpid());
-  *semaphore = sem_open(name, O_CREAT, S_IRUSR, value);
-
-  if (*semaphore == SEM_FAILED)
-    return errno;
-
-  if (sem_unlink(name) != 0)
-    return errno;
 #endif
 
   return 0;
 }
 
-void semaphore_destroy(SEMAPHORE* semaphore)
+void cli_semaphore_destroy(SEMAPHORE* semaphore)
 {
 #if defined(_WIN32) || defined(__CYGWIN__)
   CloseHandle(*semaphore);
-#elif defined(__FreeBSD__)
+#elif defined(__APPLE__)
+  semaphore_destroy(mach_task_self(), *semaphore);
+#else
   sem_close(*semaphore);
   free(*semaphore);
-#else
-  sem_close(*semaphore);
 #endif
 }
 
-void semaphore_wait(SEMAPHORE* semaphore)
+///////////////////////////////////////////////////////////////////////////////
+// Wait for the semaphore, but stop waiting when the current time exceeds the
+// given deadline. If deadline is in the past, exit immediately.
+//
+int cli_semaphore_wait(SEMAPHORE* semaphore, time_t deadline)
 {
+  unsigned int timeout = (unsigned int) (deadline - time(NULL));
+
+  if (timeout <= 0)
+    return ERROR_SCAN_TIMEOUT;
+
 #if defined(_WIN32) || defined(__CYGWIN__)
-  WaitForSingleObject(*semaphore, INFINITE);
+  if (WaitForSingleObject(*semaphore, timeout * 1000) == WAIT_TIMEOUT)
+    return ERROR_SCAN_TIMEOUT;
+#elif defined(__APPLE__)
+  mach_timespec_t ts;
+  // semaphore_timedwait expects a timeout relative to the current time, not an
+  // absolute timeout (deadline) as sem_timedwait does.
+  ts.tv_sec = timeout;
+  ts.tv_nsec = 0;
+  if (semaphore_timedwait(*semaphore, ts) == KERN_OPERATION_TIMED_OUT)
+    return ERROR_SCAN_TIMEOUT;
 #else
-  sem_wait(*semaphore);
+  struct timespec ts;
+  // sem_timedwait expects an absolute timeout (deadline), not a relative
+  // timeout as semaphore_timedwait does.
+  ts.tv_sec = deadline;
+  ts.tv_nsec = 0;
+  if (sem_timedwait(*semaphore, &ts) == -1 && errno == ETIMEDOUT)
+    return ERROR_SCAN_TIMEOUT;
 #endif
+  return ERROR_SUCCESS;
 }
 
-void semaphore_release(SEMAPHORE* semaphore)
+void cli_semaphore_release(SEMAPHORE* semaphore)
 {
 #if defined(_WIN32) || defined(__CYGWIN__)
   ReleaseSemaphore(*semaphore, 1, NULL);
+#elif defined(__APPLE__)
+  semaphore_signal(*semaphore);
 #else
   sem_post(*semaphore);
 #endif
 }
 
-int create_thread(
+int cli_create_thread(
     THREAD* thread,
     THREAD_START_ROUTINE start_routine,
     void* param)
@@ -160,7 +177,7 @@ int create_thread(
 #endif
 }
 
-void thread_join(THREAD* thread)
+void cli_thread_join(THREAD* thread)
 {
 #if defined(_WIN32) || defined(__CYGWIN__)
   WaitForSingleObject(*thread, INFINITE);
