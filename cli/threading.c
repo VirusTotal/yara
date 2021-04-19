@@ -122,7 +122,7 @@ void cli_semaphore_destroy(SEMAPHORE* semaphore)
 //
 int cli_semaphore_wait(SEMAPHORE* semaphore, time_t deadline)
 {
-  int timeout = deadline - time(NULL);
+  unsigned int timeout = (unsigned int) (deadline - time(NULL));
 
   if (timeout <= 0)
     return ERROR_SCAN_TIMEOUT;
