@@ -356,9 +356,7 @@ static void file_queue_destroy()
 
 static void file_queue_finish()
 {
-  int i;
-
-  for (i = 0; i < YR_MAX_THREADS; i++) cli_semaphore_release(&used_slots);
+  for (int i = 0; i < YR_MAX_THREADS; i++) cli_semaphore_release(&used_slots);
 }
 
 static int file_queue_put(const char* file_path, time_t deadline)
@@ -675,9 +673,7 @@ static char cescapes[] = {
 
 static void print_escaped(const uint8_t* data, size_t length)
 {
-  size_t i;
-
-  for (i = 0; i < length; i++)
+  for (size_t i = 0; i < length; i++)
   {
     switch (data[i])
     {
@@ -1283,7 +1279,7 @@ int main(int argc, const char** argv)
 
   bool arg_is_dir = false;
   int flags = 0;
-  int result, i;
+  int result;
 
   argc = args_parse(options, argc, argv);
 
@@ -1452,7 +1448,7 @@ int main(int argc, const char** argv)
     THREAD thread[YR_MAX_THREADS];
     THREAD_ARGS thread_args[YR_MAX_THREADS];
 
-    for (i = 0; i < threads; i++)
+    for (int i = 0; i < threads; i++)
     {
       thread_args[i].deadline = scan_opts.deadline;
       thread_args[i].current_count = 0;
@@ -1493,9 +1489,10 @@ int main(int argc, const char** argv)
     file_queue_finish();
 
     // Wait for scan threads to finish
-    for (i = 0; i < threads; i++) cli_thread_join(&thread[i]);
+    for (int i = 0; i < threads; i++) cli_thread_join(&thread[i]);
 
-    for (i = 0; i < threads; i++) yr_scanner_destroy(thread_args[i].scanner);
+    for (int i = 0; i < threads; i++)
+      yr_scanner_destroy(thread_args[i].scanner);
 
     file_queue_destroy();
   }
