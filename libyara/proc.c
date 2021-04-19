@@ -54,6 +54,9 @@ YR_API int yr_process_open_iterator(int pid, YR_MEMORY_BLOCK_ITERATOR* iterator)
   iterator->context = context;
   iterator->first = yr_process_get_first_memory_block;
   iterator->next = yr_process_get_next_memory_block;
+  // In a process scan file size is undefined, when the file_size function is
+  // set to NULL the value returned by the filesize keyword is YR_UNDEFINED.
+  iterator->file_size = NULL;
 
   context->buffer = NULL;
   context->buffer_size = 0;
