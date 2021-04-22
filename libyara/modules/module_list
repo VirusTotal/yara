@@ -3,7 +3,6 @@ MODULE(pe)
 MODULE(elf)
 MODULE(math)
 MODULE(time)
-MODULE(stats)
 
 #ifdef DOTNET_MODULE
 MODULE(dotnet)

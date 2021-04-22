@@ -20,7 +20,6 @@ modules in the :ref:`writing-modules` section.
    Math <modules/math>
    Dotnet <modules/dotnet>
    Time <modules/time>
-   Stats <modules/stats>
 
 
 

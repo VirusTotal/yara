@@ -43,8 +43,6 @@ MODULES += modules/math/math.c
 
 MODULES += modules/time/time.c
 
-MODULES += modules/stats/stats.c
-
 MODULES += modules/pe/pe.c
 MODULES += modules/pe/pe_utils.c
 
