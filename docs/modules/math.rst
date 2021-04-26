@@ -129,9 +129,9 @@ file and create signatures based on those results.
     the process address space.
     *offset* and *size* are optional; if left empty, the complete file is searched.
 
-    *Example: stats.count("$[]", 0, 100) >= 5*
+    *Example: math.count("$[]", 0, 100) >= 5*
 
-    *Example: stats.count(0x4A) >= 10*
+    *Example: math.count(0x4A) >= 10*
 
 .. c:function:: percentage(byte, offset, size)
 
@@ -144,9 +144,9 @@ file and create signatures based on those results.
     *offset* and *size* are optional; if left empty, the complete file is searched.
 
     
-    *Example: stats.percentage(0xFF, filesize-1024, filesize) >= 0.9*
+    *Example: math.percentage(0xFF, filesize-1024, filesize) >= 0.9*
     
-    *Example: stats.percentage(0x4A) >= 0.4*
+    *Example: math.percentage(0x4A) >= 0.4*
 
 .. c:function:: mode(offset, size)
 
@@ -158,4 +158,4 @@ file and create signatures based on those results.
     the process address space. The returned value is a float.
     *offset* and *size* are optional; if left empty, the complete file is searched.
 
-    *Example: stats.mode(0, filesize) == 0xFF*
+    *Example: math.mode(0, filesize) == 0xFF*
