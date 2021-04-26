@@ -714,9 +714,10 @@ define_function(count_range_char)
       break;
   }
 
+  yr_free(matches_in_progress);
+
   if (!past_first_block)
   {
-    yr_free(matches_in_progress);
     return_integer(YR_UNDEFINED);
   }
   return_integer(count);
@@ -788,6 +789,7 @@ define_function(count_global_char)
     }
     expected_next_offset = block->base + block->size;
   }
+  yr_free(matches_in_progress);
   return_integer(count);
 }
 
