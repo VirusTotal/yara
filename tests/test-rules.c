@@ -2792,7 +2792,7 @@ void test_process_scan()
             "/bin/sh",
             "/bin/sh",
             "-c",
-            "VAR='Hello, world!'; sleep 5; true",
+            "VAR='Hello, world!'; sleep 600; true",
             NULL) == -1)
       exit(1);
   }
