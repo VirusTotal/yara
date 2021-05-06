@@ -33,9 +33,11 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifdef _MSC_VER
 #include <tchar.h>
 #define char_t TCHAR
+#define PF_S "hs"
 #else
 #define char_t char
 #define _T(x) x
+#define PF_S  "s"
 
 #ifdef __CYGWIN__
 #define _tcstok_s strtok_r

@@ -1,4 +1,4 @@
-/*
+﻿/*
 Copyright (c) 2007-2021. The YARA Authors. All Rights Reserved.
 
 Redistribution and use in source and binary forms, with or without modification,
@@ -41,6 +41,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #else
 
 #include <windows.h>
+#include <fcntl.h>
+#include <io.h>
 
 #define PRIx64 "I64x"
 #define PRId64 "I64d"
@@ -446,7 +448,7 @@ static bool is_directory(const char_t* path)
 static int scan_dir(const char_t* dir, SCAN_OPTIONS* scan_opts)
 {
   int result = ERROR_SUCCESS;
-  static char_t path[MAX_PATH];
+  char_t path[MAX_PATH];
 
   _sntprintf(path, MAX_PATH, _T("%s\\*"), dir);
 
@@ -725,12 +727,10 @@ static void print_string(const uint8_t* data, int length)
   for (int i = 0; i < length; i++)
   {
     if (data[i] >= 32 && data[i] <= 126)
-      printf("%c", data[i]);
+      _tprintf(_T("%c"), data[i]);
     else
-      printf("\\x%02X", data[i]);
+      _tprintf(_T("\\x%02X"), data[i]);
   }
-
-  printf("\n");
 }
 
 static char cescapes[] = {
@@ -747,18 +747,18 @@ static void print_escaped(const uint8_t* data, size_t length)
     case '\"':
     case '\'':
     case '\\':
-      printf("\\%c", data[i]);
+      _tprintf(_T("\\%hc"), data[i]);
       break;
 
     default:
       if (data[i] >= 127)
-        printf("\\%03o", data[i]);
+        _tprintf(_T("\\%03o"), data[i]);
       else if (data[i] >= 32)
-        putchar(data[i]);
+        _tprintf(_T("%hc"), data[i]);
       else if (cescapes[data[i]] != 0)
-        printf("\\%c", cescapes[data[i]]);
+        _tprintf(_T("\\%hc"), cescapes[data[i]]);
       else
-        printf("\\%03o", data[i]);
+        _tprintf(_T("\\%03o"), data[i]);
     }
   }
 }
@@ -766,9 +766,10 @@ static void print_escaped(const uint8_t* data, size_t length)
 static void print_hex_string(const uint8_t* data, int length)
 {
   for (int i = 0; i < min(64, length); i++)
-    printf("%s%02X", (i == 0 ? "" : " "), data[i]);
+    _tprintf(_T("%s%02X"), (i == 0 ? _T("") : _T(" ")), data[i]);
 
-  puts(length > 64 ? " ..." : "");
+  if (length > 64)
+    _tprintf(_T(" ..."));
 }
 
 static void print_error(int error)
@@ -895,31 +896,32 @@ static void print_rules_stats(YR_RULES* rules)
     return;
   }
 
-  printf("size of AC transition table        : %d\n", stats.ac_tables_size);
+  _tprintf(
+	  _T("size of AC transition table        : %d\n"), stats.ac_tables_size);
 
-  printf(
-      "average length of AC matches lists : %f\n",
+  _tprintf(
+      _T("average length of AC matches lists : %f\n"),
       stats.ac_average_match_list_length);
 
-  printf("number of rules                    : %d\n", stats.num_rules);
+  _tprintf(_T("number of rules                    : %d\n"), stats.num_rules);
 
-  printf("number of strings                  : %d\n", stats.num_strings);
+  _tprintf(_T("number of strings                  : %d\n"), stats.num_strings);
 
-  printf("number of AC matches               : %d\n", stats.ac_matches);
+  _tprintf(_T("number of AC matches               : %d\n"), stats.ac_matches);
 
-  printf(
-      "number of AC matches in root node  : %d\n",
+  _tprintf(
+      _T("number of AC matches in root node  : %d\n"),
       stats.ac_root_match_list_length);
 
-  printf("number of AC matches in top %d longest lists\n", t);
+  _tprintf(_T("number of AC matches in top %d longest lists\n"), t);
 
   for (int i = 0; i < t; i++)
-    printf(" %3d: %d\n", i + 1, stats.top_ac_match_list_lengths[i]);
+    _tprintf(_T(" %3d: %d\n"), i + 1, stats.top_ac_match_list_lengths[i]);
 
-  printf("match list length percentiles\n");
+  _tprintf(_T("match list length percentiles\n"));
 
   for (int i = 100; i >= 0; i--)
-    printf(" %3d: %d\n", i, stats.ac_match_list_length_pctls[i]);
+    _tprintf(_T(" %3d: %d\n"), i, stats.ac_match_list_length_pctls[i]);
 }
 
 static int handle_message(
@@ -977,24 +979,24 @@ static int handle_message(
     cli_mutex_lock(&output_mutex);
 
     if (show_namespace)
-      printf("%s:", rule->ns->name);
+      _tprintf(_T("%" PF_S ":"), rule->ns->name);
 
-    printf("%s ", rule->identifier);
+    _tprintf(_T("%" PF_S " "), rule->identifier);
 
     if (show_tags)
     {
-      printf("[");
+      _tprintf(_T("["));
 
       yr_rule_tags_foreach(rule, tag)
       {
         // print a comma except for the first tag
         if (tag != rule->tags)
-          printf(",");
+          _tprintf(_T(","));
 
-        printf("%s", tag);
+        _tprintf(_T("%" PF_S), tag);
       }
 
-      printf("] ");
+      _tprintf(_T("] "));
     }
 
     // Show meta-data.
@@ -1003,30 +1005,33 @@ static int handle_message(
     {
       YR_META* meta;
 
-      printf("[");
+      _tprintf(_T("["));
 
       yr_rule_metas_foreach(rule, meta)
       {
         if (meta != rule->metas)
-          printf(",");
+          _tprintf(_T(","));
 
         if (meta->type == META_TYPE_INTEGER)
         {
-          printf("%s=%" PRId64, meta->identifier, meta->integer);
+          _tprintf(_T("%" PF_S " =%" PRId64), meta->identifier, meta->integer);
         }
         else if (meta->type == META_TYPE_BOOLEAN)
         {
-          printf("%s=%s", meta->identifier, meta->integer ? "true" : "false");
+          _tprintf(
+		      _T("%" PF_S "=%" PF_S), 
+			  meta->identifier, 
+			  meta->integer ? "true" : "false");
         }
         else
         {
-          printf("%s=\"", meta->identifier);
+          _tprintf(_T("%" PF_S "=\""), meta->identifier);
           print_escaped((uint8_t*) (meta->string), strlen(meta->string));
-          putchar('"');
+		  _tprintf(_T("\""));
         }
       }
 
-      printf("] ");
+      _tprintf(_T("] "));
     }
 
     _tprintf(_T("%s\n"), ((CALLBACK_ARGS*) data)->file_path);
@@ -1044,30 +1049,28 @@ static int handle_message(
         yr_string_matches_foreach(context, string, match)
         {
           if (show_string_length)
-            printf(
-                "0x%" PRIx64 ":%d:%s",
+            _tprintf(
+                _T("0x%" PRIx64 ":%d:%" PF_S),
                 match->base + match->offset,
                 match->data_length,
                 string->identifier);
           else
-            printf(
-                "0x%" PRIx64 ":%s",
+            _tprintf(
+                _T("0x%" PRIx64 ":%" PF_S),
                 match->base + match->offset,
                 string->identifier);
 
           if (show_strings)
           {
-            printf(": ");
+            _tprintf(_T(": "));
 
             if (STRING_IS_HEX(string))
               print_hex_string(match->data, match->data_length);
             else
               print_string(match->data, match->data_length);
           }
-          else
-          {
-            printf("\n");
-          }
+         
+          _tprintf(_T("\n"));
         }
       }
     }
@@ -1132,12 +1135,23 @@ static int callback(
 
       cli_mutex_lock(&output_mutex);
 
+#if defined(_WIN32) || defined(__CYGWIN__)
+	  // In Windows restore stdout to normal text mode as yr_object_print_data calls
+	  // printf which is not supported in UTF-8 mode.
+	  _setmode(_fileno(stdout), _O_TEXT);
+#endif
+
       yr_object_print_data(object, 0, 1);
-      printf("\n");
+	  printf("\n");
+
+#if defined(_WIN32) || defined(__CYGWIN__)
+	  // Go back to UTF-8 mode.
+	  _setmode(_fileno(stdout), _O_U8TEXT);
+#endif
 
       cli_mutex_unlock(&output_mutex);
     }
-
+	
     return CALLBACK_CONTINUE;
 
   case CALLBACK_MSG_TOO_MANY_MATCHES:
@@ -1269,6 +1283,7 @@ static void unload_modules_data()
   modules_data_list = NULL;
 }
 
+
 int _tmain(int argc, const char_t** argv)
 {
   COMPILER_RESULTS cr;
@@ -1328,6 +1343,14 @@ int _tmain(int argc, const char_t** argv)
 
     return EXIT_FAILURE;
   }
+
+#if defined(_WIN32) || defined(__CYGWIN__)
+  // In Windows set stdout to UTF-8 mode. 
+  if (_setmode(_fileno(stdout), _O_U8TEXT) == -1)
+  { 
+    return EXIT_FAILURE;
+  }
+#endif
 
   if (!load_modules_data())
     exit_with_code(EXIT_FAILURE);
