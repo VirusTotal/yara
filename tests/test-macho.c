@@ -12,7 +12,7 @@ int main(int argc, char** argv)
   YR_DEBUG_INITIALIZE();
   YR_DEBUG_FPRINTF(1, stderr, "+ %s() { // in %s\n", __FUNCTION__, argv[0]);
 
-  chdir_if_env_top_srcdir();
+  init_top_srcdir();
 
   yr_initialize();
 
@@ -22,10 +22,12 @@ int main(int argc, char** argv)
       "import \"macho\" rule test { condition: \
     macho.cputype == macho.CPU_TYPE_X86 }",
       MACHO_X86_FILE);
+
   assert_true_rule_blob(
       "import \"macho\" rule test { condition: \
     macho.filetype == macho.MH_EXECUTE }",
       MACHO_X86_FILE);
+
   assert_true_rule_blob(
       "import \"macho\" rule test { condition: \
     macho.flags & macho.MH_PIE }",
@@ -37,6 +39,7 @@ int main(int argc, char** argv)
       "import \"macho\" rule test { condition: \
     macho.number_of_segments == 4 }",
       MACHO_X86_FILE);
+
   assert_true_rule_blob(
       "import \"macho\" rule test { condition: \
     macho.segments[0].segname == \"__PAGEZERO\" and \
@@ -44,6 +47,7 @@ int main(int argc, char** argv)
     macho.segments[2].segname == \"__DATA\" and \
     macho.segments[3].segname == \"__LINKEDIT\" }",
       MACHO_X86_FILE);
+
   assert_true_rule_blob(
       "import \"macho\" rule test { condition: \
     macho.segments[0].vmaddr == 0 and \
@@ -51,6 +55,7 @@ int main(int argc, char** argv)
     macho.segments[2].nsects == 2 and \
     macho.segments[3].fsize == 0x118 }",
       MACHO_X86_FILE);
+
   assert_true_rule_file(
       "import \"macho\" rule test { condition: \
     macho.number_of_segments == 1 }",
@@ -64,11 +69,13 @@ int main(int argc, char** argv)
     macho.segments[1].sections[0].size == 0xa6 and \
     macho.segments[1].sections[0].offset == 0x0e90 }",
       MACHO_X86_FILE);
+
   assert_true_rule_blob(
       "import \"macho\" rule test { condition: \
     macho.segments[1].sections[0].sectname == \"__text\" and \
     macho.segments[1].sections[0].segname == \"__TEXT\" }",
       MACHO_X86_FILE);
+
   assert_true_rule_blob(
       "import \"macho\" rule test { condition: \
     macho.segments[1].sections[1].sectname == \"__symbol_stub\" and \
@@ -92,6 +99,7 @@ int main(int argc, char** argv)
       "import \"macho\" rule test { condition: \
     macho.cputype == macho.CPU_TYPE_X86 }",
       MACHO_X86_OBJECT_FILE);
+
   assert_true_rule_blob(
       "import \"macho\" rule test { condition: \
     macho.filetype == macho.MH_OBJECT }",
@@ -112,6 +120,7 @@ int main(int argc, char** argv)
       "import \"macho\" rule test { condition: \
     macho.cputype == macho.CPU_TYPE_POWERPC }",
       MACHO_PPC_FILE);
+
   assert_true_rule_blob(
       "import \"macho\" rule test { condition: \
     macho.filetype == macho.MH_EXECUTE }",
@@ -142,12 +151,24 @@ int main(int argc, char** argv)
 
   assert_true_rule_blob(
       "import \"macho\" rule test { condition: \
+    macho.flags == 0x0000100085 }",
+      MACHO_X86_64_DYLIB_FILE);
+
+  assert_true_rule_blob(
+      "import \"macho\" rule test { condition: \
+    macho.reserved == 0x00000001 }",
+      MACHO_X86_64_DYLIB_FILE);
+
+  assert_true_rule_blob(
+      "import \"macho\" rule test { condition: \
     macho.cputype == macho.CPU_TYPE_X86_64 }",
       MACHO_X86_64_DYLIB_FILE);
+
   assert_true_rule_blob(
       "import \"macho\" rule test { condition: \
     macho.filetype == macho.MH_DYLIB }",
       MACHO_X86_64_DYLIB_FILE);
+
   assert_true_rule_blob(
       "import \"macho\" rule test { condition: \
     macho.flags & macho.MH_DYLDLINK and \
@@ -162,11 +183,13 @@ int main(int argc, char** argv)
       "import \"macho\" rule test { condition: \
     macho.number_of_segments == 2 }",
       MACHO_X86_64_DYLIB_FILE);
+
   assert_true_rule_blob(
       "import \"macho\" rule test { condition: \
     macho.segments[0].segname == \"__TEXT\" and \
     macho.segments[1].segname == \"__LINKEDIT\" }",
       MACHO_X86_64_DYLIB_FILE);
+
   assert_true_rule_blob(
       "import \"macho\" rule test { condition: \
     macho.segments[1].vmaddr == 0x0000000000001000 and \
@@ -174,11 +197,13 @@ int main(int argc, char** argv)
     macho.segments[1].nsects == 0 and \
     macho.segments[1].fsize == 128 }",
       MACHO_X86_64_DYLIB_FILE);
+
   assert_true_rule_blob(
       "import \"macho\" rule test { condition: \
     macho.segments[0].sections[0].sectname == \"__text\" and \
     macho.segments[0].sections[0].segname == \"__TEXT\" }",
       MACHO_X86_64_DYLIB_FILE);
+
   assert_true_rule_blob(
       "import \"macho\" rule test { condition: \
     macho.segments[0].sections[1].addr == 0x0000000000000f98 and \
@@ -192,6 +217,7 @@ int main(int argc, char** argv)
       "import \"macho\" rule test { condition: \
     macho.fat_magic == macho.FAT_MAGIC and macho.nfat_arch == 2 }",
       "tests/data/tiny-universal");
+
   assert_true_rule_file(
       "import \"macho\" rule test { condition: \
     macho.fat_arch[0].cputype == macho.CPU_TYPE_I386 and \
@@ -201,6 +227,7 @@ int main(int argc, char** argv)
     macho.fat_arch[1].cpusubtype == macho.CPU_SUBTYPE_X86_64_ALL | \
     macho.CPU_SUBTYPE_LIB64 and macho.fat_arch[1].align == 12 }",
       "tests/data/tiny-universal");
+
   assert_true_rule_file(
       "import \"macho\" rule test { condition: \
     macho.file[0].cputype == macho.fat_arch[0].cputype and \
@@ -240,6 +267,7 @@ int main(int argc, char** argv)
                macho.CPU_SUBTYPE_I386_ALL)].entry_point == \
     macho.file[0].entry_point }",
       "tests/data/tiny-universal");
+
   assert_true_rule_file(
       "import \"macho\" rule test { condition: \
     macho.file[macho.file_index_for_arch(macho.CPU_TYPE_X86_64, \

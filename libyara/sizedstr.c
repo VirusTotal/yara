@@ -137,7 +137,7 @@ bool ss_startswith(SIZED_STRING* s1, SIZED_STRING* s2)
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-// ss_istartswith is the case-insensitive version of ss_startswith
+// ss_istartswith is the case-insensitive version of ss_startswith.
 //
 bool ss_istartswith(SIZED_STRING* s1, SIZED_STRING* s2)
 {
@@ -171,6 +171,9 @@ bool ss_endswith(SIZED_STRING* s1, SIZED_STRING* s2)
   return true;
 }
 
+////////////////////////////////////////////////////////////////////////////////
+// ss_iendswith is the case-insensitive version of ss_endswith.
+//
 bool ss_iendswith(SIZED_STRING* s1, SIZED_STRING* s2)
 {
   if (s1->length < s2->length)
@@ -186,6 +189,9 @@ bool ss_iendswith(SIZED_STRING* s1, SIZED_STRING* s2)
   return true;
 }
 
+////////////////////////////////////////////////////////////////////////////////
+// ss_dup creates a new copy of a given SIZED_STRING.
+//
 SIZED_STRING* ss_dup(SIZED_STRING* s)
 {
   SIZED_STRING* result = (SIZED_STRING*) yr_malloc(
@@ -202,6 +208,9 @@ SIZED_STRING* ss_dup(SIZED_STRING* s)
   return result;
 }
 
+////////////////////////////////////////////////////////////////////////////////
+// ss_new creates a SIZED_STRING from a C string.
+//
 SIZED_STRING* ss_new(const char* s)
 {
   SIZED_STRING* result;

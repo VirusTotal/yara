@@ -100,7 +100,7 @@ typedef struct _THREAD_ARGS
 {
   YR_SCANNER* scanner;
   CALLBACK_ARGS callback_args;
-  time_t start_time;
+  time_t deadline;
   int current_count;
 
 } THREAD_ARGS;
@@ -122,6 +122,8 @@ typedef struct SCAN_OPTIONS
 {
   bool follow_symlinks;
   bool recursive_search;
+  time_t deadline;
+
 } SCAN_OPTIONS;
 
 #define MAX_ARGS_TAG         32
@@ -360,51 +362,56 @@ static int file_queue_init()
   queue_tail = 0;
   queue_head = 0;
 
-  result = mutex_init(&queue_mutex);
+  result = cli_mutex_init(&queue_mutex);
 
   if (result != 0)
     return result;
 
-  result = semaphore_init(&used_slots, 0);
+  result = cli_semaphore_init(&used_slots, 0);
 
   if (result != 0)
     return result;
 
-  return semaphore_init(&unused_slots, MAX_QUEUED_FILES);
+  return cli_semaphore_init(&unused_slots, MAX_QUEUED_FILES);
 }
 
 static void file_queue_destroy()
 {
-  mutex_destroy(&queue_mutex);
-  semaphore_destroy(&unused_slots);
-  semaphore_destroy(&used_slots);
+  cli_mutex_destroy(&queue_mutex);
+  cli_semaphore_destroy(&unused_slots);
+  cli_semaphore_destroy(&used_slots);
 }
 
 static void file_queue_finish()
 {
-  int i;
-
-  for (i = 0; i < YR_MAX_THREADS; i++) semaphore_release(&used_slots);
+  for (int i = 0; i < YR_MAX_THREADS; i++) cli_semaphore_release(&used_slots);
 }
 
-static void file_queue_put(const char_t* file_path)
+static int file_queue_put(const char_t* file_path, time_t deadline)
 {
-  semaphore_wait(&unused_slots);
-  mutex_lock(&queue_mutex);
+  if (cli_semaphore_wait(&unused_slots, deadline) == ERROR_SCAN_TIMEOUT)
+    return ERROR_SCAN_TIMEOUT;
+
+  cli_mutex_lock(&queue_mutex);
 
   file_queue[queue_tail].path = _tcsdup(file_path);
   queue_tail = (queue_tail + 1) % (MAX_QUEUED_FILES + 1);
 
-  mutex_unlock(&queue_mutex);
-  semaphore_release(&used_slots);
+  cli_mutex_unlock(&queue_mutex);
+  cli_semaphore_release(&used_slots);
+
+  return ERROR_SUCCESS;
 }
 
-static char_t* file_queue_get()
+
+static char_t* file_queue_get(time_t deadline)
 {
   char_t* result;
 
-  semaphore_wait(&used_slots);
-  mutex_lock(&queue_mutex);
+  if (cli_semaphore_wait(&used_slots, deadline) == ERROR_SCAN_TIMEOUT)
+    return NULL;
+
+  cli_mutex_lock(&queue_mutex);
 
   if (queue_head == queue_tail)  // queue is empty
   {
@@ -416,8 +423,8 @@ static char_t* file_queue_get()
     queue_head = (queue_head + 1) % (MAX_QUEUED_FILES + 1);
   }
 
-  mutex_unlock(&queue_mutex);
-  semaphore_release(&unused_slots);
+  cli_mutex_unlock(&queue_mutex);
+  cli_semaphore_release(&unused_slots);
 
   return result;
 }
@@ -435,12 +442,11 @@ static bool is_directory(const char_t* path)
     return false;
 }
 
-static void scan_dir(
-    const char_t* dir,
-    SCAN_OPTIONS* scan_opts,
-    time_t start_time)
+
+static int scan_dir(const char_t* dir, SCAN_OPTIONS* scan_opts)
 {
-  char_t path[MAX_PATH];
+  int result = ERROR_SUCCESS;
+  static char_t path[MAX_PATH];
 
   _sntprintf(path, MAX_PATH, _T("%s\\*"), dir);
 
@@ -455,20 +461,23 @@ static void scan_dir(
 
       if (!(FindFileData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
       {
-        file_queue_put(path);
+        result = file_queue_put(path, scan_opts->deadline);
       }
       else if (
           scan_opts->recursive_search &&
           _tcscmp(FindFileData.cFileName, _T(".")) != 0 &&
           _tcscmp(FindFileData.cFileName, _T("..")) != 0)
       {
-        scan_dir(path, scan_opts, start_time);
+        result = scan_dir(path, scan_opts);
       }
 
-    } while (FindNextFile(hFind, &FindFileData));
+    } while (result != ERROR_SCAN_TIMEOUT &&
+             FindNextFile(hFind, &FindFileData));
 
     FindClose(hFind);
   }
+
+  return result;
 }
 
 static int scan_file(YR_SCANNER* scanner, const char_t* filename)
@@ -492,13 +501,11 @@ static int scan_file(YR_SCANNER* scanner, const char_t* filename)
   return result;
 }
 
-static int populate_scan_list(
-    const char_t* filename,
-    SCAN_OPTIONS* scan_opts,
-    time_t start_time)
+static int populate_scan_list(const char_t* filename, SCAN_OPTIONS* scan_opts)
 {
   char_t* context;
   DWORD nread;
+  int result = ERROR_SUCCESS;
 
   HANDLE hFile = CreateFile(
       filename,
@@ -556,9 +563,9 @@ static int populate_scan_list(
 
   char_t* path = _tcstok_s(buf, _T("\n"), &context);
 
-  while (path != NULL)
+  while (result != ERROR_SCAN_TIMEOUT && path != NULL)
   {
-    // remove trailing carriage return, if present
+    // Remove trailing carriage return, if present.
     if (*path != '\0')
     {
       char_t* final = path + _tcslen(path) - 1;
@@ -568,15 +575,16 @@ static int populate_scan_list(
     }
 
     if (is_directory(path))
-      scan_dir(path, scan_opts, start_time);
+      result = scan_dir(path, scan_opts);
     else
-      file_queue_put(path);
+      result = file_queue_put(path, scan_opts->deadline);
 
     path = _tcstok_s(NULL, _T("\n"), &context);
   }
 
   CloseHandle(hFile);
-  return ERROR_SUCCESS;
+
+  return result;
 }
 
 #else
@@ -591,18 +599,16 @@ static bool is_directory(const char* path)
   return 0;
 }
 
-static void scan_dir(
-    const char* dir,
-    SCAN_OPTIONS* scan_opts,
-    time_t start_time)
+static int scan_dir(const char* dir, SCAN_OPTIONS* scan_opts)
 {
+  int result = ERROR_SUCCESS;
   DIR* dp = opendir(dir);
 
   if (dp)
   {
     struct dirent* de = readdir(dp);
 
-    while (de && difftime(time(NULL), start_time) < timeout)
+    while (de && result != ERROR_SCAN_TIMEOUT)
     {
       char full_path[MAX_PATH];
       struct stat st;
@@ -611,24 +617,42 @@ static void scan_dir(
 
       int err = lstat(full_path, &st);
 
+      // If lstat returned error, or this directory entry is a symlink and the
+      // user doesn't want to follow symlinks, skip the entry and continue with
+      // the next one.
       if (err != 0 || (S_ISLNK(st.st_mode) && !scan_opts->follow_symlinks))
       {
         de = readdir(dp);
         continue;
       }
+      // If the directory entry is a symlink, check if it points to . and
+      // skip it in that case.
+      else if (S_ISLNK(st.st_mode))
+      {
+        char buf[2];
+
+        int len = readlink(full_path, buf, sizeof(buf));
+
+        if (len == 1 && strcmp(buf, ".") == 0)
+        {
+          de = readdir(dp);
+          continue;
+        }
+      }
 
       err = stat(full_path, &st);
+
       if (err == 0)
       {
         if (S_ISREG(st.st_mode))
         {
-          file_queue_put(full_path);
+          result = file_queue_put(full_path, scan_opts->deadline);
         }
         else if (
             scan_opts->recursive_search && S_ISDIR(st.st_mode) &&
             strcmp(de->d_name, ".") != 0 && strcmp(de->d_name, "..") != 0)
         {
-          scan_dir(full_path, scan_opts, start_time);
+          result = scan_dir(full_path, scan_opts);
         }
       }
 
@@ -637,7 +661,10 @@ static void scan_dir(
 
     closedir(dp);
   }
+
+  return result;
 }
+
 
 static int scan_file(YR_SCANNER* scanner, const char_t* filename)
 {
@@ -653,23 +680,24 @@ static int scan_file(YR_SCANNER* scanner, const char_t* filename)
   return result;
 }
 
-static int populate_scan_list(
-    const char* filename,
-    SCAN_OPTIONS* scan_opts,
-    time_t start_time)
+
+static int populate_scan_list(const char* filename, SCAN_OPTIONS* scan_opts)
 {
   size_t nsize = 0;
   ssize_t nread;
   char* path = NULL;
+  int result = ERROR_SUCCESS;
 
   FILE* fh_scan_list = fopen(filename, "r");
+
   if (fh_scan_list == NULL)
   {
     fprintf(stderr, "error: could not open file \"%s\".\n", filename);
     return ERROR_COULD_NOT_OPEN_FILE;
   }
 
-  while ((nread = getline(&path, &nsize, fh_scan_list)) != -1)
+  while (result != ERROR_SCAN_TIMEOUT &&
+         (nread = getline(&path, &nsize, fh_scan_list)) != -1)
   {
     // remove trailing newline
     if (nread && path[nread - 1] == '\n')
@@ -677,15 +705,17 @@ static int populate_scan_list(
       path[nread - 1] = '\0';
       nread--;
     }
+
     if (is_directory(path))
-      scan_dir(path, scan_opts, start_time);
+      result = scan_dir(path, scan_opts);
     else
-      file_queue_put(path);
+      result = file_queue_put(path, scan_opts->deadline);
   }
 
   free(path);
   fclose(fh_scan_list);
-  return ERROR_SUCCESS;
+
+  return result;
 }
 
 #endif
@@ -710,9 +740,7 @@ static char cescapes[] = {
 
 static void print_escaped(const uint8_t* data, size_t length)
 {
-  size_t i;
-
-  for (i = 0; i < length; i++)
+  for (size_t i = 0; i < length; i++)
   {
     switch (data[i])
     {
@@ -737,10 +765,10 @@ static void print_escaped(const uint8_t* data, size_t length)
 
 static void print_hex_string(const uint8_t* data, int length)
 {
-  for (int i = 0; i < min(32, length); i++)
+  for (int i = 0; i < min(64, length); i++)
     printf("%s%02X", (i == 0 ? "" : " "), data[i]);
 
-  puts(length > 32 ? " ..." : "");
+  puts(length > 64 ? " ..." : "");
 }
 
 static void print_error(int error)
@@ -838,11 +866,11 @@ static void print_compiler_error(
   {
     fprintf(
         stderr,
-        "%s(%d): %s in rule \"%s\": %s\n",
-        file_name,
-        line_number,
+        "%s: rule \"%s\" in %s(%d): %s\n",
         msg_type,
         rule->identifier,
+        file_name,
+        line_number,
         message);
   }
   else
@@ -946,7 +974,7 @@ static int handle_message(
 
   if (show && !print_count_only)
   {
-    mutex_lock(&output_mutex);
+    cli_mutex_lock(&output_mutex);
 
     if (show_namespace)
       printf("%s:", rule->ns->name);
@@ -1044,7 +1072,7 @@ static int handle_message(
       }
     }
 
-    mutex_unlock(&output_mutex);
+    cli_mutex_unlock(&output_mutex);
   }
 
   if (is_matching)
@@ -1066,6 +1094,8 @@ static int callback(
     void* user_data)
 {
   YR_MODULE_IMPORT* mi;
+  YR_STRING* string;
+  YR_RULE* rule;
   YR_OBJECT* object;
   MODULE_DATA* module_data;
 
@@ -1100,21 +1130,32 @@ static int callback(
     {
       object = (YR_OBJECT*) message_data;
 
-      mutex_lock(&output_mutex);
+      cli_mutex_lock(&output_mutex);
 
       yr_object_print_data(object, 0, 1);
       printf("\n");
 
-      mutex_unlock(&output_mutex);
+      cli_mutex_unlock(&output_mutex);
     }
 
     return CALLBACK_CONTINUE;
 
   case CALLBACK_MSG_TOO_MANY_MATCHES:
+    if (ignore_warnings)
+      return CALLBACK_CONTINUE;
+
+    string = (YR_STRING*) message_data;
+    rule = &context->rules->rules_table[string->rule_idx];
+
     fprintf(
         stderr,
-        "Warning: maximum matches for string %s. Results may be invalid.\n",
-        ((YR_STRING*) message_data)->identifier);
+        "warning: rule \"%s\": too many matches for %s, results for this rule "
+        "may be incorrect\n",
+        rule->identifier,
+        string->identifier);
+
+    if (fail_on_warnings)
+      return CALLBACK_ERROR;
 
     return CALLBACK_CONTINUE;
   }
@@ -1130,38 +1171,40 @@ static void* scanning_thread(void* param)
 {
   int result = ERROR_SUCCESS;
   THREAD_ARGS* args = (THREAD_ARGS*) param;
-  char_t* file_path = file_queue_get();
+
+  char_t* file_path = file_queue_get(args->deadline);
 
   while (file_path != NULL)
   {
     args->callback_args.current_count = 0;
     args->callback_args.file_path = file_path;
 
-    int elapsed_time = (int) difftime(time(NULL), args->start_time);
+    time_t current_time = time(NULL);
 
-    if (elapsed_time < timeout)
+    if (current_time < args->deadline)
     {
-      yr_scanner_set_timeout(args->scanner, timeout - elapsed_time);
+      yr_scanner_set_timeout(
+		  args->scanner, (int) (args->deadline - current_time));
 
       result = scan_file(args->scanner, file_path);
 
       if (print_count_only)
       {
-        mutex_lock(&output_mutex);
+        cli_mutex_lock(&output_mutex);
         _tprintf(_T("%s: %d\n"), file_path, args->callback_args.current_count);
-        mutex_unlock(&output_mutex);
+        cli_mutex_unlock(&output_mutex);
       }
 
       if (result != ERROR_SUCCESS)
       {
-        mutex_lock(&output_mutex);
+        cli_mutex_lock(&output_mutex);
         _ftprintf(stderr, _T("error scanning %s: "), file_path);
         print_scanner_error(args->scanner, result);
-        mutex_unlock(&output_mutex);
+        cli_mutex_unlock(&output_mutex);
       }
 
       free(file_path);
-      file_path = file_queue_get();
+      file_path = file_queue_get(args->deadline);
     }
     else
     {
@@ -1237,7 +1280,7 @@ int _tmain(int argc, const char_t** argv)
 
   bool arg_is_dir = false;
   int flags = 0;
-  int result, i;
+  int result;
 
   argc = args_parse(options, argc, argv);
 
@@ -1402,10 +1445,12 @@ int _tmain(int argc, const char_t** argv)
   if (show_stats)
     print_rules_stats(rules);
 
-  mutex_init(&output_mutex);
+  cli_mutex_init(&output_mutex);
 
   if (fast_scan)
     flags |= SCAN_FLAGS_FAST_MODE;
+
+  scan_opts.deadline = time(NULL) + timeout;
 
   arg_is_dir = is_directory(argv[argc - 1]);
 
@@ -1425,11 +1470,9 @@ int _tmain(int argc, const char_t** argv)
     THREAD thread[YR_MAX_THREADS];
     THREAD_ARGS thread_args[YR_MAX_THREADS];
 
-    time_t start_time = time(NULL);
-
-    for (i = 0; i < threads; i++)
+    for (int i = 0; i < threads; i++)
     {
-      thread_args[i].start_time = start_time;
+      thread_args[i].deadline = scan_opts.deadline;
       thread_args[i].current_count = 0;
 
       result = yr_scanner_create(rules, &thread_args[i].scanner);
@@ -1445,7 +1488,8 @@ int _tmain(int argc, const char_t** argv)
 
       yr_scanner_set_flags(thread_args[i].scanner, flags);
 
-      if (create_thread(&thread[i], scanning_thread, (void*) &thread_args[i]))
+      if (cli_create_thread(
+              &thread[i], scanning_thread, (void*) &thread_args[i]))
       {
         print_error(ERROR_COULD_NOT_CREATE_THREAD);
         exit_with_code(EXIT_FAILURE);
@@ -1454,11 +1498,11 @@ int _tmain(int argc, const char_t** argv)
 
     if (arg_is_dir)
     {
-      scan_dir(argv[argc - 1], &scan_opts, start_time);
+      scan_dir(argv[argc - 1], &scan_opts);
     }
     else
     {
-      result = populate_scan_list(argv[argc - 1], &scan_opts, start_time);
+      result = populate_scan_list(argv[argc - 1], &scan_opts);
 
       if (result != ERROR_SUCCESS)
         exit_with_code(EXIT_FAILURE);
@@ -1467,9 +1511,10 @@ int _tmain(int argc, const char_t** argv)
     file_queue_finish();
 
     // Wait for scan threads to finish
-    for (i = 0; i < threads; i++) thread_join(&thread[i]);
+    for (int i = 0; i < threads; i++) cli_thread_join(&thread[i]);
 
-    for (i = 0; i < threads; i++) yr_scanner_destroy(thread_args[i].scanner);
+    for (int i = 0; i < threads; i++)
+      yr_scanner_destroy(thread_args[i].scanner);
 
     file_queue_destroy();
   }

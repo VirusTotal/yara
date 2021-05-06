@@ -294,6 +294,16 @@ available in the C language:
    * - ``\xdd``
      - Any byte in hexadecimal notation
 
+In all versions of YARA before 4.1.0 text strings accepted any kind of unicode
+characters, regardless of their encoding. Those characters were interpreted by
+YARA as raw bytes, and therefore the final string was actually determined by the
+encoding format used by your text editor. This never meant to be a feature, the
+original intention always was that YARA strings should be ASCII-only and YARA
+4.1.0 started to raise warnings about non-ASCII characters in strings. This
+limitation does not apply to strings in the metadata section or comments. See
+more details [here](https://github.com/VirusTotal/yara/wiki/Unicode-characters-in-YARA)
+
+
 Case-insensitive strings
 ^^^^^^^^^^^^^^^^^^^^^^^^
 

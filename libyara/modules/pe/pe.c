@@ -1504,7 +1504,8 @@ static void pe_parse_certificates(PE* pe)
     {
       end = (uintptr_t)((uint8_t*) win_cert) + yr_le32toh(win_cert->Length);
 
-      win_cert = (PWIN_CERTIFICATE)(end + (end % 8));
+      // Next certificate is aligned to the next 8-bytes boundary.
+      win_cert = (PWIN_CERTIFICATE)((end + 7) & -8);
       continue;
     }
 
@@ -1523,7 +1524,8 @@ static void pe_parse_certificates(PE* pe)
       pkcs7 = NULL;
     }
 
-    win_cert = (PWIN_CERTIFICATE)(end + (end % 8));
+    // Next certificate is aligned to the next 8-bytes boundary.
+    win_cert = (PWIN_CERTIFICATE)((end + 7) & -8);
   }
 
   set_integer(counter, pe->object, "number_of_signatures");

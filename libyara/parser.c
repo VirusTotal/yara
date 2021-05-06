@@ -556,7 +556,7 @@ int yr_parser_reduce_string_declaration(
     yr_compiler_set_error_extra_info(compiler, identifier) goto _exit;
   }
 
-  // Empty strings are not allowed
+  // Empty strings are not allowed.
   if (str->length == 0)
   {
     result = ERROR_EMPTY_STRING;
@@ -824,7 +824,7 @@ int yr_parser_reduce_string_declaration(
 
   if (min_atom_quality < compiler->atoms_config.quality_warning_threshold)
   {
-    yywarning(yyscanner, "%s is slowing down scanning", identifier);
+    yywarning(yyscanner, "string \"%s\" may slow down scanning", identifier);
   }
 
 _exit:
@@ -1156,8 +1156,9 @@ int yr_parser_reduce_import(yyscan_t yyscanner, SIZED_STRING* module_name)
 
   if (!_yr_parser_valid_module_name(module_name))
   {
-    yr_compiler_set_error_extra_info(
-        compiler, module_name->c_string) return ERROR_INVALID_MODULE_NAME;
+    yr_compiler_set_error_extra_info(compiler, module_name->c_string);
+
+    return ERROR_INVALID_MODULE_NAME;
   }
 
   YR_NAMESPACE* ns = (YR_NAMESPACE*) yr_arena_get_ptr(
@@ -1185,9 +1186,10 @@ int yr_parser_reduce_import(yyscan_t yyscanner, SIZED_STRING* module_name)
   result = yr_modules_do_declarations(module_name->c_string, module_structure);
 
   if (result == ERROR_UNKNOWN_MODULE)
-    yr_compiler_set_error_extra_info(compiler, module_name->c_string)
+    yr_compiler_set_error_extra_info(compiler, module_name->c_string);
 
-        if (result != ERROR_SUCCESS) return result;
+  if (result != ERROR_SUCCESS)
+    return result;
 
   FAIL_ON_ERROR(
       _yr_compiler_store_string(compiler, module_name->c_string, &ref));
@@ -1319,16 +1321,16 @@ int yr_parser_reduce_operation(
     else
     {
       yr_compiler_set_error_extra_info_fmt(
-          compiler, "strings don't support \"%s\" operation", op)
+          compiler, "strings don't support \"%s\" operation", op);
 
-          return ERROR_WRONG_TYPE;
+      return ERROR_WRONG_TYPE;
     }
   }
   else
   {
-    yr_compiler_set_error_extra_info(compiler, "type mismatch")
+    yr_compiler_set_error_extra_info(compiler, "type mismatch");
 
-        return ERROR_WRONG_TYPE;
+    return ERROR_WRONG_TYPE;
   }
 
   return ERROR_SUCCESS;

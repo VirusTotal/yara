@@ -28,6 +28,22 @@ int main(int argc, char** argv)
       }",
       "A");
 
+  assert_true_rule_blob(
+      "import \"math\" \
+      rule test { \
+        condition: \
+          math.to_number(1 == 1) \
+      }",
+      "A");
+
+  assert_false_rule_blob(
+      "import \"math\" \
+      rule test { \
+        condition: \
+          math.to_number(1 > 2) \
+      }",
+      "A");
+
   yr_finalize();
 
   YR_DEBUG_FPRINTF(

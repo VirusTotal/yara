@@ -43,7 +43,7 @@ yara-python extension.
 
 ## Additional resources
 
-Do you use GitHub for storing you YARA rules? [YARA-CI](https://yara-ci.cloud.virustotal.com)
+Do you use GitHub for storing your YARA rules? [YARA-CI](https://yara-ci.cloud.virustotal.com)
 may be a useful addition to your toolbelt. This is GitHub application that provides
 continuous testing for your rules, helping you to identify common mistakes and
 false positives.
@@ -92,6 +92,7 @@ awesome list of [YARA-related stuff](https://github.com/InQuest/awesome-yara).
 * [Joe Security](https://www.joesecurity.org)
 * [jsunpack-n](http://jsunpack.jeek.org/)
 * [Kaspersky Lab](http://www.kaspersky.com)
+* [KnowBe4](https://www.knowbe4.com)
 * [Koodous](https://koodous.com/)
 * [Laika BOSS](https://github.com/lmco/laikaboss)
 * [Lastline, Inc.](http://www.lastline.com)

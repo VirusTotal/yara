@@ -11,4 +11,3 @@ rule UPX : Packer
 
 
 rule test {condition: false}
-

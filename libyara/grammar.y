@@ -205,7 +205,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 %token _IENDSWITH_                                     "<iendswith>"
 %token _IMPORT_                                        "<import>"
 %token _TRUE_                                          "<true>"
-%token _FALSE_                                         "<false"
+%token _FALSE_                                         "<false>"
 %token _OR_                                            "<or>"
 %token _AND_                                           "<and>"
 %token _NOT_                                           "<not>"
@@ -1215,21 +1215,20 @@ arguments_list
 regexp
     : _REGEXP_
       {
-        SIZED_STRING* sized_string = $1;
         YR_ARENA_REF re_ref;
         RE_ERROR error;
 
         int result = ERROR_SUCCESS;
         int re_flags = 0;
 
-        if (sized_string->flags & SIZED_STRING_FLAGS_NO_CASE)
+        if ($1->flags & SIZED_STRING_FLAGS_NO_CASE)
           re_flags |= RE_FLAGS_NO_CASE;
 
-        if (sized_string->flags & SIZED_STRING_FLAGS_DOT_ALL)
+        if ($1->flags & SIZED_STRING_FLAGS_DOT_ALL)
           re_flags |= RE_FLAGS_DOT_ALL;
 
         result = yr_re_compile(
-            sized_string->c_string,
+            $1->c_string,
             re_flags,
             compiler->arena,
             &re_ref,
@@ -1266,7 +1265,7 @@ boolean_expression
                 compiler->arena, &$1.value.sized_string_ref);
 
             yywarning(yyscanner,
-                "Using literal string \"%s\" in a boolean operation.",
+                "using literal string \"%s\" in a boolean operation.",
                 sized_string->c_string);
           }
 

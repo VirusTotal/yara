@@ -490,8 +490,12 @@ YR_API int yr_scanner_scan_mem_blocks(
   if (result != ERROR_SUCCESS)
     goto _exit;
 
-  // Ask the iterator for the file size.
-  scanner->file_size = iterator->file_size(iterator);
+  // If the iterator has a file_size function, ask the function for the file's
+  // size, if not file size is undefined.
+  if (iterator->file_size != NULL)
+    scanner->file_size = iterator->file_size(iterator);
+  else
+    scanner->file_size = YR_UNDEFINED;
 
   YR_TRYCATCH(
       !(scanner->flags & SCAN_FLAGS_NO_TRYCATCH),
@@ -573,8 +577,6 @@ static YR_MEMORY_BLOCK* _yr_get_first_block(YR_MEMORY_BLOCK_ITERATOR* iterator)
       __FUNCTION__,
       result);
 
-  iterator->last_error = ERROR_SUCCESS;
-
   return result;
 }
 
@@ -588,8 +590,6 @@ static YR_MEMORY_BLOCK* _yr_get_next_block(YR_MEMORY_BLOCK_ITERATOR* iterator)
       "- %s() {} = %p // default iterator; single memory block, blocking\n",
       __FUNCTION__,
       result);
-
-  iterator->last_error = ERROR_SUCCESS;
 
   return result;
 }
@@ -639,6 +639,7 @@ YR_API int yr_scanner_scan_mem(
   iterator.first = _yr_get_first_block;
   iterator.next = _yr_get_next_block;
   iterator.file_size = _yr_get_file_size;
+  iterator.last_error = ERROR_SUCCESS;
 
   int result = yr_scanner_scan_mem_blocks(scanner, &iterator);
 

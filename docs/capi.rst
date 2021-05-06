@@ -895,10 +895,26 @@ Functions
 
   .. versionadded:: 3.8.0
 
-  Scan a serie of memory blocks that are provided by a :c:type:`YR_MEMORY_BLOCK_ITERATOR`.
-  The iterator has a pair of `first` and `next` functions, that must return
-  the first and next blocks respectively. The how the data is split in blocks is
-  up to the iterator implementation.
+  Scan a series of memory blocks that are provided by a :c:type:`YR_MEMORY_BLOCK_ITERATOR`.
+  The iterator has a pair of `first` and `next` functions that must return
+  the first and next blocks respectively. When these functions return `NULL` it
+  indicates that there are not more blocks to scan.
+
+  In YARA 4.1 and later the `first` and `next` functions can return `NULL` and
+  set the `last_error` field in :c:type:`YR_MEMORY_BLOCK_ITERATOR` to
+  :c:macro:`ERROR_BLOCK_NOT_READY`. This indicates that the iterator is not able
+  to return the next block yet, but the operation may be retried. In such cases
+  `yr_scanner_scan_mem_blocks` also returns :c:macro:`ERROR_BLOCK_NOT_READY` but
+  the scanner maintains its state and this function can be called again for
+  continuing the scanning where it was left. This can be done multiple times
+  until the block is ready and the iterator is able to return it.
+
+  Notice however that once the iterator completes a full iteration, any subsequent
+  iteration should proceed without returning :c:macro:`ERROR_BLOCK_NOT_READY`.
+  During the first iteration the iterator should store in memory any information
+  that it needs about the blocks, so that it can be iterated again without
+  relying on costly operations that may result in a :c:macro:`ERROR_BLOCK_NOT_READY`
+  error.
 
   Returns one of the following error codes:
 
@@ -973,6 +989,19 @@ Functions
     :c:macro:`ERROR_CALLBACK_ERROR`
 
     :c:macro:`ERROR_TOO_MANY_MATCHES`
+
+.. c:function:: YR_RULE* yr_scanner_last_error_rule(YR_SCANNER* scanner)
+
+  .. versionadded:: 3.8.0
+
+  Return a pointer to the ``YR_RULE`` which triggered a scanning error. In the
+  case where the rule is unable to be determined, NULL is returned.
+
+.. c:function:: YR_RULE* yr_scanner_last_error_string(YR_SCANNER* scanner)
+
+  .. versionadded:: 3.8.0
+
+  Return a pointer to the ``YR_STRING`` which triggered a scanning error.
 
 Error codes
 -----------
