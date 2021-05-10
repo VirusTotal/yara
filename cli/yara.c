@@ -747,16 +747,16 @@ static void print_escaped(const uint8_t* data, size_t length)
     case '\"':
     case '\'':
     case '\\':
-      _tprintf(_T("\\%hc"), data[i]);
+      _tprintf(_T("\\%" PF_C), data[i]);
       break;
 
     default:
       if (data[i] >= 127)
         _tprintf(_T("\\%03o"), data[i]);
       else if (data[i] >= 32)
-        _tprintf(_T("%hc"), data[i]);
+        _tprintf(_T("%" PF_C), data[i]);
       else if (cescapes[data[i]] != 0)
-        _tprintf(_T("\\%hc"), cescapes[data[i]]);
+        _tprintf(_T("\\%" PF_C), cescapes[data[i]]);
       else
         _tprintf(_T("\\%03o"), data[i]);
     }
@@ -1135,7 +1135,7 @@ static int callback(
 
       cli_mutex_lock(&output_mutex);
 
-#if defined(_WIN32) || defined(__CYGWIN__)
+#if defined(_WIN32)
 	  // In Windows restore stdout to normal text mode as yr_object_print_data calls
 	  // printf which is not supported in UTF-8 mode.
 	  _setmode(_fileno(stdout), _O_TEXT);
@@ -1144,7 +1144,7 @@ static int callback(
       yr_object_print_data(object, 0, 1);
 	  printf("\n");
 
-#if defined(_WIN32) || defined(__CYGWIN__)
+#if defined(_WIN32)
 	  // Go back to UTF-8 mode.
 	  _setmode(_fileno(stdout), _O_U8TEXT);
 #endif
@@ -1344,7 +1344,7 @@ int _tmain(int argc, const char_t** argv)
     return EXIT_FAILURE;
   }
 
-#if defined(_WIN32) || defined(__CYGWIN__)
+#if defined(_WIN32)
   // In Windows set stdout to UTF-8 mode. 
   if (_setmode(_fileno(stdout), _O_U8TEXT) == -1)
   { 

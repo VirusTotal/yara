@@ -34,10 +34,13 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <tchar.h>
 #define char_t TCHAR
 #define PF_S "hs"
+#define PF_C "hc"
+
 #else
 #define char_t char
 #define _T(x) x
-#define PF_S  "s"
+#define PF_S "s"
+#define PF_C "c"
 
 #ifdef __CYGWIN__
 #define _tcstok_s strtok_r
