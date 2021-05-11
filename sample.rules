@@ -9,4 +9,5 @@ rule UPX : Packer
         $a at pe.entry_point
 }
 
+
 rule test {condition: false}
