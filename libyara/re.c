@@ -2022,7 +2022,6 @@ int yr_re_fast_exec(
   uint8_t mask;
   uint8_t value;
 
-  int i;
   int stop;
   int input_incr;
   int sp = 0;
@@ -2058,8 +2057,16 @@ int yr_re_fast_exec(
         if (flags & RE_FLAGS_EXHAUSTIVE)
         {
           FAIL_ON_ERROR(callback(
-              flags & RE_FLAGS_BACKWARDS ? input + 1 : input_data,
-              bytes_matched,
+              // When matching forwards the matching data always starts at
+              // input_data, when matching backwards it starts at input + 1 or
+              // input_data - input_backwards_size if input + 1 is outside the
+              // buffer.
+              flags & RE_FLAGS_BACKWARDS
+                  ? yr_max(input + 1, input_data - input_backwards_size)
+                  : input_data,
+              // The number of matched bytes should not be larger than
+              // max_bytes_matched.
+              yr_min(bytes_matched, max_bytes_matched),
               flags,
               callback_args));
 
@@ -2125,7 +2132,7 @@ int yr_re_fast_exec(
         repeat_any_args = (RE_REPEAT_ANY_ARGS*) (ip + 1);
         next_opcode = ip + 1 + sizeof(RE_REPEAT_ANY_ARGS);
 
-        for (i = repeat_any_args->min + 1; i <= repeat_any_args->max; i++)
+        for (int i = repeat_any_args->min + 1; i <= repeat_any_args->max; i++)
         {
           if (bytes_matched + i >= max_bytes_matched)
             break;
@@ -2148,7 +2155,7 @@ int yr_re_fast_exec(
 
         input += input_incr * repeat_any_args->min;
         bytes_matched += repeat_any_args->min;
-        bytes_matched = yr_min(bytes_matched, max_bytes_matched);
+
         ip = next_opcode;
 
         break;
