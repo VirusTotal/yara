@@ -218,7 +218,12 @@ void macho_handle_unixthread(
 
   uint32_t command_size = ((yr_thread_command_t*) command)->cmdsize;
 
-  // cmd_size includes the size of yr_thread_command_t and the thread
+  // command_size should be greater than the size of yr_thread_command_t, if
+  // not the file is corrupt.
+  if (command_size < sizeof(yr_thread_command_t))
+    return;
+
+  // command_size includes the size of yr_thread_command_t and the thread
   // state structure that follows, let's compute the size of the thread state
   // structure.
   size_t thread_state_size = command_size - sizeof(yr_thread_command_t);
