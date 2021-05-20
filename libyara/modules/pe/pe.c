@@ -928,7 +928,7 @@ static int pe_valid_dll_name(const char* dll_name, size_t n)
   while (l < n && *c != '\0')
   {
     if ((*c >= 'a' && *c <= 'z') || (*c >= 'A' && *c <= 'Z') ||
-        (*c >= '0' && *c <= '9') || (*c == '_' || *c == '.' || *c == '-'))
+        (*c >= '0' && *c <= '9') || (*c == '_' || *c == '.' || *c == '-' || *c == '+'))
     {
       c++;
       l++;
