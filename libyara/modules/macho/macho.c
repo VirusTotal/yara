@@ -209,17 +209,23 @@ int macho_offset_to_rva(uint64_t offset, uint64_t* result, YR_OBJECT* object)
 
 // Get entry point address from LC_UNIXTHREAD load command.
 void macho_handle_unixthread(
-    const uint8_t* command,
+    const uint8_t* data,
+    size_t size,
     YR_OBJECT* object,
     YR_SCAN_CONTEXT* context)
 {
   int should_swap = should_swap_bytes(get_integer(object, "magic"));
   bool is64 = false;
 
-  uint32_t command_size = ((yr_thread_command_t*) command)->cmdsize;
+  if (size < sizeof(yr_thread_command_t))
+    return;
 
-  // command_size should be greater than the size of yr_thread_command_t, if
-  // not the file is corrupt.
+  // command_size is the size indicated in yr_thread_command_t structure, but
+  // limited to the data's size because we can't rely on the structure having a
+  // valid size.
+  uint32_t command_size = yr_min(size, ((yr_thread_command_t*) data)->cmdsize);
+
+  // command_size should be at least the size of yr_thread_command_t.
   if (command_size < sizeof(yr_thread_command_t))
     return;
 
@@ -230,7 +236,7 @@ void macho_handle_unixthread(
 
   // The structure that contains the thread state starts where
   // yr_thread_command_t ends.
-  const void* thread_state = command + sizeof(yr_thread_command_t);
+  const void* thread_state = data + sizeof(yr_thread_command_t);
 
   uint64_t address = 0;
 
@@ -323,13 +329,17 @@ void macho_handle_unixthread(
 // Get entry point offset and stack-size from LC_MAIN load command.
 
 void macho_handle_main(
-    void* command,
+    void* data,
+    size_t size,
     YR_OBJECT* object,
     YR_SCAN_CONTEXT* context)
 {
   yr_entry_point_command_t ep_command;
 
-  memcpy(&ep_command, command, sizeof(yr_entry_point_command_t));
+  if (size < sizeof(yr_entry_point_command_t))
+    return;
+
+  memcpy(&ep_command, data, sizeof(yr_entry_point_command_t));
 
   if (should_swap_bytes(get_integer(object, "magic")))
     swap_entry_point_command(&ep_command);
@@ -352,15 +362,19 @@ void macho_handle_main(
 // Load segment and its sections.
 
 void macho_handle_segment(
-    const uint8_t* command,
+    const uint8_t* data,
+    size_t size,
     const unsigned i,
     YR_OBJECT* object)
 {
-  int should_swap = should_swap_bytes(get_integer(object, "magic"));
+  if (size < sizeof(yr_segment_command_32_t))
+    return;
 
   yr_segment_command_32_t sg;
 
-  memcpy(&sg, command, sizeof(yr_segment_command_32_t));
+  memcpy(&sg, data, sizeof(yr_segment_command_32_t));
+
+  int should_swap = should_swap_bytes(get_integer(object, "magic"));
 
   if (should_swap)
     swap_segment_command(&sg);
@@ -381,7 +395,7 @@ void macho_handle_segment(
 
   // The array of yr_section_32_t starts where yr_segment_command_32_t ends.
   yr_section_32_t* sections =
-      (yr_section_32_t*) (command + sizeof(yr_segment_command_32_t));
+      (yr_section_32_t*) (data + sizeof(yr_segment_command_32_t));
 
   for (unsigned j = 0; j < sg.nsects; ++j)
   {
@@ -436,15 +450,19 @@ void macho_handle_segment(
 }
 
 void macho_handle_segment_64(
-    const uint8_t* command,
+    const uint8_t* data,
+    size_t size,
     const unsigned i,
     YR_OBJECT* object)
 {
-  int should_swap = should_swap_bytes(get_integer(object, "magic"));
+  if (size < sizeof(yr_segment_command_64_t))
+    return;
 
   yr_segment_command_64_t sg;
 
-  memcpy(&sg, command, sizeof(yr_segment_command_64_t));
+  memcpy(&sg, data, sizeof(yr_segment_command_64_t));
+
+  int should_swap = should_swap_bytes(get_integer(object, "magic"));
 
   if (should_swap)
     swap_segment_command_64(&sg);
@@ -468,13 +486,13 @@ void macho_handle_segment_64(
   for (unsigned j = 0; j < sg.nsects; ++j)
   {
     parsed_size += sizeof(yr_section_64_t);
+
     if (sg.cmdsize < parsed_size)
       break;
 
     memcpy(
         &sec,
-        command + sizeof(yr_segment_command_64_t) +
-            (j * sizeof(yr_section_64_t)),
+        data + sizeof(yr_segment_command_64_t) + (j * sizeof(yr_section_64_t)),
         sizeof(yr_section_64_t));
 
     if (should_swap)
@@ -587,12 +605,10 @@ void macho_parse_file(
     switch (command_struct.cmd)
     {
     case LC_SEGMENT:
-      if (command_struct.cmdsize >= sizeof(yr_segment_command_32_t))
-        macho_handle_segment(command, seg_count++, object);
+      macho_handle_segment(command, size - parsed_size, seg_count++, object);
       break;
     case LC_SEGMENT_64:
-      if (command_struct.cmdsize >= sizeof(yr_segment_command_64_t))
-        macho_handle_segment_64(command, seg_count++, object);
+      macho_handle_segment_64(command, size - parsed_size, seg_count++, object);
       break;
     }
 
@@ -625,12 +641,10 @@ void macho_parse_file(
     switch (command_struct.cmd)
     {
     case LC_UNIXTHREAD:
-      if (command_struct.cmdsize >= sizeof(yr_thread_command_t))
-        macho_handle_unixthread(command, object, context);
+      macho_handle_unixthread(command, size - parsed_size, object, context);
       break;
     case LC_MAIN:
-      if (command_struct.cmdsize >= sizeof(yr_entry_point_command_t))
-        macho_handle_main(command, object, context);
+      macho_handle_main(command, size - parsed_size, object, context);
       break;
     }
 
