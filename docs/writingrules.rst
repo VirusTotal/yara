@@ -561,7 +561,7 @@ In previous versions of YARA, external libraries like PCRE and RE2 were used
 to perform regular expression matching, but starting with version 2.0 YARA uses
 its own regular expression engine. This new engine implements most features
 found in PCRE, except a few of them like capture groups, POSIX character
-classes and backreferences.
+classes ([[:isalpha:]], [[:isdigit:]], etc) and backreferences.
 
 YARA’s regular expressions recognise the following metacharacters:
 
@@ -571,7 +571,8 @@ YARA’s regular expressions recognise the following metacharacters:
    * - ``\``
      - Quote the next metacharacter
    * - ``^``
-     - Match the beginning of the file
+     - Match the beginning of the file or negates a character class when used
+       as the first character after the opening bracket.
    * - ``$``
      - Match the end of the file
    * - ``|``
@@ -1230,8 +1231,9 @@ they satisfy a given condition. For example:
             for all i in (1,2,3) : ( @a[i] + 10 == @b[i] )
     }
 
-The previous rule says that the first three occurrences of $b should be 10
-bytes away from the first three occurrences of $a.
+The previous rule says that the first occurrence of $b should be 10 bytes
+after the first occurrence of $a, and the same should happen with the second
+and thirds ocurrences of the two strings.
 
 The same condition could be written also as:
 
