@@ -65,7 +65,7 @@ for:
     verbosity: minimal
 
   after_build:
-  - cmd: 7z a yara-%APPVEYOR_BUILD_VERSION%-%ARTIFACT_POSTFIX%.zip %APPVEYOR_BUILD_FOLDER%\windows\%TARGET%\%CONFIGURATION%\*.exe
+  - cmd: 7z a yara-%APPVEYOR_BUILD_VERSION%-%ARTIFACT_POSTFIX%.zip %APPVEYOR_BUILD_FOLDER%\windows\%TARGET%\%CONFIGURATION%\yara*.exe
 
   artifacts:
   - path: yara-$(APPVEYOR_BUILD_VERSION)-$(ARTIFACT_POSTFIX).zip
