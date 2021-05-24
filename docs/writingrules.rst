@@ -1233,7 +1233,7 @@ they satisfy a given condition. For example:
 
 The previous rule says that the first occurrence of $b should be 10 bytes
 after the first occurrence of $a, and the same should happen with the second
-and thirds ocurrences of the two strings.
+and third ocurrences of the two strings.
 
 The same condition could be written also as:
 
