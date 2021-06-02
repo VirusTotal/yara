@@ -31,7 +31,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define MODULE_NAME tests
 
-
 define_function(fsum_2)
 {
   double a = float_argument(1);
@@ -57,7 +56,6 @@ define_function(isum_2)
   return_integer(a + b);
 }
 
-
 define_function(isum_3)
 {
   int64_t a = integer_argument(1);
@@ -67,7 +65,6 @@ define_function(isum_3)
   return_integer(a + b + c);
 }
 
-
 define_function(length)
 {
   char* s = string_argument(1);
@@ -75,19 +72,16 @@ define_function(length)
   return_integer(strlen(s));
 }
 
-
 define_function(empty)
 {
   return_string("");
 }
-
 
 define_function(match)
 {
   return_integer(
       yr_re_match(scan_context(), regexp_argument(1), string_argument(2)));
 }
-
 
 define_function(foobar)
 {
@@ -140,6 +134,15 @@ begin_declarations
     declare_integer("unused");
   end_struct_dictionary("empty_struct_dict")
 
+  begin_struct_array("empty_struct_array")
+    begin_struct_array("struct_array")
+      declare_string("unused");
+    end_struct_array("struct_array");
+    begin_struct_dictionary("struct_dict")
+      declare_string("unused");
+    end_struct_dictionary("struct_dict");
+  end_struct_array("empty_struct_array");
+
   declare_function("match", "rs", "i", match);
   declare_function("isum", "ii", "i", isum_2);
   declare_function("isum", "iii", "i", isum_3);
@@ -150,12 +153,10 @@ begin_declarations
   declare_function("foobar", "i", "s", foobar);
 end_declarations
 
-
 int module_initialize(YR_MODULE* module)
 {
   return ERROR_SUCCESS;
 }
-
 
 int module_finalize(YR_MODULE* module)
 {
@@ -203,7 +204,6 @@ int module_load(
 
   return ERROR_SUCCESS;
 }
-
 
 int module_unload(YR_OBJECT* module_object)
 {
