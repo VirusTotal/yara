@@ -2559,19 +2559,39 @@ static void test_modules()
 
   assert_true_rule(
       "import \"tests\" \
-      rule test { condition: tests.match(/foo/,\"bar\") == -1\
+      rule test { condition: tests.match(/foo/,\"bar\") == -1 \
       }",
       NULL);
 
   assert_true_rule(
       "import \"tests\" \
-      rule test { condition: tests.match(/foo.bar/i,\"FOO\\nBAR\") == -1\
+      rule test { condition: tests.match(/foo.bar/i,\"FOO\\nBAR\") == -1 \
       }",
       NULL);
 
   assert_true_rule(
       "import \"tests\" \
-      rule test { condition: tests.match(/foo.bar/is,\"FOO\\nBAR\") == 7\
+      rule test { condition: tests.match(/foo.bar/is,\"FOO\\nBAR\") == 7 \
+      }",
+      NULL);
+
+  assert_false_rule(
+      "import \"tests\" \
+      rule test { \
+        condition: \
+          for any k,v in tests.empty_struct_array[0].struct_dict: ( \
+            v.unused == \"foo\" \
+          ) \
+      }",
+      NULL);
+
+  assert_false_rule(
+      "import \"tests\" \
+      rule test { \
+        condition: \
+          for any item in tests.empty_struct_array[0].struct_array: ( \
+            item.unused == \"foo\" \
+          ) \
       }",
       NULL);
 
