@@ -187,7 +187,7 @@ static int iter_array_next(YR_ITERATOR* self, YR_VALUE_STACK* stack)
   if (stack->sp + 1 >= stack->capacity)
     return ERROR_EXEC_STACK_OVERFLOW;
 
-  if (self->array_it.index < yr_object_array_length(self->array_it.array))
+  if (!IS_UNDEFINED(self->array_it.array) && self->array_it.index < yr_object_array_length(self->array_it.array))
   {
     // Push the false value that indicates that the iterator is not exhausted.
     stack->items[stack->sp++].i = 0;
