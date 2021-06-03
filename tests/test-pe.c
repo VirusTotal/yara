@@ -359,6 +359,20 @@ int main(int argc, char** argv)
       }",
       "tests/data/mtxex.dll");
 
+  assert_true_rule_file(
+      "import \"pe\" \
+      \
+      rule version_info_catch \
+      {\
+          condition:\
+            pe.number_of_version_infos  > 2 and\
+            for any version in pe.version_info_list : ( \
+              version.key == \"FileVersion\" and \
+              version.value == \"1.0.4400.37258\" \
+          ) \
+      }",
+      "tests/data/0ca09bde7602769120fadc4f7a4147347a7a97271370583586c9e587fd396171");
+
   yr_finalize();
 
   YR_DEBUG_FPRINTF(
