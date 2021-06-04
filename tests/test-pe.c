@@ -368,10 +368,10 @@ int main(int argc, char** argv)
             pe.number_of_version_infos  > 2 and\
             for any version in pe.version_info_list : ( \
               version.key == \"FileVersion\" and \
-              version.value == \"1.0.4400.37258\" \
+              version.value == \"27.1.9.33\" \
           ) \
       }",
-      "tests/data/0ca09bde7602769120fadc4f7a4147347a7a97271370583586c9e587fd396171");
+      "tests/data/079a472d22290a94ebb212aa8015cdc8dd28a968c6b4d3b88acdd58ce2d3b885");
 
   yr_finalize();
 
