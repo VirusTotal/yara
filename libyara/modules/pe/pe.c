@@ -173,7 +173,7 @@ static void pe_parse_rich_signature(PE* pe, uint64_t base_address)
   // find the Rich header we need to start at the NT header and work backwards.
   p = (DWORD*) (pe->data + nthdr_offset - 4);
 
-  while (p > (DWORD*) (pe->data + sizeof(IMAGE_DOS_HEADER)))
+  while (p >= (DWORD*) (pe->data + sizeof(IMAGE_DOS_HEADER)))
   {
     if (yr_le32toh(*p) == RICH_RICH)
     {
@@ -194,7 +194,7 @@ static void pe_parse_rich_signature(PE* pe, uint64_t base_address)
     return;
 
   // If we have found the key we need to now find the start (DanS).
-  while (p > (DWORD*) (pe->data + sizeof(IMAGE_DOS_HEADER)))
+  while (p >= (DWORD*) (pe->data + sizeof(IMAGE_DOS_HEADER)))
   {
     if (yr_le32toh((*(p) ^ key)) == RICH_DANS)
     {
