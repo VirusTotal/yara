@@ -40,9 +40,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #else
 
-#include <windows.h>
 #include <fcntl.h>
 #include <io.h>
+#include <windows.h>
 
 #define PRIx64 "I64x"
 #define PRId64 "I64d"
@@ -405,7 +405,6 @@ static int file_queue_put(const char_t* file_path, time_t deadline)
   return ERROR_SUCCESS;
 }
 
-
 static char_t* file_queue_get(time_t deadline)
 {
   char_t* result;
@@ -443,7 +442,6 @@ static bool is_directory(const char_t* path)
   else
     return false;
 }
-
 
 static int scan_dir(const char_t* dir, SCAN_OPTIONS* scan_opts)
 {
@@ -632,10 +630,9 @@ static int scan_dir(const char* dir, SCAN_OPTIONS* scan_opts)
       else if (S_ISLNK(st.st_mode))
       {
         char buf[2];
-
         int len = readlink(full_path, buf, sizeof(buf));
 
-        if (len == 1 && strcmp(buf, ".") == 0)
+        if (len == 1 && buf[0] == '.')
         {
           de = readdir(dp);
           continue;
@@ -667,7 +664,6 @@ static int scan_dir(const char* dir, SCAN_OPTIONS* scan_opts)
   return result;
 }
 
-
 static int scan_file(YR_SCANNER* scanner, const char_t* filename)
 {
   YR_FILE_DESCRIPTOR fd = open(filename, O_RDONLY);
@@ -681,7 +677,6 @@ static int scan_file(YR_SCANNER* scanner, const char_t* filename)
 
   return result;
 }
-
 
 static int populate_scan_list(const char* filename, SCAN_OPTIONS* scan_opts)
 {
@@ -897,7 +892,7 @@ static void print_rules_stats(YR_RULES* rules)
   }
 
   _tprintf(
-	  _T("size of AC transition table        : %d\n"), stats.ac_tables_size);
+      _T("size of AC transition table        : %d\n"), stats.ac_tables_size);
 
   _tprintf(
       _T("average length of AC matches lists : %f\n"),
@@ -1019,15 +1014,15 @@ static int handle_message(
         else if (meta->type == META_TYPE_BOOLEAN)
         {
           _tprintf(
-		      _T("%" PF_S "=%" PF_S), 
-			  meta->identifier, 
-			  meta->integer ? "true" : "false");
+              _T("%" PF_S "=%" PF_S),
+              meta->identifier,
+              meta->integer ? "true" : "false");
         }
         else
         {
           _tprintf(_T("%" PF_S "=\""), meta->identifier);
           print_escaped((uint8_t*) (meta->string), strlen(meta->string));
-		  _tprintf(_T("\""));
+          _tprintf(_T("\""));
         }
       }
 
@@ -1069,7 +1064,7 @@ static int handle_message(
             else
               print_string(match->data, match->data_length);
           }
-         
+
           _tprintf(_T("\n"));
         }
       }
@@ -1136,22 +1131,22 @@ static int callback(
       cli_mutex_lock(&output_mutex);
 
 #if defined(_WIN32)
-	  // In Windows restore stdout to normal text mode as yr_object_print_data calls
-	  // printf which is not supported in UTF-8 mode.
-	  _setmode(_fileno(stdout), _O_TEXT);
+      // In Windows restore stdout to normal text mode as yr_object_print_data
+      // calls printf which is not supported in UTF-8 mode.
+      _setmode(_fileno(stdout), _O_TEXT);
 #endif
 
       yr_object_print_data(object, 0, 1);
-	  printf("\n");
+      printf("\n");
 
 #if defined(_WIN32)
-	  // Go back to UTF-8 mode.
-	  _setmode(_fileno(stdout), _O_U8TEXT);
+      // Go back to UTF-8 mode.
+      _setmode(_fileno(stdout), _O_U8TEXT);
 #endif
 
       cli_mutex_unlock(&output_mutex);
     }
-	
+
     return CALLBACK_CONTINUE;
 
   case CALLBACK_MSG_TOO_MANY_MATCHES:
@@ -1198,7 +1193,7 @@ static void* scanning_thread(void* param)
     if (current_time < args->deadline)
     {
       yr_scanner_set_timeout(
-		  args->scanner, (int) (args->deadline - current_time));
+          args->scanner, (int) (args->deadline - current_time));
 
       result = scan_file(args->scanner, file_path);
 
@@ -1283,7 +1278,6 @@ static void unload_modules_data()
   modules_data_list = NULL;
 }
 
-
 int _tmain(int argc, const char_t** argv)
 {
   COMPILER_RESULTS cr;
@@ -1345,9 +1339,9 @@ int _tmain(int argc, const char_t** argv)
   }
 
 #if defined(_WIN32)
-  // In Windows set stdout to UTF-8 mode. 
+  // In Windows set stdout to UTF-8 mode.
   if (_setmode(_fileno(stdout), _O_U8TEXT) == -1)
-  { 
+  {
     return EXIT_FAILURE;
   }
 #endif
