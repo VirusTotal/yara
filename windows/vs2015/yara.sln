@@ -16,9 +16,6 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "yarac", "yarac\yarac.vcxpro
 	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "test-alignment", "test-alignment\test-alignment.vcxproj", "{76A5B2B8-8844-4278-A33E-CE95261AF6A1}"
-	ProjectSection(ProjectDependencies) = postProject
-		{E236CE39-D8F3-4DB6-985C-F2794FF17746} = {E236CE39-D8F3-4DB6-985C-F2794FF17746}
-	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

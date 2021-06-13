@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2007-2015. The YARA Authors. All Rights Reserved.
+Copyright (c) 2021. The YARA Authors. All Rights Reserved.
 
 Redistribution and use in source and binary forms, with or without modification,
 are permitted provided that the following conditions are met:
@@ -27,55 +27,42 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#ifndef YR_FILEMAP_H
-#define YR_FILEMAP_H
+#ifndef YR_UNICODE_H
+#define YR_UNICODE_H
 
-#include <sys/types.h>
+#ifdef _MSC_VER
+#include <tchar.h>
+#define char_t TCHAR
+#define PF_S "hs"
+#define PF_C "hc"
 
-#if defined(_WIN32) || defined(__CYGWIN__)
-#include <windows.h>
-#define YR_FILE_DESCRIPTOR HANDLE
 #else
-#define YR_FILE_DESCRIPTOR int
+#define char_t char
+#define _T(x) x
+#define PF_S "s"
+#define PF_C "c"
+
+#ifdef __CYGWIN__
+#define _tcstok_s strtok_r
+#else
+#define _tcstok_s strtok_s
 #endif
 
-#include <stdlib.h>
-#include <yara/integers.h>
-#include <yara/utils.h>
-
-
-typedef struct _YR_MAPPED_FILE
-{
-  YR_FILE_DESCRIPTOR file;
-  size_t size;
-  const uint8_t* data;
-#if defined(_WIN32) || defined(__CYGWIN__)
-  HANDLE mapping;
+#define _tcscmp strcmp
+#define _tcsdup strdup
+#define _tcschr strchr
+#define _tcslen strlen
+#define _tcsstr strstr
+#define _tcstol strtol
+#define _tstoi atoi
+#define _tstof atof
+#define _tisdigit isdigit
+#define _tfopen fopen
+#define _ftprintf fprintf
+#define _stprintf sprintf
+#define _tprintf printf
+#define _tmain main
+#define _sntprintf snprintf
 #endif
-
-} YR_MAPPED_FILE;
-
-
-YR_API int yr_filemap_map(const char* file_path, YR_MAPPED_FILE* pmapped_file);
-
-
-YR_API int yr_filemap_map_fd(
-    YR_FILE_DESCRIPTOR file,
-    uint64_t offset,
-    size_t size,
-    YR_MAPPED_FILE* pmapped_file);
-
-
-YR_API int yr_filemap_map_ex(
-    const char* file_path,
-    uint64_t offset,
-    size_t size,
-    YR_MAPPED_FILE* pmapped_file);
-
-
-YR_API void yr_filemap_unmap(YR_MAPPED_FILE* pmapped_file);
-
-
-YR_API void yr_filemap_unmap_fd(YR_MAPPED_FILE* pmapped_file);
 
 #endif

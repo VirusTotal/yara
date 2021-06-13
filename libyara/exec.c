@@ -179,78 +179,92 @@ static const uint8_t* jmp_if(int condition, const uint8_t* ip)
 
 static int iter_array_next(YR_ITERATOR* self, YR_VALUE_STACK* stack)
 {
-  YR_OBJECT* obj;
-
   // Check that there's two available slots in the stack, one for the next
   // item returned by the iterator and another one for the boolean that
   // indicates if there are more items.
   if (stack->sp + 1 >= stack->capacity)
     return ERROR_EXEC_STACK_OVERFLOW;
 
-  if (self->array_it.index < yr_object_array_length(self->array_it.array))
-  {
-    // Push the false value that indicates that the iterator is not exhausted.
-    stack->items[stack->sp++].i = 0;
+  // If the array that must be iterated is undefined stop the iteration right
+  // aways, as if the array would be empty.
+  if (IS_UNDEFINED(self->array_it.array))
+    goto _stop_iter;
 
-    obj = yr_object_array_get_item(
-        self->array_it.array, 0, self->array_it.index);
+  // If the current index is equal or larger than array's length the iterator
+  // has reached the end of the array.
+  if (self->array_it.index >= yr_object_array_length(self->array_it.array))
+    goto _stop_iter;
 
-    if (obj != NULL)
-      stack->items[stack->sp++].o = obj;
-    else
-      stack->items[stack->sp++].i = YR_UNDEFINED;
+  // Push the false value that indicates that the iterator is not exhausted.
+  stack->items[stack->sp++].i = 0;
 
-    self->array_it.index++;
-  }
+  YR_OBJECT* obj = yr_object_array_get_item(
+      self->array_it.array, 0, self->array_it.index);
+
+  if (obj != NULL)
+    stack->items[stack->sp++].o = obj;
   else
-  {
-    // Push true for indicating the iterator has been exhausted.
-    stack->items[stack->sp++].i = 1;
-    // Push YR_UNDEFINED as a placeholder for the next item.
     stack->items[stack->sp++].i = YR_UNDEFINED;
-  }
+
+  self->array_it.index++;
+
+  return ERROR_SUCCESS;
+
+_stop_iter:
+
+  // Push true for indicating the iterator has been exhausted.
+  stack->items[stack->sp++].i = 1;
+  // Push YR_UNDEFINED as a placeholder for the next item.
+  stack->items[stack->sp++].i = YR_UNDEFINED;
 
   return ERROR_SUCCESS;
 }
 
 static int iter_dict_next(YR_ITERATOR* self, YR_VALUE_STACK* stack)
 {
-  YR_DICTIONARY_ITEMS* items = object_as_dictionary(self->dict_it.dict)->items;
-
   // Check that there's three available slots in the stack, two for the next
   // item returned by the iterator and its key, and another one for the boolean
   // that indicates if there are more items.
   if (stack->sp + 2 >= stack->capacity)
     return ERROR_EXEC_STACK_OVERFLOW;
 
+  // If the dictionary that must be iterated is undefined, stop the iteration
+  // right away, as if the dictionary would be empty.
+  if (IS_UNDEFINED(self->dict_it.dict))
+    goto _stop_iter;
+
+  YR_DICTIONARY_ITEMS* items = object_as_dictionary(self->dict_it.dict)->items;
+
   // If the dictionary has no items or the iterator reached the last item, abort
   // the iteration, if not push the next key and value.
   if (items == NULL || self->dict_it.index == items->used)
+    goto _stop_iter;
+
+  // Push the false value that indicates that the iterator is not exhausted.
+  stack->items[stack->sp++].i = 0;
+
+  if (items->objects[self->dict_it.index].obj != NULL)
   {
-    // Push true for indicating the iterator has been exhausted.
-    stack->items[stack->sp++].i = 1;
-    // Push YR_UNDEFINED as a placeholder for the next key and value.
-    stack->items[stack->sp++].i = YR_UNDEFINED;
-    stack->items[stack->sp++].i = YR_UNDEFINED;
+    stack->items[stack->sp++].o = items->objects[self->dict_it.index].obj;
+    stack->items[stack->sp++].p = items->objects[self->dict_it.index].key;
   }
   else
   {
-    // Push the false value that indicates that the iterator is not exhausted.
-    stack->items[stack->sp++].i = 0;
-
-    if (items->objects[self->dict_it.index].obj != NULL)
-    {
-      stack->items[stack->sp++].o = items->objects[self->dict_it.index].obj;
-      stack->items[stack->sp++].p = items->objects[self->dict_it.index].key;
-    }
-    else
-    {
-      stack->items[stack->sp++].i = YR_UNDEFINED;
-      stack->items[stack->sp++].i = YR_UNDEFINED;
-    }
-
-    self->dict_it.index++;
+    stack->items[stack->sp++].i = YR_UNDEFINED;
+    stack->items[stack->sp++].i = YR_UNDEFINED;
   }
+
+  self->dict_it.index++;
+
+  return ERROR_SUCCESS;
+
+_stop_iter:
+
+  // Push true for indicating the iterator has been exhausted.
+  stack->items[stack->sp++].i = 1;
+  // Push YR_UNDEFINED as a placeholder for the next key and value.
+  stack->items[stack->sp++].i = YR_UNDEFINED;
+  stack->items[stack->sp++].i = YR_UNDEFINED;
 
   return ERROR_SUCCESS;
 }

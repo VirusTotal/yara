@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2014. The YARA Authors. All Rights Reserved.
+Copyright (c) 2014-2021. The YARA Authors. All Rights Reserved.
 
 Redistribution and use in source and binary forms, with or without modification,
 are permitted provided that the following conditions are met:
@@ -34,14 +34,16 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <string.h>
 #include <yara.h>
 
-#define args_is_long_arg(arg) (arg[0] == '-' && arg[1] == '-' && arg[2] != '\0')
+#include "args.h"
+#include "common.h"
+#include "unicode.h"
 
+#define args_is_long_arg(arg) (arg[0] == '-' && arg[1] == '-' && arg[2] != '\0')
 
 #define args_is_short_arg(arg) \
   (arg[0] == '-' && arg[1] != '-' && arg[1] != '\0')
 
-
-args_option_t* args_get_short_option(args_option_t* options, const char opt)
+args_option_t* args_get_short_option(args_option_t* options, const char_t opt)
 {
   while (options->type != ARGS_OPT_END)
   {
@@ -54,8 +56,7 @@ args_option_t* args_get_short_option(args_option_t* options, const char opt)
   return NULL;
 }
 
-
-args_option_t* args_get_long_option(args_option_t* options, const char* arg)
+args_option_t* args_get_long_option(args_option_t* options, const char_t* arg)
 {
   arg += 2;  // skip starting --
 
@@ -63,10 +64,10 @@ args_option_t* args_get_long_option(args_option_t* options, const char* arg)
   {
     if (options->long_name != NULL)
     {
-      size_t l = strlen(options->long_name);
+      size_t l = _tcslen(options->long_name);
 
       if ((arg[l] == '\0' || arg[l] == '=') &&
-          strstr(arg, options->long_name) == arg)
+          _tcsstr(arg, options->long_name) == arg)
       {
         return options;
       }
@@ -78,13 +79,12 @@ args_option_t* args_get_long_option(args_option_t* options, const char* arg)
   return NULL;
 }
 
-
 args_error_type_t args_parse_option(
     args_option_t* opt,
-    const char* opt_arg,
+    const char_t* opt_arg,
     int* opt_arg_was_used)
 {
-  char* endptr = NULL;
+  char_t* endptr = NULL;
 
   if (opt_arg_was_used != NULL)
     *opt_arg_was_used = 0;
@@ -99,11 +99,10 @@ args_error_type_t args_parse_option(
     break;
 
   case ARGS_OPT_INTEGER:
-
     if (opt_arg == NULL)
       return ARGS_ERROR_REQUIRED_INTEGER_ARG;
 
-    *(int*) opt->value = strtol(opt_arg, &endptr, 0);
+    *(long*) opt->value = _tcstol(opt_arg, &endptr, 0);
 
     if (*endptr != '\0')
       return ARGS_ERROR_REQUIRED_INTEGER_ARG;
@@ -114,14 +113,20 @@ args_error_type_t args_parse_option(
     break;
 
   case ARGS_OPT_STRING:
-
     if (opt_arg == NULL)
       return ARGS_ERROR_REQUIRED_STRING_ARG;
 
+#ifdef _UNICODE
+    if (opt->max_count > 1)
+      ((const char**) opt->value)[opt->count] = unicode_to_ansi(opt_arg);
+    else
+      *(const char**) opt->value = unicode_to_ansi(opt_arg);
+#else
     if (opt->max_count > 1)
       ((const char**) opt->value)[opt->count] = opt_arg;
     else
       *(const char**) opt->value = opt_arg;
+#endif
 
     if (opt_arg_was_used != NULL)
       *opt_arg_was_used = 1;
@@ -137,33 +142,31 @@ args_error_type_t args_parse_option(
   return ARGS_ERROR_OK;
 }
 
-
-void args_print_error(args_error_type_t error, const char* option)
+void args_print_error(args_error_type_t error, const char_t* option)
 {
   switch (error)
   {
   case ARGS_ERROR_UNKNOWN_OPT:
-    fprintf(stderr, "unknown option `%s`\n", option);
+    _ftprintf(stderr, _T("unknown option `%s`\n"), option);
     break;
   case ARGS_ERROR_TOO_MANY:
-    fprintf(stderr, "too many `%s` options\n", option);
+    _ftprintf(stderr, _T("too many `%s` options\n"), option);
     break;
   case ARGS_ERROR_REQUIRED_INTEGER_ARG:
-    fprintf(stderr, "option `%s` requires an integer argument\n", option);
+    _ftprintf(stderr, _T("option `%s` requires an integer argument\n"), option);
     break;
   case ARGS_ERROR_REQUIRED_STRING_ARG:
-    fprintf(stderr, "option `%s` requires a string argument\n", option);
+    _ftprintf(stderr, _T("option `%s` requires a string argument\n"), option);
     break;
   case ARGS_ERROR_UNEXPECTED_ARG:
-    fprintf(stderr, "option `%s` doesn't expect an argument\n", option);
+    _ftprintf(stderr, _T("option `%s` doesn't expect an argument\n"), option);
     break;
   default:
     return;
   }
 }
 
-
-int args_parse(args_option_t* options, int argc, const char** argv)
+int args_parse(args_option_t* options, int argc, const char_t** argv)
 {
   args_error_type_t error = ARGS_ERROR_OK;
 
@@ -172,7 +175,7 @@ int args_parse(args_option_t* options, int argc, const char** argv)
 
   while (i < argc)
   {
-    const char* arg = argv[i];
+    const char_t* arg = argv[i];
 
     if (args_is_long_arg(arg))
     {
@@ -180,7 +183,7 @@ int args_parse(args_option_t* options, int argc, const char** argv)
 
       if (opt != NULL)
       {
-        const char* equal = strchr(arg, '=');
+        const char_t* equal = _tcschr(arg, '=');
 
         if (equal)
           error = args_parse_option(opt, equal + 1, NULL);
@@ -242,38 +245,51 @@ int args_parse(args_option_t* options, int argc, const char** argv)
     i++;
   }
 
+  // Initialize to NULL the value pointers for all options.
+  for (; options->type != ARGS_OPT_END; options++) options->value = NULL;
+
   return o;
 }
 
-
 void args_print_usage(args_option_t* options, int help_alignment)
 {
-  char buffer[128];
+  char_t buffer[128];
 
   for (; options->type != ARGS_OPT_END; options++)
   {
-    int len = sprintf(buffer, "  ");
+    int len = _stprintf(buffer, _T("  "));
 
     if (options->short_name != '\0')
-      len += sprintf(buffer + len, "-%c", options->short_name);
+      len += _stprintf(buffer + len, _T("-%c"), options->short_name);
     else
-      len += sprintf(buffer + len, "     ");
+      len += _stprintf(buffer + len, _T("     "));
 
     if (options->short_name != '\0' && options->long_name != NULL)
-      len += sprintf(buffer + len, ",  ");
+      len += _stprintf(buffer + len, _T( ",  "));
 
     if (options->long_name != NULL)
-      len += sprintf(buffer + len, "--%s", options->long_name);
+      len += _stprintf(buffer + len, _T("--%s"), options->long_name);
 
     if (options->type == ARGS_OPT_STRING || options->type == ARGS_OPT_INTEGER)
     {
-      len += sprintf(
+      len += _stprintf(
           buffer + len,
-          "%s%s",
-          (options->long_name != NULL) ? "=" : " ",
+          _T("%s%s"),
+          (options->long_name != NULL) ? _T("=") : _T(" "),
           options->type_help);
     }
 
-    printf("%-*s%s\n", help_alignment, buffer, options->help);
+    _tprintf(_T("%-*s%s\n"), help_alignment, buffer, options->help);
+  }
+}
+
+void args_free(args_option_t* options)
+{
+  for (; options->type != ARGS_OPT_END; options++)
+  {
+    if (options->type == ARGS_OPT_STRING && options->value != NULL)
+    {
+      free(options->value);
+    }
   }
 }
