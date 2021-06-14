@@ -29,11 +29,12 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #if defined(USE_OPENBSD_PROC)
 
-#include <errno.h>
+#include <sys/types.h>
 #include <sys/ptrace.h>
 #include <sys/sysctl.h>
-#include <sys/types.h>
 #include <sys/wait.h>
+#include <errno.h>
+
 #include <yara/error.h>
 #include <yara/mem.h>
 #include <yara/proc.h>
