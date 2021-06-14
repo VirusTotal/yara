@@ -43,7 +43,7 @@ yara_SOURCES = \
   cli/threading.h \
   cli/yara.c
 
-yara_LDADD = -Llibyara/.libs -lyara
+yara_LDADD = -Llibyara/.libs libyara/.libs/libyara.a #-lyara
 yara_DEPENDENCIES = libyara/.libs/libyara.la
 
 yarac_SOURCES = \
