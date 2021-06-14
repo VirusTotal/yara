@@ -924,7 +924,7 @@ Again, numbers are decimal by default.
 
 You can also get the offset or virtual address of the i-th occurrence of string
 $a by using @a[i]. The indexes are one-based, so the first occurrence would be
-@a[1] the second one @a[2] and so on. If you provide an index greater then the
+@a[1] the second one @a[2] and so on. If you provide an index greater than the
 number of occurrences of the string, the result will be a NaN (Not A Number)
 value.
 

@@ -11,16 +11,16 @@ process. ::
   yara [OPTIONS] RULES_FILE TARGET
 
 In YARA 3.8 and below ``RULES_FILE`` was allowed to be a file with rules in source
-form or in compiled form indistinctly. In YARA 3.9 you need to explictly specify
+form or in compiled form indistinctly. In YARA 3.9 you need to explicitly specify
 that ``RULES_FILE`` contains compiled rules by using the -C flag. ::
 
   yara [OPTIONS] -C RULES_FILE TARGET
 
-This is a security measure to prevent users from inadvertenly using compiled
+This is a security measure to prevent users from inadvertently using compiled
 rules coming from a third-party. Using compiled rules from untrusted sources can
 lead to the execution of malicious code in your computer.
 
-For compiling rules beforhand you can use the ``yarac`` tool. This way can save
+For compiling rules beforehand you can use the ``yarac`` tool. This way can save
 time, because for YARA it is faster to load compiled rules than compiling the
 same rules over and over again.
 
