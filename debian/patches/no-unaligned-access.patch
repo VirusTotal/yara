@@ -1,0 +1,131 @@
+From: Steve Langasek <steve.langasek@ubuntu.com>
+Date: Mon, 6 Aug 2018 17:53:06 +0200
+Subject: use alignment-safe handling
+
+Casting a char* to a uint64_t* is not universally safe due to alignment
+constraints on reads on some platforms.  Just use memcpy() instead, which
+the compiler should optimize adequately for us.
+
+Also, force alignment of our arena-allocated structures that contain 64-bit
+elements.
+---
+ libyara/exec.c | 19 +++++++++----------
+ libyara/scan.c | 10 ++++++++--
+ 2 files changed, 17 insertions(+), 12 deletions(-)
+
+diff --git a/libyara/exec.c b/libyara/exec.c
+index a5d598f..a11daf1 100644
+--- a/libyara/exec.c
++++ b/libyara/exec.c
+@@ -266,7 +266,7 @@ int yr_execute_code(
+         break;
+ 
+       case OP_PUSH:
+-        r1.i = *(uint64_t*)(ip);
++        memcpy(&r1.i, ip, sizeof(uint64_t));
+         ip += sizeof(uint64_t);
+         push(r1);
+         break;
+@@ -276,7 +276,7 @@ int yr_execute_code(
+         break;
+ 
+       case OP_CLEAR_M:
+-        r1.i = *(uint64_t*)(ip);
++        memcpy(&r1.i, ip, sizeof(uint64_t));
+         ip += sizeof(uint64_t);
+         #if PARANOID_EXEC
+         ensure_within_mem(r1.i);
+@@ -285,7 +285,7 @@ int yr_execute_code(
+         break;
+ 
+       case OP_ADD_M:
+-        r1.i = *(uint64_t*)(ip);
++        memcpy(&r1.i, ip, sizeof(uint64_t));
+         ip += sizeof(uint64_t);
+         #if PARANOID_EXEC
+         ensure_within_mem(r1.i);
+@@ -296,7 +296,7 @@ int yr_execute_code(
+         break;
+ 
+       case OP_INCR_M:
+-        r1.i = *(uint64_t*)(ip);
++        memcpy(&r1.i, ip, sizeof(uint64_t));
+         ip += sizeof(uint64_t);
+         #if PARANOID_EXEC
+         ensure_within_mem(r1.i);
+@@ -305,7 +305,7 @@ int yr_execute_code(
+         break;
+ 
+       case OP_PUSH_M:
+-        r1.i = *(uint64_t*)(ip);
++        memcpy(&r1.i, ip, sizeof(uint64_t));
+         ip += sizeof(uint64_t);
+         #if PARANOID_EXEC
+         ensure_within_mem(r1.i);
+@@ -315,7 +315,7 @@ int yr_execute_code(
+         break;
+ 
+       case OP_POP_M:
+-        r1.i = *(uint64_t*)(ip);
++        memcpy(&r1.i, ip, sizeof(uint64_t));
+         ip += sizeof(uint64_t);
+         #if PARANOID_EXEC
+         ensure_within_mem(r1.i);
+@@ -337,7 +337,7 @@ int yr_execute_code(
+         break;
+ 
+       case OP_SWAPUNDEF:
+-        r1.i = *(uint64_t*)(ip);
++        memcpy(&r1.i, ip, sizeof(uint64_t));
+         ip += sizeof(uint64_t);
+         #if PARANOID_EXEC
+         ensure_within_mem(r1.i);
+@@ -998,7 +998,7 @@ int yr_execute_code(
+         break;
+ 
+       case OP_IMPORT:
+-        r1.i = *(uint64_t*)(ip);
++        memcpy(&r1.i, ip, sizeof(uint64_t));
+         ip += sizeof(uint64_t);
+ 
+         result = yr_modules_load((char*) r1.p, context);
+@@ -1042,8 +1042,7 @@ int yr_execute_code(
+         break;
+ 
+       case OP_INT_TO_DBL:
+-
+-        r1.i = *(uint64_t*)(ip);
++        memcpy(&r1.i, ip, sizeof(uint64_t));
+         ip += sizeof(uint64_t);
+ 
+         #if PARANOID_EXEC
+diff --git a/libyara/scan.c b/libyara/scan.c
+index c26115d..c92af8e 100644
+--- a/libyara/scan.c
++++ b/libyara/scan.c
+@@ -462,8 +462,11 @@ static int _yr_scan_verify_chained_string_match(
+ 
+       FAIL_ON_ERROR(yr_arena_allocate_memory(
+           context->matches_arena,
+-          sizeof(YR_MATCH),
++          sizeof(YR_MATCH) + sizeof(uint64_t) - 1,
+           (void**) &new_match));
++      /* force alignment */
++      new_match = (YR_MATCH *)(((size_t)new_match + sizeof(uint64_t) - 1)
++                      & ~(sizeof(uint64_t) - 1));
+ 
+       new_match->data_length = yr_min(match_length, max_match_data);
+ 
+@@ -578,8 +581,11 @@ static int _yr_scan_match_callback(
+ 
+     FAIL_ON_ERROR(yr_arena_allocate_memory(
+         callback_args->context->matches_arena,
+-        sizeof(YR_MATCH),
++        sizeof(YR_MATCH) + sizeof(uint64_t) - 1,
+         (void**) &new_match));
++    /* force alignment */
++    new_match = (YR_MATCH *)(((size_t)new_match + sizeof(uint64_t) - 1)
++                    & ~(sizeof(uint64_t) - 1));
+ 
+     new_match->data_length = yr_min(match_length, max_match_data);
+ 

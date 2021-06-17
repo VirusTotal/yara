@@ -1,0 +1,33 @@
+#!/usr/bin/make -f
+#export DH_VERBOSE=1
+
+%:
+	dh $@  --with sphinxdoc
+
+override_dh_auto_configure:
+	rm -f \
+		libyara/*grammar.[ch] \
+		libyara/*lexer.[ch]
+	dh_auto_configure -- --enable-cuckoo --enable-magic --enable-debug --enable-dotnet --enable-macho --enable-dex
+
+override_dh_auto_build:
+	dh_auto_build
+	$(MAKE) -C docs html
+
+override_dh_auto_clean:
+	rm -rf yara-python/build docs/_build
+	dh_auto_clean
+
+override_dh_autoreconf:
+	mkdir -p m4 libyara/m4
+	dh_autoreconf
+
+override_dh_missing:
+	dh_missing -X.la --fail-missing
+
+override_dh_install:
+	dh_install -X.la
+
+override_dh_installchangelogs:
+	dh_installchangelogs
+	dh_installchangelogs -p libyara-dev -p libyara3 -p yara debian/changelog.upstream
