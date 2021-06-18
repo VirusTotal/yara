@@ -552,7 +552,7 @@ int yr_arena_load_stream(YR_STREAM* stream, YR_ARENA** arena)
 
   YR_ARENA* new_arena;
 
-  FAIL_ON_ERROR(yr_arena_create(hdr.num_buffers, 1048576, &new_arena))
+  FAIL_ON_ERROR(yr_arena_create(hdr.num_buffers, 10485, &new_arena))
 
   for (int i = 0; i < hdr.num_buffers; ++i)
   {
