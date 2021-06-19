@@ -278,8 +278,9 @@ Possible values for the type are::
   CALLBACK_TOO_MANY_MATCHES
 
 Contents of the callback message depend on the type of the callback.
-For ``CALLBACK_TOO_MANY_MATCHES`` it is going to be named tuple containing
-3 items ``namespace``, ``rule`` and ``string``, all containing string
+
+For ``CALLBACK_TOO_MANY_MATCHES``, the message is a named tuple containing
+3 items: ``namespace``, ``rule`` and ``string``. All contain string
 identifiers.
 
 Here is an example:
