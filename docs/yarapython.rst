@@ -277,6 +277,12 @@ Possible values for the type are::
 
   CALLBACK_TOO_MANY_MATCHES
 
+Contents of the callback message depend on the type of the callback.
+
+For ``CALLBACK_TOO_MANY_MATCHES``, the message is a named tuple containing
+3 items: ``namespace``, ``rule`` and ``string``. All contain string
+identifiers.
+
 Here is an example:
 
 .. code-block:: python
@@ -285,7 +291,7 @@ Here is an example:
 
   def warnings_callback(warning_type, message):
     if warning_type == yara.CALLBACK_TOO_MANY_MATCHES:
-        print(message)
+        print(f"namespace:'{message.namespace}' rule:'{message.rule}' string:'{message.string}'")
     return yara.CALLBACK_CONTINUE
 
   matches = rules.match('/foo/bar/my_file', warnings_callback=warnings_callback)
