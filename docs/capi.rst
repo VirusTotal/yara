@@ -254,10 +254,10 @@ CALLBACK_MSG_MODULE_IMPORTED. When this happens ``message_data`` points to a
 :c:type:`YR_OBJECT_STRUCTURE` structure. This structure contains all the
 information provided by the module about the currently scanned file.
 
-If during the scan a string hits the maximum number of matches your callback
-will be called once with the CALLBACK_MSG_TOO_MANY_MATCHES. When this happens,
-`message_data` is a `YR_STRING*` which points to the string which caused the
-warning. If your callback returns CALLBACK_CONTINUE the string will be disabled
+If during the scan a string hits the maximum number of matches, your callback
+will be called once with the ``CALLBACK_MSG_TOO_MANY_MATCHES``. When this happens,
+``message_data`` is a ``YR_STRING*`` which points to the string which caused the
+warning. If your callback returns ``CALLBACK_CONTINUE``, the string will be disabled
 and scanning will continue, otherwise scanning will be halted.
 
 Lastly, the callback function is also called with the
