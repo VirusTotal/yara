@@ -14,6 +14,7 @@ modules in the :ref:`writing-modules` section.
 
    PE <modules/pe>
    ELF <modules/elf>
+   macho <modules/macho>
    Cuckoo <modules/cuckoo>
    Magic <modules/magic>
    Hash <modules/hash>
