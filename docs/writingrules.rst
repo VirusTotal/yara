@@ -574,8 +574,8 @@ new-line characters. For example:
             any of them
     }
 
-Notice that `/foo/i` is equivalent to `/foo/ nocase`, but we recommend the
-latter when defining strings. The `/foo/i` syntax is useful when writting
+Notice that ``/foo/i`` is equivalent to ``/foo/ nocase``, but we recommend the
+latter when defining strings. The ``/foo/i`` syntax is useful when writting
 case-insentive regular expressions for the ``matches`` operator.
 
 In previous versions of YARA, external libraries like PCRE and RE2 were used
