@@ -920,23 +920,40 @@ static IMPORT_FUNCTION* pe_parse_import_descriptor(
   return head;
 }
 
+//
+// In Windows PE files, any character including 0x20 and above is allowed.
+// The only exceptions are characters that are invalid for file names in Windows,
+// which are "*<>?|. While they still can be present in the import directory,
+// such module can never be present in Windows, so we can treat them as invalid.
+// 
+// Explicit: The above also applies to slash, backslash (these form a relative path
+// in a subdirectory, which is allowed in the import directory) and colon (which forms
+// a file name with an Alternate Data Stream "test:file.dll" - also allowed).
+//
+// Proof of concept: https://github.com/ladislav-zezula/ImportTest
+//
+// Samples
+// -------
+// f561d60bff4342e529b2c793e216b73a72e6256f90ab24c3cc460646371130ca (imports "test/file.dll")
+// b7f7b8a001769eb0f9c36cb27626b62cabdca9a716a222066028fcd206244b40 (imports "test\file.dll")
+// 94cfb8223132da0a76f9dfbd35a29ab78e5806651758650292ab9c7baf2c0bc2 (imports "test:file.dll")
+// eb2e2c443840276afe095fff05a3a24c00e610ac0e020233d6cd7a0b0b340fb1 (the imported DLL)
+//
+
 static int pe_valid_dll_name(const char* dll_name, size_t n)
 {
-  const char* c = dll_name;
+  const unsigned char * c = (const unsigned char *)dll_name;
   size_t l = 0;
 
   while (l < n && *c != '\0')
   {
-    if ((*c >= 'a' && *c <= 'z') || (*c >= 'A' && *c <= 'Z') ||
-        (*c >= '0' && *c <= '9') || (*c == '_' || *c == '.' || *c == '-' || *c == '+'))
-    {
-      c++;
-      l++;
-    }
-    else
+    if(*c < ' ' || *c == '\"' || *c == '*' || *c == '<' || *c == '>' || *c == '?' || *c == '|')
     {
       return false;
     }
+
+    c++;
+    l++;
   }
 
   return (l > 0 && l < n);
