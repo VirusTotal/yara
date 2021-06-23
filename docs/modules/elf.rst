@@ -60,6 +60,7 @@ Reference
 
     Integer with one of the following values:
 
+    .. c:type:: EM_NONE
     .. c:type:: EM_M32
     .. c:type:: EM_SPARC
     .. c:type:: EM_386

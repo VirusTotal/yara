@@ -33,51 +33,46 @@ keywords are reserved and cannot be used as an identifier:
      - base64
      - base64wide
      - condition
-     - contains
-   * - endswith
+   * - contains
+     - endswith
      - entrypoint
      - false
      - filesize
      - for
      - fullword
      - global
-     - import
+   * - import
      - icontains
-   * - iendswith
+     - iendswith
      - in
      - include
      - int16
      - int16be
      - int32
-     - int32be
+   * - int32be
      - int8
      - int8be
-   * - istartswith
+     - istartswith
      - matches
      - meta
      - nocase
      - not
-     - of
+   * - of
      - or
      - private
      - rule
-   * - startswith
+     - startswith
      - strings
      - them
      - true
-     - uint16
+   * - uint16
      - uint16be
      - uint32
      - uint32be
-   * - uint8
+     - uint8
      - uint8be
      - wide
      - xor
-     -
-     -
-     -
-     -
-     -
 
 Rules are generally composed of two sections: strings definition and condition.
 The strings definition section can be omitted if the rule doesn't rely on any
@@ -463,7 +458,7 @@ Base64 strings
 The ``base64`` modifier can be used to search for strings that have been base64
 encoded. A good explanation of the technique is at:
 
-https://www.leeholmes.com/blog/2019/12/10/searching-for-content-in-base-64-strings-2/
+https://www.leeholmes.com/searching-for-content-in-base-64-strings/
 
 The following rule will search for the three base64 permutations of the string
 "This program cannot":
