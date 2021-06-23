@@ -308,7 +308,7 @@ Case-insensitive strings
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
 Text strings in YARA are case-sensitive by default, however you can turn your
-string into case-insensitive mode by appending the modifier nocase at the end
+string into case-insensitive mode by appending the modifier ``nocase`` at the end
 of the string definition, in the same line:
 
 .. code-block:: yara
@@ -557,6 +557,27 @@ Regular expressions can be also followed by ``nocase``, ``ascii``, ``wide``,
 and ``fullword`` modifiers just like in text strings. The semantics of these
 modifiers are the same in both cases.
 
+Additionally, they can be followed by the characters ``i`` and ``s`` just after
+the closing slash, which is a very common convention for specifying that the
+regular expression is case-insensitive and that the dot (``.``) can match
+new-line characters. For example:
+
+.. code-block:: yara
+
+    rule RegExpExample2
+    {
+        strings:
+            $re1 = /foo/i    // This regexp is case-insentitive
+            $re2 = /bar./s   // In this regexp the dot matches everything, including new-line
+            $re3 = /baz./is  // Both modifiers can be used together
+        condition:
+            any of them
+    }
+
+Notice that `/foo/i` is equivalent to `/foo/ nocase`, but we recommend the
+latter when defining strings. The `/foo/i` syntax is useful when writting
+case-insentive regular expressions for the ``matches`` operator.
+
 In previous versions of YARA, external libraries like PCRE and RE2 were used
 to perform regular expression matching, but starting with version 2.0 YARA uses
 its own regular expression engine. This new engine implements most features
@@ -572,9 +593,11 @@ YARA’s regular expressions recognise the following metacharacters:
      - Quote the next metacharacter
    * - ``^``
      - Match the beginning of the file or negates a character class when used
-       as the first character after the opening bracket.
+       as the first character after the opening bracket
    * - ``$``
      - Match the end of the file
+   * - ``.``
+     - Matches any single character except a newline character
    * - ``|``
      - Alternation
    * - ``()``
@@ -670,6 +693,8 @@ Starting with version 3.3.0 these zero-width assertions are also recognized:
      - Match a word boundary
    * - ``\B``
      - Match except at a word boundary
+
+Regular expressions can be
 
 Private strings
 ---------------
