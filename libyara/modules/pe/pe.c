@@ -2679,15 +2679,18 @@ begin_declarations
   declare_integer("SUBSYSTEM_EFI_APPLICATION");
   declare_integer("SUBSYSTEM_EFI_BOOT_SERVICE_DRIVER");
   declare_integer("SUBSYSTEM_EFI_RUNTIME_DRIVER");
+  declare_integer("SUBSYSTEM_EFI_ROM_IMAGE");
   declare_integer("SUBSYSTEM_XBOX");
   declare_integer("SUBSYSTEM_WINDOWS_BOOT_APPLICATION");
 
+  declare_integer("HIGH_ENTROPY_VA");
   declare_integer("DYNAMIC_BASE");
   declare_integer("FORCE_INTEGRITY");
   declare_integer("NX_COMPAT");
   declare_integer("NO_ISOLATION");
   declare_integer("NO_SEH");
   declare_integer("NO_BIND");
+  declare_integer("APPCONTAINER");
   declare_integer("WDM_DRIVER");
   declare_integer("TERMINAL_SERVER_AWARE");
 
@@ -2715,6 +2718,7 @@ begin_declarations
   declare_integer("IMAGE_DIRECTORY_ENTRY_BASERELOC");
   declare_integer("IMAGE_DIRECTORY_ENTRY_DEBUG");
   declare_integer("IMAGE_DIRECTORY_ENTRY_ARCHITECTURE");
+  declare_integer("IMAGE_DIRECTORY_ENTRY_COPYRIGHT");
   declare_integer("IMAGE_DIRECTORY_ENTRY_GLOBALPTR");
   declare_integer("IMAGE_DIRECTORY_ENTRY_TLS");
   declare_integer("IMAGE_DIRECTORY_ENTRY_LOAD_CONFIG");
@@ -2723,11 +2727,38 @@ begin_declarations
   declare_integer("IMAGE_DIRECTORY_ENTRY_DELAY_IMPORT");
   declare_integer("IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR");
 
+  declare_integer("IMAGE_NT_OPTIONAL_HDR32_MAGIC");
+  declare_integer("IMAGE_NT_OPTIONAL_HDR64_MAGIC");
+  declare_integer("IMAGE_ROM_OPTIONAL_HDR_MAGIC");
+
+  declare_integer("SECTION_NO_PAD");
   declare_integer("SECTION_CNT_CODE");
   declare_integer("SECTION_CNT_INITIALIZED_DATA");
   declare_integer("SECTION_CNT_UNINITIALIZED_DATA");
+  declare_integer("SECTION_LNK_OTHER");
+  declare_integer("SECTION_LNK_INFO");
+  declare_integer("SECTION_LNK_REMOVE");
+  declare_integer("SECTION_LNK_COMDAT");
+  declare_integer("SECTION_NO_DEFER_SPEC_EXC");
   declare_integer("SECTION_GPREL");
+  declare_integer("SECTION_MEM_PURGEABLE");
   declare_integer("SECTION_MEM_16BIT");
+  declare_integer("SECTION_MEM_LOCKED");
+  declare_integer("SECTION_MEM_PRELOAD");
+  declare_integer("SECTION_ALIGN_1BYTES");
+  declare_integer("SECTION_ALIGN_2BYTES");
+  declare_integer("SECTION_ALIGN_4BYTES");
+  declare_integer("SECTION_ALIGN_8BYTES");
+  declare_integer("SECTION_ALIGN_16BYTES");
+  declare_integer("SECTION_ALIGN_32BYTES");
+  declare_integer("SECTION_ALIGN_64BYTES");
+  declare_integer("SECTION_ALIGN_128BYTES");
+  declare_integer("SECTION_ALIGN_256BYTES");
+  declare_integer("SECTION_ALIGN_512BYTES");
+  declare_integer("SECTION_ALIGN_1024BYTES");
+  declare_integer("SECTION_ALIGN_2048BYTES");
+  declare_integer("SECTION_ALIGN_4096BYTES");
+  declare_integer("SECTION_ALIGN_8192BYTES");
   declare_integer("SECTION_LNK_NRELOC_OVFL");
   declare_integer("SECTION_MEM_DISCARDABLE");
   declare_integer("SECTION_MEM_NOT_CACHED");
@@ -2758,6 +2789,15 @@ begin_declarations
   declare_integer("RESOURCE_TYPE_ANIICON");
   declare_integer("RESOURCE_TYPE_HTML");
   declare_integer("RESOURCE_TYPE_MANIFEST");
+
+  declare_integer("IMAGE_DEBUG_TYPE_UNKNOWN");
+  declare_integer("IMAGE_DEBUG_TYPE_COFF");
+  declare_integer("IMAGE_DEBUG_TYPE_CODEVIEW");
+  declare_integer("IMAGE_DEBUG_TYPE_FPO");
+  declare_integer("IMAGE_DEBUG_TYPE_MISC");
+  declare_integer("IMAGE_DEBUG_TYPE_EXCEPTION");
+  declare_integer("IMAGE_DEBUG_TYPE_FIXUP");
+  declare_integer("IMAGE_DEBUG_TYPE_BORLAND");
 
   declare_integer("is_pe");
   declare_integer("machine");
@@ -3011,12 +3051,18 @@ int module_load(
       IMAGE_SUBSYSTEM_EFI_RUNTIME_DRIVER,
       module_object,
       "SUBSYSTEM_EFI_RUNTIME_DRIVER");
+  set_integer(
+      IMAGE_SUBSYSTEM_EFI_ROM_IMAGE, module_object,
+      "SUBSYSTEM_EFI_ROM_IMAGE");
   set_integer(IMAGE_SUBSYSTEM_XBOX, module_object, "SUBSYSTEM_XBOX");
   set_integer(
       IMAGE_SUBSYSTEM_WINDOWS_BOOT_APPLICATION,
       module_object,
       "SUBSYSTEM_WINDOWS_BOOT_APPLICATION");
 
+  set_integer(
+      IMAGE_DLLCHARACTERISTICS_HIGH_ENTROPY_VA, module_object,
+      "HIGH_ENTROPY_VA");
   set_integer(
       IMAGE_DLLCHARACTERISTICS_DYNAMIC_BASE, module_object, "DYNAMIC_BASE");
   set_integer(
@@ -3028,6 +3074,9 @@ int module_load(
       IMAGE_DLLCHARACTERISTICS_NO_ISOLATION, module_object, "NO_ISOLATION");
   set_integer(IMAGE_DLLCHARACTERISTICS_NO_SEH, module_object, "NO_SEH");
   set_integer(IMAGE_DLLCHARACTERISTICS_NO_BIND, module_object, "NO_BIND");
+  set_integer(
+      IMAGE_DLLCHARACTERISTICS_APPCONTAINER, module_object,
+      "APPCONTAINER");
   set_integer(IMAGE_DLLCHARACTERISTICS_WDM_DRIVER, module_object, "WDM_DRIVER");
   set_integer(
       IMAGE_DLLCHARACTERISTICS_TERMINAL_SERVER_AWARE,
@@ -3089,6 +3138,9 @@ int module_load(
       module_object,
       "IMAGE_DIRECTORY_ENTRY_ARCHITECTURE");
   set_integer(
+      IMAGE_DIRECTORY_ENTRY_COPYRIGHT, module_object,
+      "IMAGE_DIRECTORY_ENTRY_COPYRIGHT");
+  set_integer(
       IMAGE_DIRECTORY_ENTRY_GLOBALPTR,
       module_object,
       "IMAGE_DIRECTORY_ENTRY_GLOBALPTR");
@@ -3113,6 +3165,19 @@ int module_load(
       module_object,
       "IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR");
 
+  set_integer(
+      IMAGE_NT_OPTIONAL_HDR32_MAGIC, module_object,
+      "IMAGE_NT_OPTIONAL_HDR32_MAGIC");
+  set_integer(
+      IMAGE_NT_OPTIONAL_HDR64_MAGIC, module_object,
+      "IMAGE_NT_OPTIONAL_HDR64_MAGIC");
+  set_integer(
+      IMAGE_ROM_OPTIONAL_HDR_MAGIC, module_object,
+      "IMAGE_ROM_OPTIONAL_HDR_MAGIC");
+
+  set_integer(
+      IMAGE_SCN_TYPE_NO_PAD, module_object,
+      "SECTION_NO_PAD");
   set_integer(IMAGE_SCN_CNT_CODE, module_object, "SECTION_CNT_CODE");
   set_integer(
       IMAGE_SCN_CNT_INITIALIZED_DATA,
@@ -3122,8 +3187,74 @@ int module_load(
       IMAGE_SCN_CNT_UNINITIALIZED_DATA,
       module_object,
       "SECTION_CNT_UNINITIALIZED_DATA");
+  set_integer(
+      IMAGE_SCN_LNK_OTHER, module_object,
+      "SECTION_LNK_OTHER");
+  set_integer(
+      IMAGE_SCN_LNK_INFO, module_object,
+      "SECTION_LNK_INFO");
+  set_integer(
+      IMAGE_SCN_LNK_REMOVE, module_object,
+      "SECTION_LNK_REMOVE");
+  set_integer(
+      IMAGE_SCN_LNK_COMDAT, module_object,
+      "SECTION_LNK_COMDAT");
+  set_integer(
+      IMAGE_SCN_NO_DEFER_SPEC_EXC, module_object,
+      "SECTION_NO_DEFER_SPEC_EXC");
   set_integer(IMAGE_SCN_GPREL, module_object, "SECTION_GPREL");
+  set_integer(
+      IMAGE_SCN_MEM_PURGEABLE, module_object,
+      "SECTION_MEM_PURGEABLE");
   set_integer(IMAGE_SCN_MEM_16BIT, module_object, "SECTION_MEM_16BIT");
+  set_integer(
+      IMAGE_SCN_MEM_LOCKED, module_object,
+      "SECTION_MEM_LOCKED");
+  set_integer(
+      IMAGE_SCN_MEM_PRELOAD, module_object,
+      "SECTION_MEM_PRELOAD");
+  set_integer(
+      IMAGE_SCN_ALIGN_1BYTES, module_object,
+      "SECTION_ALIGN_1BYTES");
+  set_integer(
+      IMAGE_SCN_ALIGN_2BYTES, module_object,
+      "SECTION_ALIGN_2BYTES");
+  set_integer(
+      IMAGE_SCN_ALIGN_4BYTES, module_object,
+      "SECTION_ALIGN_4BYTES");
+  set_integer(
+      IMAGE_SCN_ALIGN_8BYTES, module_object,
+      "SECTION_ALIGN_8BYTES");
+  set_integer(
+      IMAGE_SCN_ALIGN_16BYTES, module_object,
+      "SECTION_ALIGN_16BYTES");
+  set_integer(
+      IMAGE_SCN_ALIGN_32BYTES, module_object,
+      "SECTION_ALIGN_32BYTES");
+  set_integer(
+      IMAGE_SCN_ALIGN_64BYTES, module_object,
+      "SECTION_ALIGN_64BYTES");
+  set_integer(
+      IMAGE_SCN_ALIGN_128BYTES, module_object,
+      "SECTION_ALIGN_128BYTES");
+  set_integer(
+      IMAGE_SCN_ALIGN_256BYTES, module_object,
+      "SECTION_ALIGN_256BYTES");
+  set_integer(
+      IMAGE_SCN_ALIGN_512BYTES, module_object,
+      "SECTION_ALIGN_512BYTES");
+  set_integer(
+      IMAGE_SCN_ALIGN_1024BYTES, module_object,
+      "SECTION_ALIGN_1024BYTES");
+  set_integer(
+      IMAGE_SCN_ALIGN_2048BYTES, module_object,
+      "SECTION_ALIGN_2048BYTES");
+  set_integer(
+      IMAGE_SCN_ALIGN_4096BYTES, module_object,
+      "SECTION_ALIGN_4096BYTES");
+  set_integer(
+      IMAGE_SCN_ALIGN_8192BYTES, module_object,
+      "SECTION_ALIGN_8192BYTES");
   set_integer(
       IMAGE_SCN_LNK_NRELOC_OVFL, module_object, "SECTION_LNK_NRELOC_OVFL");
   set_integer(
@@ -3163,6 +3294,32 @@ int module_load(
   set_integer(RESOURCE_TYPE_ANIICON, module_object, "RESOURCE_TYPE_ANIICON");
   set_integer(RESOURCE_TYPE_HTML, module_object, "RESOURCE_TYPE_HTML");
   set_integer(RESOURCE_TYPE_MANIFEST, module_object, "RESOURCE_TYPE_MANIFEST");
+
+  set_integer(
+      IMAGE_DEBUG_TYPE_UNKNOWN, module_object,
+      "IMAGE_DEBUG_TYPE_UNKNOWN");
+  set_integer(
+      IMAGE_DEBUG_TYPE_COFF, module_object,
+      "IMAGE_DEBUG_TYPE_COFF");
+  set_integer(
+      IMAGE_DEBUG_TYPE_CODEVIEW, module_object,
+      "IMAGE_DEBUG_TYPE_CODEVIEW");
+  set_integer(
+      IMAGE_DEBUG_TYPE_FPO, module_object,
+      "IMAGE_DEBUG_TYPE_FPO");
+  set_integer(
+      IMAGE_DEBUG_TYPE_MISC, module_object,
+      "IMAGE_DEBUG_TYPE_MISC");
+  set_integer(
+      IMAGE_DEBUG_TYPE_EXCEPTION, module_object,
+      "IMAGE_DEBUG_TYPE_EXCEPTION");
+  set_integer(
+      IMAGE_DEBUG_TYPE_FIXUP, module_object,
+      "IMAGE_DEBUG_TYPE_FIXUP");
+  set_integer(
+      IMAGE_DEBUG_TYPE_BORLAND, module_object,
+      "IMAGE_DEBUG_TYPE_BORLAND");
+
   set_integer(0, module_object, "is_pe");
 
   foreach_memory_block(iterator, block)
