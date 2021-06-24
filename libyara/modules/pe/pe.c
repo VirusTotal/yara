@@ -273,7 +273,6 @@ static void pe_parse_debug_directory(PE* pe)
   PIMAGE_DATA_DIRECTORY data_dir;
   PIMAGE_DEBUG_DIRECTORY debug_dir;
   int64_t debug_dir_offset;
-  int64_t pcv_hdr_offset;
   int i, dcount;
   size_t pdb_path_len;
   char* pdb_path = NULL;
@@ -301,6 +300,8 @@ static void pe_parse_debug_directory(PE* pe)
 
   for (i = 0; i < dcount; i++)
   {
+    int64_t pcv_hdr_offset = 0;
+
     debug_dir = (PIMAGE_DEBUG_DIRECTORY)(
         pe->data + debug_dir_offset + i * sizeof(IMAGE_DEBUG_DIRECTORY));
 
@@ -310,13 +311,19 @@ static void pe_parse_debug_directory(PE* pe)
     if (yr_le32toh(debug_dir->Type) != IMAGE_DEBUG_TYPE_CODEVIEW)
       continue;
 
-    if (yr_le32toh(debug_dir->AddressOfRawData) == 0)
-      continue;
+    // The debug info offset may be present either as RVA or as raw offset
+    // Sample: 0249e00b6d46bee5a17096559f18e671cd0ceee36373e8708f614a9a6c7c079e
+    if (debug_dir->AddressOfRawData != 0)
+    {
+      pcv_hdr_offset = pe_rva_to_offset(
+          pe, yr_le32toh(debug_dir->AddressOfRawData));
+    }
+    else if (debug_dir->PointerToRawData != 0)
+    {
+      pcv_hdr_offset = yr_le32toh(debug_dir->PointerToRawData);
+    }
 
-    pcv_hdr_offset = pe_rva_to_offset(
-        pe, yr_le32toh(debug_dir->AddressOfRawData));
-
-    if (pcv_hdr_offset < 0)
+    if (pcv_hdr_offset <= 0)
       continue;
 
     PCV_HEADER cv_hdr = (PCV_HEADER)(pe->data + pcv_hdr_offset);
