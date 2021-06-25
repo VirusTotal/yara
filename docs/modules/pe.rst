@@ -101,6 +101,7 @@ Reference
     .. c:type:: SUBSYSTEM_EFI_APPLICATION
     .. c:type:: SUBSYSTEM_EFI_BOOT_SERVICE_DRIVER
     .. c:type:: SUBSYSTEM_EFI_RUNTIME_DRIVER
+    .. c:type:: SUBSYSTEM_EFI_ROM_IMAGE
     .. c:type:: SUBSYSTEM_XBOX
     .. c:type:: SUBSYSTEM_WINDOWS_BOOT_APPLICATION
 
@@ -139,6 +140,13 @@ Reference
     .. versionadded:: 3.8.0
 
     Value of IMAGE_OPTIONAL_HEADER::Magic.
+
+    Integer with one of the following values:
+
+        .. c:type:: IMAGE_NT_OPTIONAL_HDR32_MAGIC
+        .. c:type:: IMAGE_NT_OPTIONAL_HDR64_MAGIC
+        .. c:type:: IMAGE_ROM_OPTIONAL_HDR_MAGIC
+
 
 .. c:type:: size_of_code
 
@@ -351,6 +359,10 @@ Reference
     characteristics can be inspected by performing a bitwise AND
     operation with the following constants:
 
+    .. c:type:: HIGH_ENTROPY_VA
+
+        ASLR with 64 bit address space.
+
     .. c:type:: DYNAMIC_BASE
 
         File can be relocated - also marks the file as ASLR compatible
@@ -367,6 +379,10 @@ Reference
         set to use SafeSEH
 
     .. c:type:: NO_BIND
+    .. c:type:: APPCONTAINER
+
+        Image should execute in an AppContainer
+
     .. c:type:: WDM_DRIVER
 
         Marks the file as a Windows Driver Model (WDM) device driver.
@@ -463,6 +479,19 @@ Reference
 
         Data directory for debug information.
 
+        IMAGE_DEBUG_DIRECTORY::Type values:
+
+            .. c:type:: IMAGE_DEBUG_TYPE_UNKNOWN
+            .. c:type:: IMAGE_DEBUG_TYPE_COFF
+            .. c:type:: IMAGE_DEBUG_TYPE_CODEVIEW
+            .. c:type:: IMAGE_DEBUG_TYPE_FPO
+            .. c:type:: IMAGE_DEBUG_TYPE_MISC
+            .. c:type:: IMAGE_DEBUG_TYPE_EXCEPTION
+            .. c:type:: IMAGE_DEBUG_TYPE_FIXUP
+            .. c:type:: IMAGE_DEBUG_TYPE_BORLAND
+
+    .. c:type:: IMAGE_DIRECTORY_ENTRY_ARCHITECTURE
+    .. c:type:: IMAGE_DIRECTORY_ENTRY_COPYRIGHT
     .. c:type:: IMAGE_DIRECTORY_ENTRY_TLS
 
         Data directory for image thread local storage.
@@ -557,12 +586,35 @@ Reference
     Individual section characteristics can be inspected using a bitwise AND
     operation with the following constants:
 
+    .. c:type:: SECTION_NO_PAD
     .. c:type:: SECTION_CNT_CODE
     .. c:type:: SECTION_CNT_INITIALIZED_DATA
     .. c:type:: SECTION_CNT_UNINITIALIZED_DATA
+    .. c:type:: SECTION_LNK_OTHER
+    .. c:type:: SECTION_LNK_INFO
+    .. c:type:: SECTION_LNK_REMOVE
+    .. c:type:: SECTION_LNK_COMDAT
+    .. c:type:: SECTION_NO_DEFER_SPEC_EXC
     .. c:type:: SECTION_GPREL
+    .. c:type:: SECTION_MEM_PURGEABLE
     .. c:type:: SECTION_MEM_16BIT
     .. c:type:: SECTION_LNK_NRELOC_OVFL
+    .. c:type:: SECTION_MEM_LOCKED
+    .. c:type:: SECTION_MEM_PRELOAD
+    .. c:type:: SECTION_ALIGN_1BYTES
+    .. c:type:: SECTION_ALIGN_2BYTES
+    .. c:type:: SECTION_ALIGN_4BYTES
+    .. c:type:: SECTION_ALIGN_8BYTES
+    .. c:type:: SECTION_ALIGN_16BYTES
+    .. c:type:: SECTION_ALIGN_32BYTES
+    .. c:type:: SECTION_ALIGN_64BYTES
+    .. c:type:: SECTION_ALIGN_128BYTES
+    .. c:type:: SECTION_ALIGN_256BYTES
+    .. c:type:: SECTION_ALIGN_512BYTES
+    .. c:type:: SECTION_ALIGN_1024BYTES
+    .. c:type:: SECTION_ALIGN_2048BYTES
+    .. c:type:: SECTION_ALIGN_4096BYTES
+    .. c:type:: SECTION_ALIGN_8192BYTES
     .. c:type:: SECTION_MEM_DISCARDABLE
     .. c:type:: SECTION_MEM_NOT_CACHED
     .. c:type:: SECTION_MEM_NOT_PAGED
