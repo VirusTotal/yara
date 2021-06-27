@@ -114,11 +114,15 @@ typedef int (*RESOURCE_CALLBACK_FUNC)(
     const IMAGE_RESOURCE_DIR_STRING_U* lang_string,
     void* cb_data);
 
+#if defined(USE_WINDOWS_PROC)
+
 YR_API YR_MEMORY_REGION* yr_process_fetch_memory_region_data(
     YR_MEMORY_BLOCK* block);
 
 YR_API void* yr_process_fetch_primary_module_base(
     YR_MEMORY_BLOCK_ITERATOR* iterator);
+
+#endif
 
 static size_t available_space(PE* pe, void* pointer)
 {
@@ -314,6 +318,7 @@ static void pe_parse_debug_directory(PE* pe)
 
     if (pe->memory)
     {
+      debug_dir = NULL;
       get_data_pointer_memory(pe, (debug_dir_offset + i * \
         sizeof(IMAGE_DEBUG_DIRECTORY)), debug_dir, PIMAGE_DEBUG_DIRECTORY);
       if (debug_dir == NULL) break;
@@ -348,6 +353,7 @@ static void pe_parse_debug_directory(PE* pe)
     PCV_HEADER cv_hdr;
     if (pe->memory)
     {
+      cv_hdr = NULL;
       get_data_pointer_memory(pe, pcv_hdr_offset, cv_hdr, PCV_HEADER);
       if (cv_hdr == NULL) continue;
     }
@@ -641,8 +647,9 @@ static void pe_parse_version_info(PIMAGE_RESOURCE_DATA_ENTRY rsrc_data, PE* pe)
 
   if (pe->memory)
   {
-      get_data_pointer_memory(pe, version_info_offset, version_info, PVERSION_INFO);
-      if (version_info == NULL) return;
+    version_info = NULL;
+    get_data_pointer_memory(pe, version_info_offset, version_info, PVERSION_INFO);
+    if (version_info == NULL) return;
   }
   else version_info = (PVERSION_INFO) (pe->data + version_info_offset);
 
@@ -841,6 +848,7 @@ static IMPORT_FUNCTION* pe_parse_import_descriptor(
     PIMAGE_THUNK_DATA64 thunks64;
     if (pe->memory)
     {
+      thunks64 = NULL;
       get_data_pointer_memory(pe, offset, thunks64, PIMAGE_THUNK_DATA64);
       if (thunks64 == NULL) return NULL;
     }
@@ -865,6 +873,8 @@ static IMPORT_FUNCTION* pe_parse_import_descriptor(
           size_t imp_size;
           if (pe->memory)
           {
+            import = NULL;
+            imp_size = 0;
             get_data_pointer_memory_with_size(pe, offset, import, PIMAGE_IMPORT_BY_NAME, imp_size);
             if (import == NULL) continue;
           }
@@ -925,6 +935,7 @@ static IMPORT_FUNCTION* pe_parse_import_descriptor(
     PIMAGE_THUNK_DATA32 thunks32;
     if (pe->memory)
     {
+      thunks32 = NULL;
       get_data_pointer_memory(pe, offset, thunks32, PIMAGE_THUNK_DATA32);
       if (thunks32 == NULL) return NULL;
     }
@@ -949,6 +960,8 @@ static IMPORT_FUNCTION* pe_parse_import_descriptor(
           size_t imp_size;
           if (pe->memory)
           {
+            import = NULL;
+            imp_size = 0;
             get_data_pointer_memory_with_size(pe, offset, import, PIMAGE_IMPORT_BY_NAME, imp_size);
             if (import == NULL) continue;
           }
@@ -1118,6 +1131,7 @@ static IMPORTED_DLL* pe_parse_imports(PE* pe)
 
   if (pe->memory)
   {
+    imports = NULL;
     get_data_pointer_memory(pe, offset, imports, PIMAGE_IMPORT_DESCRIPTOR);
     if (imports == NULL) return NULL;
   }
@@ -1137,6 +1151,7 @@ static IMPORTED_DLL* pe_parse_imports(PE* pe)
       size_t dll_name_max;
       if (pe->memory)
       {
+        dll_name = NULL;
         get_data_pointer_memory_with_size(pe, offset, dll_name, char*, dll_name_max);
         if (dll_name == NULL) return NULL;
       }
@@ -1532,6 +1547,7 @@ static void pe_parse_exports(PE* pe)
 
   if (pe->memory)
   {
+    exports = NULL;
     get_data_pointer_memory(pe, offset, exports, PIMAGE_EXPORT_DIRECTORY);
     if (exports == NULL) return;
   }
@@ -1675,6 +1691,7 @@ static void pe_parse_exports(PE* pe)
     char* name;
     if (pe->memory)
     {
+      name = NULL;
       get_data_pointer_memory_with_size(pe, offset, name, char*, remaining);
       if (name == NULL) return;
     }
@@ -4159,7 +4176,16 @@ int module_load(
         pe_parse_debug_directory(pe);
 
         #if defined(HAVE_LIBCRYPTO) && !defined(BORINGSSL)
+
+        // Certificate data is stored in the PE overlay, outside the bounds 
+        // of the mappable image. This is necessary otherwise signature verification
+        // algorithms would have to account for the presence of volatile certificate 
+        // data within the image being verified.
+        // When an image is mapped into memory, the overlay is not included. As a 
+        // result, it is not possible to extract PE signature information from a
+        // memory mapped image.
         if (!pe->memory) pe_parse_certificates(pe);
+
         #endif
 
         pe->imported_dlls = pe_parse_imports(pe);
