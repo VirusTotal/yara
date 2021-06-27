@@ -104,6 +104,7 @@
       <AdditionalDependencies>ws2_32.lib;crypt32.lib;libyara$(PlatformArchitecture).lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>..\libyara\$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
+      <DelayLoadDLLs>crypt32.dll;ws2_32.dll;bcrypt.dll;advapi32.dll;user32.dll</DelayLoadDLLs>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -124,6 +125,7 @@
       <AdditionalLibraryDirectories>..\libyara\$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
       <LinkTimeCodeGeneration>Default</LinkTimeCodeGeneration>
+      <DelayLoadDLLs>crypt32.dll;ws2_32.dll;bcrypt.dll;advapi32.dll;user32.dll</DelayLoadDLLs>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -146,6 +148,7 @@
       <AdditionalLibraryDirectories>..\libyara\$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
       <GenerateDebugInformation>No</GenerateDebugInformation>
+      <DelayLoadDLLs>crypt32.dll;ws2_32.dll;bcrypt.dll;advapi32.dll;user32.dll</DelayLoadDLLs>
     </Link>
     <ProjectReference>
       <UseLibraryDependencyInputs>false</UseLibraryDependencyInputs>
@@ -171,10 +174,12 @@
       <AdditionalLibraryDirectories>..\libyara\$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
       <GenerateDebugInformation>No</GenerateDebugInformation>
+      <DelayLoadDLLs>crypt32.dll;ws2_32.dll;bcrypt.dll;advapi32.dll;user32.dll</DelayLoadDLLs>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\..\..\cli\args.c" />
+    <ClCompile Include="..\..\..\cli\common.c" />
     <ClCompile Include="..\..\..\cli\threading.c" />
     <ClCompile Include="..\..\..\cli\yara.c" />
   </ItemGroup>
