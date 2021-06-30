@@ -387,6 +387,10 @@ Reference
 
         Marks the file as a Windows Driver Model (WDM) device driver.
 
+    .. c:type:: GUARD_CF
+
+        Image supports Control Flow Guard.
+
     .. c:type:: TERMINAL_SERVER_AWARE
 
         Marks the file as terminal server compatible

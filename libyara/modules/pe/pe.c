@@ -2692,6 +2692,7 @@ begin_declarations
   declare_integer("NO_BIND");
   declare_integer("APPCONTAINER");
   declare_integer("WDM_DRIVER");
+  declare_integer("GUARD_CF");
   declare_integer("TERMINAL_SERVER_AWARE");
 
   declare_integer("RELOCS_STRIPPED");
@@ -3078,6 +3079,7 @@ int module_load(
       IMAGE_DLLCHARACTERISTICS_APPCONTAINER, module_object,
       "APPCONTAINER");
   set_integer(IMAGE_DLLCHARACTERISTICS_WDM_DRIVER, module_object, "WDM_DRIVER");
+  set_integer(IMAGE_DLLCHARACTERISTICS_GUARD_CF, module_object, "GUARD_CF");
   set_integer(
       IMAGE_DLLCHARACTERISTICS_TERMINAL_SERVER_AWARE,
       module_object,
