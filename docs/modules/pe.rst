@@ -69,6 +69,16 @@ Reference
     .. c:type:: MACHINE_SH5
     .. c:type:: MACHINE_THUMB
     .. c:type:: MACHINE_WCEMIPSV2
+    .. c:type:: MACHINE_TARGET_HOST
+    .. c:type:: MACHINE_R3000
+    .. c:type:: MACHINE_R10000
+    .. c:type:: MACHINE_ALPHA
+    .. c:type:: MACHINE_SH3E
+    .. c:type:: MACHINE_ALPHA64
+    .. c:type:: MACHINE_AXP64
+    .. c:type:: MACHINE_TRICORE
+    .. c:type:: MACHINE_CEF
+    .. c:type:: MACHINE_CEE
 
     *Example: pe.machine == pe.MACHINE_AMD64*
 
@@ -492,7 +502,16 @@ Reference
             .. c:type:: IMAGE_DEBUG_TYPE_MISC
             .. c:type:: IMAGE_DEBUG_TYPE_EXCEPTION
             .. c:type:: IMAGE_DEBUG_TYPE_FIXUP
+            .. c:type:: IMAGE_DEBUG_TYPE_OMAP_TO_SRC
+            .. c:type:: IMAGE_DEBUG_TYPE_OMAP_FROM_SRC
             .. c:type:: IMAGE_DEBUG_TYPE_BORLAND
+            .. c:type:: IMAGE_DEBUG_TYPE_RESERVED10
+            .. c:type:: IMAGE_DEBUG_TYPE_CLSID
+            .. c:type:: IMAGE_DEBUG_TYPE_VC_FEATURE
+            .. c:type:: IMAGE_DEBUG_TYPE_POGO
+            .. c:type:: IMAGE_DEBUG_TYPE_ILTCG
+            .. c:type:: IMAGE_DEBUG_TYPE_MPX
+            .. c:type:: IMAGE_DEBUG_TYPE_REPRO
 
     .. c:type:: IMAGE_DIRECTORY_ENTRY_ARCHITECTURE
     .. c:type:: IMAGE_DIRECTORY_ENTRY_COPYRIGHT
@@ -600,6 +619,7 @@ Reference
     .. c:type:: SECTION_LNK_COMDAT
     .. c:type:: SECTION_NO_DEFER_SPEC_EXC
     .. c:type:: SECTION_GPREL
+    .. c:type:: SECTION_FARDATA
     .. c:type:: SECTION_MEM_PURGEABLE
     .. c:type:: SECTION_MEM_16BIT
     .. c:type:: SECTION_LNK_NRELOC_OVFL
@@ -619,6 +639,7 @@ Reference
     .. c:type:: SECTION_ALIGN_2048BYTES
     .. c:type:: SECTION_ALIGN_4096BYTES
     .. c:type:: SECTION_ALIGN_8192BYTES
+    .. c:type:: SECTION_ALIGN_MASK
     .. c:type:: SECTION_MEM_DISCARDABLE
     .. c:type:: SECTION_MEM_NOT_CACHED
     .. c:type:: SECTION_MEM_NOT_PAGED
@@ -626,6 +647,7 @@ Reference
     .. c:type:: SECTION_MEM_EXECUTE
     .. c:type:: SECTION_MEM_READ
     .. c:type:: SECTION_MEM_WRITE
+    .. c:type:: SECTION_SCALE_INDEX
 
     *Example: pe.sections[1].characteristics & pe.SECTION_CNT_CODE*
 

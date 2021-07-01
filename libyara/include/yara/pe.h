@@ -60,6 +60,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define IMAGE_DIRECTORY_ENTRY_COPYRIGHT       7   // (X86 usage)
 #endif
 
+#ifndef IMAGE_FILE_MACHINE_TARGET_HOST
+#define IMAGE_FILE_MACHINE_TARGET_HOST        0x0001
+#endif
 
 #else
 
@@ -189,6 +192,16 @@ typedef struct _IMAGE_FILE_HEADER
 #define IMAGE_FILE_MACHINE_SH5           0x01a8
 #define IMAGE_FILE_MACHINE_THUMB         0x01c2
 #define IMAGE_FILE_MACHINE_WCEMIPSV2     0x0169
+#define IMAGE_FILE_MACHINE_TARGET_HOST   0x0001  // Useful for indicating we want to interact with the host and not a WoW guest.
+#define IMAGE_FILE_MACHINE_R3000         0x0162  // MIPS little-endian, 0x160 big-endian
+#define IMAGE_FILE_MACHINE_R10000        0x0168  // MIPS little-endian
+#define IMAGE_FILE_MACHINE_ALPHA         0x0184  // Alpha_AXP
+#define IMAGE_FILE_MACHINE_SH3E          0x01a4  // SH3E little-endian
+#define IMAGE_FILE_MACHINE_ALPHA64       0x0284  // ALPHA64
+#define IMAGE_FILE_MACHINE_AXP64         IMAGE_FILE_MACHINE_ALPHA64
+#define IMAGE_FILE_MACHINE_TRICORE       0x0520  // Infineon
+#define IMAGE_FILE_MACHINE_CEF           0x0CEF
+#define IMAGE_FILE_MACHINE_CEE           0xC0EE
 
 // Section characteristics
 #define IMAGE_SCN_TYPE_NO_PAD                0x00000008
@@ -201,6 +214,7 @@ typedef struct _IMAGE_FILE_HEADER
 #define IMAGE_SCN_LNK_COMDAT                 0x00001000
 #define IMAGE_SCN_NO_DEFER_SPEC_EXC          0x00004000
 #define IMAGE_SCN_GPREL                      0x00008000
+#define IMAGE_SCN_MEM_FARDATA                0x00008000
 #define IMAGE_SCN_MEM_PURGEABLE              0x00020000
 #define IMAGE_SCN_MEM_16BIT                  0x00020000
 #define IMAGE_SCN_MEM_LOCKED                 0x00040000
@@ -219,6 +233,7 @@ typedef struct _IMAGE_FILE_HEADER
 #define IMAGE_SCN_ALIGN_2048BYTES            0x00C00000
 #define IMAGE_SCN_ALIGN_4096BYTES            0x00D00000
 #define IMAGE_SCN_ALIGN_8192BYTES            0x00E00000
+#define IMAGE_SCN_ALIGN_MASK                 0x00F00000
 #define IMAGE_SCN_LNK_NRELOC_OVFL            0x01000000
 #define IMAGE_SCN_MEM_DISCARDABLE            0x02000000
 #define IMAGE_SCN_MEM_NOT_CACHED             0x04000000
@@ -227,6 +242,7 @@ typedef struct _IMAGE_FILE_HEADER
 #define IMAGE_SCN_MEM_EXECUTE                0x20000000
 #define IMAGE_SCN_MEM_READ                   0x40000000
 #define IMAGE_SCN_MEM_WRITE                  0x80000000
+#define IMAGE_SCN_SCALE_INDEX                0x00000001
 
 //
 // Directory format.
@@ -506,14 +522,20 @@ typedef struct _IMAGE_RESOURCE_DIRECTORY
   WORD NumberOfIdEntries;
 } IMAGE_RESOURCE_DIRECTORY, *PIMAGE_RESOURCE_DIRECTORY;
 
-#define IMAGE_DEBUG_TYPE_UNKNOWN   0
-#define IMAGE_DEBUG_TYPE_COFF      1
-#define IMAGE_DEBUG_TYPE_CODEVIEW  2
-#define IMAGE_DEBUG_TYPE_FPO       3
-#define IMAGE_DEBUG_TYPE_MISC      4
-#define IMAGE_DEBUG_TYPE_EXCEPTION 5
-#define IMAGE_DEBUG_TYPE_FIXUP     6
-#define IMAGE_DEBUG_TYPE_BORLAND   9
+#define IMAGE_DEBUG_TYPE_FPO                             3
+#define IMAGE_DEBUG_TYPE_MISC                            4
+#define IMAGE_DEBUG_TYPE_EXCEPTION                       5
+#define IMAGE_DEBUG_TYPE_FIXUP                           6
+#define IMAGE_DEBUG_TYPE_OMAP_TO_SRC                     7
+#define IMAGE_DEBUG_TYPE_OMAP_FROM_SRC                   8
+#define IMAGE_DEBUG_TYPE_BORLAND                         9
+#define IMAGE_DEBUG_TYPE_RESERVED10                     10
+#define IMAGE_DEBUG_TYPE_CLSID                          11
+#define IMAGE_DEBUG_TYPE_VC_FEATURE                     12
+#define IMAGE_DEBUG_TYPE_POGO                           13
+#define IMAGE_DEBUG_TYPE_ILTCG                          14
+#define IMAGE_DEBUG_TYPE_MPX                            15
+#define IMAGE_DEBUG_TYPE_REPRO                          16
 
 typedef struct _IMAGE_DEBUG_DIRECTORY
 {
@@ -593,7 +615,23 @@ typedef struct _WIN_CERTIFICATE
 
 #define RICH_VERSION_ID(id_version)      (id_version >> 16)
 #define RICH_VERSION_VERSION(id_version) (id_version & 0xFFFF)
-
+#define IMAGE_DEBUG_TYPE_UNKNOWN   0
+#define IMAGE_DEBUG_TYPE_COFF      1
+#define IMAGE_DEBUG_TYPE_CODEVIEW  2
+#define IMAGE_DEBUG_TYPE_FPO       3
+#define IMAGE_DEBUG_TYPE_MISC      4
+#define IMAGE_DEBUG_TYPE_EXCEPTION 5
+#define IMAGE_DEBUG_TYPE_FIXUP                         6
+#define IMAGE_DEBUG_TYPE_OMAP_TO_SRC                     7
+#define IMAGE_DEBUG_TYPE_OMAP_FROM_SRC                   8
+#define IMAGE_DEBUG_TYPE_BORLAND                         9
+#define IMAGE_DEBUG_TYPE_RESERVED10                     10
+#define IMAGE_DEBUG_TYPE_CLSID                          11
+#define IMAGE_DEBUG_TYPE_VC_FEATURE                     12
+#define IMAGE_DEBUG_TYPE_POGO                           13
+#define IMAGE_DEBUG_TYPE_ILTCG                          14
+#define IMAGE_DEBUG_TYPE_MPX                            15
+#define IMAGE_DEBUG_TYPE_REPRO                          16
 typedef struct _RICH_VERSION_INFO
 {
   DWORD id_version;  // tool id and version (use RICH_VERSION_ID and
