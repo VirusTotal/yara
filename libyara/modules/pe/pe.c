@@ -991,8 +991,12 @@ static IMPORTED_DLL* pe_parse_imports(PE* pe)
   int num_imports = 0;           // Number of imported DLLs
   int num_function_imports = 0;  // Total number of functions imported
 
+  int dll_cnt = 0;
+  int fun_cnt = 0;
+
   IMPORTED_DLL* head = NULL;
   IMPORTED_DLL* tail = NULL;
+  IMPORTED_DLL* dll = NULL;
 
   PIMAGE_IMPORT_DESCRIPTOR imports;
   PIMAGE_DATA_DIRECTORY directory;
@@ -1067,6 +1071,21 @@ static IMPORTED_DLL* pe_parse_imports(PE* pe)
 
   set_integer(num_imports, pe->object, "number_of_imports");
   set_integer(num_function_imports, pe->object, "number_of_imported_functions");
+  dll = head;
+  for (; dll != NULL; dll = dll->next, dll_cnt++)
+  {
+    for (IMPORT_FUNCTION* func = dll->functions; func != NULL; func = func->next, fun_cnt++)
+    {
+      set_string(func->name, pe->object, "import_details[%i].functions[%i].name", dll_cnt, fun_cnt);
+      if (func->has_ordinal)
+        set_integer(func->ordinal, pe->object, "import_details[%i].functions[%i].ordinal", dll_cnt, fun_cnt);
+      else
+        set_integer(YR_UNDEFINED, pe->object, "import_details[%i].functions[%i].ordinal", dll_cnt, fun_cnt);
+    }
+    set_string(dll->name, pe->object, "import_details[%i].library_name", dll_cnt);
+    set_integer(fun_cnt, pe->object, "import_details[%i].number_of_functions", dll_cnt);
+  }
+
   return head;
 }
 
@@ -3009,6 +3028,16 @@ begin_declarations
     declare_string("forward_name");
     declare_integer("ordinal");
   end_struct_array("export_details")
+
+  begin_struct_array("import_details");
+    declare_string("library_name");
+    declare_integer("number_of_functions");
+    begin_struct_array("functions");
+      declare_string("name");
+      declare_integer("ordinal");
+    end_struct_array("functions");
+  end_struct_array("import_details");
+
 
   declare_integer("resource_timestamp");
 
