@@ -1776,6 +1776,8 @@ void _parse_pkcs7(PE* pe, PKCS7* pkcs7, int* counter)
   unsigned char thumbprint[YR_SHA1_LEN];
   char thumbprint_ascii[YR_SHA1_LEN * 2 + 1];
 
+  BIO* out = NULL;
+  BUF_MEM* buf;
   PKCS7_SIGNER_INFO* signer_info = NULL;
   PKCS7* nested_pkcs7 = NULL;
   ASN1_INTEGER* serial = NULL;
@@ -1809,13 +1811,34 @@ void _parse_pkcs7(PE* pe, PKCS7* pkcs7, int* counter)
         "signatures[%i].thumbprint",
         *counter);
 
-    X509_NAME_oneline(X509_get_issuer_name(cert), buffer, sizeof(buffer));
+    if ((out = BIO_new(BIO_s_mem())) &&
+        X509_NAME_print_ex(
+            out,
+            X509_get_issuer_name(cert),
+            0,
+            XN_FLAG_ONELINE & ~ASN1_STRFLGS_ESC_MSB))
+    {
+      BIO_write(out, "\0", 1);
+      BIO_get_mem_ptr(out, &buf);
+      set_string(buf->data, pe->object, "signatures[%i].issuer", *counter);
+    }
+    
+    if (out) BIO_free(out);
+    out = NULL;
 
-    set_string(buffer, pe->object, "signatures[%i].issuer", *counter);
+    if ((out = BIO_new(BIO_s_mem())) &&
+        X509_NAME_print_ex(
+            out,
+            X509_get_subject_name(cert),
+            0,
+            XN_FLAG_ONELINE & ~ASN1_STRFLGS_ESC_MSB))
+    {
+      BIO_write(out, "\0", 1);
+      BIO_get_mem_ptr(out, &buf);
+      set_string(buf->data, pe->object, "signatures[%i].subject", *counter);
+    }
 
-    X509_NAME_oneline(X509_get_subject_name(cert), buffer, sizeof(buffer));
-
-    set_string(buffer, pe->object, "signatures[%i].subject", *counter);
+    if (out) BIO_free(out);
 
     set_integer(
         X509_get_version(cert) + 1,  // Versions are zero based, so add one.
