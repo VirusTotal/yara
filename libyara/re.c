@@ -2158,6 +2158,9 @@ int yr_re_fast_exec(
         {
           const uint8_t* next_input = current->input + j * input_incr;
 
+          if (bytes_matched + j >= max_bytes_matched)
+            break;
+
           // Find the point where next_input should be inserted. The list is
           // kept sorted by pointer in increasing order, the insertion point is
           // an item that has a pointer lower or equal than next_input, but
