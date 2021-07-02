@@ -2156,10 +2156,16 @@ int yr_re_fast_exec(
 
         for (int j = repeat_any_args->min + 1; j <= repeat_any_args->max; j++)
         {
-          const uint8_t* next_input = current->input + j * input_incr;
-
+          // bytes_matched is the number of bytes matched so far, and j is the
+          // minimum number of bytes that are still pending to match. If these
+          // two numbers sum more than the maximum number of bytes that can be
+          // matched the loop can be aborted. The position that we were about
+          // to create can't lead to a match without exceeding
+          // max_bytes_matched.
           if (bytes_matched + j >= max_bytes_matched)
             break;
+
+          const uint8_t* next_input = current->input + j * input_incr;
 
           // Find the point where next_input should be inserted. The list is
           // kept sorted by pointer in increasing order, the insertion point is
