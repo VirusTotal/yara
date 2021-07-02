@@ -1299,6 +1299,36 @@ static void test_hex_strings()
         condition: !a == 2 }",
       "122222222" TEXT_1024_BYTES);
 
+  assert_true_rule(
+      "rule test { \
+        strings: $a = { 30 31 32 [0-5] 38 39 } \
+        condition: $a }",
+      "0123456789");
+
+  assert_true_rule(
+      "rule test { \
+        strings: $a = { 31 32 [0-5] 38 39 30 } \
+        condition: $a }",
+      "1234567890");
+
+  assert_true_rule(
+      "rule test { \
+        strings: $a = { 31 32 [0-2] 34 [0-2] 34 } \
+        condition: $a }",
+      "1244");
+
+  assert_true_rule(
+      "rule test { \
+        strings: $a = { 31 32 [0-2] 34 [0-2] 34 } \
+        condition: $a }",
+      "12344");
+
+  assert_true_rule(
+      "rule test { \
+        strings: $a = { 31 32 [0-2] 34 [0-2] 34 [2-3] 34 } \
+        condition: $a }",
+      "123440004");
+
   assert_error(
       "rule test { \
         strings: $a = { 01 [0] 02 } \
