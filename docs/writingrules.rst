@@ -694,7 +694,6 @@ Starting with version 3.3.0 these zero-width assertions are also recognized:
    * - ``\B``
      - Match except at a word boundary
 
-Regular expressions can be
 
 Private strings
 ---------------
