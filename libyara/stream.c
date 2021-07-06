@@ -31,11 +31,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <yara/stream.h>
 
 
-size_t yr_stream_read(
-    void* ptr,
-    size_t size,
-    size_t count,
-    YR_STREAM* stream)
+size_t yr_stream_read(void* ptr, size_t size, size_t count, YR_STREAM* stream)
 {
   if (stream->read == NULL)
     return 0;

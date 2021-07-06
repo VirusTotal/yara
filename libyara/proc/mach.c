@@ -33,20 +33,18 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <mach/mach_vm.h>
 #include <mach/vm_region.h>
 #include <mach/vm_statistics.h>
-
+#include <yara/error.h>
 #include <yara/mem.h>
 #include <yara/proc.h>
-#include <yara/error.h>
 
 
-typedef struct _YR_PROC_INFO {
-  task_t            task;
+typedef struct _YR_PROC_INFO
+{
+  task_t task;
 } YR_PROC_INFO;
 
 
-int _yr_process_attach(
-    int pid,
-    YR_PROC_ITERATOR_CTX* context)
+int _yr_process_attach(int pid, YR_PROC_ITERATOR_CTX* context)
 {
   YR_PROC_INFO* proc_info = (YR_PROC_INFO*) yr_malloc(sizeof(YR_PROC_INFO));
 
@@ -67,8 +65,7 @@ int _yr_process_attach(
 }
 
 
-int _yr_process_detach(
-    YR_PROC_ITERATOR_CTX* context)
+int _yr_process_detach(YR_PROC_ITERATOR_CTX* context)
 {
   YR_PROC_INFO* proc_info = context->proc_info;
 
@@ -79,8 +76,7 @@ int _yr_process_detach(
 }
 
 
-YR_API const uint8_t* yr_process_fetch_memory_block_data(
-    YR_MEMORY_BLOCK* block)
+YR_API const uint8_t* yr_process_fetch_memory_block_data(YR_MEMORY_BLOCK* block)
 {
   YR_PROC_ITERATOR_CTX* context = (YR_PROC_ITERATOR_CTX*) block->context;
   YR_PROC_INFO* proc_info = context->proc_info;
@@ -105,11 +101,11 @@ YR_API const uint8_t* yr_process_fetch_memory_block_data(
   }
 
   if (vm_read_overwrite(
-      proc_info->task,
-      (vm_address_t) block->base,
-      block->size,
-      (vm_address_t) context->buffer,
-      &size) != KERN_SUCCESS)
+          proc_info->task,
+          (vm_address_t) block->base,
+          block->size,
+          (vm_address_t) context->buffer,
+          &size) != KERN_SUCCESS)
   {
     return NULL;
   }
@@ -129,8 +125,12 @@ YR_API YR_MEMORY_BLOCK* yr_process_get_next_memory_block(
   mach_port_t object;
   vm_region_basic_info_data_64_t info;
   vm_size_t size = 0;
-  vm_address_t address = (vm_address_t) \
-      context->current_block.base + context->current_block.size;
+
+  vm_address_t address = (vm_address_t) context->current_block.base +
+                         context->current_block.size;
+
+  iterator->last_error = ERROR_SUCCESS;
+
   do
   {
     info_count = VM_REGION_BASIC_INFO_COUNT_64;

@@ -1,5 +1,5 @@
 [![Join the chat at https://gitter.im/VirusTotal/yara](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/VirusTotal/yara?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
-[![Travis build status](https://travis-ci.org/VirusTotal/yara.svg)](https://travis-ci.org/VirusTotal/yara)
+[![Travis build status](https://travis-ci.com/VirusTotal/yara.svg)](https://travis-ci.com/VirusTotal/yara)
 [![AppVeyor build status](https://ci.appveyor.com/api/projects/status/7glqg19w4oolm7pr?svg=true)](https://ci.appveyor.com/project/plusvic/yara)
 [![Coverity status](https://scan.coverity.com/projects/9057/badge.svg?flat=1)](https://scan.coverity.com/projects/plusvic-yara)
 
@@ -10,7 +10,7 @@
 YARA is a tool aimed at (but not limited to) helping malware researchers to
 identify and classify malware samples. With YARA you can create descriptions of
 malware families (or whatever you want to describe) based on textual or binary
-patterns. Each description, a.k.a rule, consists of a set of strings and a
+patterns. Each description, a.k.a. rule, consists of a set of strings and a
 boolean expression which determine its logic. Let's see an example:
 
 ```yara
@@ -43,6 +43,11 @@ yara-python extension.
 
 ## Additional resources
 
+Do you use GitHub for storing your YARA rules? [YARA-CI](https://yara-ci.cloud.virustotal.com)
+may be a useful addition to your toolbelt. This is GitHub application that provides
+continuous testing for your rules, helping you to identify common mistakes and
+false positives.
+
 If you plan to use YARA to scan compressed files (.zip, .tar, etc) you should
 take a look at [yextend](https://github.com/BayshoreNetworks/yextend), a very
 helpful extension to YARA developed and open-sourced by Bayshore Networks.
@@ -61,6 +66,8 @@ awesome list of [YARA-related stuff](https://github.com/InQuest/awesome-yara).
 * [BinaryAlert](https://github.com/airbnb/binaryalert)
 * [Blue Coat](http://www.bluecoat.com/products/malware-analysis-appliance)
 * [Blueliv](http://www.blueliv.com)
+* [Cisco Talos Intelligence Group](https://talosintelligence.com/)
+* [Claroty](https://claroty.com/continuous-threat-detection)
 * [Cofense](https://cofense.com)
 * [Conix](http://www.conix.fr)
 * [CounterCraft](https://www.countercraft.eu)
@@ -75,6 +82,7 @@ awesome list of [YARA-related stuff](https://github.com/InQuest/awesome-yara).
 * [ESTsecurity](https://www.estsecurity.com)
 * [Fidelis XPS](http://www.fidelissecurity.com/network-security-appliance/Fidelis-XPS)
 * [FireEye, Inc.](http://www.fireeye.com)
+* [Forcepoint](https://www.forcepoint.com)
 * [Fox-IT](https://www.fox-it.com)
 * [FSF](https://github.com/EmersonElectricCo/fsf)
 * [Guidance Software](http://www.guidancesoftware.com/endpointsecurity)
@@ -85,6 +93,7 @@ awesome list of [YARA-related stuff](https://github.com/InQuest/awesome-yara).
 * [Joe Security](https://www.joesecurity.org)
 * [jsunpack-n](http://jsunpack.jeek.org/)
 * [Kaspersky Lab](http://www.kaspersky.com)
+* [KnowBe4](https://www.knowbe4.com)
 * [Koodous](https://koodous.com/)
 * [Laika BOSS](https://github.com/lmco/laikaboss)
 * [Lastline, Inc.](http://www.lastline.com)
@@ -116,11 +125,11 @@ awesome list of [YARA-related stuff](https://github.com/InQuest/awesome-yara).
 * [ThreatConnect](https://www.threatconnect.com/)
 * [ThreatStream, Inc.](http://threatstream.com)
 * [Thug](https://github.com/buffer/thug)
+* [TouchWeb](https://www.touchweb.fr)
 * [Trend Micro](http://www.trendmicro.com)
 * [VirusTotal Intelligence](https://www.virustotal.com/intelligence/)
 * [VMRay](https://www.vmray.com/)
 * [We Watch Your Website](http://www.wewatchyourwebsite.com/)
-* [Websense](http://www.websense.com)
 * [x64dbg](http://x64dbg.com)
 * [YALIH](https://github.com/Masood-M/YALIH)
 

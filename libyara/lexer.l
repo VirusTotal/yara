@@ -200,6 +200,11 @@ octdigit      [0-7]
 "filesize"              { return _FILESIZE_;    }
 "matches"               { return _MATCHES_;     }
 "contains"              { return _CONTAINS_;    }
+"startswith"            { return _STARTSWITH_;  }
+"endswith"              { return _ENDSWITH_;    }
+"icontains"             { return _ICONTAINS_;   }
+"istartswith"           { return _ISTARTSWITH_; }
+"iendswith"             { return _IENDSWITH_;   }
 "import"                { return _IMPORT_;      }
 
 
@@ -574,6 +579,7 @@ u?int(8|16|32)(be)? {
 
   *yyextra->lex_buf_ptr = '\0';
   memcpy(s->c_string, yyextra->lex_buf, yyextra->lex_buf_len + 1);
+
   yylval->sized_string = s;
 
   BEGIN(INITIAL);
@@ -586,6 +592,14 @@ u?int(8|16|32)(be)? {
 
   lex_check_space_ok("\t", yyextra->lex_buf_len, YR_LEX_BUF_SIZE);
   *yyextra->lex_buf_ptr++ = '\t';
+  yyextra->lex_buf_len++;
+}
+
+
+<str>\\r   {
+
+  lex_check_space_ok("\r", yyextra->lex_buf_len, YR_LEX_BUF_SIZE);
+  *yyextra->lex_buf_ptr++ = '\r';
   yyextra->lex_buf_len++;
 }
 
@@ -616,12 +630,12 @@ u?int(8|16|32)(be)? {
 
 <str>\\x{hexdigit}{2} {
 
-   int result;
+  int result;
 
-   sscanf( yytext + 2, "%x", &result );
-   lex_check_space_ok("X", yyextra->lex_buf_len, YR_LEX_BUF_SIZE);
-   *yyextra->lex_buf_ptr++ = result;
-   yyextra->lex_buf_len++;
+  sscanf(yytext + 2, "%x", &result);
+  lex_check_space_ok("X", yyextra->lex_buf_len, YR_LEX_BUF_SIZE);
+  *yyextra->lex_buf_ptr++ = result;
+  yyextra->lex_buf_len++;
 }
 
 
@@ -652,6 +666,7 @@ u?int(8|16|32)(be)? {
 
     *yyextra->lex_buf_ptr = '\0';
     strlcpy(s->c_string, yyextra->lex_buf, s->length + 1);
+
     yylval->sized_string = s;
   }
   else

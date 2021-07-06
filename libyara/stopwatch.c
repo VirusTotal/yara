@@ -31,37 +31,34 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #if defined(_WIN32)
 
-void yr_stopwatch_start(
-    YR_STOPWATCH* sw)
+void yr_stopwatch_start(YR_STOPWATCH* sw)
 {
   QueryPerformanceFrequency(&sw->frequency);
   QueryPerformanceCounter(&sw->start);
 }
 
 
-uint64_t yr_stopwatch_elapsed_ns(
-    YR_STOPWATCH* sw)
+uint64_t yr_stopwatch_elapsed_ns(YR_STOPWATCH* sw)
 {
   LARGE_INTEGER li;
 
   QueryPerformanceCounter(&li);
 
-  return (li.QuadPart - sw->start.QuadPart) * 1000000000L / sw->frequency.QuadPart;
+  return (li.QuadPart - sw->start.QuadPart) * 1000000000ULL /
+         sw->frequency.QuadPart;
 }
 
 
 #elif defined(__APPLE__) && defined(__MACH__)
 
-void yr_stopwatch_start(
-    YR_STOPWATCH* sw)
+void yr_stopwatch_start(YR_STOPWATCH* sw)
 {
   mach_timebase_info(&sw->timebase);
   sw->start = mach_absolute_time();
 }
 
 
-uint64_t yr_stopwatch_elapsed_ns(
-    YR_STOPWATCH* sw)
+uint64_t yr_stopwatch_elapsed_ns(YR_STOPWATCH* sw)
 {
   uint64_t now = mach_absolute_time();
   return ((now - sw->start) * sw->timebase.numer) / sw->timebase.denom;
@@ -70,33 +67,33 @@ uint64_t yr_stopwatch_elapsed_ns(
 
 #elif defined(HAVE_CLOCK_GETTIME)
 
-#define timespecsub(tsp, usp, vsp)                      \
-do {                                                    \
-  (vsp)->tv_sec = (tsp)->tv_sec - (usp)->tv_sec;        \
-  (vsp)->tv_nsec = (tsp)->tv_nsec - (usp)->tv_nsec;     \
-  if ((vsp)->tv_nsec < 0) {                             \
-    (vsp)->tv_sec--;                                    \
-    (vsp)->tv_nsec += 1000000000L;                      \
-  }                                                     \
-} while (0)
+#define timespecsub(tsp, usp, vsp)                    \
+  do                                                  \
+  {                                                   \
+    (vsp)->tv_sec = (tsp)->tv_sec - (usp)->tv_sec;    \
+    (vsp)->tv_nsec = (tsp)->tv_nsec - (usp)->tv_nsec; \
+    if ((vsp)->tv_nsec < 0)                           \
+    {                                                 \
+      (vsp)->tv_sec--;                                \
+      (vsp)->tv_nsec += 1000000000L;                  \
+    }                                                 \
+  } while (0)
 
 
-void yr_stopwatch_start(
-    YR_STOPWATCH* stopwatch)
+void yr_stopwatch_start(YR_STOPWATCH* stopwatch)
 {
   clock_gettime(CLOCK_MONOTONIC, &stopwatch->ts_start);
 }
 
 
-uint64_t yr_stopwatch_elapsed_ns(
-    YR_STOPWATCH* stopwatch)
+uint64_t yr_stopwatch_elapsed_ns(YR_STOPWATCH* stopwatch)
 {
   struct timespec ts_stop;
   struct timespec ts_elapsed;
 
   clock_gettime(CLOCK_MONOTONIC, &ts_stop);
   timespecsub(&ts_stop, &stopwatch->ts_start, &ts_elapsed);
-  return ts_elapsed.tv_sec * 1000000000L + ts_elapsed.tv_nsec;
+  return ts_elapsed.tv_sec * 1000000000ULL + ts_elapsed.tv_nsec;
 }
 
 
@@ -104,33 +101,33 @@ uint64_t yr_stopwatch_elapsed_ns(
 
 #include <sys/time.h>
 
-#define timevalsub(tvp, uvp, vvp)                       \
-do {                                                    \
-  (vvp)->tv_sec = (tvp)->tv_sec - (uvp)->tv_sec;        \
-  (vvp)->tv_usec = (tvp)->tv_usec - (uvp)->tv_usec;     \
-  if ((vvp)->tv_usec < 0) {                             \
-    (vvp)->tv_sec--;                                    \
-    (vvp)->tv_usec += 1000000L;                         \
-  }                                                     \
-} while (0)
+#define timevalsub(tvp, uvp, vvp)                     \
+  do                                                  \
+  {                                                   \
+    (vvp)->tv_sec = (tvp)->tv_sec - (uvp)->tv_sec;    \
+    (vvp)->tv_usec = (tvp)->tv_usec - (uvp)->tv_usec; \
+    if ((vvp)->tv_usec < 0)                           \
+    {                                                 \
+      (vvp)->tv_sec--;                                \
+      (vvp)->tv_usec += 1000000L;                     \
+    }                                                 \
+  } while (0)
 
 
-void yr_stopwatch_start(
-    YR_STOPWATCH* stopwatch)
+void yr_stopwatch_start(YR_STOPWATCH* stopwatch)
 {
   gettimeofday(&stopwatch->tv_start, NULL);
 }
 
 
-uint64_t yr_stopwatch_elapsed_ns(
-    YR_STOPWATCH* stopwatch)
+uint64_t yr_stopwatch_elapsed_ns(YR_STOPWATCH* stopwatch)
 {
   struct timeval tv_stop;
   struct timeval tv_elapsed;
 
   gettimeofday(&tv_stop, NULL);
   timevalsub(&tv_stop, &stopwatch->tv_start, &tv_elapsed);
-  return tv_elapsed.tv_sec * 1000000000L + tv_elapsed.tv_usec * 1000L;
+  return tv_elapsed.tv_sec * 1000000000ULL + tv_elapsed.tv_usec * 1000ULL;
 }
 
 #endif

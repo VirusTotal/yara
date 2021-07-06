@@ -27,13 +27,12 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-
-#include <yara/bitmask.h>
 #include <yara.h>
+#include <yara/bitmask.h>
+
 #include "util.h"
 
 #define BITMAP_SIZE 512
-
 
 void assert_clear_all(YR_BITMASK* bitmask)
 {
@@ -65,12 +64,12 @@ void test_set_clear()
   if (yr_bitmask_is_set(bitmask, 0))
     exit(EXIT_FAILURE);
 
-  yr_bitmask_set(bitmask, BITMAP_SIZE-1);
+  yr_bitmask_set(bitmask, BITMAP_SIZE - 1);
 
   if (yr_bitmask_is_not_set(bitmask, BITMAP_SIZE - 1))
     exit(EXIT_FAILURE);
 
-  yr_bitmask_clear(bitmask, BITMAP_SIZE-1);
+  yr_bitmask_clear(bitmask, BITMAP_SIZE - 1);
 
   if (yr_bitmask_is_set(bitmask, BITMAP_SIZE - 1))
     exit(EXIT_FAILURE);
@@ -109,7 +108,6 @@ void test_set_clear()
 
   assert_clear_all(bitmask);
 }
-
 
 void test_find_non_colliding_offsets_1()
 {
@@ -157,7 +155,6 @@ void test_find_non_colliding_offsets_1()
   if (yr_bitmask_find_non_colliding_offset(a, b, 18, 13, &o) != 4)
     exit(EXIT_FAILURE);
 
-
   // Set the A to:
   // 1 0 1 0   0 0 0 1   0 0 0 0   0 0 1 1   1 0
   yr_bitmask_set(a, 16);
@@ -165,7 +162,6 @@ void test_find_non_colliding_offsets_1()
   // Bitmask A can accommodate B at offset 10.
   if (yr_bitmask_find_non_colliding_offset(a, b, 18, 13, &o) != 10)
     exit(EXIT_FAILURE);
-
 
   yr_bitmask_clear_all(a);
   yr_bitmask_clear_all(b);
@@ -191,7 +187,6 @@ void test_find_non_colliding_offsets_1()
   if (yr_bitmask_find_non_colliding_offset(a, b, 4, 4, &o) != 1)
     exit(EXIT_FAILURE);
 }
-
 
 void test_find_non_colliding_offsets_2()
 {
@@ -228,12 +223,19 @@ void test_find_non_colliding_offsets_2()
     exit(EXIT_FAILURE);
 }
 
-
 int main(int argc, char** argv)
 {
+  int result = 0;
+
+  YR_DEBUG_INITIALIZE();
+  YR_DEBUG_FPRINTF(1, stderr, "+ %s() { // in %s\n", __FUNCTION__, argv[0]);
+
   test_set_clear();
   test_find_non_colliding_offsets_1();
   test_find_non_colliding_offsets_2();
 
-  return 0;
+  YR_DEBUG_FPRINTF(
+      1, stderr, "} = %d // %s() in %s\n", result, __FUNCTION__, argv[0]);
+
+  return result;
 }

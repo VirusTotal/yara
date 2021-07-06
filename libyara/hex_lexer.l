@@ -121,6 +121,12 @@ hexdigit      [a-fA-F0-9]
   return _MASKED_BYTE_;
 }
 
+{hexdigit} {
+
+  yyerror(yyscanner, lex_env, "uneven number of digits in hex string");
+  yyterminate();
+}
+
 \[ {
 
   BEGIN(range);

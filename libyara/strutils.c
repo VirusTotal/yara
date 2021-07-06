@@ -29,11 +29,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <stdio.h>
 #include <string.h>
-
 #include <yara/strutils.h>
 
-uint64_t xtoi(
-    const char* hexstr)
+uint64_t xtoi(const char* hexstr)
 {
   size_t i;
   size_t l = strlen(hexstr);
@@ -44,36 +42,36 @@ uint64_t xtoi(
   {
     switch (hexstr[i])
     {
-      case '0':
-      case '1':
-      case '2':
-      case '3':
-      case '4':
-      case '5':
-      case '6':
-      case '7':
-      case '8':
-      case '9':
-        r |= ((uint64_t)(hexstr[i] - '0')) << ((l - i - 1) * 4);
-        break;
-      case 'a':
-      case 'b':
-      case 'c':
-      case 'd':
-      case 'e':
-      case 'f':
-        r |= ((uint64_t)(hexstr[i] - 'a' + 10)) << ((l - i - 1) * 4);
-        break;
-      case 'A':
-      case 'B':
-      case 'C':
-      case 'D':
-      case 'E':
-      case 'F':
-        r |= ((uint64_t)(hexstr[i] - 'A' + 10)) << ((l - i - 1) * 4);
-        break;
-      default:
-        i = l;  // force loop exit
+    case '0':
+    case '1':
+    case '2':
+    case '3':
+    case '4':
+    case '5':
+    case '6':
+    case '7':
+    case '8':
+    case '9':
+      r |= ((uint64_t)(hexstr[i] - '0')) << ((l - i - 1) * 4);
+      break;
+    case 'a':
+    case 'b':
+    case 'c':
+    case 'd':
+    case 'e':
+    case 'f':
+      r |= ((uint64_t)(hexstr[i] - 'a' + 10)) << ((l - i - 1) * 4);
+      break;
+    case 'A':
+    case 'B':
+    case 'C':
+    case 'D':
+    case 'E':
+    case 'F':
+      r |= ((uint64_t)(hexstr[i] - 'A' + 10)) << ((l - i - 1) * 4);
+      break;
+    default:
+      i = l;  // force loop exit
     }
   }
 
@@ -89,10 +87,7 @@ the following implementations were taken from OpenBSD.
 
 #if !HAVE_STRLCPY && !defined(strlcpy)
 
-size_t strlcpy(
-    char* dst,
-    const char* src,
-    size_t size)
+size_t strlcpy(char* dst, const char* src, size_t size)
 {
   register char* d = dst;
   register const char* s = src;
@@ -115,9 +110,10 @@ size_t strlcpy(
   if (n == 0)
   {
     if (size != 0)
-      *d = '\0';    // NULL-terminate dst
+      *d = '\0';  // NULL-terminate dst
 
-    while (*s++);
+    while (*s++)
+      ;
   }
 
   return (s - src - 1);  // count does not include NULL
@@ -128,10 +124,7 @@ size_t strlcpy(
 
 #if !HAVE_STRLCAT && !defined(strlcat)
 
-size_t strlcat(
-    char* dst,
-    const char* src,
-    size_t size)
+size_t strlcat(char* dst, const char* src, size_t size)
 {
   register char* d = dst;
   register const char* s = src;
@@ -146,7 +139,7 @@ size_t strlcat(
   n = size - dlen;
 
   if (n == 0)
-    return(dlen + strlen(s));
+    return (dlen + strlen(s));
 
   while (*s != '\0')
   {
@@ -166,8 +159,7 @@ size_t strlcat(
 #endif
 
 
-int strnlen_w(
-    const char* w_str)
+int strnlen_w(const char* w_str)
 {
   int len = 0;
 
@@ -181,9 +173,7 @@ int strnlen_w(
 }
 
 
-int strcmp_w(
-    const char* w_str,
-    const char* str)
+int strcmp_w(const char* w_str, const char* str)
 {
   while (*str != 0 && w_str[0] == *str && w_str[1] == 0)
   {
@@ -200,10 +190,7 @@ int strcmp_w(
 }
 
 
-size_t strlcpy_w(
-    char* dst,
-    const char* w_src,
-    size_t n)
+size_t strlcpy_w(char* dst, const char* w_src, size_t n)
 {
   register char* d = dst;
   register const char* s = w_src;
@@ -226,18 +213,20 @@ size_t strlcpy_w(
 
 #if !HAVE_MEMMEM && !defined(memmem)
 void* memmem(
-    const void *haystack,
+    const void* haystack,
     size_t haystack_size,
-    const void *needle,
+    const void* needle,
     size_t needle_size)
 {
-  char *sp = (char *) haystack;
-  char *pp = (char *) needle;
-  char *eos = sp + haystack_size - needle_size;
+  char* sp = (char*) haystack;
+  char* pp = (char*) needle;
+  char* eos;
 
-  if (haystack == NULL || haystack_size == 0 ||
-      needle == NULL || needle_size == 0)
+  if (haystack == NULL || haystack_size == 0 || needle == NULL ||
+      needle_size == 0)
     return NULL;
+
+  eos = sp + haystack_size - needle_size;
 
   while (sp <= eos)
   {

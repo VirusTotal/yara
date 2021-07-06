@@ -31,14 +31,65 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define _UTIL_H
 
 #include <yara.h>
+#include <yara/globals.h>
+
+
+#define TEXT_0063_BYTES     "[ 987654321 987654321 987654321 987654321 987654321 987654321 ]"
+#define TEXT_0256_BYTES_001 "001" TEXT_0063_BYTES TEXT_0063_BYTES TEXT_0063_BYTES TEXT_0063_BYTES "\n"
+#define TEXT_0256_BYTES_002 "002" TEXT_0063_BYTES TEXT_0063_BYTES TEXT_0063_BYTES TEXT_0063_BYTES "\n"
+#define TEXT_0256_BYTES_003 "003" TEXT_0063_BYTES TEXT_0063_BYTES TEXT_0063_BYTES TEXT_0063_BYTES "\n"
+#define TEXT_0256_BYTES_004 "004" TEXT_0063_BYTES TEXT_0063_BYTES TEXT_0063_BYTES TEXT_0063_BYTES "\n"
+#define TEXT_1024_BYTES     TEXT_0256_BYTES_001 TEXT_0256_BYTES_002 TEXT_0256_BYTES_003 TEXT_0256_BYTES_004
+
 
 extern char compile_error[1024];
 extern int warnings;
+
+// For testing, 1024 means split contiguous memory into max 1024 byte blocks.
+// See https://github.com/VirusTotal/yara/issues/1356
+extern uint64_t yr_test_mem_block_size;
+
+// If yr_test_mem_block_size is non-zero, this specifies the bytes of the
+// previous memory block to include in the current memory block.
+extern uint64_t yr_test_mem_block_size_overlap;
+
+// Counts calls to 'get first / next block' function for testing purposes.
+extern uint64_t yr_test_count_get_block;
+
+
+typedef struct YR_TEST_ITERATOR_CTX YR_TEST_ITERATOR_CTX;
+
+struct YR_TEST_ITERATOR_CTX
+{
+  const uint8_t* buffer;
+  size_t buffer_size;
+
+  YR_MEMORY_BLOCK current_block;
+
+  // Indicates the frequency in which the iterator returns ERROR_BLOCK_NOT_READY
+  // errors. For example, if the frequency is 2, the iterator will return an
+  // ERROR_BLOCK_NOT_READY every two blocks succesfully returned. If the value
+  // is 1, it will return an ERROR_BLOCK_NOT_READY after every block that was
+  // returned succesfully. With a value of 0 the iterator won't ever return
+  // ERROR_BLOCK_NOT_READY.
+  int block_not_ready_frequency;
+
+  // Number of blocks that has been returned successfully so far. When this
+  // reaches block_not_ready_frequency an ERROR_BLOCK_NOT_READY is returned.
+  int blocks_returned_successfully;
+};
+
+extern char* top_srcdir;
+
+extern void init_top_srcdir(void);
+
+extern char* prefix_top_srcdir(char* dir);
 
 struct COUNTERS
 {
   int rules_matching;
   int rules_not_matching;
+  int rules_warning;
 };
 
 int compile_rule(
@@ -46,12 +97,32 @@ int compile_rule(
     YR_RULES** rules);
 
 
-int count(
+typedef struct SCAN_CALLBACK_CTX SCAN_CALLBACK_CTX;
+
+struct SCAN_CALLBACK_CTX {
+  int matches;
+  void* module_data;
+  size_t module_data_size;
+};
+
+
+void init_test_iterator(
+    YR_MEMORY_BLOCK_ITERATOR* iterator,
+    YR_TEST_ITERATOR_CTX* ctx,
+    const uint8_t* buffer,
+    size_t buffer_size);
+
+int _scan_callback(
     YR_SCAN_CONTEXT* context,
     int message,
     void* message_data,
     void* user_data);
 
+int count(
+    YR_SCAN_CONTEXT* context,
+    int message,
+    void* message_data,
+    void* user_data);
 
 int do_nothing(
     YR_SCAN_CONTEXT* context,
@@ -59,6 +130,7 @@ int do_nothing(
     void* message_data,
     void* user_data);
 
+extern int matches_blob_uses_default_iterator;
 
 int matches_blob(
     char* rule,
@@ -67,11 +139,9 @@ int matches_blob(
     uint8_t* module_data,
     size_t module_data_size);
 
-
 int matches_string(
     char* rule,
     char* string);
-
 
 int capture_string(
     char* rule,
@@ -142,7 +212,7 @@ void assert_hex_atoms(
   do {                                                                  \
     char* buf;                                                          \
     size_t sz;                                                          \
-    if ((sz = read_file(filename, &buf)) == -1) {                       \
+    if ((sz = read_file(prefix_top_srcdir(filename), &buf)) == -1) {    \
       fprintf(stderr, "%s:%d: cannot read file '%s'\n",                 \
               __FILE__, __LINE__, filename);                            \
       exit(EXIT_FAILURE);                                               \
@@ -185,7 +255,7 @@ void assert_hex_atoms(
   do {                                                                  \
     char* buf;                                                          \
     size_t sz;                                                          \
-    if ((sz = read_file(filename, &buf)) == -1) {                       \
+    if ((sz = read_file(prefix_top_srcdir(filename), &buf)) == -1) {    \
       fprintf(stderr, "%s:%d: cannot read file '%s'\n",                 \
               __FILE__, __LINE__, filename);                            \
       exit(EXIT_FAILURE);                                               \
@@ -203,7 +273,7 @@ void assert_hex_atoms(
   do {                                                                  \
     char* buf;                                                          \
     size_t sz;                                                          \
-    if ((sz = read_file(filename, &buf)) == -1) {                       \
+    if ((sz = read_file(prefix_top_srcdir(filename), &buf)) == -1) {    \
       fprintf(stderr, "%s:%d: cannot read file '%s'\n",                 \
               __FILE__, __LINE__, filename);                            \
       exit(EXIT_FAILURE);                                               \

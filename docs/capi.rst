@@ -225,6 +225,7 @@ Possible values for ``message`` are::
   CALLBACK_MSG_SCAN_FINISHED
   CALLBACK_MSG_IMPORT_MODULE
   CALLBACK_MSG_MODULE_IMPORTED
+  CALLBACK_MSG_TOO_MANY_MATCHES
 
 Your callback function will be called once for each rule with either
 a ``CALLBACK_MSG_RULE_MATCHING`` or ``CALLBACK_MSG_RULE_NOT_MATCHING`` message,
@@ -252,6 +253,12 @@ Once a module is imported the callback is called again with the
 CALLBACK_MSG_MODULE_IMPORTED. When this happens ``message_data`` points to a
 :c:type:`YR_OBJECT_STRUCTURE` structure. This structure contains all the
 information provided by the module about the currently scanned file.
+
+If during the scan a string hits the maximum number of matches, your callback
+will be called once with the ``CALLBACK_MSG_TOO_MANY_MATCHES``. When this happens,
+``message_data`` is a ``YR_STRING*`` which points to the string which caused the
+warning. If your callback returns ``CALLBACK_CONTINUE``, the string will be disabled
+and scanning will continue, otherwise scanning will be halted.
 
 Lastly, the callback function is also called with the
 ``CALLBACK_MSG_SCAN_FINISHED`` message when the scan is finished. In this case
@@ -390,7 +397,6 @@ Data structures
 
     One of the following metadata types:
 
-      ``META_TYPE_NULL``
       ``META_TYPE_INTEGER``
       ``META_TYPE_STRING``
       ``META_TYPE_BOOLEAN``
@@ -885,6 +891,47 @@ Functions
 
   Define a string external variable.
 
+.. c:function:: int yr_scanner_scan_mem_blocks(YR_SCANNER* scanner, YR_MEMORY_BLOCK_ITERATOR* iterator)
+
+  .. versionadded:: 3.8.0
+
+  Scan a series of memory blocks that are provided by a :c:type:`YR_MEMORY_BLOCK_ITERATOR`.
+  The iterator has a pair of `first` and `next` functions that must return
+  the first and next blocks respectively. When these functions return `NULL` it
+  indicates that there are not more blocks to scan.
+
+  In YARA 4.1 and later the `first` and `next` functions can return `NULL` and
+  set the `last_error` field in :c:type:`YR_MEMORY_BLOCK_ITERATOR` to
+  :c:macro:`ERROR_BLOCK_NOT_READY`. This indicates that the iterator is not able
+  to return the next block yet, but the operation may be retried. In such cases
+  `yr_scanner_scan_mem_blocks` also returns :c:macro:`ERROR_BLOCK_NOT_READY` but
+  the scanner maintains its state and this function can be called again for
+  continuing the scanning where it was left. This can be done multiple times
+  until the block is ready and the iterator is able to return it.
+
+  Notice however that once the iterator completes a full iteration, any subsequent
+  iteration should proceed without returning :c:macro:`ERROR_BLOCK_NOT_READY`.
+  During the first iteration the iterator should store in memory any information
+  that it needs about the blocks, so that it can be iterated again without
+  relying on costly operations that may result in a :c:macro:`ERROR_BLOCK_NOT_READY`
+  error.
+
+  Returns one of the following error codes:
+
+    :c:macro:`ERROR_SUCCESS`
+
+    :c:macro:`ERROR_INSUFFICIENT_MEMORY`
+
+    :c:macro:`ERROR_TOO_MANY_SCAN_THREADS`
+
+    :c:macro:`ERROR_SCAN_TIMEOUT`
+
+    :c:macro:`ERROR_CALLBACK_ERROR`
+
+    :c:macro:`ERROR_TOO_MANY_MATCHES`
+
+    :c:macro:`ERROR_BLOCK_NOT_READY`
+
 .. c:function:: int yr_scanner_scan_mem(YR_SCANNER* scanner, const uint8_t* buffer, size_t buffer_size)
 
   .. versionadded:: 3.8.0
@@ -943,6 +990,19 @@ Functions
 
     :c:macro:`ERROR_TOO_MANY_MATCHES`
 
+.. c:function:: YR_RULE* yr_scanner_last_error_rule(YR_SCANNER* scanner)
+
+  .. versionadded:: 3.8.0
+
+  Return a pointer to the ``YR_RULE`` which triggered a scanning error. In the
+  case where the rule is unable to be determined, NULL is returned.
+
+.. c:function:: YR_RULE* yr_scanner_last_error_string(YR_SCANNER* scanner)
+
+  .. versionadded:: 3.8.0
+
+  Return a pointer to the ``YR_STRING`` which triggered a scanning error.
+
 Error codes
 -----------
 
@@ -994,3 +1054,7 @@ Error codes
   your rules contains very short or very common strings like ``01 02`` or
   ``FF FF FF FF``. The limit is defined by ``YR_MAX_STRING_MATCHES`` in
   *./include/yara/limits.h*
+
+.. c:macro:: ERROR_BLOCK_NOT_READY
+
+  Next memory block to scan is not ready; custom iterators may return this.

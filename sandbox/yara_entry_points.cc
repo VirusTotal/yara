@@ -47,10 +47,12 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "sandbox/collect_matches.h"
 #include "sandbox/yara_matches.pb.h"
 
-namespace yara {
-namespace {
-
-struct ScanTask {
+namespace yara
+{
+namespace
+{
+struct ScanTask
+{
   // Key into the g_results map, used by YaraGetScanResult()
   uint64_t result_id;
 
@@ -64,7 +66,8 @@ struct ScanTask {
   absl::Duration timeout;
 };
 
-struct ScanResult {
+struct ScanResult
+{
   int code;
   YaraMatches matches;
 };
@@ -104,8 +107,10 @@ static auto* g_results GUARDED_BY(g_results_mutex) =
 ABSL_CONST_INIT static absl::Mutex g_rules_mutex(absl::kConstInit);
 static YR_RULES* g_rules GUARDED_BY(g_rules_mutex) = nullptr;
 
-void ScanWorker() {
-  while (true) {
+void ScanWorker()
+{
+  while (true)
+  {
     // Wait for and retrieve a new ScanTask from the queue.
     g_queue_mutex.LockWhen(absl::Condition(
         +[](std::queue<ScanTask>* queue) { return !queue->empty(); }, g_queue));
@@ -117,9 +122,11 @@ void ScanWorker() {
     {
       absl::ReaderMutexLock lock(&g_rules_mutex);
       result.code = yr_rules_scan_fd(
-          g_rules, task.data_fd,
+          g_rules,
+          task.data_fd,
           // Disable SIGSEGV handler, allowing YARA to crash/coredump.
-          SCAN_FLAGS_NO_TRYCATCH, CollectMatches,
+          SCAN_FLAGS_NO_TRYCATCH,
+          CollectMatches,
           /*user_data=*/reinterpret_cast<void*>(&result.matches),
           absl::ToInt64Seconds(task.timeout));
     }
@@ -132,9 +139,10 @@ void ScanWorker() {
     // writing 8 bytes, as long as the event_fd stays open in this function,
     // hence the CHECK.
     uint64_t unblock_value = 1;
-    ABSL_RAW_CHECK(write(task.event_fd, &unblock_value,
-                         sizeof(unblock_value)) == sizeof(unblock_value),
-                   strerror(errno));
+    ABSL_RAW_CHECK(
+        write(task.event_fd, &unblock_value, sizeof(unblock_value)) ==
+            sizeof(unblock_value),
+        strerror(errno));
 
     close(task.event_fd);
     close(task.data_fd);
@@ -143,13 +151,17 @@ void ScanWorker() {
 
 }  // namespace
 
-extern "C" void YaraInitWorkers(int num_workers) {
-  const int num_threads =
-      std::min(static_cast<unsigned int>(std::min(num_workers, YR_MAX_THREADS)),
-               std::thread::hardware_concurrency());
+extern "C" void YaraInitWorkers(int num_workers)
+{
+  const int num_threads = std::min(
+      static_cast<unsigned int>(std::min(num_workers, YR_MAX_THREADS)),
+      std::thread::hardware_concurrency());
+
   static auto* workers = new std::vector<std::thread>();
   workers->reserve(num_threads);
-  for (int i = 0; i < num_threads; ++i) {
+
+  for (int i = 0; i < num_threads; ++i)
+  {
     workers->emplace_back(ScanWorker);
   }
 }
@@ -157,21 +169,27 @@ extern "C" void YaraInitWorkers(int num_workers) {
 // Initializes the global YARA rules set from a string. Returns the number of
 // rules loaded. Extended error information can be found in status if it is not
 // nullptr.
-extern "C" int YaraLoadRules(const char* rule_string, YaraStatus* error_status) {
+extern "C" int YaraLoadRules(const char* rule_string, YaraStatus* error_status)
+{
   _YR_COMPILER* compiler;
   int error = yr_compiler_create(&compiler);
-  if (error != ERROR_SUCCESS) {
-    if (error_status) {
+
+  if (error != ERROR_SUCCESS)
+  {
+    if (error_status)
+    {
       error_status->set_code(error);
     }
     return 0;
   }
+
   std::unique_ptr<_YR_COMPILER, void (*)(_YR_COMPILER*)> compiler_cleanup(
       compiler, yr_compiler_destroy);
 
-  if (yr_compiler_add_string(compiler, rule_string, /*namespace_=*/nullptr) !=
-      0) {
-    if (error_status) {
+  if (yr_compiler_add_string(compiler, rule_string, nullptr) != 0)
+  {
+    if (error_status)
+    {
       error_status->set_code(compiler->last_error);
 
       char message[512] = {'\0'};
@@ -183,8 +201,11 @@ extern "C" int YaraLoadRules(const char* rule_string, YaraStatus* error_status) 
 
   YR_RULES* rules = nullptr;
   error = yr_compiler_get_rules(compiler, &rules);
-  if (error != ERROR_SUCCESS) {
-    if (error_status) {
+
+  if (error != ERROR_SUCCESS)
+  {
+    if (error_status)
+    {
       error_status->set_code(error);
     }
     return 0;
@@ -195,9 +216,12 @@ extern "C" int YaraLoadRules(const char* rule_string, YaraStatus* error_status) 
   yr_rules_foreach(rules, rule) { ++num_rules; }
 
   absl::MutexLock lock(&g_rules_mutex);
-  if (g_rules) {
+
+  if (g_rules)
+  {
     yr_rules_destroy(g_rules);
   }
+
   g_rules = rules;
 
   return num_rules;
@@ -206,24 +230,28 @@ extern "C" int YaraLoadRules(const char* rule_string, YaraStatus* error_status) 
 // Schedules a new asynchronous YARA scan task on the data in the specified file
 // descriptor. Notifies host code via writing to the event_fd file descriptor.
 // Returns a unique identifier that can be used to retrieve the results.
-extern "C" uint64_t YaraAsyncScanFd(int data_fd, int event_fd,
-                                    int timeout_secs) {
+extern "C" uint64_t YaraAsyncScanFd(int data_fd, int event_fd, int timeout_secs)
+{
   absl::MutexLock queue_lock(&g_queue_mutex);
   ++g_result_id;
   g_queue->push({g_result_id, data_fd, event_fd, absl::Seconds(timeout_secs)});
   return g_result_id;
 }
 
-extern "C" int YaraGetScanResult(uint64_t result_id, YaraMatches* matches) {
+extern "C" int YaraGetScanResult(uint64_t result_id, YaraMatches* matches)
+{
   absl::MutexLock lock(&g_results_mutex);
   auto result = g_results->find(result_id);
-  if (result == g_results->end()) {
+
+  if (result == g_results->end())
+  {
     return -1;
   }
 
   int code = result->second.code;
   *matches = std::move(result->second.matches);
   g_results->erase(result);
+
   return code;
 }
 

@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2007-2017. The YARA Authors. All Rights Reserved.
+Copyright (c) 2007-2021. The YARA Authors. All Rights Reserved.
 
 Redistribution and use in source and binary forms, with or without modification,
 are permitted provided that the following conditions are met:
@@ -29,28 +29,25 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #if defined(USE_LINUX_PROC)
 
+#include <errno.h>
 #include <fcntl.h>
 #include <inttypes.h>
-#include <unistd.h>
 #include <sys/types.h>
 #include <sys/wait.h>
-#include <errno.h>
-
+#include <unistd.h>
 #include <yara/error.h>
-#include <yara/proc.h>
+#include <yara/globals.h>
 #include <yara/mem.h>
+#include <yara/proc.h>
 
-
-typedef struct _YR_PROC_INFO {
-  int             pid;
-  int             mem_fd;
-  FILE*           maps;
+typedef struct _YR_PROC_INFO
+{
+  int pid;
+  int mem_fd;
+  FILE* maps;
 } YR_PROC_INFO;
 
-
-int _yr_process_attach(
-    int pid,
-    YR_PROC_ITERATOR_CTX* context)
+int _yr_process_attach(int pid, YR_PROC_ITERATOR_CTX* context)
 {
   char buffer[256];
 
@@ -90,9 +87,7 @@ int _yr_process_attach(
   return ERROR_SUCCESS;
 }
 
-
-int _yr_process_detach(
-    YR_PROC_ITERATOR_CTX* context)
+int _yr_process_detach(YR_PROC_ITERATOR_CTX* context)
 {
   YR_PROC_INFO* proc_info = (YR_PROC_INFO*) context->proc_info;
 
@@ -102,10 +97,10 @@ int _yr_process_detach(
   return ERROR_SUCCESS;
 }
 
-
-YR_API const uint8_t* yr_process_fetch_memory_block_data(
-    YR_MEMORY_BLOCK* block)
+YR_API const uint8_t* yr_process_fetch_memory_block_data(YR_MEMORY_BLOCK* block)
 {
+  const uint8_t* result = NULL;
+
   YR_PROC_ITERATOR_CTX* context = (YR_PROC_ITERATOR_CTX*) block->context;
   YR_PROC_INFO* proc_info = (YR_PROC_INFO*) context->proc_info;
 
@@ -123,25 +118,32 @@ YR_API const uint8_t* yr_process_fetch_memory_block_data(
     else
     {
       context->buffer_size = 0;
-      return NULL;
+      goto _exit;  // return NULL;
     }
   }
 
-  if (pread(proc_info->mem_fd,
-            (void *) context->buffer,
-            block->size,
-            block->base) == -1)
+  if (pread(
+          proc_info->mem_fd,
+          (void*) context->buffer,
+          block->size,
+          block->base) == -1)
   {
-    return NULL;
+    goto _exit;  // return NULL;
   }
 
-  return context->buffer;
-}
+  result = context->buffer;
 
+_exit:;
+
+  YR_DEBUG_FPRINTF(2, stderr, "- %s() {} = %p\n", __FUNCTION__, result);
+
+  return result;
+}
 
 YR_API YR_MEMORY_BLOCK* yr_process_get_next_memory_block(
     YR_MEMORY_BLOCK_ITERATOR* iterator)
 {
+  YR_MEMORY_BLOCK* result = NULL;
   YR_PROC_ITERATOR_CTX* context = (YR_PROC_ITERATOR_CTX*) iterator->context;
   YR_PROC_INFO* proc_info = (YR_PROC_INFO*) context->proc_info;
 
@@ -150,28 +152,59 @@ YR_API YR_MEMORY_BLOCK* yr_process_get_next_memory_block(
 
   if (fgets(buffer, sizeof(buffer), proc_info->maps) != NULL)
   {
-    sscanf(buffer, "%"SCNx64"-%"SCNx64, &begin, &end);
+    sscanf(buffer, "%" SCNx64 "-%" SCNx64, &begin, &end);
 
     context->current_block.base = begin;
     context->current_block.size = end - begin;
-
-    return &context->current_block;
+    result = &context->current_block;
   }
 
-  return NULL;
-}
+  // If we haven't read the whole line, skip over the rest.
+  if (strrchr(buffer, '\n') == NULL)
+  {
+    int c;
+    do
+    {
+      c = fgetc(proc_info->maps);
+    } while (c >= 0 && c != '\n');
+  }
 
+  iterator->last_error = ERROR_SUCCESS;
+
+  YR_DEBUG_FPRINTF(
+      2,
+      stderr,
+      "- %s() {} = %p // .base=0x%" PRIx64 " .size=%" PRIu64 "\n",
+      __FUNCTION__,
+      result,
+      context->current_block.base,
+      context->current_block.size);
+
+  return result;
+}
 
 YR_API YR_MEMORY_BLOCK* yr_process_get_first_memory_block(
     YR_MEMORY_BLOCK_ITERATOR* iterator)
 {
+  YR_DEBUG_FPRINTF(2, stderr, "+ %s() {\n", __FUNCTION__);
+
+  YR_MEMORY_BLOCK* result = NULL;
   YR_PROC_ITERATOR_CTX* context = (YR_PROC_ITERATOR_CTX*) iterator->context;
   YR_PROC_INFO* proc_info = (YR_PROC_INFO*) context->proc_info;
 
   if (fseek(proc_info->maps, 0, SEEK_SET) != 0)
-    return NULL;
+  {
+    result = NULL;
+    goto _exit;
+  }
 
-  return yr_process_get_next_memory_block(iterator);
+  result = yr_process_get_next_memory_block(iterator);
+
+_exit:
+
+  YR_DEBUG_FPRINTF(2, stderr, "} = %p // %s()\n", result, __FUNCTION__);
+
+  return result;
 }
 
 #endif

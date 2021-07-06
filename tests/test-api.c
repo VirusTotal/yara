@@ -1,6 +1,7 @@
-#include <yara.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <yara.h>
+
 #include "util.h"
 
 #if defined(_WIN32) || defined(__CYGWIN__)
@@ -25,6 +26,7 @@ void test_disabled_rules()
 
   counters.rules_not_matching = 0;
   counters.rules_matching = 0;
+  counters.rules_warning = 0;
 
   yr_initialize();
 
@@ -41,8 +43,7 @@ void test_disabled_rules()
       yr_rule_disable(rule);
   }
 
-  yr_rules_scan_mem(
-      rules, (uint8_t *) buf, strlen(buf), 0, count, &counters, 0);
+  yr_rules_scan_mem(rules, (uint8_t*) buf, strlen(buf), 0, count, &counters, 0);
 
   yr_rules_destroy(rules);
 
@@ -58,15 +59,15 @@ void test_disabled_rules()
 
 
 const char* _include_callback(
-  const char* include_name,
-  const char* calling_rule_filename,
-  const char* calling_rule_namespace,
-  void* user_data)
+    const char* include_name,
+    const char* calling_rule_filename,
+    const char* calling_rule_namespace,
+    void* user_data)
 {
-if (strcmp(include_name, "ok") == 0)
-  return "rule test {condition: true}";
-else
-  return NULL;
+  if (strcmp(include_name, "ok") == 0)
+    return "rule test {condition: true}";
+  else
+    return NULL;
 }
 
 
@@ -109,14 +110,15 @@ void test_file_descriptor()
   YR_RULES* rules = NULL;
 
 #if defined(_WIN32) || defined(__CYGWIN__)
-  HANDLE fd = CreateFile("tests/data/baz.yar", GENERIC_READ, 0, NULL, OPEN_EXISTING, 0, NULL);
+  HANDLE fd = CreateFile(
+      "tests/data/baz.yar", GENERIC_READ, 0, NULL, OPEN_EXISTING, 0, NULL);
   if (fd == INVALID_HANDLE_VALUE)
   {
     fputs("CreateFile failed", stderr);
     exit(1);
   }
 #else
-  int fd = open("tests/data/baz.yar", O_RDONLY);
+  int fd = open(prefix_top_srcdir("tests/data/baz.yar"), O_RDONLY);
   if (fd < 0)
   {
     perror("open");
@@ -169,12 +171,10 @@ void test_max_string_per_rules()
   yr_initialize();
 
   yr_get_configuration(
-      YR_CONFIG_MAX_STRINGS_PER_RULE,
-      (void*) &old_max_strings_per_rule);
+      YR_CONFIG_MAX_STRINGS_PER_RULE, (void*) &old_max_strings_per_rule);
 
   yr_set_configuration(
-      YR_CONFIG_MAX_STRINGS_PER_RULE,
-      (void*) &new_max_strings_per_rule);
+      YR_CONFIG_MAX_STRINGS_PER_RULE, (void*) &new_max_strings_per_rule);
 
   assert_error(
       "rule test { \
@@ -188,8 +188,7 @@ void test_max_string_per_rules()
   new_max_strings_per_rule = 2;
 
   yr_set_configuration(
-      YR_CONFIG_MAX_STRINGS_PER_RULE,
-      (void*) &new_max_strings_per_rule);
+      YR_CONFIG_MAX_STRINGS_PER_RULE, (void*) &new_max_strings_per_rule);
 
   assert_error(
       "rule test { \
@@ -201,8 +200,7 @@ void test_max_string_per_rules()
       ERROR_SUCCESS);
 
   yr_set_configuration(
-      YR_CONFIG_MAX_STRINGS_PER_RULE,
-      (void*) &old_max_strings_per_rule);
+      YR_CONFIG_MAX_STRINGS_PER_RULE, (void*) &old_max_strings_per_rule);
 
   yr_finalize();
 }
@@ -245,13 +243,9 @@ void test_max_match_data()
 
   yr_initialize();
 
-  yr_get_configuration(
-      YR_CONFIG_MAX_MATCH_DATA,
-      (void*) &old_max_match_data);
+  yr_get_configuration(YR_CONFIG_MAX_MATCH_DATA, (void*) &old_max_match_data);
 
-  yr_set_configuration(
-      YR_CONFIG_MAX_MATCH_DATA,
-      (void*) &new_max_match_data);
+  yr_set_configuration(YR_CONFIG_MAX_MATCH_DATA, (void*) &new_max_match_data);
 
   if (compile_rule(rules_str, &rules) != ERROR_SUCCESS)
   {
@@ -261,7 +255,7 @@ void test_max_match_data()
 
   int err = yr_rules_scan_mem(
       rules,
-      (const uint8_t *) "foobar",
+      (const uint8_t*) "foobar",
       6,
       0,
       test_max_match_data_callback,
@@ -288,6 +282,7 @@ void test_save_load_rules()
 
   counters.rules_not_matching = 0;
   counters.rules_matching = 0;
+  counters.rules_warning = 0;
 
   char* rules_str = "rule t {condition: bool_var and str_var == \"foobar\"}";
 
@@ -333,14 +328,7 @@ void test_save_load_rules()
     exit(EXIT_FAILURE);
   }
 
-  int err = yr_rules_scan_mem(
-      rules,
-      (uint8_t *) "",
-       0,
-       0,
-       count,
-       &counters,
-       0);
+  int err = yr_rules_scan_mem(rules, (uint8_t*) "", 0, 0, count, &counters, 0);
 
   if (err != ERROR_SUCCESS)
   {
@@ -398,8 +386,8 @@ void test_scanner()
   yr_compiler_define_string_variable(compiler, "str_var", "");
 
 
-  if (yr_compiler_define_string_variable(
-      compiler, "str_var", "") != ERROR_DUPLICATED_EXTERNAL_VARIABLE)
+  if (yr_compiler_define_string_variable(compiler, "str_var", "") !=
+      ERROR_DUPLICATED_EXTERNAL_VARIABLE)
   {
     yr_compiler_destroy(compiler);
     perror("expecting ERROR_DUPLICATED_EXTERNAL_VARIABLE");
@@ -424,7 +412,7 @@ void test_scanner()
   yr_compiler_destroy(compiler);
 
   // Create an scanner
-  if (yr_scanner_create(rules, &scanner1)!= ERROR_SUCCESS)
+  if (yr_scanner_create(rules, &scanner1) != ERROR_SUCCESS)
   {
     yr_rules_destroy(rules);
     perror("yr_scanner_create");
@@ -432,7 +420,7 @@ void test_scanner()
   }
 
   // Create another scanner
-  if (yr_scanner_create(rules, &scanner2)!= ERROR_SUCCESS)
+  if (yr_scanner_create(rules, &scanner2) != ERROR_SUCCESS)
   {
     yr_scanner_destroy(scanner1);
     yr_rules_destroy(rules);
@@ -442,15 +430,17 @@ void test_scanner()
 
   // Let's check the yr_scanner_scan_mem returns the appropriate error when
   // called without specifying a callback.
-  result = yr_scanner_scan_mem(scanner1, (uint8_t *) buf, strlen(buf));
+  result = yr_scanner_scan_mem(scanner1, (uint8_t*) buf, strlen(buf));
 
   if (result != ERROR_CALLBACK_REQUIRED)
   {
     yr_scanner_destroy(scanner1);
     yr_scanner_destroy(scanner2);
     yr_rules_destroy(rules);
-    printf("expecting ERROR_CALLBACK_REQUIRED (%d), got: %d\n",
-           ERROR_CALLBACK_REQUIRED, result);
+    printf(
+        "expecting ERROR_CALLBACK_REQUIRED (%d), got: %d\n",
+        ERROR_CALLBACK_REQUIRED,
+        result);
     exit(EXIT_FAILURE);
   }
 
@@ -458,6 +448,7 @@ void test_scanner()
 
   counters.rules_not_matching = 0;
   counters.rules_matching = 0;
+  counters.rules_warning = 0;
 
   // Set the callback and the correct variable values for the rule to match.
   yr_scanner_set_callback(scanner1, count, &counters);
@@ -471,20 +462,18 @@ void test_scanner()
   yr_scanner_define_boolean_variable(scanner2, "bool_var", 0);
   yr_scanner_define_string_variable(scanner2, "str_var", "bar");
 
-  result = yr_scanner_scan_mem(scanner1, (uint8_t *) buf, strlen(buf));
+  result = yr_scanner_scan_mem(scanner1, (uint8_t*) buf, strlen(buf));
 
   if (result != ERROR_SUCCESS)
   {
     yr_scanner_destroy(scanner1);
     yr_scanner_destroy(scanner2);
     yr_rules_destroy(rules);
-    printf("expecting ERROR_SUCCESS (%d), got: %d\n",
-           ERROR_SUCCESS, result);
+    printf("expecting ERROR_SUCCESS (%d), got: %d\n", ERROR_SUCCESS, result);
     exit(EXIT_FAILURE);
   }
 
-  if (counters.rules_matching != 2 ||
-      counters.rules_not_matching != 1)
+  if (counters.rules_matching != 2 || counters.rules_not_matching != 1)
   {
     yr_scanner_destroy(scanner1);
     yr_scanner_destroy(scanner2);
@@ -494,13 +483,13 @@ void test_scanner()
 
   counters.rules_matching = 0;
   counters.rules_not_matching = 0;
+  counters.rules_warning = 0;
 
   yr_scanner_set_flags(scanner1, SCAN_FLAGS_REPORT_RULES_MATCHING);
   yr_scanner_set_callback(scanner1, count, &counters);
-  yr_scanner_scan_mem(scanner1, (uint8_t *) buf, strlen(buf));
+  yr_scanner_scan_mem(scanner1, (uint8_t*) buf, strlen(buf));
 
-  if (counters.rules_matching != 2 ||
-      counters.rules_not_matching != 0)
+  if (counters.rules_matching != 2 || counters.rules_not_matching != 0)
   {
     yr_scanner_destroy(scanner1);
     yr_scanner_destroy(scanner2);
@@ -510,13 +499,13 @@ void test_scanner()
 
   counters.rules_matching = 0;
   counters.rules_not_matching = 0;
+  counters.rules_warning = 0;
 
   yr_scanner_set_flags(scanner2, SCAN_FLAGS_REPORT_RULES_NOT_MATCHING);
   yr_scanner_set_callback(scanner2, count, &counters);
-  yr_scanner_scan_mem(scanner2, (uint8_t *) buf, strlen(buf));
+  yr_scanner_scan_mem(scanner2, (uint8_t*) buf, strlen(buf));
 
-  if (counters.rules_not_matching != 2 ||
-      counters.rules_matching != 0)
+  if (counters.rules_not_matching != 2 || counters.rules_matching != 0)
   {
     yr_scanner_destroy(scanner1);
     yr_scanner_destroy(scanner2);
@@ -567,7 +556,7 @@ void test_issue_834()
 
   yr_compiler_destroy(compiler);
 
-  if (yr_scanner_create(rules, &scanner)!= ERROR_SUCCESS)
+  if (yr_scanner_create(rules, &scanner) != ERROR_SUCCESS)
   {
     yr_rules_destroy(rules);
     perror("yr_scanner_create");
@@ -577,8 +566,8 @@ void test_issue_834()
   yr_scanner_set_callback(scanner, do_nothing, NULL);
 
   // Call yr_scanner_scan_mem twice.
-  yr_scanner_scan_mem(scanner, (uint8_t *) buf, strlen(buf));
-  yr_scanner_scan_mem(scanner, (uint8_t *) buf, strlen(buf));
+  yr_scanner_scan_mem(scanner, (uint8_t*) buf, strlen(buf));
+  yr_scanner_scan_mem(scanner, (uint8_t*) buf, strlen(buf));
 
   yr_scanner_destroy(scanner);
   yr_rules_destroy(rules);
@@ -618,10 +607,7 @@ void test_ast_callback()
 
   int ok = 0;
 
-  yr_compiler_set_re_ast_callback(
-      compiler,
-      ast_callback,
-      &ok);
+  yr_compiler_set_re_ast_callback(compiler, ast_callback, &ok);
 
   // Compile a rule that use the variables in the condition.
   if (yr_compiler_add_string(compiler, rules_str, NULL) != 0)
@@ -642,9 +628,7 @@ void test_ast_callback()
 }
 
 
-void stats_for_rules(
-    const char* rules_str,
-    YR_RULES_STATS* stats)
+void stats_for_rules(const char* rules_str, YR_RULES_STATS* stats)
 {
   YR_COMPILER* compiler = NULL;
   YR_RULES* rules = NULL;
@@ -683,7 +667,8 @@ void test_rules_stats()
 {
   YR_RULES_STATS stats;
 
-  stats_for_rules("\
+  stats_for_rules(
+      "\
       rule test { \
       strings: $ = /.*/ \
       condition: all of them }",
@@ -693,7 +678,8 @@ void test_rules_stats()
   assert_true_expr(stats.num_strings == 1);
   assert_true_expr(stats.ac_root_match_list_length == 1);
 
-  stats_for_rules("\
+  stats_for_rules(
+      "\
       rule test { \
       strings: $ = \"abc\" \
       condition: all of them }",
@@ -707,7 +693,8 @@ void test_rules_stats()
   assert_true_expr(stats.ac_match_list_length_pctls[1] == 1);
   assert_true_expr(stats.ac_match_list_length_pctls[100] == 1);
 
-  stats_for_rules("\
+  stats_for_rules(
+      "\
       rule test { \
       strings: \
         $ = \"00000\" \
@@ -727,7 +714,8 @@ void test_rules_stats()
   assert_true_expr(stats.ac_match_list_length_pctls[1] == 3);
   assert_true_expr(stats.ac_match_list_length_pctls[100] == 3);
 
-  stats_for_rules("\
+  stats_for_rules(
+      "\
       rule test { \
       strings: \
         $ = \"00000\" \
@@ -749,13 +737,14 @@ void test_rules_stats()
   assert_true_expr(stats.ac_match_list_length_pctls[1] == 1);
   assert_true_expr(stats.ac_match_list_length_pctls[100] == 3);
 
-  stats_for_rules("\
+  stats_for_rules(
+      "\
       rule test { \
       condition: true }",
       &stats);
 
   assert_true_expr(stats.num_rules == 1);
-  assert_true_expr(stats.num_strings== 0);
+  assert_true_expr(stats.num_strings == 0);
   assert_true_expr(stats.ac_matches == 0);
   assert_true_expr(stats.ac_root_match_list_length == 0);
 }
@@ -788,8 +777,10 @@ void test_issue_920()
   if (compiler->last_error != ERROR_DUPLICATED_IDENTIFIER)
   {
     yr_compiler_destroy(compiler);
-    printf("expecting ERROR_CALLBACK_REQUIRED (%d), got: %d\n",
-           ERROR_DUPLICATED_IDENTIFIER, compiler->last_error);
+    printf(
+        "expecting ERROR_CALLBACK_REQUIRED (%d), got: %d\n",
+        ERROR_DUPLICATED_IDENTIFIER,
+        compiler->last_error);
     exit(EXIT_FAILURE);
   }
 
@@ -797,11 +788,72 @@ void test_issue_920()
   yr_finalize();
 }
 
+
+void test_runtime_warnings() {
+  // This rule should never match since it will hit the maximum number of
+  // matches (see YR_MAX_STRING_MATCHES) and a warning will be issued, and any
+  // further matches no longer count.
+  const char* rules_str = "rule test { \
+    strings: \
+      $x = \"X\" \
+    condition: \
+      #x > 1000000 \
+    }";
+
+  YR_COMPILER* compiler = NULL;
+  YR_RULES* rules = NULL;
+  struct COUNTERS counters;
+
+  counters.rules_not_matching = 0;
+  counters.rules_matching = 0;
+  counters.rules_warning = 0;
+
+  yr_initialize();
+
+  if (yr_compiler_create(&compiler) != ERROR_SUCCESS) {
+    perror("yr_compiler_create");
+    exit(EXIT_FAILURE);
+  }
+
+  if (yr_compiler_add_string(compiler, rules_str, NULL) != ERROR_SUCCESS) {
+    yr_compiler_destroy(compiler);
+    perror("yr_compiler_add_string");
+    exit(EXIT_FAILURE);
+  }
+
+  if (yr_compiler_get_rules(compiler, &rules) != ERROR_SUCCESS)
+  {
+    yr_compiler_destroy(compiler);
+    perror("yr_compiler_get_rules");
+    exit(EXIT_FAILURE);
+  }
+
+  yr_compiler_destroy(compiler);
+
+  if (yr_rules_scan_file(rules, prefix_top_srcdir("tests/data/x.txt"), 0, count, &counters, 0) != ERROR_SUCCESS) {
+    yr_rules_destroy(rules);
+    perror("yr_rules_scan_file");
+    exit(EXIT_FAILURE);
+  }
+
+  // There should only be a single warning issued since the string is disabled
+  // after the callback returns CALLBACK_CONTINUE.
+  assert_true_expr(counters.rules_warning == 1);
+  assert_true_expr(counters.rules_matching == 0);
+  assert_true_expr(counters.rules_not_matching == 1);
+
+  yr_rules_destroy(rules);
+  yr_finalize();
+}
+
 int main(int argc, char** argv)
 {
-  char *top_srcdir = getenv("TOP_SRCDIR");
-  if (top_srcdir)
-    chdir(top_srcdir);
+  int result = 0;
+
+  YR_DEBUG_INITIALIZE();
+  YR_DEBUG_FPRINTF(1, stderr, "+ %s() { // in %s\n", __FUNCTION__, argv[0]);
+
+  init_top_srcdir();
 
   test_disabled_rules();
   test_file_descriptor();
@@ -810,12 +862,13 @@ int main(int argc, char** argv)
   test_include_callback();
   test_save_load_rules();
   test_scanner();
-// test_ast_callback();
-// //TODO(vmalvarez): Enable these tests.
-// //test_rules_stats();
-//
-// test_issue_834();
-// test_issue_920();
+  test_ast_callback();
+  test_rules_stats();
+  test_issue_834();
+  test_issue_920();
+  test_runtime_warnings();
 
-  return 0;
+  YR_DEBUG_FPRINTF(1, stderr, "} = %d // %s() in %s\n", result, __FUNCTION__, argv[0]);
+
+  return result;
 }

@@ -31,22 +31,18 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define MODULE_NAME demo
 
-begin_declarations;
-
+begin_declarations
   declare_string("greeting");
+end_declarations
 
-end_declarations;
 
-
-int module_initialize(
-    YR_MODULE* module)
+int module_initialize(YR_MODULE* module)
 {
   return ERROR_SUCCESS;
 }
 
 
-int module_finalize(
-    YR_MODULE* module)
+int module_finalize(YR_MODULE* module)
 {
   return ERROR_SUCCESS;
 }
@@ -64,8 +60,7 @@ int module_load(
 }
 
 
-int module_unload(
-    YR_OBJECT* module_object)
+int module_unload(YR_OBJECT* module_object)
 {
   return ERROR_SUCCESS;
 }

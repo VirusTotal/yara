@@ -48,32 +48,37 @@ using ::sapi::IsOk;
 using ::testing::Eq;
 using ::testing::StrEq;
 
-namespace yara {
-namespace {
-
+namespace yara
+{
+namespace
+{
 // Wraps an in-memory file descriptor created by memfd_create().
-class MemoryFD {
+class MemoryFD
+{
  public:
-  static ::sapi::StatusOr<MemoryFD> CreateWithContent(
-      absl::string_view content) {
+  static ::sapi::StatusOr<MemoryFD> CreateWithContent(absl::string_view content)
+  {
     MemoryFD mem_fd;
     // Avoid dependency on UAPI headers
     constexpr uintptr_t MFD_CLOEXEC = 0x0001U;
     constexpr const char* kName = "memfd";
-    mem_fd.fd_ = syscall(__NR_memfd_create, reinterpret_cast<uintptr_t>(kName),
-                         MFD_CLOEXEC);
-    if (mem_fd.fd_ == -1) {
-      return ::sapi::UnknownError(absl::StrCat("memfd(): ", strerror(errno)));
+    mem_fd.fd_ = syscall(
+        __NR_memfd_create, reinterpret_cast<uintptr_t>(kName), MFD_CLOEXEC);
+    if (mem_fd.fd_ == -1)
+    {
+      return absl::UnknownError(absl::StrCat("memfd(): ", strerror(errno)));
     }
-    if (ftruncate(mem_fd.fd_, content.size()) == -1) {
-      return ::sapi::UnknownError(
-          absl::StrCat("ftruncate(): ", strerror(errno)));
+    if (ftruncate(mem_fd.fd_, content.size()) == -1)
+    {
+      return absl::UnknownError(absl::StrCat("ftruncate(): ", strerror(errno)));
     }
-    while (!content.empty()) {
-      ssize_t written =
-          TEMP_FAILURE_RETRY(write(mem_fd.fd_, content.data(), content.size()));
-      if (written <= 0) {
-        return ::sapi::UnknownError(absl::StrCat("write(): ", strerror(errno)));
+    while (!content.empty())
+    {
+      ssize_t written = TEMP_FAILURE_RETRY(
+          write(mem_fd.fd_, content.data(), content.size()));
+      if (written <= 0)
+      {
+        return absl::UnknownError(absl::StrCat("write(): ", strerror(errno)));
       }
       content.remove_prefix(written);
     }
@@ -82,14 +87,17 @@ class MemoryFD {
 
   MemoryFD(MemoryFD&& other) { *this = std::move(other); }
 
-  MemoryFD& operator=(MemoryFD&& other) {
+  MemoryFD& operator=(MemoryFD&& other)
+  {
     fd_ = other.fd_;
     other.fd_ = 0;
     return *this;
   }
 
-  ~MemoryFD() {
-    if (fd_ > 0) {
+  ~MemoryFD()
+  {
+    if (fd_ > 0)
+    {
       close(fd_);
     };
   }
@@ -101,9 +109,11 @@ class MemoryFD {
   int fd_;
 };
 
-class TransactionTest : public ::testing::Test {
+class TransactionTest : public ::testing::Test
+{
  protected:
-  void SetUp() override {
+  void SetUp() override
+  {
     SAPI_ASSERT_OK_AND_ASSIGN(
         transaction_,
         YaraTransaction::Create(YaraTransaction::Options{}
@@ -111,18 +121,21 @@ class TransactionTest : public ::testing::Test {
                                     .set_num_workers(16)));
   }
 
-  ::sapi::StatusOr<YaraMatches> ScanString(absl::string_view content) {
-    SAPI_ASSIGN_OR_RETURN(MemoryFD mem_fd,
-                          MemoryFD::CreateWithContent(content));
+  ::sapi::StatusOr<YaraMatches> ScanString(absl::string_view content)
+  {
+    SAPI_ASSIGN_OR_RETURN(
+        MemoryFD mem_fd, MemoryFD::CreateWithContent(content));
     return transaction_->ScanFd(mem_fd.fd());
   }
 
   std::unique_ptr<YaraTransaction> transaction_;
 };
 
-TEST_F(TransactionTest, BasicFunctionality) {
-  ASSERT_THAT(transaction_
-                  ->LoadRules(R"(
+TEST_F(TransactionTest, BasicFunctionality)
+{
+  ASSERT_THAT(
+      transaction_
+          ->LoadRules(R"(
     rule Number {
       strings:   $ = "123"
       condition: all of them
@@ -136,8 +149,8 @@ TEST_F(TransactionTest, BasicFunctionality) {
       condition: all of them
     })")
 
-                  .ValueOrDie(),
-              Eq(3));
+          .ValueOrDie(),
+      Eq(3));
 
   SAPI_ASSERT_OK_AND_ASSIGN(YaraMatches matches, ScanString("qwerty 123"));
 
@@ -150,22 +163,25 @@ TEST_F(TransactionTest, BasicFunctionality) {
   EXPECT_THAT(matches.match(1).id().rule_name(), StrEq("Keyboard"));
 }
 
-TEST_F(TransactionTest, ConcurrentScanStressTest) {
-  ASSERT_THAT(transaction_
-                  ->LoadRules(R"(
+TEST_F(TransactionTest, ConcurrentScanStressTest)
+{
+  ASSERT_THAT(
+      transaction_
+          ->LoadRules(R"(
     rule Simple {
       strings:   $ = "A"
       condition: all of them
     })")
-                  .ValueOrDie(),
-              Eq(1));
+          .ValueOrDie(),
+      Eq(1));
 
   // Large number of threads during testing to increase likelihood of exposing
   // race conditions in threading code.
   constexpr int kThreads = 64;
 
   std::vector<std::thread> bundle;
-  for (int i = 0; i < kThreads; ++i) {
+  for (int i = 0; i < kThreads; ++i)
+  {
     bundle.emplace_back([this, i]() {
       std::string buf((i + 1) * 102400, 'B');
       buf.append("A");  // Force the match to be at the very end
@@ -174,7 +190,8 @@ TEST_F(TransactionTest, ConcurrentScanStressTest) {
       EXPECT_THAT(matches.match(0).id().rule_name(), StrEq("Simple"));
     });
   }
-  for (auto& thread : bundle) {
+  for (auto& thread : bundle)
+  {
     thread.join();
   }
 }

@@ -27,9 +27,10 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+#include <yara.h>
 #include <yara/arena.h>
 #include <yara/stream.h>
-#include <yara.h>
+
 #include "util.h"
 
 static void basic_tests()
@@ -53,14 +54,16 @@ static void basic_tests()
   // Write 16 bytes, "123456789ABCDEF" + null terminator. This forces a
   // reallocation.
   assert_true_expr(
-      yr_arena_write_string(arena, 0, "123456789ABCDEF", &ref) == ERROR_SUCCESS);
+      yr_arena_write_string(arena, 0, "123456789ABCDEF", &ref) ==
+      ERROR_SUCCESS);
 
   // Offset should be 5 as this was written after the first 5-bytes write.
   assert_true_expr(ref.offset == 5);
 
   // Write 4 bytes, "bar" + null terminator.
   assert_true_expr(
-      yr_arena_write_string(arena, 0, "123456789ABCDEF", &ref) == ERROR_SUCCESS);
+      yr_arena_write_string(arena, 0, "123456789ABCDEF", &ref) ==
+      ERROR_SUCCESS);
 
   // Offset should be 21.
   assert_true_expr(ref.offset == 21);
@@ -69,14 +72,13 @@ static void basic_tests()
   yr_finalize();
 }
 
-
 typedef struct TEST_STRUCT TEST_STRUCT;
 
-struct TEST_STRUCT {
+struct TEST_STRUCT
+{
   DECLARE_REFERENCE(char*, str1);
   DECLARE_REFERENCE(char*, str2);
 };
-
 
 static void advanced_tests()
 {
@@ -112,21 +114,23 @@ static void advanced_tests()
   yr_arena_write_string(arena, 1, "foo", &ref);
 
   // Get the string's address and store it in the struct's "str" field.
-  s->str1 = (char *) yr_arena_ref_to_ptr(arena, &ref);
+  s->str1 = (char*) yr_arena_ref_to_ptr(arena, &ref);
 
   // Write another string in buffer 1.
   yr_arena_write_string(arena, 1, "bar", &ref);
 
   // Get the string's address and store it in the struct's "str" field.
-  s->str2 = (char *) yr_arena_ref_to_ptr(arena, &ref);
+  s->str2 = (char*) yr_arena_ref_to_ptr(arena, &ref);
 
   // The arena should have two reloc entries for the "str1" and "str2" fields.
   assert_true_expr(arena->reloc_list_head != NULL);
   assert_true_expr(arena->reloc_list_tail != NULL);
   assert_true_expr(arena->reloc_list_head->buffer_id == 0);
   assert_true_expr(arena->reloc_list_tail->buffer_id == 0);
-  assert_true_expr(arena->reloc_list_head->offset == offsetof(TEST_STRUCT, str1));
-  assert_true_expr(arena->reloc_list_tail->offset == offsetof(TEST_STRUCT, str2));
+  assert_true_expr(
+      arena->reloc_list_head->offset == offsetof(TEST_STRUCT, str1));
+  assert_true_expr(
+      arena->reloc_list_tail->offset == offsetof(TEST_STRUCT, str2));
 
   // Write another string in buffer 1 that causes a buffer reallocation.
   yr_arena_write_string(arena, 1, "aaaaaaaaaaa", NULL);
@@ -172,8 +176,16 @@ static void advanced_tests()
 
 int main(int argc, char** argv)
 {
+  int result = 0;
+
+  YR_DEBUG_INITIALIZE();
+  YR_DEBUG_FPRINTF(1, stderr, "+ %s() { // in %s\n", __FUNCTION__, argv[0]);
+
   basic_tests();
   advanced_tests();
 
-  return 0;
+  YR_DEBUG_FPRINTF(
+      1, stderr, "} = %d // %s() in %s\n", result, __FUNCTION__, argv[0]);
+
+  return result;
 }

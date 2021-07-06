@@ -30,22 +30,27 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef _SIZEDSTR_H
 #define _SIZEDSTR_H
 
-#include <stddef.h>
-
 #include <yara/integers.h>
+#include <yara/utils.h>
+
+// SIZED_STRING_FLAGS_NO_CASE indicates that the has been decorated with
+// the "nocase" modifier or with the /i modifier in the case of regular
+// expressions.
+#define SIZED_STRING_FLAGS_NO_CASE 1
+
+// SIZED_STRING_FLAGS_DOT_ALL is used for strings that contain a regular
+// expression that had the /s modifier.
+#define SIZED_STRING_FLAGS_DOT_ALL 2
+
+
+#pragma pack(push)
+#pragma pack(1)
 
 //
 // This struct is used to support strings containing null chars. The length of
 // the string is stored along the string data. However the string data is also
 // terminated with a null char.
 //
-
-#define SIZED_STRING_FLAGS_NO_CASE  1
-#define SIZED_STRING_FLAGS_DOT_ALL  2
-
-#pragma pack(push)
-#pragma pack(4)
-
 typedef struct _SIZED_STRING
 {
   uint32_t length;
@@ -57,25 +62,26 @@ typedef struct _SIZED_STRING
 
 #pragma pack(pop)
 
+int ss_compare(SIZED_STRING* s1, SIZED_STRING* s2);
 
-int sized_string_cmp_nocase(
-  SIZED_STRING* s1,
-  SIZED_STRING* s2);
+int ss_icompare(SIZED_STRING* s1, SIZED_STRING* s2);
 
+bool ss_contains(SIZED_STRING* s1, SIZED_STRING* s2);
 
-int sized_string_cmp(
-    SIZED_STRING* s1,
-    SIZED_STRING* s2);
+bool ss_icontains(SIZED_STRING* s1, SIZED_STRING* s2);
 
+bool ss_startswith(SIZED_STRING* s1, SIZED_STRING* s2);
 
-SIZED_STRING* sized_string_dup(
-    SIZED_STRING* s);
+bool ss_istartswith(SIZED_STRING* s1, SIZED_STRING* s2);
 
+bool ss_endswith(SIZED_STRING* s1, SIZED_STRING* s2);
 
-SIZED_STRING* sized_string_new(
-    const char* s);
+bool ss_iendswith(SIZED_STRING* s1, SIZED_STRING* s2);
 
-SIZED_STRING* sized_string_convert_to_wide(
-    SIZED_STRING* s);
+SIZED_STRING* ss_dup(SIZED_STRING* s);
+
+SIZED_STRING* ss_new(const char* s);
+
+SIZED_STRING* ss_convert_to_wide(SIZED_STRING* s);
 
 #endif

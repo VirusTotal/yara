@@ -266,6 +266,39 @@ Here is an example:
 
 The passed dictionary will contain the information from the module.
 
+You can also specify a warning callback function when invoking the ``match``
+method.  The provided function will be called for every runtime warning.
+Your callback function should expect two parameters. The first is an integer
+which contains the type of warning and the second is a string with the warning
+message. Your callback should return ``CALLBACK_CONTINUE`` to proceed with the
+scan or ``CALLBACK_ABORT`` to stop.
+
+Possible values for the type are::
+
+  CALLBACK_TOO_MANY_MATCHES
+
+Contents of the callback message depend on the type of the callback.
+
+For ``CALLBACK_TOO_MANY_MATCHES``, the message is a named tuple containing
+3 items: ``namespace``, ``rule`` and ``string``. All contain string
+identifiers.
+
+Here is an example:
+
+.. code-block:: python
+
+  import yara
+
+  def warnings_callback(warning_type, message):
+    if warning_type == yara.CALLBACK_TOO_MANY_MATCHES:
+        print(f"namespace:'{message.namespace}' rule:'{message.rule}' string:'{message.string}'")
+    return yara.CALLBACK_CONTINUE
+
+  matches = rules.match('/foo/bar/my_file', warnings_callback=warnings_callback)
+
+If you do not use a warning callback a warning message will be sent to the
+normal python warning system for you and scanning will continue.
+
 
 You may also find that the default sizes for the stack for the matching engine in
 yara or the default size for the maximum number of strings per rule is too low. In
@@ -320,8 +353,8 @@ Reference
     raising an exception.
   :return: Compiled rules object.
   :rtype: :py:class:`yara.Rules`
-  :raises YaraSyntaxError: If a syntax error was found.
-  :raises YaraError: If an error occurred.
+  :raises yara.SyntaxError: If a syntax error was found.
+  :raises yara.Error: If an error occurred.
 
 .. py:function:: yara.load(...)
 
@@ -334,7 +367,7 @@ Reference
   :param file-object file: A file object supporting the ``read`` method.
   :return: Compiled rules object.
   :rtype: :py:class:`yara.Rules`
-  :raises: **YaraError**: If an error occurred while loading the file.
+  :raises: **yara.Error**: If an error occurred while loading the file.
 
 .. py:function:: yara.set_config(...)
 
@@ -353,7 +386,7 @@ Reference
     yara match. Will be mapped to ``YR_CONFIG_MAX_MATCH_DATA``.
   :return: None
   :rtype: **NoneType**
-  :raises: **YaraError**: If an error occurred.
+  :raises: **yara.Error**: If an error occurred.
 
 .. py:class:: Rules
 
@@ -383,8 +416,8 @@ Reference
     :param int which_callbacks: An integer that indicates in which cases the
       callback function must be called. Possible values are ``yara.CALLBACK_ALL``,
       ``yara.CALLBACK_MATCHES`` and ``yara.CALLBACK_NON_MATCHES``.
-    :raises YaraTimeoutError: If the timeout was reached.
-    :raises YaraError: If an error occurred during the scan.
+    :raises yara.TimeoutError: If the timeout was reached.
+    :raises yara.Error: If an error occurred during the scan.
 
   .. py:method:: save(...)
 
@@ -394,11 +427,11 @@ Reference
 
     :param str filepath: Path to the file.
     :param file-object file: A file object supporting the ``write`` method.
-    :raises: **YaraError**: If an error occurred while saving the file.
+    :raises: **yara.Error**: If an error occurred while saving the file.
 
 .. py:class:: Match
 
-  Objects returned by :py:func:`yara.match`, representing a match.
+  Objects returned by :py:meth:`yara.Rules.match`, representing a match.
 
   .. py:attribute:: rule
 
@@ -410,7 +443,7 @@ Reference
 
   .. py:attribute:: tags
 
-    Array of strings containig the tags associated to the matching rule.
+    Array of strings containing the tags associated to the matching rule.
 
   .. py:attribute:: meta
 

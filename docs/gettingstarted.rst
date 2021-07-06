@@ -12,8 +12,8 @@ Compiling and installing YARA
 
 Download the source tarball and get prepared for compiling it::
 
-    tar -zxf yara-4.0.0.tar.gz
-    cd yara-4.0.0
+    tar -zxf yara-4.1.0.tar.gz
+    cd yara-4.1.0
     ./bootstrap.sh
 
 Make sure you have ``automake``, ``libtool``, ``make``  and ``gcc`` and ``pkg-config`` installed in your system. Ubuntu and Debian users can use::
@@ -27,6 +27,7 @@ If you plan to modify YARA's source code you may also need ``flex`` and
 
 Compile and install YARA in the standard way::
 
+    ./bootstrap.sh
     ./configure
     make
     sudo make install

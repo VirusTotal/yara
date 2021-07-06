@@ -1,4 +1,3 @@
-
 # Copyright (c) 2020. The YARA Authors. All Rights Reserved.
 #
 # Redistribution and use in source and binary forms, with or without modification,
@@ -46,7 +45,7 @@ MAGIC_COPTS = [
     # The VERSION macro usually contains the actual version (e.g: "5.38") but
     # any arbitrary string will work. We simply use "BUILT_BY_YARA".
     "-DVERSION=\\\"BUILT_BY_YARA\\\"",
-    ] + select({
+] + select({
     "@bazel_tools//src/conditions:darwin": [
         "-DHAVE_FORK=1",
         "-DHAVE_INTTYPES_H=1",
@@ -74,14 +73,14 @@ MAGIC_COPTS = [
         "-DHAVE_INTTYPES_H=1",
         "-DHAVE_STDINT_H=1",
         "-DHAVE_UNISTD_H=1",
+        "-DHAVE_MKSTEMP=1",
     ],
     "@bazel_tools//src/conditions:windows": [
-    ]
+    ],
 })
 
 cc_library(
     name = "magic",
-    hdrs = ["src/magic.h"],
     srcs = glob(["src/*.h"]) + [
         "src/apprentice.c",
         "src/apptype.c",
@@ -117,23 +116,28 @@ cc_library(
         "src/teststrchr.c",
         "src/vasprintf.c",
     ] + select({
-    "@bazel_tools//src/conditions:darwin": [
-    ],
-    "@bazel_tools//src/conditions:freebsd": [
-    ],
-    "@bazel_tools//src/conditions:linux_aarch64": [
-        "src/strlcat.c",
-        "src/strlcpy.c",
-    ],
-    "@bazel_tools//src/conditions:linux_x86_64": [
-        "src/strlcat.c",
-        "src/strlcpy.c",
-    ],
-    "@bazel_tools//src/conditions:windows": [
-        "src/strlcat.c",
-        "src/strlcpy.c",
-    ]}),
-    includes = [".", "src"],
+        "@bazel_tools//src/conditions:darwin": [
+        ],
+        "@bazel_tools//src/conditions:freebsd": [
+        ],
+        "@bazel_tools//src/conditions:linux_aarch64": [
+            "src/strlcat.c",
+            "src/strlcpy.c",
+        ],
+        "@bazel_tools//src/conditions:linux_x86_64": [
+            "src/strlcat.c",
+            "src/strlcpy.c",
+        ],
+        "@bazel_tools//src/conditions:windows": [
+            "src/strlcat.c",
+            "src/strlcpy.c",
+        ],
+    }),
+    hdrs = ["src/magic.h"],
     copts = MAGIC_COPTS,
+    includes = [
+        ".",
+        "src",
+    ],
     visibility = ["//visibility:public"],
 )

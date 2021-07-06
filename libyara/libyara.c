@@ -31,15 +31,14 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <jemalloc/jemalloc.h>
 #endif
 
-#include <string.h>
-#include <stdio.h>
 #include <ctype.h>
-
-#include <yara/globals.h>
+#include <stdio.h>
+#include <string.h>
 #include <yara/error.h>
-#include <yara/re.h>
-#include <yara/modules.h>
+#include <yara/globals.h>
 #include <yara/mem.h>
+#include <yara/modules.h>
+#include <yara/re.h>
 #include <yara/threading.h>
 
 #include "crypto.h"
@@ -59,20 +58,142 @@ static struct yr_config_var
 {
   union
   {
-    size_t   sz;
+    size_t sz;
     uint32_t ui32;
     uint64_t ui64;
-    char*    str;
+    char *str;
   };
 
 } yr_cfgs[YR_CONFIG_LAST];
-
 
 // Global variables. See globals.h for their descriptions.
 
 uint8_t yr_lowercase[256];
 uint8_t yr_altercase[256];
 
+#if 0 == YR_DEBUG_VERBOSITY
+
+#else
+
+uint64_t yr_debug_verbosity = YR_DEBUG_VERBOSITY;
+
+YR_TLS int yr_debug_indent = 0;
+
+YR_TLS int yr_debug_stopwatch_unstarted = 1;
+
+YR_TLS YR_STOPWATCH yr_debug_stopwatch;
+
+const char yr_debug_spaces[] = "                " /* 16 spaces * 1 */
+                               "                " /* 16 spaces * 2 */
+                               "                " /* 16 spaces * 3 */
+                               "                " /* 16 spaces * 4 */
+                               "                " /* 16 spaces * 5 */
+                               "                " /* 16 spaces * 6 */
+                               "                " /* 16 spaces * 7 */
+                               "                " /* 16 spaces * 8 */;
+
+size_t yr_debug_spaces_len = sizeof(yr_debug_spaces);
+
+double yr_debug_get_elapsed_seconds(void)
+{
+  if (yr_debug_stopwatch_unstarted)
+  {
+    yr_debug_stopwatch_unstarted = 0;
+    yr_stopwatch_start(&yr_debug_stopwatch);
+  }
+
+  uint64_t elapsed_ns = yr_stopwatch_elapsed_ns(&yr_debug_stopwatch);
+
+  double seconds = (double) elapsed_ns / 1000000000;
+
+  return seconds;
+}
+
+char *yr_debug_callback_message_as_string(int message)
+{
+  char *s = "CALLBACK_MSG_?";
+  switch (message)
+  {  // clang-format off
+  case CALLBACK_MSG_RULE_MATCHING    : s = "CALLBACK_MSG_RULE_MATCHING"    ; break;
+  case CALLBACK_MSG_RULE_NOT_MATCHING: s = "CALLBACK_MSG_RULE_NOT_MATCHING"; break;
+  case CALLBACK_MSG_SCAN_FINISHED    : s = "CALLBACK_MSG_SCAN_FINISHED"    ; break;
+  case CALLBACK_MSG_IMPORT_MODULE    : s = "CALLBACK_MSG_IMPORT_MODULE"    ; break;
+  case CALLBACK_MSG_MODULE_IMPORTED  : s = "CALLBACK_MSG_MODULE_IMPORTED"  ; break;
+  }  // clang-format on
+  return s;
+}
+
+char *yr_debug_error_as_string(int error)
+{
+  char *s = "ERROR_?";
+  switch (error)
+  {  // clang-format off
+  case ERROR_SUCCESS                       : s = "ERROR_SUCCESS 0"                     ; break;
+  case ERROR_INSUFFICIENT_MEMORY           : s = "ERROR_INSUFFICIENT_MEMORY"           ; break;
+  case ERROR_COULD_NOT_ATTACH_TO_PROCESS   : s = "ERROR_COULD_NOT_ATTACH_TO_PROCESS"   ; break;
+  case ERROR_COULD_NOT_OPEN_FILE           : s = "ERROR_COULD_NOT_OPEN_FILE"           ; break;
+  case ERROR_COULD_NOT_MAP_FILE            : s = "ERROR_COULD_NOT_MAP_FILE"            ; break;
+  case ERROR_INVALID_FILE                  : s = "ERROR_INVALID_FILE"                  ; break;
+  case ERROR_CORRUPT_FILE                  : s = "ERROR_CORRUPT_FILE"                  ; break;
+  case ERROR_UNSUPPORTED_FILE_VERSION      : s = "ERROR_UNSUPPORTED_FILE_VERSION"      ; break;
+  case ERROR_INVALID_REGULAR_EXPRESSION    : s = "ERROR_INVALID_REGULAR_EXPRESSION"    ; break;
+  case ERROR_INVALID_HEX_STRING            : s = "ERROR_INVALID_HEX_STRING"            ; break;
+  case ERROR_SYNTAX_ERROR                  : s = "ERROR_SYNTAX_ERROR"                  ; break;
+  case ERROR_LOOP_NESTING_LIMIT_EXCEEDED   : s = "ERROR_LOOP_NESTING_LIMIT_EXCEEDED"   ; break;
+  case ERROR_DUPLICATED_LOOP_IDENTIFIER    : s = "ERROR_DUPLICATED_LOOP_IDENTIFIER"    ; break;
+  case ERROR_DUPLICATED_IDENTIFIER         : s = "ERROR_DUPLICATED_IDENTIFIER"         ; break;
+  case ERROR_DUPLICATED_TAG_IDENTIFIER     : s = "ERROR_DUPLICATED_TAG_IDENTIFIER"     ; break;
+  case ERROR_DUPLICATED_META_IDENTIFIER    : s = "ERROR_DUPLICATED_META_IDENTIFIER"    ; break;
+  case ERROR_DUPLICATED_STRING_IDENTIFIER  : s = "ERROR_DUPLICATED_STRING_IDENTIFIER"  ; break;
+  case ERROR_UNREFERENCED_STRING           : s = "ERROR_UNREFERENCED_STRING"           ; break;
+  case ERROR_UNDEFINED_STRING              : s = "ERROR_UNDEFINED_STRING"              ; break;
+  case ERROR_UNDEFINED_IDENTIFIER          : s = "ERROR_UNDEFINED_IDENTIFIER"          ; break;
+  case ERROR_MISPLACED_ANONYMOUS_STRING    : s = "ERROR_MISPLACED_ANONYMOUS_STRING"    ; break;
+  case ERROR_INCLUDES_CIRCULAR_REFERENCE   : s = "ERROR_INCLUDES_CIRCULAR_REFERENCE"   ; break;
+  case ERROR_INCLUDE_DEPTH_EXCEEDED        : s = "ERROR_INCLUDE_DEPTH_EXCEEDED"        ; break;
+  case ERROR_WRONG_TYPE                    : s = "ERROR_WRONG_TYPE"                    ; break;
+  case ERROR_EXEC_STACK_OVERFLOW           : s = "ERROR_EXEC_STACK_OVERFLOW"           ; break;
+  case ERROR_SCAN_TIMEOUT                  : s = "ERROR_SCAN_TIMEOUT"                  ; break;
+  case ERROR_TOO_MANY_SCAN_THREADS         : s = "ERROR_TOO_MANY_SCAN_THREADS"         ; break;
+  case ERROR_CALLBACK_ERROR                : s = "ERROR_CALLBACK_ERROR"                ; break;
+  case ERROR_INVALID_ARGUMENT              : s = "ERROR_INVALID_ARGUMENT"              ; break;
+  case ERROR_TOO_MANY_MATCHES              : s = "ERROR_TOO_MANY_MATCHES"              ; break;
+  case ERROR_INTERNAL_FATAL_ERROR          : s = "ERROR_INTERNAL_FATAL_ERROR"          ; break;
+  case ERROR_NESTED_FOR_OF_LOOP            : s = "ERROR_NESTED_FOR_OF_LOOP"            ; break;
+  case ERROR_INVALID_FIELD_NAME            : s = "ERROR_INVALID_FIELD_NAME"            ; break;
+  case ERROR_UNKNOWN_MODULE                : s = "ERROR_UNKNOWN_MODULE"                ; break;
+  case ERROR_NOT_A_STRUCTURE               : s = "ERROR_NOT_A_STRUCTURE"               ; break;
+  case ERROR_NOT_INDEXABLE                 : s = "ERROR_NOT_INDEXABLE"                 ; break;
+  case ERROR_NOT_A_FUNCTION                : s = "ERROR_NOT_A_FUNCTION"                ; break;
+  case ERROR_INVALID_FORMAT                : s = "ERROR_INVALID_FORMAT"                ; break;
+  case ERROR_TOO_MANY_ARGUMENTS            : s = "ERROR_TOO_MANY_ARGUMENTS"            ; break;
+  case ERROR_WRONG_ARGUMENTS               : s = "ERROR_WRONG_ARGUMENTS"               ; break;
+  case ERROR_WRONG_RETURN_TYPE             : s = "ERROR_WRONG_RETURN_TYPE"             ; break;
+  case ERROR_DUPLICATED_STRUCTURE_MEMBER   : s = "ERROR_DUPLICATED_STRUCTURE_MEMBER"   ; break;
+  case ERROR_EMPTY_STRING                  : s = "ERROR_EMPTY_STRING"                  ; break;
+  case ERROR_DIVISION_BY_ZERO              : s = "ERROR_DIVISION_BY_ZERO"              ; break;
+  case ERROR_REGULAR_EXPRESSION_TOO_LARGE  : s = "ERROR_REGULAR_EXPRESSION_TOO_LARGE"  ; break;
+  case ERROR_TOO_MANY_RE_FIBERS            : s = "ERROR_TOO_MANY_RE_FIBERS"            ; break;
+  case ERROR_COULD_NOT_READ_PROCESS_MEMORY : s = "ERROR_COULD_NOT_READ_PROCESS_MEMORY" ; break;
+  case ERROR_INVALID_EXTERNAL_VARIABLE_TYPE: s = "ERROR_INVALID_EXTERNAL_VARIABLE_TYPE"; break;
+  case ERROR_REGULAR_EXPRESSION_TOO_COMPLEX: s = "ERROR_REGULAR_EXPRESSION_TOO_COMPLEX"; break;
+  case ERROR_INVALID_MODULE_NAME           : s = "ERROR_INVALID_MODULE_NAME"           ; break;
+  case ERROR_TOO_MANY_STRINGS              : s = "ERROR_TOO_MANY_STRINGS"              ; break;
+  case ERROR_INTEGER_OVERFLOW              : s = "ERROR_INTEGER_OVERFLOW"              ; break;
+  case ERROR_CALLBACK_REQUIRED             : s = "ERROR_CALLBACK_REQUIRED"             ; break;
+  case ERROR_INVALID_OPERAND               : s = "ERROR_INVALID_OPERAND"               ; break;
+  case ERROR_COULD_NOT_READ_FILE           : s = "ERROR_COULD_NOT_READ_FILE"           ; break;
+  case ERROR_DUPLICATED_EXTERNAL_VARIABLE  : s = "ERROR_DUPLICATED_EXTERNAL_VARIABLE"  ; break;
+  case ERROR_INVALID_MODULE_DATA           : s = "ERROR_INVALID_MODULE_DATA"           ; break;
+  case ERROR_WRITING_FILE                  : s = "ERROR_WRITING_FILE"                  ; break;
+  case ERROR_INVALID_MODIFIER              : s = "ERROR_INVALID_MODIFIER"              ; break;
+  case ERROR_DUPLICATED_MODIFIER           : s = "ERROR_DUPLICATED_MODIFIER"           ; break;
+  case ERROR_BLOCK_NOT_READY               : s = "ERROR_BLOCK_NOT_READY"               ; break;
+  }  // clang-format on
+  return s;
+}
+
+#endif
 
 #if defined(HAVE_LIBCRYPTO) && OPENSSL_VERSION_NUMBER < 0x10100000L
 
@@ -82,18 +203,12 @@ uint8_t yr_altercase[256];
 
 static YR_MUTEX *openssl_locks;
 
-
 static void _thread_id(CRYPTO_THREADID *id)
 {
   CRYPTO_THREADID_set_numeric(id, (unsigned long) yr_current_thread_id());
 }
 
-
-static void _locking_function(
-    int mode,
-    int n,
-    const char *file,
-    int line)
+static void _locking_function(int mode, int n, const char *file, int line)
 {
   if (mode & CRYPTO_LOCK)
     yr_mutex_lock(&openssl_locks[n]);
@@ -103,20 +218,23 @@ static void _locking_function(
 
 #endif
 
-//
-// yr_initialize
-//
+#if defined(HAVE_WINCRYPT_H)
+
+HCRYPTPROV yr_cryptprov;
+
+#endif
+
+////////////////////////////////////////////////////////////////////////////////
 // Should be called by main thread before using any other
 // function from libyara.
 //
-
 YR_API int yr_initialize(void)
 {
+  YR_DEBUG_FPRINTF(2, stderr, "+ %s() {\n", __FUNCTION__);
+
   uint32_t def_stack_size = DEFAULT_STACK_SIZE;
   uint32_t def_max_strings_per_rule = DEFAULT_MAX_STRINGS_PER_RULE;
   uint32_t def_max_match_data = DEFAULT_MAX_MATCH_DATA;
-
-  int i;
 
   init_count++;
 
@@ -127,7 +245,7 @@ YR_API int yr_initialize(void)
   // canaries.
   srand((unsigned) time(NULL));
 
-  for (i = 0; i < 256; i++)
+  for (int i = 0; i < 256; i++)
   {
     if (i >= 'a' && i <= 'z')
       yr_altercase[i] = i - 32;
@@ -143,56 +261,58 @@ YR_API int yr_initialize(void)
   FAIL_ON_ERROR(yr_thread_storage_create(&yr_yyfatal_trampoline_tls));
   FAIL_ON_ERROR(yr_thread_storage_create(&yr_trycatch_trampoline_tls));
 
-  #if defined HAVE_LIBCRYPTO && OPENSSL_VERSION_NUMBER < 0x10100000L
+#if defined HAVE_LIBCRYPTO && OPENSSL_VERSION_NUMBER < 0x10100000L
 
-  openssl_locks = (YR_MUTEX*) OPENSSL_malloc(
+  openssl_locks = (YR_MUTEX *) OPENSSL_malloc(
       CRYPTO_num_locks() * sizeof(YR_MUTEX));
 
-  for (i = 0; i < CRYPTO_num_locks(); i++)
+  for (int i = 0; i < CRYPTO_num_locks(); i++)
     yr_mutex_create(&openssl_locks[i]);
 
   CRYPTO_THREADID_set_callback(_thread_id);
   CRYPTO_set_locking_callback(_locking_function);
 
-  #elif defined(HAVE_WINCRYPT_H)
+#elif defined(HAVE_WINCRYPT_H)
 
-  if (!CryptAcquireContext(&yr_cryptprov, NULL, NULL, PROV_RSA_AES, CRYPT_VERIFYCONTEXT)) {
+  if (!CryptAcquireContext(
+          &yr_cryptprov, NULL, NULL, PROV_RSA_AES, CRYPT_VERIFYCONTEXT))
+  {
     return ERROR_INTERNAL_FATAL_ERROR;
   }
 
-  #elif defined(HAVE_COMMON_CRYPTO)
+#elif defined(HAVE_COMMON_CRYPTO)
 
   ...
 
-  #endif
+#endif
 
   FAIL_ON_ERROR(yr_modules_initialize());
 
   // Initialize default configuration options
-  FAIL_ON_ERROR(yr_set_configuration(
-      YR_CONFIG_STACK_SIZE, &def_stack_size));
+
+  FAIL_ON_ERROR(yr_set_configuration(YR_CONFIG_STACK_SIZE, &def_stack_size));
 
   FAIL_ON_ERROR(yr_set_configuration(
       YR_CONFIG_MAX_STRINGS_PER_RULE, &def_max_strings_per_rule));
 
-  FAIL_ON_ERROR(yr_set_configuration(
-      YR_CONFIG_MAX_MATCH_DATA, &def_max_match_data));
+  FAIL_ON_ERROR(
+      yr_set_configuration(YR_CONFIG_MAX_MATCH_DATA, &def_max_match_data));
+
+  YR_DEBUG_FPRINTF(2, stderr, "} // %s()\n", __FUNCTION__);
 
   return ERROR_SUCCESS;
 }
 
-
-//
-// yr_finalize
-//
+////////////////////////////////////////////////////////////////////////////////
 // Should be called by main thread before exiting.
 //
-
 YR_API int yr_finalize(void)
 {
-  #if defined HAVE_LIBCRYPTO && OPENSSL_VERSION_NUMBER < 0x10100000L
+  YR_DEBUG_FPRINTF(2, stderr, "+ %s() {\n", __FUNCTION__);
+
+#if defined HAVE_LIBCRYPTO && OPENSSL_VERSION_NUMBER < 0x10100000L
   int i;
-  #endif
+#endif
 
   // yr_finalize shouldn't be called without calling yr_initialize first
 
@@ -204,96 +324,90 @@ YR_API int yr_finalize(void)
   if (init_count > 0)
     return ERROR_SUCCESS;
 
-  #if defined HAVE_LIBCRYPTO && OPENSSL_VERSION_NUMBER < 0x10100000L
+#if defined HAVE_LIBCRYPTO && OPENSSL_VERSION_NUMBER < 0x10100000L
 
-  for (i = 0; i < CRYPTO_num_locks(); i ++)
-    yr_mutex_destroy(&openssl_locks[i]);
+  for (i = 0; i < CRYPTO_num_locks(); i++) yr_mutex_destroy(&openssl_locks[i]);
 
   OPENSSL_free(openssl_locks);
   CRYPTO_THREADID_set_callback(NULL);
   CRYPTO_set_locking_callback(NULL);
 
-  #elif defined(HAVE_WINCRYPT_H)
+#elif defined(HAVE_WINCRYPT_H)
 
   CryptReleaseContext(yr_cryptprov, 0);
 
-  #endif
+#endif
 
   FAIL_ON_ERROR(yr_thread_storage_destroy(&yr_yyfatal_trampoline_tls));
   FAIL_ON_ERROR(yr_thread_storage_destroy(&yr_trycatch_trampoline_tls));
   FAIL_ON_ERROR(yr_modules_finalize());
   FAIL_ON_ERROR(yr_heap_free());
 
-  #if defined(JEMALLOC)
+#if defined(JEMALLOC)
   malloc_stats_print(NULL, NULL, NULL);
   mallctl("prof.dump", NULL, NULL, NULL, 0);
-  #endif
+#endif
+
+  YR_DEBUG_FPRINTF(2, stderr, "} // %s()\n", __FUNCTION__);
 
   return ERROR_SUCCESS;
 }
 
-
-
+////////////////////////////////////////////////////////////////////////////////
+// Sets a configuration option.
 //
-// yr_set_configuration
-//
-// Sets a configuration option. This function receives a configuration name,
-// as defined by the YR_CONFIG_NAME enum, and a pointer to the value being
-// set. The type of the value depends on the configuration name.
+// This function receives a configuration name, as defined by the YR_CONFIG_NAME
+// enum, and a pointer to the value being set. The type of the value depends on
+// the configuration name.
 //
 // Args:
-//    YR_CONFIG_NAME  name   - Any of the values defined by the YR_CONFIG_NAME
-//                             enum. Possible values are:
+//   name: Any of the values defined by the YR_CONFIG_NAME enum. Possible values
+//         are:
+//              YR_CONFIG_STACK_SIZE             data type: uint32_t
+//              YR_CONFIG_MAX_STRINGS_PER_RULE   data type: uint32_t
+//              YR_CONFIG_MAX_MATCH_DATA         data type: uint32_t
 //
-//       YR_CONFIG_STACK_SIZE             data type: uint32_t
-//       YR_CONFIG_MAX_STRINGS_PER_RULE   data type: uint32_t
-//       YR_CONFIG_MAX_MATCH_DATA         data type: uint32_t
-//
-//    void *src              - Pointer to the value being set for the option.
+//   src: Pointer to the value being set for the option.
 //
 // Returns:
-//    An error code.
-
-YR_API int yr_set_configuration(
-    YR_CONFIG_NAME name,
-    void *src)
+//   ERROR_SUCCESS
+//   ERROR_INTERNAL_FATAL_ERROR
+//
+YR_API int yr_set_configuration(YR_CONFIG_NAME name, void *src)
 {
   if (src == NULL)
     return ERROR_INTERNAL_FATAL_ERROR;
 
   switch (name)
-  { // lump all the cases using same types together in one cascade
-    case YR_CONFIG_STACK_SIZE:
-    case YR_CONFIG_MAX_STRINGS_PER_RULE:
-    case YR_CONFIG_MAX_MATCH_DATA:
-      yr_cfgs[name].ui32 = *(uint32_t*) src;
-      break;
+  {  // lump all the cases using same types together in one cascade
+  case YR_CONFIG_STACK_SIZE:
+  case YR_CONFIG_MAX_STRINGS_PER_RULE:
+  case YR_CONFIG_MAX_MATCH_DATA:
+    yr_cfgs[name].ui32 = *(uint32_t *) src;
+    break;
 
-    default:
-      return ERROR_INTERNAL_FATAL_ERROR;
+  default:
+    return ERROR_INTERNAL_FATAL_ERROR;
   }
 
   return ERROR_SUCCESS;
 }
 
-
-YR_API int yr_get_configuration(
-    YR_CONFIG_NAME name,
-    void *dest)
+YR_API int yr_get_configuration(YR_CONFIG_NAME name, void *dest)
 {
   if (dest == NULL)
     return ERROR_INTERNAL_FATAL_ERROR;
 
   switch (name)
-  { // lump all the cases using same types together in one cascade
-    case YR_CONFIG_STACK_SIZE:
-    case YR_CONFIG_MAX_STRINGS_PER_RULE:
-    case YR_CONFIG_MAX_MATCH_DATA:
-      *(uint32_t*) dest = yr_cfgs[name].ui32;
-      break;
+  {  // lump all the cases using same types together in one cascade
+  case YR_CONFIG_STACK_SIZE:
+  case YR_CONFIG_MAX_STRINGS_PER_RULE:
+  case YR_CONFIG_MAX_MATCH_DATA:
+    *(uint32_t *) dest = yr_cfgs[name].ui32;
+    break;
 
-    default:
-      return ERROR_INTERNAL_FATAL_ERROR;
+  default:
+    return ERROR_INTERNAL_FATAL_ERROR;
   }
 
   return ERROR_SUCCESS;

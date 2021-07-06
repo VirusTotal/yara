@@ -28,10 +28,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include <math.h>
-
-#include <yara/utils.h>
-#include <yara/modules.h>
 #include <yara/mem.h>
+#include <yara/modules.h>
+#include <yara/utils.h>
 
 #define MODULE_NAME math
 
@@ -45,7 +44,6 @@ static double log2(double n)
   return log(n) / log(2.0);
 }
 #endif
-
 
 define_function(string_entropy)
 {
@@ -78,7 +76,6 @@ define_function(string_entropy)
   return_float(entropy);
 }
 
-
 define_function(data_entropy)
 {
   bool past_first_block = false;
@@ -89,8 +86,8 @@ define_function(data_entropy)
 
   uint32_t* data;
 
-  int64_t offset = integer_argument(1);   // offset where to start
-  int64_t length = integer_argument(2);   // length of bytes we want entropy on
+  int64_t offset = integer_argument(1);  // offset where to start
+  int64_t length = integer_argument(2);  // length of bytes we want entropy on
 
   YR_SCAN_CONTEXT* context = scan_context();
   YR_MEMORY_BLOCK* block = first_memory_block(context);
@@ -106,12 +103,11 @@ define_function(data_entropy)
 
   foreach_memory_block(iterator, block)
   {
-    if (offset >= block->base &&
-        offset < block->base + block->size)
+    if (offset >= block->base && offset < block->base + block->size)
     {
-      size_t data_offset = (size_t) (offset - block->base);
+      size_t data_offset = (size_t)(offset - block->base);
       size_t data_len = (size_t) yr_min(
-          length, (size_t) (block->size - data_offset));
+          length, (size_t)(block->size - data_offset));
 
       const uint8_t* block_data = block->fetch_data(block);
 
@@ -168,7 +164,6 @@ define_function(data_entropy)
   return_float(entropy);
 }
 
-
 define_function(string_deviation)
 {
   SIZED_STRING* s = sized_string_argument(1);
@@ -178,12 +173,10 @@ define_function(string_deviation)
 
   size_t i;
 
-  for (i = 0; i < s->length; i++)
-    sum += fabs(((double) s->c_string[i]) - mean);
+  for (i = 0; i < s->length; i++) sum += fabs(((double) s->c_string[i]) - mean);
 
   return_float(sum / s->length);
 }
-
 
 define_function(data_deviation)
 {
@@ -211,12 +204,10 @@ define_function(data_deviation)
 
   foreach_memory_block(iterator, block)
   {
-    if (offset >= block->base &&
-        offset < block->base + block->size)
+    if (offset >= block->base && offset < block->base + block->size)
     {
       data_offset = (size_t)(offset - block->base);
-      data_len = (size_t)yr_min(
-          length, (size_t)(block->size - data_offset));
+      data_len = (size_t) yr_min(length, (size_t)(block->size - data_offset));
       block_data = block->fetch_data(block);
 
       if (block_data == NULL)
@@ -227,7 +218,7 @@ define_function(data_deviation)
       length -= data_len;
 
       for (i = 0; i < data_len; i++)
-        sum += fabs(((double)* (block_data + data_offset + i)) - mean);
+        sum += fabs(((double) *(block_data + data_offset + i)) - mean);
 
       past_first_block = true;
     }
@@ -251,7 +242,6 @@ define_function(data_deviation)
   return_float(sum / total_len);
 }
 
-
 define_function(string_mean)
 {
   size_t i;
@@ -259,12 +249,10 @@ define_function(string_mean)
 
   SIZED_STRING* s = sized_string_argument(1);
 
-  for (i = 0; i < s->length; i++)
-    sum += (double) s->c_string[i];
+  for (i = 0; i < s->length; i++) sum += (double) s->c_string[i];
 
   return_float(sum / s->length);
 }
-
 
 define_function(data_mean)
 {
@@ -286,12 +274,11 @@ define_function(data_mean)
 
   foreach_memory_block(iterator, block)
   {
-    if (offset >= block->base &&
-        offset < block->base + block->size)
+    if (offset >= block->base && offset < block->base + block->size)
     {
-      size_t data_offset = (size_t) (offset - block->base);
+      size_t data_offset = (size_t)(offset - block->base);
       size_t data_len = (size_t) yr_min(
-          length, (size_t) (block->size - data_offset));
+          length, (size_t)(block->size - data_offset));
 
       const uint8_t* block_data = block->fetch_data(block);
 
@@ -303,7 +290,7 @@ define_function(data_mean)
       length -= data_len;
 
       for (i = 0; i < data_len; i++)
-        sum += (double)* (block_data + data_offset + i);
+        sum += (double) *(block_data + data_offset + i);
 
       past_first_block = true;
     }
@@ -326,7 +313,6 @@ define_function(data_mean)
 
   return_float(sum / total_len);
 }
-
 
 define_function(data_serial_correlation)
 {
@@ -354,12 +340,11 @@ define_function(data_serial_correlation)
 
   foreach_memory_block(iterator, block)
   {
-    if (offset >= block->base &&
-        offset < block->base + block->size)
+    if (offset >= block->base && offset < block->base + block->size)
     {
       size_t data_offset = (size_t)(offset - block->base);
       size_t data_len = (size_t) yr_min(
-          length, (size_t) (block->size - data_offset));
+          length, (size_t)(block->size - data_offset));
 
       const uint8_t* block_data = block->fetch_data(block);
 
@@ -372,7 +357,7 @@ define_function(data_serial_correlation)
 
       for (i = 0; i < data_len; i++)
       {
-        sccun = (double)* (block_data + data_offset + i);
+        sccun = (double) *(block_data + data_offset + i);
         scct1 += scclast * sccun;
         scct2 += sccun;
         scct3 += sccun * sccun;
@@ -411,7 +396,6 @@ define_function(data_serial_correlation)
   return_float(scc);
 }
 
-
 define_function(string_serial_correlation)
 {
   SIZED_STRING* s = sized_string_argument(1);
@@ -447,7 +431,6 @@ define_function(string_serial_correlation)
   return_float(scc);
 }
 
-
 define_function(data_monte_carlo_pi)
 {
   int past_first_block = false;
@@ -471,14 +454,13 @@ define_function(data_monte_carlo_pi)
 
   foreach_memory_block(iterator, block)
   {
-    if (offset >= block->base &&
-        offset < block->base + block->size)
+    if (offset >= block->base && offset < block->base + block->size)
     {
       unsigned int monte[6];
 
-      size_t data_offset = (size_t) (offset - block->base);
+      size_t data_offset = (size_t)(offset - block->base);
       size_t data_len = (size_t) yr_min(
-          length, (size_t) (block->size - data_offset));
+          length, (size_t)(block->size - data_offset));
 
       const uint8_t* block_data = block->fetch_data(block);
 
@@ -490,7 +472,7 @@ define_function(data_monte_carlo_pi)
 
       for (i = 0; i < data_len; i++)
       {
-        monte[i % 6] = (unsigned int)* (block_data + data_offset + i);
+        monte[i % 6] = (unsigned int) *(block_data + data_offset + i);
 
         if (i % 6 == 5)
         {
@@ -534,7 +516,6 @@ define_function(data_monte_carlo_pi)
 
   return_float(fabs((mpi - PI) / PI));
 }
-
 
 define_function(string_monte_carlo_pi)
 {
@@ -581,7 +562,6 @@ define_function(string_monte_carlo_pi)
   return_float(fabs((mpi - PI) / PI));
 }
 
-
 define_function(in_range)
 {
   double test = float_argument(1);
@@ -590,7 +570,6 @@ define_function(in_range)
 
   return_integer((lower <= test && test <= upper) ? 1 : 0);
 }
-
 
 // Undefine existing "min" and "max" macros in order to avoid conflicts with
 // function names.
@@ -605,7 +584,6 @@ define_function(min)
   return_integer(i < j ? i : j);
 }
 
-
 define_function(max)
 {
   uint64_t i = integer_argument(1);
@@ -614,9 +592,12 @@ define_function(max)
   return_integer(i > j ? i : j);
 }
 
+define_function(to_number)
+{
+  return_integer(integer_argument(1) ? 1 : 0);
+}
 
-begin_declarations;
-
+begin_declarations
   declare_float("MEAN_BYTES");
   declare_function("in_range", "fff", "i", in_range);
   declare_function("deviation", "iif", "f", data_deviation);
@@ -631,23 +612,18 @@ begin_declarations;
   declare_function("entropy", "s", "f", string_entropy);
   declare_function("min", "ii", "i", min);
   declare_function("max", "ii", "i", max);
+  declare_function("to_number", "b", "i", to_number);
+end_declarations
 
-end_declarations;
-
-
-int module_initialize(
-    YR_MODULE* module)
+int module_initialize(YR_MODULE* module)
 {
   return ERROR_SUCCESS;
 }
 
-
-int module_finalize(
-    YR_MODULE* module)
+int module_finalize(YR_MODULE* module)
 {
   return ERROR_SUCCESS;
 }
-
 
 int module_load(
     YR_SCAN_CONTEXT* context,
@@ -659,9 +635,7 @@ int module_load(
   return ERROR_SUCCESS;
 }
 
-
-int module_unload(
-    YR_OBJECT* module_object)
+int module_unload(YR_OBJECT* module_object)
 {
   return ERROR_SUCCESS;
 }

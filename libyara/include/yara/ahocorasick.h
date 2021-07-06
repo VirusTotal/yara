@@ -30,35 +30,29 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef _AHOCORASICK_H
 #define _AHOCORASICK_H
 
-#include <yara/limits.h>
 #include <yara/atoms.h>
+#include <yara/limits.h>
 #include <yara/types.h>
 
 // Number of bits dedicated to store the offset of the slot relative to its
 // own state.
-#define YR_AC_SLOT_OFFSET_BITS              9
+#define YR_AC_SLOT_OFFSET_BITS 9
 
 // Max number of slots in the transition table. This is the maximum number of
 // slots that can be addressed with 23-bit indexes.
-#define YR_AC_MAX_TRANSITION_TABLE_SIZE     0x800000
+#define YR_AC_MAX_TRANSITION_TABLE_SIZE 0x800000
 
-#define YR_AC_ROOT_STATE                    0
-#define YR_AC_NEXT_STATE(t)                 (t >> YR_AC_SLOT_OFFSET_BITS)
-#define YR_AC_INVALID_TRANSITION(t, c)      (((t) & 0x1FF) != c)
+#define YR_AC_ROOT_STATE               0
+#define YR_AC_NEXT_STATE(t)            (t >> YR_AC_SLOT_OFFSET_BITS)
+#define YR_AC_INVALID_TRANSITION(t, c) (((t) &0x1FF) != c)
 
 #define YR_AC_MAKE_TRANSITION(state, code) \
-  ((YR_AC_TRANSITION) \
-    ((((YR_AC_TRANSITION) state) << YR_AC_SLOT_OFFSET_BITS) | (code)))
+  ((YR_AC_TRANSITION)(                     \
+      (((YR_AC_TRANSITION) state) << YR_AC_SLOT_OFFSET_BITS) | (code)))
 
+int yr_ac_automaton_create(YR_ARENA* arena, YR_AC_AUTOMATON** automaton);
 
-int yr_ac_automaton_create(
-    YR_ARENA* arena,
-    YR_AC_AUTOMATON** automaton);
-
-
-int yr_ac_automaton_destroy(
-    YR_AC_AUTOMATON* automaton);
-
+int yr_ac_automaton_destroy(YR_AC_AUTOMATON* automaton);
 
 int yr_ac_add_string(
     YR_AC_AUTOMATON* automaton,
@@ -67,13 +61,8 @@ int yr_ac_add_string(
     YR_ATOM_LIST_ITEM* atom,
     YR_ARENA* arena);
 
+int yr_ac_compile(YR_AC_AUTOMATON* automaton, YR_ARENA* arena);
 
-int yr_ac_compile(
-    YR_AC_AUTOMATON* automaton,
-    YR_ARENA* arena);
-
-void yr_ac_print_automaton(
-    YR_AC_AUTOMATON* automaton);
-
+void yr_ac_print_automaton(YR_AC_AUTOMATON* automaton);
 
 #endif
