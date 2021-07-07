@@ -1987,28 +1987,50 @@ int yr_re_exec(
   return ERROR_SUCCESS;
 }
 
-typedef struct _RE_FAST_EXEC_POSITION
+static int _yr_re_fast_exec_position_create(
+    RE_FAST_EXEC_POSITION_POOL* pool,
+    RE_FAST_EXEC_POSITION** new_position)
 {
-  int round;
-  const uint8_t* input;
-  struct _RE_FAST_EXEC_POSITION* prev;
-  struct _RE_FAST_EXEC_POSITION* next;
+  RE_FAST_EXEC_POSITION* position;
 
-} RE_FAST_EXEC_POSITION;
-
-////////////////////////////////////////////////////////////////////////////////
-// Helper function that destroys a list of RE_FAST_EXEC_POSITION.
-//
-static void _yr_re_fast_exec_destroy_position_list(RE_FAST_EXEC_POSITION* first)
-{
-  RE_FAST_EXEC_POSITION* current = first;
-
-  while (current != NULL)
+  if (pool->head != NULL)
   {
-    RE_FAST_EXEC_POSITION* next = current->next;
-    yr_free(current);
-    current = next;
+    position = pool->head;
+    pool->head = position->next;
   }
+  else
+  {
+    position = (RE_FAST_EXEC_POSITION*) yr_malloc(
+        sizeof(RE_FAST_EXEC_POSITION));
+
+    if (position == NULL)
+      return ERROR_INSUFFICIENT_MEMORY;
+  }
+
+  position->input = NULL;
+  position->round = 0;
+  position->next = NULL;
+  position->prev = NULL;
+
+  *new_position = position;
+
+  return ERROR_SUCCESS;
+}
+
+static void _yr_re_fast_exec_destroy_position_list(
+    RE_FAST_EXEC_POSITION_POOL* pool,
+    RE_FAST_EXEC_POSITION* list)
+{
+  RE_FAST_EXEC_POSITION* last = list;
+
+  while (last->next != NULL) last = last->next;
+
+  last->next = pool->head;
+
+  if (pool->head != NULL)
+    pool->head->prev = last;
+
+  pool->head = list;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -2062,10 +2084,8 @@ int yr_re_fast_exec(
   // Create the first position in the list, which points to the start of the
   // input data. Intially this is the only position, more will be every time
   // RE_OPCODE_REPEAT_ANY_UNGREEDY is executed.
-  first = (RE_FAST_EXEC_POSITION*) yr_malloc(sizeof(RE_FAST_EXEC_POSITION));
-
-  if (first == NULL)
-    return ERROR_INSUFFICIENT_MEMORY;
+  FAIL_ON_ERROR(_yr_re_fast_exec_position_create(
+      &context->re_fast_exec_position_pool, &first));
 
   first->round = 0;
   first->input = input_data;
@@ -2191,12 +2211,14 @@ int yr_re_fast_exec(
               *(next_opcode + 1) != *next_input)
             continue;
 
-          // Insert next_input after insertion point.
-          RE_FAST_EXEC_POSITION* new_input = (RE_FAST_EXEC_POSITION*) yr_malloc(
-              sizeof(RE_FAST_EXEC_POSITION));
+          RE_FAST_EXEC_POSITION* new_input;
 
-          FAIL_ON_NULL_WITH_CLEANUP(
-              new_input, _yr_re_fast_exec_destroy_position_list(first));
+          FAIL_ON_ERROR_WITH_CLEANUP(
+              _yr_re_fast_exec_position_create(
+                  &context->re_fast_exec_position_pool, &new_input),
+              // Cleanup
+              _yr_re_fast_exec_destroy_position_list(
+                  &context->re_fast_exec_position_pool, first));
 
           new_input->input = next_input;
           new_input->round = round + 1;
@@ -2232,14 +2254,16 @@ int yr_re_fast_exec(
                   flags,
                   callback_args),
               // Cleanup
-              _yr_re_fast_exec_destroy_position_list(first));
+              _yr_re_fast_exec_destroy_position_list(
+                  &context->re_fast_exec_position_pool, first));
         }
         else
         {
           if (matches != NULL)
             *matches = bytes_matched;
 
-          _yr_re_fast_exec_destroy_position_list(first);
+          _yr_re_fast_exec_destroy_position_list(
+              &context->re_fast_exec_position_pool, first);
 
           return ERROR_SUCCESS;
         }
@@ -2265,7 +2289,13 @@ int yr_re_fast_exec(
         if (current->next != NULL)
           current->next->prev = current->prev;
 
-        yr_free(current);
+        current->prev = NULL;
+        current->next = context->re_fast_exec_position_pool.head;
+
+        if (current->next != NULL)
+          current->next->prev = current;
+
+        context->re_fast_exec_position_pool.head = current;
       }
 
       current = next;
