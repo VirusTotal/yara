@@ -1987,6 +1987,10 @@ int yr_re_exec(
   return ERROR_SUCCESS;
 }
 
+////////////////////////////////////////////////////////////////////////////////
+// Helper function that creates a RE_FAST_EXEC_POSITION by either allocating it
+// or reusing a previously allocated one from a pool.
+//
 static int _yr_re_fast_exec_position_create(
     RE_FAST_EXEC_POSITION_POOL* pool,
     RE_FAST_EXEC_POSITION** new_position)
@@ -2017,20 +2021,22 @@ static int _yr_re_fast_exec_position_create(
   return ERROR_SUCCESS;
 }
 
+////////////////////////////////////////////////////////////////////////////////
+// Helper function that moves a list of RE_FAST_EXEC_POSITION structures to a
+// pool represented by a RE_FAST_EXEC_POSITION_POOL. Receives pointers to the
+// pool, the first item, and last item in the list.
+//
 static void _yr_re_fast_exec_destroy_position_list(
     RE_FAST_EXEC_POSITION_POOL* pool,
-    RE_FAST_EXEC_POSITION* list)
+    RE_FAST_EXEC_POSITION* first,
+    RE_FAST_EXEC_POSITION* last)
 {
-  RE_FAST_EXEC_POSITION* last = list;
-
-  while (last->next != NULL) last = last->next;
-
   last->next = pool->head;
 
   if (pool->head != NULL)
     pool->head->prev = last;
 
-  pool->head = list;
+  pool->head = first;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -2041,7 +2047,7 @@ static void _yr_re_fast_exec_destroy_position_list(
 //   { 01 02 03 04 [0-2] 04 05 06 07 }
 //
 // The regexp's code produced by such strings can be matched by a faster, less
-// general algorithm, and contains only the following opcodes:
+// general algorithm, and it contains only the following opcodes:
 //
 //   * RE_OPCODE_LITERAL
 //   * RE_OPCODE_MASKED_LITERAL,
@@ -2071,7 +2077,10 @@ int yr_re_fast_exec(
     int* matches)
 {
   RE_REPEAT_ANY_ARGS* repeat_any_args;
+
+  // Pointers to the first and last position in the list.
   RE_FAST_EXEC_POSITION* first;
+  RE_FAST_EXEC_POSITION* last;
 
   int input_incr = flags & RE_FLAGS_BACKWARDS ? -1 : 1;
   int max_bytes_matched = flags & RE_FLAGS_BACKWARDS
@@ -2082,8 +2091,8 @@ int yr_re_fast_exec(
   const uint8_t* ip = code;
 
   // Create the first position in the list, which points to the start of the
-  // input data. Intially this is the only position, more will be every time
-  // RE_OPCODE_REPEAT_ANY_UNGREEDY is executed.
+  // input data. Intially this is the only position, more positions will be
+  // created every time RE_OPCODE_REPEAT_ANY_UNGREEDY is executed.
   FAIL_ON_ERROR(_yr_re_fast_exec_position_create(
       &context->re_fast_exec_position_pool, &first));
 
@@ -2095,6 +2104,11 @@ int yr_re_fast_exec(
   if (flags & RE_FLAGS_BACKWARDS)
     first->input--;
 
+  // As we are starting with a single position, the last one and the first one
+  // are the same.
+  last = first;
+
+  // Round is incremented with every regxp instruction.
   int round = 0;
 
   // Keep in the loop until the list of positions gets empty. Positions are
@@ -2124,6 +2138,7 @@ int yr_re_fast_exec(
                           : current->input - input_data;
       uint8_t mask;
       uint8_t value;
+
       bool match = false;
 
       switch (*ip)
@@ -2218,7 +2233,7 @@ int yr_re_fast_exec(
                   &context->re_fast_exec_position_pool, &new_input),
               // Cleanup
               _yr_re_fast_exec_destroy_position_list(
-                  &context->re_fast_exec_position_pool, first));
+                  &context->re_fast_exec_position_pool, first, last));
 
           new_input->input = next_input;
           new_input->round = round + 1;
@@ -2228,6 +2243,9 @@ int yr_re_fast_exec(
 
           if (new_input->next != NULL)
             new_input->next->prev = new_input;
+
+          if (insertion_point == last)
+            last = new_input;
         }
 
         current->input += input_incr * repeat_any_args->min;
@@ -2255,7 +2273,7 @@ int yr_re_fast_exec(
                   callback_args),
               // Cleanup
               _yr_re_fast_exec_destroy_position_list(
-                  &context->re_fast_exec_position_pool, first));
+                  &context->re_fast_exec_position_pool, first, last));
         }
         else
         {
@@ -2263,7 +2281,7 @@ int yr_re_fast_exec(
             *matches = bytes_matched;
 
           _yr_re_fast_exec_destroy_position_list(
-              &context->re_fast_exec_position_pool, first);
+              &context->re_fast_exec_position_pool, first, last);
 
           return ERROR_SUCCESS;
         }
@@ -2280,8 +2298,15 @@ int yr_re_fast_exec(
       }
       else
       {
-        if (first == current)
+        // Remove current from the list. If the item being removed is the first
+        // one or the last one, the first and last pointers should be updated.
+        // The removed item is put into the pool for later reuse.
+
+        if (current == first)
           first = current->next;
+
+        if (current == last)
+          last = current->prev;
 
         if (current->prev != NULL)
           current->prev->next = current->next;
