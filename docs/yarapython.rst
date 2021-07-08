@@ -393,7 +393,7 @@ Reference
   Instances of this class are returned by :py:func:`yara.compile` and represents
   a set of compiled rules.
 
-  .. py:method:: match(filepath, pid, data, externals=None, callback=None, fast=False, timeout=None, modules_data=None, modules_callback=None, which_callbacks=CALLBACK_ALL)
+  .. py:method:: match(filepath, pid, data, externals=None, callback=None, fast=False, timeout=None, modules_data=None, modules_callback=None, warnings_callback=None, which_callbacks=CALLBACK_ALL)
 
     Scan a file, process memory or data string.
 
@@ -413,6 +413,7 @@ Reference
       are module names and values are *bytes* objects containing the additional
       data.
     :param function modules_callback: Callback function invoked for each module.
+    :param function warnings_callback: Callback function invoked for warning, like ``yara.CALLBACK_TOO_MANY_MATCHES``.
     :param int which_callbacks: An integer that indicates in which cases the
       callback function must be called. Possible values are ``yara.CALLBACK_ALL``,
       ``yara.CALLBACK_MATCHES`` and ``yara.CALLBACK_NON_MATCHES``.

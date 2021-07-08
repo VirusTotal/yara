@@ -483,7 +483,7 @@ Reference
 
         Data directory for Delayed Import Table. Structure of the delayed import table
         is linker-dependent. Microsoft version of delayed imports is described
-        in the souces "delayimp.h" and "delayimp.cpp", which can be found
+        in the sources "delayimp.h" and "delayimp.cpp", which can be found
         in MS Visual Studio 2008 CRT sources.
 
     .. c:type:: IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR
@@ -751,9 +751,9 @@ Reference
     .. c:member:: algorithm
 
         String representation of the algorithm used for this
-	signature. Usually "sha1WithRSAEncryption". It depends on the
-	X.509 and PKCS#7 implementationss and possibly their versions,
-	consider using algorithm_oid instead.
+    signature. Usually "sha1WithRSAEncryption". It depends on the
+    X.509 and PKCS#7 implementations and possibly their versions,
+    consider using algorithm_oid instead.
 
     .. c:member:: algorithm_oid
 
@@ -763,11 +763,11 @@ Reference
         expected to be stable across X.509 and PKCS#7 implementations
         and their versions.
 
-	For example, when using the current OpenSSL-based implementation::
+    For example, when using the current OpenSSL-based implementation::
 
-	    algorithm_oid == "1.2.840.113549.1.1.11"
+        algorithm_oid == "1.2.840.113549.1.1.11"
 
-	is functionally equivalent to::
+    is functionally equivalent to::
 
             algorithm == "sha1WithRSAEncryption"
 
