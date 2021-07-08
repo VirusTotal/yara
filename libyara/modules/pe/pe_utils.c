@@ -110,6 +110,7 @@ PIMAGE_NT_HEADERS32 pe_get_header(const uint8_t* data, size_t data_size)
       yr_le16toh(pe_header->FileHeader.Machine) != IMAGE_FILE_MACHINE_R10000 &&
       yr_le16toh(pe_header->FileHeader.Machine) != IMAGE_FILE_MACHINE_ALPHA &&
       yr_le16toh(pe_header->FileHeader.Machine) != IMAGE_FILE_MACHINE_SH3E &&
+      yr_le16toh(pe_header->FileHeader.Machine) != IMAGE_FILE_MACHINE_ALPHA64 &&
       yr_le16toh(pe_header->FileHeader.Machine) != IMAGE_FILE_MACHINE_AXP64 &&
       yr_le16toh(pe_header->FileHeader.Machine) != IMAGE_FILE_MACHINE_TRICORE &&
       yr_le16toh(pe_header->FileHeader.Machine) != IMAGE_FILE_MACHINE_CEF &&
