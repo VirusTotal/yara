@@ -124,12 +124,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define YR_MAX_OVERLOADED_FUNCTIONS 10
 #endif
 
-// Size of the stack used by yr_re_fast_exec.
-#ifndef YR_MAX_FAST_RE_STACK
-#define YR_MAX_FAST_RE_STACK 300
-#endif
-
-
 // Regular expressions like /foo.{x,y}bar/ are split in two separate ones /foo/
 // and /bar/ if x is larger than YR_STRING_CHAINING_THRESHOLD. This also applies
 // to hex strings like { 01 02 03 [x-y] 004 05 06 }.

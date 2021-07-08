@@ -159,6 +159,9 @@ typedef struct RE_ERROR RE_ERROR;
 typedef struct RE_FIBER RE_FIBER;
 typedef struct RE_FIBER_LIST RE_FIBER_LIST;
 typedef struct RE_FIBER_POOL RE_FIBER_POOL;
+typedef struct RE_FAST_EXEC_POSITION RE_FAST_EXEC_POSITION;
+typedef struct RE_FAST_EXEC_POSITION_LIST RE_FAST_EXEC_POSITION_LIST;
+typedef struct RE_FAST_EXEC_POSITION_POOL RE_FAST_EXEC_POSITION_POOL;
 
 typedef struct YR_AC_STATE YR_AC_STATE;
 typedef struct YR_AC_AUTOMATON YR_AC_AUTOMATON;
@@ -431,6 +434,19 @@ struct RE_FIBER_POOL
 {
   int fiber_count;
   RE_FIBER_LIST fibers;
+};
+
+struct RE_FAST_EXEC_POSITION
+{
+  int round;
+  const uint8_t* input;
+  RE_FAST_EXEC_POSITION* prev;
+  RE_FAST_EXEC_POSITION* next;
+};
+
+struct RE_FAST_EXEC_POSITION_POOL
+{
+  RE_FAST_EXEC_POSITION* head;
 };
 
 struct YR_MODIFIER
@@ -759,6 +775,9 @@ struct YR_SCAN_CONTEXT
 
   // Fiber pool used by yr_re_exec.
   RE_FIBER_POOL re_fiber_pool;
+
+  // Pool used by yr_re_fast_exec.
+  RE_FAST_EXEC_POSITION_POOL re_fast_exec_position_pool;
 
   // A bitmap with one bit per rule, bit N is set when the rule with index N
   // has matched.

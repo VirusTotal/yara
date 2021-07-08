@@ -94,9 +94,6 @@ matrix:
 before_script: ./bootstrap.sh
 
 script: |
-  rvm get head  # Workaround for Travis CI issue https://github.com/travis-ci/travis-ci/issues/6307
-  set -e
-  unset CC # A pre-set CC overrides --host settings.
   ./configure $CONFIGFLAGS
   make clean && make
   case "$CONFIGFLAGS" in
