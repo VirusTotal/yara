@@ -463,7 +463,7 @@ Base64 strings
 The ``base64`` modifier can be used to search for strings that have been base64
 encoded. A good explanation of the technique is at:
 
-https://www.leeholmes.com/blog/2019/12/10/searching-for-content-in-base-64-strings-2/
+https://www.leeholmes.com/searching-for-content-in-xor-encrypted-data/
 
 The following rule will search for the three base64 permutations of the string
 "This program cannot":
