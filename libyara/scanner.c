@@ -279,16 +279,22 @@ YR_API void yr_scanner_destroy(YR_SCANNER* scanner)
 {
   YR_DEBUG_FPRINTF(2, stderr, "- %s() {} \n", __FUNCTION__);
 
-  RE_FIBER* fiber;
-  RE_FIBER* next_fiber;
-
-  fiber = scanner->re_fiber_pool.fibers.head;
+  RE_FIBER* fiber = scanner->re_fiber_pool.fibers.head;
 
   while (fiber != NULL)
   {
-    next_fiber = fiber->next;
+    RE_FIBER* next = fiber->next;
     yr_free(fiber);
-    fiber = next_fiber;
+    fiber = next;
+  }
+
+  RE_FAST_EXEC_POSITION* position = scanner->re_fast_exec_position_pool.head;
+
+  while (position != NULL)
+  {
+    RE_FAST_EXEC_POSITION* next = position->next;
+    yr_free(position);
+    position = next;
   }
 
   if (scanner->objects_table != NULL)
