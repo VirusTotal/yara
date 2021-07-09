@@ -77,13 +77,13 @@ static int _yr_arena_make_ptr_relocatable(
     yr_arena_off_t base_offset,
     va_list offsets)
 {
-  yr_arena_off_t offset;
+  size_t offset;
 
   int result = ERROR_SUCCESS;
 
   // The argument to va_arg is size_t because the offsets passed to this
   // function are obtained with offsetof().
-  offset = (yr_arena_off_t) va_arg(offsets, size_t);
+  offset = va_arg(offsets, size_t);
 
   while (offset != EOL)
   {
@@ -93,7 +93,7 @@ static int _yr_arena_make_ptr_relocatable(
       return ERROR_INSUFFICIENT_MEMORY;
 
     reloc->buffer_id = buffer_id;
-    reloc->offset = base_offset + offset;
+    reloc->offset = base_offset + (yr_arena_off_t) offset;
     reloc->next = NULL;
 
     if (arena->reloc_list_head == NULL)
@@ -103,7 +103,7 @@ static int _yr_arena_make_ptr_relocatable(
       arena->reloc_list_tail->next = reloc;
 
     arena->reloc_list_tail = reloc;
-    offset = (yr_arena_off_t) va_arg(offsets, size_t);
+    offset = va_arg(offsets, size_t);
   }
 
   return result;
