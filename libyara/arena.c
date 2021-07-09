@@ -81,7 +81,9 @@ static int _yr_arena_make_ptr_relocatable(
 
   int result = ERROR_SUCCESS;
 
-  offset = (yr_arena_off_t) va_arg(offsets, yr_arena_off_t);
+  // The argument to va_arg is size_t because the offsets passed to this
+  // function are obtained with offsetof().
+  offset = (yr_arena_off_t) va_arg(offsets, size_t);
 
   while (offset != EOL)
   {
@@ -101,7 +103,7 @@ static int _yr_arena_make_ptr_relocatable(
       arena->reloc_list_tail->next = reloc;
 
     arena->reloc_list_tail = reloc;
-    offset = (yr_arena_off_t) va_arg(offsets, yr_arena_off_t);
+    offset = (yr_arena_off_t) va_arg(offsets, size_t);
   }
 
   return result;
