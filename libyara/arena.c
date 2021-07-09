@@ -101,7 +101,7 @@ static int _yr_arena_make_ptr_relocatable(
       arena->reloc_list_tail->next = reloc;
 
     arena->reloc_list_tail = reloc;
-    offset = (yr_arena_off_t) va_arg(offsets, size_t);
+    offset = (yr_arena_off_t) va_arg(offsets, yr_arena_off_t);
   }
 
   return result;
