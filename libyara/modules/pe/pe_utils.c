@@ -188,6 +188,7 @@ int64_t pe_rva_to_offset(PE* pe, uint64_t rva)
       }
 
       if (rva >= yr_le32toh(section->VirtualAddress) &&
+          rva - yr_le32toh(section->VirtualAddress) < yr_le32toh(section->Misc.VirtualSize) &&
           section_rva <= yr_le32toh(section->VirtualAddress))
       {
         // Round section_offset
