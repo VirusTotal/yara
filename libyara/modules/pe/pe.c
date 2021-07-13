@@ -1089,6 +1089,273 @@ static IMPORTED_DLL* pe_parse_imports(PE* pe)
   return head;
 }
 
+// Delay-import descriptors made by MS Visual C++ 6.0 have old format
+// of delay import directory, where all entries are VAs (as opposite to RVAs from newer MS compilers).
+// We convert the delay-import directory entries to RVAs by checking the lowest bit in the delay-import descriptor's Attributes value
+uint64_t pe_normalize_delay_import_value(uint64_t image_base, uint64_t virtual_address)
+{
+
+  // Ignore zero items
+  if (virtual_address != 0)
+  {
+    // Sample: 0fc4cb0620f95bdd624f2c78eea4d2b59594244c6671cf249526adf2f2cb71ec
+    // Contains artificially created delay import directory with incorrect values:
+    //
+    //  Attributes                      0x00000000 <-- Old MS delay import record, contains VAs
+    //  NameRva                         0x004010e6
+    //  ModuleHandleRva                 0x00000000
+    //  DelayImportAddressTableRva      0x00001140 <-- WRONG! This is an RVA
+    //  DelayImportNameTableRva         0x004010c0
+    //  BoundDelayImportTableRva        0x00000000
+    //  ...
+
+    if (virtual_address > image_base)
+    {
+      virtual_address = virtual_address - image_base;
+    }
+  }
+
+  return virtual_address;
+}
+
+int pe_is_termination_delay_import_entry(PIMAGE_DELAYLOAD_DESCRIPTOR importDescriptor)
+{
+  return (importDescriptor->Attributes.AllAttributes == 0 &&
+          importDescriptor->DllNameRVA == 0 &&
+          importDescriptor->ModuleHandleRVA == 0 &&
+          importDescriptor->ImportAddressTableRVA == 0 &&
+          importDescriptor->ImportNameTableRVA == 0 &&
+          importDescriptor->BoundImportAddressTableRVA == 0 &&
+          importDescriptor->UnloadInformationTableRVA == 0 &&
+          importDescriptor->TimeDateStamp == 0);
+}
+
+char * pe_parse_delay_import_dll_name(PE* pe, uint64_t rva)
+{
+  const uint64_t offset = pe_rva_to_offset(pe, rva);
+
+  if (offset < 0)
+    return NULL;
+
+  char* dll_name = (char *) (pe->data + offset);
+  if (!pe_valid_dll_name(dll_name, pe->data_size - (size_t) offset))
+    return NULL;
+  return yr_strdup(dll_name);
+}
+
+uint64_t pe_parse_delay_import_pointer(PE* pe, uint64_t pointerSize, uint64_t rva)
+{
+  const uint64_t offset = pe_rva_to_offset(pe, rva);
+  const uint8_t *data = pe->data + offset;
+
+
+  if (!fits_in_pe(pe, data, pointerSize))
+    return YR_UNDEFINED;
+
+
+  if (IS_64BITS_PE(pe))
+    return yr_le64toh(*(uint64_t *) data);
+  else
+    return yr_le32toh(*(uint32_t *) data);
+}
+
+static void* pe_parse_delay_imports(PE* pe)
+{
+  int64_t offset;
+  uint64_t num_imports = 0;           // Number of imported DLLs
+  uint64_t num_function_imports = 0;  // Total number of functions imported
+  uint64_t image_base = OptionalHeader(pe, ImageBase);
+  uint64_t size_of_image = OptionalHeader(pe, SizeOfImage);
+  uint64_t pointer_size = (IS_64BITS_PE(pe)) ? 8 : 4;
+  uint64_t ordinal_mask = (IS_64BITS_PE(pe)) ? IMAGE_ORDINAL_FLAG64 : IMAGE_ORDINAL_FLAG32;
+
+  IMPORTED_DLL* head_dll = NULL;
+  IMPORTED_DLL* tail_dll = NULL;
+
+  IMPORT_FUNCTION *head_fun = NULL;
+  IMPORT_FUNCTION *tail_fun = NULL;
+
+  PIMAGE_DELAYLOAD_DESCRIPTOR import_descriptor = NULL;
+  PIMAGE_DATA_DIRECTORY directory = NULL;
+
+  // Default to 0 imports until we know there are any
+  set_integer(0, pe->object, "number_of_delay_imports");
+  set_integer(0, pe->object, "number_of_delay_imported_functions");
+
+
+  directory = pe_get_directory_entry(
+      pe, IMAGE_DIRECTORY_ENTRY_DELAY_IMPORT);
+
+  if (directory == NULL)
+    return NULL;
+
+  if (yr_le32toh(directory->VirtualAddress) == 0)
+    return NULL;
+
+
+  offset = pe_rva_to_offset(pe, yr_le32toh(directory->VirtualAddress));
+
+  if (offset < 0)
+    return NULL;
+
+  import_descriptor = (PIMAGE_DELAYLOAD_DESCRIPTOR)(pe->data + offset);
+  for (; struct_fits_in_pe(pe, import_descriptor, IMAGE_DELAYLOAD_DESCRIPTOR); import_descriptor++)
+  {
+    // Check for the termination entry
+    if (pe_is_termination_delay_import_entry(import_descriptor))
+      break;
+
+    DWORD Attributes                 = yr_le32toh(import_descriptor->Attributes.AllAttributes);
+    DWORD DllNameRVA                 = yr_le32toh(import_descriptor->DllNameRVA);
+    DWORD ModuleHandleRVA            = yr_le32toh(import_descriptor->ModuleHandleRVA);
+    DWORD ImportAddressTableRVA      = yr_le32toh(import_descriptor->ImportAddressTableRVA);
+    DWORD ImportNameTableRVA         = yr_le32toh(import_descriptor->ImportNameTableRVA);
+    DWORD BoundImportAddressTableRVA = yr_le32toh(import_descriptor->BoundImportAddressTableRVA);
+    DWORD UnloadInformationTableRVA  = yr_le32toh(import_descriptor->UnloadInformationTableRVA);
+
+    // Valid delayed import entry starts either with 0 or 0x01.
+    // We strict require one of the valid values here
+    if (Attributes > 0x1)
+      break;
+
+    // Convert older (MS Visual C++ 6.0) delay-import descriptor to newer one.
+    // These delay-import descriptors are distinguishable by lowest bit in rec.Attributes to be zero.
+    // Sample: 2775d97f8bdb3311ace960a42eee35dbec84b9d71a6abbacb26c14e83f5897e4
+    if(!IS_64BITS_PE(pe) && !Attributes)
+    {
+      DllNameRVA = pe_normalize_delay_import_value(image_base, DllNameRVA);
+      ModuleHandleRVA = pe_normalize_delay_import_value(image_base, ModuleHandleRVA);
+      ImportAddressTableRVA = pe_normalize_delay_import_value(image_base, ImportAddressTableRVA);
+      ImportNameTableRVA = pe_normalize_delay_import_value(image_base, ImportNameTableRVA);
+      BoundImportAddressTableRVA = pe_normalize_delay_import_value(image_base, BoundImportAddressTableRVA);
+      UnloadInformationTableRVA = pe_normalize_delay_import_value(image_base, UnloadInformationTableRVA);
+    }
+
+    // Stop on blatantly invalid delay import entries (old PELIB behavior)
+    if (ImportNameTableRVA >= size_of_image ||
+        ImportAddressTableRVA >= size_of_image ||
+        DllNameRVA < sizeof(IMAGE_DOS_HEADER) ||
+        ImportNameTableRVA < sizeof(IMAGE_DOS_HEADER))
+      break;
+
+    char *dll_name = pe_parse_delay_import_dll_name(pe, DllNameRVA);
+
+    if (dll_name == NULL)
+      continue;
+
+    IMPORTED_DLL *imported_dll = (IMPORTED_DLL*) yr_calloc(1, sizeof(IMPORTED_DLL));
+    if (imported_dll == NULL)
+      continue;
+
+
+    imported_dll->name = dll_name;
+    imported_dll->next = NULL;
+    imported_dll->functions = NULL;
+
+
+    head_fun = tail_fun = NULL;
+
+    uint64_t name_rva = ImportNameTableRVA;
+    uint64_t func_rva = ImportAddressTableRVA;
+    for(;;)
+    {
+      uint64_t nameAddress = pe_parse_delay_import_pointer(pe, pointer_size, name_rva);
+      uint64_t funcAddress = pe_parse_delay_import_pointer(pe, pointer_size, func_rva);
+
+      // Value of YR_UNDEFINED means that value is outside of pe->data
+      if (nameAddress == YR_UNDEFINED || funcAddress == YR_UNDEFINED)
+        break;
+
+      // Value of zero means that this is the end of the bound import name table
+      if(nameAddress == 0 || funcAddress == 0)
+        break;
+
+
+      IMPORT_FUNCTION* imported_func = (IMPORT_FUNCTION*) yr_malloc(sizeof(IMPORT_FUNCTION));
+
+
+      if (imported_func == NULL)
+        continue;
+
+      imported_func->name = NULL;
+      imported_func->has_ordinal = 0;
+      imported_func->ordinal = 0;
+      imported_func->next = NULL;
+
+      // Check name address. It could be ordinal, VA or RVA
+      if (!(nameAddress & ordinal_mask))
+      {
+        // Convert name address to RVA, if needed
+        if(!Attributes)
+          nameAddress = pe_normalize_delay_import_value(image_base, nameAddress);
+
+        offset = pe_rva_to_offset(pe, nameAddress+sizeof(uint16_t));
+        imported_func->name = (char *) yr_strndup(
+            (char*) (pe->data + offset), yr_min(available_space(pe, (char*) (pe->data + offset)), 512));
+      }
+      else
+      {
+        // If imported by ordinal. Lookup the ordinal.
+        imported_func->name = ord_lookup(dll_name, yr_le64toh(nameAddress) & 0xFFFF);
+        // Also store the ordinal.
+        imported_func->ordinal = yr_le64toh(nameAddress) & 0xFFFF;
+        imported_func->has_ordinal = 1;
+      }
+
+
+      num_function_imports++;
+      name_rva += pointer_size;
+      func_rva += pointer_size;
+
+
+      if (head_fun == NULL)
+        head_fun = imported_func;
+
+      if (tail_fun != NULL)
+        tail_fun->next = imported_func;
+
+      tail_fun = imported_func;
+    }
+
+
+    num_imports++;
+
+
+    imported_dll->functions = head_fun;
+
+    if (head_dll == NULL)
+      head_dll = imported_dll;
+
+    if (tail_dll != NULL)
+      tail_dll->next = imported_dll;
+
+    tail_dll = imported_dll;
+
+  }
+
+
+  set_integer(num_imports, pe->object, "number_of_delay_imports");
+  set_integer(num_function_imports, pe->object, "number_of_delay_imported_functions");
+
+  IMPORTED_DLL *dll = head_dll;
+  int dll_cnt = 0;
+  int fun_cnt = 0;
+  for (; dll != NULL; dll = dll->next, dll_cnt++)
+  {
+    for (IMPORT_FUNCTION* func = dll->functions; func != NULL; func = func->next, fun_cnt++)
+    {
+      set_string(func->name, pe->object, "delay_import_details[%i].functions[%i].name", dll_cnt, fun_cnt);
+      if (func->has_ordinal)
+        set_integer(func->ordinal, pe->object, "delay_import_details[%i].functions[%i].ordinal", dll_cnt, fun_cnt);
+      else
+        set_integer(YR_UNDEFINED, pe->object, "delay_import_details[%i].functions[%i].ordinal", dll_cnt, fun_cnt);
+    }
+    set_string(dll->name, pe->object, "delay_import_details[%i].library_name", dll_cnt);
+    set_integer(fun_cnt, pe->object, "delay_import_details[%i].number_of_functions", dll_cnt);
+  }
+  return head_dll;
+}
+
 //
 // Walk the exports and collect relevant information. It is used in the
 // "exports" function for comparison.
@@ -3018,6 +3285,8 @@ begin_declarations
 
   declare_integer("number_of_imports");
   declare_integer("number_of_imported_functions");
+  declare_integer("number_of_delay_imports");
+  declare_integer("number_of_delay_imported_functions");
   declare_integer("number_of_exports");
 
   declare_string("dll_name");
@@ -3038,6 +3307,14 @@ begin_declarations
     end_struct_array("functions");
   end_struct_array("import_details");
 
+  begin_struct_array("delay_import_details");
+    declare_string("library_name");
+    declare_integer("number_of_function");
+    begin_struct_array("functions");
+      declare_string("name");
+      declare_integer("ordinal");
+    end_struct_array("functions");
+  end_struct_array("delay_import_details");
 
   declare_integer("resource_timestamp");
 
@@ -3539,6 +3816,7 @@ int module_load(
 #endif
 
         pe->imported_dlls = pe_parse_imports(pe);
+        pe->delay_imported_dlls = pe_parse_delay_imports(pe);
         pe_parse_exports(pe);
 
         break;
@@ -3549,23 +3827,11 @@ int module_load(
   return ERROR_SUCCESS;
 }
 
-int module_unload(YR_OBJECT* module_object)
+void free_dlls(IMPORTED_DLL * dll)
 {
-  IMPORTED_DLL* dll = NULL;
-  IMPORTED_DLL* next_dll = NULL;
-  IMPORT_FUNCTION* func = NULL;
-  IMPORT_FUNCTION* next_func = NULL;
-
-  PE* pe = (PE*) module_object->data;
-
-  if (pe == NULL)
-    return ERROR_SUCCESS;
-
-  if (pe->hash_table != NULL)
-    yr_hash_table_destroy(
-        pe->hash_table, (YR_HASH_TABLE_FREE_VALUE_FUNC) yr_free);
-
-  dll = pe->imported_dlls;
+  IMPORTED_DLL *next_dll = NULL;
+  IMPORT_FUNCTION *func = NULL;
+  IMPORT_FUNCTION *next_func = NULL;
 
   while (dll)
   {
@@ -3588,6 +3854,22 @@ int module_unload(YR_OBJECT* module_object)
     yr_free(dll);
     dll = next_dll;
   }
+
+}
+
+int module_unload(YR_OBJECT* module_object)
+{
+  PE* pe = (PE*) module_object->data;
+
+  if (pe == NULL)
+    return ERROR_SUCCESS;
+
+  if (pe->hash_table != NULL)
+    yr_hash_table_destroy(
+        pe->hash_table, (YR_HASH_TABLE_FREE_VALUE_FUNC) yr_free);
+
+  free_dlls(pe->imported_dlls);
+  free_dlls(pe->delay_imported_dlls);
 
   yr_free(pe);
 
