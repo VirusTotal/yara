@@ -1562,6 +1562,13 @@ for non-PE files, and so will do ``pe.entry_point != 0x1000`` and
 ``not pe.entry_point == 0x1000``, as non of these expressions make sense for non-PE
 files.
 
+To check if expression is defined use unary operator ``defined``. Example:
+
+.. code-block:: yara
+
+    defined pe.entry_point
+
+
 
 External variables
 ==================
