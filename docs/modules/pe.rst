@@ -1131,7 +1131,7 @@ Reference
 
         .. c:member:: ordinal
 
-            Ordinal of imported function. If ordinal does not exists this value is YR_UNDEFINED
+            Ordinal of imported function. If ordinal does not exist this value is YR_UNDEFINED
 
     *Example: pe.import_details[1].library_name == "library_name"
 
