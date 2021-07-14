@@ -979,6 +979,34 @@ static int pe_valid_dll_name(const char* dll_name, size_t n)
   return (l > 0 && l < n);
 }
 
+
+void pe_set_imports(
+    PE *pe,
+    IMPORTED_DLL *dll,
+    const char* dll_name,
+    const char* dll_number_of_functions,
+    const char* fun_name,
+    const char* fun_ordinal)
+{
+  int dll_cnt = 0;
+  int fun_cnt = 0;
+
+  for (; dll != NULL; dll = dll->next, dll_cnt++)
+  {
+    for (IMPORT_FUNCTION *func = dll->functions; func != NULL; func = func->next, fun_cnt++)
+    {
+      set_string(func->name, pe->object, fun_name, dll_cnt, fun_cnt);
+      if (func->has_ordinal)
+        set_integer(func->ordinal, pe->object, fun_ordinal, dll_cnt, fun_cnt);
+      else
+        set_integer(YR_UNDEFINED, pe->object, fun_ordinal, dll_cnt, fun_cnt);
+    }
+    set_string(dll->name, pe->object, dll_name, dll_cnt);
+    set_integer(fun_cnt, pe->object, dll_number_of_functions, dll_cnt);
+  }
+
+}
+
 //
 // Walk the imports and collect relevant information. It is used in the
 // "imports" function for comparison and in the "imphash" function for
@@ -1071,20 +1099,13 @@ static IMPORTED_DLL* pe_parse_imports(PE* pe)
 
   set_integer(num_imports, pe->object, "number_of_imports");
   set_integer(num_function_imports, pe->object, "number_of_imported_functions");
-  dll = head;
-  for (; dll != NULL; dll = dll->next, dll_cnt++)
-  {
-    for (IMPORT_FUNCTION* func = dll->functions; func != NULL; func = func->next, fun_cnt++)
-    {
-      set_string(func->name, pe->object, "import_details[%i].functions[%i].name", dll_cnt, fun_cnt);
-      if (func->has_ordinal)
-        set_integer(func->ordinal, pe->object, "import_details[%i].functions[%i].ordinal", dll_cnt, fun_cnt);
-      else
-        set_integer(YR_UNDEFINED, pe->object, "import_details[%i].functions[%i].ordinal", dll_cnt, fun_cnt);
-    }
-    set_string(dll->name, pe->object, "import_details[%i].library_name", dll_cnt);
-    set_integer(fun_cnt, pe->object, "import_details[%i].number_of_functions", dll_cnt);
-  }
+  pe_set_imports(
+      pe,
+      head,
+      "import_details[%i].library_name",
+      "import_details[%i].number_of_functions",
+      "import_details[%i].functions[%i].name",
+      "import_details[%i].functions[%i].ordinal");
 
   return head;
 }
@@ -1118,6 +1139,7 @@ uint64_t pe_normalize_delay_import_value(uint64_t image_base, uint64_t virtual_a
   return virtual_address;
 }
 
+
 int pe_is_termination_delay_import_entry(PIMAGE_DELAYLOAD_DESCRIPTOR importDescriptor)
 {
   return (importDescriptor->Attributes.AllAttributes == 0 &&
@@ -1129,6 +1151,7 @@ int pe_is_termination_delay_import_entry(PIMAGE_DELAYLOAD_DESCRIPTOR importDescr
           importDescriptor->UnloadInformationTableRVA == 0 &&
           importDescriptor->TimeDateStamp == 0);
 }
+
 
 char * pe_parse_delay_import_dll_name(PE* pe, uint64_t rva)
 {
@@ -1142,6 +1165,7 @@ char * pe_parse_delay_import_dll_name(PE* pe, uint64_t rva)
     return NULL;
   return yr_strdup(dll_name);
 }
+
 
 uint64_t pe_parse_delay_import_pointer(PE* pe, uint64_t pointerSize, uint64_t rva)
 {
@@ -1158,6 +1182,7 @@ uint64_t pe_parse_delay_import_pointer(PE* pe, uint64_t pointerSize, uint64_t rv
   else
     return yr_le32toh(*(uint32_t *) data);
 }
+
 
 static void* pe_parse_delay_imports(PE* pe)
 {
@@ -1337,22 +1362,14 @@ static void* pe_parse_delay_imports(PE* pe)
   set_integer(num_imports, pe->object, "number_of_delay_imports");
   set_integer(num_function_imports, pe->object, "number_of_delay_imported_functions");
 
-  IMPORTED_DLL *dll = head_dll;
-  int dll_cnt = 0;
-  int fun_cnt = 0;
-  for (; dll != NULL; dll = dll->next, dll_cnt++)
-  {
-    for (IMPORT_FUNCTION* func = dll->functions; func != NULL; func = func->next, fun_cnt++)
-    {
-      set_string(func->name, pe->object, "delay_import_details[%i].functions[%i].name", dll_cnt, fun_cnt);
-      if (func->has_ordinal)
-        set_integer(func->ordinal, pe->object, "delay_import_details[%i].functions[%i].ordinal", dll_cnt, fun_cnt);
-      else
-        set_integer(YR_UNDEFINED, pe->object, "delay_import_details[%i].functions[%i].ordinal", dll_cnt, fun_cnt);
-    }
-    set_string(dll->name, pe->object, "delay_import_details[%i].library_name", dll_cnt);
-    set_integer(fun_cnt, pe->object, "delay_import_details[%i].number_of_functions", dll_cnt);
-  }
+  pe_set_imports(
+      pe,
+      head_dll,
+      "delay_import_details[%i].library_name",
+      "delay_import_details[%i].number_of_functions",
+      "delay_import_details[%i].functions[%i].name",
+      "delay_import_details[%i].functions[%i].ordinal");
+
   return head_dll;
 }
 
