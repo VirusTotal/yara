@@ -359,6 +359,22 @@ int main(int argc, char** argv)
       }",
       "tests/data/mtxex.dll");
 
+  assert_true_rule_file(
+      "import \"pe\" \
+      \
+      rule import_details_catch \
+      {\
+          condition:\
+            for any import_detail in pe.import_details: (\
+                import_detail.library_name == \"MSVCR100.dll\" and\
+                for any function in import_detail.functions : (\
+                    function.name == \"_initterm\"\
+                )\
+            )\
+      }",
+      "tests/data/079a472d22290a94ebb212aa8015cdc8dd28a968c6b4d3b88acdd58ce2d3b885");
+
+
   yr_finalize();
 
   YR_DEBUG_FPRINTF(
