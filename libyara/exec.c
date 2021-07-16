@@ -797,6 +797,12 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
       push(r1);
       break;
 
+    case OP_DEFINED:
+      pop(r1);
+      r1.i = !is_undef(r1);
+      push(r1);
+      break;
+
     case OP_MOD:
       YR_DEBUG_FPRINTF(2, stderr, "- case OP_MOD: // %s()\n", __FUNCTION__);
       pop(r2);
