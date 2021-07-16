@@ -1539,7 +1539,7 @@ static void pe_parse_header(PE* pe, uint64_t base_address, int flags)
   PIMAGE_DATA_DIRECTORY data_dir;
 
   char section_name[IMAGE_SIZEOF_SHORT_NAME + 1];
-  int scount, ddcount;
+  int sect_name_length, scount, ddcount;
 
   uint64_t highest_sec_siz = 0;
   uint64_t highest_sec_ofs = 0;
@@ -1770,10 +1770,23 @@ static void pe_parse_header(PE* pe, uint64_t base_address, int flags)
     if (!struct_fits_in_pe(pe, section, IMAGE_SECTION_HEADER))
       break;
 
-    strncpy(section_name, (char*) section->Name, IMAGE_SIZEOF_SHORT_NAME);
+    memcpy(section_name, section->Name, IMAGE_SIZEOF_SHORT_NAME);
     section_name[IMAGE_SIZEOF_SHORT_NAME] = '\0';
 
-    set_string(section_name, pe->object, "sections[%i].name", i);
+    // Basically do rstrip('\0'), find the rightmost non-null character.
+    // Samples like 0043812838495a45449a0ac61a81b9c16eddca1ad249fb4f7fdb1c4505e9bb34 contain
+    // sections with additional characters after the first null.
+    for (sect_name_length = IMAGE_SIZEOF_SHORT_NAME - 1; sect_name_length >= 0; --sect_name_length)
+    {
+      if (section_name[sect_name_length] != '\0')
+        break;
+    }
+
+    set_sized_string(
+        (char*) section_name,
+        sect_name_length + 1,
+        pe->object, "sections[%i].name",
+        i);
 
     set_integer(
         yr_le32toh(section->Characteristics),
