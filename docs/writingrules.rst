@@ -73,6 +73,14 @@ keywords are reserved and cannot be used as an identifier:
      - uint8be
      - wide
      - xor
+   * - defined
+     -
+     -
+     -
+     -
+     -
+     -
+     -
 
 Rules are generally composed of two sections: strings definition and condition.
 The strings definition section can be omitted if the rule doesn't rely on any
