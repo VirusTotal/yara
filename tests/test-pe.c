@@ -85,6 +85,112 @@ int main(int argc, char** argv)
       "import \"pe\" \
       rule test { \
         condition: \
+          pe.delayed_imports(\"USER32.dll\", \"MessageBoxA\") \
+      }",
+      "tests/data/pe_imports");
+
+  assert_false_rule_file(
+      "import \"pe\" \
+      rule test { \
+        condition: \
+            pe.delayed_imports(\"KERNEL32.dll\", \"DeleteCriticalSection\") \
+      }",
+      "tests/data/pe_imports");
+
+  assert_true_rule_file(
+      "import \"pe\" \
+      rule test { \
+        condition: \
+          pe.delayed_imports(/.*/, /Message.*/) == 2 \
+      }",
+      "tests/data/pe_imports");
+
+  assert_true_rule_file(
+      "import \"pe\" \
+      rule test { \
+        condition: \
+          pe.delayed_imports(/USER32\\.dll/i, /.*BoxA/) == 1 \
+      }",
+      "tests/data/pe_imports");
+
+  assert_false_rule_file(
+      "import \"pe\" \
+      rule test { \
+        condition: \
+          pe.delayed_imports(/.*/, /.*CriticalSection/) \
+      }",
+      "tests/data/pe_imports");
+
+  assert_true_rule_file(
+      "import \"pe\" \
+      rule test { \
+        condition: \
+          pe.number_of_delayed_imports == 1 and\
+          pe.number_of_delayed_imported_functions == 2\
+      }",
+      "tests/data/pe_imports");
+
+  assert_true_rule_file(
+      "import \"pe\" \
+      rule test { \
+        condition: \
+          pe.any_imports(\"KERNEL32.dll\", \"DeleteCriticalSection\") and \
+          pe.any_imports(\"USER32.dll\", \"MessageBoxA\") \
+      }",
+      "tests/data/pe_imports");
+
+  assert_true_rule_file(
+      "import \"pe\" \
+      rule test { \
+        condition: \
+          pe.any_imports(\"KERNEL32.dll\", \"DeleteCriticalSection\") \
+      }",
+      "tests/data/tiny-idata-51ff");
+
+  assert_false_rule_file(
+      "import \"pe\" \
+      rule test { \
+        condition: \
+          pe.any_imports(\"KERNEL32.dll\", \"DeleteCriticalSection\") \
+      }",
+      "tests/data/tiny-idata-5200");
+
+  assert_true_rule_file(
+      "import \"pe\" \
+      rule test { \
+        condition: \
+          pe.any_imports(/.*/, /.*CriticalSection/) == 4 \
+      }",
+      "tests/data/tiny");
+
+  assert_true_rule_file(
+      "import \"pe\" \
+      rule test { \
+        condition: \
+          pe.any_imports(/kernel32\\.dll/i, /.*/) == 21 \
+      }",
+      "tests/data/tiny");
+
+  assert_true_rule_file(
+      "import \"pe\" \
+      rule test { \
+        condition: \
+          pe.any_imports(/.*/, /.*/) \
+      }",
+      "tests/data/tiny-idata-5200");
+
+  assert_false_rule_file(
+      "import \"pe\" \
+      rule test { \
+        condition: \
+          pe.any_imports(/.*/, /.*CriticalSection/) \
+      }",
+      "tests/data/tiny-idata-5200");
+
+  assert_true_rule_file(
+      "import \"pe\" \
+      rule test { \
+        condition: \
           pe.number_of_sections == 7 \
       }",
       "tests/data/tiny");

@@ -120,7 +120,7 @@ Reference
 .. c:type:: timestamp
 
     PE timestamp, as an epoch integer.
-    
+
     *Example: pe.timestamp >= 1424563200*
 
 .. c:type:: pointer_to_symbol_table
@@ -185,7 +185,7 @@ Reference
 
     Entry point raw value from the optional header of the PE. This value is not
     converted to a file offset or an RVA.
-    
+
     .. versionadded:: 4.1.0
 
 .. c:type:: base_of_code
@@ -1061,6 +1061,14 @@ Reference
 
     Number of imported functions in the PE.
 
+.. c:type:: number_of_delayed_imports
+
+    Number of delayed imported DLLs in the PE. (Number of IMAGE_DELAYLOAD_DESCRIPTOR parsed from file)
+
+.. c:type:: number_of_delay_imported_functions
+
+    Number of delayed imported functions in the PE.
+
 .. c:function:: imports(dll_name, function_name)
 
     Function returning true if the PE imports *function_name* from *dll_name*,
@@ -1109,6 +1117,68 @@ Reference
 
     *Example:  pe.imports(/kernel32\.dll/i, /(Read|Write)ProcessMemory/) == 2*
 
+.. c:function:: delayed_imports(dll_name, function_name)
+
+    Function returning true if the PE delayed imports *function_name* from *dll_name*,
+    or false otherwise. *dll_name* is case insensitive.
+
+    *Example:  pe.delayed_imports("kernel32.dll", "WriteProcessMemory")*
+
+.. c:function:: delayed_imports(dll_name)
+
+    Function returning the number of functions from the *dll_name*, in the PE
+    imports. *dll_name* is case insensitive.
+
+    *Examples:  pe.delayed_imports("kernel32.dll"), pe.delayed_imports("kernel32.dll") == 10*
+
+.. c:function:: delayed_imports(dll_name, ordinal)
+
+    Function returning true if the PE delayed imports *ordinal* from *dll_name*,
+    or false otherwise. *dll_name* is case insensitive.
+
+    *Example:  pe.delayed_imports("WS2_32.DLL", 3)*
+
+.. c:function:: delayed_imports(dll_regexp, function_regexp)
+
+    Function returning the number of functions from the PE delayed imports where a
+    function name matches *function_regexp* and a DLL name matches
+    *dll_regexp*. Both *dll_regexp* and *function_regexp* are case sensitive
+    unless you use the "/i" modifier in the regexp, as shown in the example
+    below.
+
+    *Example:  pe.delayed_imports(/kernel32\.dll/i, /(Read|Write)ProcessMemory/) == 2*
+
+.. c:function:: any_imports(dll_name, function_name)
+
+    Function returning true if the PE imports *function_name* from *dll_name*,
+    or false otherwise. *dll_name* is case insensitive.
+
+    *Example:  pe.imports("kernel32.dll", "WriteProcessMemory")*
+
+.. c:function:: import_any(dll_name)
+
+    Function returning the number of functions from the *dll_name*, in the PE
+    imports and delayed imports. *dll_name* is case insensitive.
+
+    *Examples:  pe.any_imports("kernel32.dll"), pe.any_imports("kernel32.dll") == 10*
+
+.. c:function:: any_imports(dll_name, ordinal)
+
+    Function returning true if the PE imports or delayed imports *ordinal* from *dll_name*,
+    or false otherwise. *dll_name* is case insensitive.
+
+    *Example:  pe.any_imports("WS2_32.DLL", 3)*
+
+.. c:function:: any_imports(dll_regexp, function_regexp)
+
+    Function returning the number of functions from the PE imports or delayed imports where a
+    function name matches *function_regexp* and a DLL name matches
+    *dll_regexp*. Both *dll_regexp* and *function_regexp* are case sensitive
+    unless you use the "/i" modifier in the regexp, as shown in the example
+    below.
+
+    *Example:  pe.any_imports(/kernel32\.dll/i, /(Read|Write)ProcessMemory/) == 2*
+
 .. c:type:: import_details
 
     Array of structures containing information about the PE's imports libraries.
@@ -1135,17 +1205,9 @@ Reference
 
     *Example: pe.import_details[1].library_name == "library_name"
 
-.. c:type:: number_of_delay_imports
+.. c:type:: delayed_import_details
 
-    Number of delay imported DLLs in the PE. (Number of IMAGE_DELAYLOAD_DESCRIPTOR parsed from file)
-
-.. c:type:: number_of_delay_imported_functions
-
-    Number of delay imported functions in the PE.
-
-.. c:type:: delay_import_details
-
-    Array of structures containing information about the PE's delay imports libraries.
+    Array of structures containing information about the PE's delayed imports libraries.
 
     .. c:member:: library_name
 
@@ -1167,7 +1229,7 @@ Reference
 
             Ordinal of imported function. If ordinal does not exist this value is YR_UNDEFINED
 
-    *Example: pe.delay_import_details[1].name == "library_name"
+    *Example: pe.delayed_import_details[1].name == "library_name"
 
 .. c:function:: locale(locale_identifier)
 
@@ -1199,7 +1261,7 @@ Reference
     an MD5 hash of the PE's import table after some normalization. The imphash
     for a PE can be also computed with `pefile <http://code.google.com/p/pefile/>`_
     and you can find more information in `Mandiant's blog
-    <https://www.mandiant.com/blog/tracking-malware-import-hashing/>`_. The returned 
+    <https://www.mandiant.com/blog/tracking-malware-import-hashing/>`_. The returned
     hash string is always in lowercase.
 
     *Example: pe.imphash() == "b8bb385806b89680e13fc0cf24f4431e"*
@@ -1227,7 +1289,7 @@ Reference
     Return true if the file is a PE.
 
     *Example: pe.is_pe()*
-       
+
 .. c:function:: is_dll()
 
     .. versionadded:: 3.5.0
