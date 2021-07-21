@@ -1155,7 +1155,7 @@ Reference
 
     *Example:  pe.imports("kernel32.dll", "WriteProcessMemory")*
 
-.. c:function:: import_any(dll_name)
+.. c:function:: any_imports(dll_name)
 
     Function returning the number of functions from the *dll_name*, in the PE
     imports and delayed imports. *dll_name* is case insensitive.
