@@ -787,6 +787,10 @@ struct YR_SCAN_CONTEXT
   // index N has some global rule that is not satisfied.
   YR_BITMASK* ns_unsatisfied_flags;
 
+  // A bitmap with one bit per string, bit N is set if the string with index
+  // N has too many matches.
+  YR_BITMASK* strings_temp_disabled;
+
   // Array with pointers to lists of matches. Item N in the array has the
   // list of matches for string with index N.
   YR_MATCHES* matches;
