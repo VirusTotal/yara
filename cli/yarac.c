@@ -212,7 +212,7 @@ int _tmain(int argc, const char_t** argv)
   if (yr_compiler_create(&compiler) != ERROR_SUCCESS)
     exit_with_code(EXIT_FAILURE);
 
-  if (!define_external_variables(ext_vars, NULL, compiler))
+  if (define_external_variables(ext_vars, NULL, compiler) != ERROR_SUCCESS)
     exit_with_code(EXIT_FAILURE);
 
   if (atom_quality_table != NULL)
