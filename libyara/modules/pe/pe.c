@@ -273,7 +273,6 @@ static void pe_parse_debug_directory(PE* pe)
   PIMAGE_DATA_DIRECTORY data_dir;
   PIMAGE_DEBUG_DIRECTORY debug_dir;
   int64_t debug_dir_offset;
-  int64_t pcv_hdr_offset;
   int i, dcount;
   size_t pdb_path_len;
   char* pdb_path = NULL;
@@ -301,6 +300,8 @@ static void pe_parse_debug_directory(PE* pe)
 
   for (i = 0; i < dcount; i++)
   {
+    int64_t pcv_hdr_offset = 0;
+
     debug_dir = (PIMAGE_DEBUG_DIRECTORY)(
         pe->data + debug_dir_offset + i * sizeof(IMAGE_DEBUG_DIRECTORY));
 
@@ -310,13 +311,19 @@ static void pe_parse_debug_directory(PE* pe)
     if (yr_le32toh(debug_dir->Type) != IMAGE_DEBUG_TYPE_CODEVIEW)
       continue;
 
-    if (yr_le32toh(debug_dir->AddressOfRawData) == 0)
-      continue;
+    // The debug info offset may be present either as RVA or as raw offset
+    // Sample: 0249e00b6d46bee5a17096559f18e671cd0ceee36373e8708f614a9a6c7c079e
+    if (debug_dir->AddressOfRawData != 0)
+    {
+      pcv_hdr_offset = pe_rva_to_offset(
+          pe, yr_le32toh(debug_dir->AddressOfRawData));
+    }
+    else if (debug_dir->PointerToRawData != 0)
+    {
+      pcv_hdr_offset = yr_le32toh(debug_dir->PointerToRawData);
+    }
 
-    pcv_hdr_offset = pe_rva_to_offset(
-        pe, yr_le32toh(debug_dir->AddressOfRawData));
-
-    if (pcv_hdr_offset < 0)
+    if (pcv_hdr_offset <= 0)
       continue;
 
     PCV_HEADER cv_hdr = (PCV_HEADER)(pe->data + pcv_hdr_offset);
@@ -920,23 +927,47 @@ static IMPORT_FUNCTION* pe_parse_import_descriptor(
   return head;
 }
 
+//
+// In Windows PE files, any character including 0x20 and above is allowed.
+// The only exceptions are characters that are invalid for file names in
+// Windows, which are "*<>?|. While they still can be present in the import
+// directory, such module can never be present in Windows, so we can treat them
+// as invalid.
+//
+// Explicit: The above also applies to slash, backslash (these form a relative
+// path in a subdirectory, which is allowed in the import directory) and colon
+// (which forms a file name with an Alternate Data Stream "test:file.dll" - also
+// allowed).
+//
+// Proof of concept: https://github.com/ladislav-zezula/ImportTest
+//
+// Samples
+// -------
+// f561d60bff4342e529b2c793e216b73a72e6256f90ab24c3cc460646371130ca (imports
+// "test/file.dll")
+// b7f7b8a001769eb0f9c36cb27626b62cabdca9a716a222066028fcd206244b40 (imports
+// "test\file.dll")
+// 94cfb8223132da0a76f9dfbd35a29ab78e5806651758650292ab9c7baf2c0bc2 (imports
+// "test:file.dll")
+// eb2e2c443840276afe095fff05a3a24c00e610ac0e020233d6cd7a0b0b340fb1 (the
+// imported DLL)
+//
+
 static int pe_valid_dll_name(const char* dll_name, size_t n)
 {
-  const char* c = dll_name;
+  const unsigned char* c = (const unsigned char*) dll_name;
   size_t l = 0;
 
   while (l < n && *c != '\0')
   {
-    if ((*c >= 'a' && *c <= 'z') || (*c >= 'A' && *c <= 'Z') ||
-        (*c >= '0' && *c <= '9') || (*c == '_' || *c == '.' || *c == '-' || *c == '+'))
-    {
-      c++;
-      l++;
-    }
-    else
+    if (*c < ' ' || *c == '\"' || *c == '*' || *c == '<' || *c == '>' ||
+        *c == '?' || *c == '|')
     {
       return false;
     }
+
+    c++;
+    l++;
   }
 
   return (l > 0 && l < n);

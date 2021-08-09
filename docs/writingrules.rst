@@ -33,51 +33,46 @@ keywords are reserved and cannot be used as an identifier:
      - base64
      - base64wide
      - condition
-     - contains
-   * - endswith
+   * - contains
+     - endswith
      - entrypoint
      - false
      - filesize
      - for
      - fullword
      - global
-     - import
+   * - import
      - icontains
-   * - iendswith
+     - iendswith
      - in
      - include
      - int16
      - int16be
      - int32
-     - int32be
+   * - int32be
      - int8
      - int8be
-   * - istartswith
+     - istartswith
      - matches
      - meta
      - nocase
      - not
-     - of
+   * - of
      - or
      - private
      - rule
-   * - startswith
+     - startswith
      - strings
      - them
      - true
-     - uint16
+   * - uint16
      - uint16be
      - uint32
      - uint32be
-   * - uint8
+     - uint8
      - uint8be
      - wide
      - xor
-     -
-     -
-     -
-     -
-     -
 
 Rules are generally composed of two sections: strings definition and condition.
 The strings definition section can be omitted if the rule doesn't rely on any
@@ -463,7 +458,7 @@ Base64 strings
 The ``base64`` modifier can be used to search for strings that have been base64
 encoded. A good explanation of the technique is at:
 
-https://www.leeholmes.com/searching-for-content-in-xor-encrypted-data/
+https://www.leeholmes.com/searching-for-content-in-base-64-strings/
 
 The following rule will search for the three base64 permutations of the string
 "This program cannot":
@@ -694,7 +689,6 @@ Starting with version 3.3.0 these zero-width assertions are also recognized:
    * - ``\B``
      - Match except at a word boundary
 
-Regular expressions can be
 
 Private strings
 ---------------
@@ -949,7 +943,7 @@ Again, numbers are decimal by default.
 
 You can also get the offset or virtual address of the i-th occurrence of string
 $a by using @a[i]. The indexes are one-based, so the first occurrence would be
-@a[1] the second one @a[2] and so on. If you provide an index greater then the
+@a[1] the second one @a[2] and so on. If you provide an index greater than the
 number of occurrences of the string, the result will be a NaN (Not A Number)
 value.
 

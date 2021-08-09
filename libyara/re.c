@@ -1988,14 +1988,82 @@ int yr_re_exec(
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-// This function replaces yr_re_exec for regular expressions marked with flag
-// RE_FLAGS_FAST_REGEXP. These are regular expression whose code contain only
-// the following operations: RE_OPCODE_LITERAL, RE_OPCODE_MASKED_LITERAL,
-// RE_OPCODE_ANY, RE_OPCODE_REPEAT_ANY_UNGREEDY and RE_OPCODE_MATCH. Some
-// examples of regular expressions that can be executed with this function are:
+// Helper function that creates a RE_FAST_EXEC_POSITION by either allocating it
+// or reusing a previously allocated one from a pool.
 //
-//  /foobar/
-//  /foo.*?bar/
+static int _yr_re_fast_exec_position_create(
+    RE_FAST_EXEC_POSITION_POOL* pool,
+    RE_FAST_EXEC_POSITION** new_position)
+{
+  RE_FAST_EXEC_POSITION* position;
+
+  if (pool->head != NULL)
+  {
+    position = pool->head;
+    pool->head = position->next;
+  }
+  else
+  {
+    position = (RE_FAST_EXEC_POSITION*) yr_malloc(
+        sizeof(RE_FAST_EXEC_POSITION));
+
+    if (position == NULL)
+      return ERROR_INSUFFICIENT_MEMORY;
+  }
+
+  position->input = NULL;
+  position->round = 0;
+  position->next = NULL;
+  position->prev = NULL;
+
+  *new_position = position;
+
+  return ERROR_SUCCESS;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// Helper function that moves a list of RE_FAST_EXEC_POSITION structures to a
+// pool represented by a RE_FAST_EXEC_POSITION_POOL. Receives pointers to the
+// pool, the first item, and last item in the list.
+//
+static void _yr_re_fast_exec_destroy_position_list(
+    RE_FAST_EXEC_POSITION_POOL* pool,
+    RE_FAST_EXEC_POSITION* first,
+    RE_FAST_EXEC_POSITION* last)
+{
+  last->next = pool->head;
+
+  if (pool->head != NULL)
+    pool->head->prev = last;
+
+  pool->head = first;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// This function replaces yr_re_exec for regular expressions marked with flag
+// RE_FLAGS_FAST_REGEXP. These regular expressions are derived from hex strings
+// that don't contain alternatives, like for example:
+//
+//   { 01 02 03 04 [0-2] 04 05 06 07 }
+//
+// The regexp's code produced by such strings can be matched by a faster, less
+// general algorithm, and it contains only the following opcodes:
+//
+//   * RE_OPCODE_LITERAL
+//   * RE_OPCODE_MASKED_LITERAL,
+//   * RE_OPCODE_ANY
+//   * RE_OPCODE_REPEAT_ANY_UNGREEDY
+//   * RE_OPCODE_MATCH.
+//
+// The regexp's code is executed one instruction at time, and the function
+// maintains a list of positions within the input for tracking different
+// matching alternatives, these positions are described by an instance of
+// RE_FAST_EXEC_POSITION. With each instruction the list of positions is
+// updated, removing those where the input data doesn't match the current
+// instruction, or adding new positions if the instruction is
+// RE_OPCODE_REPEAT_ANY_UNGREEDY. The list of positions is maintained sorted
+// by the value of the pointer they hold to the input, and it doesn't contain
+// duplicated pointer values.
 //
 int yr_re_fast_exec(
     YR_SCAN_CONTEXT* context,
@@ -2010,161 +2078,281 @@ int yr_re_fast_exec(
 {
   RE_REPEAT_ANY_ARGS* repeat_any_args;
 
-  const uint8_t* code_stack[YR_MAX_FAST_RE_STACK];
-  const uint8_t* input_stack[YR_MAX_FAST_RE_STACK];
-  int matches_stack[YR_MAX_FAST_RE_STACK];
+  // Pointers to the first and last position in the list.
+  RE_FAST_EXEC_POSITION* first;
+  RE_FAST_EXEC_POSITION* last;
 
-  const uint8_t* input = input_data;
-  const uint8_t* next_input;
-  const uint8_t* ip = code;
-  const uint8_t* next_opcode;
-
-  uint8_t mask;
-  uint8_t value;
-
-  int stop;
-  int input_incr;
-  int sp = 0;
-
+  int input_incr = flags & RE_FLAGS_BACKWARDS ? -1 : 1;
+  int max_bytes_matched = flags & RE_FLAGS_BACKWARDS
+                              ? (int) input_backwards_size
+                              : (int) input_forwards_size;
   int bytes_matched;
-  int max_bytes_matched;
 
-  max_bytes_matched = flags & RE_FLAGS_BACKWARDS ? (int) input_backwards_size
-                                                 : (int) input_forwards_size;
+  const uint8_t* ip = code;
 
-  input_incr = flags & RE_FLAGS_BACKWARDS ? -1 : 1;
+  // Create the first position in the list, which points to the start of the
+  // input data. Intially this is the only position, more positions will be
+  // created every time RE_OPCODE_REPEAT_ANY_UNGREEDY is executed.
+  FAIL_ON_ERROR(_yr_re_fast_exec_position_create(
+      &context->re_fast_exec_position_pool, &first));
+
+  first->round = 0;
+  first->input = input_data;
+  first->prev = NULL;
+  first->next = NULL;
 
   if (flags & RE_FLAGS_BACKWARDS)
-    input--;
+    first->input--;
 
-  code_stack[sp] = code;
-  input_stack[sp] = input;
-  matches_stack[sp] = 0;
-  sp++;
+  // As we are starting with a single position, the last one and the first one
+  // are the same.
+  last = first;
 
-  while (sp > 0)
+  // Round is incremented with every regxp instruction.
+  int round = 0;
+
+  // Keep in the loop until the list of positions gets empty. Positions are
+  // removed from the list when they don't match the current instruction in
+  // the code.
+  while (first != NULL)
   {
-    sp--;
-    ip = code_stack[sp];
-    input = input_stack[sp];
-    bytes_matched = matches_stack[sp];
-    stop = false;
+    RE_FAST_EXEC_POSITION* current = first;
 
-    while (!stop)
+    // Iterate over all the positions, executing the current instruction at
+    // all of them.
+    while (current != NULL)
     {
-      if (*ip == RE_OPCODE_MATCH)
+      RE_FAST_EXEC_POSITION* next = current->next;
+
+      // Ignore any position in the list whose round number is different from
+      // the current round. This prevents new positions added to the list in
+      // this round from being taken into account in this same round.
+      if (current->round != round)
       {
+        current = next;
+        continue;
+      }
+
+      bytes_matched = flags & RE_FLAGS_BACKWARDS
+                          ? input_data - current->input - 1
+                          : current->input - input_data;
+      uint8_t mask;
+      uint8_t value;
+
+      bool match = false;
+
+      switch (*ip)
+      {
+      case RE_OPCODE_ANY:
+        if (bytes_matched >= max_bytes_matched)
+          break;
+
+        match = true;
+        current->input += input_incr;
+        break;
+
+      case RE_OPCODE_LITERAL:
+        if (bytes_matched >= max_bytes_matched)
+          break;
+
+        if (*current->input == *(ip + 1))
+        {
+          match = true;
+          current->input += input_incr;
+        }
+        break;
+
+      case RE_OPCODE_MASKED_LITERAL:
+        if (bytes_matched >= max_bytes_matched)
+          break;
+
+        value = *(int16_t*) (ip + 1) & 0xFF;
+        mask = *(int16_t*) (ip + 1) >> 8;
+
+        if ((*current->input & mask) == value)
+        {
+          match = true;
+          current->input += input_incr;
+        }
+        break;
+
+      case RE_OPCODE_REPEAT_ANY_UNGREEDY:
+        if (bytes_matched >= max_bytes_matched)
+          break;
+
+        repeat_any_args = (RE_REPEAT_ANY_ARGS*) (ip + 1);
+        match = true;
+
+        const uint8_t* next_opcode = ip + 1 + sizeof(RE_REPEAT_ANY_ARGS);
+
+        // insertion_point indicates the item in the list of inputs after which
+        // the newly created inputs will be inserted.
+        RE_FAST_EXEC_POSITION* insertion_point = current;
+
+        for (int j = repeat_any_args->min + 1; j <= repeat_any_args->max; j++)
+        {
+          // bytes_matched is the number of bytes matched so far, and j is the
+          // minimum number of bytes that are still pending to match. If these
+          // two numbers sum more than the maximum number of bytes that can be
+          // matched the loop can be aborted. The position that we were about
+          // to create can't lead to a match without exceeding
+          // max_bytes_matched.
+          if (bytes_matched + j >= max_bytes_matched)
+            break;
+
+          const uint8_t* next_input = current->input + j * input_incr;
+
+          // Find the point where next_input should be inserted. The list is
+          // kept sorted by pointer in increasing order, the insertion point is
+          // an item that has a pointer lower or equal than next_input, but
+          // whose next item have a pointer that is larger.
+          while (insertion_point->next != NULL &&
+                 next_input >= insertion_point->next->input)
+          {
+            insertion_point = insertion_point->next;
+          }
+
+          // If the pointer at the insertion point is equal to next_input we
+          // don't need to insert next_input in the list as this input already
+          // exists.
+          if (next_input == insertion_point->input)
+            continue;
+
+          // The next opcode is RE_OPCODE_LITERAL, but the literal doesn't
+          // match with the byte at next_input, we don't need to add this
+          // input to the list as we already know that it won't match in the
+          // next round and will be deleted from the list anyways.
+          if (*(next_opcode) == RE_OPCODE_LITERAL &&
+              *(next_opcode + 1) != *next_input)
+            continue;
+
+          RE_FAST_EXEC_POSITION* new_input;
+
+          FAIL_ON_ERROR_WITH_CLEANUP(
+              _yr_re_fast_exec_position_create(
+                  &context->re_fast_exec_position_pool, &new_input),
+              // Cleanup
+              _yr_re_fast_exec_destroy_position_list(
+                  &context->re_fast_exec_position_pool, first, last));
+
+          new_input->input = next_input;
+          new_input->round = round + 1;
+          new_input->prev = insertion_point;
+          new_input->next = insertion_point->next;
+          insertion_point->next = new_input;
+
+          if (new_input->next != NULL)
+            new_input->next->prev = new_input;
+
+          if (insertion_point == last)
+            last = new_input;
+        }
+
+        current->input += input_incr * repeat_any_args->min;
+        break;
+
+      case RE_OPCODE_MATCH:
+
         if (flags & RE_FLAGS_EXHAUSTIVE)
         {
-          FAIL_ON_ERROR(callback(
-              // When matching forwards the matching data always starts at
-              // input_data, when matching backwards it starts at input + 1 or
-              // input_data - input_backwards_size if input + 1 is outside the
-              // buffer.
-              flags & RE_FLAGS_BACKWARDS
-                  ? yr_max(input + 1, input_data - input_backwards_size)
-                  : input_data,
-              // The number of matched bytes should not be larger than
-              // max_bytes_matched.
-              yr_min(bytes_matched, max_bytes_matched),
-              flags,
-              callback_args));
-
-          break;
+          FAIL_ON_ERROR_WITH_CLEANUP(
+              callback(
+                  // When matching forwards the matching data always starts at
+                  // input_data, when matching backwards it starts at input + 1
+                  // or input_data - input_backwards_size if input + 1 is
+                  // outside the buffer.
+                  flags & RE_FLAGS_BACKWARDS
+                      ? yr_max(
+                            current->input + 1,
+                            input_data - input_backwards_size)
+                      : input_data,
+                  // The number of matched bytes should not be larger than
+                  // max_bytes_matched.
+                  yr_min(bytes_matched, max_bytes_matched),
+                  flags,
+                  callback_args),
+              // Cleanup
+              _yr_re_fast_exec_destroy_position_list(
+                  &context->re_fast_exec_position_pool, first, last));
         }
         else
         {
           if (matches != NULL)
             *matches = bytes_matched;
 
+          _yr_re_fast_exec_destroy_position_list(
+              &context->re_fast_exec_position_pool, first, last);
+
           return ERROR_SUCCESS;
         }
-      }
-
-      if (bytes_matched >= max_bytes_matched)
-        break;
-
-      switch (*ip)
-      {
-      case RE_OPCODE_LITERAL:
-
-        if (*input == *(ip + 1))
-        {
-          bytes_matched++;
-          input += input_incr;
-          ip += 2;
-        }
-        else
-        {
-          stop = true;
-        }
-
-        break;
-
-      case RE_OPCODE_MASKED_LITERAL:
-
-        value = *(int16_t*) (ip + 1) & 0xFF;
-        mask = *(int16_t*) (ip + 1) >> 8;
-
-        if ((*input & mask) == value)
-        {
-          bytes_matched++;
-          input += input_incr;
-          ip += 3;
-        }
-        else
-        {
-          stop = true;
-        }
-
-        break;
-
-      case RE_OPCODE_ANY:
-
-        bytes_matched++;
-        input += input_incr;
-        ip += 1;
-
-        break;
-
-      case RE_OPCODE_REPEAT_ANY_UNGREEDY:
-
-        repeat_any_args = (RE_REPEAT_ANY_ARGS*) (ip + 1);
-        next_opcode = ip + 1 + sizeof(RE_REPEAT_ANY_ARGS);
-
-        for (int i = repeat_any_args->min + 1; i <= repeat_any_args->max; i++)
-        {
-          if (bytes_matched + i >= max_bytes_matched)
-            break;
-
-          next_input = input + i * input_incr;
-
-          if (*(next_opcode) != RE_OPCODE_LITERAL ||
-              (*(next_opcode) == RE_OPCODE_LITERAL &&
-               *(next_opcode + 1) == *next_input))
-          {
-            if (sp >= YR_MAX_FAST_RE_STACK)
-              return ERROR_TOO_MANY_RE_FIBERS;
-
-            code_stack[sp] = next_opcode;
-            input_stack[sp] = next_input;
-            matches_stack[sp] = bytes_matched + i;
-            sp++;
-          }
-        }
-
-        input += input_incr * repeat_any_args->min;
-        bytes_matched += repeat_any_args->min;
-
-        ip = next_opcode;
-
         break;
 
       default:
+        printf("non-supported opcode: %d\n", *ip);
         assert(false);
       }
+
+      if (match)
+      {
+        current->round = round + 1;
+      }
+      else
+      {
+        // Remove current from the list. If the item being removed is the first
+        // one or the last one, the first and last pointers should be updated.
+        // The removed item is put into the pool for later reuse.
+
+        if (current == first)
+          first = current->next;
+
+        if (current == last)
+          last = current->prev;
+
+        if (current->prev != NULL)
+          current->prev->next = current->next;
+
+        if (current->next != NULL)
+          current->next->prev = current->prev;
+
+        current->prev = NULL;
+        current->next = context->re_fast_exec_position_pool.head;
+
+        if (current->next != NULL)
+          current->next->prev = current;
+
+        context->re_fast_exec_position_pool.head = current;
+      }
+
+      current = next;
+
+    }  // while (current != NULL)
+
+    // Move instruction pointer (ip) to next instruction. Each opcode has
+    // a different size.
+    switch (*ip)
+    {
+    case RE_OPCODE_ANY:
+      ip += 1;
+      break;
+    case RE_OPCODE_LITERAL:
+      ip += 2;
+      break;
+    case RE_OPCODE_MASKED_LITERAL:
+      ip += 3;
+      break;
+    case RE_OPCODE_REPEAT_ANY_UNGREEDY:
+      ip += 1 + sizeof(RE_REPEAT_ANY_ARGS);
+      break;
+    case RE_OPCODE_MATCH:
+      break;
+    default:
+      assert(false);
     }
+
+    round++;
   }
+
+  // If this point is reached no matches were found.
 
   if (matches != NULL)
     *matches = -1;
