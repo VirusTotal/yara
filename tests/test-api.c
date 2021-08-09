@@ -842,6 +842,24 @@ void test_runtime_warnings() {
   assert_true_expr(counters.rules_matching == 0);
   assert_true_expr(counters.rules_not_matching == 1);
 
+  // Repeat the same scan to ensure that the string that had a warning is
+  // enabled after the first scan. But first we must reset the counters.
+  counters.rules_not_matching = 0;
+  counters.rules_matching = 0;
+  counters.rules_warning = 0;
+
+  if (yr_rules_scan_file(rules, prefix_top_srcdir("tests/data/x.txt"), 0, count, &counters, 0) != ERROR_SUCCESS) {
+    yr_rules_destroy(rules);
+    perror("yr_rules_scan_file");
+    exit(EXIT_FAILURE);
+  }
+
+  // The assertions here should be EXACTLY the same as the assertions above. We
+  // are making sure the string is disabled only for a single scan.
+  assert_true_expr(counters.rules_warning == 1);
+  assert_true_expr(counters.rules_matching == 0);
+  assert_true_expr(counters.rules_not_matching == 1);
+
   yr_rules_destroy(rules);
   yr_finalize();
 }
