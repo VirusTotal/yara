@@ -2796,7 +2796,7 @@ begin_declarations
   declare_integer("SECTION_LNK_COMDAT");
   declare_integer("SECTION_NO_DEFER_SPEC_EXC");
   declare_integer("SECTION_GPREL");
-  declare_integer("SECTION_FARDATA");
+  declare_integer("SECTION_MEM_FARDATA");
   declare_integer("SECTION_MEM_PURGEABLE");
   declare_integer("SECTION_MEM_16BIT");
   declare_integer("SECTION_MEM_LOCKED");
@@ -3303,7 +3303,7 @@ int module_load(
   set_integer(IMAGE_SCN_GPREL, module_object, "SECTION_GPREL");
   set_integer(
       IMAGE_SCN_MEM_FARDATA, module_object,
-      "SECTION_FARDATA");
+      "SECTION_MEM_FARDATA");
   set_integer(
       IMAGE_SCN_MEM_PURGEABLE, module_object,
       "SECTION_MEM_PURGEABLE");

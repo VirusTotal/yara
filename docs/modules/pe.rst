@@ -619,7 +619,7 @@ Reference
     .. c:type:: SECTION_LNK_COMDAT
     .. c:type:: SECTION_NO_DEFER_SPEC_EXC
     .. c:type:: SECTION_GPREL
-    .. c:type:: SECTION_FARDATA
+    .. c:type:: SECTION_MEM_FARDATA
     .. c:type:: SECTION_MEM_PURGEABLE
     .. c:type:: SECTION_MEM_16BIT
     .. c:type:: SECTION_LNK_NRELOC_OVFL
