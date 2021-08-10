@@ -205,6 +205,7 @@ octdigit      [0-7]
 "icontains"             { return _ICONTAINS_;   }
 "istartswith"           { return _ISTARTSWITH_; }
 "iendswith"             { return _IENDSWITH_;   }
+"iequals"               { return _IEQUALS_;     }
 "import"                { return _IMPORT_;      }
 
 
