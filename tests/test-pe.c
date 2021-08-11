@@ -361,7 +361,6 @@ int main(int argc, char** argv)
 
   assert_true_rule_file(
       "import \"pe\" \
-      \
       rule version_info_catch \
       {\
           condition:\
@@ -372,6 +371,15 @@ int main(int argc, char** argv)
           ) \
       }",
       "tests/data/079a472d22290a94ebb212aa8015cdc8dd28a968c6b4d3b88acdd58ce2d3b885");
+  
+  assert_true_rule_file(
+      "import \"pe\" \
+      rule iequals_comparison { \
+        condition: \
+          pe.sections[0].name != \".TEXT\" and \
+          pe.sections[0].name iequals \".TEXT\" \
+      }",
+      "tests/data/tiny");
 
   yr_finalize();
 

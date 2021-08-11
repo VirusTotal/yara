@@ -104,7 +104,17 @@ PIMAGE_NT_HEADERS32 pe_get_header(const uint8_t* data, size_t data_size)
       yr_le16toh(pe_header->FileHeader.Machine) != IMAGE_FILE_MACHINE_SH4 &&
       yr_le16toh(pe_header->FileHeader.Machine) != IMAGE_FILE_MACHINE_SH5 &&
       yr_le16toh(pe_header->FileHeader.Machine) != IMAGE_FILE_MACHINE_THUMB &&
-      yr_le16toh(pe_header->FileHeader.Machine) != IMAGE_FILE_MACHINE_WCEMIPSV2)
+      yr_le16toh(pe_header->FileHeader.Machine) != IMAGE_FILE_MACHINE_WCEMIPSV2 &&
+      yr_le16toh(pe_header->FileHeader.Machine) != IMAGE_FILE_MACHINE_TARGET_HOST &&
+      yr_le16toh(pe_header->FileHeader.Machine) != IMAGE_FILE_MACHINE_R3000 &&
+      yr_le16toh(pe_header->FileHeader.Machine) != IMAGE_FILE_MACHINE_R10000 &&
+      yr_le16toh(pe_header->FileHeader.Machine) != IMAGE_FILE_MACHINE_ALPHA &&
+      yr_le16toh(pe_header->FileHeader.Machine) != IMAGE_FILE_MACHINE_SH3E &&
+      yr_le16toh(pe_header->FileHeader.Machine) != IMAGE_FILE_MACHINE_ALPHA64 &&
+      yr_le16toh(pe_header->FileHeader.Machine) != IMAGE_FILE_MACHINE_AXP64 &&
+      yr_le16toh(pe_header->FileHeader.Machine) != IMAGE_FILE_MACHINE_TRICORE &&
+      yr_le16toh(pe_header->FileHeader.Machine) != IMAGE_FILE_MACHINE_CEF &&
+      yr_le16toh(pe_header->FileHeader.Machine) != IMAGE_FILE_MACHINE_CEE)
   {
     return NULL;
   }
@@ -188,6 +198,7 @@ int64_t pe_rva_to_offset(PE* pe, uint64_t rva)
       }
 
       if (rva >= yr_le32toh(section->VirtualAddress) &&
+          rva - yr_le32toh(section->VirtualAddress) < yr_le32toh(section->Misc.VirtualSize) &&
           section_rva <= yr_le32toh(section->VirtualAddress))
       {
         // Round section_offset
