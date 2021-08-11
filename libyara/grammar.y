@@ -203,6 +203,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 %token _ICONTAINS_                                     "<icontains>"
 %token _ISTARTSWITH_                                   "<istartswith>"
 %token _IENDSWITH_                                     "<iendswith>"
+%token _IEQUALS_                                       "<iequals>"
 %token _IMPORT_                                        "<import>"
 %token _TRUE_                                          "<true>"
 %token _FALSE_                                         "<false>"
@@ -222,7 +223,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // in the list. Operators that appear in the same line have the same precedence.
 %left _OR_
 %left _AND_
-%left _EQ_ _NEQ_ _CONTAINS_ _ICONTAINS_ _STARTSWITH_ _ENDSWITH_ _ISTARTSWITH_ _IENDSWITH_ _MATCHES_
+%left _EQ_ _NEQ_ _CONTAINS_ _ICONTAINS_ _STARTSWITH_ _ENDSWITH_ _ISTARTSWITH_ _IENDSWITH_ _IEQUALS_ _MATCHES_
 %left _LT_ _LE_ _GT_ _GE_
 %left '|'
 %left '^'
@@ -1359,6 +1360,16 @@ expression
 
         fail_if_error(yr_parser_emit(
             yyscanner, OP_IENDSWITH, NULL));
+
+        $$.type = EXPRESSION_TYPE_BOOLEAN;
+      }
+    | primary_expression _IEQUALS_ primary_expression
+      {
+        check_type($1, EXPRESSION_TYPE_STRING, "iequals");
+        check_type($3, EXPRESSION_TYPE_STRING, "iequals");
+
+        fail_if_error(yr_parser_emit(
+            yyscanner, OP_IEQUALS, NULL));
 
         $$.type = EXPRESSION_TYPE_BOOLEAN;
       }

@@ -1804,6 +1804,7 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
     case OP_ISTARTSWITH:
     case OP_ENDSWITH:
     case OP_IENDSWITH:
+    case OP_IEQUALS:
       pop(r2);
       pop(r1);
 
@@ -1841,6 +1842,11 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
         YR_DEBUG_FPRINTF(
             2, stderr, "- case OP_IENDSWITH: // %s()\n", __FUNCTION__);
         r1.i = ss_iendswith(r1.ss, r2.ss);
+        break;
+      case OP_IEQUALS:
+        YR_DEBUG_FPRINTF(
+            2, stderr, "- case OP_IEQUALS: // %s()\n", __FUNCTION__);
+        r1.i = ss_icompare(r1.ss, r2.ss) == 0;
         break;
       }
 

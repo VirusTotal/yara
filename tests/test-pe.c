@@ -359,6 +359,15 @@ int main(int argc, char** argv)
       }",
       "tests/data/mtxex.dll");
 
+  assert_true_rule_file(
+      "import \"pe\" \
+      rule iequals_comparison { \
+        condition: \
+          pe.sections[0].name != \".TEXT\" and \
+          pe.sections[0].name iequals \".TEXT\" \
+      }",
+      "tests/data/tiny");
+
   yr_finalize();
 
   YR_DEBUG_FPRINTF(

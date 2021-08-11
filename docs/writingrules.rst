@@ -44,35 +44,43 @@ keywords are reserved and cannot be used as an identifier:
    * - import
      - icontains
      - iendswith
+     - iequals
      - in
      - include
      - int16
      - int16be
-     - int32
-   * - int32be
+   * - int32
+     - int32be
      - int8
      - int8be
      - istartswith
      - matches
      - meta
      - nocase
-     - not
-   * - of
+   * - not
+     - of
      - or
      - private
      - rule
      - startswith
      - strings
      - them
-     - true
-   * - uint16
+   * - true
+     - uint16
      - uint16be
      - uint32
      - uint32be
      - uint8
      - uint8be
      - wide
-     - xor
+   * - xor
+     -
+     -
+     -
+     -
+     -
+     -
+     -
 
 Rules are generally composed of two sections: strings definition and condition.
 The strings definition section can be omitted if the rule doesn't rely on any
@@ -833,6 +841,8 @@ Precedence  Operator     Description                                Associativit
             endswith     String ends with substring
 
             iendswith    Like endswith but case-insensitive
+
+            iequals      Case-insensitive string comparison
 
             matches      String matches regular expression
 ----------  -----------  -----------------------------------------  -------------
@@ -1595,8 +1605,10 @@ For example:
 
 External variables of type string can be used with the operators: ``contains``,
 ``startswith``, ``endswith`` and their case-insensitive counterparts: ``icontains``,
-``istartswith`` and ``iendswith`. They can be used also with the ``matches``
+``istartswith`` and ``iendswith``. They can be used also with the ``matches``
 operator, which returns true if the string matches a given regular expression.
+Case-insensitive string comparison can be done through special operator ``iequals``
+which only works with strings. For case-sensitive comparison use regular ``==``.
 
 .. code-block:: yara
 
@@ -1622,6 +1634,12 @@ operator, which returns true if the string matches a given regular expression.
     {
         condition:
             string_ext_var endswith "suffix"
+    }
+
+    rule IequalsExample
+    {
+        condition:
+            string_ext_var iequals "string"
     }
 
     rule MatchesExample
