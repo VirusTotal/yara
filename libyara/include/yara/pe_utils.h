@@ -68,6 +68,7 @@ typedef struct _PE
   IMPORTED_DLL* imported_dlls;
 
   uint32_t resources;
+  uint32_t version_infos;
 
 } PE;
 

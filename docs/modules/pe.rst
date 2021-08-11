@@ -792,6 +792,20 @@ Reference
 
     *Example:  pe.version_info["CompanyName"] contains "Microsoft"*
 
+.. c:type:: version_info_list
+
+    Array of structures containing information about the PE's version information.
+
+    .. c:member:: key
+
+        Key of version information.
+
+    .. c:member:: value
+
+        Value of version information.
+
+    *Example:  pe.version_info_list[0].value contains "Microsoft"*
+
 .. c:type:: number_of_signatures
 
     Number of authenticode signatures in the PE.
