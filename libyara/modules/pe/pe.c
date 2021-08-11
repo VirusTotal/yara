@@ -661,6 +661,12 @@ static void pe_parse_version_info(PIMAGE_RESOURCE_DATA_ENTRY rsrc_data, PE* pe)
             strlcpy_w(value, string_value, sizeof(value));
 
             set_string(value, pe->object, "version_info[%s]", key);
+
+            set_string(
+                key, pe->object, "version_info_list[%i].key", pe->version_infos);
+            set_string(
+                value, pe->object, "version_info_list[%i].value", pe->version_infos);
+            pe->version_infos += 1;
           }
         }
 
@@ -1790,6 +1796,7 @@ static void pe_parse_header(PE* pe, uint64_t base_address, int flags)
       pe, (RESOURCE_CALLBACK_FUNC) pe_collect_resources, (void*) pe);
 
   set_integer(pe->resources, pe->object, "number_of_resources");
+  set_integer(pe->version_infos, pe->object, "number_of_version_infos");
 
   section = IMAGE_FIRST_SECTION(pe->header);
 
@@ -2879,8 +2886,14 @@ begin_declarations
   declare_integer("entry_point_raw");
   declare_integer("image_base");
   declare_integer("number_of_rva_and_sizes");
+  declare_integer("number_of_version_infos");
 
   declare_string_dictionary("version_info");
+
+  begin_struct_array("version_info_list");
+    declare_string("key");
+    declare_string("value");
+  end_struct_array("version_info_list");
 
   declare_integer("opthdr_magic");
   declare_integer("size_of_code");
@@ -3484,6 +3497,7 @@ int module_load(
         pe->header = pe_header;
         pe->object = module_object;
         pe->resources = 0;
+        pe->version_infos = 0;
 
         module_object->data = pe;
 
