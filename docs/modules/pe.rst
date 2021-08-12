@@ -1117,67 +1117,52 @@ Reference
 
     *Example:  pe.imports(/kernel32\.dll/i, /(Read|Write)ProcessMemory/) == 2*
 
-.. c:function:: delayed_imports(dll_name, function_name)
 
-    Function returning true if the PE delayed imports *function_name* from *dll_name*,
-    or false otherwise. *dll_name* is case insensitive.
-
-    *Example:  pe.delayed_imports("kernel32.dll", "WriteProcessMemory")*
-
-.. c:function:: delayed_imports(dll_name)
-
-    Function returning the number of functions from the *dll_name*, in the PE
-    imports. *dll_name* is case insensitive.
-
-    *Examples:  pe.delayed_imports("kernel32.dll"), pe.delayed_imports("kernel32.dll") == 10*
-
-.. c:function:: delayed_imports(dll_name, ordinal)
-
-    Function returning true if the PE delayed imports *ordinal* from *dll_name*,
-    or false otherwise. *dll_name* is case insensitive.
-
-    *Example:  pe.delayed_imports("WS2_32.DLL", 3)*
-
-.. c:function:: delayed_imports(dll_regexp, function_regexp)
-
-    Function returning the number of functions from the PE delayed imports where a
-    function name matches *function_regexp* and a DLL name matches
-    *dll_regexp*. Both *dll_regexp* and *function_regexp* are case sensitive
-    unless you use the "/i" modifier in the regexp, as shown in the example
-    below.
-
-    *Example:  pe.delayed_imports(/kernel32\.dll/i, /(Read|Write)ProcessMemory/) == 2*
-
-.. c:function:: any_imports(dll_name, function_name)
+.. c:function:: imports(import_flag, dll_name, function_name)
 
     Function returning true if the PE imports *function_name* from *dll_name*,
     or false otherwise. *dll_name* is case insensitive.
 
-    *Example:  pe.imports("kernel32.dll", "WriteProcessMemory")*
+    *import_flag* is binary flag which specify type of import which should Yara search.
+    This value can be composed by binary or these values:
 
-.. c:function:: any_imports(dll_name)
+        .. c:member:: pe.IMPORT_STANDARD
+
+            Search in standard imports
+
+        .. c:member:: pe.IMPORT_DELAYED
+
+            Search in delayed imports
+
+        .. c:member:: pe.IMPORT_ANY
+
+            Search in all imports
+
+    *Example:  pe.imports(pe.IMPORT_DELAYED | pe.IMPORT_STANDARD, "kernel32.dll", "WriteProcessMemory")*
+
+.. c:function:: imports(import_flag, import_flag, dll_name)
 
     Function returning the number of functions from the *dll_name*, in the PE
-    imports and delayed imports. *dll_name* is case insensitive.
+    imports. *dll_name* is case insensitive.
 
-    *Examples:  pe.any_imports("kernel32.dll"), pe.any_imports("kernel32.dll") == 10*
+    *Examples:  pe.imports(pe.IMPORT_DELAYED, "kernel32.dll"), pe.imports("kernel32.dll") == 10*
 
-.. c:function:: any_imports(dll_name, ordinal)
+.. c:function:: imports(import_flag, dll_name, ordinal)
 
-    Function returning true if the PE imports or delayed imports *ordinal* from *dll_name*,
+    Function returning true if the PE imports *ordinal* from *dll_name*,
     or false otherwise. *dll_name* is case insensitive.
 
-    *Example:  pe.any_imports("WS2_32.DLL", 3)*
+    *Example:  pe.imports(pe.IMPORT_DELAYED, "WS2_32.DLL", 3)*
 
-.. c:function:: any_imports(dll_regexp, function_regexp)
+.. c:function:: imports(import_flag, dll_regexp, function_regexp)
 
-    Function returning the number of functions from the PE imports or delayed imports where a
+    Function returning the number of functions from the PE imports where a
     function name matches *function_regexp* and a DLL name matches
     *dll_regexp*. Both *dll_regexp* and *function_regexp* are case sensitive
     unless you use the "/i" modifier in the regexp, as shown in the example
     below.
 
-    *Example:  pe.any_imports(/kernel32\.dll/i, /(Read|Write)ProcessMemory/) == 2*
+    *Example:  pe.imports(pe.IMPORT_DELAYED, /kernel32\.dll/i, /(Read|Write)ProcessMemory/) == 2*
 
 .. c:type:: import_details
 
