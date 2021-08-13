@@ -1123,8 +1123,8 @@ Reference
     Function returning true if the PE imports *function_name* from *dll_name*,
     or false otherwise. *dll_name* is case insensitive.
 
-    *import_flag* is binary flag which specify type of import which should Yara search.
-    This value can be composed by binary or these values:
+    *import_flag* is flag which specify type of import which should YARA search for.
+    This value can be composed by bitwise OR these values:
 
         .. c:member:: pe.IMPORT_STANDARD
 

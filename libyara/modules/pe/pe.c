@@ -2727,7 +2727,7 @@ define_function(imports_standard)
     return_integer(YR_UNDEFINED);
 
   return_integer(
-      pe_imports(pe->imported_dlls, dll_name, function_name));
+    pe_imports(pe->imported_dlls, dll_name, function_name));
 }
 
 
@@ -2738,18 +2738,18 @@ define_function(imports)
   char* function_name = string_argument(3);
 
   YR_OBJECT* module = module();
-  PE* pe = (PE*)module->data;
+  PE* pe = (PE*) module->data;
 
   if (!pe)
     return_integer(YR_UNDEFINED);
 
   if (flags & IMPORT_STANDARD &&
-  pe_imports(pe->imported_dlls, dll_name, function_name))
+    pe_imports(pe->imported_dlls, dll_name, function_name))
   {
     return_integer(1);
   }
   if (flags & IMPORT_DELAYED &&
-  pe_imports(pe->delay_imported_dlls, dll_name, function_name))
+    pe_imports(pe->delay_imported_dlls, dll_name, function_name))
   {
     return_integer(1);
   }
@@ -2785,12 +2785,12 @@ define_function(imports_ordinal)
     return_integer(YR_UNDEFINED);
 
   if (flags & IMPORT_STANDARD &&
-  pe_imports_ordinal(pe->imported_dlls, dll_name, ordinal))
+    pe_imports_ordinal(pe->imported_dlls, dll_name, ordinal))
   {
     return_integer(1);
   }
   if (flags & IMPORT_DELAYED &&
-  pe_imports_ordinal(pe->delay_imported_dlls, dll_name, ordinal))
+    pe_imports_ordinal(pe->delay_imported_dlls, dll_name, ordinal))
   {
     return_integer(1);
   }
