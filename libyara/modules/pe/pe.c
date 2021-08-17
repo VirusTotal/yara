@@ -647,27 +647,28 @@ static void pe_parse_version_info(PIMAGE_RESOURCE_DATA_ENTRY rsrc_data, PE* pe)
              wide_string_fits_in_pe(pe, string->Key) &&
              yr_le16toh(string->Length) != 0 && string < string_table)
       {
-        if (yr_le16toh(string->ValueLength) > 0)
+        char* string_value = (char*) ADD_OFFSET(
+            string, sizeof(VERSION_INFO) + 2 * (strnlen_w(string->Key) + 1));
+
+        if (wide_string_fits_in_pe(pe, string_value))
         {
-          char* string_value = (char*) ADD_OFFSET(
-              string, sizeof(VERSION_INFO) + 2 * (strnlen_w(string->Key) + 1));
+          char key[64];
+          char value[256];
 
-          if (wide_string_fits_in_pe(pe, string_value))
-          {
-            char key[64];
-            char value[256];
+          strlcpy_w(key, string->Key, sizeof(key));
+          strlcpy_w(value, string_value, sizeof(value));
 
-            strlcpy_w(key, string->Key, sizeof(key));
-            strlcpy_w(value, string_value, sizeof(value));
+          // null terminator of string is not included in version value when ValueLength is zero
+          if (yr_le16toh(string->ValueLength) == 0)
+            value[yr_le16toh(string->ValueLength)] = '\0';
 
-            set_string(value, pe->object, "version_info[%s]", key);
+          set_string(value, pe->object, "version_info[%s]", key);
 
-            set_string(
-                key, pe->object, "version_info_list[%i].key", pe->version_infos);
-            set_string(
-                value, pe->object, "version_info_list[%i].value", pe->version_infos);
-            pe->version_infos += 1;
-          }
+          set_string(
+              key, pe->object, "version_info_list[%i].key", pe->version_infos);
+          set_string(
+              value, pe->object, "version_info_list[%i].value", pe->version_infos);
+          pe->version_infos += 1;
         }
 
         string = ADD_OFFSET(string, yr_le16toh(string->Length));
