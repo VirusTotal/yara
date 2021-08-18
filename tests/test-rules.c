@@ -3052,6 +3052,27 @@ void test_performance_warnings()
   YR_DEBUG_FPRINTF(1, stderr, "} // %s()\n", __FUNCTION__);
 }
 
+static void test_meta()
+{
+  YR_DEBUG_FPRINTF(1, stderr, "+ %s() {\n", __FUNCTION__);
+
+  // Make sure that multiple metadata with the same identifier are allowed.
+  // This was not intentionally designed like that, but users are alreay
+  // relying on this.
+  assert_true_rule(
+      "rule test { \
+         meta: \
+           foo = \"foo\" \
+           foo = 1 \
+           foo = false \
+         condition:\
+           true \
+      }",
+      NULL);
+
+  YR_DEBUG_FPRINTF(1, stderr, "} // %s()\n", __FUNCTION__);
+}
+
 static void test_pass(int pass)
 {
   switch (pass)
@@ -3131,6 +3152,7 @@ static void test_pass(int pass)
   test_entrypoint();
   test_global_rules();
   test_tags();
+  test_meta();
 
 #if !defined(USE_NO_PROC) && !defined(_WIN32) && !defined(__CYGWIN__)
   test_process_scan();
