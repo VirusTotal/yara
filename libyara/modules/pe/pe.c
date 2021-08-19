@@ -59,9 +59,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define MODULE_NAME pe
 
-#define IMPORT_STANDARD            1
-#define IMPORT_DELAYED             2
-#define IMPORT_ANY               (~0)
+#define IMPORT_STANDARD 1
+#define IMPORT_DELAYED  2
+#define IMPORT_ANY      (~0)
 
 // http://msdn.microsoft.com/en-us/library/ms648009(v=vs.85).aspx
 #define RESOURCE_TYPE_CURSOR       1
@@ -667,9 +667,15 @@ static void pe_parse_version_info(PIMAGE_RESOURCE_DATA_ENTRY rsrc_data, PE* pe)
             set_string(value, pe->object, "version_info[%s]", key);
 
             set_string(
-                key, pe->object, "version_info_list[%i].key", pe->version_infos);
+                key,
+                pe->object,
+                "version_info_list[%i].key",
+                pe->version_infos);
             set_string(
-                value, pe->object, "version_info_list[%i].value", pe->version_infos);
+                value,
+                pe->object,
+                "version_info_list[%i].value",
+                pe->version_infos);
             pe->version_infos += 1;
           }
         }
@@ -983,10 +989,9 @@ static int pe_valid_dll_name(const char* dll_name, size_t n)
   return (l > 0 && l < n);
 }
 
-
 void pe_set_imports(
-    PE *pe,
-    IMPORTED_DLL *dll,
+    PE* pe,
+    IMPORTED_DLL* dll,
     const char* dll_name,
     const char* dll_number_of_functions,
     const char* fun_name,
@@ -997,7 +1002,8 @@ void pe_set_imports(
 
   for (; dll != NULL; dll = dll->next, dll_cnt++)
   {
-    for (IMPORT_FUNCTION *func = dll->functions; func != NULL; func = func->next, fun_cnt++)
+    for (IMPORT_FUNCTION* func = dll->functions; func != NULL;
+         func = func->next, fun_cnt++)
     {
       set_string(func->name, pe->object, fun_name, dll_cnt, fun_cnt);
       if (func->has_ordinal)
@@ -1008,7 +1014,6 @@ void pe_set_imports(
     set_string(dll->name, pe->object, dll_name, dll_cnt);
     set_integer(fun_cnt, pe->object, dll_number_of_functions, dll_cnt);
   }
-
 }
 
 //
@@ -1111,19 +1116,23 @@ static IMPORTED_DLL* pe_parse_imports(PE* pe)
 }
 
 // Delay-import descriptors made by MS Visual C++ 6.0 have old format
-// of delay import directory, where all entries are VAs (as opposite to RVAs from newer MS compilers).
-// We convert the delay-import directory entries to RVAs by checking the lowest bit in the delay-import descriptor's Attributes value
-uint64_t pe_normalize_delay_import_value(uint64_t image_base, uint64_t virtual_address)
+// of delay import directory, where all entries are VAs (as opposite to RVAs
+// from newer MS compilers). We convert the delay-import directory entries to
+// RVAs by checking the lowest bit in the delay-import descriptor's Attributes
+// value
+uint64_t pe_normalize_delay_import_value(
+    uint64_t image_base,
+    uint64_t virtual_address)
 {
-
   // Ignore zero items
   if (virtual_address != 0)
   {
     // Sample: 0fc4cb0620f95bdd624f2c78eea4d2b59594244c6671cf249526adf2f2cb71ec
-    // Contains artificially created delay import directory with incorrect values:
+    // Contains artificially created delay import directory with incorrect
+    // values:
     //
-    //  Attributes                      0x00000000 <-- Old MS delay import record, contains VAs
-    //  NameRva                         0x004010e6
+    //  Attributes                      0x00000000 <-- Old MS delay import
+    //  record, contains VAs NameRva                         0x004010e6
     //  ModuleHandleRva                 0x00000000
     //  DelayImportAddressTableRva      0x00001140 <-- WRONG! This is an RVA
     //  DelayImportNameTableRva         0x004010c0
@@ -1139,48 +1148,48 @@ uint64_t pe_normalize_delay_import_value(uint64_t image_base, uint64_t virtual_a
   return virtual_address;
 }
 
-
-int pe_is_termination_delay_import_entry(PIMAGE_DELAYLOAD_DESCRIPTOR importDescriptor)
+int pe_is_termination_delay_import_entry(
+    PIMAGE_DELAYLOAD_DESCRIPTOR importDescriptor)
 {
-  return (importDescriptor->Attributes.AllAttributes == 0 &&
-          importDescriptor->DllNameRVA == 0 &&
-          importDescriptor->ModuleHandleRVA == 0 &&
-          importDescriptor->ImportAddressTableRVA == 0 &&
-          importDescriptor->ImportNameTableRVA == 0 &&
-          importDescriptor->BoundImportAddressTableRVA == 0 &&
-          importDescriptor->UnloadInformationTableRVA == 0 &&
-          importDescriptor->TimeDateStamp == 0);
+  return (
+      importDescriptor->Attributes.AllAttributes == 0 &&
+      importDescriptor->DllNameRVA == 0 &&
+      importDescriptor->ModuleHandleRVA == 0 &&
+      importDescriptor->ImportAddressTableRVA == 0 &&
+      importDescriptor->ImportNameTableRVA == 0 &&
+      importDescriptor->BoundImportAddressTableRVA == 0 &&
+      importDescriptor->UnloadInformationTableRVA == 0 &&
+      importDescriptor->TimeDateStamp == 0);
 }
 
-
-char * pe_parse_delay_import_dll_name(PE* pe, uint64_t rva)
+char* pe_parse_delay_import_dll_name(PE* pe, uint64_t rva)
 {
   const uint64_t offset = pe_rva_to_offset(pe, rva);
 
   if (offset < 0)
     return NULL;
 
-  char* dll_name = (char *) (pe->data + offset);
+  char* dll_name = (char*) (pe->data + offset);
   if (!pe_valid_dll_name(dll_name, pe->data_size - (size_t) offset))
     return NULL;
   return yr_strdup(dll_name);
 }
 
-
-uint64_t pe_parse_delay_import_pointer(PE* pe, uint64_t pointerSize, uint64_t rva)
+uint64_t pe_parse_delay_import_pointer(
+    PE* pe,
+    uint64_t pointerSize,
+    uint64_t rva)
 {
   const uint64_t offset = pe_rva_to_offset(pe, rva);
-  const uint8_t *data = pe->data + offset;
-
+  const uint8_t* data = pe->data + offset;
 
   if (!fits_in_pe(pe, data, pointerSize))
     return YR_UNDEFINED;
 
-
   if (IS_64BITS_PE(pe))
-    return yr_le64toh(*(uint64_t *) data);
+    return yr_le64toh(*(uint64_t*) data);
   else
-    return yr_le32toh(*(uint32_t *) data);
+    return yr_le32toh(*(uint32_t*) data);
 }
 
 static void* pe_parse_delayed_imports(PE* pe)
@@ -1191,13 +1200,14 @@ static void* pe_parse_delayed_imports(PE* pe)
   uint64_t image_base = OptionalHeader(pe, ImageBase);
   uint64_t size_of_image = OptionalHeader(pe, SizeOfImage);
   uint64_t pointer_size = (IS_64BITS_PE(pe)) ? 8 : 4;
-  uint64_t ordinal_mask = (IS_64BITS_PE(pe)) ? IMAGE_ORDINAL_FLAG64 : IMAGE_ORDINAL_FLAG32;
+  uint64_t ordinal_mask = (IS_64BITS_PE(pe)) ? IMAGE_ORDINAL_FLAG64
+                                             : IMAGE_ORDINAL_FLAG32;
 
   IMPORTED_DLL* head_dll = NULL;
   IMPORTED_DLL* tail_dll = NULL;
 
-  IMPORT_FUNCTION *head_fun = NULL;
-  IMPORT_FUNCTION *tail_fun = NULL;
+  IMPORT_FUNCTION* head_fun = NULL;
+  IMPORT_FUNCTION* tail_fun = NULL;
 
   PIMAGE_DELAYLOAD_DESCRIPTOR import_descriptor = NULL;
   PIMAGE_DATA_DIRECTORY directory = NULL;
@@ -1206,9 +1216,7 @@ static void* pe_parse_delayed_imports(PE* pe)
   set_integer(0, pe->object, "number_of_delayed_imports");
   set_integer(0, pe->object, "number_of_delayed_imported_functions");
 
-
-  directory = pe_get_directory_entry(
-      pe, IMAGE_DIRECTORY_ENTRY_DELAY_IMPORT);
+  directory = pe_get_directory_entry(pe, IMAGE_DIRECTORY_ENTRY_DELAY_IMPORT);
 
   if (directory == NULL)
     return NULL;
@@ -1216,26 +1224,30 @@ static void* pe_parse_delayed_imports(PE* pe)
   if (yr_le32toh(directory->VirtualAddress) == 0)
     return NULL;
 
-
   offset = pe_rva_to_offset(pe, yr_le32toh(directory->VirtualAddress));
 
   if (offset < 0)
     return NULL;
 
   import_descriptor = (PIMAGE_DELAYLOAD_DESCRIPTOR)(pe->data + offset);
-  for (; struct_fits_in_pe(pe, import_descriptor, IMAGE_DELAYLOAD_DESCRIPTOR); import_descriptor++)
+  for (; struct_fits_in_pe(pe, import_descriptor, IMAGE_DELAYLOAD_DESCRIPTOR);
+       import_descriptor++)
   {
     // Check for the termination entry
     if (pe_is_termination_delay_import_entry(import_descriptor))
       break;
 
-    DWORD Attributes                 = yr_le32toh(import_descriptor->Attributes.AllAttributes);
-    DWORD DllNameRVA                 = yr_le32toh(import_descriptor->DllNameRVA);
-    DWORD ModuleHandleRVA            = yr_le32toh(import_descriptor->ModuleHandleRVA);
-    DWORD ImportAddressTableRVA      = yr_le32toh(import_descriptor->ImportAddressTableRVA);
-    DWORD ImportNameTableRVA         = yr_le32toh(import_descriptor->ImportNameTableRVA);
-    DWORD BoundImportAddressTableRVA = yr_le32toh(import_descriptor->BoundImportAddressTableRVA);
-    DWORD UnloadInformationTableRVA  = yr_le32toh(import_descriptor->UnloadInformationTableRVA);
+    DWORD Attributes = yr_le32toh(import_descriptor->Attributes.AllAttributes);
+    DWORD DllNameRVA = yr_le32toh(import_descriptor->DllNameRVA);
+    DWORD ModuleHandleRVA = yr_le32toh(import_descriptor->ModuleHandleRVA);
+    DWORD ImportAddressTableRVA = yr_le32toh(
+        import_descriptor->ImportAddressTableRVA);
+    DWORD ImportNameTableRVA = yr_le32toh(
+        import_descriptor->ImportNameTableRVA);
+    DWORD BoundImportAddressTableRVA = yr_le32toh(
+        import_descriptor->BoundImportAddressTableRVA);
+    DWORD UnloadInformationTableRVA = yr_le32toh(
+        import_descriptor->UnloadInformationTableRVA);
 
     // Valid delayed import entry starts either with 0 or 0x01.
     // We strict require one of the valid values here
@@ -1243,16 +1255,22 @@ static void* pe_parse_delayed_imports(PE* pe)
       break;
 
     // Convert older (MS Visual C++ 6.0) delay-import descriptor to newer one.
-    // These delay-import descriptors are distinguishable by lowest bit in rec.Attributes to be zero.
-    // Sample: 2775d97f8bdb3311ace960a42eee35dbec84b9d71a6abbacb26c14e83f5897e4
-    if(!IS_64BITS_PE(pe) && !Attributes)
+    // These delay-import descriptors are distinguishable by lowest bit in
+    // rec.Attributes to be zero. Sample:
+    // 2775d97f8bdb3311ace960a42eee35dbec84b9d71a6abbacb26c14e83f5897e4
+    if (!IS_64BITS_PE(pe) && !Attributes)
     {
       DllNameRVA = pe_normalize_delay_import_value(image_base, DllNameRVA);
-      ModuleHandleRVA = pe_normalize_delay_import_value(image_base, ModuleHandleRVA);
-      ImportAddressTableRVA = pe_normalize_delay_import_value(image_base, ImportAddressTableRVA);
-      ImportNameTableRVA = pe_normalize_delay_import_value(image_base, ImportNameTableRVA);
-      BoundImportAddressTableRVA = pe_normalize_delay_import_value(image_base, BoundImportAddressTableRVA);
-      UnloadInformationTableRVA = pe_normalize_delay_import_value(image_base, UnloadInformationTableRVA);
+      ModuleHandleRVA = pe_normalize_delay_import_value(
+          image_base, ModuleHandleRVA);
+      ImportAddressTableRVA = pe_normalize_delay_import_value(
+          image_base, ImportAddressTableRVA);
+      ImportNameTableRVA = pe_normalize_delay_import_value(
+          image_base, ImportNameTableRVA);
+      BoundImportAddressTableRVA = pe_normalize_delay_import_value(
+          image_base, BoundImportAddressTableRVA);
+      UnloadInformationTableRVA = pe_normalize_delay_import_value(
+          image_base, UnloadInformationTableRVA);
     }
 
     // Stop on blatantly invalid delay import entries (old PELIB behavior)
@@ -1262,41 +1280,41 @@ static void* pe_parse_delayed_imports(PE* pe)
         ImportNameTableRVA < sizeof(IMAGE_DOS_HEADER))
       break;
 
-    char *dll_name = pe_parse_delay_import_dll_name(pe, DllNameRVA);
+    char* dll_name = pe_parse_delay_import_dll_name(pe, DllNameRVA);
 
     if (dll_name == NULL)
       continue;
 
-    IMPORTED_DLL *imported_dll = (IMPORTED_DLL*) yr_calloc(1, sizeof(IMPORTED_DLL));
+    IMPORTED_DLL* imported_dll = (IMPORTED_DLL*) yr_calloc(
+        1, sizeof(IMPORTED_DLL));
     if (imported_dll == NULL)
       continue;
-
 
     imported_dll->name = dll_name;
     imported_dll->next = NULL;
     imported_dll->functions = NULL;
 
-
     head_fun = tail_fun = NULL;
 
     uint64_t name_rva = ImportNameTableRVA;
     uint64_t func_rva = ImportAddressTableRVA;
-    for(;;)
+    for (;;)
     {
-      uint64_t nameAddress = pe_parse_delay_import_pointer(pe, pointer_size, name_rva);
-      uint64_t funcAddress = pe_parse_delay_import_pointer(pe, pointer_size, func_rva);
+      uint64_t nameAddress = pe_parse_delay_import_pointer(
+          pe, pointer_size, name_rva);
+      uint64_t funcAddress = pe_parse_delay_import_pointer(
+          pe, pointer_size, func_rva);
 
       // Value of YR_UNDEFINED means that value is outside of pe->data
       if (nameAddress == YR_UNDEFINED || funcAddress == YR_UNDEFINED)
         break;
 
       // Value of zero means that this is the end of the bound import name table
-      if(nameAddress == 0 || funcAddress == 0)
+      if (nameAddress == 0 || funcAddress == 0)
         break;
 
-
-      IMPORT_FUNCTION* imported_func = (IMPORT_FUNCTION*) yr_malloc(sizeof(IMPORT_FUNCTION));
-
+      IMPORT_FUNCTION* imported_func = (IMPORT_FUNCTION*) yr_malloc(
+          sizeof(IMPORT_FUNCTION));
 
       if (imported_func == NULL)
         continue;
@@ -1310,27 +1328,28 @@ static void* pe_parse_delayed_imports(PE* pe)
       if (!(nameAddress & ordinal_mask))
       {
         // Convert name address to RVA, if needed
-        if(!Attributes)
-          nameAddress = pe_normalize_delay_import_value(image_base, nameAddress);
+        if (!Attributes)
+          nameAddress = pe_normalize_delay_import_value(
+              image_base, nameAddress);
 
-        offset = pe_rva_to_offset(pe, nameAddress+sizeof(uint16_t));
-        imported_func->name = (char *) yr_strndup(
-            (char*) (pe->data + offset), yr_min(available_space(pe, (char*) (pe->data + offset)), 512));
+        offset = pe_rva_to_offset(pe, nameAddress + sizeof(uint16_t));
+        imported_func->name = (char*) yr_strndup(
+            (char*) (pe->data + offset),
+            yr_min(available_space(pe, (char*) (pe->data + offset)), 512));
       }
       else
       {
         // If imported by ordinal. Lookup the ordinal.
-        imported_func->name = ord_lookup(dll_name, yr_le64toh(nameAddress) & 0xFFFF);
+        imported_func->name = ord_lookup(
+            dll_name, yr_le64toh(nameAddress) & 0xFFFF);
         // Also store the ordinal.
         imported_func->ordinal = yr_le64toh(nameAddress) & 0xFFFF;
         imported_func->has_ordinal = 1;
       }
 
-
       num_function_imports++;
       name_rva += pointer_size;
       func_rva += pointer_size;
-
 
       if (head_fun == NULL)
         head_fun = imported_func;
@@ -1341,9 +1360,7 @@ static void* pe_parse_delayed_imports(PE* pe)
       tail_fun = imported_func;
     }
 
-
     num_imports++;
-
 
     imported_dll->functions = head_fun;
 
@@ -1354,12 +1371,11 @@ static void* pe_parse_delayed_imports(PE* pe)
       tail_dll->next = imported_dll;
 
     tail_dll = imported_dll;
-
   }
 
-
   set_integer(num_imports, pe->object, "number_of_delayed_imports");
-  set_integer(num_function_imports, pe->object, "number_of_delayed_imported_functions");
+  set_integer(
+      num_function_imports, pe->object, "number_of_delayed_imported_functions");
   pe_set_imports(
       pe,
       head_dll,
@@ -2113,9 +2129,11 @@ static void pe_parse_header(PE* pe, uint64_t base_address, int flags)
     section_name[IMAGE_SIZEOF_SHORT_NAME] = '\0';
 
     // Basically do rstrip('\0'), find the rightmost non-null character.
-    // Samples like 0043812838495a45449a0ac61a81b9c16eddca1ad249fb4f7fdb1c4505e9bb34 contain
+    // Samples like
+    // 0043812838495a45449a0ac61a81b9c16eddca1ad249fb4f7fdb1c4505e9bb34 contain
     // sections with additional characters after the first null.
-    for (sect_name_length = IMAGE_SIZEOF_SHORT_NAME - 1; sect_name_length >= 0; --sect_name_length)
+    for (sect_name_length = IMAGE_SIZEOF_SHORT_NAME - 1; sect_name_length >= 0;
+         --sect_name_length)
     {
       if (section_name[sect_name_length] != '\0')
         break;
@@ -2124,7 +2142,8 @@ static void pe_parse_header(PE* pe, uint64_t base_address, int flags)
     set_sized_string(
         (char*) section_name,
         sect_name_length + 1,
-        pe->object, "sections[%i].name",
+        pe->object,
+        "sections[%i].name",
         i);
 
     set_integer(
@@ -2619,20 +2638,19 @@ define_function(imphash)
 
 #endif  // defined(HAVE_LIBCRYPTO) || defined(HAVE_WINCRYPT_H)
 
-
-long long pe_imports_dll(
-  IMPORTED_DLL* dll,
-  char *dll_name)
+long long pe_imports_dll(IMPORTED_DLL* dll, char* dll_name)
 {
   if (dll == NULL)
     return 0;
 
   long long result = 0;
-  for (;dll != NULL; dll = dll->next) {
+  for (; dll != NULL; dll = dll->next)
+  {
     if (strcasecmp(dll->name, dll_name) == 0)
     {
-      IMPORT_FUNCTION *fun = dll->functions;
-      for (; fun != NULL; fun = fun->next) {
+      IMPORT_FUNCTION* fun = dll->functions;
+      for (; fun != NULL; fun = fun->next)
+      {
         result++;
       }
     }
@@ -2640,20 +2658,16 @@ long long pe_imports_dll(
   return result;
 }
 
-
-long long pe_imports(
-  IMPORTED_DLL* dll,
-  char* dll_name,
-  char* fun_name)
+long long pe_imports(IMPORTED_DLL* dll, char* dll_name, char* fun_name)
 {
   if (dll == NULL)
     return 0;
 
-  for (;dll != NULL; dll = dll->next)
+  for (; dll != NULL; dll = dll->next)
   {
     if (strcasecmp(dll->name, dll_name) == 0)
     {
-      IMPORT_FUNCTION *fun = dll->functions;
+      IMPORT_FUNCTION* fun = dll->functions;
       for (; fun != NULL; fun = fun->next)
       {
         if (strcasecmp(fun->name, fun_name) == 0)
@@ -2664,22 +2678,21 @@ long long pe_imports(
   return 0;
 }
 
-
 long long pe_imports_regexp(
-  YR_SCAN_CONTEXT* context,
-  IMPORTED_DLL* dll,
-  RE* dll_name,
-  RE* fun_name)
+    YR_SCAN_CONTEXT* context,
+    IMPORTED_DLL* dll,
+    RE* dll_name,
+    RE* fun_name)
 {
   if (dll == NULL)
     return 0;
 
   long long result = 0;
-  for (;dll != NULL; dll = dll->next)
+  for (; dll != NULL; dll = dll->next)
   {
     if (yr_re_match(context, dll_name, dll->name) > 0)
     {
-      IMPORT_FUNCTION *fun = dll->functions;
+      IMPORT_FUNCTION* fun = dll->functions;
       for (; fun != NULL; fun = fun->next)
       {
         if (yr_re_match(context, fun_name, fun->name) > 0)
@@ -2690,20 +2703,16 @@ long long pe_imports_regexp(
   return result;
 }
 
-
-long long pe_imports_ordinal(
-  IMPORTED_DLL* dll,
-  char* dll_name,
-  int ordinal)
+long long pe_imports_ordinal(IMPORTED_DLL* dll, char* dll_name, int ordinal)
 {
   if (dll == NULL)
     return 0;
 
-  for (;dll != NULL; dll = dll->next)
+  for (; dll != NULL; dll = dll->next)
   {
     if (strcasecmp(dll->name, dll_name) == 0)
     {
-      IMPORT_FUNCTION *fun = dll->functions;
+      IMPORT_FUNCTION* fun = dll->functions;
       for (; fun != NULL; fun = fun->next)
       {
         if (fun->has_ordinal && fun->ordinal == ordinal)
@@ -2713,7 +2722,6 @@ long long pe_imports_ordinal(
   }
   return 0;
 }
-
 
 define_function(imports_standard)
 {
@@ -2726,10 +2734,8 @@ define_function(imports_standard)
   if (!pe)
     return_integer(YR_UNDEFINED);
 
-  return_integer(
-    pe_imports(pe->imported_dlls, dll_name, function_name));
+  return_integer(pe_imports(pe->imported_dlls, dll_name, function_name));
 }
-
 
 define_function(imports)
 {
@@ -2744,18 +2750,17 @@ define_function(imports)
     return_integer(YR_UNDEFINED);
 
   if (flags & IMPORT_STANDARD &&
-    pe_imports(pe->imported_dlls, dll_name, function_name))
+      pe_imports(pe->imported_dlls, dll_name, function_name))
   {
     return_integer(1);
   }
   if (flags & IMPORT_DELAYED &&
-    pe_imports(pe->delay_imported_dlls, dll_name, function_name))
+      pe_imports(pe->delay_imported_dlls, dll_name, function_name))
   {
     return_integer(1);
   }
   return_integer(0);
 }
-
 
 define_function(imports_standard_ordinal)
 {
@@ -2771,7 +2776,6 @@ define_function(imports_standard_ordinal)
   return_integer(pe_imports_ordinal(pe->imported_dlls, dll_name, ordinal))
 }
 
-
 define_function(imports_ordinal)
 {
   int flags = integer_argument(1);
@@ -2785,23 +2789,22 @@ define_function(imports_ordinal)
     return_integer(YR_UNDEFINED);
 
   if (flags & IMPORT_STANDARD &&
-    pe_imports_ordinal(pe->imported_dlls, dll_name, ordinal))
+      pe_imports_ordinal(pe->imported_dlls, dll_name, ordinal))
   {
     return_integer(1);
   }
   if (flags & IMPORT_DELAYED &&
-    pe_imports_ordinal(pe->delay_imported_dlls, dll_name, ordinal))
+      pe_imports_ordinal(pe->delay_imported_dlls, dll_name, ordinal))
   {
     return_integer(1);
   }
   return_integer(0);
 }
 
-
 define_function(imports_standard_regex)
 {
   RE* dll_name = regexp_argument(1);
-  RE* function_name =  regexp_argument(2);
+  RE* function_name = regexp_argument(2);
 
   YR_OBJECT* module = module();
   PE* pe = (PE*) module->data;
@@ -2809,20 +2812,15 @@ define_function(imports_standard_regex)
   if (!pe)
     return_integer(YR_UNDEFINED);
 
-  return_integer(
-      pe_imports_regexp(
-          scan_context(),
-          pe->imported_dlls,
-          dll_name,
-          function_name))
+  return_integer(pe_imports_regexp(
+      scan_context(), pe->imported_dlls, dll_name, function_name))
 }
-
 
 define_function(imports_regex)
 {
   int flags = integer_argument(1);
   RE* dll_name = regexp_argument(2);
-  RE* function_name =  regexp_argument(3);
+  RE* function_name = regexp_argument(3);
 
   YR_OBJECT* module = module();
   PE* pe = (PE*) module->data;
@@ -2834,22 +2832,15 @@ define_function(imports_regex)
   if (flags & IMPORT_STANDARD)
   {
     result += pe_imports_regexp(
-        scan_context(),
-        pe->imported_dlls,
-        dll_name,
-        function_name);
+        scan_context(), pe->imported_dlls, dll_name, function_name);
   }
   if (flags & IMPORT_DELAYED)
   {
     result += pe_imports_regexp(
-        scan_context(),
-        pe->delay_imported_dlls,
-        dll_name,
-        function_name);
+        scan_context(), pe->delay_imported_dlls, dll_name, function_name);
   }
   return_integer(result);
 }
-
 
 define_function(imports_standard_dll)
 {
@@ -2863,7 +2854,6 @@ define_function(imports_standard_dll)
 
   return_integer(pe_imports_dll(pe->imported_dlls, dll_name));
 }
-
 
 define_function(imports_dll)
 {
@@ -2887,7 +2877,6 @@ define_function(imports_dll)
   }
   return_integer(result);
 }
-
 
 define_function(locale)
 {
@@ -3441,15 +3430,6 @@ begin_declarations
   declare_integer("number_of_delayed_imported_functions");
   declare_integer("number_of_exports");
 
-  begin_struct_array("delayed_import_details");
-    declare_string("library_name");
-    declare_integer("number_of_function");
-    begin_struct_array("functions");
-      declare_string("name");
-      declare_integer("ordinal");
-    end_struct_array("functions");
-  end_struct_array("delayed_import_details");
-
   declare_string("dll_name");
   declare_integer("export_timestamp");
   begin_struct_array("export_details")
@@ -3574,35 +3554,16 @@ int module_load(
   set_integer(IMAGE_FILE_MACHINE_THUMB, module_object, "MACHINE_THUMB");
   set_integer(IMAGE_FILE_MACHINE_WCEMIPSV2, module_object, "MACHINE_WCEMIPSV2");
   set_integer(
-      IMAGE_FILE_MACHINE_TARGET_HOST, module_object,
-      "MACHINE_TARGET_HOST");
-  set_integer(
-      IMAGE_FILE_MACHINE_R3000, module_object,
-      "MACHINE_R3000");
-  set_integer(
-      IMAGE_FILE_MACHINE_R10000, module_object,
-      "MACHINE_R10000");
-  set_integer(
-      IMAGE_FILE_MACHINE_ALPHA, module_object,
-      "MACHINE_ALPHA");
-  set_integer(
-      IMAGE_FILE_MACHINE_SH3E, module_object,
-      "MACHINE_SH3E");
-  set_integer(
-      IMAGE_FILE_MACHINE_ALPHA64, module_object,
-      "MACHINE_ALPHA64");
-  set_integer(
-      IMAGE_FILE_MACHINE_AXP64, module_object,
-      "MACHINE_AXP64");
-  set_integer(
-      IMAGE_FILE_MACHINE_TRICORE, module_object,
-      "MACHINE_TRICORE");
-  set_integer(
-      IMAGE_FILE_MACHINE_CEF, module_object,
-      "MACHINE_CEF");
-  set_integer(
-      IMAGE_FILE_MACHINE_CEE, module_object,
-      "MACHINE_CEE");
+      IMAGE_FILE_MACHINE_TARGET_HOST, module_object, "MACHINE_TARGET_HOST");
+  set_integer(IMAGE_FILE_MACHINE_R3000, module_object, "MACHINE_R3000");
+  set_integer(IMAGE_FILE_MACHINE_R10000, module_object, "MACHINE_R10000");
+  set_integer(IMAGE_FILE_MACHINE_ALPHA, module_object, "MACHINE_ALPHA");
+  set_integer(IMAGE_FILE_MACHINE_SH3E, module_object, "MACHINE_SH3E");
+  set_integer(IMAGE_FILE_MACHINE_ALPHA64, module_object, "MACHINE_ALPHA64");
+  set_integer(IMAGE_FILE_MACHINE_AXP64, module_object, "MACHINE_AXP64");
+  set_integer(IMAGE_FILE_MACHINE_TRICORE, module_object, "MACHINE_TRICORE");
+  set_integer(IMAGE_FILE_MACHINE_CEF, module_object, "MACHINE_CEF");
+  set_integer(IMAGE_FILE_MACHINE_CEE, module_object, "MACHINE_CEE");
 
   set_integer(IMAGE_SUBSYSTEM_UNKNOWN, module_object, "SUBSYSTEM_UNKNOWN");
   set_integer(IMAGE_SUBSYSTEM_NATIVE, module_object, "SUBSYSTEM_NATIVE");
@@ -3633,8 +3594,7 @@ int module_load(
       module_object,
       "SUBSYSTEM_EFI_RUNTIME_DRIVER");
   set_integer(
-      IMAGE_SUBSYSTEM_EFI_ROM_IMAGE, module_object,
-      "SUBSYSTEM_EFI_ROM_IMAGE");
+      IMAGE_SUBSYSTEM_EFI_ROM_IMAGE, module_object, "SUBSYSTEM_EFI_ROM_IMAGE");
   set_integer(IMAGE_SUBSYSTEM_XBOX, module_object, "SUBSYSTEM_XBOX");
   set_integer(
       IMAGE_SUBSYSTEM_WINDOWS_BOOT_APPLICATION,
@@ -3642,7 +3602,8 @@ int module_load(
       "SUBSYSTEM_WINDOWS_BOOT_APPLICATION");
 
   set_integer(
-      IMAGE_DLLCHARACTERISTICS_HIGH_ENTROPY_VA, module_object,
+      IMAGE_DLLCHARACTERISTICS_HIGH_ENTROPY_VA,
+      module_object,
       "HIGH_ENTROPY_VA");
   set_integer(
       IMAGE_DLLCHARACTERISTICS_DYNAMIC_BASE, module_object, "DYNAMIC_BASE");
@@ -3656,8 +3617,7 @@ int module_load(
   set_integer(IMAGE_DLLCHARACTERISTICS_NO_SEH, module_object, "NO_SEH");
   set_integer(IMAGE_DLLCHARACTERISTICS_NO_BIND, module_object, "NO_BIND");
   set_integer(
-      IMAGE_DLLCHARACTERISTICS_APPCONTAINER, module_object,
-      "APPCONTAINER");
+      IMAGE_DLLCHARACTERISTICS_APPCONTAINER, module_object, "APPCONTAINER");
   set_integer(IMAGE_DLLCHARACTERISTICS_WDM_DRIVER, module_object, "WDM_DRIVER");
   set_integer(IMAGE_DLLCHARACTERISTICS_GUARD_CF, module_object, "GUARD_CF");
   set_integer(
@@ -3720,7 +3680,8 @@ int module_load(
       module_object,
       "IMAGE_DIRECTORY_ENTRY_ARCHITECTURE");
   set_integer(
-      IMAGE_DIRECTORY_ENTRY_COPYRIGHT, module_object,
+      IMAGE_DIRECTORY_ENTRY_COPYRIGHT,
+      module_object,
       "IMAGE_DIRECTORY_ENTRY_COPYRIGHT");
   set_integer(
       IMAGE_DIRECTORY_ENTRY_GLOBALPTR,
@@ -3748,18 +3709,19 @@ int module_load(
       "IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR");
 
   set_integer(
-      IMAGE_NT_OPTIONAL_HDR32_MAGIC, module_object,
+      IMAGE_NT_OPTIONAL_HDR32_MAGIC,
+      module_object,
       "IMAGE_NT_OPTIONAL_HDR32_MAGIC");
   set_integer(
-      IMAGE_NT_OPTIONAL_HDR64_MAGIC, module_object,
+      IMAGE_NT_OPTIONAL_HDR64_MAGIC,
+      module_object,
       "IMAGE_NT_OPTIONAL_HDR64_MAGIC");
   set_integer(
-      IMAGE_ROM_OPTIONAL_HDR_MAGIC, module_object,
+      IMAGE_ROM_OPTIONAL_HDR_MAGIC,
+      module_object,
       "IMAGE_ROM_OPTIONAL_HDR_MAGIC");
 
-  set_integer(
-      IMAGE_SCN_TYPE_NO_PAD, module_object,
-      "SECTION_NO_PAD");
+  set_integer(IMAGE_SCN_TYPE_NO_PAD, module_object, "SECTION_NO_PAD");
   set_integer(IMAGE_SCN_CNT_CODE, module_object, "SECTION_CNT_CODE");
   set_integer(
       IMAGE_SCN_CNT_INITIALIZED_DATA,
@@ -3769,80 +3731,40 @@ int module_load(
       IMAGE_SCN_CNT_UNINITIALIZED_DATA,
       module_object,
       "SECTION_CNT_UNINITIALIZED_DATA");
+  set_integer(IMAGE_SCN_LNK_OTHER, module_object, "SECTION_LNK_OTHER");
+  set_integer(IMAGE_SCN_LNK_INFO, module_object, "SECTION_LNK_INFO");
+  set_integer(IMAGE_SCN_LNK_REMOVE, module_object, "SECTION_LNK_REMOVE");
+  set_integer(IMAGE_SCN_LNK_COMDAT, module_object, "SECTION_LNK_COMDAT");
   set_integer(
-      IMAGE_SCN_LNK_OTHER, module_object,
-      "SECTION_LNK_OTHER");
-  set_integer(
-      IMAGE_SCN_LNK_INFO, module_object,
-      "SECTION_LNK_INFO");
-  set_integer(
-      IMAGE_SCN_LNK_REMOVE, module_object,
-      "SECTION_LNK_REMOVE");
-  set_integer(
-      IMAGE_SCN_LNK_COMDAT, module_object,
-      "SECTION_LNK_COMDAT");
-  set_integer(
-      IMAGE_SCN_NO_DEFER_SPEC_EXC, module_object,
-      "SECTION_NO_DEFER_SPEC_EXC");
+      IMAGE_SCN_NO_DEFER_SPEC_EXC, module_object, "SECTION_NO_DEFER_SPEC_EXC");
   set_integer(IMAGE_SCN_GPREL, module_object, "SECTION_GPREL");
-  set_integer(
-      IMAGE_SCN_MEM_FARDATA, module_object,
-      "SECTION_MEM_FARDATA");
-  set_integer(
-      IMAGE_SCN_MEM_PURGEABLE, module_object,
-      "SECTION_MEM_PURGEABLE");
+  set_integer(IMAGE_SCN_MEM_FARDATA, module_object, "SECTION_MEM_FARDATA");
+  set_integer(IMAGE_SCN_MEM_PURGEABLE, module_object, "SECTION_MEM_PURGEABLE");
   set_integer(IMAGE_SCN_MEM_16BIT, module_object, "SECTION_MEM_16BIT");
+  set_integer(IMAGE_SCN_MEM_LOCKED, module_object, "SECTION_MEM_LOCKED");
+  set_integer(IMAGE_SCN_MEM_PRELOAD, module_object, "SECTION_MEM_PRELOAD");
+  set_integer(IMAGE_SCN_ALIGN_1BYTES, module_object, "SECTION_ALIGN_1BYTES");
+  set_integer(IMAGE_SCN_ALIGN_2BYTES, module_object, "SECTION_ALIGN_2BYTES");
+  set_integer(IMAGE_SCN_ALIGN_4BYTES, module_object, "SECTION_ALIGN_4BYTES");
+  set_integer(IMAGE_SCN_ALIGN_8BYTES, module_object, "SECTION_ALIGN_8BYTES");
+  set_integer(IMAGE_SCN_ALIGN_16BYTES, module_object, "SECTION_ALIGN_16BYTES");
+  set_integer(IMAGE_SCN_ALIGN_32BYTES, module_object, "SECTION_ALIGN_32BYTES");
+  set_integer(IMAGE_SCN_ALIGN_64BYTES, module_object, "SECTION_ALIGN_64BYTES");
   set_integer(
-      IMAGE_SCN_MEM_LOCKED, module_object,
-      "SECTION_MEM_LOCKED");
+      IMAGE_SCN_ALIGN_128BYTES, module_object, "SECTION_ALIGN_128BYTES");
   set_integer(
-      IMAGE_SCN_MEM_PRELOAD, module_object,
-      "SECTION_MEM_PRELOAD");
+      IMAGE_SCN_ALIGN_256BYTES, module_object, "SECTION_ALIGN_256BYTES");
   set_integer(
-      IMAGE_SCN_ALIGN_1BYTES, module_object,
-      "SECTION_ALIGN_1BYTES");
+      IMAGE_SCN_ALIGN_512BYTES, module_object, "SECTION_ALIGN_512BYTES");
   set_integer(
-      IMAGE_SCN_ALIGN_2BYTES, module_object,
-      "SECTION_ALIGN_2BYTES");
+      IMAGE_SCN_ALIGN_1024BYTES, module_object, "SECTION_ALIGN_1024BYTES");
   set_integer(
-      IMAGE_SCN_ALIGN_4BYTES, module_object,
-      "SECTION_ALIGN_4BYTES");
+      IMAGE_SCN_ALIGN_2048BYTES, module_object, "SECTION_ALIGN_2048BYTES");
   set_integer(
-      IMAGE_SCN_ALIGN_8BYTES, module_object,
-      "SECTION_ALIGN_8BYTES");
+      IMAGE_SCN_ALIGN_4096BYTES, module_object, "SECTION_ALIGN_4096BYTES");
   set_integer(
-      IMAGE_SCN_ALIGN_16BYTES, module_object,
-      "SECTION_ALIGN_16BYTES");
-  set_integer(
-      IMAGE_SCN_ALIGN_32BYTES, module_object,
-      "SECTION_ALIGN_32BYTES");
-  set_integer(
-      IMAGE_SCN_ALIGN_64BYTES, module_object,
-      "SECTION_ALIGN_64BYTES");
-  set_integer(
-      IMAGE_SCN_ALIGN_128BYTES, module_object,
-      "SECTION_ALIGN_128BYTES");
-  set_integer(
-      IMAGE_SCN_ALIGN_256BYTES, module_object,
-      "SECTION_ALIGN_256BYTES");
-  set_integer(
-      IMAGE_SCN_ALIGN_512BYTES, module_object,
-      "SECTION_ALIGN_512BYTES");
-  set_integer(
-      IMAGE_SCN_ALIGN_1024BYTES, module_object,
-      "SECTION_ALIGN_1024BYTES");
-  set_integer(
-      IMAGE_SCN_ALIGN_2048BYTES, module_object,
-      "SECTION_ALIGN_2048BYTES");
-  set_integer(
-      IMAGE_SCN_ALIGN_4096BYTES, module_object,
-      "SECTION_ALIGN_4096BYTES");
-  set_integer(
-      IMAGE_SCN_ALIGN_8192BYTES, module_object,
-      "SECTION_ALIGN_8192BYTES");
-  set_integer(
-      IMAGE_SCN_ALIGN_MASK, module_object,
-      "SECTION_ALIGN_MASK");
+      IMAGE_SCN_ALIGN_8192BYTES, module_object, "SECTION_ALIGN_8192BYTES");
+  set_integer(IMAGE_SCN_ALIGN_MASK, module_object, "SECTION_ALIGN_MASK");
   set_integer(
       IMAGE_SCN_LNK_NRELOC_OVFL, module_object, "SECTION_LNK_NRELOC_OVFL");
   set_integer(
@@ -3854,8 +3776,7 @@ int module_load(
   set_integer(IMAGE_SCN_MEM_EXECUTE, module_object, "SECTION_MEM_EXECUTE");
   set_integer(IMAGE_SCN_MEM_READ, module_object, "SECTION_MEM_READ");
   set_integer(IMAGE_SCN_MEM_WRITE, module_object, "SECTION_MEM_WRITE");
-  set_integer(
-      IMAGE_SCN_SCALE_INDEX, module_object, "SECTION_SCALE_INDEX");
+  set_integer(IMAGE_SCN_SCALE_INDEX, module_object, "SECTION_SCALE_INDEX");
 
   set_integer(RESOURCE_TYPE_CURSOR, module_object, "RESOURCE_TYPE_CURSOR");
   set_integer(RESOURCE_TYPE_BITMAP, module_object, "RESOURCE_TYPE_BITMAP");
@@ -3886,56 +3807,38 @@ int module_load(
   set_integer(RESOURCE_TYPE_MANIFEST, module_object, "RESOURCE_TYPE_MANIFEST");
 
   set_integer(
-      IMAGE_DEBUG_TYPE_UNKNOWN, module_object,
-      "IMAGE_DEBUG_TYPE_UNKNOWN");
+      IMAGE_DEBUG_TYPE_UNKNOWN, module_object, "IMAGE_DEBUG_TYPE_UNKNOWN");
+  set_integer(IMAGE_DEBUG_TYPE_COFF, module_object, "IMAGE_DEBUG_TYPE_COFF");
   set_integer(
-      IMAGE_DEBUG_TYPE_COFF, module_object,
-      "IMAGE_DEBUG_TYPE_COFF");
+      IMAGE_DEBUG_TYPE_CODEVIEW, module_object, "IMAGE_DEBUG_TYPE_CODEVIEW");
+  set_integer(IMAGE_DEBUG_TYPE_FPO, module_object, "IMAGE_DEBUG_TYPE_FPO");
+  set_integer(IMAGE_DEBUG_TYPE_MISC, module_object, "IMAGE_DEBUG_TYPE_MISC");
   set_integer(
-      IMAGE_DEBUG_TYPE_CODEVIEW, module_object,
-      "IMAGE_DEBUG_TYPE_CODEVIEW");
+      IMAGE_DEBUG_TYPE_EXCEPTION, module_object, "IMAGE_DEBUG_TYPE_EXCEPTION");
+  set_integer(IMAGE_DEBUG_TYPE_FIXUP, module_object, "IMAGE_DEBUG_TYPE_FIXUP");
   set_integer(
-      IMAGE_DEBUG_TYPE_FPO, module_object,
-      "IMAGE_DEBUG_TYPE_FPO");
-  set_integer(
-      IMAGE_DEBUG_TYPE_MISC, module_object,
-      "IMAGE_DEBUG_TYPE_MISC");
-  set_integer(
-      IMAGE_DEBUG_TYPE_EXCEPTION, module_object,
-      "IMAGE_DEBUG_TYPE_EXCEPTION");
-  set_integer(
-      IMAGE_DEBUG_TYPE_FIXUP, module_object,
-      "IMAGE_DEBUG_TYPE_FIXUP");
-  set_integer(
-      IMAGE_DEBUG_TYPE_OMAP_TO_SRC, module_object,
+      IMAGE_DEBUG_TYPE_OMAP_TO_SRC,
+      module_object,
       "IMAGE_DEBUG_TYPE_OMAP_TO_SRC");
   set_integer(
-      IMAGE_DEBUG_TYPE_OMAP_FROM_SRC, module_object,
+      IMAGE_DEBUG_TYPE_OMAP_FROM_SRC,
+      module_object,
       "IMAGE_DEBUG_TYPE_OMAP_FROM_SRC");
   set_integer(
-      IMAGE_DEBUG_TYPE_BORLAND, module_object,
-      "IMAGE_DEBUG_TYPE_BORLAND");
+      IMAGE_DEBUG_TYPE_BORLAND, module_object, "IMAGE_DEBUG_TYPE_BORLAND");
   set_integer(
-      IMAGE_DEBUG_TYPE_RESERVED10, module_object,
+      IMAGE_DEBUG_TYPE_RESERVED10,
+      module_object,
       "IMAGE_DEBUG_TYPE_RESERVED10");
+  set_integer(IMAGE_DEBUG_TYPE_CLSID, module_object, "IMAGE_DEBUG_TYPE_CLSID");
   set_integer(
-      IMAGE_DEBUG_TYPE_CLSID, module_object,
-      "IMAGE_DEBUG_TYPE_CLSID");
-  set_integer(
-      IMAGE_DEBUG_TYPE_VC_FEATURE, module_object,
+      IMAGE_DEBUG_TYPE_VC_FEATURE,
+      module_object,
       "IMAGE_DEBUG_TYPE_VC_FEATURE");
-  set_integer(
-      IMAGE_DEBUG_TYPE_POGO, module_object,
-      "IMAGE_DEBUG_TYPE_POGO");
-  set_integer(
-      IMAGE_DEBUG_TYPE_ILTCG, module_object,
-      "IMAGE_DEBUG_TYPE_ILTCG");
-  set_integer(
-      IMAGE_DEBUG_TYPE_MPX, module_object,
-      "IMAGE_DEBUG_TYPE_MPX");
-  set_integer(
-      IMAGE_DEBUG_TYPE_REPRO, module_object,
-      "IMAGE_DEBUG_TYPE_REPRO");
+  set_integer(IMAGE_DEBUG_TYPE_POGO, module_object, "IMAGE_DEBUG_TYPE_POGO");
+  set_integer(IMAGE_DEBUG_TYPE_ILTCG, module_object, "IMAGE_DEBUG_TYPE_ILTCG");
+  set_integer(IMAGE_DEBUG_TYPE_MPX, module_object, "IMAGE_DEBUG_TYPE_MPX");
+  set_integer(IMAGE_DEBUG_TYPE_REPRO, module_object, "IMAGE_DEBUG_TYPE_REPRO");
 
   set_integer(0, module_object, "is_pe");
 
@@ -3992,11 +3895,11 @@ int module_load(
   return ERROR_SUCCESS;
 }
 
-void free_dlls(IMPORTED_DLL * dll)
+void free_dlls(IMPORTED_DLL* dll)
 {
-  IMPORTED_DLL *next_dll = NULL;
-  IMPORT_FUNCTION *func = NULL;
-  IMPORT_FUNCTION *next_func = NULL;
+  IMPORTED_DLL* next_dll = NULL;
+  IMPORT_FUNCTION* func = NULL;
+  IMPORT_FUNCTION* next_func = NULL;
 
   while (dll)
   {
@@ -4019,7 +3922,6 @@ void free_dlls(IMPORTED_DLL * dll)
     yr_free(dll);
     dll = next_dll;
   }
-
 }
 
 int module_unload(YR_OBJECT* module_object)
