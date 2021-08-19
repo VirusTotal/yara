@@ -1561,7 +1561,7 @@ int _tmain(int argc, const char_t** argv)
       char* endptr = NULL;
       long pid = _tcstol(argv[argc - 1], &endptr, 10);
 
-      if (pid != 0 && argv[argc - 1] != NULL && *endptr == '\x00')
+      if (pid > 0 && argv[argc - 1] != NULL && *endptr == '\x00')
         result = yr_scanner_scan_proc(scanner, (int) pid);
     }
 
