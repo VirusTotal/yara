@@ -1551,12 +1551,19 @@ int _tmain(int argc, const char_t** argv)
     yr_scanner_set_flags(scanner, flags);
     yr_scanner_set_timeout(scanner, timeout);
 
-    long pid = _tcstol(argv[argc - 1], NULL, 10);
+    // Assume the last argument is a file first. This assures we try to process
+    // files that start with numbers first.
+    result = scan_file(scanner, argv[argc - 1]);
 
-    if (pid != 0)
-      result = yr_scanner_scan_proc(scanner, (int) pid);
-    else
-      result = scan_file(scanner, argv[argc - 1]);
+    if (result == ERROR_COULD_NOT_OPEN_FILE)
+    {
+      // Is it a PID? To be a PID it must be made up entirely of digits.
+      char* endptr = NULL;
+      long pid = _tcstol(argv[argc - 1], &endptr, 10);
+
+      if (pid > 0 && argv[argc - 1] != NULL && *endptr == '\x00')
+        result = yr_scanner_scan_proc(scanner, (int) pid);
+    }
 
     if (result != ERROR_SUCCESS)
     {
