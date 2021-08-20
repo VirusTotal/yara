@@ -66,6 +66,7 @@ typedef struct _PE
   YR_HASH_TABLE* hash_table;
   YR_OBJECT* object;
   IMPORTED_DLL* imported_dlls;
+  IMPORTED_DLL* delay_imported_dlls;
 
   uint32_t resources;
   uint32_t version_infos;

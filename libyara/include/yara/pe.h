@@ -486,6 +486,47 @@ typedef struct _IMAGE_THUNK_DATA32
 #define IMAGE_ORDINAL_FLAG32 0x80000000
 #define IMAGE_ORDINAL_FLAG64 0x8000000000000000L
 
+typedef struct _IMAGE_BOUND_IMPORT_DESCRIPTOR
+{
+  DWORD TimeDateStamp;
+  WORD OffsetModuleName;
+  WORD NumberOfModuleForwarderRefs;
+  // Array of zero or more IMAGE_BOUND_FORWARDER_REF follows
+} IMAGE_BOUND_IMPORT_DESCRIPTOR, *PIMAGE_BOUND_IMPORT_DESCRIPTOR;
+
+typedef struct _IMAGE_BOUND_FORWARDER_REF
+{
+  DWORD TimeDateStamp;
+  WORD OffsetModuleName;
+  WORD Reserved;
+} IMAGE_BOUND_FORWARDER_REF, *PIMAGE_BOUND_FORWARDER_REF;
+
+typedef struct _IMAGE_DELAYLOAD_DESCRIPTOR
+{
+  union
+  {
+    DWORD AllAttributes;
+    struct
+    {
+      DWORD RvaBased : 1;  // Delay load version 2
+      DWORD ReservedAttributes : 31;
+    } DUMMYSTRUCTNAME;
+  } Attributes;
+
+  DWORD DllNameRVA;  // RVA to the name of the target library (NULL-terminate
+                     // ASCII string)
+  DWORD ModuleHandleRVA;  // RVA to the HMODULE caching location (PHMODULE)
+  DWORD
+      ImportAddressTableRVA;  // RVA to the start of the IAT (PIMAGE_THUNK_DATA)
+  DWORD ImportNameTableRVA;   // RVA to the start of the name table
+                              // (PIMAGE_THUNK_DATA::AddressOfData)
+  DWORD BoundImportAddressTableRVA;  // RVA to an optional bound IAT
+  DWORD UnloadInformationTableRVA;   // RVA to an optional unload info table
+  DWORD TimeDateStamp;               // 0 if not bound,
+  // Otherwise, date/time of the target DLL
+
+} IMAGE_DELAYLOAD_DESCRIPTOR, *PIMAGE_DELAYLOAD_DESCRIPTOR;
+
 typedef struct _IMAGE_THUNK_DATA64
 {
   union
