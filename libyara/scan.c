@@ -635,7 +635,7 @@ static int _yr_scan_match_callback(
       2,
       stderr,
       "+ %s(match_data=%p match_length=%d) { //"
-      " match_offset=%" PRId64 " args->data=%p args->string.length=%u"
+      " match_offset=%zu args->data=%p args->string.length=%u"
       " args->data_base=0x%" PRIx64 " args->data_size=%zu"
       " args->forward_matches=%'u\n",
       __FUNCTION__,

@@ -1,4 +1,4 @@
-AC_INIT([yara], [4.1.0], [vmalvarez@virustotal.com])
+AC_INIT([yara], [4.1.1], [vmalvarez@virustotal.com])
 
 AM_SILENT_RULES([yes])
 AC_CONFIG_SRCDIR([cli/yara.c])
@@ -119,6 +119,14 @@ AC_ARG_ENABLE([profiling],
   [if test x$enableval = xyes; then
     profiling_enabled=true
     CFLAGS="$CFLAGS -DYR_PROFILING_ENABLED"
+  fi])
+
+AC_ARG_WITH([debug-verbose],
+  [AS_HELP_STRING([--with-debug-verbose=[[NUM]]], [Turn on runtime debugging information])],
+  [if test $withval -gt 0; then
+    AC_DEFINE_UNQUOTED([YR_DEBUG_VERBOSITY], [$withval])
+   else
+    AC_MSG_ERROR([debug verbosity must be greater than 0])
   fi])
 
 AC_ARG_ENABLE([cuckoo],
