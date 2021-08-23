@@ -118,3 +118,11 @@ file and create signatures based on those results.
     Returns 0 or 1, it's useful when writing a score based rule.
 
     *Example: math.to_number(SubRule1) \* 60 + math.to_number(SubRule2) \* 20 + math.to_number(SubRule3) \* 70 > 80*
+
+.. c:function:: abs(int)
+
+    .. versionadded:: 4.2.0
+
+    Returns the absolute value of the signed integer.
+
+    *Example: math.abs(@a - @b) == 1*
