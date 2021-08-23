@@ -597,6 +597,11 @@ define_function(to_number)
   return_integer(integer_argument(1) ? 1 : 0);
 }
 
+define_function(yr_math_abs)
+{
+  return_integer(llabs(integer_argument(1)));
+}
+
 begin_declarations
   declare_float("MEAN_BYTES");
   declare_function("in_range", "fff", "i", in_range);
@@ -613,6 +618,7 @@ begin_declarations
   declare_function("min", "ii", "i", min);
   declare_function("max", "ii", "i", max);
   declare_function("to_number", "b", "i", to_number);
+  declare_function("abs", "i", "i", yr_math_abs);
 end_declarations
 
 int module_initialize(YR_MODULE* module)
