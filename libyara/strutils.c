@@ -239,3 +239,10 @@ void* memmem(
   return NULL;
 }
 #endif
+
+
+int yr_isalnum(const uint8_t* s) {
+  return (*s >= 0x30 && *s <= 0x39) ||
+         (*s >= 0x41 && *s <= 0x5a) ||
+         (*s >= 0x61 && *s <= 0x7a);
+}
