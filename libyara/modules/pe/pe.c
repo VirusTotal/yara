@@ -962,6 +962,7 @@ static IMPORTED_DLL* pe_parse_imports(PE* pe)
 
   // Default to 0 imports until we know there are any
   set_integer(0, pe->object, "number_of_imports");
+  set_integer(0, pe->object, "number_of_imported_functions");
 
   directory = pe_get_directory_entry(pe, IMAGE_DIRECTORY_ENTRY_IMPORT);
 
