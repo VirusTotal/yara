@@ -662,22 +662,22 @@ static void pe_parse_version_info(PIMAGE_RESOURCE_DATA_ENTRY rsrc_data, PE* pe)
           strlcpy_w(key, string->Key, sizeof(key));
           strlcpy_w(value, string_value, sizeof(value));
 
-          // null terminator of string is not included in version value when ValueLength is zero
+          // null terminator of string is not included in version value when
+          // ValueLength is zero
           if (yr_le16toh(string->ValueLength) == 0)
             value[yr_le16toh(string->ValueLength)] = '\0';
 
           set_string(value, pe->object, "version_info[%s]", key);
 
           set_string(
-                key,
-                pe->object,
-                "version_info_list[%i].key",
-                pe->version_infos);
+              key, pe->object, "version_info_list[%i].key", pe->version_infos);
+
           set_string(
-                value,
-                pe->object,
-                "version_info_list[%i].value",
-                pe->version_infos);
+              value,
+              pe->object,
+              "version_info_list[%i].value",
+              pe->version_infos);
+
           pe->version_infos += 1;
         }
 
@@ -1165,14 +1165,16 @@ int pe_is_termination_delay_import_entry(
 
 char* pe_parse_delay_import_dll_name(PE* pe, uint64_t rva)
 {
-  const uint64_t offset = pe_rva_to_offset(pe, rva);
+  const int64_t offset = pe_rva_to_offset(pe, rva);
 
   if (offset < 0)
     return NULL;
 
   char* dll_name = (char*) (pe->data + offset);
+
   if (!pe_valid_dll_name(dll_name, pe->data_size - (size_t) offset))
     return NULL;
+
   return yr_strdup(dll_name);
 }
 
@@ -1181,7 +1183,7 @@ uint64_t pe_parse_delay_import_pointer(
     uint64_t pointerSize,
     uint64_t rva)
 {
-  const uint64_t offset = pe_rva_to_offset(pe, rva);
+  const int64_t offset = pe_rva_to_offset(pe, rva);
   const uint8_t* data = pe->data + offset;
 
   if (!fits_in_pe(pe, data, pointerSize))
@@ -3310,7 +3312,7 @@ begin_declarations
 
   declare_string_dictionary("version_info");
 
-  begin_struct_array("version_info_list");
+  begin_struct_array("version_info_list")
     declare_string("key");
     declare_string("value");
   end_struct_array("version_info_list");
@@ -3440,19 +3442,19 @@ begin_declarations
     declare_integer("ordinal");
   end_struct_array("export_details")
 
-  begin_struct_array("import_details");
+  begin_struct_array("import_details")
     declare_string("library_name");
     declare_integer("number_of_functions");
-    begin_struct_array("functions");
+    begin_struct_array("functions")
       declare_string("name");
       declare_integer("ordinal");
     end_struct_array("functions");
   end_struct_array("import_details");
 
-  begin_struct_array("delay_import_details");
+  begin_struct_array("delay_import_details")
     declare_string("library_name");
     declare_integer("number_of_function");
-    begin_struct_array("functions");
+    begin_struct_array("functions")
       declare_string("name");
       declare_integer("ordinal");
     end_struct_array("functions");
