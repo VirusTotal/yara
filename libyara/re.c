@@ -102,7 +102,7 @@ static bool _yr_re_is_char_in_class(
 
 static bool _yr_re_is_word_char(const uint8_t* input, uint8_t character_size)
 {
-  int result = ((isalnum(*input) || (*input) == '_'));
+  int result = ((yr_isalnum(input) || (*input) == '_'));
 
   if (character_size == 2)
     result = result && (*(input + 1) == 0);
