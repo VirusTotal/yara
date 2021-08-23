@@ -99,3 +99,5 @@ int strcmp_w(const char* w_str, const char* str);
 size_t strlcpy_w(char* dst, const char* w_src, size_t n);
 
 #endif
+
+int yr_isalnum(const uint8_t* s);
