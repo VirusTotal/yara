@@ -704,5 +704,8 @@ typedef struct _RICH_SIGNATURE
 #define RICH_DANS 0x536e6144  // "DanS"
 #define RICH_RICH 0x68636952  // "Rich"
 
+#define PE_PAGE_SIZE   0x1000
+#define PE_SECTOR_SIZE 0x0200
+
 #pragma pack(pop)
 #endif
