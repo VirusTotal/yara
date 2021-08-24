@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2007-2014. The YARA Authors. All Rights Reserved.
+Copyright (c) 2021. The YARA Authors. All Rights Reserved.
 
 Redistribution and use in source and binary forms, with or without modification,
 are permitted provided that the following conditions are met:
@@ -27,77 +27,42 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#ifndef YR_STRUTILS_H
-#define YR_STRUTILS_H
+#ifndef YR_UNICODE_H
+#define YR_UNICODE_H
 
-#include <assert.h>
-#include <stdlib.h>
-#include <string.h>
-#include <yara/integers.h>
-
-#if defined(_WIN32)
-
-#if !defined(PRIu64)
-#define PRIu64 "I64u"
-#endif
-
-#if !defined(PRIu32)
-#define PRIu32 "I32u"
-#endif
-
-#if !defined(PRIx64)
-#define PRIx64 "I64x"
-#endif
-
-#if !defined(PRId64)
-#define PRId64 "I64d"
-#endif
-
-#if !defined(PRIi32)
-#define PRIi32 "I32i"
-#endif
+#ifdef _MSC_VER
+#include <tchar.h>
+#define char_t TCHAR
+#define PF_S "hs"
+#define PF_C "hc"
 
 #else
-#include <inttypes.h>
+#define char_t char
+#define _T(x) x
+#define PF_S "s"
+#define PF_C "c"
+
+#ifdef __CYGWIN__
+#define _tcstok_s strtok_r
+#else
+#define _tcstok_s strtok_s
 #endif
 
-// Cygwin already has these functions.
-#if defined(_WIN32) && !defined(__CYGWIN__)
-#if defined(_MSC_VER) && _MSC_VER < 1900
-
-#if !defined(snprintf)
-#define snprintf _snprintf
+#define _tcscmp strcmp
+#define _tcsdup strdup
+#define _tcschr strchr
+#define _tcslen strlen
+#define _tcsstr strstr
+#define _tcstol strtol
+#define _tstoi atoi
+#define _tstof atof
+#define _tisdigit isdigit
+#define _tfopen fopen
+#define _ftprintf fprintf
+#define _stprintf sprintf
+#define _tprintf printf
+#define _tmain main
+#define _sntprintf snprintf
 #endif
 
 #endif
-#define strcasecmp  _stricmp
-#define strncasecmp _strnicmp
-#endif
-
-uint64_t xtoi(const char* hexstr);
-
-#if !HAVE_STRLCPY && !defined(strlcpy)
-size_t strlcpy(char* dst, const char* src, size_t size);
-#endif
-
-#if !HAVE_STRLCAT && !defined(strlcat)
-size_t strlcat(char* dst, const char* src, size_t size);
-#endif
-
-#if !HAVE_MEMMEM && !defined(memmem)
-void* memmem(
-    const void* haystack,
-    size_t haystack_size,
-    const void* needle,
-    size_t needle_size);
-#endif
-
-int strnlen_w(const char* w_str);
-
-int strcmp_w(const char* w_str, const char* str);
-
-size_t strlcpy_w(char* dst, const char* w_src, size_t n);
-
-#endif
-
-int yr_isalnum(const uint8_t* s);

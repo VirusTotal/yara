@@ -27,9 +27,13 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+#include <errno.h>
+#include <fcntl.h>
 #include <signal.h>
 #include <stdlib.h>
+#include <sys/stat.h>
 #include <sys/types.h>
+#include <sys/wait.h>
 #include <unistd.h>
 #include <yara.h>
 
@@ -1299,6 +1303,36 @@ static void test_hex_strings()
         condition: !a == 2 }",
       "122222222" TEXT_1024_BYTES);
 
+  assert_true_rule(
+      "rule test { \
+        strings: $a = { 30 31 32 [0-5] 38 39 } \
+        condition: $a }",
+      "0123456789");
+
+  assert_true_rule(
+      "rule test { \
+        strings: $a = { 31 32 [0-5] 38 39 30 } \
+        condition: $a }",
+      "1234567890");
+
+  assert_true_rule(
+      "rule test { \
+        strings: $a = { 31 32 [0-2] 34 [0-2] 34 } \
+        condition: $a }",
+      "1244");
+
+  assert_true_rule(
+      "rule test { \
+        strings: $a = { 31 32 [0-2] 34 [0-2] 34 } \
+        condition: $a }",
+      "12344");
+
+  assert_true_rule(
+      "rule test { \
+        strings: $a = { 31 32 [0-2] 34 [0-2] 34 [2-3] 34 } \
+        condition: $a }",
+      "123440004");
+
   assert_error(
       "rule test { \
         strings: $a = { 01 [0] 02 } \
@@ -2559,19 +2593,39 @@ static void test_modules()
 
   assert_true_rule(
       "import \"tests\" \
-      rule test { condition: tests.match(/foo/,\"bar\") == -1\
+      rule test { condition: tests.match(/foo/,\"bar\") == -1 \
       }",
       NULL);
 
   assert_true_rule(
       "import \"tests\" \
-      rule test { condition: tests.match(/foo.bar/i,\"FOO\\nBAR\") == -1\
+      rule test { condition: tests.match(/foo.bar/i,\"FOO\\nBAR\") == -1 \
       }",
       NULL);
 
   assert_true_rule(
       "import \"tests\" \
-      rule test { condition: tests.match(/foo.bar/is,\"FOO\\nBAR\") == 7\
+      rule test { condition: tests.match(/foo.bar/is,\"FOO\\nBAR\") == 7 \
+      }",
+      NULL);
+
+  assert_false_rule(
+      "import \"tests\" \
+      rule test { \
+        condition: \
+          for any k,v in tests.empty_struct_array[0].struct_dict: ( \
+            v.unused == \"foo\" \
+          ) \
+      }",
+      NULL);
+
+  assert_false_rule(
+      "import \"tests\" \
+      rule test { \
+        condition: \
+          for any item in tests.empty_struct_array[0].struct_array: ( \
+            item.unused == \"foo\" \
+          ) \
       }",
       NULL);
 
@@ -2770,39 +2824,46 @@ void test_tags()
   YR_DEBUG_FPRINTF(1, stderr, "} // %s()\n", __FUNCTION__);
 }
 
-#if !defined(_WIN32) && !defined(__CYGWIN__)
+#if !defined(_WIN32) || defined(__CYGWIN__)
+
+#define spawn(cmd, rest...)                                     \
+  do                                                            \
+  {                                                             \
+    if ((pid = fork()) == 0)                                    \
+    {                                                           \
+      execl(cmd, cmd, rest, NULL);                              \
+      fprintf(stderr, "execl: %s: %s\n", cmd, strerror(errno)); \
+      exit(1);                                                  \
+    }                                                           \
+    if (pid <= 0)                                               \
+    {                                                           \
+      perror("fork");                                           \
+      abort();                                                  \
+    }                                                           \
+    sleep(1);                                                   \
+    if (waitpid(pid, NULL, WNOHANG) != 0)                       \
+    {                                                           \
+      fprintf(stderr, "%s did not live long enough\n", cmd);    \
+      abort();                                                  \
+    }                                                           \
+  } while (0)
+
 void test_process_scan()
 {
   YR_DEBUG_FPRINTF(1, stderr, "+ %s() {\n", __FUNCTION__);
 
-  int pid = fork();
+  int pid;
   int status = 0;
   YR_RULES* rules;
-  int rc1, rc2;
+  int rc;
+  int fd;
+  char* tf;
+  char buf[16384];
 
   struct COUNTERS counters;
 
-  counters.rules_not_matching = 0;
-  counters.rules_matching = 0;
-
-  if (pid == 0)
-  {
-    // The string should appear somewhere in the shell's process space.
-    if (execl(
-            "/bin/sh",
-            "/bin/sh",
-            "-c",
-            "VAR='Hello, world!'; sleep 5; true",
-            NULL) == -1)
-      exit(1);
-  }
-  assert(pid > 0);
-
-  // Give child process time to initialize.
-  sleep(1);
-
-  status = compile_rule(
-      "\
+  if (compile_rule(
+          "\
     rule should_match {\
       strings:\
         $a = { 48 65 6c 6c 6f 2c 20 77 6f 72 6c 64 21 }\
@@ -2813,58 +2874,82 @@ void test_process_scan()
       condition: \
         filesize < 100000000 \
     }",
-      &rules);
-
-  if (status != ERROR_SUCCESS)
+          &rules) != ERROR_SUCCESS)
   {
     perror("compile_rule");
     exit(EXIT_FAILURE);
   }
 
-  rc1 = yr_rules_scan_proc(rules, pid, 0, count, &counters, 0);
-  yr_rules_destroy(rules);
-  kill(pid, SIGALRM);
+  spawn("/bin/sh", "-c", "VAR='Hello, world!'; sleep 600; true");
 
-  rc2 = waitpid(pid, &status, 0);
-  if (rc2 == -1)
-  {
-    perror("waitpid");
-    exit(EXIT_FAILURE);
-  }
-  if (status != SIGALRM)
-  {
-    fprintf(
-        stderr, "Scanned process exited with unexpected status %d\n", status);
-    exit(EXIT_FAILURE);
-  }
+  counters.rules_matching = 0;
+  counters.rules_not_matching = 0;
+  rc = yr_rules_scan_proc(rules, pid, 0, count, &counters, 0);
 
-  switch (rc1)
+  switch (rc)
   {
-  case ERROR_SUCCESS:
-    if (counters.rules_matching != 1)
-    {
-      fprintf(
-          stderr,
-          "Expecting one rule matching in test_process_scan, found %d\n",
-          counters.rules_matching);
-      exit(EXIT_FAILURE);
-    }
-    if (counters.rules_not_matching != 1)
-    {
-      fprintf(
-          stderr,
-          "Expecting one rule not matching in test_process_scan, found %d\n",
-          counters.rules_not_matching);
-      exit(EXIT_FAILURE);
-    }
-    break;
   case ERROR_COULD_NOT_ATTACH_TO_PROCESS:
     fprintf(stderr, "Could not attach to process, ignoring this error\n");
-    break;
-  default:
-    fprintf(stderr, "yr_rules_scan_proc: Got unexpected error %d\n", rc1);
-    exit(EXIT_FAILURE);
+    return;
   }
+
+  kill(pid, SIGALRM);
+
+  assert(rc == ERROR_SUCCESS);
+
+  assert(waitpid(pid, &status, 0) >= 0);
+  assert(status == SIGALRM);
+
+  assert(counters.rules_matching == 1);
+  assert(counters.rules_not_matching == 1);
+
+  tf = strdup("./map-XXXXXX");
+  fd = mkstemp(tf);
+  assert(fd >= 0);
+
+  // check for string in file that gets mapped by a process
+  bzero(buf, sizeof(buf));
+  sprintf(buf, "Hello, world!");
+  write(fd, buf, sizeof(buf));
+  lseek(fd, 0, SEEK_SET);
+
+  spawn("tests/mapper", "open", tf);
+
+  counters.rules_matching = 0;
+  rc = yr_rules_scan_proc(rules, pid, 0, count, &counters, 0);
+  kill(pid, SIGALRM);
+
+  fprintf(stderr, "scan: %d\n", rc);
+  assert(rc == ERROR_SUCCESS);
+
+  assert(waitpid(pid, &status, 0) >= 0);
+  assert(status == SIGALRM);
+
+  assert(counters.rules_matching == 1);
+
+  // check for string in blank mapping after process has overwritten
+  // the mapping.
+  bzero(buf, sizeof(buf));
+  write(fd, buf, sizeof(buf));
+
+  spawn("./tests/mapper", "patch", tf);
+
+  counters.rules_matching = 0;
+  rc = yr_rules_scan_proc(rules, pid, 0, count, &counters, 0);
+  kill(pid, SIGALRM);
+
+  fprintf(stderr, "scan: %d\n", rc);
+  assert(rc == ERROR_SUCCESS);
+
+  assert(waitpid(pid, &status, 0) >= 0);
+  assert(status == SIGALRM);
+
+  assert(counters.rules_matching == 1);
+
+  close(fd);
+  unlink(tf);
+  free(tf);
+  yr_rules_destroy(rules);
 
   YR_DEBUG_FPRINTF(1, stderr, "} // %s()\n", __FUNCTION__);
 }
@@ -3002,6 +3087,27 @@ void test_performance_warnings()
   YR_DEBUG_FPRINTF(1, stderr, "} // %s()\n", __FUNCTION__);
 }
 
+static void test_meta()
+{
+  YR_DEBUG_FPRINTF(1, stderr, "+ %s() {\n", __FUNCTION__);
+
+  // Make sure that multiple metadata with the same identifier are allowed.
+  // This was not intentionally designed like that, but users are alreay
+  // relying on this.
+  assert_true_rule(
+      "rule test { \
+         meta: \
+           foo = \"foo\" \
+           foo = 1 \
+           foo = false \
+         condition:\
+           true \
+      }",
+      NULL);
+
+  YR_DEBUG_FPRINTF(1, stderr, "} // %s()\n", __FUNCTION__);
+}
+
 static void test_pass(int pass)
 {
   switch (pass)
@@ -3081,6 +3187,7 @@ static void test_pass(int pass)
   test_entrypoint();
   test_global_rules();
   test_tags();
+  test_meta();
 
 #if !defined(USE_NO_PROC) && !defined(_WIN32) && !defined(__CYGWIN__)
   test_process_scan();

@@ -587,6 +587,11 @@ define_function(to_number)
   return_integer(integer_argument(1) ? 1 : 0);
 }
 
+define_function(yr_math_abs)
+{
+  return_integer(llabs(integer_argument(1)));
+}
+
 define_function(count_range)
 {
   uint8_t byte = (uint8_t) integer_argument(1);
@@ -806,6 +811,7 @@ begin_declarations
   declare_function("min", "ii", "i", min);
   declare_function("max", "ii", "i", max);
   declare_function("to_number", "b", "i", to_number);
+  declare_function("abs", "i", "i", yr_math_abs);
   declare_function("count", "iii", "i", count_range);
   declare_function("count", "sii", "i", count_range_char);
   declare_function("count", "i", "i", count_global);

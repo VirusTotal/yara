@@ -48,6 +48,25 @@ int main(int argc, char** argv)
       "import \"math\" \
       rule test { \
         condition: \
+          math.abs(-1) == 1 \
+      }",
+      "A");
+
+  assert_true_rule_blob(
+      "import \"math\" \
+      rule test { \
+        strings: \
+          $a = \"A\" \
+          $b = \"B\" \
+        condition: \
+          math.abs(@a - @b) == 1 \
+      }",
+      "AB");
+
+  assert_true_rule_blob(
+      "import \"math\" \
+      rule test { \
+        condition: \
           math.count(0x41, 0, 3) == 2 \
       }",
       "AABAAB");

@@ -31,6 +31,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <yara/bitmask.h>
 #include <yara/error.h>
 #include <yara/globals.h>
 #include <yara/libyara.h>
@@ -39,6 +40,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <yara/rules.h>
 #include <yara/scan.h>
 #include <yara/stopwatch.h>
+#include <yara/strutils.h>
 #include <yara/types.h>
 #include <yara/utils.h>
 
@@ -634,7 +636,7 @@ static int _yr_scan_match_callback(
       2,
       stderr,
       "+ %s(match_data=%p match_length=%d) { //"
-      " match_offset=%" PRId64 " args->data=%p args->string.length=%u"
+      " match_offset=%zu args->data=%p args->string.length=%u"
       " args->data_base=0x%" PRIx64 " args->data_size=%zu"
       " args->forward_matches=%'u\n",
       __FUNCTION__,
@@ -658,21 +660,21 @@ static int _yr_scan_match_callback(
     if (flags & RE_FLAGS_WIDE)
     {
       if (match_offset >= 2 && *(match_data - 1) == 0 &&
-          isalnum(*(match_data - 2)))
+          yr_isalnum(match_data - 2))
         goto _exit;  // return ERROR_SUCCESS;
 
       if (match_offset + match_length + 1 < callback_args->data_size &&
           *(match_data + match_length + 1) == 0 &&
-          isalnum(*(match_data + match_length)))
+          yr_isalnum(match_data + match_length))
         goto _exit;  // return ERROR_SUCCESS;
     }
     else
     {
-      if (match_offset >= 1 && isalnum(*(match_data - 1)))
+      if (match_offset >= 1 && yr_isalnum(match_data - 1))
         goto _exit;  // return ERROR_SUCCESS;
 
       if (match_offset + match_length < callback_args->data_size &&
-          isalnum(*(match_data + match_length)))
+          yr_isalnum(match_data + match_length))
         goto _exit;  // return ERROR_SUCCESS;
     }
   }
@@ -985,7 +987,7 @@ int yr_scan_verify_match(
   if (data_size - offset <= 0)
     return ERROR_SUCCESS;
 
-  if (STRING_IS_DISABLED(string))
+  if (yr_bitmask_is_set(context->strings_temp_disabled, string->idx))
     return ERROR_SUCCESS;
 
   if (context->matches[string->idx].count == YR_MAX_STRING_MATCHES)
@@ -998,7 +1000,7 @@ int yr_scan_verify_match(
 
     if (result == CALLBACK_CONTINUE)
     {
-      string->flags |= STRING_FLAGS_DISABLED;
+      yr_bitmask_set(context->strings_temp_disabled, string->idx);
       return ERROR_SUCCESS;
     }
     else if (result == CALLBACK_ABORT || result == CALLBACK_ERROR)
