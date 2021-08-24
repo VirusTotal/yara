@@ -80,7 +80,7 @@ int main(int argc, char** argv)
       "import \"math\" \
       rule test { \
         condition: \
-          math.count(\"ABC\") == 3 \
+          math.count(\"ABC\", 0, filesize) == 3 \
       }",
       "ABCDABCDABCD");
 
@@ -88,9 +88,17 @@ int main(int argc, char** argv)
       "import \"math\" \
       rule test { \
         condition: \
-          math.count(\"AA\") == 4 \
+          math.count(\"AA\", 0, filesize) == 4 \
       }",
       "AAAAA");
+
+  assert_true_rule_blob(
+      "import \"math\" \
+      rule test { \
+        condition: \
+          math.count(\"AAA\", 0, filesize) == 0 \
+      }",
+      "AA");
 
   assert_true_rule_blob(
       "import \"math\" \

@@ -635,23 +635,13 @@ define_function(count_range_char)
 
   int64_t count = 0;
 
-  // Array to track matches that are currently ongoing. If matches_in_progress[i]
-  // is set, it means that at the currently inspected index, the last i bytes matched
-  // the first i bytes of the searched string.
-  bool* matches_in_progress = (bool*) yr_calloc((size_t) s->length, sizeof(bool));
-  if (matches_in_progress == NULL)
-  {
-    return_integer(YR_UNDEFINED);
-  }
-
-  size_t inspected_index;
+  size_t j;
 
   YR_MEMORY_BLOCK* block = first_memory_block(context);
   YR_MEMORY_BLOCK_ITERATOR* iterator = context->iterator;
 
   if (offset < 0 || length < 0 || offset < block->base)
   {
-    yr_free(matches_in_progress);
     return_integer(YR_UNDEFINED);
   }
 
@@ -667,46 +657,36 @@ define_function(count_range_char)
 
       if (block_data == NULL)
       {
-        yr_free(matches_in_progress);
         return_integer(YR_UNDEFINED);
       }
 
       offset += data_len;
       length -= data_len;
 
-      for (i = 0; i < data_len; i++)
+      if (data_len >= s->length)
       {
-        uint8_t c = *(block_data + data_offset + i);
-        for (inspected_index = s->length - 1; inspected_index > 0; inspected_index--)
+        for (i = 0; i <= data_len - s->length; i++)
         {
-          if (matches_in_progress[inspected_index - 1] && c == s->c_string[inspected_index])
+          // Check whether a match exists starting at the current position
+          bool matches = true;
+          for (j = 0; j < s->length; j++)
           {
-            matches_in_progress[inspected_index] = true;
-            matches_in_progress[inspected_index - 1] = false;
+            if (*(block_data + data_offset + i + j) != s->c_string[j])
+            {
+              matches = false;
+              break;
+            }
+          }
+          if (matches)
+          {
+            count++;
           }
         }
-        if (c == s->c_string[0])
-        {
-          matches_in_progress[0] = true;
-        }
-        if (matches_in_progress[s->length - 1])
-        {
-          count++;
-          matches_in_progress[s->length - 1] = false;
-        }
       }
-
       past_first_block = true;
     }
     else if (past_first_block)
     {
-      // If offset is not within current block and we already
-      // past the first block then the we are trying to compute
-      // the distribution over a range of non contiguous blocks. As
-      // range contains gaps of undefined data the distribution is
-      // undefined.
-
-      yr_free(matches_in_progress);
       return_integer(YR_UNDEFINED);
     }
 
@@ -714,82 +694,10 @@ define_function(count_range_char)
       break;
   }
 
-  yr_free(matches_in_progress);
-
   if (!past_first_block)
   {
     return_integer(YR_UNDEFINED);
   }
-  return_integer(count);
-}
-
-define_function(count_global_char)
-{
-  SIZED_STRING* s = sized_string_argument(1);
-
-  YR_SCAN_CONTEXT* context = scan_context();
-
-  size_t i;
-  int64_t count = 0;
-
-  // Array to track matches that are currently ongoing. If matches_in_progress[i]
-  // is set, it means that at the currently inspected index, the last i bytes matched
-  // the first i bytes of the searched string.
-  bool* matches_in_progress = (bool*) yr_calloc((size_t) s->length, sizeof(bool));
-  if (matches_in_progress == NULL)
-  {
-    return_integer(YR_UNDEFINED);
-  }
-  size_t inspected_index;
-
-  YR_MEMORY_BLOCK* block = first_memory_block(context);
-  YR_MEMORY_BLOCK_ITERATOR* iterator = context->iterator;
-
-  int64_t expected_next_offset = 0;
-
-  foreach_memory_block(iterator, block)
-  {
-    if (expected_next_offset != block->base)
-    {
-      // If offset is not directly after the current block then 
-      // we are trying to compute the distribution over a range of non 
-      // contiguous blocks. As the range contains gaps of 
-      // undefined data the distribution is undefined.
-      yr_free(matches_in_progress);
-      return_integer(YR_UNDEFINED);
-    }
-    const uint8_t* block_data = block->fetch_data(block);
-
-    if (block_data == NULL)
-    {
-      yr_free(matches_in_progress);
-      return_integer(YR_UNDEFINED);
-    }
-
-    for (i = 0; i < block->size; i++)
-    {
-      uint8_t c = *(block_data + i);
-      for (inspected_index = s->length - 1; inspected_index > 0; inspected_index--)
-      {
-        if (matches_in_progress[inspected_index - 1] && c == s->c_string[inspected_index])
-        {
-          matches_in_progress[inspected_index] = true;
-          matches_in_progress[inspected_index - 1] = false;
-        }
-      }
-      if (c == s->c_string[0])
-      {
-        matches_in_progress[0] = true;
-      }
-      if (matches_in_progress[s->length - 1])
-      {
-        count++;
-        matches_in_progress[s->length - 1] = false;
-      }
-    }
-    expected_next_offset = block->base + block->size;
-  }
-  yr_free(matches_in_progress);
   return_integer(count);
 }
 
@@ -901,7 +809,6 @@ begin_declarations
   declare_function("count", "iii", "i", count_range);
   declare_function("count", "sii", "i", count_range_char);
   declare_function("count", "i", "i", count_global);
-  declare_function("count", "s", "i", count_global_char);
   declare_function("percentage", "iii", "f", percentage_range);
   declare_function("percentage", "i", "f", percentage_global);
   declare_function("mode", "ii", "i", mode_range);
