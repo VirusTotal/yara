@@ -27,6 +27,7 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+#include <errno.h>
 #include <fcntl.h>
 #include <signal.h>
 #include <stdlib.h>
@@ -35,7 +36,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <sys/wait.h>
 #include <unistd.h>
 #include <yara.h>
-#include <errno.h>
 
 #if !defined(_WIN32) && !defined(__CYGWIN__)
 #include <sys/wait.h>
@@ -2826,7 +2826,7 @@ void test_tags()
 
 #if !defined(_WIN32) || defined(__CYGWIN__)
 
-#define spawn(cmd,rest...)                                      \
+#define spawn(cmd, rest...)                                     \
   do                                                            \
   {                                                             \
     if ((pid = fork()) == 0)                                    \
@@ -2885,6 +2885,14 @@ void test_process_scan()
   counters.rules_matching = 0;
   counters.rules_not_matching = 0;
   rc = yr_rules_scan_proc(rules, pid, 0, count, &counters, 0);
+
+  switch (rc)
+  {
+  case ERROR_COULD_NOT_ATTACH_TO_PROCESS:
+    fprintf(stderr, "Could not attach to process, ignoring this error\n");
+    return;
+  }
+
   kill(pid, SIGALRM);
 
   assert(rc == ERROR_SUCCESS);

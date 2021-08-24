@@ -51,7 +51,10 @@ typedef struct _YR_PROC_INFO
   FILE* maps;
   int page_size;
   char map_path[PATH_MAX];
-  uint64_t map_dmaj, map_dmin, map_ino, map_offset;
+  uint64_t map_dmaj;
+  uint64_t map_dmin;
+  uint64_t map_ino;
+  uint64_t map_offset;
 } YR_PROC_INFO;
 
 static int page_size = -1;
@@ -137,7 +140,7 @@ int _yr_process_detach(YR_PROC_ITERATOR_CTX* context)
 YR_API const uint8_t* yr_process_fetch_memory_block_data(YR_MEMORY_BLOCK* block)
 {
   const uint8_t* result = NULL;
-  uint64_t *pagemap = NULL;
+  uint64_t* pagemap = NULL;
 
   YR_PROC_ITERATOR_CTX* context = (YR_PROC_ITERATOR_CTX*) block->context;
   YR_PROC_INFO* proc_info = (YR_PROC_INFO*) context->proc_info;
@@ -149,20 +152,21 @@ YR_API const uint8_t* yr_process_fetch_memory_block_data(YR_MEMORY_BLOCK* block)
     context->buffer_size = 0;
   }
 
-  int fd = -2; /* Assume mapping not connected with a file */
+  int fd = -2;  // Assume mapping not connected with a file.
+
   if (strlen(proc_info->map_path) > 0 && proc_info->map_dmaj != 0 &&
       proc_info->map_ino != 0)
   {
     struct stat st;
     fd = open(proc_info->map_path, O_RDONLY);
+
     if (fd < 0)
     {
-      /* file does not exist. */
-      fd = -1;
+      fd = -1;  // File does not exist.
     }
     else if (fstat(fd, &st) < 0)
     {
-      /* Why should stat fail after file open? Treat like missing. */
+      // Why should stat fail after file open? Treat like missing.
       close(fd);
       fd = -1;
     }
@@ -171,20 +175,20 @@ YR_API const uint8_t* yr_process_fetch_memory_block_data(YR_MEMORY_BLOCK* block)
         (minor(st.st_dev) != proc_info->map_dmin) ||
         (st.st_ino != proc_info->map_ino))
     {
-      /* Wrong file, may have been replaced. Treat like missing. */
+      // Wrong file, may have been replaced. Treat like missing.
       close(fd);
       fd = -1;
     }
     else if (st.st_size < proc_info->map_offset + block->size)
     {
-      /* Mapping extends past end of file. Treat like missing. */
+      // Mapping extends past end of file. Treat like missing.
       close(fd);
       fd = -1;
     }
     else if ((st.st_mode & S_IFMT) != S_IFREG)
     {
-      /* Correct filesystem object, but not a regular file. Treat like
-       * uninitialized mapping. */
+      // Correct filesystem object, but not a regular file. Treat like
+      // uninitialized mapping.
       close(fd);
       fd = -2;
     }
@@ -222,8 +226,8 @@ YR_API const uint8_t* yr_process_fetch_memory_block_data(YR_MEMORY_BLOCK* block)
     goto _exit;
   }
 
-  /* If mapping can't be accessed through the filesystem, read everything from
-   * target process VM. */
+  // If mapping can't be accessed through the filesystem, read everything from
+  // target process VM.
   if (fd == -1)
   {
     if (pread(
@@ -253,12 +257,14 @@ YR_API const uint8_t* yr_process_fetch_memory_block_data(YR_MEMORY_BLOCK* block)
 
     for (uint64_t i = 0; i < block->size / page_size; i++)
     {
-      if (pagemap[i] >> 61 == 0) {
+      if (pagemap[i] >> 61 == 0)
+      {
         continue;
       }
-      /* Overwrite our mapping if the page is present, file-backed, or
-       * swap-backed and if it differs from our mapping. */
+      // Overwrite our mapping if the page is present, file-backed, or
+      // swap-backed and if it differs from our mapping.
       uint8_t buffer[page_size];
+
       if (pread(
               proc_info->mem_fd,
               buffer,
@@ -267,9 +273,14 @@ YR_API const uint8_t* yr_process_fetch_memory_block_data(YR_MEMORY_BLOCK* block)
       {
         goto _exit;
       }
-      if (memcmp((void*) context->buffer + i * page_size, (void*) buffer, page_size) != 0)
+
+      if (memcmp(
+              (void*) context->buffer + i * page_size,
+              (void*) buffer,
+              page_size) != 0)
       {
-        memcpy((void*) context->buffer + i * page_size, (void*) buffer, page_size);
+        memcpy(
+            (void*) context->buffer + i * page_size, (void*) buffer, page_size);
       }
     }
   }
