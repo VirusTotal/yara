@@ -172,6 +172,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\..\..\cli\args.c" />
+    <ClCompile Include="..\..\..\cli\common.c" />
     <ClCompile Include="..\..\..\cli\yarac.c" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
