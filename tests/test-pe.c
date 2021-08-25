@@ -571,6 +571,21 @@ int main(int argc, char** argv)
       }",
       "tests/data/079a472d22290a94ebb212aa8015cdc8dd28a968c6b4d3b88acdd58ce2d3b885");
 
+  assert_true_rule_file(
+      "import \"pe\" \
+      \
+      rule zero_length_version_info_value \
+      {\
+          condition:\
+            pe.number_of_version_infos == 12 and \
+            pe.version_info[\"Comments\"] == \"\" and \
+            pe.version_info[\"CompanyName\"] == \"\" and \
+            pe.version_info[\"LegalTrademarks\"] == \"\" and \
+            pe.version_info[\"PrivateBuild\"] == \"\" and \
+            pe.version_info[\"SpecialBuild\"] == \"\" \
+      }",
+      "tests/data/ca21e1c32065352d352be6cde97f89c141d7737ea92434831f998080783d5386");
+
 
   yr_finalize();
 
