@@ -560,6 +560,13 @@ Reference
 
         Section name.
 
+    .. c:member:: full_name
+
+        If the name in the section table contains a slash (/) followed by
+        a representation of the decimal number in ASCII format, then this field
+        contains a string from the specified offset in the string table.
+        Otherwise, this field contains the same value as a name field.
+
     .. c:member:: characteristics
 
         Section characteristics.
