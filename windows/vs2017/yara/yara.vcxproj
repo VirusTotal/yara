@@ -175,6 +175,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\..\..\cli\args.c" />
+    <ClCompile Include="..\..\..\cli\common.c" />
     <ClCompile Include="..\..\..\cli\threading.c" />
     <ClCompile Include="..\..\..\cli\yara.c" />
   </ItemGroup>
