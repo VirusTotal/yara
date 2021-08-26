@@ -1237,6 +1237,7 @@ static void* pe_parse_delayed_imports(PE* pe)
     return NULL;
 
   import_descriptor = (PIMAGE_DELAYLOAD_DESCRIPTOR)(pe->data + offset);
+
   for (; struct_fits_in_pe(pe, import_descriptor, IMAGE_DELAYLOAD_DESCRIPTOR);
        import_descriptor++)
   {
@@ -1294,8 +1295,12 @@ static void* pe_parse_delayed_imports(PE* pe)
 
     IMPORTED_DLL* imported_dll = (IMPORTED_DLL*) yr_calloc(
         1, sizeof(IMPORTED_DLL));
+
     if (imported_dll == NULL)
+    {
+      yr_free(dll_name);
       continue;
+    }
 
     imported_dll->name = dll_name;
     imported_dll->next = NULL;
@@ -1305,6 +1310,7 @@ static void* pe_parse_delayed_imports(PE* pe)
 
     uint64_t name_rva = ImportNameTableRVA;
     uint64_t func_rva = ImportAddressTableRVA;
+
     for (;;)
     {
       uint64_t nameAddress = pe_parse_delay_import_pointer(
@@ -1383,6 +1389,7 @@ static void* pe_parse_delayed_imports(PE* pe)
   set_integer(num_imports, pe->object, "number_of_delayed_imports");
   set_integer(
       num_function_imports, pe->object, "number_of_delayed_imported_functions");
+
   pe_set_imports(
       pe,
       head_dll,
