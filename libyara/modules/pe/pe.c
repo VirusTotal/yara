@@ -322,7 +322,10 @@ static void pe_parse_debug_directory(PE* pe)
       pcv_hdr_offset = pe_rva_to_offset(
           pe, yr_le32toh(debug_dir->AddressOfRawData));
     }
-    else if (debug_dir->PointerToRawData != 0)
+
+    // Give it chance to read it from the RAW offset
+    // Sample: 735f72b3fcd72789f01e923c9de2a9ab5b5ffbece23633da81d976ad0ad159e3
+    if (pcv_hdr_offset <= 0 && debug_dir->PointerToRawData != 0)
     {
       pcv_hdr_offset = yr_le32toh(debug_dir->PointerToRawData);
     }
