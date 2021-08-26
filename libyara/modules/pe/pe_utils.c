@@ -132,11 +132,12 @@ PIMAGE_DATA_DIRECTORY pe_get_directory_entry(PE* pe, int entry)
   // RtlImageDirectoryEntryToData function. This is one of the first checks
   // whether the desired directory entry is smaller than NumberOfRvaAndSizes.
   // If it's not, it means that the requested directory entry is not there.
-
+  //
   //  1. Must NOT check whether NumberOfRvaAndSizes > 0x10
-
-  //  2. Must check for NumberOfRvaAndSizes < DataDirectory except for 0x0E for 32-bit binary
-
+  //
+  //  2. Must check for NumberOfRvaAndSizes < DataDirectory except for 
+  //     IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR for 32-bit binary
+  //
   //  3. The function must NOT check for SizeOfOptionalHeader
 
 
