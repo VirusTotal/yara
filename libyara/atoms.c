@@ -161,6 +161,7 @@ int yr_atoms_heuristic_quality(YR_ATOMS_CONFIG* config, YR_ATOM* atom)
   // it heavily.
   if (unique_bytes == 1 && (yr_bitmask_is_set(seen_bytes, 0x00) ||
                             yr_bitmask_is_set(seen_bytes, 0x20) ||
+                            yr_bitmask_is_set(seen_bytes, 0x90) ||
                             yr_bitmask_is_set(seen_bytes, 0xCC) ||
                             yr_bitmask_is_set(seen_bytes, 0xFF)))
   {
