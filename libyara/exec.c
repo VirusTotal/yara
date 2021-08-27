@@ -1319,7 +1319,7 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
       YR_DEBUG_FPRINTF(2, stderr, "- case OP_OF: // %s()\n", __FUNCTION__);
       found = 0;
       count = 0;
-      pop(r2);
+      pop(r1);
 
       while (!is_undef(r1))
       {
