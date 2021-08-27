@@ -1782,6 +1782,12 @@ expression
 
         $$.type = EXPRESSION_TYPE_BOOLEAN;
       }
+    | for_expression _OF_ string_set _IN_ range
+      {
+        yr_parser_emit(yyscanner, OP_OF_FOUND_IN, NULL);
+
+        $$.type = EXPRESSION_TYPE_BOOLEAN;
+      }
     | _NOT_ boolean_expression
       {
         yr_parser_emit(yyscanner, OP_NOT, NULL);
