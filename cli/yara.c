@@ -1338,7 +1338,7 @@ int _tmain(int argc, const char_t** argv)
     return EXIT_FAILURE;
   }
 
-#if defined(_WIN32)
+#if defined(_WIN32) && defined _UNICODE
   // In Windows set stdout to UTF-8 mode.
   if (_setmode(_fileno(stdout), _O_U8TEXT) == -1)
   {
