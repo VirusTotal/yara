@@ -71,6 +71,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 typedef uint8_t BYTE;
 typedef uint16_t WORD;
+typedef uint16_t WCHAR;
 typedef uint32_t DWORD;
 typedef int32_t LONG;
 typedef uint32_t ULONG;
@@ -543,6 +544,12 @@ typedef struct _IMAGE_THUNK_DATA64
   } u1;
 
 } IMAGE_THUNK_DATA64, *PIMAGE_THUNK_DATA64;
+
+typedef struct _IMAGE_RESOURCE_DIR_STRING_U
+{
+    WORD    Length;
+    WCHAR   NameString[1];
+} IMAGE_RESOURCE_DIR_STRING_U, *PIMAGE_RESOURCE_DIR_STRING_U;
 
 typedef struct _IMAGE_RESOURCE_DIRECTORY_ENTRY
 {

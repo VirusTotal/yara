@@ -109,9 +109,9 @@ typedef int (*RESOURCE_CALLBACK_FUNC)(
     int rsrc_type,
     int rsrc_id,
     int rsrc_language,
-    const uint8_t* type_string,
-    const uint8_t* name_string,
-    const uint8_t* lang_string,
+    const IMAGE_RESOURCE_DIR_STRING_U* type_string, \
+    const IMAGE_RESOURCE_DIR_STRING_U* name_string, \
+    const IMAGE_RESOURCE_DIR_STRING_U* lang_string, \
     void* cb_data);
 
 static size_t available_space(PE* pe, void* pointer)
@@ -371,7 +371,7 @@ static void pe_parse_debug_directory(PE* pe)
 // The callback function will parse this and call set_sized_string().
 // The pointer is guaranteed to have enough space to contain the entire string.
 
-static const uint8_t* parse_resource_name(
+static const PIMAGE_RESOURCE_DIR_STRING_U parse_resource_name(
     PE* pe,
     const uint8_t* rsrc_data,
     PIMAGE_RESOURCE_DIRECTORY_ENTRY entry)
@@ -381,24 +381,21 @@ static const uint8_t* parse_resource_name(
 
   if (yr_le32toh(entry->Name) & 0x80000000)
   {
-    DWORD length;
-
-    const uint8_t* rsrc_str_ptr = rsrc_data +
-                                  (yr_le32toh(entry->Name) & 0x7FFFFFFF);
+    const PIMAGE_RESOURCE_DIR_STRING_U pNameString =
+        (PIMAGE_RESOURCE_DIR_STRING_U)
+        (rsrc_data + (yr_le32toh(entry->Name) & 0x7FFFFFFF));
 
     // A resource directory string is 2 bytes for the length and then a variable
     // length Unicode string. Make sure we have at least 2 bytes.
 
-    if (!fits_in_pe(pe, rsrc_str_ptr, 2))
+    if (!fits_in_pe(pe, pNameString, 2))
       return NULL;
-
-    length = *rsrc_str_ptr;
 
     // Move past the length and make sure we have enough bytes for the string.
-    if (!fits_in_pe(pe, rsrc_str_ptr + 2, length * 2))
+    if (!fits_in_pe(pe, pNameString, sizeof(uint16_t) + pNameString->Length * 2))
       return NULL;
 
-    return rsrc_str_ptr;
+    return pNameString;
   }
 
   return NULL;
@@ -412,9 +409,9 @@ static int _pe_iterate_resources(
     int* type,
     int* id,
     int* language,
-    const uint8_t* type_string,
-    const uint8_t* name_string,
-    const uint8_t* lang_string,
+    const IMAGE_RESOURCE_DIR_STRING_U* type_string,
+    const IMAGE_RESOURCE_DIR_STRING_U* name_string,
+    const IMAGE_RESOURCE_DIR_STRING_U* lang_string,
     RESOURCE_CALLBACK_FUNC callback,
     void* callback_data)
 {
@@ -537,9 +534,9 @@ static int pe_iterate_resources(
   int id = -1;
   int language = -1;
 
-  uint8_t* type_string = NULL;
-  uint8_t* name_string = NULL;
-  uint8_t* lang_string = NULL;
+  IMAGE_RESOURCE_DIR_STRING_U* type_string = NULL;
+  IMAGE_RESOURCE_DIR_STRING_U* name_string = NULL;
+  IMAGE_RESOURCE_DIR_STRING_U* lang_string = NULL;
 
   PIMAGE_DATA_DIRECTORY directory = pe_get_directory_entry(
       pe, IMAGE_DIRECTORY_ENTRY_RESOURCE);
@@ -690,14 +687,45 @@ static void pe_parse_version_info(PIMAGE_RESOURCE_DATA_ENTRY rsrc_data, PE* pe)
   }
 }
 
+static void pe_set_resource_string_or_id(
+    IMAGE_RESOURCE_DIR_STRING_U* rsrc_string,
+    int rsrc_int,
+    const char * string_description,
+    const char * int_description,
+    PE* pe)
+{
+  if (rsrc_string)
+  {
+    // Multiply by 2 because it is a Unicode string.
+    size_t length = rsrc_string->Length * 2;
+
+    // Check if the whole string fits in the PE image.
+    // If not, the name becomes UNDEFINED by default.
+    if(fits_in_pe(pe, rsrc_string->NameString, length))
+    {
+      set_sized_string(
+          (char*)rsrc_string->NameString, length, pe->object,
+          string_description, pe->resources);
+    }
+  }
+  else
+  {
+    set_integer(
+          rsrc_int,
+          pe->object,
+          int_description,
+          pe->resources);
+  }
+}
+
 static int pe_collect_resources(
     PIMAGE_RESOURCE_DATA_ENTRY rsrc_data,
     int rsrc_type,
     int rsrc_id,
     int rsrc_language,
-    uint8_t* type_string,
-    uint8_t* name_string,
-    uint8_t* lang_string,
+    IMAGE_RESOURCE_DIR_STRING_U* type_string,
+    IMAGE_RESOURCE_DIR_STRING_U* name_string,
+    IMAGE_RESOURCE_DIR_STRING_U* lang_string,
     PE* pe)
 {
   DWORD length;
@@ -725,58 +753,23 @@ static int pe_collect_resources(
       "resources[%i].length",
       pe->resources);
 
-  if (type_string)
-  {
-    // Multiply by 2 because it is a Unicode string.
-    length = ((DWORD) *type_string) * 2;
-    type_string += 2;
+  pe_set_resource_string_or_id(type_string,
+      rsrc_type,
+      "resources[%i].type_string", 
+      "resources[%i].type",
+      pe);
 
-    set_sized_string(
-        (char*) type_string,
-        length,
-        pe->object,
-        "resources[%i].type_string",
-        pe->resources);
-  }
-  else
-  {
-    set_integer(rsrc_type, pe->object, "resources[%i].type", pe->resources);
-  }
+  pe_set_resource_string_or_id(name_string,
+      rsrc_id,
+      "resources[%i].name_string", 
+      "resources[%i].id",
+      pe);
 
-  if (name_string)
-  {
-    // Multiply by 2 because it is a Unicode string.
-    length = ((DWORD) *name_string) * 2;
-    name_string += 2;
-    set_sized_string(
-        (char*) name_string,
-        length,
-        pe->object,
-        "resources[%i].name_string",
-        pe->resources);
-  }
-  else
-  {
-    set_integer(rsrc_id, pe->object, "resources[%i].id", pe->resources);
-  }
-
-  if (lang_string)
-  {
-    // Multiply by 2 because it is a Unicode string.
-    length = ((DWORD) *lang_string) * 2;
-    lang_string += 2;
-    set_sized_string(
-        (char*) lang_string,
-        length,
-        pe->object,
-        "resources[%i].language_string",
-        pe->resources);
-  }
-  else
-  {
-    set_integer(
-        rsrc_language, pe->object, "resources[%i].language", pe->resources);
-  }
+  pe_set_resource_string_or_id(lang_string,
+      rsrc_language,
+      "resources[%i].language_string", 
+      "resources[%i].language",
+      pe);
 
   // Resources we do extra parsing on
   if (rsrc_type == RESOURCE_TYPE_VERSION)
