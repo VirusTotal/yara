@@ -29,6 +29,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <stdio.h>
 #include <yara.h>
+#include <yara/globals.h>
+
 #undef NDEBUG
 #include <assert.h>
 

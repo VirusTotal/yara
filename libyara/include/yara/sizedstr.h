@@ -33,8 +33,15 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <yara/integers.h>
 #include <yara/utils.h>
 
+// SIZED_STRING_FLAGS_NO_CASE indicates that the has been decorated with
+// the "nocase" modifier or with the /i modifier in the case of regular
+// expressions.
 #define SIZED_STRING_FLAGS_NO_CASE 1
+
+// SIZED_STRING_FLAGS_DOT_ALL is used for strings that contain a regular
+// expression that had the /s modifier.
 #define SIZED_STRING_FLAGS_DOT_ALL 2
+
 
 #pragma pack(push)
 #pragma pack(1)

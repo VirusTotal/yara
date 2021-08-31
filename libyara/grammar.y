@@ -27,9 +27,10 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+// clang-format off
+
 %{
-
-
+  
 #include <assert.h>
 #include <stdio.h>
 #include <string.h>
@@ -203,9 +204,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 %token _ICONTAINS_                                     "<icontains>"
 %token _ISTARTSWITH_                                   "<istartswith>"
 %token _IENDSWITH_                                     "<iendswith>"
+%token _IEQUALS_                                       "<iequals>"
 %token _IMPORT_                                        "<import>"
 %token _TRUE_                                          "<true>"
-%token _FALSE_                                         "<false"
+%token _FALSE_                                         "<false>"
 %token _OR_                                            "<or>"
 %token _AND_                                           "<and>"
 %token _NOT_                                           "<not>"
@@ -222,7 +224,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // in the list. Operators that appear in the same line have the same precedence.
 %left _OR_
 %left _AND_
-%left _EQ_ _NEQ_ _CONTAINS_ _ICONTAINS_ _STARTSWITH_ _ENDSWITH_ _ISTARTSWITH_ _IENDSWITH_ _MATCHES_
+%left _EQ_ _NEQ_ _CONTAINS_ _ICONTAINS_ _STARTSWITH_ _ENDSWITH_ _ISTARTSWITH_ _IENDSWITH_ _IEQUALS_ _MATCHES_
 %left _LT_ _LE_ _GT_ _GE_
 %left '|'
 %left '^'
@@ -741,8 +743,8 @@ string_modifier
         fail_if_error(result);
 
         $$.flags = STRING_FLAGS_XOR;
-        $$.xor_min = $3;
-        $$.xor_max = $3;
+        $$.xor_min = (uint8_t) $3;
+        $$.xor_max = (uint8_t) $3;
       }
     /*
      * Would love to use range here for consistency in the language but that
@@ -777,8 +779,8 @@ string_modifier
         fail_if_error(result);
 
         $$.flags = STRING_FLAGS_XOR;
-        $$.xor_min = $3;
-        $$.xor_max = $5;
+        $$.xor_min = (uint8_t) $3;
+        $$.xor_max = (uint8_t) $5;
       }
     | _BASE64_
       {
@@ -1215,21 +1217,20 @@ arguments_list
 regexp
     : _REGEXP_
       {
-        SIZED_STRING* sized_string = $1;
         YR_ARENA_REF re_ref;
         RE_ERROR error;
 
         int result = ERROR_SUCCESS;
         int re_flags = 0;
 
-        if (sized_string->flags & SIZED_STRING_FLAGS_NO_CASE)
+        if ($1->flags & SIZED_STRING_FLAGS_NO_CASE)
           re_flags |= RE_FLAGS_NO_CASE;
 
-        if (sized_string->flags & SIZED_STRING_FLAGS_DOT_ALL)
+        if ($1->flags & SIZED_STRING_FLAGS_DOT_ALL)
           re_flags |= RE_FLAGS_DOT_ALL;
 
         result = yr_re_compile(
-            sized_string->c_string,
+            $1->c_string,
             re_flags,
             compiler->arena,
             &re_ref,
@@ -1266,7 +1267,7 @@ boolean_expression
                 compiler->arena, &$1.value.sized_string_ref);
 
             yywarning(yyscanner,
-                "Using literal string \"%s\" in a boolean operation.",
+                "using literal string \"%s\" in a boolean operation.",
                 sized_string->c_string);
           }
 
@@ -1360,6 +1361,16 @@ expression
 
         fail_if_error(yr_parser_emit(
             yyscanner, OP_IENDSWITH, NULL));
+
+        $$.type = EXPRESSION_TYPE_BOOLEAN;
+      }
+    | primary_expression _IEQUALS_ primary_expression
+      {
+        check_type($1, EXPRESSION_TYPE_STRING, "iequals");
+        check_type($3, EXPRESSION_TYPE_STRING, "iequals");
+
+        fail_if_error(yr_parser_emit(
+            yyscanner, OP_IEQUALS, NULL));
 
         $$.type = EXPRESSION_TYPE_BOOLEAN;
       }
@@ -1791,6 +1802,10 @@ expression
         }
 
         yr_parser_emit(yyscanner, OP_OF_PERCENT, NULL);
+      }
+    | for_expression _OF_ string_set _IN_ range
+      {
+        yr_parser_emit(yyscanner, OP_OF_FOUND_IN, NULL);
 
         $$.type = EXPRESSION_TYPE_BOOLEAN;
       }

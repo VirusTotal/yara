@@ -25,9 +25,9 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-
 COPTS = [
     "-D_GNU_SOURCE",
+    "-DHAVE_STDBOOL_H=1",
     # Tell the compiler we want the C99 standard.
     "-std=c99",
 ]
@@ -40,6 +40,7 @@ cc_library(
 cc_library(
     name = "util",
     srcs = ["util.c"],
+    copts = COPTS,
     textual_hdrs = ["util.h"],
     deps = ["@//:libyara"],
 )
@@ -48,30 +49,39 @@ cc_test(
     name = "test_alignment",
     srcs = ["test-alignment.c"],
     copts = COPTS,
-    deps = ["@//:libyara"],
-    linkstatic=True,
+    linkstatic = True,
+    deps = [
+        ":util",
+        "@//:libyara",
+    ],
 )
 
 cc_test(
     name = "test_arena",
     srcs = ["test-arena.c"],
     copts = COPTS,
+    linkstatic = True,
     deps = [
         ":util",
         "@//:libyara",
     ],
-    linkstatic=True,
 )
 
 cc_test(
     name = "test_atoms",
     srcs = ["test-atoms.c"],
     copts = COPTS,
+    linkstatic = True,
     deps = [
         ":util",
         "@//:libyara",
     ],
-    linkstatic=True,
+)
+
+cc_binary(
+    name = "mapper",
+    srcs = ["mapper.c"],
+    copts = ["-O0"],
 )
 
 cc_test(
@@ -87,12 +97,13 @@ cc_test(
         "data/xorwide.out",
         "data/xorwideandascii.out",
     ],
+    linkstatic = True,
     deps = [
         ":blob",
+        ":mapper",
         ":util",
         "@//:libyara",
     ],
-    linkstatic=True,
 )
 
 cc_test(
@@ -102,76 +113,82 @@ cc_test(
     data = [
         "data/079a472d22290a94ebb212aa8015cdc8dd28a968c6b4d3b88acdd58ce2d3b885",
         "data/079a472d22290a94ebb212aa8015cdc8dd28a968c6b4d3b88acdd58ce2d3b885.upx",
+        "data/3b8b90159fa9b6048cc5410c5d53f116943564e4d05b04a843f9b3d0540d0c1c",
+        "data/ca21e1c32065352d352be6cde97f89c141d7737ea92434831f998080783d5386",
+        "data/mtxex.dll",
+        "data/mtxex_modified_rsrc_rva.dll",
+        "data/pe_imports",
         "data/tiny",
         "data/tiny-idata-51ff",
         "data/tiny-idata-5200",
         "data/tiny-overlay",
         "data/weird_rich",
-        "data/mtxex.dll",
-        "data/mtxex_modified_rsrc_rva.dll",
     ],
+    linkstatic = True,
     deps = [
         ":util",
         "@//:libyara",
     ],
-    linkstatic=True,
 )
 
 cc_test(
     name = "test_elf",
     srcs = ["test-elf.c"],
     copts = COPTS,
+    linkstatic = True,
     deps = [
         ":blob",
         ":util",
         "@//:libyara",
     ],
-    linkstatic=True,
 )
 
 cc_test(
     name = "test_api",
     srcs = ["test-api.c"],
-    data = ["data/baz.yar"],
     copts = COPTS,
+    data = [
+        "data/baz.yar",
+        "data/x.txt",
+    ],
+    linkstatic = True,
     deps = [
         ":util",
         "@//:libyara",
     ],
-    linkstatic=True,
 )
 
 cc_test(
     name = "test_bitmask",
     srcs = ["test-bitmask.c"],
     copts = COPTS,
+    linkstatic = True,
     deps = [
         ":util",
         "@//:libyara",
     ],
-    linkstatic=True,
 )
 
 cc_test(
     name = "test_math",
     srcs = ["test-math.c"],
     copts = COPTS,
+    linkstatic = True,
     deps = [
         ":util",
         "@//:libyara",
     ],
-    linkstatic=True,
 )
 
 cc_test(
     name = "test_stack",
     srcs = ["test-stack.c"],
     copts = COPTS,
+    linkstatic = True,
     deps = [
         ":util",
         "@//:libyara",
     ],
-    linkstatic=True,
 )
 
 # This test fails when running under ASAN
@@ -179,48 +196,48 @@ cc_test(
     name = "test_exception",
     srcs = ["test-exception.c"],
     copts = COPTS,
+    linkstatic = True,
     deps = [
         ":util",
         "@//:libyara",
     ],
-    linkstatic=True,
 )
 
 cc_test(
     name = "test_macho",
     srcs = ["test-macho.c"],
-    data = [
-        "data/tiny-universal",
-        "data/tiny-macho",
-    ],
     copts = COPTS,
+    data = [
+        "data/tiny-macho",
+        "data/tiny-universal",
+    ],
+    linkstatic = True,
     deps = [
         ":blob",
         ":util",
         "@//:libyara",
     ],
-    linkstatic=True,
 )
 
 cc_test(
     name = "test_dex",
     srcs = ["test-dex.c"],
     copts = COPTS,
+    linkstatic = True,
     deps = [
         ":blob",
         ":util",
         "@//:libyara",
     ],
-    linkstatic=True,
 )
 
 cc_test(
     name = "test_re_split",
     srcs = ["test-re-split.c"],
     copts = COPTS,
+    linkstatic = True,
     deps = [
         ":util",
         "@//:libyara",
     ],
-    linkstatic=True,
 )

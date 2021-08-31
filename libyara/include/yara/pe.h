@@ -52,6 +52,18 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define IMAGE_FILE_MACHINE_ARM64 0xaa64
 #endif
 
+#ifndef IMAGE_SUBSYSTEM_EFI_ROM_IMAGE
+#define IMAGE_SUBSYSTEM_EFI_ROM_IMAGE 13
+#endif
+
+#ifndef IMAGE_DIRECTORY_ENTRY_COPYRIGHT
+#define IMAGE_DIRECTORY_ENTRY_COPYRIGHT 7  // (X86 usage)
+#endif
+
+#ifndef IMAGE_FILE_MACHINE_TARGET_HOST
+#define IMAGE_FILE_MACHINE_TARGET_HOST 0x0001
+#endif
+
 #else
 
 #include <stdlib.h>
@@ -59,6 +71,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 typedef uint8_t BYTE;
 typedef uint16_t WORD;
+typedef uint16_t WCHAR;
 typedef uint32_t DWORD;
 typedef int32_t LONG;
 typedef uint32_t ULONG;
@@ -180,13 +193,50 @@ typedef struct _IMAGE_FILE_HEADER
 #define IMAGE_FILE_MACHINE_SH5           0x01a8
 #define IMAGE_FILE_MACHINE_THUMB         0x01c2
 #define IMAGE_FILE_MACHINE_WCEMIPSV2     0x0169
+// Useful for indicating we want to interact with the host and not a WoW guest.
+#define IMAGE_FILE_MACHINE_TARGET_HOST   0x0001
+// MIPS little-endian, 0x160 big-endian
+#define IMAGE_FILE_MACHINE_R3000         0x0162  // MIPS little-endian
+#define IMAGE_FILE_MACHINE_R10000        0x0168  // Alpha_AXP
+#define IMAGE_FILE_MACHINE_ALPHA         0x0184  // SH3E little-endian
+#define IMAGE_FILE_MACHINE_SH3E          0x01a4  // ALPHA64
+#define IMAGE_FILE_MACHINE_ALPHA64       0x0284
+#define IMAGE_FILE_MACHINE_AXP64         IMAGE_FILE_MACHINE_ALPHA64
+#define IMAGE_FILE_MACHINE_TRICORE       0x0520  // Infineon
+#define IMAGE_FILE_MACHINE_CEF           0x0CEF
+#define IMAGE_FILE_MACHINE_CEE           0xC0EE
 
 // Section characteristics
+#define IMAGE_SCN_TYPE_NO_PAD            0x00000008
 #define IMAGE_SCN_CNT_CODE               0x00000020
 #define IMAGE_SCN_CNT_INITIALIZED_DATA   0x00000040
 #define IMAGE_SCN_CNT_UNINITIALIZED_DATA 0x00000080
+#define IMAGE_SCN_LNK_OTHER              0x00000100
+#define IMAGE_SCN_LNK_INFO               0x00000200
+#define IMAGE_SCN_LNK_REMOVE             0x00000800
+#define IMAGE_SCN_LNK_COMDAT             0x00001000
+#define IMAGE_SCN_NO_DEFER_SPEC_EXC      0x00004000
 #define IMAGE_SCN_GPREL                  0x00008000
+#define IMAGE_SCN_MEM_FARDATA            0x00008000
+#define IMAGE_SCN_MEM_PURGEABLE          0x00020000
 #define IMAGE_SCN_MEM_16BIT              0x00020000
+#define IMAGE_SCN_MEM_LOCKED             0x00040000
+#define IMAGE_SCN_MEM_PRELOAD            0x00080000
+#define IMAGE_SCN_ALIGN_1BYTES           0x00100000
+#define IMAGE_SCN_ALIGN_2BYTES           0x00200000
+#define IMAGE_SCN_ALIGN_4BYTES           0x00300000
+#define IMAGE_SCN_ALIGN_8BYTES           0x00400000
+#define IMAGE_SCN_ALIGN_16BYTES          0x00500000
+#define IMAGE_SCN_ALIGN_32BYTES          0x00600000
+#define IMAGE_SCN_ALIGN_64BYTES          0x00700000
+#define IMAGE_SCN_ALIGN_128BYTES         0x00800000
+#define IMAGE_SCN_ALIGN_256BYTES         0x00900000
+#define IMAGE_SCN_ALIGN_512BYTES         0x00A00000
+#define IMAGE_SCN_ALIGN_1024BYTES        0x00B00000
+#define IMAGE_SCN_ALIGN_2048BYTES        0x00C00000
+#define IMAGE_SCN_ALIGN_4096BYTES        0x00D00000
+#define IMAGE_SCN_ALIGN_8192BYTES        0x00E00000
+#define IMAGE_SCN_ALIGN_MASK             0x00F00000
 #define IMAGE_SCN_LNK_NRELOC_OVFL        0x01000000
 #define IMAGE_SCN_MEM_DISCARDABLE        0x02000000
 #define IMAGE_SCN_MEM_NOT_CACHED         0x04000000
@@ -195,6 +245,7 @@ typedef struct _IMAGE_FILE_HEADER
 #define IMAGE_SCN_MEM_EXECUTE            0x20000000
 #define IMAGE_SCN_MEM_READ               0x40000000
 #define IMAGE_SCN_MEM_WRITE              0x80000000
+#define IMAGE_SCN_SCALE_INDEX            0x00000001
 
 //
 // Directory format.
@@ -302,6 +353,7 @@ typedef struct _IMAGE_OPTIONAL_HEADER64
 
 #define IMAGE_NT_OPTIONAL_HDR32_MAGIC 0x10b
 #define IMAGE_NT_OPTIONAL_HDR64_MAGIC 0x20b
+#define IMAGE_ROM_OPTIONAL_HDR_MAGIC  0x107
 
 typedef struct _IMAGE_NT_HEADERS32
 {
@@ -347,13 +399,16 @@ typedef struct _IMAGE_NT_HEADERS64
 
 // DllCharacteristics values
 
+#define IMAGE_DLLCHARACTERISTICS_HIGH_ENTROPY_VA       0x0020
 #define IMAGE_DLLCHARACTERISTICS_DYNAMIC_BASE          0x0040
 #define IMAGE_DLLCHARACTERISTICS_FORCE_INTEGRITY       0x0080
 #define IMAGE_DLLCHARACTERISTICS_NX_COMPAT             0x0100
 #define IMAGE_DLLCHARACTERISTICS_NO_ISOLATION          0x0200
 #define IMAGE_DLLCHARACTERISTICS_NO_SEH                0x0400
 #define IMAGE_DLLCHARACTERISTICS_NO_BIND               0x0800
+#define IMAGE_DLLCHARACTERISTICS_APPCONTAINER          0x1000
 #define IMAGE_DLLCHARACTERISTICS_WDM_DRIVER            0x2000
+#define IMAGE_DLLCHARACTERISTICS_GUARD_CF              0x4000
 #define IMAGE_DLLCHARACTERISTICS_TERMINAL_SERVER_AWARE 0x8000
 
 //
@@ -434,6 +489,50 @@ typedef struct _IMAGE_THUNK_DATA32
 #define IMAGE_ORDINAL_FLAG32 0x80000000
 #define IMAGE_ORDINAL_FLAG64 0x8000000000000000L
 
+typedef struct _IMAGE_BOUND_IMPORT_DESCRIPTOR
+{
+  DWORD TimeDateStamp;
+  WORD OffsetModuleName;
+  WORD NumberOfModuleForwarderRefs;
+  // Array of zero or more IMAGE_BOUND_FORWARDER_REF follows
+} IMAGE_BOUND_IMPORT_DESCRIPTOR, *PIMAGE_BOUND_IMPORT_DESCRIPTOR;
+
+typedef struct _IMAGE_BOUND_FORWARDER_REF
+{
+  DWORD TimeDateStamp;
+  WORD OffsetModuleName;
+  WORD Reserved;
+} IMAGE_BOUND_FORWARDER_REF, *PIMAGE_BOUND_FORWARDER_REF;
+
+typedef struct _IMAGE_DELAYLOAD_DESCRIPTOR
+{
+  union
+  {
+    DWORD AllAttributes;
+    struct
+    {
+      DWORD RvaBased : 1;  // Delay load version 2
+      DWORD ReservedAttributes : 31;
+    } DUMMYSTRUCTNAME;
+  } Attributes;
+
+  // RVA to the name of the target library (NULL-terminate ASCII string)
+  DWORD DllNameRVA;
+  // RVA to the HMODULE caching location (PHMODULE)
+  DWORD ModuleHandleRVA;
+  // RVA to the start of the IAT (PIMAGE_THUNK_DATA)
+  DWORD ImportAddressTableRVA;
+  // RVA to the start of the name table (PIMAGE_THUNK_DATA::AddressOfData)
+  DWORD ImportNameTableRVA;
+  // RVA to an optional bound IAT
+  DWORD BoundImportAddressTableRVA;
+  // RVA to an optional unload info table
+  DWORD UnloadInformationTableRVA;
+  // 0 if not bound, otherwise, date/time of the target DLL
+  DWORD TimeDateStamp;
+
+} IMAGE_DELAYLOAD_DESCRIPTOR, *PIMAGE_DELAYLOAD_DESCRIPTOR;
+
 typedef struct _IMAGE_THUNK_DATA64
 {
   union
@@ -445,6 +544,12 @@ typedef struct _IMAGE_THUNK_DATA64
   } u1;
 
 } IMAGE_THUNK_DATA64, *PIMAGE_THUNK_DATA64;
+
+typedef struct _IMAGE_RESOURCE_DIR_STRING_U
+{
+    WORD    Length;
+    WCHAR   NameString[1];
+} IMAGE_RESOURCE_DIR_STRING_U, *PIMAGE_RESOURCE_DIR_STRING_U;
 
 typedef struct _IMAGE_RESOURCE_DIRECTORY_ENTRY
 {
@@ -470,14 +575,20 @@ typedef struct _IMAGE_RESOURCE_DIRECTORY
   WORD NumberOfIdEntries;
 } IMAGE_RESOURCE_DIRECTORY, *PIMAGE_RESOURCE_DIRECTORY;
 
-#define IMAGE_DEBUG_TYPE_UNKNOWN   0
-#define IMAGE_DEBUG_TYPE_COFF      1
-#define IMAGE_DEBUG_TYPE_CODEVIEW  2
-#define IMAGE_DEBUG_TYPE_FPO       3
-#define IMAGE_DEBUG_TYPE_MISC      4
-#define IMAGE_DEBUG_TYPE_EXCEPTION 5
-#define IMAGE_DEBUG_TYPE_FIXUP     6
-#define IMAGE_DEBUG_TYPE_BORLAND   9
+#define IMAGE_DEBUG_TYPE_FPO           3
+#define IMAGE_DEBUG_TYPE_MISC          4
+#define IMAGE_DEBUG_TYPE_EXCEPTION     5
+#define IMAGE_DEBUG_TYPE_FIXUP         6
+#define IMAGE_DEBUG_TYPE_OMAP_TO_SRC   7
+#define IMAGE_DEBUG_TYPE_OMAP_FROM_SRC 8
+#define IMAGE_DEBUG_TYPE_BORLAND       9
+#define IMAGE_DEBUG_TYPE_RESERVED10    10
+#define IMAGE_DEBUG_TYPE_CLSID         11
+#define IMAGE_DEBUG_TYPE_VC_FEATURE    12
+#define IMAGE_DEBUG_TYPE_POGO          13
+#define IMAGE_DEBUG_TYPE_ILTCG         14
+#define IMAGE_DEBUG_TYPE_MPX           15
+#define IMAGE_DEBUG_TYPE_REPRO         16
 
 typedef struct _IMAGE_DEBUG_DIRECTORY
 {
@@ -557,7 +668,23 @@ typedef struct _WIN_CERTIFICATE
 
 #define RICH_VERSION_ID(id_version)      (id_version >> 16)
 #define RICH_VERSION_VERSION(id_version) (id_version & 0xFFFF)
-
+#define IMAGE_DEBUG_TYPE_UNKNOWN         0
+#define IMAGE_DEBUG_TYPE_COFF            1
+#define IMAGE_DEBUG_TYPE_CODEVIEW        2
+#define IMAGE_DEBUG_TYPE_FPO             3
+#define IMAGE_DEBUG_TYPE_MISC            4
+#define IMAGE_DEBUG_TYPE_EXCEPTION       5
+#define IMAGE_DEBUG_TYPE_FIXUP           6
+#define IMAGE_DEBUG_TYPE_OMAP_TO_SRC     7
+#define IMAGE_DEBUG_TYPE_OMAP_FROM_SRC   8
+#define IMAGE_DEBUG_TYPE_BORLAND         9
+#define IMAGE_DEBUG_TYPE_RESERVED10      10
+#define IMAGE_DEBUG_TYPE_CLSID           11
+#define IMAGE_DEBUG_TYPE_VC_FEATURE      12
+#define IMAGE_DEBUG_TYPE_POGO            13
+#define IMAGE_DEBUG_TYPE_ILTCG           14
+#define IMAGE_DEBUG_TYPE_MPX             15
+#define IMAGE_DEBUG_TYPE_REPRO           16
 typedef struct _RICH_VERSION_INFO
 {
   DWORD id_version;  // tool id and version (use RICH_VERSION_ID and

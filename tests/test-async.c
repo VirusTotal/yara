@@ -327,7 +327,7 @@ int main(int argc, char** argv)
   YR_DEBUG_INITIALIZE();
   YR_DEBUG_FPRINTF(1, stderr, "+ %s() { // in %s\n", __FUNCTION__, argv[0]);
 
-  chdir_if_env_top_srcdir();
+  init_top_srcdir();
 
   yr_initialize();
 

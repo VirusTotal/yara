@@ -1,4 +1,4 @@
-AC_INIT([yara], [4.0.2], [vmalvarez@virustotal.com])
+AC_INIT([yara], [4.1.1], [vmalvarez@virustotal.com])
 
 AM_SILENT_RULES([yes])
 AC_CONFIG_SRCDIR([cli/yara.c])
@@ -121,6 +121,14 @@ AC_ARG_ENABLE([profiling],
     CFLAGS="$CFLAGS -DYR_PROFILING_ENABLED"
   fi])
 
+AC_ARG_WITH([debug-verbose],
+  [AS_HELP_STRING([--with-debug-verbose=[[NUM]]], [Turn on runtime debugging information])],
+  [if test $withval -gt 0; then
+    AC_DEFINE_UNQUOTED([YR_DEBUG_VERBOSITY], [$withval])
+   else
+    AC_MSG_ERROR([debug verbosity must be greater than 0])
+  fi])
+
 AC_ARG_ENABLE([cuckoo],
   [AS_HELP_STRING([--enable-cuckoo], [enable cuckoo module])],
   [if test x$enableval = xyes; then
@@ -183,8 +191,8 @@ AC_ARG_ENABLE([pb-tests],
     # AC_CHECK_PROG(PROTOC_GEN_YARA, protoc-gen-yara, protoc-gen-yara)
     # AS_IF([test "x${PROTOC_GEN_YARA}" == "x"],
     #    [AC_MSG_ERROR([please install https://github.com/VirusTotal/protoc-gen-yara])])
-    PKG_CHECK_MODULES(PROTOBUF_C, libprotobuf-c >= 1.0.0)
-    AC_CHECK_LIB(protobuf-c, protobuf_c_message_unpack,,
+    PKG_CHECK_MODULES([PROTOBUF_C], [libprotobuf-c >= 1.0.0])
+    AC_CHECK_LIB([protobuf-c], protobuf_c_message_unpack,,
       AC_MSG_ERROR([please install libprotobuf-c library]))
     CFLAGS="$CFLAGS -DPB_TESTS_MODULE"
     PC_REQUIRES_PRIVATE="$PC_REQUIRES_PRIVATE libprotobuf-c"

@@ -77,11 +77,13 @@ static int _yr_arena_make_ptr_relocatable(
     yr_arena_off_t base_offset,
     va_list offsets)
 {
-  yr_arena_off_t offset;
+  size_t offset;
 
   int result = ERROR_SUCCESS;
 
-  offset = (yr_arena_off_t) va_arg(offsets, yr_arena_off_t);
+  // The argument to va_arg is size_t because the offsets passed to this
+  // function are obtained with offsetof().
+  offset = va_arg(offsets, size_t);
 
   while (offset != EOL)
   {
@@ -91,7 +93,7 @@ static int _yr_arena_make_ptr_relocatable(
       return ERROR_INSUFFICIENT_MEMORY;
 
     reloc->buffer_id = buffer_id;
-    reloc->offset = base_offset + offset;
+    reloc->offset = base_offset + (yr_arena_off_t) offset;
     reloc->next = NULL;
 
     if (arena->reloc_list_head == NULL)
@@ -101,7 +103,7 @@ static int _yr_arena_make_ptr_relocatable(
       arena->reloc_list_tail->next = reloc;
 
     arena->reloc_list_tail = reloc;
-    offset = (yr_arena_off_t) va_arg(offsets, size_t);
+    offset = va_arg(offsets, size_t);
   }
 
   return result;
@@ -149,7 +151,7 @@ static int _yr_arena_allocate_memory(
     while (new_size < b->used + size) new_size *= 2;
 
     // Make sure that buffer size if not larger than 4GB.
-    if (new_size > 1L << 32)
+    if (new_size > 1ULL << 32)
       return ERROR_INSUFFICIENT_MEMORY;
 
     uint8_t* new_data = yr_realloc(b->data, new_size);
@@ -223,7 +225,7 @@ static int _yr_arena_allocate_memory(
 //   ERROR_INSUFFICIENT_MEMORY
 //
 int yr_arena_create(
-    int number_of_buffers,
+    uint32_t num_buffers,
     size_t initial_buffer_size,
     YR_ARENA** arena)
 {
@@ -233,7 +235,7 @@ int yr_arena_create(
     return ERROR_INSUFFICIENT_MEMORY;
 
   new_arena->xrefs = 1;
-  new_arena->num_buffers = number_of_buffers;
+  new_arena->num_buffers = num_buffers;
   new_arena->initial_buffer_size = initial_buffer_size;
 
   *arena = new_arena;
@@ -267,7 +269,7 @@ int yr_arena_release(YR_ARENA* arena)
   if (arena->xrefs > 0)
     return ERROR_SUCCESS;
 
-  for (int i = 0; i < arena->num_buffers; i++)
+  for (uint32_t i = 0; i < arena->num_buffers; i++)
   {
     if (arena->buffers[i].data != NULL)
       yr_free(arena->buffers[i].data);
@@ -426,7 +428,7 @@ int yr_arena_ptr_to_ref(YR_ARENA* arena, const void* address, YR_ARENA_REF* ref)
   if (address == NULL)
     return 1;
 
-  for (int i = 0; i < arena->num_buffers; ++i)
+  for (uint32_t i = 0; i < arena->num_buffers; ++i)
   {
     if ((uint8_t*) address >= arena->buffers[i].data &&
         (uint8_t*) address < arena->buffers[i].data + arena->buffers[i].used)
@@ -434,6 +436,7 @@ int yr_arena_ptr_to_ref(YR_ARENA* arena, const void* address, YR_ARENA_REF* ref)
       ref->buffer_id = i;
       ref->offset = (yr_arena_off_t)(
           (uint8_t*) address - arena->buffers[i].data);
+
       return 1;
     }
   }
@@ -551,7 +554,7 @@ int yr_arena_load_stream(YR_STREAM* stream, YR_ARENA** arena)
 
   YR_ARENA* new_arena;
 
-  FAIL_ON_ERROR(yr_arena_create(hdr.num_buffers, 1048576, &new_arena))
+  FAIL_ON_ERROR(yr_arena_create(hdr.num_buffers, 10485, &new_arena))
 
   for (int i = 0; i < hdr.num_buffers; ++i)
   {
@@ -622,7 +625,7 @@ int yr_arena_save_stream(YR_ARENA* arena, YR_STREAM* stream)
   uint64_t offset = sizeof(YR_ARENA_FILE_HEADER) +
                     sizeof(YR_ARENA_FILE_BUFFER) * arena->num_buffers;
 
-  for (int i = 0; i < arena->num_buffers; ++i)
+  for (uint32_t i = 0; i < arena->num_buffers; ++i)
   {
     YR_ARENA_FILE_BUFFER buffer = {
         .offset = offset,
@@ -669,7 +672,7 @@ int yr_arena_save_stream(YR_ARENA* arena, YR_STREAM* stream)
 
   // Now that all relocatable pointers are converted to references, write the
   // buffers.
-  for (int i = 0; i < arena->num_buffers; ++i)
+  for (uint32_t i = 0; i < arena->num_buffers; ++i)
   {
     YR_ARENA_BUFFER* b = &arena->buffers[i];
 

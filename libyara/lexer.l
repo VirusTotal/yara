@@ -205,6 +205,7 @@ octdigit      [0-7]
 "icontains"             { return _ICONTAINS_;   }
 "istartswith"           { return _ISTARTSWITH_; }
 "iendswith"             { return _IENDSWITH_;   }
+"iequals"               { return _IEQUALS_;     }
 "import"                { return _IMPORT_;      }
 
 
@@ -579,6 +580,7 @@ u?int(8|16|32)(be)? {
 
   *yyextra->lex_buf_ptr = '\0';
   memcpy(s->c_string, yyextra->lex_buf, yyextra->lex_buf_len + 1);
+
   yylval->sized_string = s;
 
   BEGIN(INITIAL);
@@ -629,12 +631,12 @@ u?int(8|16|32)(be)? {
 
 <str>\\x{hexdigit}{2} {
 
-   int result;
+  int result;
 
-   sscanf( yytext + 2, "%x", &result );
-   lex_check_space_ok("X", yyextra->lex_buf_len, YR_LEX_BUF_SIZE);
-   *yyextra->lex_buf_ptr++ = result;
-   yyextra->lex_buf_len++;
+  sscanf(yytext + 2, "%x", &result);
+  lex_check_space_ok("X", yyextra->lex_buf_len, YR_LEX_BUF_SIZE);
+  *yyextra->lex_buf_ptr++ = result;
+  yyextra->lex_buf_len++;
 }
 
 
@@ -665,6 +667,7 @@ u?int(8|16|32)(be)? {
 
     *yyextra->lex_buf_ptr = '\0';
     strlcpy(s->c_string, yyextra->lex_buf, s->length + 1);
+
     yylval->sized_string = s;
   }
   else

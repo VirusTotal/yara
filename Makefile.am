@@ -37,6 +37,7 @@ bin_PROGRAMS = yara yarac
 yara_SOURCES = \
   cli/args.c \
   cli/args.h \
+  cli/common.c \
   cli/common.h \
   cli/threading.c \
   cli/threading.h \
@@ -48,11 +49,15 @@ yara_DEPENDENCIES = libyara/.libs/libyara.la
 yarac_SOURCES = \
    cli/args.c \
    cli/args.h \
+   cli/common.c \
    cli/common.h \
    cli/yarac.c
 
 yarac_LDADD = -Llibyara/.libs -lyara
 yarac_DEPENDENCIES = libyara/.libs/libyara.la
+
+tests_mapper_SOURCES = tests/mapper.c
+tests_mapper_CFLAGS = -O0
 
 test_alignment_SOURCES = tests/test-alignment.c tests/util.c
 test_alignment_LDADD = libyara/.libs/libyara.a
@@ -60,12 +65,11 @@ test_arena_SOURCES = tests/test-arena.c tests/util.c
 test_arena_LDADD = libyara/.libs/libyara.a
 test_atoms_SOURCES = tests/test-atoms.c tests/util.c
 test_atoms_LDADD = libyara/.libs/libyara.a
-test_rules_pass_1_SOURCES = tests/test-rules-pass-1.c tests/util.c
-test_rules_pass_1_LDADD = libyara/.libs/libyara.a
-test_rules_pass_2_SOURCES = tests/test-rules-pass-2.c tests/util.c
-test_rules_pass_2_LDADD = libyara/.libs/libyara.a
-test_rules_pass_3_SOURCES = tests/test-rules-pass-3.c tests/util.c
-test_rules_pass_3_LDADD = libyara/.libs/libyara.a
+test_rules_SOURCES = tests/test-rules.c tests/util.c
+test_rules_LDADD = libyara/.libs/libyara.a
+if POSIX
+EXTRA_test_rules_DEPENDENCIES = tests/mapper$(EXEEXT)
+endif
 test_pe_SOURCES = tests/test-pe.c tests/util.c
 test_pe_LDADD = libyara/.libs/libyara.a
 test_elf_SOURCES = tests/test-elf.c tests/util.c
@@ -86,16 +90,14 @@ test_async_SOURCES = tests/test-async.c tests/util.c
 test_async_LDADD = libyara/.libs/libyara.a
 
 TESTS = $(check_PROGRAMS)
-TESTS_ENVIRONMENT = TOP_SRCDIR=$(top_srcdir)
+TESTS_ENVIRONMENT = TOP_SRCDIR=$(top_srcdir) TOP_BUILDDIR=$(top_builddir)
 
 check_PROGRAMS = \
   test-arena \
   test-alignment \
   test-atoms \
   test-api \
-  test-rules-pass-1 \
-  test-rules-pass-2 \
-  test-rules-pass-3 \
+  test-rules \
   test-pe \
   test-elf \
   test-version \
@@ -104,6 +106,9 @@ check_PROGRAMS = \
   test-stack \
   test-re-split \
   test-async
+
+EXTRA_PROGRAMS = tests/mapper
+CLEANFILES = tests/mapper$(EXEEXT)
 
 if POSIX
 # The -fsanitize=address option makes test-exception fail. Include the test

@@ -27,9 +27,13 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+#include <errno.h>
+#include <fcntl.h>
 #include <signal.h>
 #include <stdlib.h>
+#include <sys/stat.h>
 #include <sys/types.h>
+#include <sys/wait.h>
 #include <unistd.h>
 #include <yara.h>
 
@@ -44,6 +48,20 @@ static void test_boolean_operators()
 {
   YR_DEBUG_FPRINTF(1, stderr, "+ %s() {\n", __FUNCTION__);
 
+  assert_true_rule("rule test { condition: not false }", NULL);
+
+  assert_false_rule("rule test { condition: not true }", NULL);
+
+  assert_false_rule("rule test { condition: not (false or true) }", NULL);
+
+  assert_false_rule("rule test { condition: not (true or false) }", NULL);
+
+  assert_true_rule("rule test { condition: not (false and true) }", NULL);
+
+  assert_true_rule("rule test { condition: not (true and false) }", NULL);
+
+  assert_true_rule("rule test { condition: not (true and false) }", NULL);
+
   assert_true_rule("rule test { condition: true }", NULL);
 
   assert_true_rule("rule test { condition: true or false }", NULL);
@@ -57,6 +75,76 @@ static void test_boolean_operators()
   assert_false_rule("rule test { condition: true and false }", NULL);
 
   assert_false_rule("rule test { condition: false or false }", NULL);
+
+  assert_false_rule(
+      "import \"tests\" rule test { condition: not tests.undefined.i }", NULL);
+
+  assert_false_rule(
+      "import \"tests\" rule test { condition: tests.undefined.i }", NULL);
+
+  assert_false_rule(
+      "import \"tests\" rule test { condition: tests.undefined.i and true }",
+      NULL);
+
+  assert_false_rule(
+      "import \"tests\" rule test { condition: true and tests.undefined.i }",
+      NULL);
+
+  assert_true_rule(
+      "import \"tests\" rule test { condition: tests.undefined.i or true }",
+      NULL);
+
+  assert_true_rule(
+      "import \"tests\" rule test { condition: true or tests.undefined.i }",
+      NULL);
+
+  assert_true_rule(
+      "import \"tests\" \
+      rule test { \
+        condition: \
+          not (tests.undefined.i and true) \
+      }",
+      NULL);
+
+  assert_true_rule(
+      "import \"tests\" \
+      rule test { \
+        condition: \
+          not (true and tests.undefined.i) \
+      }",
+      NULL);
+
+  assert_false_rule(
+      "import \"tests\" \
+      rule test { \
+        condition: \
+          not tests.string_array[4] contains \"foo\" \
+      }",
+      NULL);
+
+  assert_false_rule(
+      "import \"tests\" \
+      rule test { \
+        condition: \
+          not tests.string_dict[\"undefined\"] matches /foo/ \
+      }",
+      NULL);
+
+  assert_false_rule(
+      "import \"tests\" \
+      rule test { \
+        condition: \
+          not tests.undefined.i \
+      }",
+      NULL);
+
+  assert_false_rule(
+      "import \"tests\" \
+      rule test { \
+        condition: \
+          not (tests.undefined.i) \
+      }",
+      NULL);
 
   YR_DEBUG_FPRINTF(1, stderr, "} // %s()\n", __FUNCTION__);
 }
@@ -519,6 +607,17 @@ static void test_strings()
              all of them\n\
        }",
       TEXT_1024_BYTES "abcdef");
+
+  assert_true_rule(
+      "rule test {\n\
+         strings:\n\
+             $a = \"foo\"\n\
+             $b = \"bar\"\n\
+             $c = \"baz\"\n\
+         condition:\n\
+             all of them in (0..10)\n\
+       }",
+      "foobarbaz" TEXT_1024_BYTES);
 
   // xor by itself will match the plaintext version of the string too.
   assert_true_rule_file(
@@ -1215,6 +1314,36 @@ static void test_hex_strings()
         condition: !a == 2 }",
       "122222222" TEXT_1024_BYTES);
 
+  assert_true_rule(
+      "rule test { \
+        strings: $a = { 30 31 32 [0-5] 38 39 } \
+        condition: $a }",
+      "0123456789");
+
+  assert_true_rule(
+      "rule test { \
+        strings: $a = { 31 32 [0-5] 38 39 30 } \
+        condition: $a }",
+      "1234567890");
+
+  assert_true_rule(
+      "rule test { \
+        strings: $a = { 31 32 [0-2] 34 [0-2] 34 } \
+        condition: $a }",
+      "1244");
+
+  assert_true_rule(
+      "rule test { \
+        strings: $a = { 31 32 [0-2] 34 [0-2] 34 } \
+        condition: $a }",
+      "12344");
+
+  assert_true_rule(
+      "rule test { \
+        strings: $a = { 31 32 [0-2] 34 [0-2] 34 [2-3] 34 } \
+        condition: $a }",
+      "123440004");
+
   assert_error(
       "rule test { \
         strings: $a = { 01 [0] 02 } \
@@ -1653,32 +1782,6 @@ void test_for()
       }",
       NULL);
 
-  // Test case for issue #1180.
-  assert_true_rule(
-      "import \"tests\" \
-      rule test { \
-        condition: \
-          not tests.string_array[4] contains \"foo\" \
-      }",
-      NULL);
-
-  // Test case for issue #1180.
-  assert_true_rule(
-      "import \"tests\" \
-      rule test { \
-        condition: \
-          not tests.string_dict[\"undefined\"] matches /foo/ \
-      }",
-      NULL);
-
-  assert_false_rule(
-      "import \"tests\" \
-      rule test { \
-        condition: \
-          not tests.undefined.i \
-      }",
-      NULL);
-
   assert_true_rule(
       "import \"tests\" \
       rule test { \
@@ -1796,7 +1899,7 @@ void test_re()
       "mississippi\tmississippi.mississippi\nmississippi" TEXT_1024_BYTES);
 
   assert_true_rule(
-      "rule test { strings: $a = /mississippi.*mississippi$/s condition: $a }",
+      "rule test { strings: $a = /mississippi.*mississippi$/s condition: $a}",
       TEXT_1024_BYTES "mississippi\tmississippi.mississippi\nmississippi");
 
   assert_false_rule(
@@ -2100,8 +2203,8 @@ void test_re()
   assert_false_regexp("^abc$", "aabc");
   assert_false_regexp("abc^", "abc");
   assert_false_regexp("ab^c", "abc");
-  assert_false_regexp("a^bcdef", "abcdef")
-      assert_true_regexp("abc$", "aabc", "abc");
+  assert_false_regexp("a^bcdef", "abcdef");
+  assert_true_regexp("abc$", "aabc", "abc");
   assert_false_regexp("$abc", "abc");
   assert_true_regexp("(a|a$)bcd", "abcd", "abcd");
   assert_false_regexp("(a$|a$)bcd", "abcd");
@@ -2133,16 +2236,20 @@ void test_re()
       "(ba{4}){4,10}",
       "baaaabaaaabaaaabaaaabaaaa",
       "baaaabaaaabaaaabaaaabaaaa");
+
   assert_true_regexp(
       "(ba{2}a{2}){5,10}",
       "baaaabaaaabaaaabaaaabaaaa",
       "baaaabaaaabaaaabaaaabaaaa");
+
   assert_true_regexp(
       "(ba{3}){4,10}", "baaabaaabaaabaaabaaa", "baaabaaabaaabaaabaaa");
+
   assert_true_regexp(
       "(ba{4}){5,10}",
       "baaaabaaaabaaaabaaaabaaaa",
       "baaaabaaaabaaaabaaaabaaaa");
+
   assert_false_regexp("(ba{4}){4,10}", "baaaabaaaabaaaa");
 
   // Test for integer overflow in repeat interval
@@ -2542,19 +2649,39 @@ static void test_modules()
 
   assert_true_rule(
       "import \"tests\" \
-      rule test { condition: tests.match(/foo/,\"bar\") == -1\
+      rule test { condition: tests.match(/foo/,\"bar\") == -1 \
       }",
       NULL);
 
   assert_true_rule(
       "import \"tests\" \
-      rule test { condition: tests.match(/foo.bar/i,\"FOO\\nBAR\") == -1\
+      rule test { condition: tests.match(/foo.bar/i,\"FOO\\nBAR\") == -1 \
       }",
       NULL);
 
   assert_true_rule(
       "import \"tests\" \
-      rule test { condition: tests.match(/foo.bar/is,\"FOO\\nBAR\") == 7\
+      rule test { condition: tests.match(/foo.bar/is,\"FOO\\nBAR\") == 7 \
+      }",
+      NULL);
+
+  assert_false_rule(
+      "import \"tests\" \
+      rule test { \
+        condition: \
+          for any k,v in tests.empty_struct_array[0].struct_dict: ( \
+            v.unused == \"foo\" \
+          ) \
+      }",
+      NULL);
+
+  assert_false_rule(
+      "import \"tests\" \
+      rule test { \
+        condition: \
+          for any item in tests.empty_struct_array[0].struct_array: ( \
+            item.unused == \"foo\" \
+          ) \
       }",
       NULL);
 
@@ -2720,11 +2847,20 @@ void test_include_files()
 {
   YR_DEBUG_FPRINTF(1, stderr, "+ %s() {\n", __FUNCTION__);
 
-  assert_true_rule(
-      "include \"tests/data/baz.yar\" rule t { condition: baz }", NULL);
+  char rule[4096];
+  snprintf(
+      rule,
+      sizeof(rule),
+      "include \"%s/tests/data/baz.yar\" rule t { condition: baz }",
+      top_srcdir);
+  assert_true_rule(rule, NULL);
 
-  assert_true_rule(
-      "include \"tests/data/foo.yar\" rule t { condition: foo }", NULL);
+  snprintf(
+      rule,
+      sizeof(rule),
+      "include \"%s/tests/data/foo.yar\" rule t { condition: foo }",
+      top_srcdir);
+  assert_true_rule(rule, NULL);
 
   YR_DEBUG_FPRINTF(1, stderr, "} // %s()\n", __FUNCTION__);
 }
@@ -2744,39 +2880,46 @@ void test_tags()
   YR_DEBUG_FPRINTF(1, stderr, "} // %s()\n", __FUNCTION__);
 }
 
-#if !defined(_WIN32) && !defined(__CYGWIN__)
+#if !defined(_WIN32) || defined(__CYGWIN__)
+
+#define spawn(cmd, rest...)                                     \
+  do                                                            \
+  {                                                             \
+    if ((pid = fork()) == 0)                                    \
+    {                                                           \
+      execl(cmd, cmd, rest, NULL);                              \
+      fprintf(stderr, "execl: %s: %s\n", cmd, strerror(errno)); \
+      exit(1);                                                  \
+    }                                                           \
+    if (pid <= 0)                                               \
+    {                                                           \
+      perror("fork");                                           \
+      abort();                                                  \
+    }                                                           \
+    sleep(1);                                                   \
+    if (waitpid(pid, NULL, WNOHANG) != 0)                       \
+    {                                                           \
+      fprintf(stderr, "%s did not live long enough\n", cmd);    \
+      abort();                                                  \
+    }                                                           \
+  } while (0)
+
 void test_process_scan()
 {
   YR_DEBUG_FPRINTF(1, stderr, "+ %s() {\n", __FUNCTION__);
 
-  int pid = fork();
+  int pid;
   int status = 0;
   YR_RULES* rules;
-  int rc1, rc2;
+  int rc;
+  int fd;
+  char* tf;
+  char buf[16384];
 
   struct COUNTERS counters;
 
-  counters.rules_not_matching = 0;
-  counters.rules_matching = 0;
-
-  if (pid == 0)
-  {
-    // The string should appear somewhere in the shell's process space.
-    if (execl(
-            "/bin/sh",
-            "/bin/sh",
-            "-c",
-            "VAR='Hello, world!'; sleep 5; true",
-            NULL) == -1)
-      exit(1);
-  }
-  assert(pid > 0);
-
-  // Give child process time to initialize.
-  sleep(1);
-
-  status = compile_rule(
-      "\
+  if (compile_rule(
+          "\
     rule should_match {\
       strings:\
         $a = { 48 65 6c 6c 6f 2c 20 77 6f 72 6c 64 21 }\
@@ -2787,58 +2930,82 @@ void test_process_scan()
       condition: \
         filesize < 100000000 \
     }",
-      &rules);
-
-  if (status != ERROR_SUCCESS)
+          &rules) != ERROR_SUCCESS)
   {
     perror("compile_rule");
     exit(EXIT_FAILURE);
   }
 
-  rc1 = yr_rules_scan_proc(rules, pid, 0, count, &counters, 0);
-  yr_rules_destroy(rules);
-  kill(pid, SIGALRM);
+  spawn("/bin/sh", "-c", "VAR='Hello, world!'; sleep 600; true");
 
-  rc2 = waitpid(pid, &status, 0);
-  if (rc2 == -1)
-  {
-    perror("waitpid");
-    exit(EXIT_FAILURE);
-  }
-  if (status != SIGALRM)
-  {
-    fprintf(
-        stderr, "Scanned process exited with unexpected status %d\n", status);
-    exit(EXIT_FAILURE);
-  }
+  counters.rules_matching = 0;
+  counters.rules_not_matching = 0;
+  rc = yr_rules_scan_proc(rules, pid, 0, count, &counters, 0);
 
-  switch (rc1)
+  switch (rc)
   {
-  case ERROR_SUCCESS:
-    if (counters.rules_matching != 1)
-    {
-      fprintf(
-          stderr,
-          "Expecting one rule matching in test_process_scan, found %d\n",
-          counters.rules_matching);
-      exit(EXIT_FAILURE);
-    }
-    if (counters.rules_not_matching != 1)
-    {
-      fprintf(
-          stderr,
-          "Expecting one rule not matching in test_process_scan, found %d\n",
-          counters.rules_not_matching);
-      exit(EXIT_FAILURE);
-    }
-    break;
   case ERROR_COULD_NOT_ATTACH_TO_PROCESS:
     fprintf(stderr, "Could not attach to process, ignoring this error\n");
-    break;
-  default:
-    fprintf(stderr, "yr_rules_scan_proc: Got unexpected error %d\n", rc1);
-    exit(EXIT_FAILURE);
+    return;
   }
+
+  kill(pid, SIGALRM);
+
+  assert(rc == ERROR_SUCCESS);
+
+  assert(waitpid(pid, &status, 0) >= 0);
+  assert(status == SIGALRM);
+
+  assert(counters.rules_matching == 1);
+  assert(counters.rules_not_matching == 1);
+
+  tf = strdup("./map-XXXXXX");
+  fd = mkstemp(tf);
+  assert(fd >= 0);
+
+  // check for string in file that gets mapped by a process
+  bzero(buf, sizeof(buf));
+  sprintf(buf, "Hello, world!");
+  write(fd, buf, sizeof(buf));
+  lseek(fd, 0, SEEK_SET);
+
+  spawn("tests/mapper", "open", tf);
+
+  counters.rules_matching = 0;
+  rc = yr_rules_scan_proc(rules, pid, 0, count, &counters, 0);
+  kill(pid, SIGALRM);
+
+  fprintf(stderr, "scan: %d\n", rc);
+  assert(rc == ERROR_SUCCESS);
+
+  assert(waitpid(pid, &status, 0) >= 0);
+  assert(status == SIGALRM);
+
+  assert(counters.rules_matching == 1);
+
+  // check for string in blank mapping after process has overwritten
+  // the mapping.
+  bzero(buf, sizeof(buf));
+  write(fd, buf, sizeof(buf));
+
+  spawn("./tests/mapper", "patch", tf);
+
+  counters.rules_matching = 0;
+  rc = yr_rules_scan_proc(rules, pid, 0, count, &counters, 0);
+  kill(pid, SIGALRM);
+
+  fprintf(stderr, "scan: %d\n", rc);
+  assert(rc == ERROR_SUCCESS);
+
+  assert(waitpid(pid, &status, 0) >= 0);
+  assert(status == SIGALRM);
+
+  assert(counters.rules_matching == 1);
+
+  close(fd);
+  unlink(tf);
+  free(tf);
+  yr_rules_destroy(rules);
 
   YR_DEBUG_FPRINTF(1, stderr, "} // %s()\n", __FUNCTION__);
 }
@@ -2930,9 +3097,9 @@ void test_performance_warnings()
 
   assert_no_warnings("rule test { \
         strings: $a = { 01 02 03 } \
-        condition: $a }")
+        condition: $a }");
 
-      assert_no_warnings("rule test { \
+  assert_no_warnings("rule test { \
         strings: $a = { 20 01 02 } \
         condition: $a }");
 
@@ -2976,27 +3143,29 @@ void test_performance_warnings()
   YR_DEBUG_FPRINTF(1, stderr, "} // %s()\n", __FUNCTION__);
 }
 
-int main(int argc, char** argv)
+static void test_meta()
 {
-  int result = 0;
+  YR_DEBUG_FPRINTF(1, stderr, "+ %s() {\n", __FUNCTION__);
 
-  YR_DEBUG_INITIALIZE();
-  YR_DEBUG_FPRINTF(1, stderr, "+ %s() { // in %s\n", __FUNCTION__, argv[0]);
+  // Make sure that multiple metadata with the same identifier are allowed.
+  // This was not intentionally designed like that, but users are alreay
+  // relying on this.
+  assert_true_rule(
+      "rule test { \
+         meta: \
+           foo = \"foo\" \
+           foo = 1 \
+           foo = false \
+         condition:\
+           true \
+      }",
+      NULL);
 
-  chdir_if_env_top_srcdir();
+  YR_DEBUG_FPRINTF(1, stderr, "} // %s()\n", __FUNCTION__);
+}
 
-  yr_initialize();
-
-  assert_true_expr(strlen(TEXT_1024_BYTES) == 1024);
-
-  // e.g. ./test-rules-pass-1 or test-rules-pass-1.exe
-  char* test_rules_pass = strstr(argv[0], "test-rules-pass-");
-  assert(test_rules_pass != NULL);
-
-  int pass;
-
-  assert(1 == sscanf(test_rules_pass, "test-rules-pass-%d", &pass));
-
+static void test_pass(int pass)
+{
   switch (pass)
   {
   case 1:
@@ -3011,8 +3180,8 @@ int main(int argc, char** argv)
     break;
   case 3:
     // Come here to test with test libyara iterator which is:
-    // Like default libyara iterator, plus records block stats, plus splits into
-    // multiple blocks:
+    // Like default libyara iterator, plus records block stats, plus splits
+    // into multiple blocks:
     matches_blob_uses_default_iterator = 0;
     // "Actually, a single block will contain the whole file's content in most
     // cases, but you can't rely on that while writing your code. For very big
@@ -3074,6 +3243,7 @@ int main(int argc, char** argv)
   test_entrypoint();
   test_global_rules();
   test_tags();
+  test_meta();
 
 #if !defined(USE_NO_PROC) && !defined(_WIN32) && !defined(__CYGWIN__)
   test_process_scan();
@@ -3098,10 +3268,28 @@ int main(int argc, char** argv)
         yr_test_count_get_block);
   }
 
+  YR_DEBUG_FPRINTF(1, stderr, "} // %s()\n", __FUNCTION__);
+}
+
+int main(int argc, char** argv)
+{
+  YR_DEBUG_INITIALIZE();
+  YR_DEBUG_FPRINTF(1, stderr, "+ %s() { \n", __FUNCTION__);
+
+  init_top_srcdir();
+  yr_initialize();
+
+  assert_true_expr(strlen(TEXT_1024_BYTES) == 1024);
+
+  for (int i = 1; i <= 3; i++)
+  {
+    printf("--- PASS %d ---\n", i);
+    test_pass(i);
+  }
+
   yr_finalize();
 
-  YR_DEBUG_FPRINTF(
-      1, stderr, "} = %d // %s() in %s\n", result, __FUNCTION__, argv[0]);
+  YR_DEBUG_FPRINTF(1, stderr, "} // %s()\n", __FUNCTION__);
 
-  return result;
+  return 0;
 }

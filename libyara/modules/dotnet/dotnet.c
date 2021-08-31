@@ -865,8 +865,11 @@ void dotnet_parse_tilde_2(
           blob_length = blob_result.length;
           blob_offset += blob_result.size;
 
-          // Quick sanity check to make sure the blob entry is within bounds.
-          if (blob_offset + blob_length >= pe->data + pe->data_size)
+          // Quick sanity check to make sure the blob entry is within bounds
+          // and its length is at least 3 (2 bytes for the 16 bits prolog and
+          // 1 byte for the string length)
+          if (blob_length < 3 ||
+              blob_offset + blob_length >= pe->data + pe->data_size)
           {
             row_ptr += row_size;
             continue;
@@ -1608,7 +1611,7 @@ void dotnet_parse_tilde(
       streams);
 }
 
-void dotnet_parse_com(PE* pe, size_t base_address)
+void dotnet_parse_com(PE* pe)
 {
   PIMAGE_DATA_DIRECTORY directory;
   PCLI_HEADER cli_header;
@@ -1795,7 +1798,7 @@ int module_load(
 
         module_object->data = pe;
 
-        dotnet_parse_com(pe, block->base);
+        dotnet_parse_com(pe);
 
         break;
       }

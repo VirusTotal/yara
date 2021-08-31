@@ -69,6 +69,16 @@ Reference
     .. c:type:: MACHINE_SH5
     .. c:type:: MACHINE_THUMB
     .. c:type:: MACHINE_WCEMIPSV2
+    .. c:type:: MACHINE_TARGET_HOST
+    .. c:type:: MACHINE_R3000
+    .. c:type:: MACHINE_R10000
+    .. c:type:: MACHINE_ALPHA
+    .. c:type:: MACHINE_SH3E
+    .. c:type:: MACHINE_ALPHA64
+    .. c:type:: MACHINE_AXP64
+    .. c:type:: MACHINE_TRICORE
+    .. c:type:: MACHINE_CEF
+    .. c:type:: MACHINE_CEE
 
     *Example: pe.machine == pe.MACHINE_AMD64*
 
@@ -101,6 +111,7 @@ Reference
     .. c:type:: SUBSYSTEM_EFI_APPLICATION
     .. c:type:: SUBSYSTEM_EFI_BOOT_SERVICE_DRIVER
     .. c:type:: SUBSYSTEM_EFI_RUNTIME_DRIVER
+    .. c:type:: SUBSYSTEM_EFI_ROM_IMAGE
     .. c:type:: SUBSYSTEM_XBOX
     .. c:type:: SUBSYSTEM_WINDOWS_BOOT_APPLICATION
 
@@ -108,7 +119,9 @@ Reference
 
 .. c:type:: timestamp
 
-    PE timestamp.
+    PE timestamp, as an epoch integer.
+
+    *Example: pe.timestamp >= 1424563200*
 
 .. c:type:: pointer_to_symbol_table
 
@@ -138,6 +151,13 @@ Reference
 
     Value of IMAGE_OPTIONAL_HEADER::Magic.
 
+    Integer with one of the following values:
+
+        .. c:type:: IMAGE_NT_OPTIONAL_HDR32_MAGIC
+        .. c:type:: IMAGE_NT_OPTIONAL_HDR64_MAGIC
+        .. c:type:: IMAGE_ROM_OPTIONAL_HDR_MAGIC
+
+
 .. c:type:: size_of_code
 
     .. versionadded:: 3.8.0
@@ -165,7 +185,7 @@ Reference
 
     Entry point raw value from the optional header of the PE. This value is not
     converted to a file offset or an RVA.
-    
+
     .. versionadded:: 4.1.0
 
 .. c:type:: base_of_code
@@ -349,6 +369,10 @@ Reference
     characteristics can be inspected by performing a bitwise AND
     operation with the following constants:
 
+    .. c:type:: HIGH_ENTROPY_VA
+
+        ASLR with 64 bit address space.
+
     .. c:type:: DYNAMIC_BASE
 
         File can be relocated - also marks the file as ASLR compatible
@@ -365,9 +389,17 @@ Reference
         set to use SafeSEH
 
     .. c:type:: NO_BIND
+    .. c:type:: APPCONTAINER
+
+        Image should execute in an AppContainer
+
     .. c:type:: WDM_DRIVER
 
         Marks the file as a Windows Driver Model (WDM) device driver.
+
+    .. c:type:: GUARD_CF
+
+        Image supports Control Flow Guard.
 
     .. c:type:: TERMINAL_SERVER_AWARE
 
@@ -461,6 +493,28 @@ Reference
 
         Data directory for debug information.
 
+        IMAGE_DEBUG_DIRECTORY::Type values:
+
+            .. c:type:: IMAGE_DEBUG_TYPE_UNKNOWN
+            .. c:type:: IMAGE_DEBUG_TYPE_COFF
+            .. c:type:: IMAGE_DEBUG_TYPE_CODEVIEW
+            .. c:type:: IMAGE_DEBUG_TYPE_FPO
+            .. c:type:: IMAGE_DEBUG_TYPE_MISC
+            .. c:type:: IMAGE_DEBUG_TYPE_EXCEPTION
+            .. c:type:: IMAGE_DEBUG_TYPE_FIXUP
+            .. c:type:: IMAGE_DEBUG_TYPE_OMAP_TO_SRC
+            .. c:type:: IMAGE_DEBUG_TYPE_OMAP_FROM_SRC
+            .. c:type:: IMAGE_DEBUG_TYPE_BORLAND
+            .. c:type:: IMAGE_DEBUG_TYPE_RESERVED10
+            .. c:type:: IMAGE_DEBUG_TYPE_CLSID
+            .. c:type:: IMAGE_DEBUG_TYPE_VC_FEATURE
+            .. c:type:: IMAGE_DEBUG_TYPE_POGO
+            .. c:type:: IMAGE_DEBUG_TYPE_ILTCG
+            .. c:type:: IMAGE_DEBUG_TYPE_MPX
+            .. c:type:: IMAGE_DEBUG_TYPE_REPRO
+
+    .. c:type:: IMAGE_DIRECTORY_ENTRY_ARCHITECTURE
+    .. c:type:: IMAGE_DIRECTORY_ENTRY_COPYRIGHT
     .. c:type:: IMAGE_DIRECTORY_ENTRY_TLS
 
         Data directory for image thread local storage.
@@ -481,7 +535,7 @@ Reference
 
         Data directory for Delayed Import Table. Structure of the delayed import table
         is linker-dependent. Microsoft version of delayed imports is described
-        in the souces "delayimp.h" and "delayimp.cpp", which can be found
+        in the sources "delayimp.h" and "delayimp.cpp", which can be found
         in MS Visual Studio 2008 CRT sources.
 
     .. c:type:: IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR
@@ -555,12 +609,37 @@ Reference
     Individual section characteristics can be inspected using a bitwise AND
     operation with the following constants:
 
+    .. c:type:: SECTION_NO_PAD
     .. c:type:: SECTION_CNT_CODE
     .. c:type:: SECTION_CNT_INITIALIZED_DATA
     .. c:type:: SECTION_CNT_UNINITIALIZED_DATA
+    .. c:type:: SECTION_LNK_OTHER
+    .. c:type:: SECTION_LNK_INFO
+    .. c:type:: SECTION_LNK_REMOVE
+    .. c:type:: SECTION_LNK_COMDAT
+    .. c:type:: SECTION_NO_DEFER_SPEC_EXC
     .. c:type:: SECTION_GPREL
+    .. c:type:: SECTION_MEM_FARDATA
+    .. c:type:: SECTION_MEM_PURGEABLE
     .. c:type:: SECTION_MEM_16BIT
     .. c:type:: SECTION_LNK_NRELOC_OVFL
+    .. c:type:: SECTION_MEM_LOCKED
+    .. c:type:: SECTION_MEM_PRELOAD
+    .. c:type:: SECTION_ALIGN_1BYTES
+    .. c:type:: SECTION_ALIGN_2BYTES
+    .. c:type:: SECTION_ALIGN_4BYTES
+    .. c:type:: SECTION_ALIGN_8BYTES
+    .. c:type:: SECTION_ALIGN_16BYTES
+    .. c:type:: SECTION_ALIGN_32BYTES
+    .. c:type:: SECTION_ALIGN_64BYTES
+    .. c:type:: SECTION_ALIGN_128BYTES
+    .. c:type:: SECTION_ALIGN_256BYTES
+    .. c:type:: SECTION_ALIGN_512BYTES
+    .. c:type:: SECTION_ALIGN_1024BYTES
+    .. c:type:: SECTION_ALIGN_2048BYTES
+    .. c:type:: SECTION_ALIGN_4096BYTES
+    .. c:type:: SECTION_ALIGN_8192BYTES
+    .. c:type:: SECTION_ALIGN_MASK
     .. c:type:: SECTION_MEM_DISCARDABLE
     .. c:type:: SECTION_MEM_NOT_CACHED
     .. c:type:: SECTION_MEM_NOT_PAGED
@@ -568,6 +647,7 @@ Reference
     .. c:type:: SECTION_MEM_EXECUTE
     .. c:type:: SECTION_MEM_READ
     .. c:type:: SECTION_MEM_WRITE
+    .. c:type:: SECTION_SCALE_INDEX
 
     *Example: pe.sections[1].characteristics & pe.SECTION_CNT_CODE*
 
@@ -579,13 +659,15 @@ Reference
 
     .. c:member:: offset
 
-        Overlay section offset.
+        Overlay section offset. This is 0 for PE files that don't have overlaid
+        data and undefined for non-PE files.
 
     .. c:member:: size
 
-        Overlay section size.
+        Overlay section size. This is 0 for PE files that don't have overlaid
+        data and undefined for non-PE files.
 
-    *Example: uint8(0x0d) at pe.overlay.offset and pe.overlay.size > 1024*
+    *Example: uint8(pe.overlay.offset) == 0x0d and pe.overlay.size > 1024*
 
 .. c:type:: number_of_resources
 
@@ -710,6 +792,20 @@ Reference
 
     *Example:  pe.version_info["CompanyName"] contains "Microsoft"*
 
+.. c:type:: version_info_list
+
+    Array of structures containing information about the PE's version information.
+
+    .. c:member:: key
+
+        Key of version information.
+
+    .. c:member:: value
+
+        Value of version information.
+
+    *Example:  pe.version_info_list[0].value contains "Microsoft"*
+
 .. c:type:: number_of_signatures
 
     Number of authenticode signatures in the PE.
@@ -746,7 +842,26 @@ Reference
 
     .. c:member:: algorithm
 
-        Algorithm used for this signature. Usually "sha1WithRSAEncryption".
+        String representation of the algorithm used for this
+    signature. Usually "sha1WithRSAEncryption". It depends on the
+    X.509 and PKCS#7 implementations and possibly their versions,
+    consider using algorithm_oid instead.
+
+    .. c:member:: algorithm_oid
+
+        Object ID of the algorithm used for this signature, expressed
+        in numeric ASN.1 dot notation. The name contained in
+        algorithm is derived from this value. The object id is
+        expected to be stable across X.509 and PKCS#7 implementations
+        and their versions.
+
+    For example, when using the current OpenSSL-based implementation::
+
+        algorithm_oid == "1.2.840.113549.1.1.11"
+
+    is functionally equivalent to::
+
+            algorithm == "sha1WithRSAEncryption"
 
     .. c:member:: serial
 
@@ -946,6 +1061,14 @@ Reference
 
     Number of imported functions in the PE.
 
+.. c:type:: number_of_delayed_imports
+
+    Number of delayed imported DLLs in the PE. (Number of IMAGE_DELAYLOAD_DESCRIPTOR parsed from file)
+
+.. c:type:: number_of_delay_imported_functions
+
+    Number of delayed imported functions in the PE.
+
 .. c:function:: imports(dll_name, function_name)
 
     Function returning true if the PE imports *function_name* from *dll_name*,
@@ -994,6 +1117,105 @@ Reference
 
     *Example:  pe.imports(/kernel32\.dll/i, /(Read|Write)ProcessMemory/) == 2*
 
+
+.. c:function:: imports(import_flag, dll_name, function_name)
+
+    Function returning true if the PE imports *function_name* from *dll_name*,
+    or false otherwise. *dll_name* is case insensitive.
+
+    *import_flag* is flag which specify type of import which should YARA search for.
+    This value can be composed by bitwise OR these values:
+
+        .. c:member:: pe.IMPORT_STANDARD
+
+            Search in standard imports
+
+        .. c:member:: pe.IMPORT_DELAYED
+
+            Search in delayed imports
+
+        .. c:member:: pe.IMPORT_ANY
+
+            Search in all imports
+
+    *Example:  pe.imports(pe.IMPORT_DELAYED | pe.IMPORT_STANDARD, "kernel32.dll", "WriteProcessMemory")*
+
+.. c:function:: imports(import_flag, import_flag, dll_name)
+
+    Function returning the number of functions from the *dll_name*, in the PE
+    imports. *dll_name* is case insensitive.
+
+    *Examples:  pe.imports(pe.IMPORT_DELAYED, "kernel32.dll"), pe.imports("kernel32.dll") == 10*
+
+.. c:function:: imports(import_flag, dll_name, ordinal)
+
+    Function returning true if the PE imports *ordinal* from *dll_name*,
+    or false otherwise. *dll_name* is case insensitive.
+
+    *Example:  pe.imports(pe.IMPORT_DELAYED, "WS2_32.DLL", 3)*
+
+.. c:function:: imports(import_flag, dll_regexp, function_regexp)
+
+    Function returning the number of functions from the PE imports where a
+    function name matches *function_regexp* and a DLL name matches
+    *dll_regexp*. Both *dll_regexp* and *function_regexp* are case sensitive
+    unless you use the "/i" modifier in the regexp, as shown in the example
+    below.
+
+    *Example:  pe.imports(pe.IMPORT_DELAYED, /kernel32\.dll/i, /(Read|Write)ProcessMemory/) == 2*
+
+.. c:type:: import_details
+
+    Array of structures containing information about the PE's imports libraries.
+
+    .. c:member:: library_name
+
+        Library name.
+
+    .. c:member:: number_of_functions
+
+        Number of imported function.
+
+    .. c:member:: functions
+
+        Array of structures containing information about the PE's imports functions.
+
+        .. c:member:: name
+
+            Name of imported function
+
+        .. c:member:: ordinal
+
+            Ordinal of imported function. If ordinal does not exist this value is YR_UNDEFINED
+
+    *Example: pe.import_details[1].library_name == "library_name"
+
+.. c:type:: delayed_import_details
+
+    Array of structures containing information about the PE's delayed imports libraries.
+
+    .. c:member:: library_name
+
+        Library name.
+
+    .. c:member:: number_of_functions
+
+        Number of imported function.
+
+    .. c:member:: functions
+
+        Array of structures containing information about the PE's imports functions.
+
+        .. c:member:: name
+
+            Name of imported function
+
+        .. c:member:: ordinal
+
+            Ordinal of imported function. If ordinal does not exist this value is YR_UNDEFINED
+
+    *Example: pe.delayed_import_details[1].name == "library_name"
+
 .. c:function:: locale(locale_identifier)
 
     .. versionadded:: 3.2.0
@@ -1021,9 +1243,11 @@ Reference
     .. versionadded:: 3.2.0
 
     Function returning the import hash or imphash for the PE. The imphash is
-    a MD5 hash of the PE's import table after some normalization. The imphash
+    an MD5 hash of the PE's import table after some normalization. The imphash
     for a PE can be also computed with `pefile <http://code.google.com/p/pefile/>`_
-    and you can find more information in `Mandiant's blog <https://www.mandiant.com/blog/tracking-malware-import-hashing/>`_.
+    and you can find more information in `Mandiant's blog
+    <https://www.mandiant.com/blog/tracking-malware-import-hashing/>`_. The returned
+    hash string is always in lowercase.
 
     *Example: pe.imphash() == "b8bb385806b89680e13fc0cf24f4431e"*
 
@@ -1050,7 +1274,7 @@ Reference
     Return true if the file is a PE.
 
     *Example: pe.is_pe()*
-       
+
 .. c:function:: is_dll()
 
     .. versionadded:: 3.5.0

@@ -179,78 +179,92 @@ static const uint8_t* jmp_if(int condition, const uint8_t* ip)
 
 static int iter_array_next(YR_ITERATOR* self, YR_VALUE_STACK* stack)
 {
-  YR_OBJECT* obj;
-
   // Check that there's two available slots in the stack, one for the next
   // item returned by the iterator and another one for the boolean that
   // indicates if there are more items.
   if (stack->sp + 1 >= stack->capacity)
     return ERROR_EXEC_STACK_OVERFLOW;
 
-  if (self->array_it.index < yr_object_array_length(self->array_it.array))
-  {
-    // Push the false value that indicates that the iterator is not exhausted.
-    stack->items[stack->sp++].i = 0;
+  // If the array that must be iterated is undefined stop the iteration right
+  // aways, as if the array would be empty.
+  if (IS_UNDEFINED(self->array_it.array))
+    goto _stop_iter;
 
-    obj = yr_object_array_get_item(
-        self->array_it.array, 0, self->array_it.index);
+  // If the current index is equal or larger than array's length the iterator
+  // has reached the end of the array.
+  if (self->array_it.index >= yr_object_array_length(self->array_it.array))
+    goto _stop_iter;
 
-    if (obj != NULL)
-      stack->items[stack->sp++].o = obj;
-    else
-      stack->items[stack->sp++].i = YR_UNDEFINED;
+  // Push the false value that indicates that the iterator is not exhausted.
+  stack->items[stack->sp++].i = 0;
 
-    self->array_it.index++;
-  }
+  YR_OBJECT* obj = yr_object_array_get_item(
+      self->array_it.array, 0, self->array_it.index);
+
+  if (obj != NULL)
+    stack->items[stack->sp++].o = obj;
   else
-  {
-    // Push true for indicating the iterator has been exhausted.
-    stack->items[stack->sp++].i = 1;
-    // Push YR_UNDEFINED as a placeholder for the next item.
     stack->items[stack->sp++].i = YR_UNDEFINED;
-  }
+
+  self->array_it.index++;
+
+  return ERROR_SUCCESS;
+
+_stop_iter:
+
+  // Push true for indicating the iterator has been exhausted.
+  stack->items[stack->sp++].i = 1;
+  // Push YR_UNDEFINED as a placeholder for the next item.
+  stack->items[stack->sp++].i = YR_UNDEFINED;
 
   return ERROR_SUCCESS;
 }
 
 static int iter_dict_next(YR_ITERATOR* self, YR_VALUE_STACK* stack)
 {
-  YR_DICTIONARY_ITEMS* items = object_as_dictionary(self->dict_it.dict)->items;
-
   // Check that there's three available slots in the stack, two for the next
   // item returned by the iterator and its key, and another one for the boolean
   // that indicates if there are more items.
   if (stack->sp + 2 >= stack->capacity)
     return ERROR_EXEC_STACK_OVERFLOW;
 
+  // If the dictionary that must be iterated is undefined, stop the iteration
+  // right away, as if the dictionary would be empty.
+  if (IS_UNDEFINED(self->dict_it.dict))
+    goto _stop_iter;
+
+  YR_DICTIONARY_ITEMS* items = object_as_dictionary(self->dict_it.dict)->items;
+
   // If the dictionary has no items or the iterator reached the last item, abort
   // the iteration, if not push the next key and value.
   if (items == NULL || self->dict_it.index == items->used)
+    goto _stop_iter;
+
+  // Push the false value that indicates that the iterator is not exhausted.
+  stack->items[stack->sp++].i = 0;
+
+  if (items->objects[self->dict_it.index].obj != NULL)
   {
-    // Push true for indicating the iterator has been exhausted.
-    stack->items[stack->sp++].i = 1;
-    // Push YR_UNDEFINED as a placeholder for the next key and value.
-    stack->items[stack->sp++].i = YR_UNDEFINED;
-    stack->items[stack->sp++].i = YR_UNDEFINED;
+    stack->items[stack->sp++].o = items->objects[self->dict_it.index].obj;
+    stack->items[stack->sp++].p = items->objects[self->dict_it.index].key;
   }
   else
   {
-    // Push the false value that indicates that the iterator is not exhausted.
-    stack->items[stack->sp++].i = 0;
-
-    if (items->objects[self->dict_it.index].obj != NULL)
-    {
-      stack->items[stack->sp++].o = items->objects[self->dict_it.index].obj;
-      stack->items[stack->sp++].p = items->objects[self->dict_it.index].key;
-    }
-    else
-    {
-      stack->items[stack->sp++].i = YR_UNDEFINED;
-      stack->items[stack->sp++].i = YR_UNDEFINED;
-    }
-
-    self->dict_it.index++;
+    stack->items[stack->sp++].i = YR_UNDEFINED;
+    stack->items[stack->sp++].i = YR_UNDEFINED;
   }
+
+  self->dict_it.index++;
+
+  return ERROR_SUCCESS;
+
+_stop_iter:
+
+  // Push true for indicating the iterator has been exhausted.
+  stack->items[stack->sp++].i = 1;
+  // Push YR_UNDEFINED as a placeholder for the next key and value.
+  stack->items[stack->sp++].i = YR_UNDEFINED;
+  stack->items[stack->sp++].i = YR_UNDEFINED;
 
   return ERROR_SUCCESS;
 }
@@ -475,7 +489,7 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
       pop(r1);
 
       r3.p = yr_notebook_alloc(
-          it_notebook, sizeof(YR_ITERATOR) + sizeof(uint64_t) * r1.i);
+          it_notebook, sizeof(YR_ITERATOR) + sizeof(uint64_t) * (size_t) r1.i);
 
       if (r3.p == NULL)
       {
@@ -656,6 +670,7 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
       break;
 
     case OP_JNUNDEF:
+      // Jump if the top the stack is not undefined without modifying the stack.
       YR_DEBUG_FPRINTF(2, stderr, "- case OP_JNUNDEF: // %s()\n", __FUNCTION__);
       pop(r1);
       push(r1);
@@ -663,6 +678,8 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
       break;
 
     case OP_JUNDEF_P:
+      // Removes a value from the top of the stack and jump if the value is not
+      // undefined.
       YR_DEBUG_FPRINTF(
           2, stderr, "- case OP_JUNDEF_P: // %s()\n", __FUNCTION__);
       pop(r1);
@@ -670,6 +687,8 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
       break;
 
     case OP_JL_P:
+      // Pops two values A and B from the stack and jump if A < B. B is popped
+      // first, and then A.
       YR_DEBUG_FPRINTF(2, stderr, "- case OP_JL_P: // %s()\n", __FUNCTION__);
       pop(r2);
       pop(r1);
@@ -677,6 +696,8 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
       break;
 
     case OP_JLE_P:
+      // Pops two values A and B from the stack and jump if A <= B. B is popped
+      // first, and then A.
       YR_DEBUG_FPRINTF(2, stderr, "- case OP_JLE_P: // %s()\n", __FUNCTION__);
       pop(r2);
       pop(r1);
@@ -684,6 +705,8 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
       break;
 
     case OP_JTRUE:
+      // Jump if the top of the stack is true without modifying the stack. If
+      // the top of the stack is undefined the jump is not taken.
       YR_DEBUG_FPRINTF(2, stderr, "- case OP_JTRUE: // %s()\n", __FUNCTION__);
       pop(r1);
       push(r1);
@@ -691,26 +714,34 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
       break;
 
     case OP_JTRUE_P:
+      // Removes a value from the stack and jump if it is true. If the value
+      // is undefined the jump is not taken.
       YR_DEBUG_FPRINTF(2, stderr, "- case OP_JTRUE_P: // %s()\n", __FUNCTION__);
       pop(r1);
       ip = jmp_if(!is_undef(r1) && r1.i, ip);
       break;
 
     case OP_JFALSE:
+      // Jump if the top of the stack is false without modifying the stack. If
+      // the top of the stack is undefined the jump is not taken.
       YR_DEBUG_FPRINTF(2, stderr, "- case OP_JFALSE: // %s()\n", __FUNCTION__);
       pop(r1);
       push(r1);
-      ip = jmp_if(is_undef(r1) || !r1.i, ip);
+      ip = jmp_if(!is_undef(r1) && !r1.i, ip);
       break;
 
     case OP_JFALSE_P:
+      // Removes a value from the stack and jump if it is false. If the value
+      // is undefined the jump is not taken.
       YR_DEBUG_FPRINTF(
           2, stderr, "- case OP_JFALSE_P: // %s()\n", __FUNCTION__);
       pop(r1);
-      ip = jmp_if(is_undef(r1) || !r1.i, ip);
+      ip = jmp_if(!is_undef(r1) && !r1.i, ip);
       break;
 
     case OP_JZ:
+      // Jump if the value at the top of the stack is 0 without modifying the
+      // stack.
       YR_DEBUG_FPRINTF(2, stderr, "- case OP_JZ: // %s()\n", __FUNCTION__);
       pop(r1);
       push(r1);
@@ -718,6 +749,7 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
       break;
 
     case OP_JZ_P:
+      // Removes a value from the stack and jump if the value is 0.
       YR_DEBUG_FPRINTF(2, stderr, "- case OP_JZ_P: // %s()\n", __FUNCTION__);
       pop(r1);
       ip = jmp_if(r1.i == 0, ip);
@@ -728,11 +760,13 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
       pop(r2);
       pop(r1);
 
-      if (is_undef(r1) || is_undef(r2))
+      if (is_undef(r1))
         r1.i = 0;
-      else
-        r1.i = r1.i && r2.i;
 
+      if (is_undef(r2))
+        r2.i = 0;
+
+      r1.i = r1.i && r2.i;
       push(r1);
       break;
 
@@ -742,18 +776,13 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
       pop(r1);
 
       if (is_undef(r1))
-      {
-        push(r2);
-      }
-      else if (is_undef(r2))
-      {
-        push(r1);
-      }
-      else
-      {
-        r1.i = r1.i || r2.i;
-        push(r1);
-      }
+        r1.i = 0;
+
+      if (is_undef(r2))
+        r2.i = 0;
+
+      r1.i = r1.i || r2.i;
+      push(r1);
       break;
 
     case OP_NOT:
@@ -1330,6 +1359,48 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
       push(r1);
       break;
 
+    case OP_OF_FOUND_IN:
+      YR_DEBUG_FPRINTF(2, stderr, "- case OP_OF_RANGE: // %s()\n", __FUNCTION__);
+
+      count = 0;
+      pop(r2);
+      pop(r1);
+      ensure_defined(r1);
+      ensure_defined(r2);
+
+      pop(r3);
+
+      while (!is_undef(r3))
+      {
+#if YR_PARANOID_EXEC
+        ensure_within_rules_arena(r3.p);
+#endif
+        match = context->matches[r3.s->idx].head;
+
+        while (match != NULL)
+        {
+          if (match->base + match->offset >= r1.i &&
+              match->base + match->offset <= r2.i)
+          {
+            count++;
+            break;
+          }
+
+          if (match->base + match->offset > r1.i)
+            break;
+
+          match = match->next;
+        }
+
+        pop(r3);
+      }
+
+      pop(r1)
+      r1.i = count >= r1.i ? 1 : 0;
+
+      push(r1);
+      break;
+
     case OP_FILESIZE:
       r1.i = context->file_size;
       YR_DEBUG_FPRINTF(
@@ -1456,7 +1527,10 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
       pop(r2);
       pop(r1);
 
-      if (is_undef(r1) || is_undef(r2) || r1.ss->length == 0)
+      ensure_defined(r2);
+      ensure_defined(r1);
+
+      if (r1.ss->length == 0)
       {
         r1.i = false;
         push(r1);
@@ -1517,10 +1591,9 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
       YR_DEBUG_FPRINTF(2, stderr, "- case OP_INT_EQ: // %s()\n", __FUNCTION__);
       pop(r2);
       pop(r1);
-      if (is_undef(r1) || is_undef(r2))
-        r1.i = false;
-      else
-        r1.i = r1.i == r2.i;
+      ensure_defined(r2);
+      ensure_defined(r1);
+      r1.i = r1.i == r2.i;
       push(r1);
       break;
 
@@ -1528,10 +1601,9 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
       YR_DEBUG_FPRINTF(2, stderr, "- case OP_INT_NEQ: // %s()\n", __FUNCTION__);
       pop(r2);
       pop(r1);
-      if (is_undef(r1) || is_undef(r2))
-        r1.i = false;
-      else
-        r1.i = r1.i != r2.i;
+      ensure_defined(r2);
+      ensure_defined(r1);
+      r1.i = r1.i != r2.i;
       push(r1);
       break;
 
@@ -1539,10 +1611,9 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
       YR_DEBUG_FPRINTF(2, stderr, "- case OP_INT_LT: // %s()\n", __FUNCTION__);
       pop(r2);
       pop(r1);
-      if (is_undef(r1) || is_undef(r2))
-        r1.i = false;
-      else
-        r1.i = r1.i < r2.i;
+      ensure_defined(r2);
+      ensure_defined(r1);
+      r1.i = r1.i < r2.i;
       push(r1);
       break;
 
@@ -1550,10 +1621,9 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
       YR_DEBUG_FPRINTF(2, stderr, "- case OP_INT_GT: // %s()\n", __FUNCTION__);
       pop(r2);
       pop(r1);
-      if (is_undef(r1) || is_undef(r2))
-        r1.i = false;
-      else
-        r1.i = r1.i > r2.i;
+      ensure_defined(r2);
+      ensure_defined(r1);
+      r1.i = r1.i > r2.i;
       push(r1);
       break;
 
@@ -1561,10 +1631,9 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
       YR_DEBUG_FPRINTF(2, stderr, "- case OP_INT_LE: // %s()\n", __FUNCTION__);
       pop(r2);
       pop(r1);
-      if (is_undef(r1) || is_undef(r2))
-        r1.i = false;
-      else
-        r1.i = r1.i <= r2.i;
+      ensure_defined(r2);
+      ensure_defined(r1);
+      r1.i = r1.i <= r2.i;
       push(r1);
       break;
 
@@ -1572,10 +1641,9 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
       YR_DEBUG_FPRINTF(2, stderr, "- case OP_INT_GE: // %s()\n", __FUNCTION__);
       pop(r2);
       pop(r1);
-      if (is_undef(r1) || is_undef(r2))
-        r1.i = false;
-      else
-        r1.i = r1.i >= r2.i;
+      ensure_defined(r2);
+      ensure_defined(r1);
+      r1.i = r1.i >= r2.i;
       push(r1);
       break;
 
@@ -1646,10 +1714,9 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
       YR_DEBUG_FPRINTF(2, stderr, "- case OP_DBL_GT: // %s()\n", __FUNCTION__);
       pop(r2);
       pop(r1);
-      if (is_undef(r1) || is_undef(r2))
-        r1.i = false;
-      else
-        r1.i = r1.d > r2.d;
+      ensure_defined(r2);
+      ensure_defined(r1);
+      r1.i = r1.d > r2.d;
       push(r1);
       break;
 
@@ -1657,10 +1724,9 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
       YR_DEBUG_FPRINTF(2, stderr, "- case OP_DBL_LE: // %s()\n", __FUNCTION__);
       pop(r2);
       pop(r1);
-      if (is_undef(r1) || is_undef(r2))
-        r1.i = false;
-      else
-        r1.i = r1.d <= r2.d;
+      ensure_defined(r2);
+      ensure_defined(r1);
+      r1.i = r1.d <= r2.d;
       push(r1);
       break;
 
@@ -1668,10 +1734,9 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
       YR_DEBUG_FPRINTF(2, stderr, "- case OP_DBL_GE: // %s()\n", __FUNCTION__);
       pop(r2);
       pop(r1);
-      if (is_undef(r1) || is_undef(r2))
-        r1.i = false;
-      else
-        r1.i = r1.d >= r2.d;
+      ensure_defined(r2);
+      ensure_defined(r1);
+      r1.i = r1.d >= r2.d;
       push(r1);
       break;
 
@@ -1679,10 +1744,9 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
       YR_DEBUG_FPRINTF(2, stderr, "- case OP_DBL_EQ: // %s()\n", __FUNCTION__);
       pop(r2);
       pop(r1);
-      if (is_undef(r1) || is_undef(r2))
-        r1.i = false;
-      else
-        r1.i = fabs(r1.d - r2.d) < DBL_EPSILON;
+      ensure_defined(r2);
+      ensure_defined(r1);
+      r1.i = fabs(r1.d - r2.d) < DBL_EPSILON;
       push(r1);
       break;
 
@@ -1690,10 +1754,9 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
       YR_DEBUG_FPRINTF(2, stderr, "- case OP_DBL_NEQ: // %s()\n", __FUNCTION__);
       pop(r2);
       pop(r1);
-      if (is_undef(r1) || is_undef(r2))
-        r1.i = false;
-      else
-        r1.i = fabs(r1.d - r2.d) >= DBL_EPSILON;
+      ensure_defined(r2);
+      ensure_defined(r1);
+      r1.i = fabs(r1.d - r2.d) >= DBL_EPSILON;
       push(r1);
       break;
 
@@ -1752,49 +1815,44 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
     case OP_STR_LE:
     case OP_STR_GT:
     case OP_STR_GE:
-
       pop(r2);
       pop(r1);
 
-      if (is_undef(r1) || is_undef(r2))
+      ensure_defined(r2);
+      ensure_defined(r1);
+
+      switch (opcode)
       {
-        r1.i = false;
-      }
-      else
-      {
-        switch (opcode)
-        {
-        case OP_STR_EQ:
-          YR_DEBUG_FPRINTF(
-              2, stderr, "- case OP_STR_EQ: // %s()\n", __FUNCTION__);
-          r1.i = (ss_compare(r1.ss, r2.ss) == 0);
-          break;
-        case OP_STR_NEQ:
-          YR_DEBUG_FPRINTF(
-              2, stderr, "- case OP_STR_NEQ: // %s()\n", __FUNCTION__);
-          r1.i = (ss_compare(r1.ss, r2.ss) != 0);
-          break;
-        case OP_STR_LT:
-          YR_DEBUG_FPRINTF(
-              2, stderr, "- case OP_STR_LT: // %s()\n", __FUNCTION__);
-          r1.i = (ss_compare(r1.ss, r2.ss) < 0);
-          break;
-        case OP_STR_LE:
-          YR_DEBUG_FPRINTF(
-              2, stderr, "- case OP_STR_LE: // %s()\n", __FUNCTION__);
-          r1.i = (ss_compare(r1.ss, r2.ss) <= 0);
-          break;
-        case OP_STR_GT:
-          YR_DEBUG_FPRINTF(
-              2, stderr, "- case OP_STR_GT: // %s()\n", __FUNCTION__);
-          r1.i = (ss_compare(r1.ss, r2.ss) > 0);
-          break;
-        case OP_STR_GE:
-          YR_DEBUG_FPRINTF(
-              2, stderr, "- case OP_STR_GE: // %s()\n", __FUNCTION__);
-          r1.i = (ss_compare(r1.ss, r2.ss) >= 0);
-          break;
-        }
+      case OP_STR_EQ:
+        YR_DEBUG_FPRINTF(
+            2, stderr, "- case OP_STR_EQ: // %s()\n", __FUNCTION__);
+        r1.i = (ss_compare(r1.ss, r2.ss) == 0);
+        break;
+      case OP_STR_NEQ:
+        YR_DEBUG_FPRINTF(
+            2, stderr, "- case OP_STR_NEQ: // %s()\n", __FUNCTION__);
+        r1.i = (ss_compare(r1.ss, r2.ss) != 0);
+        break;
+      case OP_STR_LT:
+        YR_DEBUG_FPRINTF(
+            2, stderr, "- case OP_STR_LT: // %s()\n", __FUNCTION__);
+        r1.i = (ss_compare(r1.ss, r2.ss) < 0);
+        break;
+      case OP_STR_LE:
+        YR_DEBUG_FPRINTF(
+            2, stderr, "- case OP_STR_LE: // %s()\n", __FUNCTION__);
+        r1.i = (ss_compare(r1.ss, r2.ss) <= 0);
+        break;
+      case OP_STR_GT:
+        YR_DEBUG_FPRINTF(
+            2, stderr, "- case OP_STR_GT: // %s()\n", __FUNCTION__);
+        r1.i = (ss_compare(r1.ss, r2.ss) > 0);
+        break;
+      case OP_STR_GE:
+        YR_DEBUG_FPRINTF(
+            2, stderr, "- case OP_STR_GE: // %s()\n", __FUNCTION__);
+        r1.i = (ss_compare(r1.ss, r2.ss) >= 0);
+        break;
       }
 
       push(r1);
@@ -1806,49 +1864,50 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
     case OP_ISTARTSWITH:
     case OP_ENDSWITH:
     case OP_IENDSWITH:
-
+    case OP_IEQUALS:
       pop(r2);
       pop(r1);
 
-      if (is_undef(r1) || is_undef(r2))
+      ensure_defined(r1);
+      ensure_defined(r2);
+
+      switch (opcode)
       {
-        r1.i = false;
-      }
-      else
-      {
-        switch (opcode)
-        {
-        case OP_CONTAINS:
-          YR_DEBUG_FPRINTF(
-              2, stderr, "- case OP_CONTAINS: // %s()\n", __FUNCTION__);
-          r1.i = ss_contains(r1.ss, r2.ss);
-          break;
-        case OP_ICONTAINS:
-          YR_DEBUG_FPRINTF(
-              2, stderr, "- case OP_ICONTAINS: // %s()\n", __FUNCTION__);
-          r1.i = ss_icontains(r1.ss, r2.ss);
-          break;
-        case OP_STARTSWITH:
-          YR_DEBUG_FPRINTF(
-              2, stderr, "- case OP_STARTSWITH: // %s()\n", __FUNCTION__);
-          r1.i = ss_startswith(r1.ss, r2.ss);
-          break;
-        case OP_ISTARTSWITH:
-          YR_DEBUG_FPRINTF(
-              2, stderr, "- case OP_ISTARTSWITH: // %s()\n", __FUNCTION__);
-          r1.i = ss_istartswith(r1.ss, r2.ss);
-          break;
-        case OP_ENDSWITH:
-          YR_DEBUG_FPRINTF(
-              2, stderr, "- case OP_ENDSWITH: // %s()\n", __FUNCTION__);
-          r1.i = ss_endswith(r1.ss, r2.ss);
-          break;
-        case OP_IENDSWITH:
-          YR_DEBUG_FPRINTF(
-              2, stderr, "- case OP_IENDSWITH: // %s()\n", __FUNCTION__);
-          r1.i = ss_iendswith(r1.ss, r2.ss);
-          break;
-        }
+      case OP_CONTAINS:
+        YR_DEBUG_FPRINTF(
+            2, stderr, "- case OP_CONTAINS: // %s()\n", __FUNCTION__);
+        r1.i = ss_contains(r1.ss, r2.ss);
+        break;
+      case OP_ICONTAINS:
+        YR_DEBUG_FPRINTF(
+            2, stderr, "- case OP_ICONTAINS: // %s()\n", __FUNCTION__);
+        r1.i = ss_icontains(r1.ss, r2.ss);
+        break;
+      case OP_STARTSWITH:
+        YR_DEBUG_FPRINTF(
+            2, stderr, "- case OP_STARTSWITH: // %s()\n", __FUNCTION__);
+        r1.i = ss_startswith(r1.ss, r2.ss);
+        break;
+      case OP_ISTARTSWITH:
+        YR_DEBUG_FPRINTF(
+            2, stderr, "- case OP_ISTARTSWITH: // %s()\n", __FUNCTION__);
+        r1.i = ss_istartswith(r1.ss, r2.ss);
+        break;
+      case OP_ENDSWITH:
+        YR_DEBUG_FPRINTF(
+            2, stderr, "- case OP_ENDSWITH: // %s()\n", __FUNCTION__);
+        r1.i = ss_endswith(r1.ss, r2.ss);
+        break;
+      case OP_IENDSWITH:
+        YR_DEBUG_FPRINTF(
+            2, stderr, "- case OP_IENDSWITH: // %s()\n", __FUNCTION__);
+        r1.i = ss_iendswith(r1.ss, r2.ss);
+        break;
+      case OP_IEQUALS:
+        YR_DEBUG_FPRINTF(
+            2, stderr, "- case OP_IEQUALS: // %s()\n", __FUNCTION__);
+        r1.i = ss_icompare(r1.ss, r2.ss) == 0;
+        break;
       }
 
       push(r1);

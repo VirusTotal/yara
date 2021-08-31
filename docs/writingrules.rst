@@ -33,46 +33,49 @@ keywords are reserved and cannot be used as an identifier:
      - base64
      - base64wide
      - condition
-     - contains
-   * - endswith
+   * - contains
+     - endswith
      - entrypoint
      - false
      - filesize
      - for
      - fullword
      - global
-     - import
+   * - import
      - icontains
-   * - iendswith
+     - iendswith
+     - iequals
      - in
      - include
      - int16
      - int16be
-     - int32
+   * - int32
      - int32be
      - int8
      - int8be
-   * - istartswith
+     - istartswith
      - matches
      - meta
      - nocase
-     - not
+   * - not
      - of
      - or
      - private
      - rule
-   * - startswith
+     - startswith
      - strings
      - them
-     - true
+   * - true
      - uint16
      - uint16be
      - uint32
      - uint32be
-   * - uint8
+     - uint8
      - uint8be
      - wide
-     - xor
+   * - xor
+     -
+     -
      -
      -
      -
@@ -294,11 +297,21 @@ available in the C language:
    * - ``\xdd``
      - Any byte in hexadecimal notation
 
+In all versions of YARA before 4.1.0 text strings accepted any kind of unicode
+characters, regardless of their encoding. Those characters were interpreted by
+YARA as raw bytes, and therefore the final string was actually determined by the
+encoding format used by your text editor. This never meant to be a feature, the
+original intention always was that YARA strings should be ASCII-only and YARA
+4.1.0 started to raise warnings about non-ASCII characters in strings. This
+limitation does not apply to strings in the metadata section or comments. See
+more details [here](https://github.com/VirusTotal/yara/wiki/Unicode-characters-in-YARA)
+
+
 Case-insensitive strings
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
 Text strings in YARA are case-sensitive by default, however you can turn your
-string into case-insensitive mode by appending the modifier nocase at the end
+string into case-insensitive mode by appending the modifier ``nocase`` at the end
 of the string definition, in the same line:
 
 .. code-block:: yara
@@ -453,7 +466,7 @@ Base64 strings
 The ``base64`` modifier can be used to search for strings that have been base64
 encoded. A good explanation of the technique is at:
 
-https://www.leeholmes.com/blog/2019/12/10/searching-for-content-in-base-64-strings-2/
+https://www.leeholmes.com/searching-for-content-in-base-64-strings/
 
 The following rule will search for the three base64 permutations of the string
 "This program cannot":
@@ -547,11 +560,32 @@ Regular expressions can be also followed by ``nocase``, ``ascii``, ``wide``,
 and ``fullword`` modifiers just like in text strings. The semantics of these
 modifiers are the same in both cases.
 
+Additionally, they can be followed by the characters ``i`` and ``s`` just after
+the closing slash, which is a very common convention for specifying that the
+regular expression is case-insensitive and that the dot (``.``) can match
+new-line characters. For example:
+
+.. code-block:: yara
+
+    rule RegExpExample2
+    {
+        strings:
+            $re1 = /foo/i    // This regexp is case-insentitive
+            $re2 = /bar./s   // In this regexp the dot matches everything, including new-line
+            $re3 = /baz./is  // Both modifiers can be used together
+        condition:
+            any of them
+    }
+
+Notice that ``/foo/i`` is equivalent to ``/foo/ nocase``, but we recommend the
+latter when defining strings. The ``/foo/i`` syntax is useful when writting
+case-insentive regular expressions for the ``matches`` operator.
+
 In previous versions of YARA, external libraries like PCRE and RE2 were used
 to perform regular expression matching, but starting with version 2.0 YARA uses
 its own regular expression engine. This new engine implements most features
 found in PCRE, except a few of them like capture groups, POSIX character
-classes and backreferences.
+classes ([[:isalpha:]], [[:isdigit:]], etc) and backreferences.
 
 YARA’s regular expressions recognise the following metacharacters:
 
@@ -561,9 +595,12 @@ YARA’s regular expressions recognise the following metacharacters:
    * - ``\``
      - Quote the next metacharacter
    * - ``^``
-     - Match the beginning of the file
+     - Match the beginning of the file or negates a character class when used
+       as the first character after the opening bracket
    * - ``$``
      - Match the end of the file
+   * - ``.``
+     - Matches any single character except a newline character
    * - ``|``
      - Alternation
    * - ``()``
@@ -659,6 +696,7 @@ Starting with version 3.3.0 these zero-width assertions are also recognized:
      - Match a word boundary
    * - ``\B``
      - Match except at a word boundary
+
 
 Private strings
 ---------------
@@ -804,6 +842,8 @@ Precedence  Operator     Description                                Associativit
 
             iendswith    Like endswith but case-insensitive
 
+            iequals      Case-insensitive string comparison
+
             matches      String matches regular expression
 ----------  -----------  -----------------------------------------  -------------
 11          not          Logical NOT                                Right-to-left
@@ -913,7 +953,7 @@ Again, numbers are decimal by default.
 
 You can also get the offset or virtual address of the i-th occurrence of string
 $a by using @a[i]. The indexes are one-based, so the first occurrence would be
-@a[1] the second one @a[2] and so on. If you provide an index greater then the
+@a[1] the second one @a[2] and so on. If you provide an index greater than the
 number of occurrences of the string, the result will be a NaN (Not A Number)
 value.
 
@@ -1127,6 +1167,15 @@ The keywords ``any`` and ``all`` can be used as well.
     1 of ($*)         // same that "any of them"
 
 
+Starting with YARA 4.2.0 it is possible to express a set of strings in an
+integer range, like this:
+
+.. code-block:: yara
+
+    all of ($a*) in (filesize-500..filesize)
+    any of ($a*, $b*) in (1000..2000)
+
+
 Applying the same condition to many strings
 -------------------------------------------
 
@@ -1220,8 +1269,9 @@ they satisfy a given condition. For example:
             for all i in (1,2,3) : ( @a[i] + 10 == @b[i] )
     }
 
-The previous rule says that the first three occurrences of $b should be 10
-bytes away from the first three occurrences of $a.
+The previous rule says that the first occurrence of $b should be 10 bytes
+after the first occurrence of $a, and the same should happen with the second
+and third ocurrences of the two strings.
 
 The same condition could be written also as:
 
@@ -1508,20 +1558,28 @@ You would expect the rule to match in this case if the file contains the string,
 even if it isn't a PE file. That's exactly how YARA behaves. The logic is as
 follows:
 
-* Arithmetic and bitwise operators return an undefined value if some of their
-  operands are undefined.
+* If the expression in the condition is undefined, it would be translated to
+  ``false`` and the rule won't match.
 
-* Boolean operators `and` and `or` will treat undefined operands as `false`.
+* Boolean operators ``and`` and ``or`` will treat undefined operands as ``false``,
+  Which means that:
 
-* Boolean `not` operator returns false if the operand is undefined.
+  * ``undefined and true`` is ``false``
+  * ``undefined and false`` is ``false``
+  * ``undefined or true`` is ``true``
+  * ``undefined or false`` is ``false``
 
-* Comparison operators and any other operator whose result is a boolean (like
-  the ``contains`` and ``matches`` operators) will return `false` if any of
-  their operands are undefined.
+* All the remaining operators, including the ``not`` operator, return undefined
+  if any of their operands is undefined.
 
-In the expression above, `pe.entry_point == 0x1000` will be false, because
-`pe.entry_point` is undefined, and the `==` operator returns false if any of its
-operands are undefined.
+In the expression above, ``pe.entry_point == 0x1000`` will be undefined for non-PE
+files, because ``pe.entry_point`` is undefined for those files. This implies that
+``$a or pe.entry_point == 0x1000`` will be ``true`` if and only if ``$a`` is ``true``.
+
+If the condition is ``pe.entry_point == 0x1000`` alone, it will evaluate to ``false``
+for non-PE files, and so will do ``pe.entry_point != 0x1000`` and
+``not pe.entry_point == 0x1000``, as non of these expressions make sense for non-PE
+files.
 
 
 External variables
@@ -1556,8 +1614,10 @@ For example:
 
 External variables of type string can be used with the operators: ``contains``,
 ``startswith``, ``endswith`` and their case-insensitive counterparts: ``icontains``,
-``istartswith`` and ``iendswith`. They can be used also with the ``matches``
+``istartswith`` and ``iendswith``. They can be used also with the ``matches``
 operator, which returns true if the string matches a given regular expression.
+Case-insensitive string comparison can be done through special operator ``iequals``
+which only works with strings. For case-sensitive comparison use regular ``==``.
 
 .. code-block:: yara
 
@@ -1583,6 +1643,12 @@ operator, which returns true if the string matches a given regular expression.
     {
         condition:
             string_ext_var endswith "suffix"
+    }
+
+    rule IequalsExample
+    {
+        condition:
+            string_ext_var iequals "string"
     }
 
     rule MatchesExample

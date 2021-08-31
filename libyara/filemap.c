@@ -64,7 +64,7 @@ YR_API int yr_filemap_map(const char* file_path, YR_MAPPED_FILE* pmapped_file)
 // Args:
 //   file: File descriptor representing the file to map.
 //   offset: File offset where the mapping will begin. This offset must be
-//           multiple of 1MB and not greater than the actualfile size.
+//           multiple of 1MB and not greater than the actual file size.
 //   size: Number of bytes that will be mapped. If zero or greater than the
 //         actual file size all content until the end of the file will be
 //         mapped.
@@ -80,7 +80,7 @@ YR_API int yr_filemap_map(const char* file_path, YR_MAPPED_FILE* pmapped_file)
 
 YR_API int yr_filemap_map_fd(
     YR_FILE_DESCRIPTOR file,
-    off_t offset,
+    uint64_t offset,
     size_t size,
     YR_MAPPED_FILE* pmapped_file)
 {
@@ -110,7 +110,7 @@ YR_API int yr_filemap_map_fd(
     return ERROR_COULD_NOT_OPEN_FILE;
   }
 
-  if (offset > file_size)
+  if (offset > (uint64_t) file_size)
     return ERROR_COULD_NOT_MAP_FILE;
 
   if (size == 0)
@@ -179,7 +179,7 @@ YR_API int yr_filemap_map_fd(
 
 YR_API int yr_filemap_map_fd(
     YR_FILE_DESCRIPTOR file,
-    off_t offset,
+    uint64_t offset,
     size_t size,
     YR_MAPPED_FILE* pmapped_file)
 {
@@ -241,7 +241,7 @@ YR_API int yr_filemap_map_fd(
 // Args:
 //   file_path: Path of the file to map.
 //   offset: File offset where the mapping will begin. This offset must be
-//           multiple of 1MB and not greater than the actualfile size.
+//           multiple of 1MB and not greater than the actual file size.
 //   size: Number of bytes that will be mapped. If zero or greater than the
 //         actual file size all content until the end of the file will be
 //         mapped.
@@ -257,7 +257,7 @@ YR_API int yr_filemap_map_fd(
 
 YR_API int yr_filemap_map_ex(
     const char* file_path,
-    off_t offset,
+    uint64_t offset,
     size_t size,
     YR_MAPPED_FILE* pmapped_file)
 {
@@ -270,7 +270,7 @@ YR_API int yr_filemap_map_ex(
   fd = CreateFileA(
       file_path,
       GENERIC_READ,
-      FILE_SHARE_READ,
+      FILE_SHARE_READ | FILE_SHARE_WRITE,
       NULL,
       OPEN_EXISTING,
       FILE_FLAG_SEQUENTIAL_SCAN,
@@ -291,7 +291,7 @@ YR_API int yr_filemap_map_ex(
 
 YR_API int yr_filemap_map_ex(
     const char* file_path,
-    off_t offset,
+    uint64_t offset,
     size_t size,
     YR_MAPPED_FILE* pmapped_file)
 {
