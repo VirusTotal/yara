@@ -26,7 +26,8 @@ jobs:
             libssl-dev  \
             protobuf-compiler \
             protobuf-c-compiler \
-            libprotobuf-c-dev
+            libprotobuf-c-dev \
+            gcc-mingw-w64
       - name: Prepare for building
         run: |
           ./bootstrap.sh
