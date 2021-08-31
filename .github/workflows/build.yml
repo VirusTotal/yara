@@ -9,7 +9,9 @@ jobs:
       matrix:
         config:
         - "--enable-cuckoo --enable-magic --enable-pb-tests --enable-address-sanitizer"
-        - "--enable-cuckoo --enable-magic --enable-pb-tests --enable-address-sanitizer --enable-profiling"
+        - "--enable-profiling --enable-cuckoo --enable-magic --enable-pb-tests --enable-address-sanitizer"
+        - "--host=x86_64-w64-mingw32"
+        - "--host=i686-w64-mingw32"
     steps:
       - uses: actions/checkout@v2
       - name: Install dependencies
@@ -50,5 +52,5 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-${{ env.cache-name }}-development
       - uses: actions/checkout@v2
-      - name: Build
-        run: bazel test @jansson//... //tests/... --test_verbose_timeout_warnings
+      - name: Build and run tests
+        run: bazel test @jansson//... //tests/...
