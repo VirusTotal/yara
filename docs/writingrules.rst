@@ -57,24 +57,24 @@ keywords are reserved and cannot be used as an identifier:
      - matches
      - meta
      - nocase
-   * - not
+   * - none
+     - not
      - of
      - or
      - private
      - rule
      - startswith
      - strings
-     - them
-   * - true
+   * - them
+     - true
      - uint16
      - uint16be
      - uint32
      - uint32be
      - uint8
      - uint8be
-     - wide
-   * - xor
-     -
+   * - wide
+     - xor
      -
      -
      -
@@ -1156,7 +1156,7 @@ the equivalent keyword ``them`` for more legibility.
 
 In all the examples above, the number of strings have been specified by a
 numeric constant, but any expression returning a numeric value can be used.
-The keywords ``any`` and ``all`` can be used as well.
+The keywords ``any``, ``all`` and ``none`` can be used as well.
 
 .. code-block:: yara
 
@@ -1165,6 +1165,7 @@ The keywords ``any`` and ``all`` can be used as well.
     all of ($a*)      // all strings whose identifier starts by $a
     any of ($a,$b,$c) // any of $a, $b or $c
     1 of ($*)         // same that "any of them"
+    none of ($b*)     // zero of the set of strings that start with "$b"
 
 
 Applying the same condition to many strings
