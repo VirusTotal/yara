@@ -10,8 +10,6 @@ jobs:
         config:
         - "--enable-cuckoo --enable-magic --enable-pb-tests --enable-address-sanitizer"
         - "--enable-profiling --enable-cuckoo --enable-magic --enable-pb-tests --enable-address-sanitizer"
-        - "--host=x86_64-w64-mingw32"
-        - "--host=i686-w64-mingw32"
     steps:
       - uses: actions/checkout@v2
       - name: Install dependencies
