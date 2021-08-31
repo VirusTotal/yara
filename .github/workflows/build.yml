@@ -29,13 +29,13 @@ jobs:
       - name: Run tests
         run: make check
 
-  Build with Bazel:
+  Bazel:
     runs-on: ubuntu-latest
     steps:
     - name: Setup bazel
       uses: jwlawson/actions-setup-bazel@v1
       with:
-        bazel-version: '2.0.0'
+        bazel-version: '2.1.0'
     - name: Setup cache
       uses: actions/cache@v2
       with:
