@@ -26,3 +26,5 @@ jobs:
           ./configure
       - name: Build
         run: make clean && make
+      - name: Run tests
+        run: make check
