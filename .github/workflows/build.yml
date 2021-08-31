@@ -1,10 +1,15 @@
-name: Build
+name: Build and test
 
-on: [push]
+on: [push, pull_request]
 
 jobs:
-  Build:
+  standard-build:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        config:
+        - "--enable-cuckoo --enable-magic --enable-pb-tests --enable-address-sanitizer"
+        - "--enable-cuckoo --enable-magic --enable-pb-tests --enable-address-sanitizer --enable-profiling"
     steps:
       - uses: actions/checkout@v2
       - name: Install dependencies
@@ -23,13 +28,13 @@ jobs:
       - name: Prepare for building
         run: |
           ./bootstrap.sh
-          ./configure
+          ./configure ${{ matrix.config }}
       - name: Build
         run: make clean && make
       - name: Run tests
         run: make check
 
-  Bazel:
+  bazel-build:
     # The ubuntu-20.04 virtual environment has Bazel installed, see:
     # https://github.com/actions/virtual-environments
     runs-on: ubuntu-20.04
