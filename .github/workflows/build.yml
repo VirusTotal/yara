@@ -28,3 +28,18 @@ jobs:
         run: make clean && make
       - name: Run tests
         run: make check
+
+  Build with Bazel:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Setup bazel
+      uses: jwlawson/actions-setup-bazel@v1
+      with:
+        bazel-version: '2.0.0'
+    - name: Setup cache
+      uses: actions/cache@v2
+      with:
+        path: "/home/runner/.cache/bazel"
+        key: bazel
+    - name: Build
+      run: bazel test @jansson//... //tests/...
