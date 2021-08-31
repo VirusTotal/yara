@@ -1316,7 +1316,7 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
       break;
 
     case OP_OF:
-      YR_DEBUG_FPRINTF(2, stderr, "- case OP_OF: // %s()\n", __FUNCTION__);
+    case OP_OF_PERCENT:
       found = 0;
       count = 0;
       pop(r1);
@@ -1333,10 +1333,28 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
 
       pop(r2);
 
-      if (is_undef(r2))
-        r1.i = found >= count ? 1 : 0;
-      else
-        r1.i = found >= r2.i ? 1 : 0;
+      if (opcode == OP_OF)
+      {
+        YR_DEBUG_FPRINTF(2, stderr, "- case OP_OF: // %s()\n", __FUNCTION__);
+
+        if (is_undef(r2))
+          r1.i = found >= count ? 1 : 0;
+        else
+          r1.i = found >= r2.i ? 1 : 0;
+      }
+      else  // OP_OF_PERCENT
+      {
+        YR_DEBUG_FPRINTF(
+            2, stderr, "- case OP_OF_PERCENT: // %s()\n", __FUNCTION__);
+
+        // If, by some weird reason, we manage to get an undefined string
+        // reference as the first thing on the stack then count would be zero.
+        // I don't know how this could ever happen but better to check for it.
+        if (is_undef(r2) || count == 0)
+          r1.i = YR_UNDEFINED;
+        else
+          r1.i = (((double) found / count) * 100) >= r2.i ? 1 : 0;
+      }
 
       push(r1);
       break;

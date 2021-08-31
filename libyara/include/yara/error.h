@@ -104,6 +104,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define ERROR_INVALID_MODIFIER               59
 #define ERROR_DUPLICATED_MODIFIER            60
 #define ERROR_BLOCK_NOT_READY                61
+#define ERROR_INVALID_PERCENTAGE             62
 
 #define GOTO_EXIT_ON_ERROR(x)    \
   {                              \
