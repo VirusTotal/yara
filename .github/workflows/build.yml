@@ -21,7 +21,7 @@ jobs:
             libprotobuf-c-dev
       - name: Prepare for building
         run: |
-          bootstrap.sh
-          configure
+          ./bootstrap.sh
+          ./configure
       - name: Build
         run: make clean && make
