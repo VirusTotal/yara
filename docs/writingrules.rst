@@ -1167,6 +1167,15 @@ The keywords ``any`` and ``all`` can be used as well.
     1 of ($*)         // same that "any of them"
 
 
+Starting with YARA 4.2.0 it is possible to express a set of strings in an
+integer range, like this:
+
+.. code-block:: yara
+
+    all of ($a*) in (filesize-500..filesize)
+    any of ($a*, $b*) in (1000..2000)
+
+
 Applying the same condition to many strings
 -------------------------------------------
 

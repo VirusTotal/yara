@@ -608,6 +608,17 @@ static void test_strings()
        }",
       TEXT_1024_BYTES "abcdef");
 
+  assert_true_rule(
+      "rule test {\n\
+         strings:\n\
+             $a = \"foo\"\n\
+             $b = \"bar\"\n\
+             $c = \"baz\"\n\
+         condition:\n\
+             all of them in (0..10)\n\
+       }",
+      "foobarbaz" TEXT_1024_BYTES);
+
   // xor by itself will match the plaintext version of the string too.
   assert_true_rule_file(
       "rule test {\n\
