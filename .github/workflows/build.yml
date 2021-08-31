@@ -30,14 +30,18 @@ jobs:
         run: make check
 
   Bazel:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     steps:
-    - name: Setup bazel
-      uses: jwlawson/actions-setup-bazel@v1
-    - name: Setup cache
-      uses: actions/cache@v2
-      with:
-        path: "/home/runner/.cache/bazel"
-        key: bazel
-    - name: Build
-      run: bazel test @jansson//... //tests/...
+      # Caches and restores the bazelisk download directory.
+      - name: Cache bazelisk download
+        uses: actions/cache@v2
+        env:
+          cache-name: bazel-cache
+        with:
+          path: ~/.cache/bazelisk
+          key: ${{ runner.os }}-${{ env.cache-name }}-${{ github.ref }}
+          restore-keys: |
+            ${{ runner.os }}-${{ env.cache-name }}-development
+      - uses: actions/checkout@v2
+      - name: Build
+        run: bazel test @jansson//... //tests/...
