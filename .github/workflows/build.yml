@@ -30,6 +30,8 @@ jobs:
         run: make check
 
   Bazel:
+    # The ubuntu-20.04 virtual environment has Bazel installed, see:
+    # https://github.com/actions/virtual-environments
     runs-on: ubuntu-20.04
     steps:
       # Caches and restores the bazelisk download directory.
@@ -44,4 +46,4 @@ jobs:
             ${{ runner.os }}-${{ env.cache-name }}-development
       - uses: actions/checkout@v2
       - name: Build
-        run: bazel test @jansson//... //tests/...
+        run: bazel test @jansson//... //tests/... --test_verbose_timeout_warnings
