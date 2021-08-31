@@ -3,7 +3,7 @@ name: Build
 on: [push]
 
 jobs:
-  build:
+  Build:
     runs-on: ubuntu-latest
     steps:
       - name: Install dependencies
@@ -19,7 +19,7 @@ jobs:
             protobuf-compiler \
             protobuf-c-compiler \
             libprotobuf-c-dev
-      - name: Configure
-        run: ./configure
+      - name: Prepare for building
+        run: ./bootstrap.sh && ./configure
       - name: Build
         run: make clean && make
