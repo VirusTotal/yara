@@ -10,7 +10,6 @@ jobs:
         config:
         - "--enable-cuckoo --enable-magic --enable-pb-tests --enable-address-sanitizer"
         - "--enable-profiling --enable-cuckoo --enable-magic --enable-pb-tests --enable-address-sanitizer"
-        - "CFLAGS=-m32 --enable-cuckoo --enable-magic"
     steps:
       - uses: actions/checkout@v2
       - name: Install dependencies
@@ -24,7 +23,6 @@ jobs:
             libjansson-dev \
             libmagic-dev \
             libssl-dev  \
-            libssl-dev:i386 \
             protobuf-compiler \
             protobuf-c-compiler \
             libprotobuf-c-dev
