@@ -1,0 +1,25 @@
+name: Build
+
+on: [push]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            autoconf \
+            automake \
+            libtool \
+            libjansson-dev \
+            libmagic-dev \
+            libssl-dev  \
+            protobuf-compiler \
+            protobuf-c-compiler \
+            libprotobuf-c-dev
+      - name: Configure
+        run: ./configure
+      - name: Build
+        run: make clean && make
