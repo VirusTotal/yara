@@ -67,7 +67,7 @@ awesome list of [YARA-related stuff](https://github.com/InQuest/awesome-yara).
 * [Blueliv](http://www.blueliv.com)
 * [Cisco Talos Intelligence Group](https://talosintelligence.com/)
 * [Claroty](https://claroty.com/continuous-threat-detection)
-* [Cloudina Security HAWK](https://cloudina.co.uk)
+* [Cloudina Security](https://cloudina.co.uk)
 * [Cofense](https://cofense.com)
 * [Conix](http://www.conix.fr)
 * [CounterCraft](https://www.countercraft.eu)
