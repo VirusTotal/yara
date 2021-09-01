@@ -626,86 +626,6 @@ define_function(count_global)
   return_integer(count);
 }
 
-define_function(count_range_char)
-{
-  SIZED_STRING* s = sized_string_argument(1);
-  int64_t offset = integer_argument(2);
-  int64_t length = integer_argument(3);
-
-  YR_SCAN_CONTEXT* context = scan_context();
-
-  bool past_first_block = false;
-
-  size_t i;
-
-  int64_t count = 0;
-
-  size_t j;
-
-  YR_MEMORY_BLOCK* block = first_memory_block(context);
-  YR_MEMORY_BLOCK_ITERATOR* iterator = context->iterator;
-
-  if (offset < 0 || length < 0 || offset < block->base)
-  {
-    return_integer(YR_UNDEFINED);
-  }
-
-  foreach_memory_block(iterator, block)
-  {
-    if (offset >= block->base && offset < block->base + block->size)
-    {
-      size_t data_offset = (size_t)(offset - block->base);
-      size_t data_len = (size_t) yr_min(
-          length, (size_t)(block->size - data_offset));
-
-      const uint8_t* block_data = block->fetch_data(block);
-
-      if (block_data == NULL)
-      {
-        return_integer(YR_UNDEFINED);
-      }
-
-      offset += data_len;
-      length -= data_len;
-
-      if (data_len >= s->length)
-      {
-        for (i = 0; i <= data_len - s->length; i++)
-        {
-          // Check whether a match exists starting at the current position
-          bool matches = true;
-          for (j = 0; j < s->length; j++)
-          {
-            if (*(block_data + data_offset + i + j) != s->c_string[j])
-            {
-              matches = false;
-              break;
-            }
-          }
-          if (matches)
-          {
-            count++;
-          }
-        }
-      }
-      past_first_block = true;
-    }
-    else if (past_first_block)
-    {
-      return_integer(YR_UNDEFINED);
-    }
-
-    if (block->base + block->size > offset + length)
-      break;
-  }
-
-  if (!past_first_block)
-  {
-    return_integer(YR_UNDEFINED);
-  }
-  return_integer(count);
-}
-
 define_function(percentage_range)
 {
   uint8_t byte = (uint8_t) integer_argument(1);
@@ -813,7 +733,6 @@ begin_declarations
   declare_function("to_number", "b", "i", to_number);
   declare_function("abs", "i", "i", yr_math_abs);
   declare_function("count", "iii", "i", count_range);
-  declare_function("count", "sii", "i", count_range_char);
   declare_function("count", "i", "i", count_global);
   declare_function("percentage", "iii", "f", percentage_range);
   declare_function("percentage", "i", "f", percentage_global);

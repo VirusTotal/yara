@@ -139,17 +139,6 @@ file and create signatures based on those results.
 
     *Example: math.count(0x4A) >= 10*
 
-.. c:function:: count(string, offset, size)
-
-    .. versionadded:: 4.2.0
-
-    Returns how often a specific string occurs, starting at *offset*
-    and looking at the next *size* bytes. When scanning a
-    running process the *offset* argument should be a virtual address within
-    the process address space.
-
-    *Example: math.count("$[]", 0, 100) >= 5*
-
 .. c:function:: percentage(byte, offset, size)
 
     .. versionadded:: 4.2.0
