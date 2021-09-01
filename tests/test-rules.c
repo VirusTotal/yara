@@ -1575,25 +1575,43 @@ static void test_of()
   assert_error("rule test { condition: all of them }", ERROR_UNDEFINED_STRING);
 
   assert_error(
-    "rule test { strings: $a = \"AXS\" condition: 101% of them }",
-    ERROR_INVALID_PERCENTAGE);
+      "rule test { strings: $a = \"AXS\" condition: 101% of them }",
+      ERROR_INVALID_PERCENTAGE);
 
   assert_error(
-    "rule test { strings: $a = \"ERS\" condition: 0% of them }",
-    ERROR_INVALID_PERCENTAGE);
+      "rule test { strings: $a = \"ERS\" condition: 0% of them }",
+      ERROR_INVALID_PERCENTAGE);
 
   assert_true_rule(
-    "rule test { strings: $a1 = \"dummy\" $a2 = \"issi\" condition: 50% of them }",
-    "mississippi");
+      "rule test { \
+        strings: \
+          $a1 = \"dummy\" \
+          $a2 = \"issi\" \
+        condition: \
+          50% of them \
+      }",
+      "mississippi");
 
   // This is equivalent to "50% of them" because 1050%50 == 50
   assert_true_rule(
-      "rule test { strings: $a1 = \"miss\" $a2 = \"issi\" condition: 1050%100% of them }",
+      "rule test { \
+        strings: \
+          $a1 = \"miss\" \
+          $a2 = \"issi\" \
+        condition: \
+          1050%100% of them \
+      }",
       "mississippi");
 
   assert_true_rule(
-    "rule test { strings: $a1 = \"miss\" $a2 = \"issi\" condition: 100% of them }",
-    "mississippi");
+      "rule test { \
+        strings: \
+          $a1 = \"miss\" \
+          $a2 = \"issi\" \
+        condition: \
+          100% of them \
+      }",
+      "mississippi");
 
   assert_true_rule(
       "import \"tests\" \
@@ -2915,6 +2933,7 @@ void test_process_scan()
   int fd;
   char* tf;
   char buf[16384];
+  size_t written;
 
   struct COUNTERS counters;
 
@@ -2966,7 +2985,9 @@ void test_process_scan()
   // check for string in file that gets mapped by a process
   bzero(buf, sizeof(buf));
   sprintf(buf, "Hello, world!");
-  write(fd, buf, sizeof(buf));
+  written = write(fd, buf, sizeof(buf));
+
+  assert(written == sizeof(buf));
   lseek(fd, 0, SEEK_SET);
 
   spawn("tests/mapper", "open", tf);
@@ -2986,7 +3007,9 @@ void test_process_scan()
   // check for string in blank mapping after process has overwritten
   // the mapping.
   bzero(buf, sizeof(buf));
-  write(fd, buf, sizeof(buf));
+  written = write(fd, buf, sizeof(buf));
+
+  assert(written == sizeof(buf));
 
   spawn("./tests/mapper", "patch", tf);
 
