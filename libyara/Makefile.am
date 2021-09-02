@@ -81,7 +81,15 @@ endif
 # MODULES += modules/yourmodule.c
 #
 
-AM_YFLAGS=-d
+#
+# When bison is used in POSIX yacc emulation mode (-y/--yacc option) it
+# produces warnings if we use Bison-specific features that are not supported
+# by yacc. With -Wno-yacc we turn off those warnings. Ideally we should call
+# bison without the -y/--yacc option, but autoconf insists on using bison in
+# yacc compatibility mode because of AC_PROG_YACC, and AC_PROG_BISON doesn't
+# exist.
+#
+AM_YFLAGS=-d -Wno-yacc
 
 AM_CFLAGS=-Wall -Wno-deprecated-declarations \
 	-D_GNU_SOURCE \

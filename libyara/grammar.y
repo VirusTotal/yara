@@ -27,9 +27,10 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+// clang-format off
+
 %{
-
-
+  
 #include <assert.h>
 #include <stdio.h>
 #include <string.h>
@@ -1781,6 +1782,32 @@ expression
     | for_expression _OF_ string_set
       {
         yr_parser_emit(yyscanner, OP_OF, NULL);
+
+        $$.type = EXPRESSION_TYPE_BOOLEAN;
+      }
+    | primary_expression '%' _OF_ string_set
+      {
+        check_type($1, EXPRESSION_TYPE_INTEGER, "%");
+
+        // The value of primary_expression can be undefined because
+        // it could be a variable for which don't know the value during
+        // compiling time. However, if the value is defined it should be
+        // in the range [1,100].
+        if (!IS_UNDEFINED($1.value.integer) &&
+            ($1.value.integer < 1 || $1.value.integer > 100))
+        {
+          yr_compiler_set_error_extra_info(
+              compiler, "percentage must be between 1 and 100 (inclusive)");
+          compiler->last_error = ERROR_INVALID_PERCENTAGE;
+          yyerror(yyscanner, compiler, NULL);
+          YYERROR;
+        }
+
+        yr_parser_emit(yyscanner, OP_OF_PERCENT, NULL);
+      }
+    | for_expression _OF_ string_set _IN_ range
+      {
+        yr_parser_emit(yyscanner, OP_OF_FOUND_IN, NULL);
 
         $$.type = EXPRESSION_TYPE_BOOLEAN;
       }

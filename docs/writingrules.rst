@@ -1168,6 +1168,15 @@ The keywords ``any``, ``all`` and ``none`` can be used as well.
     none of ($b*)     // zero of the set of strings that start with "$b"
 
 
+Starting with YARA 4.2.0 it is possible to express a set of strings in an
+integer range, like this:
+
+.. code-block:: yara
+
+    all of ($a*) in (filesize-500..filesize)
+    any of ($a*, $b*) in (1000..2000)
+
+
 Applying the same condition to many strings
 -------------------------------------------
 

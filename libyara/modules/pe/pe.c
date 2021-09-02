@@ -109,9 +109,9 @@ typedef int (*RESOURCE_CALLBACK_FUNC)(
     int rsrc_type,
     int rsrc_id,
     int rsrc_language,
-    const IMAGE_RESOURCE_DIR_STRING_U* type_string, \
-    const IMAGE_RESOURCE_DIR_STRING_U* name_string, \
-    const IMAGE_RESOURCE_DIR_STRING_U* lang_string, \
+    const IMAGE_RESOURCE_DIR_STRING_U* type_string,
+    const IMAGE_RESOURCE_DIR_STRING_U* name_string,
+    const IMAGE_RESOURCE_DIR_STRING_U* lang_string,
     void* cb_data);
 
 static size_t available_space(PE* pe, void* pointer)
@@ -382,8 +382,8 @@ static const PIMAGE_RESOURCE_DIR_STRING_U parse_resource_name(
   if (yr_le32toh(entry->Name) & 0x80000000)
   {
     const PIMAGE_RESOURCE_DIR_STRING_U pNameString =
-        (PIMAGE_RESOURCE_DIR_STRING_U)
-        (rsrc_data + (yr_le32toh(entry->Name) & 0x7FFFFFFF));
+        (PIMAGE_RESOURCE_DIR_STRING_U)(
+            rsrc_data + (yr_le32toh(entry->Name) & 0x7FFFFFFF));
 
     // A resource directory string is 2 bytes for the length and then a variable
     // length Unicode string. Make sure we have at least 2 bytes.
@@ -392,7 +392,8 @@ static const PIMAGE_RESOURCE_DIR_STRING_U parse_resource_name(
       return NULL;
 
     // Move past the length and make sure we have enough bytes for the string.
-    if (!fits_in_pe(pe, pNameString, sizeof(uint16_t) + pNameString->Length * 2))
+    if (!fits_in_pe(
+            pe, pNameString, sizeof(uint16_t) + pNameString->Length * 2))
       return NULL;
 
     return pNameString;
@@ -690,8 +691,8 @@ static void pe_parse_version_info(PIMAGE_RESOURCE_DATA_ENTRY rsrc_data, PE* pe)
 static void pe_set_resource_string_or_id(
     IMAGE_RESOURCE_DIR_STRING_U* rsrc_string,
     int rsrc_int,
-    const char * string_description,
-    const char * int_description,
+    const char* string_description,
+    const char* int_description,
     PE* pe)
 {
   if (rsrc_string)
@@ -701,20 +702,19 @@ static void pe_set_resource_string_or_id(
 
     // Check if the whole string fits in the PE image.
     // If not, the name becomes UNDEFINED by default.
-    if(fits_in_pe(pe, rsrc_string->NameString, length))
+    if (fits_in_pe(pe, rsrc_string->NameString, length))
     {
       set_sized_string(
-          (char*)rsrc_string->NameString, length, pe->object,
-          string_description, pe->resources);
+          (char*) rsrc_string->NameString,
+          length,
+          pe->object,
+          string_description,
+          pe->resources);
     }
   }
   else
   {
-    set_integer(
-          rsrc_int,
-          pe->object,
-          int_description,
-          pe->resources);
+    set_integer(rsrc_int, pe->object, int_description, pe->resources);
   }
 }
 
@@ -728,8 +728,6 @@ static int pe_collect_resources(
     IMAGE_RESOURCE_DIR_STRING_U* lang_string,
     PE* pe)
 {
-  DWORD length;
-
   // Don't collect too many resources.
   if (pe->resources > MAX_RESOURCES)
     return RESOURCE_CALLBACK_CONTINUE;
@@ -753,21 +751,24 @@ static int pe_collect_resources(
       "resources[%i].length",
       pe->resources);
 
-  pe_set_resource_string_or_id(type_string,
+  pe_set_resource_string_or_id(
+      type_string,
       rsrc_type,
-      "resources[%i].type_string", 
+      "resources[%i].type_string",
       "resources[%i].type",
       pe);
 
-  pe_set_resource_string_or_id(name_string,
+  pe_set_resource_string_or_id(
+      name_string,
       rsrc_id,
-      "resources[%i].name_string", 
+      "resources[%i].name_string",
       "resources[%i].id",
       pe);
 
-  pe_set_resource_string_or_id(lang_string,
+  pe_set_resource_string_or_id(
+      lang_string,
       rsrc_language,
-      "resources[%i].language_string", 
+      "resources[%i].language_string",
       "resources[%i].language",
       pe);
 

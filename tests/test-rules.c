@@ -608,6 +608,17 @@ static void test_strings()
        }",
       TEXT_1024_BYTES "abcdef");
 
+  assert_true_rule(
+      "rule test {\n\
+         strings:\n\
+             $a = \"foo\"\n\
+             $b = \"bar\"\n\
+             $c = \"baz\"\n\
+         condition:\n\
+             all of them in (0..10)\n\
+       }",
+      "foobarbaz" TEXT_1024_BYTES);
+
   // xor by itself will match the plaintext version of the string too.
   assert_true_rule_file(
       "rule test {\n\
@@ -1572,6 +1583,69 @@ static void test_of()
   assert_error("rule test { condition: all of ($a*) }", ERROR_UNDEFINED_STRING);
 
   assert_error("rule test { condition: all of them }", ERROR_UNDEFINED_STRING);
+
+  assert_error(
+      "rule test { strings: $a = \"AXS\" condition: 101% of them }",
+      ERROR_INVALID_PERCENTAGE);
+
+  assert_error(
+      "rule test { strings: $a = \"ERS\" condition: 0% of them }",
+      ERROR_INVALID_PERCENTAGE);
+
+  assert_true_rule(
+      "rule test { \
+        strings: \
+          $a1 = \"dummy\" \
+          $a2 = \"issi\" \
+        condition: \
+          50% of them \
+      }",
+      "mississippi");
+
+  // This is equivalent to "50% of them" because 1050%50 == 50
+  assert_true_rule(
+      "rule test { \
+        strings: \
+          $a1 = \"miss\" \
+          $a2 = \"issi\" \
+        condition: \
+          1050%100% of them \
+      }",
+      "mississippi");
+
+  assert_true_rule(
+      "rule test { \
+        strings: \
+          $a1 = \"miss\" \
+          $a2 = \"issi\" \
+        condition: \
+          100% of them \
+      }",
+      "mississippi");
+
+  assert_true_rule(
+      "import \"tests\" \
+       rule test { \
+         strings: \
+           $a1 = \"miss\" \
+           $a2 = \"issi\" \
+         condition: \
+           (25*tests.constants.two)% of them \
+       }",
+      "mississippi");
+
+  // tests.integer_array[5] is undefined, so the following rule must evaluate
+  // to false.
+  assert_false_rule(
+      "import \"tests\" \
+       rule test { \
+         strings: \
+           $a1 = \"miss\" \
+           $a2 = \"issi\" \
+         condition: \
+           tests.integer_array[5]% of them \
+       }",
+      "mississippi");
 
   YR_DEBUG_FPRINTF(1, stderr, "} // %s()\n", __FUNCTION__);
 }
@@ -2869,6 +2943,7 @@ void test_process_scan()
   int fd;
   char* tf;
   char buf[16384];
+  size_t written;
 
   struct COUNTERS counters;
 
@@ -2920,7 +2995,9 @@ void test_process_scan()
   // check for string in file that gets mapped by a process
   bzero(buf, sizeof(buf));
   sprintf(buf, "Hello, world!");
-  write(fd, buf, sizeof(buf));
+  written = write(fd, buf, sizeof(buf));
+
+  assert(written == sizeof(buf));
   lseek(fd, 0, SEEK_SET);
 
   spawn("tests/mapper", "open", tf);
@@ -2940,7 +3017,9 @@ void test_process_scan()
   // check for string in blank mapping after process has overwritten
   // the mapping.
   bzero(buf, sizeof(buf));
-  write(fd, buf, sizeof(buf));
+  written = write(fd, buf, sizeof(buf));
+
+  assert(written == sizeof(buf));
 
   spawn("./tests/mapper", "patch", tf);
 
