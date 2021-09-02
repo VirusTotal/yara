@@ -60,8 +60,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define YYMALLOC yr_malloc
 #define YYFREE yr_free
 
-#define FOR_EXPRESSION_ALL 1
-#define FOR_EXPRESSION_ANY 2
+#define FOR_EXPRESSION_ALL  1
+#define FOR_EXPRESSION_ANY  2
+#define FOR_EXPRESSION_NONE 3
 
 #define fail_with_error(e) \
     { \
@@ -193,6 +194,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 %token _ENTRYPOINT_                                    "<entrypoint>"
 %token _ALL_                                           "<all>"
 %token _ANY_                                           "<any>"
+%token _NONE_                                          "<none>"
 %token _IN_                                            "<in>"
 %token _OF_                                            "<of>"
 %token _FOR_                                           "<for>"
@@ -2237,6 +2239,11 @@ for_expression
       {
         yr_parser_emit_push_const(yyscanner, 1);
         $$ = FOR_EXPRESSION_ANY;
+      }
+    | _NONE_
+      {
+        yr_parser_emit_push_const(yyscanner, 0);
+        $$ = FOR_EXPRESSION_NONE;
       }
     ;
 
