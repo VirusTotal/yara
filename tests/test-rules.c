@@ -1534,6 +1534,11 @@ static void test_of()
       TEXT_1024_BYTES "mississippi");
 
   assert_true_rule(
+      "rule test { strings: $a = \"ssi\" $b = \"mis\" $c = \"oops\" "
+      "condition: none of them }",
+      TEXT_1024_BYTES "AXSERS");
+
+  assert_true_rule(
       "rule test { strings: $a = \"ssi\" $b = \"mis\" private $c = \"oops\" "
       "condition: 1 of them }",
       TEXT_1024_BYTES "mississippi");
@@ -1547,6 +1552,11 @@ static void test_of()
       "rule test { strings: $a1 = \"dummy1\" $b1 = \"dummy1\" $b2 = \"ssi\""
       "condition: any of ($a*, $b*) }",
       TEXT_1024_BYTES "mississippi");
+
+  assert_true_rule(
+      "rule test { strings: $a1 = \"dummy1\" $b1 = \"dummy1\" $b2 = \"ssi\""
+      "condition: none of ($a*, $b*) }",
+      TEXT_1024_BYTES "AXSERS");
 
   assert_true_rule_blob(
       "rule test { \
