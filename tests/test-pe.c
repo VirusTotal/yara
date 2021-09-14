@@ -597,6 +597,17 @@ int main(int argc, char** argv)
       }",
       "tests/data/tiny");
 
+  assert_true_rule_file(
+      "import \"pe\" \
+      rule section_name_comparison { \
+        condition: \
+          for any section in pe.sections : ( \
+              section.name == \"/4\" and\
+              section.full_name == \".debug_aranges\" \
+          )\
+      }",
+      "tests/data/pe_mingw");
+
   yr_finalize();
 
   YR_DEBUG_FPRINTF(
