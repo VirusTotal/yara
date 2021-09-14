@@ -1934,8 +1934,7 @@ const char* pe_get_section_full_name(
   uint64_t string_index = 0;
 
   // Calculate string index/offset in string table
-  int i = 1;
-  for (; i < IMAGE_SIZEOF_SHORT_NAME && isdigit(section_name[i]); i++)
+  for (int i = 1; i < IMAGE_SIZEOF_SHORT_NAME && isdigit(section_name[i]); i++)
     string_index = (string_index * 10) + (section_name[i] - '0');
 
   // Calculate string pointer

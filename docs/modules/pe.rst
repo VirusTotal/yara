@@ -567,6 +567,9 @@ Reference
         contains a string from the specified offset in the string table.
         Otherwise, this field contains the same value as a name field.
 
+        Even though it's not a standard, MinGW and Cygwin compilers use this
+        feature to store section names which are longer than 8 characters.
+
     .. c:member:: characteristics
 
         Section characteristics.
