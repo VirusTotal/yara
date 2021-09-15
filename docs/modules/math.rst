@@ -126,3 +126,42 @@ file and create signatures based on those results.
     Returns the absolute value of the signed integer.
 
     *Example: math.abs(@a - @b) == 1*
+
+.. c:function:: count(byte, offset, size)
+
+    .. versionadded:: 4.2.0
+
+    Returns how often a specific byte occurs, starting at *offset*
+    and looking at the next *size* bytes. When scanning a
+    running process the *offset* argument should be a virtual address within
+    the process address space.
+    *offset* and *size* are optional; if left empty, the complete file is searched.
+
+    *Example: math.count(0x4A) >= 10*
+
+.. c:function:: percentage(byte, offset, size)
+
+    .. versionadded:: 4.2.0
+
+    Returns the occurrence rate of a specific byte, starting at *offset*
+    and looking at the next *size* bytes. When scanning a
+    running process the *offset* argument should be a virtual address within
+    the process address space. The returned value is a float between 0 and 1.
+    *offset* and *size* are optional; if left empty, the complete file is searched.
+
+    
+    *Example: math.percentage(0xFF, filesize-1024, filesize) >= 0.9*
+    
+    *Example: math.percentage(0x4A) >= 0.4*
+
+.. c:function:: mode(offset, size)
+
+    .. versionadded:: 4.2.0
+    
+    Returns the most common byte, starting at *offset* and looking at the next
+    *size* bytes. When scanning a
+    running process the *offset* argument should be a virtual address within
+    the process address space. The returned value is a float.
+    *offset* and *size* are optional; if left empty, the complete file is searched.
+
+    *Example: math.mode(0, filesize) == 0xFF*
