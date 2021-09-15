@@ -83,46 +83,6 @@ int main(int argc, char** argv)
       "import \"math\" \
       rule test { \
         condition: \
-          math.count(\"AA\", 0, 10) == 4 \
-      }",
-      "AAAAA");
-
-  assert_true_rule_blob(
-      "import \"math\" \
-      rule test { \
-        condition: \
-          math.count(\"ABC\", 0, 10) == 2 \
-      }",
-      "ABCDABCDABCD");
-
-  assert_true_rule_blob(
-      "import \"math\" \
-      rule test { \
-        condition: \
-          math.count(\"ABC\", 0, filesize) == 3 \
-      }",
-      "ABCDABCDABCD");
-
-  assert_true_rule_blob(
-      "import \"math\" \
-      rule test { \
-        condition: \
-          math.count(\"AA\", 0, filesize) == 4 \
-      }",
-      "AAAAA");
-
-  assert_true_rule_blob(
-      "import \"math\" \
-      rule test { \
-        condition: \
-          math.count(\"AAA\", 0, filesize) == 0 \
-      }",
-      "AA");
-
-  assert_true_rule_blob(
-      "import \"math\" \
-      rule test { \
-        condition: \
           math.percentage(0x41) > 0.39 and math.percentage(0x41) < 0.41 \
       }",
       "ABAB"); // Blob matching includes terminating zero byte
