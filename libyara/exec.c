@@ -1259,6 +1259,39 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
       push(r2);
       break;
 
+    case OP_COUNT_IN:
+      YR_DEBUG_FPRINTF(2, stderr, "- case OP_COUNT_IN: // %s()\n", __FUNCTION__);
+      pop(r3);
+      pop(r2);
+      pop(r1);
+
+      ensure_defined(r1);
+      ensure_defined(r2);
+
+#if YR_PARANOID_EXEC
+      ensure_within_rules_arena(r1.p);
+#endif
+
+      match = context->matches[r3.s->idx].head;
+      r4.i = 0;
+
+      while (match != NULL)
+      {
+        if (match->base + match->offset >= r1.i &&
+            match->base + match->offset <= r2.i)
+        {
+          r4.i++;
+        }
+
+        if (match->base + match->offset > r2.i)
+          break;
+
+        match = match->next;
+      }
+
+      push(r4);
+      break;
+
     case OP_OFFSET:
       YR_DEBUG_FPRINTF(2, stderr, "- case OP_OFFSET: // %s()\n", __FUNCTION__);
       pop(r2);
@@ -1360,7 +1393,8 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
       break;
 
     case OP_OF_FOUND_IN:
-      YR_DEBUG_FPRINTF(2, stderr, "- case OP_OF_RANGE: // %s()\n", __FUNCTION__);
+      YR_DEBUG_FPRINTF(
+          2, stderr, "- case OP_OF_FOUND_IN: // %s()\n", __FUNCTION__);
 
       count = 0;
       pop(r2);
