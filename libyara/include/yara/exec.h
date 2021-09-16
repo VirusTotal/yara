@@ -114,6 +114,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define OP_IEQUALS              70
 #define OP_OF_PERCENT           71
 #define OP_OF_FOUND_IN          72
+#define OP_COUNT_IN             73
 
 #define _OP_EQ    0
 #define _OP_NEQ   1
