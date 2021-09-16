@@ -899,6 +899,16 @@ For example:
 This rule matches any file or process containing the string $a exactly six times,
 and more than ten occurrences of string $b.
 
+Starting with YARA 4.2.0 it is possible to express the count of a string in an
+integer range, like this:
+
+.. code-block:: yara
+
+    #a in (filesize-500..filesize) == 2
+
+In this example the number of 'a' strings in the last 500 bytes of the file must
+equal exactly 2.
+
 .. _string-offsets:
 
 String offsets or virtual addresses

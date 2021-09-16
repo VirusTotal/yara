@@ -2326,6 +2326,18 @@ primary_expression
         $$.type = EXPRESSION_TYPE_STRING;
         $$.value.sized_string_ref = ref;
       }
+    | _STRING_COUNT_ _IN_ range
+      {
+        int result = yr_parser_reduce_string_identifier(
+            yyscanner, $1, OP_COUNT_IN, YR_UNDEFINED);
+
+        yr_free($1);
+
+        fail_if_error(result);
+
+        $$.type = EXPRESSION_TYPE_INTEGER;
+        $$.value.integer = YR_UNDEFINED;
+      }
     | _STRING_COUNT_
       {
         int result = yr_parser_reduce_string_identifier(
