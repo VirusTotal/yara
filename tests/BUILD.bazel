@@ -118,6 +118,7 @@ cc_test(
         "data/mtxex.dll",
         "data/mtxex_modified_rsrc_rva.dll",
         "data/pe_imports",
+        "data/pe_mingw",
         "data/tiny",
         "data/tiny-idata-51ff",
         "data/tiny-idata-5200",

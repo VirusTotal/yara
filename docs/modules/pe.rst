@@ -560,6 +560,16 @@ Reference
 
         Section name.
 
+    .. c:member:: full_name
+
+        If the name in the section table contains a slash (/) followed by
+        a representation of the decimal number in ASCII format, then this field
+        contains a string from the specified offset in the string table.
+        Otherwise, this field contains the same value as a name field.
+
+        Even though it's not a standard, MinGW and Cygwin compilers use this
+        feature to store section names which are longer than 8 characters.
+
     .. c:member:: characteristics
 
         Section characteristics.
