@@ -1895,6 +1895,70 @@ static void pe_parse_certificates(PE* pe)
 
 #endif  // defined(HAVE_LIBCRYPTO)
 
+const char* pe_get_section_full_name(
+    PE* pe,
+    const char* section_name,
+    uint64_t section_name_length,
+    uint64_t* section_full_name_length)
+{
+  // section_name is an 8-byte, null-padded UTF-8 encoded string. If the string
+  // is exactly 8 characters long, there is no terminating null. For longer
+  // names, this field contains a slash (/) that is followed by an ASCII
+  // representation of a decimal number that is an offset into the string table.
+
+  // Sample: 2e9c671b8a0411f2b397544b368c44d7f095eb395779de0ad1ac946914dfa34c
+
+  // Check if any param is NULL
+  if (pe == NULL || section_name == NULL || section_full_name_length == NULL)
+    return NULL;
+
+  // Set length to zero
+  *section_full_name_length = 0;
+
+  // Offset and number of records in coff table
+  uint64_t coff_offset = yr_le32toh(
+      pe->header->FileHeader.PointerToSymbolTable);
+  uint64_t coff_number = yr_le32toh(pe->header->FileHeader.NumberOfSymbols);
+
+  // If section name start with '/' and file contain coff table then section
+  // name is stored in string table
+  if (coff_offset == 0 || section_name[0] != '/')
+  {
+    *section_full_name_length = section_name_length;
+    return section_name;
+  }
+
+  // Calculate offset of string table (String table is immediately after coff
+  // table)
+  uint64_t string_offset = coff_offset + coff_number * sizeof(IMAGE_SYMBOL);
+  uint64_t string_index = 0;
+
+  // Calculate string index/offset in string table
+  for (int i = 1; i < IMAGE_SIZEOF_SHORT_NAME && isdigit(section_name[i]); i++)
+    string_index = (string_index * 10) + (section_name[i] - '0');
+
+  // Calculate string pointer
+  const char* string = (char*) (pe->data + string_offset + string_index);
+
+  // Check string
+  for (uint64_t len = 0; fits_in_pe(pe, string, len + 1); len++)
+  {
+    // Valid string
+    if (string[len] == 0)
+    {
+      *section_full_name_length = len;
+      return string;
+    }
+
+    // string contain unprintable character
+    if (!isprint(string[len]))
+      return NULL;
+  }
+
+  // String do not fit into pe file
+  return NULL;
+}
+
 static void pe_parse_header(PE* pe, uint64_t base_address, int flags)
 {
   PIMAGE_SECTION_HEADER section;
@@ -2147,11 +2211,22 @@ static void pe_parse_header(PE* pe, uint64_t base_address, int flags)
         break;
     }
 
+    uint64_t sect_full_name_length = 0;
+    const char* full_section_name = pe_get_section_full_name(
+        pe, section_name, sect_name_length + 1, &sect_full_name_length);
+
     set_sized_string(
         (char*) section_name,
         sect_name_length + 1,
         pe->object,
         "sections[%i].name",
+        i);
+
+    set_sized_string(
+        full_section_name,
+        sect_full_name_length,
+        pe->object,
+        "sections[%i].full_name",
         i);
 
     set_integer(
@@ -3373,6 +3448,7 @@ begin_declarations
 
   begin_struct_array("sections")
     declare_string("name");
+    declare_string("full_name");
     declare_integer("characteristics");
     declare_integer("virtual_address");
     declare_integer("virtual_size");
