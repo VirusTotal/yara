@@ -2,6 +2,7 @@
 #define YR_DOTNET_H
 
 #include <yara/pe.h>
+#include <yara/pe_utils.h>
 
 #pragma pack(push, 1)
 
@@ -368,6 +369,8 @@ typedef struct _INDEX_SIZES
   uint8_t assemblyref;
   uint8_t genericparam;
 } INDEX_SIZES, *PINDEX_SIZES;
+
+bool dotnet_is_dotnet(PE* pe);
 
 #pragma pack(pop)
 #endif

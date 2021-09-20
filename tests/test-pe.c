@@ -608,6 +608,28 @@ int main(int argc, char** argv)
       }",
       "tests/data/pe_mingw");
 
+  assert_true_rule_file(
+      "import \"pe\" \
+      \
+      rule is_dotnet \
+      {\
+          condition:\
+            pe.is_dotnet() == 0\
+      }",
+      "tests/data/"
+      "33fc70f99be6d2833ae48852d611c8048d0c053ed0b2c626db4dbe902832a08b");
+
+  assert_true_rule_file(
+      "import \"pe\" \
+      \
+      rule is_dotnet \
+      {\
+          condition:\
+            pe.is_dotnet() == 1\
+      }",
+      "tests/data/"
+      "0ca09bde7602769120fadc4f7a4147347a7a97271370583586c9e587fd396171");
+
   yr_finalize();
 
   YR_DEBUG_FPRINTF(
