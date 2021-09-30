@@ -34,11 +34,9 @@ jobs:
         run: make clean && make
       - name: Run tests
         run: make check
-      - name: Archive tests log
-        uses: actions/upload-artifact@v2
-        with:
-          name: test-suite-log
-          path: test-suite.log
+      - name: Print test logs
+        if: ${{ failure() }}
+        run: cat test-suite.log
 
   mingw-build:
     runs-on: ubuntu-latest
