@@ -990,25 +990,6 @@ int yr_scan_verify_match(
   if (yr_bitmask_is_set(context->strings_temp_disabled, string->idx))
     return ERROR_SUCCESS;
 
-  if (context->matches[string->idx].count == YR_MAX_STRING_MATCHES)
-  {
-    result = callback(
-        context,
-        CALLBACK_MSG_TOO_MANY_MATCHES,
-        (void*) string,
-        context->user_data);
-
-    if (result == CALLBACK_CONTINUE)
-    {
-      yr_bitmask_set(context->strings_temp_disabled, string->idx);
-      return ERROR_SUCCESS;
-    }
-    else if (result == CALLBACK_ABORT || result == CALLBACK_ERROR)
-      return ERROR_TOO_MANY_MATCHES;
-    else
-      return ERROR_INTERNAL_FATAL_ERROR;
-  }
-
   if (context->flags & SCAN_FLAGS_FAST_MODE && STRING_IS_SINGLE_MATCH(string) &&
       context->matches[string->idx].head != NULL)
     return ERROR_SUCCESS;
@@ -1036,6 +1017,31 @@ int yr_scan_verify_match(
   {
     result = _yr_scan_verify_re_match(
         context, ac_match, data, data_size, data_base, offset);
+  }
+
+  // If _yr_scan_verify_literal_match or _yr_scan_verify_re_match return
+  // ERROR_TOO_MANY_MATCHES call the callback with CALLBACK_MSG_TOO_MANY_MATCHES
+  // in order to ask what to do. If the callback returns CALLBACK_CONTINUE
+  // this error is ignored, if not, the error is propagated to the caller.
+  if (result == ERROR_TOO_MANY_MATCHES)
+  {
+    result = callback(
+        context,
+        CALLBACK_MSG_TOO_MANY_MATCHES,
+        (void*) string,
+        context->user_data);
+
+    switch (result)
+    {
+    case CALLBACK_CONTINUE:
+      yr_bitmask_set(context->strings_temp_disabled, string->idx);
+      result = ERROR_SUCCESS;
+      break;
+
+    default:
+      result = ERROR_TOO_MANY_MATCHES;
+      break;
+    }
   }
 
 #ifdef YR_PROFILING_ENABLED
