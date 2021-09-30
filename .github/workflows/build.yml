@@ -33,9 +33,9 @@ jobs:
       - name: Build
         run: make clean && make
       - name: Run tests
-        run: |
-          make check
-          cat test-suite.log
+        run: make check
+      - name: Show tests results
+        run: cat test-suite.log
 
   mingw-build:
     runs-on: ubuntu-latest
