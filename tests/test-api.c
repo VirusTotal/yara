@@ -340,6 +340,13 @@ void test_too_many_matches()
   }
 
   uint8_t* buffer = (uint8_t*) malloc(2 * YR_MAX_STRING_MATCHES);
+
+  if (buffer == NULL)
+  {
+    perror("malloc");
+    exit(EXIT_FAILURE);
+  }
+
   memset(buffer, 'a', 2 * YR_MAX_STRING_MATCHES);
 
   int err = yr_rules_scan_mem(
@@ -359,6 +366,7 @@ void test_too_many_matches()
         "%d\n",
         err);
 
+    free(buffer);
     exit(EXIT_FAILURE);
   }
 
@@ -378,9 +386,11 @@ void test_too_many_matches()
         "test_too_many_matches failed, expecting ERROR_SUCCESS, got %d\n",
         err);
 
+    free(buffer);
     exit(EXIT_FAILURE);
   }
 
+  free(buffer);
   yr_rules_destroy(rules);
   yr_finalize();
 }
