@@ -34,7 +34,7 @@ jobs:
         run: make clean && make
       - name: Run tests
         run: make check
-      - name: Print test logs
+      - name: Print tests errors
         if: ${{ failure() }}
         run: cat test-suite.log
 
