@@ -34,7 +34,8 @@ jobs:
         run: make clean && make
       - name: Run tests
         run: make check
-      - name: Show tests results
+      - name: Print test logs
+        if: ${{ failure() }}
         run: cat test-suite.log
 
   mingw-build:
