@@ -34,8 +34,11 @@ jobs:
         run: make clean && make
       - name: Run tests
         run: make check
-      - name: Show tests results
-        run: cat test-suite.log
+      - name: Archive tests log
+        uses: actions/upload-artifact@v2
+        with:
+          name: test-suite-log
+          path: test-suite.log
 
   mingw-build:
     runs-on: ubuntu-latest
