@@ -80,6 +80,7 @@ awesome list of [YARA-related stuff](https://github.com/InQuest/awesome-yara).
 * [Dtex Systems](https://dtexsystems.com)
 * [ESET](https://www.eset.com)
 * [ESTsecurity](https://www.estsecurity.com)
+* [FarCry 6](https://en.wikipedia.org/wiki/Far_Cry_6)
 * [Fidelis XPS](http://www.fidelissecurity.com/network-security-appliance/Fidelis-XPS)
 * [FireEye, Inc.](http://www.fireeye.com)
 * [Forcepoint](https://www.forcepoint.com)
