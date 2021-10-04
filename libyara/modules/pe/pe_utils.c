@@ -36,6 +36,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <yara/pe_utils.h>
 #include <yara/strutils.h>
 #include <yara/utils.h>
+#include <yara/dotnet.h>
 
 #if HAVE_LIBCRYPTO
 #include <openssl/asn1.h>
@@ -1876,4 +1877,65 @@ char* ord_lookup(char* dll, uint16_t ord)
     sprintf(name, "ord%u", ord);
 
   return yr_strdup(name);
+}
+
+bool dotnet_is_dotnet(PE* pe)
+{
+  PIMAGE_DATA_DIRECTORY directory = pe_get_directory_entry(
+      pe, IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR);
+
+  if (!directory)
+    return false;
+
+  int64_t offset = pe_rva_to_offset(pe, yr_le32toh(directory->VirtualAddress));
+
+  if (offset < 0 || !struct_fits_in_pe(pe, pe->data + offset, CLI_HEADER))
+    return false;
+
+  CLI_HEADER* cli_header = (CLI_HEADER*) (pe->data + offset);
+
+  if (yr_le32toh(cli_header->Size) != sizeof(CLI_HEADER))
+    return false;
+
+  int64_t metadata_root = pe_rva_to_offset(
+      pe, yr_le32toh(cli_header->MetaData.VirtualAddress));
+
+  if (!struct_fits_in_pe(pe, pe->data + metadata_root, NET_METADATA))
+    return false;
+
+  NET_METADATA* metadata = (NET_METADATA*) (pe->data + metadata_root);
+
+  if (yr_le32toh(metadata->Magic) != NET_METADATA_MAGIC)
+    return false;
+
+  // Version length must be between 1 and 255, and be a multiple of 4.
+  // Also make sure it fits in pe.
+  uint32_t md_len = yr_le32toh(metadata->Length);
+  if (md_len == 0 || md_len > 255 || md_len % 4 != 0 ||
+      !fits_in_pe(pe, pe->data + offset, md_len))
+  {
+    return false;
+  }
+
+  if (IS_64BITS_PE(pe))
+  {
+    if (yr_le16toh(OptionalHeader(pe, NumberOfRvaAndSizes)) <
+        IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR)
+      return false;
+  }
+  else if (!(pe->header->FileHeader.Characteristics & IMAGE_FILE_DLL))  // 32bit
+  {
+    // Check first 2 bytes of the Entry point are equal to 0xFF 0x25
+    int64_t entry_offset = pe_rva_to_offset(
+        pe, yr_le32toh(pe->header->OptionalHeader.AddressOfEntryPoint));
+
+    if (offset < 0 || !fits_in_pe(pe, pe->data + entry_offset, 2))
+      return false;
+
+    const uint8_t* entry_data = pe->data + entry_offset;
+    if (!(entry_data[0] == 0xFF && entry_data[1] == 0x25))
+      return false;
+  }
+
+  return true;
 }
