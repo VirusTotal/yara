@@ -72,6 +72,65 @@ int main(int argc, char** argv)
       }",
       "tests/data/tiny-idata-5200");
 
+  ///////////////////////////////
+
+  assert_true_rule_file(
+      "import \"pe\" \
+      rule test { \
+        condition: \
+          pe.imports(pe.IMPORT_STANDARD, \"KERNEL32.dll\", \"DeleteCriticalSection\") \
+      }",
+      "tests/data/tiny");
+
+  assert_true_rule_file(
+      "import \"pe\" \
+      rule test { \
+        condition: \
+          pe.imports(pe.IMPORT_STANDARD, \"KERNEL32.dll\", \"DeleteCriticalSection\") \
+      }",
+      "tests/data/tiny-idata-51ff");
+
+  assert_false_rule_file(
+      "import \"pe\" \
+      rule test { \
+        condition: \
+          pe.imports(pe.IMPORT_STANDARD, \"KERNEL32.dll\", \"DeleteCriticalSection\") \
+      }",
+      "tests/data/tiny-idata-5200");
+
+  assert_true_rule_file(
+      "import \"pe\" \
+      rule test { \
+        condition: \
+          pe.imports(pe.IMPORT_STANDARD, /.*/, /.*CriticalSection/) == 4 \
+      }",
+      "tests/data/tiny");
+
+  assert_true_rule_file(
+      "import \"pe\" \
+      rule test { \
+        condition: \
+          pe.imports(pe.IMPORT_STANDARD, /kernel32\\.dll/i, /.*/) == 21 \
+      }",
+      "tests/data/tiny");
+
+  assert_true_rule_file(
+      "import \"pe\" \
+      rule test { \
+        condition: \
+          pe.imports(pe.IMPORT_STANDARD, /.*/, /.*/) \
+      }",
+      "tests/data/tiny-idata-5200");
+
+  assert_false_rule_file(
+      "import \"pe\" \
+      rule test { \
+        condition: \
+          pe.imports(pe.IMPORT_STANDARD, /.*/, /.*CriticalSection/) \
+      }",
+      "tests/data/tiny-idata-5200");
+
+
   assert_true_rule_file(
       "import \"pe\" \
       rule test { \
@@ -80,6 +139,122 @@ int main(int argc, char** argv)
           pe.number_of_imported_functions == 48\
       }",
       "tests/data/tiny");
+
+  assert_true_rule_file(
+      "import \"pe\" \
+      rule test { \
+        condition: \
+          pe.imports(pe.IMPORT_DELAYED, \"USER32.dll\", \"MessageBoxA\") \
+      }",
+      "tests/data/pe_imports");
+
+  assert_false_rule_file(
+      "import \"pe\" \
+      rule test { \
+        condition: \
+            pe.imports(pe.IMPORT_DELAYED, \"KERNEL32.dll\", \"DeleteCriticalSection\") \
+      }",
+      "tests/data/pe_imports");
+
+  assert_true_rule_file(
+      "import \"pe\" \
+      rule test { \
+        condition: \
+          pe.imports(pe.IMPORT_DELAYED, /.*/, /Message.*/) == 2 \
+      }",
+      "tests/data/pe_imports");
+
+  assert_true_rule_file(
+      "import \"pe\" \
+      rule test { \
+        condition: \
+          pe.imports(pe.IMPORT_DELAYED, /USER32\\.dll/i, /.*BoxA/) == 1 \
+      }",
+      "tests/data/pe_imports");
+
+  assert_false_rule_file(
+      "import \"pe\" \
+      rule test { \
+        condition: \
+          pe.imports(pe.IMPORT_DELAYED, /.*/, /.*CriticalSection/) \
+      }",
+      "tests/data/pe_imports");
+
+  assert_true_rule_file(
+      "import \"pe\" \
+      rule test { \
+        condition: \
+          pe.number_of_delayed_imports == 1 and\
+          pe.number_of_delayed_imported_functions == 2\
+      }",
+      "tests/data/pe_imports");
+
+  assert_true_rule_file(
+      "import \"pe\" \
+      rule test { \
+        condition: \
+          pe.imports(pe.IMPORT_ANY, \"KERNEL32.dll\", \"DeleteCriticalSection\") and \
+          pe.imports(pe.IMPORT_ANY, \"USER32.dll\", \"MessageBoxA\") \
+      }",
+      "tests/data/pe_imports");
+
+  assert_true_rule_file(
+      "import \"pe\" \
+      rule test { \
+        condition: \
+          pe.imports(pe.IMPORT_ANY, \"KERNEL32.dll\", \"DeleteCriticalSection\") \
+      }",
+      "tests/data/tiny-idata-51ff");
+
+  assert_false_rule_file(
+      "import \"pe\" \
+      rule test { \
+        condition: \
+          pe.imports(pe.IMPORT_ANY, \"KERNEL32.dll\", \"DeleteCriticalSection\") \
+      }",
+      "tests/data/tiny-idata-5200");
+
+  assert_true_rule_file(
+      "import \"pe\" \
+      rule test { \
+        condition: \
+          pe.imports(pe.IMPORT_ANY, /.*/, /.*CriticalSection/) == 4 \
+      }",
+      "tests/data/tiny");
+
+  assert_true_rule_file(
+      "import \"pe\" \
+      rule test { \
+        condition: \
+          pe.imports(pe.IMPORT_ANY, /kernel32\\.dll/i, /.*/) == 21 \
+      }",
+      "tests/data/tiny");
+
+  assert_true_rule_file(
+      "import \"pe\" \
+      rule test { \
+        condition: \
+          pe.imports(pe.IMPORT_ANY, /.*/, /.*/) \
+      }",
+      "tests/data/tiny-idata-5200");
+
+  assert_false_rule_file(
+      "import \"pe\" \
+      rule test { \
+        condition: \
+          pe.imports(pe.IMPORT_ANY, /.*/, /.*CriticalSection/) \
+      }",
+      "tests/data/tiny-idata-5200");
+
+  assert_true_rule(
+      "import \"pe\" \
+      rule test { \
+        condition: \
+          ( \
+            pe.IMPORT_ANY & (pe.IMPORT_STANDARD | pe.IMPORT_DELAYED) \
+          ) == (pe.IMPORT_STANDARD | pe.IMPORT_DELAYED)\
+      }",
+      "")
 
   assert_true_rule_file(
       "import \"pe\" \
@@ -358,6 +533,80 @@ int main(int argc, char** argv)
           pe.language(0x09) and pe.locale(0x0409) \
       }",
       "tests/data/mtxex.dll");
+
+  assert_true_rule_file(
+      "import \"pe\" \
+      rule version_info_catch \
+      {\
+          condition:\
+            pe.number_of_version_infos  > 2 and\
+            for any version in pe.version_info_list : ( \
+              version.key == \"FileVersion\" and \
+              version.value == \"27.1.9.33\" \
+          ) \
+      }",
+      "tests/data/079a472d22290a94ebb212aa8015cdc8dd28a968c6b4d3b88acdd58ce2d3b885");
+
+  assert_true_rule_file(
+      "import \"pe\" \
+      rule iequals_comparison { \
+        condition: \
+          pe.sections[0].name != \".TEXT\" and \
+          pe.sections[0].name iequals \".TEXT\" \
+      }",
+      "tests/data/tiny");
+
+  assert_true_rule_file(
+      "import \"pe\" \
+      \
+      rule import_details_catch \
+      {\
+          condition:\
+            for any import_detail in pe.import_details: (\
+                import_detail.library_name == \"MSVCR100.dll\" and\
+                for any function in import_detail.functions : (\
+                    function.name == \"_initterm\"\
+                )\
+            )\
+      }",
+      "tests/data/079a472d22290a94ebb212aa8015cdc8dd28a968c6b4d3b88acdd58ce2d3b885");
+
+  assert_true_rule_file(
+      "import \"pe\" \
+      \
+      rule zero_length_version_info_value \
+      {\
+          condition:\
+            pe.number_of_version_infos == 12 and \
+            pe.version_info[\"Comments\"] == \"\" and \
+            pe.version_info[\"CompanyName\"] == \"\" and \
+            pe.version_info[\"LegalTrademarks\"] == \"\" and \
+            pe.version_info[\"PrivateBuild\"] == \"\" and \
+            pe.version_info[\"SpecialBuild\"] == \"\" \
+      }",
+      "tests/data/ca21e1c32065352d352be6cde97f89c141d7737ea92434831f998080783d5386");
+
+
+  assert_true_rule_file(
+      "import \"pe\" \
+      rule section_name_comparison { \
+        condition: \
+          for all section in pe.sections : ( \
+              section.name == section.full_name \
+          )\
+      }",
+      "tests/data/tiny");
+
+  assert_true_rule_file(
+      "import \"pe\" \
+      rule section_name_comparison { \
+        condition: \
+          for any section in pe.sections : ( \
+              section.name == \"/4\" and\
+              section.full_name == \".debug_aranges\" \
+          )\
+      }",
+      "tests/data/pe_mingw");
 
   yr_finalize();
 

@@ -27,9 +27,10 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+// clang-format off
+
 %{
-
-
+  
 #include <assert.h>
 #include <stdio.h>
 #include <string.h>
@@ -59,8 +60,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define YYMALLOC yr_malloc
 #define YYFREE yr_free
 
-#define FOR_EXPRESSION_ALL 1
-#define FOR_EXPRESSION_ANY 2
+#define FOR_EXPRESSION_ALL  1
+#define FOR_EXPRESSION_ANY  2
+#define FOR_EXPRESSION_NONE 3
 
 #define fail_with_error(e) \
     { \
@@ -192,6 +194,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 %token _ENTRYPOINT_                                    "<entrypoint>"
 %token _ALL_                                           "<all>"
 %token _ANY_                                           "<any>"
+%token _NONE_                                          "<none>"
 %token _IN_                                            "<in>"
 %token _OF_                                            "<of>"
 %token _FOR_                                           "<for>"
@@ -203,6 +206,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 %token _ICONTAINS_                                     "<icontains>"
 %token _ISTARTSWITH_                                   "<istartswith>"
 %token _IENDSWITH_                                     "<iendswith>"
+%token _IEQUALS_                                       "<iequals>"
 %token _IMPORT_                                        "<import>"
 %token _TRUE_                                          "<true>"
 %token _FALSE_                                         "<false>"
@@ -223,7 +227,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // in the list. Operators that appear in the same line have the same precedence.
 %left _OR_
 %left _AND_
-%left _EQ_ _NEQ_ _CONTAINS_ _ICONTAINS_ _STARTSWITH_ _ENDSWITH_ _ISTARTSWITH_ _IENDSWITH_ _MATCHES_
+%left _EQ_ _NEQ_ _CONTAINS_ _ICONTAINS_ _STARTSWITH_ _ENDSWITH_ _ISTARTSWITH_ _IENDSWITH_ _IEQUALS_ _MATCHES_
 %left _LT_ _LE_ _GT_ _GE_
 %left '|'
 %left '^'
@@ -1364,6 +1368,16 @@ expression
 
         $$.type = EXPRESSION_TYPE_BOOLEAN;
       }
+    | primary_expression _IEQUALS_ primary_expression
+      {
+        check_type($1, EXPRESSION_TYPE_STRING, "iequals");
+        check_type($3, EXPRESSION_TYPE_STRING, "iequals");
+
+        fail_if_error(yr_parser_emit(
+            yyscanner, OP_IEQUALS, NULL));
+
+        $$.type = EXPRESSION_TYPE_BOOLEAN;
+      }
     | _STRING_IDENTIFIER_
       {
         int result = yr_parser_reduce_string_identifier(
@@ -1770,6 +1784,32 @@ expression
     | for_expression _OF_ string_set
       {
         yr_parser_emit(yyscanner, OP_OF, NULL);
+
+        $$.type = EXPRESSION_TYPE_BOOLEAN;
+      }
+    | primary_expression '%' _OF_ string_set
+      {
+        check_type($1, EXPRESSION_TYPE_INTEGER, "%");
+
+        // The value of primary_expression can be undefined because
+        // it could be a variable for which don't know the value during
+        // compiling time. However, if the value is defined it should be
+        // in the range [1,100].
+        if (!IS_UNDEFINED($1.value.integer) &&
+            ($1.value.integer < 1 || $1.value.integer > 100))
+        {
+          yr_compiler_set_error_extra_info(
+              compiler, "percentage must be between 1 and 100 (inclusive)");
+          compiler->last_error = ERROR_INVALID_PERCENTAGE;
+          yyerror(yyscanner, compiler, NULL);
+          YYERROR;
+        }
+
+        yr_parser_emit(yyscanner, OP_OF_PERCENT, NULL);
+      }
+    | for_expression _OF_ string_set _IN_ range
+      {
+        yr_parser_emit(yyscanner, OP_OF_FOUND_IN, NULL);
 
         $$.type = EXPRESSION_TYPE_BOOLEAN;
       }
@@ -2207,6 +2247,11 @@ for_expression
         yr_parser_emit_push_const(yyscanner, 1);
         $$ = FOR_EXPRESSION_ANY;
       }
+    | _NONE_
+      {
+        yr_parser_emit_push_const(yyscanner, 0);
+        $$ = FOR_EXPRESSION_NONE;
+      }
     ;
 
 
@@ -2287,6 +2332,18 @@ primary_expression
 
         $$.type = EXPRESSION_TYPE_STRING;
         $$.value.sized_string_ref = ref;
+      }
+    | _STRING_COUNT_ _IN_ range
+      {
+        int result = yr_parser_reduce_string_identifier(
+            yyscanner, $1, OP_COUNT_IN, YR_UNDEFINED);
+
+        yr_free($1);
+
+        fail_if_error(result);
+
+        $$.type = EXPRESSION_TYPE_INTEGER;
+        $$.value.integer = YR_UNDEFINED;
       }
     | _STRING_COUNT_
       {

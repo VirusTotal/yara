@@ -44,38 +44,38 @@ keywords are reserved and cannot be used as an identifier:
    * - import
      - icontains
      - iendswith
+     - iequals
      - in
      - include
      - int16
      - int16be
-     - int32
-   * - int32be
+   * - int32
+     - int32be
      - int8
      - int8be
      - istartswith
      - matches
      - meta
      - nocase
+   * - none
      - not
-   * - of
+     - of
      - or
      - private
      - rule
      - startswith
      - strings
-     - them
+   * - them
      - true
-   * - uint16
+     - uint16
      - uint16be
      - uint32
      - uint32be
      - uint8
      - uint8be
-     - wide
+   * - wide
      - xor
-   * - defined
-     -
-     -
+     - defined
      -
      -
      -
@@ -842,6 +842,8 @@ Precedence  Operator     Description                                Associativit
 
             iendswith    Like endswith but case-insensitive
 
+            iequals      Case-insensitive string comparison
+
             matches      String matches regular expression
 ----------  -----------  -----------------------------------------  -------------
 11          not          Logical NOT                                Right-to-left
@@ -897,6 +899,16 @@ For example:
 This rule matches any file or process containing the string $a exactly six times,
 and more than ten occurrences of string $b.
 
+Starting with YARA 4.2.0 it is possible to express the count of a string in an
+integer range, like this:
+
+.. code-block:: yara
+
+    #a in (filesize-500..filesize) == 2
+
+In this example the number of 'a' strings in the last 500 bytes of the file must
+equal exactly 2.
+
 .. _string-offsets:
 
 String offsets or virtual addresses
@@ -951,7 +963,7 @@ Again, numbers are decimal by default.
 
 You can also get the offset or virtual address of the i-th occurrence of string
 $a by using @a[i]. The indexes are one-based, so the first occurrence would be
-@a[1] the second one @a[2] and so on. If you provide an index greater then the
+@a[1] the second one @a[2] and so on. If you provide an index greater than the
 number of occurrences of the string, the result will be a NaN (Not A Number)
 value.
 
@@ -1154,7 +1166,7 @@ the equivalent keyword ``them`` for more legibility.
 
 In all the examples above, the number of strings have been specified by a
 numeric constant, but any expression returning a numeric value can be used.
-The keywords ``any`` and ``all`` can be used as well.
+The keywords ``any``, ``all`` and ``none`` can be used as well.
 
 .. code-block:: yara
 
@@ -1163,6 +1175,16 @@ The keywords ``any`` and ``all`` can be used as well.
     all of ($a*)      // all strings whose identifier starts by $a
     any of ($a,$b,$c) // any of $a, $b or $c
     1 of ($*)         // same that "any of them"
+    none of ($b*)     // zero of the set of strings that start with "$b"
+
+
+Starting with YARA 4.2.0 it is possible to express a set of strings in an
+integer range, like this:
+
+.. code-block:: yara
+
+    all of ($a*) in (filesize-500..filesize)
+    any of ($a*, $b*) in (1000..2000)
 
 
 Applying the same condition to many strings
@@ -1610,8 +1632,10 @@ For example:
 
 External variables of type string can be used with the operators: ``contains``,
 ``startswith``, ``endswith`` and their case-insensitive counterparts: ``icontains``,
-``istartswith`` and ``iendswith`. They can be used also with the ``matches``
+``istartswith`` and ``iendswith``. They can be used also with the ``matches``
 operator, which returns true if the string matches a given regular expression.
+Case-insensitive string comparison can be done through special operator ``iequals``
+which only works with strings. For case-sensitive comparison use regular ``==``.
 
 .. code-block:: yara
 
@@ -1637,6 +1661,12 @@ operator, which returns true if the string matches a given regular expression.
     {
         condition:
             string_ext_var endswith "suffix"
+    }
+
+    rule IequalsExample
+    {
+        condition:
+            string_ext_var iequals "string"
     }
 
     rule MatchesExample

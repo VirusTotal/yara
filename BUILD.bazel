@@ -104,12 +104,14 @@ cc_library(
     name = "cli_shared",
     srcs = [
         "cli/args.c",
+        "cli/common.c",
         "cli/threading.c",
     ],
     hdrs = [
         "cli/args.h",
         "cli/common.h",
         "cli/threading.h",
+        "cli/unicode.h",
     ],
     deps = [":libyara"],
 )

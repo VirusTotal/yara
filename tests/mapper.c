@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2007-2014. The YARA Authors. All Rights Reserved.
+Copyright (c) 2021. The YARA Authors. All Rights Reserved.
 
 Redistribution and use in source and binary forms, with or without modification,
 are permitted provided that the following conditions are met:
@@ -27,77 +27,70 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#ifndef YR_STRUTILS_H
-#define YR_STRUTILS_H
-
-#include <assert.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <yara/integers.h>
+#include <sys/mman.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <unistd.h>
 
-#if defined(_WIN32)
+char str[] = "!dlrow ,olleH";
+int fd;
 
-#if !defined(PRIu64)
-#define PRIu64 "I64u"
-#endif
+char* map_file(char* path)
+{
+  if ((fd = open(path, O_RDONLY)) < 0)
+  {
+    fprintf(stderr, "open: %s: %s\n", path, strerror(errno));
+    exit(1);
+  }
+  char* rv = mmap(NULL, 4096, PROT_READ | PROT_WRITE, MAP_PRIVATE, fd, 0);
+  if (rv == NULL)
+  {
+    fprintf(stderr, "mmap: %s: failed: %s\n", path, strerror(errno));
+    exit(1);
+  }
+  close(fd);
+  return rv;
+}
 
-#if !defined(PRIu32)
-#define PRIu32 "I32u"
-#endif
+int main(int argc, char** argv)
+{
+  char* buf;
 
-#if !defined(PRIx64)
-#define PRIx64 "I64x"
-#endif
+  if (argc < 2)
+  {
+    fprintf(stderr, "no argument\n");
+    exit(1);
+  }
+  else if (strcmp(argv[1], "open") == 0)
+  {
+    if (argc < 3)
+      exit(1);
 
-#if !defined(PRId64)
-#define PRId64 "I64d"
-#endif
+    printf("%s: %s %s\n", argv[0], argv[1], argv[2]);
+    buf = map_file(argv[2]);
+  }
+  else if (strcmp(argv[1], "patch") == 0)
+  {
+    if (argc < 3)
+      exit(1);
 
-#if !defined(PRIi32)
-#define PRIi32 "I32i"
-#endif
+    printf("%s: %s %s\n", argv[0], argv[1], argv[2]);
+    buf = map_file(argv[2]);
 
-#else
-#include <inttypes.h>
-#endif
-
-// Cygwin already has these functions.
-#if defined(_WIN32) && !defined(__CYGWIN__)
-#if defined(_MSC_VER) && _MSC_VER < 1900
-
-#if !defined(snprintf)
-#define snprintf _snprintf
-#endif
-
-#endif
-#define strcasecmp  _stricmp
-#define strncasecmp _strnicmp
-#endif
-
-uint64_t xtoi(const char* hexstr);
-
-#if !HAVE_STRLCPY && !defined(strlcpy)
-size_t strlcpy(char* dst, const char* src, size_t size);
-#endif
-
-#if !HAVE_STRLCAT && !defined(strlcat)
-size_t strlcat(char* dst, const char* src, size_t size);
-#endif
-
-#if !HAVE_MEMMEM && !defined(memmem)
-void* memmem(
-    const void* haystack,
-    size_t haystack_size,
-    const void* needle,
-    size_t needle_size);
-#endif
-
-int strnlen_w(const char* w_str);
-
-int strcmp_w(const char* w_str, const char* str);
-
-size_t strlcpy_w(char* dst, const char* w_src, size_t n);
-
-#endif
-
-int yr_isalnum(const uint8_t* s);
+    for (int i = 0; i < sizeof(str) - 1; i++)
+    {
+      buf[i] = str[sizeof(str) - i - 2];
+    }
+  }
+  else
+  {
+    fprintf(stderr, "unknown argument <%s>\n", argv[1]);
+    exit(1);
+  }
+  sleep(3600);
+}

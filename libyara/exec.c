@@ -1265,6 +1265,39 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
       push(r2);
       break;
 
+    case OP_COUNT_IN:
+      YR_DEBUG_FPRINTF(2, stderr, "- case OP_COUNT_IN: // %s()\n", __FUNCTION__);
+      pop(r3);
+      pop(r2);
+      pop(r1);
+
+      ensure_defined(r1);
+      ensure_defined(r2);
+
+#if YR_PARANOID_EXEC
+      ensure_within_rules_arena(r1.p);
+#endif
+
+      match = context->matches[r3.s->idx].head;
+      r4.i = 0;
+
+      while (match != NULL)
+      {
+        if (match->base + match->offset >= r1.i &&
+            match->base + match->offset <= r2.i)
+        {
+          r4.i++;
+        }
+
+        if (match->base + match->offset > r2.i)
+          break;
+
+        match = match->next;
+      }
+
+      push(r4);
+      break;
+
     case OP_OFFSET:
       YR_DEBUG_FPRINTF(2, stderr, "- case OP_OFFSET: // %s()\n", __FUNCTION__);
       pop(r2);
@@ -1322,7 +1355,7 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
       break;
 
     case OP_OF:
-      YR_DEBUG_FPRINTF(2, stderr, "- case OP_OF: // %s()\n", __FUNCTION__);
+    case OP_OF_PERCENT:
       found = 0;
       count = 0;
       pop(r1);
@@ -1339,10 +1372,71 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
 
       pop(r2);
 
-      if (is_undef(r2))
-        r1.i = found >= count ? 1 : 0;
-      else
-        r1.i = found >= r2.i ? 1 : 0;
+      if (opcode == OP_OF)
+      {
+        YR_DEBUG_FPRINTF(2, stderr, "- case OP_OF: // %s()\n", __FUNCTION__);
+
+        if (is_undef(r2))
+          r1.i = found >= count ? 1 : 0;
+        else
+          r1.i = found >= r2.i ? 1 : 0;
+      }
+      else  // OP_OF_PERCENT
+      {
+        YR_DEBUG_FPRINTF(
+            2, stderr, "- case OP_OF_PERCENT: // %s()\n", __FUNCTION__);
+
+        // If, by some weird reason, we manage to get an undefined string
+        // reference as the first thing on the stack then count would be zero.
+        // I don't know how this could ever happen but better to check for it.
+        if (is_undef(r2) || count == 0)
+          r1.i = YR_UNDEFINED;
+        else
+          r1.i = (((double) found / count) * 100) >= r2.i ? 1 : 0;
+      }
+
+      push(r1);
+      break;
+
+    case OP_OF_FOUND_IN:
+      YR_DEBUG_FPRINTF(
+          2, stderr, "- case OP_OF_FOUND_IN: // %s()\n", __FUNCTION__);
+
+      count = 0;
+      pop(r2);
+      pop(r1);
+      ensure_defined(r1);
+      ensure_defined(r2);
+
+      pop(r3);
+
+      while (!is_undef(r3))
+      {
+#if YR_PARANOID_EXEC
+        ensure_within_rules_arena(r3.p);
+#endif
+        match = context->matches[r3.s->idx].head;
+
+        while (match != NULL)
+        {
+          if (match->base + match->offset >= r1.i &&
+              match->base + match->offset <= r2.i)
+          {
+            count++;
+            break;
+          }
+
+          if (match->base + match->offset > r1.i)
+            break;
+
+          match = match->next;
+        }
+
+        pop(r3);
+      }
+
+      pop(r1)
+      r1.i = count >= r1.i ? 1 : 0;
 
       push(r1);
       break;
@@ -1810,6 +1904,7 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
     case OP_ISTARTSWITH:
     case OP_ENDSWITH:
     case OP_IENDSWITH:
+    case OP_IEQUALS:
       pop(r2);
       pop(r1);
 
@@ -1847,6 +1942,11 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
         YR_DEBUG_FPRINTF(
             2, stderr, "- case OP_IENDSWITH: // %s()\n", __FUNCTION__);
         r1.i = ss_iendswith(r1.ss, r2.ss);
+        break;
+      case OP_IEQUALS:
+        YR_DEBUG_FPRINTF(
+            2, stderr, "- case OP_IEQUALS: // %s()\n", __FUNCTION__);
+        r1.i = ss_icompare(r1.ss, r2.ss) == 0;
         break;
       }
 
