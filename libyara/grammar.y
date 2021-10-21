@@ -213,6 +213,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 %token _OR_                                            "<or>"
 %token _AND_                                           "<and>"
 %token _NOT_                                           "<not>"
+%token _DEFINED_                                       "<defined>"
 %token _EQ_                                            "=="
 %token _NEQ_                                           "!="
 %token _LT_                                            "<"
@@ -235,6 +236,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 %left '+' '-'
 %left '*' '\\' '%'
 %right _NOT_ '~' UNARY_MINUS
+%right _DEFINED_
 
 %type <rule>   rule
 
@@ -1815,6 +1817,11 @@ expression
       {
         yr_parser_emit(yyscanner, OP_NOT, NULL);
 
+        $$.type = EXPRESSION_TYPE_BOOLEAN;
+      }
+    | _DEFINED_ boolean_expression
+      {
+        yr_parser_emit(yyscanner, OP_DEFINED, NULL);
         $$.type = EXPRESSION_TYPE_BOOLEAN;
       }
     | boolean_expression _AND_

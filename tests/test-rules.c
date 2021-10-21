@@ -3206,6 +3206,31 @@ static void test_meta()
   YR_DEBUG_FPRINTF(1, stderr, "} // %s()\n", __FUNCTION__);
 }
 
+void test_defined()
+{
+
+  assert_true_rule(
+      "rule t { condition: defined 1 }",
+      NULL);
+
+  assert_false_rule(
+      "import \"pe\" \
+      rule t { \
+        condition: \
+          defined pe.number_of_resources \
+      }",
+      NULL);
+
+  assert_true_rule(
+      "import \"pe\" \
+      rule t { \
+        condition: \
+          not defined pe.number_of_resources \
+      }",
+      NULL);
+
+}
+
 static void test_pass(int pass)
 {
   switch (pass)
@@ -3297,6 +3322,7 @@ static void test_pass(int pass)
 
   test_time_module();
   test_performance_warnings();
+  test_defined();
 
   if (pass >= 2)
   {
