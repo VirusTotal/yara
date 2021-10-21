@@ -74,6 +74,7 @@ test-rules-pass-1
 test-rules-pass-2
 test-rules-pass-3
 test-rules.yarc
+test-rules
 test-pb
 test-pe
 test-re-split
