@@ -98,6 +98,7 @@ awesome list of [YARA-related stuff](https://github.com/InQuest/awesome-yara).
 * [Laika BOSS](https://github.com/lmco/laikaboss)
 * [Lastline, Inc.](http://www.lastline.com)
 * [LimaCharlie](https://limacharlie.io/)
+* [Malwation](http://malwation.com/)
 * [McAfee Advanced Threat Defense](http://mcafee.com/atd)
 * [Metaflows](http://www.metaflows.com)
 * [NBS System](https://www.nbs-system.com/)
