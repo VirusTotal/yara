@@ -36,16 +36,15 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <sys/wait.h>
 #include <unistd.h>
 #include <yara/error.h>
+#include <yara/libyara.h>
 #include <yara/mem.h>
 #include <yara/proc.h>
-
 
 typedef struct _YR_PROC_INFO
 {
   int pid;
   struct ptrace_vm_entry vm_entry;
 } YR_PROC_INFO;
-
 
 int _yr_process_attach(int pid, YR_PROC_ITERATOR_CTX* context)
 {
@@ -55,6 +54,8 @@ int _yr_process_attach(int pid, YR_PROC_ITERATOR_CTX* context)
 
   if (proc_info == NULL)
     return ERROR_INSUFFICIENT_MEMORY;
+
+  memset(proc_info, 0, sizeof(YR_PROC_INFO));
 
   context->proc_info = proc_info;
 
@@ -79,7 +80,6 @@ int _yr_process_attach(int pid, YR_PROC_ITERATOR_CTX* context)
   return ERROR_SUCCESS;
 }
 
-
 int _yr_process_detach(YR_PROC_ITERATOR_CTX* context)
 {
   YR_PROC_INFO* proc_info = (YR_PROC_INFO*) context->proc_info;
@@ -89,7 +89,6 @@ int _yr_process_detach(YR_PROC_ITERATOR_CTX* context)
 
   return ERROR_SUCCESS;
 }
-
 
 YR_API const uint8_t* yr_process_fetch_memory_block_data(YR_MEMORY_BLOCK* block)
 {
@@ -128,7 +127,6 @@ YR_API const uint8_t* yr_process_fetch_memory_block_data(YR_MEMORY_BLOCK* block)
   return context->buffer;
 }
 
-
 YR_API YR_MEMORY_BLOCK* yr_process_get_next_memory_block(
     YR_MEMORY_BLOCK_ITERATOR* iterator)
 {
@@ -142,19 +140,37 @@ YR_API YR_MEMORY_BLOCK* yr_process_get_next_memory_block(
 
   iterator->last_error = ERROR_SUCCESS;
 
-  if (ptrace(PT_VM_ENTRY, proc_info->pid, (char*) (&proc_info->vm_entry), 0) ==
-      -1)
+  uint64_t current_begin = context->current_block.base +
+                           context->current_block.size;
+
+  uint64_t max_process_memory_chunk;
+
+  yr_get_configuration(
+      YR_CONFIG_MAX_PROCESS_MEMORY_CHUNK, (void*) &max_process_memory_chunk);
+
+  if (proc_info->vm_entry.pve_end <= current_begin)
   {
-    return NULL;
+    if (ptrace(
+            PT_VM_ENTRY, proc_info->pid, (char*) (&proc_info->vm_entry), 0) ==
+        -1)
+    {
+      return NULL;
+    }
+    else
+    {
+      current_begin = proc_info->vm_entry.pve_start;
+    }
   }
 
-  context->current_block.base = proc_info->vm_entry.pve_start;
-  context->current_block.size = proc_info->vm_entry.pve_end -
-                                proc_info->vm_entry.pve_start + 1;
+  context->current_block.base = current_begin;
+  context->current_block.size = yr_min(
+      proc_info->vm_entry.pve_end - current_begin + 1,
+      max_process_memory_chunk);
+
+  assert(context->current_block.size > 0);
 
   return &context->current_block;
 }
-
 
 YR_API YR_MEMORY_BLOCK* yr_process_get_first_memory_block(
     YR_MEMORY_BLOCK_ITERATOR* iterator)
