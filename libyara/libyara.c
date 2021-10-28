@@ -235,7 +235,7 @@ YR_API int yr_initialize(void)
   uint32_t def_stack_size = DEFAULT_STACK_SIZE;
   uint32_t def_max_strings_per_rule = DEFAULT_MAX_STRINGS_PER_RULE;
   uint32_t def_max_match_data = DEFAULT_MAX_MATCH_DATA;
-  uint64_t def_max_processmemory_chunk = DEFAULT_MAX_PROCESSMEMORY_CHUNK;
+  uint64_t def_max_process_memory_chunk = DEFAULT_MAX_PROCESS_MEMORY_CHUNK;
 
   init_count++;
 
@@ -296,11 +296,11 @@ YR_API int yr_initialize(void)
   FAIL_ON_ERROR(yr_set_configuration(
       YR_CONFIG_MAX_STRINGS_PER_RULE, &def_max_strings_per_rule));
 
+  FAIL_ON_ERROR(yr_set_configuration(
+      YR_CONFIG_MAX_PROCESS_MEMORY_CHUNK, &def_max_process_memory_chunk));
+
   FAIL_ON_ERROR(
       yr_set_configuration(YR_CONFIG_MAX_MATCH_DATA, &def_max_match_data));
-
-  FAIL_ON_ERROR(yr_set_configuration(
-      YR_CONFIG_MAX_PROCESSMEMORY_CHUNK, &def_max_processmemory_chunk));
 
   YR_DEBUG_FPRINTF(2, stderr, "} // %s()\n", __FUNCTION__);
 
@@ -370,7 +370,7 @@ YR_API int yr_finalize(void)
 //              YR_CONFIG_STACK_SIZE                data type: uint32_t
 //              YR_CONFIG_MAX_STRINGS_PER_RULE      data type: uint32_t
 //              YR_CONFIG_MAX_MATCH_DATA            data type: uint32_t
-//              YR_CONFIG_MAX_PROCESSMEMORY_CHUNK   data type: uint64_t
+//              YR_CONFIG_MAX_PROCESS_MEMORY_CHUNK   data type: uint64_t
 //
 //   src: Pointer to the value being set for the option.
 //
@@ -391,7 +391,7 @@ YR_API int yr_set_configuration(YR_CONFIG_NAME name, void *src)
     yr_cfgs[name].ui32 = *(uint32_t *) src;
     break;
 
-  case YR_CONFIG_MAX_PROCESSMEMORY_CHUNK:
+  case YR_CONFIG_MAX_PROCESS_MEMORY_CHUNK:
     yr_cfgs[name].ui64 = *(uint64_t *) src;
     break;
 
@@ -415,7 +415,7 @@ YR_API int yr_get_configuration(YR_CONFIG_NAME name, void *dest)
     *(uint32_t *) dest = yr_cfgs[name].ui32;
     break;
 
-  case YR_CONFIG_MAX_PROCESSMEMORY_CHUNK:
+  case YR_CONFIG_MAX_PROCESS_MEMORY_CHUNK:
     *(uint64_t *) dest = yr_cfgs[name].ui64;
     break;
 

@@ -137,10 +137,10 @@ YR_API YR_MEMORY_BLOCK* yr_process_get_next_memory_block(
   MEMORY_BASIC_INFORMATION mbi;
   void* address =
       (void*) (context->current_block.base + context->current_block.size);
-  uint64_t max_processmemory_chunk;
+  uint64_t max_process_memory_chunk;
 
   yr_get_configuration(
-      YR_CONFIG_MAX_PROCESSMEMORY_CHUNK, (void*) &max_processmemory_chunk);
+      YR_CONFIG_MAX_PROCESS_MEMORY_CHUNK, (void*) &max_process_memory_chunk);
 
   iterator->last_error = ERROR_SUCCESS;
 
@@ -158,9 +158,9 @@ YR_API YR_MEMORY_BLOCK* yr_process_get_next_memory_block(
           mbi.RegionSize -
           (size_t) (((uint8_t*) address) - ((uint8_t*) mbi.BaseAddress));
 
-      if (((uint64_t) chuck_size) > max_processmemory_chunk)
+      if (((uint64_t) chuck_size) > max_process_memory_chunk)
       {
-        chuck_size = (size_t) max_processmemory_chunk;
+        chuck_size = (size_t) max_process_memory_chunk;
       }
 
       context->current_block.base = (size_t) address;

@@ -143,10 +143,10 @@ YR_API YR_MEMORY_BLOCK* yr_process_get_next_memory_block(
   uint64_t current_begin = context->current_block.base +
                            context->current_block.size;
 
-  uint64_t max_processmemory_chunk;
+  uint64_t max_process_memory_chunk;
 
   yr_get_configuration(
-      YR_CONFIG_MAX_PROCESSMEMORY_CHUNK, (void*) &max_processmemory_chunk);
+      YR_CONFIG_MAX_PROCESS_MEMORY_CHUNK, (void*) &max_process_memory_chunk);
 
   if (proc_info->vm_entry.pve_end <= current_begin)
   {
@@ -164,7 +164,8 @@ YR_API YR_MEMORY_BLOCK* yr_process_get_next_memory_block(
 
   context->current_block.base = current_begin;
   context->current_block.size = yr_min(
-      proc_info->vm_entry.pve_end - current_begin + 1, max_processmemory_chunk);
+      proc_info->vm_entry.pve_end - current_begin + 1,
+      max_process_memory_chunk);
 
   assert(context->current_block.size > 0);
 
