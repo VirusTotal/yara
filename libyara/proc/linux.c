@@ -323,7 +323,7 @@ YR_API YR_MEMORY_BLOCK* yr_process_get_next_memory_block(
 
   if (proc_info->next_block_end <= current_begin)
   {
-    int n, len;
+    int n, path_start;
 
     while (fgets(buffer, sizeof(buffer), proc_info->maps) != NULL)
     {
@@ -337,6 +337,12 @@ YR_API YR_MEMORY_BLOCK* yr_process_get_next_memory_block(
         } while (c >= 0 && c != '\n');
       }
 
+      // Each row in /proc/$PID/maps describes a region of contiguous virtual
+      // memory in a process or thread. Each row has the following fields:
+      //
+      // address           perms offset  dev   inode   pathname
+      // 08048000-08056000 r-xp 00000000 03:0c 64593   /usr/sbin/gpm
+      //
       n = sscanf(
           buffer,
           "%" SCNx64 "-%" SCNx64 " %4s "
@@ -348,14 +354,17 @@ YR_API YR_MEMORY_BLOCK* yr_process_get_next_memory_block(
           &(proc_info->map_dmaj),
           &(proc_info->map_dmin),
           &(proc_info->map_ino),
-          &len);
+          &path_start);
 
+      // If the row was parsed correctly sscan must return 7.
       if (n == 7)
       {
-        if (buffer[len] == '/')
+        // path_start contains the offset within buffer where the path starts,
+        // the path should start with /.
+        if (buffer[path_start] == '/')
           strncpy(
               proc_info->map_path,
-              buffer + len,
+              buffer + path_start,
               sizeof(proc_info->map_path) - 1);
         else
           proc_info->map_path[0] = '\0';
@@ -379,7 +388,7 @@ YR_API YR_MEMORY_BLOCK* yr_process_get_next_memory_block(
   context->current_block.size = yr_min(
       proc_info->next_block_end - current_begin, max_processmemory_chunk);
 
-  // assert(context->current_block.size > 0);
+  assert(context->current_block.size > 0);
 
   iterator->last_error = ERROR_SUCCESS;
 
