@@ -1073,9 +1073,13 @@ Reference
 
 .. c:type:: number_of_delayed_imports
 
+    .. versionadded:: 4.2.0
+
     Number of delayed imported DLLs in the PE. (Number of IMAGE_DELAYLOAD_DESCRIPTOR parsed from file)
 
 .. c:type:: number_of_delay_imported_functions
+
+    .. versionadded:: 4.2.0
 
     Number of delayed imported functions in the PE.
 
@@ -1130,6 +1134,8 @@ Reference
 
 .. c:function:: imports(import_flag, dll_name, function_name)
 
+    .. versionadded:: 4.2.0
+
     Function returning true if the PE imports *function_name* from *dll_name*,
     or false otherwise. *dll_name* is case insensitive.
 
@@ -1152,12 +1158,16 @@ Reference
 
 .. c:function:: imports(import_flag, import_flag, dll_name)
 
+    .. versionadded:: 4.2.0
+
     Function returning the number of functions from the *dll_name*, in the PE
     imports. *dll_name* is case insensitive.
 
     *Examples:  pe.imports(pe.IMPORT_DELAYED, "kernel32.dll"), pe.imports("kernel32.dll") == 10*
 
 .. c:function:: imports(import_flag, dll_name, ordinal)
+   
+    .. versionadded:: 4.2.0
 
     Function returning true if the PE imports *ordinal* from *dll_name*,
     or false otherwise. *dll_name* is case insensitive.
@@ -1165,6 +1175,8 @@ Reference
     *Example:  pe.imports(pe.IMPORT_DELAYED, "WS2_32.DLL", 3)*
 
 .. c:function:: imports(import_flag, dll_regexp, function_regexp)
+
+    .. versionadded:: 4.2.0
 
     Function returning the number of functions from the PE imports where a
     function name matches *function_regexp* and a DLL name matches
@@ -1175,6 +1187,8 @@ Reference
     *Example:  pe.imports(pe.IMPORT_DELAYED, /kernel32\.dll/i, /(Read|Write)ProcessMemory/) == 2*
 
 .. c:type:: import_details
+
+    .. versionadded:: 4.2.0
 
     Array of structures containing information about the PE's imports libraries.
 
@@ -1201,6 +1215,8 @@ Reference
     *Example: pe.import_details[1].library_name == "library_name"
 
 .. c:type:: delayed_import_details
+
+    .. versionadded:: 4.2.0
 
     Array of structures containing information about the PE's delayed imports libraries.
 
