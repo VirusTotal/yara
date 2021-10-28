@@ -341,7 +341,7 @@ YR_API YR_MEMORY_BLOCK* yr_process_get_next_memory_block(
   context->current_block.size = yr_min(
       proc_info->next_block_end - current_begin, max_processmemory_chunk);
 
-  assert(context->current_block.size > 0);
+  // assert(context->current_block.size > 0);
 
   iterator->last_error = ERROR_SUCCESS;
 
