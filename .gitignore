@@ -85,3 +85,5 @@ windows/*/packages/
 .dirstamp
 
 .idea/
+
+tests/mapper
