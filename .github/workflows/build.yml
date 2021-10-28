@@ -1,0 +1,83 @@
+name: Build and test
+
+on: [push, pull_request]
+
+jobs:
+  standard-build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        config:
+        - "--enable-cuckoo --enable-magic --enable-pb-tests --enable-address-sanitizer"
+        - "--enable-profiling --enable-cuckoo --enable-magic --enable-pb-tests --enable-address-sanitizer"
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            autoconf \
+            automake \
+            gcc-multilib \
+            libtool \
+            libjansson-dev \
+            libmagic-dev \
+            libssl-dev  \
+            protobuf-compiler \
+            protobuf-c-compiler \
+            libprotobuf-c-dev
+      - name: Prepare for building
+        run: |
+          ./bootstrap.sh
+          ./configure ${{ matrix.config }}
+      - name: Build
+        run: make clean && make
+      - name: Run tests
+        run: make check
+      - name: Print tests errors
+        if: ${{ failure() }}
+        run: cat test-suite.log
+
+  mingw-build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        config:
+        - "--host=x86_64-w64-mingw32"
+        - "--host=i686-w64-mingw32"
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            autoconf \
+            automake \
+            libtool \
+            libssl-dev  \
+            gcc-mingw-w64
+      - name: Prepare for building
+        run: |
+          ./bootstrap.sh
+          ./configure ${{ matrix.config }}
+      - name: Build
+        run: make clean && make
+
+  bazel-build:
+    # The ubuntu-20.04 virtual environment has Bazel installed, see:
+    # https://github.com/actions/virtual-environments
+    runs-on: ubuntu-20.04
+    steps:
+      # Caches and restores the bazelisk download directory.
+      - name: Cache bazelisk download
+        uses: actions/cache@v2
+        env:
+          cache-name: bazel-cache
+        with:
+          path: ~/.cache/bazelisk
+          key: ${{ runner.os }}-${{ env.cache-name }}-${{ github.ref }}
+          restore-keys: |
+            ${{ runner.os }}-${{ env.cache-name }}-development
+      - uses: actions/checkout@v2
+      - name: Build and run tests
+        run: bazel test @jansson//... //tests/...

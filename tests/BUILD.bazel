@@ -78,6 +78,12 @@ cc_test(
     ],
 )
 
+cc_binary(
+    name = "mapper",
+    srcs = ["mapper.c"],
+    copts = ["-O0"],
+)
+
 cc_test(
     name = "test_rules",
     srcs = ["test-rules.c"],
@@ -94,6 +100,7 @@ cc_test(
     linkstatic = True,
     deps = [
         ":blob",
+        ":mapper",
         ":util",
         "@//:libyara",
     ],
@@ -107,8 +114,11 @@ cc_test(
         "data/079a472d22290a94ebb212aa8015cdc8dd28a968c6b4d3b88acdd58ce2d3b885",
         "data/079a472d22290a94ebb212aa8015cdc8dd28a968c6b4d3b88acdd58ce2d3b885.upx",
         "data/3b8b90159fa9b6048cc5410c5d53f116943564e4d05b04a843f9b3d0540d0c1c",
+        "data/ca21e1c32065352d352be6cde97f89c141d7737ea92434831f998080783d5386",
         "data/mtxex.dll",
         "data/mtxex_modified_rsrc_rva.dll",
+        "data/pe_imports",
+        "data/pe_mingw",
         "data/tiny",
         "data/tiny-idata-51ff",
         "data/tiny-idata-5200",

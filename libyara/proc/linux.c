@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2007-2017. The YARA Authors. All Rights Reserved.
+Copyright (c) 2007-2021. The YARA Authors. All Rights Reserved.
 
 Redistribution and use in source and binary forms, with or without modification,
 are permitted provided that the following conditions are met:
@@ -32,6 +32,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <errno.h>
 #include <fcntl.h>
 #include <inttypes.h>
+#include <sys/mman.h>
+#include <sys/stat.h>
+#include <sys/sysmacros.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <unistd.h>
@@ -41,19 +44,30 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <yara/mem.h>
 #include <yara/proc.h>
 
-
 typedef struct _YR_PROC_INFO
 {
   int pid;
   int mem_fd;
+  int pagemap_fd;
   FILE* maps;
+  uint64_t map_offset;
   uint64_t next_block_end;
+  int page_size;
+  char map_path[PATH_MAX];
+  uint64_t map_dmaj;
+  uint64_t map_dmin;
+  uint64_t map_ino;
 } YR_PROC_INFO;
 
+static int page_size = -1;
 
 int _yr_process_attach(int pid, YR_PROC_ITERATOR_CTX* context)
 {
   char buffer[256];
+
+  page_size = sysconf(_SC_PAGE_SIZE);
+  if (page_size < 0)
+    page_size = 4096;
 
   YR_PROC_INFO* proc_info = (YR_PROC_INFO*) yr_malloc(sizeof(YR_PROC_INFO));
 
@@ -65,88 +79,227 @@ int _yr_process_attach(int pid, YR_PROC_ITERATOR_CTX* context)
   proc_info->pid = pid;
   proc_info->maps = NULL;
   proc_info->mem_fd = -1;
-  proc_info->next_block_end = 0;
 
   snprintf(buffer, sizeof(buffer), "/proc/%u/maps", pid);
   proc_info->maps = fopen(buffer, "r");
 
   if (proc_info->maps == NULL)
-  {
-    yr_free(proc_info);
-    return ERROR_COULD_NOT_ATTACH_TO_PROCESS;
-  }
+    goto err;
 
   snprintf(buffer, sizeof(buffer), "/proc/%u/mem", pid);
   proc_info->mem_fd = open(buffer, O_RDONLY);
 
   if (proc_info->mem_fd == -1)
-  {
-    fclose(proc_info->maps);
-    proc_info->maps = NULL;
+    goto err;
 
-    yr_free(proc_info);
+  snprintf(buffer, sizeof(buffer), "/proc/%u/pagemap", pid);
+  proc_info->pagemap_fd = open(buffer, O_RDONLY);
 
-    return ERROR_COULD_NOT_ATTACH_TO_PROCESS;
-  }
+  if (proc_info->mem_fd == -1)
+    goto err;
 
   return ERROR_SUCCESS;
-}
 
+err:
+  if (proc_info)
+  {
+    if (proc_info->pagemap_fd != -1)
+      close(proc_info->pagemap_fd);
+
+    if (proc_info->mem_fd != -1)
+      close(proc_info->mem_fd);
+
+    if (proc_info->maps != NULL)
+      fclose(proc_info->maps);
+
+    yr_free(proc_info);
+  }
+
+  return ERROR_COULD_NOT_ATTACH_TO_PROCESS;
+}
 
 int _yr_process_detach(YR_PROC_ITERATOR_CTX* context)
 {
   YR_PROC_INFO* proc_info = (YR_PROC_INFO*) context->proc_info;
+  if (proc_info)
+  {
+    fclose(proc_info->maps);
+    close(proc_info->mem_fd);
+    close(proc_info->pagemap_fd);
+  }
 
-  fclose(proc_info->maps);
-  close(proc_info->mem_fd);
+  if (context->buffer != NULL)
+  {
+    munmap((void*) context->buffer, context->buffer_size);
+    context->buffer = NULL;
+    context->buffer_size = 0;
+  }
 
   return ERROR_SUCCESS;
 }
 
-
 YR_API const uint8_t* yr_process_fetch_memory_block_data(YR_MEMORY_BLOCK* block)
 {
   const uint8_t* result = NULL;
+  uint64_t* pagemap = NULL;
 
   YR_PROC_ITERATOR_CTX* context = (YR_PROC_ITERATOR_CTX*) block->context;
   YR_PROC_INFO* proc_info = (YR_PROC_INFO*) context->proc_info;
 
-  if (context->buffer_size < block->size)
+  if (context->buffer != NULL)
   {
-    if (context->buffer != NULL)
-      yr_free((void*) context->buffer);
+    munmap((void*) context->buffer, context->buffer_size);
+    context->buffer = NULL;
+    context->buffer_size = 0;
+  }
 
-    context->buffer = (const uint8_t*) yr_malloc(block->size);
+  int fd = -2;  // Assume mapping not connected with a file.
 
-    if (context->buffer != NULL)
+  if (strlen(proc_info->map_path) > 0 && proc_info->map_dmaj != 0 &&
+      proc_info->map_ino != 0)
+  {
+    struct stat st;
+    fd = open(proc_info->map_path, O_RDONLY);
+
+    if (fd < 0)
     {
-      context->buffer_size = block->size;
+      fd = -1;  // File does not exist.
     }
-    else
+    else if (fstat(fd, &st) < 0)
     {
-      context->buffer_size = 0;
-      goto _exit;  // return NULL;
+      // Why should stat fail after file open? Treat like missing.
+      close(fd);
+      fd = -1;
+    }
+    else if (
+        (major(st.st_dev) != proc_info->map_dmaj) ||
+        (minor(st.st_dev) != proc_info->map_dmin) ||
+        (st.st_ino != proc_info->map_ino))
+    {
+      // Wrong file, may have been replaced. Treat like missing.
+      close(fd);
+      fd = -1;
+    }
+    else if (st.st_size < proc_info->map_offset + block->size)
+    {
+      // Mapping extends past end of file. Treat like missing.
+      close(fd);
+      fd = -1;
+    }
+    else if ((st.st_mode & S_IFMT) != S_IFREG)
+    {
+      // Correct filesystem object, but not a regular file. Treat like
+      // uninitialized mapping.
+      close(fd);
+      fd = -2;
     }
   }
 
-  if (pread(
-          proc_info->mem_fd,
-          (void*) context->buffer,
-          block->size,
-          block->base) == -1)
+  if (fd >= 0)
   {
-    goto _exit;  // return NULL;
+    context->buffer = mmap(
+        NULL,
+        block->size,
+        PROT_READ | PROT_WRITE,
+        MAP_PRIVATE,
+        fd,
+        proc_info->map_offset);
+    close(fd);
+  }
+  else
+  {
+    context->buffer = mmap(
+        NULL,
+        block->size,
+        PROT_READ | PROT_WRITE,
+        MAP_PRIVATE | MAP_ANONYMOUS,
+        -1,
+        0);
+  }
+
+  if (context->buffer != NULL)
+  {
+    context->buffer_size = block->size;
+  }
+  else
+  {
+    context->buffer_size = 0;
+    goto _exit;
+  }
+
+  // If mapping can't be accessed through the filesystem, read everything from
+  // target process VM.
+  if (fd == -1)
+  {
+    if (pread(
+            proc_info->mem_fd,
+            (void*) context->buffer,
+            block->size,
+            block->base) == -1)
+    {
+      goto _exit;
+    }
+  }
+  else
+  {
+    pagemap = calloc(block->size / page_size, sizeof(uint64_t));
+    if (pagemap == NULL)
+    {
+      goto _exit;
+    }
+    if (pread(
+            proc_info->pagemap_fd,
+            pagemap,
+            sizeof(uint64_t) * block->size / page_size,
+            sizeof(uint64_t) * block->base / page_size) == -1)
+    {
+      goto _exit;
+    }
+
+    for (uint64_t i = 0; i < block->size / page_size; i++)
+    {
+      if (pagemap[i] >> 61 == 0)
+      {
+        continue;
+      }
+      // Overwrite our mapping if the page is present, file-backed, or
+      // swap-backed and if it differs from our mapping.
+      uint8_t buffer[page_size];
+
+      if (pread(
+              proc_info->mem_fd,
+              buffer,
+              page_size,
+              block->base + i * page_size) == -1)
+      {
+        goto _exit;
+      }
+
+      if (memcmp(
+              (void*) context->buffer + i * page_size,
+              (void*) buffer,
+              page_size) != 0)
+      {
+        memcpy(
+            (void*) context->buffer + i * page_size, (void*) buffer, page_size);
+      }
+    }
   }
 
   result = context->buffer;
 
 _exit:;
 
+  if (pagemap)
+  {
+    free(pagemap);
+    pagemap = NULL;
+  }
+
   YR_DEBUG_FPRINTF(2, stderr, "- %s() {} = %p\n", __FUNCTION__, result);
 
   return result;
 }
-
 
 YR_API YR_MEMORY_BLOCK* yr_process_get_next_memory_block(
     YR_MEMORY_BLOCK_ITERATOR* iterator)
@@ -155,30 +308,18 @@ YR_API YR_MEMORY_BLOCK* yr_process_get_next_memory_block(
   YR_PROC_ITERATOR_CTX* context = (YR_PROC_ITERATOR_CTX*) iterator->context;
   YR_PROC_INFO* proc_info = (YR_PROC_INFO*) context->proc_info;
 
-  char buffer[256];
+  char buffer[PATH_MAX];
+  char perm[5];
   uint64_t begin, end;
+  int n, len;
 
-  uint64_t current_begin = context->current_block.base +
-                           context->current_block.size;
-  uint64_t max_processmemory_chunk;
-
-  yr_get_configuration(
-      YR_CONFIG_MAX_PROCESSMEMORY_CHUNK, (void*) &max_processmemory_chunk);
-
-  if (proc_info->next_block_end <= current_begin)
+  if (fgets(buffer, sizeof(buffer), proc_info->maps) != NULL)
   {
-    if (fgets(buffer, sizeof(buffer), proc_info->maps) != NULL)
-    {
-      sscanf(buffer, "%" SCNx64 "-%" SCNx64, &begin, &end);
+    sscanf(buffer, "%" SCNx64 "-%" SCNx64, &begin, &end);
 
-      current_begin = begin;
-      proc_info->next_block_end = end;
-    }
-    else
-    {
-      YR_DEBUG_FPRINTF(2, stderr, "+ %s() = NULL\n", __FUNCTION__);
-      return NULL;
-    }
+    context->current_block.base = begin;
+    context->current_block.size = end - begin;
+    result = &context->current_block;
   }
 
   if (proc_info->next_block_end - current_begin > max_processmemory_chunk)
@@ -205,7 +346,6 @@ YR_API YR_MEMORY_BLOCK* yr_process_get_next_memory_block(
   return &context->current_block;
 }
 
-
 YR_API YR_MEMORY_BLOCK* yr_process_get_first_memory_block(
     YR_MEMORY_BLOCK_ITERATOR* iterator)
 {
@@ -227,12 +367,7 @@ YR_API YR_MEMORY_BLOCK* yr_process_get_first_memory_block(
 
 _exit:
 
-  YR_DEBUG_FPRINTF(
-      2,
-      stderr,
-      "} = %p // %s()\n",
-      result,
-      __FUNCTION__);
+  YR_DEBUG_FPRINTF(2, stderr, "} = %p // %s()\n", result, __FUNCTION__);
 
   return result;
 }

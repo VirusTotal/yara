@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2014-2015. The YARA Authors. All Rights Reserved.
+Copyright (c) 2014-2021. The YARA Authors. All Rights Reserved.
 
 Redistribution and use in source and binary forms, with or without modification,
 are permitted provided that the following conditions are met:
@@ -45,6 +45,119 @@ static double log2(double n)
 }
 #endif
 
+uint32_t* get_distribution(int64_t offset, int64_t length, YR_SCAN_CONTEXT* context) {
+  bool past_first_block = false;
+
+  size_t i;
+
+  uint32_t* data = (uint32_t*) yr_calloc(256, sizeof(uint32_t));
+
+  if (data == NULL) {
+    return NULL;
+  }
+
+  YR_MEMORY_BLOCK* block = first_memory_block(context);
+  YR_MEMORY_BLOCK_ITERATOR* iterator = context->iterator;
+
+  if (offset < 0 || length < 0 || offset < block->base)
+  {
+    yr_free(data);
+    return NULL;
+  }
+
+  foreach_memory_block(iterator, block)
+  {
+    if (offset >= block->base && offset < block->base + block->size)
+    {
+      size_t data_offset = (size_t)(offset - block->base);
+      size_t data_len = (size_t) yr_min(
+          length, (size_t)(block->size - data_offset));
+
+      const uint8_t* block_data = block->fetch_data(block);
+
+      if (block_data == NULL)
+      {
+        yr_free(data);
+        return NULL;
+      }
+
+      offset += data_len;
+      length -= data_len;
+
+      for (i = 0; i < data_len; i++)
+      {
+        uint8_t c = *(block_data + data_offset + i);
+        data[c]++;
+      }
+
+      past_first_block = true;
+    }
+    else if (past_first_block)
+    {
+      // If offset is not within current block and we already
+      // past the first block then the we are trying to compute
+      // the distribution over a range of non contiguous blocks. As
+      // range contains gaps of undefined data the distribution is
+      // undefined.
+
+      yr_free(data);
+      return NULL;
+    }
+
+    if (block->base + block->size > offset + length)
+      break;
+  }
+
+  if (!past_first_block)
+  {
+    yr_free(data);
+    return NULL;
+  }
+  return data;
+}
+
+uint32_t* get_distribution_global(YR_SCAN_CONTEXT* context) {
+
+  size_t i;
+
+  int64_t expected_next_offset = 0;
+
+  uint32_t* data = (uint32_t*) yr_calloc(256, sizeof(uint32_t));
+
+  if (data == NULL)
+    return NULL;
+
+  YR_MEMORY_BLOCK* block = first_memory_block(context);
+  YR_MEMORY_BLOCK_ITERATOR* iterator = context->iterator;
+
+  foreach_memory_block(iterator, block)
+  {
+    if (expected_next_offset != block->base)
+    {
+      // If offset is not directly after the current block then 
+      // we are trying to compute the distribution over a range of non 
+      // contiguous blocks. As the range contains gaps of 
+      // undefined data the distribution is undefined.
+      yr_free(data);
+      return NULL;
+    }
+    const uint8_t* block_data = block->fetch_data(block);
+
+    if (block_data == NULL)
+    {
+      yr_free(data);
+      return NULL;
+    }
+
+    for (i = 0; i < block->size; i++)
+    {
+        uint8_t c = *(block_data + i);
+        data[c] += 1;
+    }
+    expected_next_offset = block->base + block->size;
+  }
+  return data;
+}
 
 define_function(string_entropy)
 {
@@ -77,80 +190,26 @@ define_function(string_entropy)
   return_float(entropy);
 }
 
-
 define_function(data_entropy)
 {
-  bool past_first_block = false;
   double entropy = 0.0;
-
-  size_t total_len = 0;
-  size_t i;
-
-  uint32_t* data;
 
   int64_t offset = integer_argument(1);  // offset where to start
   int64_t length = integer_argument(2);  // length of bytes we want entropy on
 
   YR_SCAN_CONTEXT* context = scan_context();
-  YR_MEMORY_BLOCK* block = first_memory_block(context);
-  YR_MEMORY_BLOCK_ITERATOR* iterator = context->iterator;
 
-  if (offset < 0 || length < 0 || offset < block->base)
-    return_float(YR_UNDEFINED);
+  size_t i;
 
-  data = (uint32_t*) yr_calloc(256, sizeof(uint32_t));
+  size_t total_len = 0;
 
+  uint32_t* data = get_distribution(offset, length, context);
   if (data == NULL)
     return_float(YR_UNDEFINED);
 
-  foreach_memory_block(iterator, block)
+  for (i = 0; i < 256; i++)
   {
-    if (offset >= block->base && offset < block->base + block->size)
-    {
-      size_t data_offset = (size_t)(offset - block->base);
-      size_t data_len = (size_t) yr_min(
-          length, (size_t)(block->size - data_offset));
-
-      const uint8_t* block_data = block->fetch_data(block);
-
-      if (block_data == NULL)
-      {
-        yr_free(data);
-        return_float(YR_UNDEFINED);
-      }
-
-      total_len += data_len;
-      offset += data_len;
-      length -= data_len;
-
-      for (i = 0; i < data_len; i++)
-      {
-        uint8_t c = *(block_data + data_offset + i);
-        data[c] += 1;
-      }
-
-      past_first_block = true;
-    }
-    else if (past_first_block)
-    {
-      // If offset is not within current block and we already
-      // past the first block then the we are trying to compute
-      // the checksum over a range of non contiguous blocks. As
-      // range contains gaps of undefined data the checksum is
-      // undefined.
-
-      yr_free(data);
-      return_float(YR_UNDEFINED);
-    }
-
-    if (block->base + block->size > offset + length)
-      break;
-  }
-
-  if (!past_first_block)
-  {
-    yr_free(data);
-    return_float(YR_UNDEFINED);
+    total_len += data[i];
   }
 
   for (i = 0; i < 256; i++)
@@ -166,7 +225,6 @@ define_function(data_entropy)
   return_float(entropy);
 }
 
-
 define_function(string_deviation)
 {
   SIZED_STRING* s = sized_string_argument(1);
@@ -181,11 +239,8 @@ define_function(string_deviation)
   return_float(sum / s->length);
 }
 
-
 define_function(data_deviation)
 {
-  int past_first_block = false;
-
   int64_t offset = integer_argument(1);
   int64_t length = integer_argument(2);
 
@@ -195,57 +250,21 @@ define_function(data_deviation)
   size_t total_len = 0;
   size_t i;
 
-  size_t data_offset = 0;
-  size_t data_len = 0;
-  const uint8_t* block_data = NULL;
-
   YR_SCAN_CONTEXT* context = scan_context();
-  YR_MEMORY_BLOCK* block = first_memory_block(context);
-  YR_MEMORY_BLOCK_ITERATOR* iterator = context->iterator;
 
-  if (offset < 0 || length < 0 || offset < block->base)
+  uint32_t* data = get_distribution(offset, length, context);
+  if (data == NULL)
     return_float(YR_UNDEFINED);
 
-  foreach_memory_block(iterator, block)
+  for (i = 0; i < 256; i++)
   {
-    if (offset >= block->base && offset < block->base + block->size)
-    {
-      data_offset = (size_t)(offset - block->base);
-      data_len = (size_t) yr_min(length, (size_t)(block->size - data_offset));
-      block_data = block->fetch_data(block);
-
-      if (block_data == NULL)
-        return_float(YR_UNDEFINED);
-
-      total_len += data_len;
-      offset += data_len;
-      length -= data_len;
-
-      for (i = 0; i < data_len; i++)
-        sum += fabs(((double) *(block_data + data_offset + i)) - mean);
-
-      past_first_block = true;
-    }
-    else if (past_first_block)
-    {
-      // If offset is not within current block and we already
-      // past the first block then the we are trying to compute
-      // the checksum over a range of non contiguous blocks. As
-      // range contains gaps of undefined data the checksum is
-      // undefined.
-      return_float(YR_UNDEFINED);
-    }
-
-    if (block->base + block->size > offset + length)
-      break;
+    total_len += data[i];
+    sum += fabs(((double) i) - mean) * data[i];
   }
 
-  if (!past_first_block)
-    return_float(YR_UNDEFINED);
-
+  yr_free(data);
   return_float(sum / total_len);
 }
-
 
 define_function(string_mean)
 {
@@ -259,67 +278,31 @@ define_function(string_mean)
   return_float(sum / s->length);
 }
 
-
 define_function(data_mean)
 {
-  int past_first_block = false;
   double sum = 0.0;
 
   int64_t offset = integer_argument(1);
   int64_t length = integer_argument(2);
 
   YR_SCAN_CONTEXT* context = scan_context();
-  YR_MEMORY_BLOCK* block = first_memory_block(context);
-  YR_MEMORY_BLOCK_ITERATOR* iterator = context->iterator;
 
   size_t total_len = 0;
   size_t i;
 
-  if (offset < 0 || length < 0 || offset < block->base)
+  uint32_t* data = get_distribution(offset, length, context);
+  if (data == NULL)
     return_float(YR_UNDEFINED);
 
-  foreach_memory_block(iterator, block)
+  for (i = 0; i < 256; i++)
   {
-    if (offset >= block->base && offset < block->base + block->size)
-    {
-      size_t data_offset = (size_t)(offset - block->base);
-      size_t data_len = (size_t) yr_min(
-          length, (size_t)(block->size - data_offset));
-
-      const uint8_t* block_data = block->fetch_data(block);
-
-      if (block_data == NULL)
-        return_float(YR_UNDEFINED);
-
-      total_len += data_len;
-      offset += data_len;
-      length -= data_len;
-
-      for (i = 0; i < data_len; i++)
-        sum += (double) *(block_data + data_offset + i);
-
-      past_first_block = true;
-    }
-    else if (past_first_block)
-    {
-      // If offset is not within current block and we already
-      // past the first block then the we are trying to compute
-      // the checksum over a range of non contiguous blocks. As
-      // range contains gaps of undefined data the checksum is
-      // undefined.
-      return_float(YR_UNDEFINED);
-    }
-
-    if (block->base + block->size > offset + length)
-      break;
+    total_len += data[i];
+    sum += ((double) i) * data[i];
   }
 
-  if (!past_first_block)
-    return_float(YR_UNDEFINED);
-
+  yr_free(data);
   return_float(sum / total_len);
 }
-
 
 define_function(data_serial_correlation)
 {
@@ -403,7 +386,6 @@ define_function(data_serial_correlation)
   return_float(scc);
 }
 
-
 define_function(string_serial_correlation)
 {
   SIZED_STRING* s = sized_string_argument(1);
@@ -438,7 +420,6 @@ define_function(string_serial_correlation)
 
   return_float(scc);
 }
-
 
 define_function(data_monte_carlo_pi)
 {
@@ -526,7 +507,6 @@ define_function(data_monte_carlo_pi)
   return_float(fabs((mpi - PI) / PI));
 }
 
-
 define_function(string_monte_carlo_pi)
 {
   SIZED_STRING* s = sized_string_argument(1);
@@ -572,7 +552,6 @@ define_function(string_monte_carlo_pi)
   return_float(fabs((mpi - PI) / PI));
 }
 
-
 define_function(in_range)
 {
   double test = float_argument(1);
@@ -581,7 +560,6 @@ define_function(in_range)
 
   return_integer((lower <= test && test <= upper) ? 1 : 0);
 }
-
 
 // Undefine existing "min" and "max" macros in order to avoid conflicts with
 // function names.
@@ -596,7 +574,6 @@ define_function(min)
   return_integer(i < j ? i : j);
 }
 
-
 define_function(max)
 {
   uint64_t i = integer_argument(1);
@@ -605,6 +582,138 @@ define_function(max)
   return_integer(i > j ? i : j);
 }
 
+define_function(to_number)
+{
+  return_integer(integer_argument(1) ? 1 : 0);
+}
+
+define_function(yr_math_abs)
+{
+  return_integer(llabs(integer_argument(1)));
+}
+
+define_function(count_range)
+{
+  uint8_t byte = (uint8_t) integer_argument(1);
+  int64_t offset = integer_argument(2);
+  int64_t length = integer_argument(3);
+
+  YR_SCAN_CONTEXT* context = scan_context();
+
+  uint32_t* distribution = get_distribution(offset, length, context);
+  if (distribution == NULL)
+  {
+    return_integer(YR_UNDEFINED);
+  }
+  int64_t count = (int64_t) distribution[byte];
+  yr_free(distribution);
+  return_integer(count);
+}
+
+define_function(count_global)
+{
+  uint8_t byte = (uint8_t) integer_argument(1);
+
+  YR_SCAN_CONTEXT* context = scan_context();
+
+  uint32_t* distribution = get_distribution_global(context);
+  if (distribution == NULL)
+  {
+    return_integer(YR_UNDEFINED);
+  }
+  int64_t count = (int64_t) distribution[byte];
+  yr_free(distribution);
+  return_integer(count);
+}
+
+define_function(percentage_range)
+{
+  uint8_t byte = (uint8_t) integer_argument(1);
+  int64_t offset = integer_argument(2);
+  int64_t length = integer_argument(3);
+
+  YR_SCAN_CONTEXT* context = scan_context();
+
+  uint32_t* distribution = get_distribution(offset, length, context);
+  if (distribution == NULL) {
+    return_float(YR_UNDEFINED);
+  }
+  int64_t count = (int64_t) distribution[byte];
+  int64_t total_count = 0;
+  int64_t i;
+  for (i = 0; i < 256; i++) {
+    total_count += distribution[i];
+  }
+  yr_free(distribution);
+  return_float(((float) count) / ((float) total_count));
+}
+
+define_function(percentage_global)
+{
+  uint8_t byte = (uint8_t) integer_argument(1);
+
+  YR_SCAN_CONTEXT* context = scan_context();
+
+  uint32_t* distribution = get_distribution_global(context);
+  if (distribution == NULL) {
+    return_float(YR_UNDEFINED);
+  }
+  int64_t count = (int64_t) distribution[byte];
+  int64_t total_count = 0;
+  int64_t i;
+  for (i = 0; i < 256; i++) {
+    total_count += distribution[i];
+  }
+  yr_free(distribution);
+  return_float(((float) count) / ((float) total_count));
+}
+
+define_function(mode_range)
+{
+  int64_t offset = integer_argument(1);
+  int64_t length = integer_argument(2);
+
+  YR_SCAN_CONTEXT* context = scan_context();
+
+  uint32_t* distribution = get_distribution(offset, length, context);
+  if (distribution == NULL) {
+    return_integer(YR_UNDEFINED);
+  }
+
+  int64_t most_common = 0;
+  size_t i;
+  for (i = 0; i < 256; i++)
+  {
+    if (distribution[i] > distribution[most_common])
+    {
+      most_common = (int64_t) i;
+    }
+  }
+  yr_free(distribution);
+  return_integer(most_common);
+}
+
+define_function(mode_global)
+{
+  YR_SCAN_CONTEXT* context = scan_context();
+
+  uint32_t* distribution = get_distribution_global(context);
+  if (distribution == NULL) {
+    return_integer(YR_UNDEFINED);
+  }
+
+  int64_t most_common = 0;
+  size_t i;
+  for (i = 0; i < 256; i++)
+  {
+    if (distribution[i] > distribution[most_common])
+    {
+      most_common = (int64_t) i;
+    }
+  }
+  yr_free(distribution);
+  return_integer(most_common);
+}
 
 begin_declarations
   declare_float("MEAN_BYTES");
@@ -621,20 +730,25 @@ begin_declarations
   declare_function("entropy", "s", "f", string_entropy);
   declare_function("min", "ii", "i", min);
   declare_function("max", "ii", "i", max);
+  declare_function("to_number", "b", "i", to_number);
+  declare_function("abs", "i", "i", yr_math_abs);
+  declare_function("count", "iii", "i", count_range);
+  declare_function("count", "i", "i", count_global);
+  declare_function("percentage", "iii", "f", percentage_range);
+  declare_function("percentage", "i", "f", percentage_global);
+  declare_function("mode", "ii", "i", mode_range);
+  declare_function("mode", "", "i", mode_global);
 end_declarations
-
 
 int module_initialize(YR_MODULE* module)
 {
   return ERROR_SUCCESS;
 }
 
-
 int module_finalize(YR_MODULE* module)
 {
   return ERROR_SUCCESS;
 }
-
 
 int module_load(
     YR_SCAN_CONTEXT* context,
@@ -645,7 +759,6 @@ int module_load(
   set_float(127.5, module_object, "MEAN_BYTES");
   return ERROR_SUCCESS;
 }
-
 
 int module_unload(YR_OBJECT* module_object)
 {

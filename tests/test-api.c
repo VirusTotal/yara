@@ -1,3 +1,32 @@
+/*
+Copyright (c) 2021. The YARA Authors. All Rights Reserved.
+
+Redistribution and use in source and binary forms, with or without modification,
+are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice,
+this list of conditions and the following disclaimer in the documentation and/or
+other materials provided with the distribution.
+
+3. Neither the name of the copyright holder nor the names of its contributors
+may be used to endorse or promote products derived from this software without
+specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
+
 #include <stdlib.h>
 #include <unistd.h>
 #include <yara.h>
@@ -57,7 +86,6 @@ void test_disabled_rules()
   yr_finalize();
 }
 
-
 const char* _include_callback(
     const char* include_name,
     const char* calling_rule_filename,
@@ -69,7 +97,6 @@ const char* _include_callback(
   else
     return NULL;
 }
-
 
 void test_include_callback()
 {
@@ -103,7 +130,6 @@ void test_include_callback()
   yr_finalize();
 }
 
-
 void test_file_descriptor()
 {
   YR_COMPILER* compiler = NULL;
@@ -118,7 +144,7 @@ void test_file_descriptor()
     exit(1);
   }
 #else
-  int fd = open("tests/data/baz.yar", O_RDONLY);
+  int fd = open(prefix_top_srcdir("tests/data/baz.yar"), O_RDONLY);
   if (fd < 0)
   {
     perror("open");
@@ -205,7 +231,6 @@ void test_max_string_per_rules()
   yr_finalize();
 }
 
-
 int test_max_match_data_callback(
     YR_SCAN_CONTEXT* context,
     int message,
@@ -272,6 +297,103 @@ void test_max_match_data()
   yr_finalize();
 }
 
+int ignore_too_many_matches(
+    YR_SCAN_CONTEXT* context,
+    int message,
+    void* message_data,
+    void* user_data)
+{
+  return CALLBACK_CONTINUE;
+}
+
+int propagate_too_many_matches(
+    YR_SCAN_CONTEXT* context,
+    int message,
+    void* message_data,
+    void* user_data)
+{
+  if (message == CALLBACK_MSG_TOO_MANY_MATCHES)
+    return CALLBACK_ERROR;
+
+  return CALLBACK_CONTINUE;
+}
+
+void test_too_many_matches()
+{
+  YR_RULES* rules;
+
+  char* rules_str = "\
+      rule t { \
+        strings: \
+          $a = \"aa\" \
+          $b = { 61 61 [-] 61 61} \
+        condition: \
+          any of them \
+       }";
+
+  yr_initialize();
+
+  if (compile_rule(rules_str, &rules) != ERROR_SUCCESS)
+  {
+    perror("compile_rule");
+    exit(EXIT_FAILURE);
+  }
+
+  uint8_t* buffer = (uint8_t*) malloc(2 * YR_MAX_STRING_MATCHES);
+
+  if (buffer == NULL)
+  {
+    perror("malloc");
+    exit(EXIT_FAILURE);
+  }
+
+  memset(buffer, 'a', 2 * YR_MAX_STRING_MATCHES);
+
+  int err = yr_rules_scan_mem(
+      rules,
+      (const uint8_t*) buffer,
+      2 * YR_MAX_STRING_MATCHES,
+      0,
+      propagate_too_many_matches,
+      NULL,
+      0);
+
+  if (err != ERROR_TOO_MANY_MATCHES)
+  {
+    fprintf(
+        stderr,
+        "test_too_many_matches failed, expecting ERROR_TOO_MANY_MATCHES, got "
+        "%d\n",
+        err);
+
+    free(buffer);
+    exit(EXIT_FAILURE);
+  }
+
+  err = yr_rules_scan_mem(
+      rules,
+      (const uint8_t*) buffer,
+      2 * YR_MAX_STRING_MATCHES,
+      0,
+      ignore_too_many_matches,
+      NULL,
+      0);
+
+  if (err != ERROR_SUCCESS)
+  {
+    fprintf(
+        stderr,
+        "test_too_many_matches failed, expecting ERROR_SUCCESS, got %d\n",
+        err);
+
+    free(buffer);
+    exit(EXIT_FAILURE);
+  }
+
+  free(buffer);
+  yr_rules_destroy(rules);
+  yr_finalize();
+}
 
 void test_save_load_rules()
 {
@@ -350,7 +472,6 @@ void test_save_load_rules()
   yr_finalize();
 }
 
-
 void test_scanner()
 {
   const char* buf = "dummy";
@@ -384,7 +505,6 @@ void test_scanner()
   yr_compiler_define_integer_variable(compiler, "int_var", 0);
   yr_compiler_define_boolean_variable(compiler, "bool_var", 0);
   yr_compiler_define_string_variable(compiler, "str_var", "");
-
 
   if (yr_compiler_define_string_variable(compiler, "str_var", "") !=
       ERROR_DUPLICATED_EXTERNAL_VARIABLE)
@@ -574,7 +694,6 @@ void test_issue_834()
   yr_finalize();
 }
 
-
 void ast_callback(
     const YR_RULE* rule,
     const char* string_identifier,
@@ -627,7 +746,6 @@ void test_ast_callback()
   yr_finalize();
 }
 
-
 void stats_for_rules(const char* rules_str, YR_RULES_STATS* stats)
 {
   YR_COMPILER* compiler = NULL;
@@ -661,7 +779,6 @@ void stats_for_rules(const char* rules_str, YR_RULES_STATS* stats)
   yr_rules_destroy(rules);
   yr_finalize();
 }
-
 
 void test_rules_stats()
 {
@@ -749,7 +866,6 @@ void test_rules_stats()
   assert_true_expr(stats.ac_root_match_list_length == 0);
 }
 
-
 void test_issue_920()
 {
   const char* rules_str = "\
@@ -788,8 +904,8 @@ void test_issue_920()
   yr_finalize();
 }
 
-
-void test_runtime_warnings() {
+void test_runtime_warnings()
+{
   // This rule should never match since it will hit the maximum number of
   // matches (see YR_MAX_STRING_MATCHES) and a warning will be issued, and any
   // further matches no longer count.
@@ -810,12 +926,14 @@ void test_runtime_warnings() {
 
   yr_initialize();
 
-  if (yr_compiler_create(&compiler) != ERROR_SUCCESS) {
+  if (yr_compiler_create(&compiler) != ERROR_SUCCESS)
+  {
     perror("yr_compiler_create");
     exit(EXIT_FAILURE);
   }
 
-  if (yr_compiler_add_string(compiler, rules_str, NULL) != ERROR_SUCCESS) {
+  if (yr_compiler_add_string(compiler, rules_str, NULL) != ERROR_SUCCESS)
+  {
     yr_compiler_destroy(compiler);
     perror("yr_compiler_add_string");
     exit(EXIT_FAILURE);
@@ -830,7 +948,14 @@ void test_runtime_warnings() {
 
   yr_compiler_destroy(compiler);
 
-  if (yr_rules_scan_file(rules, "tests/data/x.txt", 0, count, &counters, 0) != ERROR_SUCCESS) {
+  if (yr_rules_scan_file(
+          rules,
+          prefix_top_srcdir("tests/data/x.txt"),
+          0,
+          count,
+          &counters,
+          0) != ERROR_SUCCESS)
+  {
     yr_rules_destroy(rules);
     perror("yr_rules_scan_file");
     exit(EXIT_FAILURE);
@@ -838,6 +963,31 @@ void test_runtime_warnings() {
 
   // There should only be a single warning issued since the string is disabled
   // after the callback returns CALLBACK_CONTINUE.
+  assert_true_expr(counters.rules_warning == 1);
+  assert_true_expr(counters.rules_matching == 0);
+  assert_true_expr(counters.rules_not_matching == 1);
+
+  // Repeat the same scan to ensure that the string that had a warning is
+  // enabled after the first scan. But first we must reset the counters.
+  counters.rules_not_matching = 0;
+  counters.rules_matching = 0;
+  counters.rules_warning = 0;
+
+  if (yr_rules_scan_file(
+          rules,
+          prefix_top_srcdir("tests/data/x.txt"),
+          0,
+          count,
+          &counters,
+          0) != ERROR_SUCCESS)
+  {
+    yr_rules_destroy(rules);
+    perror("yr_rules_scan_file");
+    exit(EXIT_FAILURE);
+  }
+
+  // The assertions here should be EXACTLY the same as the assertions above. We
+  // are making sure the string is disabled only for a single scan.
   assert_true_expr(counters.rules_warning == 1);
   assert_true_expr(counters.rules_matching == 0);
   assert_true_expr(counters.rules_not_matching == 1);
@@ -853,12 +1003,13 @@ int main(int argc, char** argv)
   YR_DEBUG_INITIALIZE();
   YR_DEBUG_FPRINTF(1, stderr, "+ %s() { // in %s\n", __FUNCTION__, argv[0]);
 
-  chdir_if_env_top_srcdir();
+  init_top_srcdir();
 
   test_disabled_rules();
   test_file_descriptor();
   test_max_string_per_rules();
   test_max_match_data();
+  test_too_many_matches();
   test_include_callback();
   test_save_load_rules();
   test_scanner();
@@ -868,7 +1019,8 @@ int main(int argc, char** argv)
   test_issue_920();
   test_runtime_warnings();
 
-  YR_DEBUG_FPRINTF(1, stderr, "} = %d // %s() in %s\n", result, __FUNCTION__, argv[0]);
+  YR_DEBUG_FPRINTF(
+      1, stderr, "} = %d // %s() in %s\n", result, __FUNCTION__, argv[0]);
 
   return result;
 }

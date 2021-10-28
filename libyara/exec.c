@@ -179,78 +179,92 @@ static const uint8_t* jmp_if(int condition, const uint8_t* ip)
 
 static int iter_array_next(YR_ITERATOR* self, YR_VALUE_STACK* stack)
 {
-  YR_OBJECT* obj;
-
   // Check that there's two available slots in the stack, one for the next
   // item returned by the iterator and another one for the boolean that
   // indicates if there are more items.
   if (stack->sp + 1 >= stack->capacity)
     return ERROR_EXEC_STACK_OVERFLOW;
 
-  if (self->array_it.index < yr_object_array_length(self->array_it.array))
-  {
-    // Push the false value that indicates that the iterator is not exhausted.
-    stack->items[stack->sp++].i = 0;
+  // If the array that must be iterated is undefined stop the iteration right
+  // aways, as if the array would be empty.
+  if (IS_UNDEFINED(self->array_it.array))
+    goto _stop_iter;
 
-    obj = yr_object_array_get_item(
-        self->array_it.array, 0, self->array_it.index);
+  // If the current index is equal or larger than array's length the iterator
+  // has reached the end of the array.
+  if (self->array_it.index >= yr_object_array_length(self->array_it.array))
+    goto _stop_iter;
 
-    if (obj != NULL)
-      stack->items[stack->sp++].o = obj;
-    else
-      stack->items[stack->sp++].i = YR_UNDEFINED;
+  // Push the false value that indicates that the iterator is not exhausted.
+  stack->items[stack->sp++].i = 0;
 
-    self->array_it.index++;
-  }
+  YR_OBJECT* obj = yr_object_array_get_item(
+      self->array_it.array, 0, self->array_it.index);
+
+  if (obj != NULL)
+    stack->items[stack->sp++].o = obj;
   else
-  {
-    // Push true for indicating the iterator has been exhausted.
-    stack->items[stack->sp++].i = 1;
-    // Push YR_UNDEFINED as a placeholder for the next item.
     stack->items[stack->sp++].i = YR_UNDEFINED;
-  }
+
+  self->array_it.index++;
+
+  return ERROR_SUCCESS;
+
+_stop_iter:
+
+  // Push true for indicating the iterator has been exhausted.
+  stack->items[stack->sp++].i = 1;
+  // Push YR_UNDEFINED as a placeholder for the next item.
+  stack->items[stack->sp++].i = YR_UNDEFINED;
 
   return ERROR_SUCCESS;
 }
 
 static int iter_dict_next(YR_ITERATOR* self, YR_VALUE_STACK* stack)
 {
-  YR_DICTIONARY_ITEMS* items = object_as_dictionary(self->dict_it.dict)->items;
-
   // Check that there's three available slots in the stack, two for the next
   // item returned by the iterator and its key, and another one for the boolean
   // that indicates if there are more items.
   if (stack->sp + 2 >= stack->capacity)
     return ERROR_EXEC_STACK_OVERFLOW;
 
+  // If the dictionary that must be iterated is undefined, stop the iteration
+  // right away, as if the dictionary would be empty.
+  if (IS_UNDEFINED(self->dict_it.dict))
+    goto _stop_iter;
+
+  YR_DICTIONARY_ITEMS* items = object_as_dictionary(self->dict_it.dict)->items;
+
   // If the dictionary has no items or the iterator reached the last item, abort
   // the iteration, if not push the next key and value.
   if (items == NULL || self->dict_it.index == items->used)
+    goto _stop_iter;
+
+  // Push the false value that indicates that the iterator is not exhausted.
+  stack->items[stack->sp++].i = 0;
+
+  if (items->objects[self->dict_it.index].obj != NULL)
   {
-    // Push true for indicating the iterator has been exhausted.
-    stack->items[stack->sp++].i = 1;
-    // Push YR_UNDEFINED as a placeholder for the next key and value.
-    stack->items[stack->sp++].i = YR_UNDEFINED;
-    stack->items[stack->sp++].i = YR_UNDEFINED;
+    stack->items[stack->sp++].o = items->objects[self->dict_it.index].obj;
+    stack->items[stack->sp++].p = items->objects[self->dict_it.index].key;
   }
   else
   {
-    // Push the false value that indicates that the iterator is not exhausted.
-    stack->items[stack->sp++].i = 0;
-
-    if (items->objects[self->dict_it.index].obj != NULL)
-    {
-      stack->items[stack->sp++].o = items->objects[self->dict_it.index].obj;
-      stack->items[stack->sp++].p = items->objects[self->dict_it.index].key;
-    }
-    else
-    {
-      stack->items[stack->sp++].i = YR_UNDEFINED;
-      stack->items[stack->sp++].i = YR_UNDEFINED;
-    }
-
-    self->dict_it.index++;
+    stack->items[stack->sp++].i = YR_UNDEFINED;
+    stack->items[stack->sp++].i = YR_UNDEFINED;
   }
+
+  self->dict_it.index++;
+
+  return ERROR_SUCCESS;
+
+_stop_iter:
+
+  // Push true for indicating the iterator has been exhausted.
+  stack->items[stack->sp++].i = 1;
+  // Push YR_UNDEFINED as a placeholder for the next key and value.
+  stack->items[stack->sp++].i = YR_UNDEFINED;
+  stack->items[stack->sp++].i = YR_UNDEFINED;
 
   return ERROR_SUCCESS;
 }
@@ -783,6 +797,12 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
       push(r1);
       break;
 
+    case OP_DEFINED:
+      pop(r1);
+      r1.i = !is_undef(r1);
+      push(r1);
+      break;
+
     case OP_MOD:
       YR_DEBUG_FPRINTF(2, stderr, "- case OP_MOD: // %s()\n", __FUNCTION__);
       pop(r2);
@@ -1245,6 +1265,39 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
       push(r2);
       break;
 
+    case OP_COUNT_IN:
+      YR_DEBUG_FPRINTF(2, stderr, "- case OP_COUNT_IN: // %s()\n", __FUNCTION__);
+      pop(r3);
+      pop(r2);
+      pop(r1);
+
+      ensure_defined(r1);
+      ensure_defined(r2);
+
+#if YR_PARANOID_EXEC
+      ensure_within_rules_arena(r1.p);
+#endif
+
+      match = context->matches[r3.s->idx].head;
+      r4.i = 0;
+
+      while (match != NULL)
+      {
+        if (match->base + match->offset >= r1.i &&
+            match->base + match->offset <= r2.i)
+        {
+          r4.i++;
+        }
+
+        if (match->base + match->offset > r2.i)
+          break;
+
+        match = match->next;
+      }
+
+      push(r4);
+      break;
+
     case OP_OFFSET:
       YR_DEBUG_FPRINTF(2, stderr, "- case OP_OFFSET: // %s()\n", __FUNCTION__);
       pop(r2);
@@ -1302,7 +1355,7 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
       break;
 
     case OP_OF:
-      YR_DEBUG_FPRINTF(2, stderr, "- case OP_OF: // %s()\n", __FUNCTION__);
+    case OP_OF_PERCENT:
       found = 0;
       count = 0;
       pop(r1);
@@ -1319,10 +1372,71 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
 
       pop(r2);
 
-      if (is_undef(r2))
-        r1.i = found >= count ? 1 : 0;
-      else
-        r1.i = found >= r2.i ? 1 : 0;
+      if (opcode == OP_OF)
+      {
+        YR_DEBUG_FPRINTF(2, stderr, "- case OP_OF: // %s()\n", __FUNCTION__);
+
+        if (is_undef(r2))
+          r1.i = found >= count ? 1 : 0;
+        else
+          r1.i = found >= r2.i ? 1 : 0;
+      }
+      else  // OP_OF_PERCENT
+      {
+        YR_DEBUG_FPRINTF(
+            2, stderr, "- case OP_OF_PERCENT: // %s()\n", __FUNCTION__);
+
+        // If, by some weird reason, we manage to get an undefined string
+        // reference as the first thing on the stack then count would be zero.
+        // I don't know how this could ever happen but better to check for it.
+        if (is_undef(r2) || count == 0)
+          r1.i = YR_UNDEFINED;
+        else
+          r1.i = (((double) found / count) * 100) >= r2.i ? 1 : 0;
+      }
+
+      push(r1);
+      break;
+
+    case OP_OF_FOUND_IN:
+      YR_DEBUG_FPRINTF(
+          2, stderr, "- case OP_OF_FOUND_IN: // %s()\n", __FUNCTION__);
+
+      count = 0;
+      pop(r2);
+      pop(r1);
+      ensure_defined(r1);
+      ensure_defined(r2);
+
+      pop(r3);
+
+      while (!is_undef(r3))
+      {
+#if YR_PARANOID_EXEC
+        ensure_within_rules_arena(r3.p);
+#endif
+        match = context->matches[r3.s->idx].head;
+
+        while (match != NULL)
+        {
+          if (match->base + match->offset >= r1.i &&
+              match->base + match->offset <= r2.i)
+          {
+            count++;
+            break;
+          }
+
+          if (match->base + match->offset > r1.i)
+            break;
+
+          match = match->next;
+        }
+
+        pop(r3);
+      }
+
+      pop(r1)
+      r1.i = count >= r1.i ? 1 : 0;
 
       push(r1);
       break;
@@ -1790,6 +1904,7 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
     case OP_ISTARTSWITH:
     case OP_ENDSWITH:
     case OP_IENDSWITH:
+    case OP_IEQUALS:
       pop(r2);
       pop(r1);
 
@@ -1827,6 +1942,11 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
         YR_DEBUG_FPRINTF(
             2, stderr, "- case OP_IENDSWITH: // %s()\n", __FUNCTION__);
         r1.i = ss_iendswith(r1.ss, r2.ss);
+        break;
+      case OP_IEQUALS:
+        YR_DEBUG_FPRINTF(
+            2, stderr, "- case OP_IEQUALS: // %s()\n", __FUNCTION__);
+        r1.i = ss_icompare(r1.ss, r2.ss) == 0;
         break;
       }
 

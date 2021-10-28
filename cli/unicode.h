@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2019. The YARA Authors. All Rights Reserved.
+Copyright (c) 2021. The YARA Authors. All Rights Reserved.
 
 Redistribution and use in source and binary forms, with or without modification,
 are permitted provided that the following conditions are met:
@@ -27,45 +27,42 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include <yara.h>
+#ifndef YR_UNICODE_H
+#define YR_UNICODE_H
 
-#include "util.h"
+#ifdef _MSC_VER
+#include <tchar.h>
+#define char_t TCHAR
+#define PF_S "hs"
+#define PF_C "hc"
 
-int main(int argc, char** argv)
-{
-  int result = 0;
+#else
+#define char_t char
+#define _T(x) x
+#define PF_S "s"
+#define PF_C "c"
 
-  YR_DEBUG_INITIALIZE();
-  YR_DEBUG_FPRINTF(1, stderr, "+ %s() { // in %s\n", __FUNCTION__, __FILE__);
+#ifdef __CYGWIN__
+#define _tcstok_s strtok_r
+#else
+#define _tcstok_s strtok_s
+#endif
 
-  init_top_srcdir();
-  yr_initialize();
+#define _tcscmp strcmp
+#define _tcsdup strdup
+#define _tcschr strchr
+#define _tcslen strlen
+#define _tcsstr strstr
+#define _tcstol strtol
+#define _tstoi atoi
+#define _tstof atof
+#define _tisdigit isdigit
+#define _tfopen fopen
+#define _ftprintf fprintf
+#define _stprintf sprintf
+#define _tprintf printf
+#define _tmain main
+#define _sntprintf snprintf
+#endif
 
-  assert_true_rule_module_data_file(
-      "import \"pb_tests\" \
-      rule test { \
-        condition: \
-          pb_tests.f_int32 == 1111 and \
-          pb_tests.f_int64 == 2222 and \
-          pb_tests.f_string == \"foo\" and \
-          pb_tests.f_struct_array[0].f_enum == pb_tests.struct.enum.SECOND \
-      }",
-      "tests/data/test-pb.data.bin");
-
-  assert_true_rule_module_data_file(
-      "import \"pb_tests\" \
-      rule test { \
-        condition: \
-          for any s in pb_tests.f_struct_array : ( \
-            s.f_nested_struct.f_int32 == 3333 \
-          ) \
-      }",
-      "tests/data/test-pb.data.bin");
-
-  yr_finalize();
-
-  YR_DEBUG_FPRINTF(
-      1, stderr, "} = %d // %s() in %s\n", result, __FUNCTION__, __FILE__);
-
-  return result;
-}
+#endif

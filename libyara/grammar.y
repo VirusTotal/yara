@@ -27,9 +27,10 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+// clang-format off
+
 %{
-
-
+  
 #include <assert.h>
 #include <stdio.h>
 #include <string.h>
@@ -59,8 +60,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define YYMALLOC yr_malloc
 #define YYFREE yr_free
 
-#define FOR_EXPRESSION_ALL 1
-#define FOR_EXPRESSION_ANY 2
+#define FOR_EXPRESSION_ALL  1
+#define FOR_EXPRESSION_ANY  2
+#define FOR_EXPRESSION_NONE 3
 
 #define fail_with_error(e) \
     { \
@@ -76,13 +78,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
       fail_with_error(e); \
     } \
 
-
-#define check_valid_ascii(s) \
-    if (!ss_is_valid_ascii(s)) \
-    { \
-      yywarning(yyscanner, \
-          "non-ascii character in string \"%s\".", (s)->c_string); \
-    }
 
 #define check_type_with_cleanup(expression, expected_type, op, cleanup) \
     if (((expression.type) & (expected_type)) == 0) \
@@ -199,6 +194,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 %token _ENTRYPOINT_                                    "<entrypoint>"
 %token _ALL_                                           "<all>"
 %token _ANY_                                           "<any>"
+%token _NONE_                                          "<none>"
 %token _IN_                                            "<in>"
 %token _OF_                                            "<of>"
 %token _FOR_                                           "<for>"
@@ -210,12 +206,14 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 %token _ICONTAINS_                                     "<icontains>"
 %token _ISTARTSWITH_                                   "<istartswith>"
 %token _IENDSWITH_                                     "<iendswith>"
+%token _IEQUALS_                                       "<iequals>"
 %token _IMPORT_                                        "<import>"
 %token _TRUE_                                          "<true>"
-%token _FALSE_                                         "<false"
+%token _FALSE_                                         "<false>"
 %token _OR_                                            "<or>"
 %token _AND_                                           "<and>"
 %token _NOT_                                           "<not>"
+%token _DEFINED_                                       "<defined>"
 %token _EQ_                                            "=="
 %token _NEQ_                                           "!="
 %token _LT_                                            "<"
@@ -229,7 +227,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // in the list. Operators that appear in the same line have the same precedence.
 %left _OR_
 %left _AND_
-%left _EQ_ _NEQ_ _CONTAINS_ _ICONTAINS_ _STARTSWITH_ _ENDSWITH_ _ISTARTSWITH_ _IENDSWITH_ _MATCHES_
+%left _EQ_ _NEQ_ _CONTAINS_ _ICONTAINS_ _STARTSWITH_ _ENDSWITH_ _ISTARTSWITH_ _IENDSWITH_ _IEQUALS_ _MATCHES_
 %left _LT_ _LE_ _GT_ _GE_
 %left '|'
 %left '^'
@@ -238,6 +236,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 %left '+' '-'
 %left '*' '\\' '%'
 %right _NOT_ '~' UNARY_MINUS
+%right _DEFINED_
 
 %type <rule>   rule
 
@@ -340,8 +339,6 @@ rules
 import
     : _IMPORT_ _TEXT_STRING_
       {
-        check_valid_ascii($2);
-
         int result = yr_parser_reduce_import(yyscanner, $2);
 
         yr_free($2);
@@ -605,8 +602,6 @@ string_declaration
       }
       _TEXT_STRING_ string_modifiers
       {
-        check_valid_ascii($4);
-
         int result = yr_parser_reduce_string_declaration(
             yyscanner, $5, $1, $4, &$<string>$);
 
@@ -800,8 +795,6 @@ string_modifier
       {
         int result = ERROR_SUCCESS;
 
-        check_valid_ascii($3);
-
         if ($3->length != 64)
         {
           yr_free($3);
@@ -823,8 +816,6 @@ string_modifier
     | _BASE64_WIDE_ '(' _TEXT_STRING_ ')'
       {
         int result = ERROR_SUCCESS;
-
-        check_valid_ascii($3);
 
         if ($3->length != 64)
         {
@@ -1230,21 +1221,20 @@ arguments_list
 regexp
     : _REGEXP_
       {
-        SIZED_STRING* sized_string = $1;
         YR_ARENA_REF re_ref;
         RE_ERROR error;
 
         int result = ERROR_SUCCESS;
         int re_flags = 0;
 
-        if (sized_string->flags & SIZED_STRING_FLAGS_NO_CASE)
+        if ($1->flags & SIZED_STRING_FLAGS_NO_CASE)
           re_flags |= RE_FLAGS_NO_CASE;
 
-        if (sized_string->flags & SIZED_STRING_FLAGS_DOT_ALL)
+        if ($1->flags & SIZED_STRING_FLAGS_DOT_ALL)
           re_flags |= RE_FLAGS_DOT_ALL;
 
         result = yr_re_compile(
-            sized_string->c_string,
+            $1->c_string,
             re_flags,
             compiler->arena,
             &re_ref,
@@ -1281,7 +1271,7 @@ boolean_expression
                 compiler->arena, &$1.value.sized_string_ref);
 
             yywarning(yyscanner,
-                "Using literal string \"%s\" in a boolean operation.",
+                "using literal string \"%s\" in a boolean operation.",
                 sized_string->c_string);
           }
 
@@ -1375,6 +1365,16 @@ expression
 
         fail_if_error(yr_parser_emit(
             yyscanner, OP_IENDSWITH, NULL));
+
+        $$.type = EXPRESSION_TYPE_BOOLEAN;
+      }
+    | primary_expression _IEQUALS_ primary_expression
+      {
+        check_type($1, EXPRESSION_TYPE_STRING, "iequals");
+        check_type($3, EXPRESSION_TYPE_STRING, "iequals");
+
+        fail_if_error(yr_parser_emit(
+            yyscanner, OP_IEQUALS, NULL));
 
         $$.type = EXPRESSION_TYPE_BOOLEAN;
       }
@@ -1787,10 +1787,41 @@ expression
 
         $$.type = EXPRESSION_TYPE_BOOLEAN;
       }
+    | primary_expression '%' _OF_ string_set
+      {
+        check_type($1, EXPRESSION_TYPE_INTEGER, "%");
+
+        // The value of primary_expression can be undefined because
+        // it could be a variable for which don't know the value during
+        // compiling time. However, if the value is defined it should be
+        // in the range [1,100].
+        if (!IS_UNDEFINED($1.value.integer) &&
+            ($1.value.integer < 1 || $1.value.integer > 100))
+        {
+          yr_compiler_set_error_extra_info(
+              compiler, "percentage must be between 1 and 100 (inclusive)");
+          compiler->last_error = ERROR_INVALID_PERCENTAGE;
+          yyerror(yyscanner, compiler, NULL);
+          YYERROR;
+        }
+
+        yr_parser_emit(yyscanner, OP_OF_PERCENT, NULL);
+      }
+    | for_expression _OF_ string_set _IN_ range
+      {
+        yr_parser_emit(yyscanner, OP_OF_FOUND_IN, NULL);
+
+        $$.type = EXPRESSION_TYPE_BOOLEAN;
+      }
     | _NOT_ boolean_expression
       {
         yr_parser_emit(yyscanner, OP_NOT, NULL);
 
+        $$.type = EXPRESSION_TYPE_BOOLEAN;
+      }
+    | _DEFINED_ boolean_expression
+      {
+        yr_parser_emit(yyscanner, OP_DEFINED, NULL);
         $$.type = EXPRESSION_TYPE_BOOLEAN;
       }
     | boolean_expression _AND_
@@ -2216,6 +2247,11 @@ for_expression
         yr_parser_emit_push_const(yyscanner, 1);
         $$ = FOR_EXPRESSION_ANY;
       }
+    | _NONE_
+      {
+        yr_parser_emit_push_const(yyscanner, 0);
+        $$ = FOR_EXPRESSION_NONE;
+      }
     ;
 
 
@@ -2276,8 +2312,6 @@ primary_expression
       {
         YR_ARENA_REF ref;
 
-        check_valid_ascii($1);
-
         int result = _yr_compiler_store_data(
             compiler,
             $1,
@@ -2298,6 +2332,18 @@ primary_expression
 
         $$.type = EXPRESSION_TYPE_STRING;
         $$.value.sized_string_ref = ref;
+      }
+    | _STRING_COUNT_ _IN_ range
+      {
+        int result = yr_parser_reduce_string_identifier(
+            yyscanner, $1, OP_COUNT_IN, YR_UNDEFINED);
+
+        yr_free($1);
+
+        fail_if_error(result);
+
+        $$.type = EXPRESSION_TYPE_INTEGER;
+        $$.value.integer = YR_UNDEFINED;
       }
     | _STRING_COUNT_
       {

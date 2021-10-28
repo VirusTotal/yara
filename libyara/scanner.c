@@ -188,6 +188,11 @@ static void _yr_scanner_clean_matches(YR_SCANNER* scanner)
       0,
       sizeof(YR_BITMASK) * YR_BITMASK_SIZE(scanner->rules->num_namespaces));
 
+  memset(
+      scanner->strings_temp_disabled,
+      0,
+      sizeof(YR_BITMASK) * YR_BITMASK_SIZE(scanner->rules->num_strings));
+
   memset(scanner->matches, 0, sizeof(YR_MATCHES) * scanner->rules->num_strings);
 
   memset(
@@ -226,6 +231,9 @@ YR_API int yr_scanner_create(YR_RULES* rules, YR_SCANNER** scanner)
 
   new_scanner->ns_unsatisfied_flags = (YR_BITMASK*) yr_calloc(
       sizeof(YR_BITMASK), YR_BITMASK_SIZE(rules->num_namespaces));
+
+  new_scanner->strings_temp_disabled = (YR_BITMASK*) yr_calloc(
+      sizeof(YR_BITMASK), YR_BITMASK_SIZE(rules->num_strings));
 
   new_scanner->matches = (YR_MATCHES*) yr_calloc(
       rules->num_strings, sizeof(YR_MATCHES));
@@ -279,16 +287,22 @@ YR_API void yr_scanner_destroy(YR_SCANNER* scanner)
 {
   YR_DEBUG_FPRINTF(2, stderr, "- %s() {} \n", __FUNCTION__);
 
-  RE_FIBER* fiber;
-  RE_FIBER* next_fiber;
-
-  fiber = scanner->re_fiber_pool.fibers.head;
+  RE_FIBER* fiber = scanner->re_fiber_pool.fibers.head;
 
   while (fiber != NULL)
   {
-    next_fiber = fiber->next;
+    RE_FIBER* next = fiber->next;
     yr_free(fiber);
-    fiber = next_fiber;
+    fiber = next;
+  }
+
+  RE_FAST_EXEC_POSITION* position = scanner->re_fast_exec_position_pool.head;
+
+  while (position != NULL)
+  {
+    RE_FAST_EXEC_POSITION* next = position->next;
+    yr_free(position);
+    position = next;
   }
 
   if (scanner->objects_table != NULL)
@@ -304,6 +318,7 @@ YR_API void yr_scanner_destroy(YR_SCANNER* scanner)
 
   yr_free(scanner->rule_matches_flags);
   yr_free(scanner->ns_unsatisfied_flags);
+  yr_free(scanner->strings_temp_disabled);
   yr_free(scanner->matches);
   yr_free(scanner->unconfirmed_matches);
   yr_free(scanner);
@@ -490,8 +505,12 @@ YR_API int yr_scanner_scan_mem_blocks(
   if (result != ERROR_SUCCESS)
     goto _exit;
 
-  // Ask the iterator for the file size.
-  scanner->file_size = iterator->file_size(iterator);
+  // If the iterator has a file_size function, ask the function for the file's
+  // size, if not file size is undefined.
+  if (iterator->file_size != NULL)
+    scanner->file_size = iterator->file_size(iterator);
+  else
+    scanner->file_size = YR_UNDEFINED;
 
   YR_TRYCATCH(
       !(scanner->flags & SCAN_FLAGS_NO_TRYCATCH),
@@ -573,8 +592,6 @@ static YR_MEMORY_BLOCK* _yr_get_first_block(YR_MEMORY_BLOCK_ITERATOR* iterator)
       __FUNCTION__,
       result);
 
-  iterator->last_error = ERROR_SUCCESS;
-
   return result;
 }
 
@@ -588,8 +605,6 @@ static YR_MEMORY_BLOCK* _yr_get_next_block(YR_MEMORY_BLOCK_ITERATOR* iterator)
       "- %s() {} = %p // default iterator; single memory block, blocking\n",
       __FUNCTION__,
       result);
-
-  iterator->last_error = ERROR_SUCCESS;
 
   return result;
 }

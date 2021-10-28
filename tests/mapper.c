@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2019. The YARA Authors. All Rights Reserved.
+Copyright (c) 2021. The YARA Authors. All Rights Reserved.
 
 Redistribution and use in source and binary forms, with or without modification,
 are permitted provided that the following conditions are met:
@@ -27,45 +27,70 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include <yara.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/mman.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <unistd.h>
 
-#include "util.h"
+char str[] = "!dlrow ,olleH";
+int fd;
+
+char* map_file(char* path)
+{
+  if ((fd = open(path, O_RDONLY)) < 0)
+  {
+    fprintf(stderr, "open: %s: %s\n", path, strerror(errno));
+    exit(1);
+  }
+  char* rv = mmap(NULL, 4096, PROT_READ | PROT_WRITE, MAP_PRIVATE, fd, 0);
+  if (rv == NULL)
+  {
+    fprintf(stderr, "mmap: %s: failed: %s\n", path, strerror(errno));
+    exit(1);
+  }
+  close(fd);
+  return rv;
+}
 
 int main(int argc, char** argv)
 {
-  int result = 0;
+  char* buf;
 
-  YR_DEBUG_INITIALIZE();
-  YR_DEBUG_FPRINTF(1, stderr, "+ %s() { // in %s\n", __FUNCTION__, __FILE__);
+  if (argc < 2)
+  {
+    fprintf(stderr, "no argument\n");
+    exit(1);
+  }
+  else if (strcmp(argv[1], "open") == 0)
+  {
+    if (argc < 3)
+      exit(1);
 
-  init_top_srcdir();
-  yr_initialize();
+    printf("%s: %s %s\n", argv[0], argv[1], argv[2]);
+    buf = map_file(argv[2]);
+  }
+  else if (strcmp(argv[1], "patch") == 0)
+  {
+    if (argc < 3)
+      exit(1);
 
-  assert_true_rule_module_data_file(
-      "import \"pb_tests\" \
-      rule test { \
-        condition: \
-          pb_tests.f_int32 == 1111 and \
-          pb_tests.f_int64 == 2222 and \
-          pb_tests.f_string == \"foo\" and \
-          pb_tests.f_struct_array[0].f_enum == pb_tests.struct.enum.SECOND \
-      }",
-      "tests/data/test-pb.data.bin");
+    printf("%s: %s %s\n", argv[0], argv[1], argv[2]);
+    buf = map_file(argv[2]);
 
-  assert_true_rule_module_data_file(
-      "import \"pb_tests\" \
-      rule test { \
-        condition: \
-          for any s in pb_tests.f_struct_array : ( \
-            s.f_nested_struct.f_int32 == 3333 \
-          ) \
-      }",
-      "tests/data/test-pb.data.bin");
-
-  yr_finalize();
-
-  YR_DEBUG_FPRINTF(
-      1, stderr, "} = %d // %s() in %s\n", result, __FUNCTION__, __FILE__);
-
-  return result;
+    for (int i = 0; i < sizeof(str) - 1; i++)
+    {
+      buf[i] = str[sizeof(str) - i - 2];
+    }
+  }
+  else
+  {
+    fprintf(stderr, "unknown argument <%s>\n", argv[1]);
+    exit(1);
+  }
+  sleep(3600);
 }

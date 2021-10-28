@@ -292,14 +292,20 @@ void init_test_iterator(
   }
 }
 
-void chdir_if_env_top_srcdir(void)
+char* top_srcdir;
+
+void init_top_srcdir(void)
 {
-  char* top_srcdir = getenv("TOP_SRCDIR");
-  if (top_srcdir)
-  {
-    int result = chdir(top_srcdir);
-    assert_true_expr(0 == result);
-  }
+  top_srcdir = getenv("TOP_SRCDIR");
+  if (!top_srcdir)
+    top_srcdir = ".";
+}
+
+char* prefix_top_srcdir(char* dir)
+{
+  static char buf[4096];
+  snprintf(buf, sizeof(buf), "%s/%s", top_srcdir, dir);
+  return buf;
 }
 
 //

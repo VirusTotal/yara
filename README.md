@@ -1,5 +1,4 @@
 [![Join the chat at https://gitter.im/VirusTotal/yara](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/VirusTotal/yara?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
-[![Travis build status](https://travis-ci.com/VirusTotal/yara.svg)](https://travis-ci.com/VirusTotal/yara)
 [![AppVeyor build status](https://ci.appveyor.com/api/projects/status/7glqg19w4oolm7pr?svg=true)](https://ci.appveyor.com/project/plusvic/yara)
 [![Coverity status](https://scan.coverity.com/projects/9057/badge.svg?flat=1)](https://scan.coverity.com/projects/plusvic-yara)
 
@@ -43,7 +42,7 @@ yara-python extension.
 
 ## Additional resources
 
-Do you use GitHub for storing you YARA rules? [YARA-CI](https://yara-ci.cloud.virustotal.com)
+Do you use GitHub for storing your YARA rules? [YARA-CI](https://yara-ci.cloud.virustotal.com)
 may be a useful addition to your toolbelt. This is GitHub application that provides
 continuous testing for your rules, helping you to identify common mistakes and
 false positives.
@@ -66,7 +65,9 @@ awesome list of [YARA-related stuff](https://github.com/InQuest/awesome-yara).
 * [BinaryAlert](https://github.com/airbnb/binaryalert)
 * [Blue Coat](http://www.bluecoat.com/products/malware-analysis-appliance)
 * [Blueliv](http://www.blueliv.com)
+* [Cisco Talos Intelligence Group](https://talosintelligence.com/)
 * [Claroty](https://claroty.com/continuous-threat-detection)
+* [Cloudina Security](https://cloudina.co.uk)
 * [Cofense](https://cofense.com)
 * [Conix](http://www.conix.fr)
 * [CounterCraft](https://www.countercraft.eu)
@@ -92,10 +93,12 @@ awesome list of [YARA-related stuff](https://github.com/InQuest/awesome-yara).
 * [Joe Security](https://www.joesecurity.org)
 * [jsunpack-n](http://jsunpack.jeek.org/)
 * [Kaspersky Lab](http://www.kaspersky.com)
+* [KnowBe4](https://www.knowbe4.com)
 * [Koodous](https://koodous.com/)
 * [Laika BOSS](https://github.com/lmco/laikaboss)
 * [Lastline, Inc.](http://www.lastline.com)
 * [LimaCharlie](https://limacharlie.io/)
+* [Malwation](http://malwation.com/)
 * [McAfee Advanced Threat Defense](http://mcafee.com/atd)
 * [Metaflows](http://www.metaflows.com)
 * [NBS System](https://www.nbs-system.com/)

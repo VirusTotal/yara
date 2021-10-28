@@ -33,7 +33,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <yara/utils.h>
 
 #define YR_MAJOR_VERSION 4
-#define YR_MINOR_VERSION 1
+#define YR_MINOR_VERSION 2
 #define YR_MICRO_VERSION 0
 
 #define version_str(s)  _version_str(s)
@@ -47,7 +47,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // Version as a single 4-byte hex number, e.g. 0x030401 == 3.4.1.
 #define YR_VERSION_HEX \
   ((YR_MAJOR_VERSION << 16) | (YR_MINOR_VERSION << 8) | (YR_MICRO_VERSION << 0))
-
 
 // Turn on paranoid mode by default if not defined otherwise. In paranoid
 // mode additional checks are performed in order to mitigate the effects of
@@ -66,7 +65,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #if !defined(YR_PARANOID_EXEC)
 #define YR_PARANOID_EXEC 1
 #endif
-
 
 // Enumerated type listing configuration options
 typedef enum _YR_CONFIG_NAME
@@ -92,6 +90,5 @@ YR_API int yr_finalize(void);
 YR_API int yr_set_configuration(YR_CONFIG_NAME, void*);
 
 YR_API int yr_get_configuration(YR_CONFIG_NAME, void*);
-
 
 #endif
