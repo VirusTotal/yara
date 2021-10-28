@@ -337,16 +337,12 @@ YR_API YR_MEMORY_BLOCK* yr_process_get_next_memory_block(
     }
   }
 
-  if (proc_info->next_block_end - current_begin > max_processmemory_chunk)
-  {
-    context->current_block.size = max_processmemory_chunk;
-  }
-  else
-  {
-    context->current_block.size = proc_info->next_block_end - current_begin;
-  }
-
   context->current_block.base = current_begin;
+  context->current_block.size = yr_min(
+      proc_info->next_block_end - current_begin, max_processmemory_chunk);
+
+  assert(context->current_block.size > 0);
+
   iterator->last_error = ERROR_SUCCESS;
 
   YR_DEBUG_FPRINTF(

@@ -38,12 +38,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <yara/mem.h>
 #include <yara/proc.h>
 
-
 typedef struct _YR_PROC_INFO
 {
   task_t task;
 } YR_PROC_INFO;
-
 
 int _yr_process_attach(int pid, YR_PROC_ITERATOR_CTX* context)
 {
@@ -65,7 +63,6 @@ int _yr_process_attach(int pid, YR_PROC_ITERATOR_CTX* context)
   return ERROR_SUCCESS;
 }
 
-
 int _yr_process_detach(YR_PROC_ITERATOR_CTX* context)
 {
   YR_PROC_INFO* proc_info = context->proc_info;
@@ -75,7 +72,6 @@ int _yr_process_detach(YR_PROC_ITERATOR_CTX* context)
 
   return ERROR_SUCCESS;
 }
-
 
 YR_API const uint8_t* yr_process_fetch_memory_block_data(YR_MEMORY_BLOCK* block)
 {
@@ -114,7 +110,6 @@ YR_API const uint8_t* yr_process_fetch_memory_block_data(YR_MEMORY_BLOCK* block)
   return context->buffer;
 }
 
-
 YR_API YR_MEMORY_BLOCK* yr_process_get_next_memory_block(
     YR_MEMORY_BLOCK_ITERATOR* iterator)
 {
@@ -130,7 +125,6 @@ YR_API YR_MEMORY_BLOCK* yr_process_get_next_memory_block(
   uint64_t current_begin = (vm_address_t) context->current_block.base +
                            context->current_block.size;
   vm_address_t address = current_begin;
-  size_t area_to_scan;
   uint64_t max_processmemory_chunk;
 
   yr_get_configuration(
@@ -153,13 +147,15 @@ YR_API YR_MEMORY_BLOCK* yr_process_get_next_memory_block(
 
     if (kr == KERN_SUCCESS)
     {
-      area_to_scan = size - (size_t)(current_begin - address);
-      if (((uint64_t) area_to_scan) > max_processmemory_chunk)
+      size_t chunk_size = size - (size_t) (current_begin - address);
+
+      if (((uint64_t) chunk_size) > max_processmemory_chunk)
       {
-        area_to_scan = (size_t) max_processmemory_chunk;
+        chunk_size = (size_t) max_processmemory_chunk;
       }
+
       context->current_block.base = (size_t) current_begin;
-      context->current_block.size = area_to_scan;
+      context->current_block.size = chunk_size;
 
       return &context->current_block;
     }
@@ -170,7 +166,6 @@ YR_API YR_MEMORY_BLOCK* yr_process_get_next_memory_block(
 
   return NULL;
 }
-
 
 YR_API YR_MEMORY_BLOCK* yr_process_get_first_memory_block(
     YR_MEMORY_BLOCK_ITERATOR* iterator)
