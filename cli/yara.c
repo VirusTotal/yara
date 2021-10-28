@@ -1297,7 +1297,7 @@ int _tmain(int argc, const char_t** argv)
 
   bool arg_is_dir = false;
   int flags = 0;
-  int result, i;
+  int result;
 
   argc = args_parse(options, argc, argv);
 
@@ -1367,9 +1367,8 @@ int _tmain(int argc, const char_t** argv)
 
   yr_set_configuration(YR_CONFIG_STACK_SIZE, &stack_size);
   yr_set_configuration(YR_CONFIG_MAX_STRINGS_PER_RULE, &max_strings_per_rule);
-  local_max_processmemory_chunk = max_processmemory_chunk;
   yr_set_configuration(
-      YR_CONFIG_MAX_PROCESSMEMORY_CHUNK, &local_max_processmemory_chunk);
+      YR_CONFIG_MAX_PROCESSMEMORY_CHUNK, &max_processmemory_chunk);
 
   // Try to load the rules file as a binary file containing
   // compiled rules first
