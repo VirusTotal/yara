@@ -323,10 +323,45 @@ YR_API YR_MEMORY_BLOCK* yr_process_get_next_memory_block(
 
   if (proc_info->next_block_end <= current_begin)
   {
-    if (fgets(buffer, sizeof(buffer), proc_info->maps) != NULL)
+    while (fgets(buffer, sizeof(buffer), proc_info->maps) != NULL)
     {
-      sscanf(buffer, "%" SCNx64 "-%" SCNx64, &begin, &end);
+      // If we haven't read the whole line, skip over the rest.
+      if (strrchr(buffer, '\n') == NULL)
+      {
+        int c;
+        do
+        {
+          c = fgetc(proc_info->maps);
+        } while (c >= 0 && c != '\n');
+      }
+      int len;
+      int n = sscanf(
+          buffer,
+          "%" SCNx64 "-%" SCNx64 " %4s "
+          "%" SCNx64 " %" SCNx64 ":%" SCNx64 " %" SCNu64 " %n",
+          &begin,
+          &end,
+          perm,
+          &(proc_info->map_offset),
+          &(proc_info->map_dmaj),
+          &(proc_info->map_dmin),
+          &(proc_info->map_ino),
+          &len);
+      if (n == 7)
+      {
+        if (buffer[len] == '/')
+          strncpy(
+              proc_info->map_path,
+              buffer + len,
+              sizeof(proc_info->map_path) - 1);
+        else
+          proc_info->map_path[0] = '\0';
+        break;
+      }
+    }
 
+    if (n == 7)
+    {
       current_begin = begin;
       proc_info->next_block_end = end;
     }
