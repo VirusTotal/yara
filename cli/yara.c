@@ -157,12 +157,13 @@ static bool negate = false;
 static bool print_count_only = false;
 static bool fail_on_warnings = false;
 static bool rules_are_compiled = false;
-static long total_count = 0;
-static long limit = 0;
-static long timeout = 1000000;
-static long stack_size = DEFAULT_STACK_SIZE;
-static long threads = YR_MAX_THREADS;
-static long max_strings_per_rule = DEFAULT_MAX_STRINGS_PER_RULE;
+static int total_count = 0;
+static int limit = 0;
+static int timeout = 1000000;
+static int stack_size = DEFAULT_STACK_SIZE;
+static int threads = YR_MAX_THREADS;
+static int max_strings_per_rule = DEFAULT_MAX_STRINGS_PER_RULE;
+static int max_process_memory_chunk = DEFAULT_MAX_PROCESS_MEMORY_CHUNK;
 
 #define USAGE_STRING \
   "Usage: yara [OPTION]... [NAMESPACE:]RULES_FILE... FILE | DIR | PID"
@@ -306,6 +307,14 @@ args_option_t options[] = {
         &stack_size,
         _T("set maximum stack size (default=16384)"),
         _T("SLOTS")),
+
+    OPT_INTEGER(
+        0,
+        _T("max-process-memory-chunk"),
+        &max_process_memory_chunk,
+        _T("set maximum chunk size while reading process memory")
+        _T(" (default=1073741824)"),
+        _T("NUMBER")),
 
     OPT_STRING_MULTI(
         't',
@@ -1359,6 +1368,8 @@ int _tmain(int argc, const char_t** argv)
 
   yr_set_configuration(YR_CONFIG_STACK_SIZE, &stack_size);
   yr_set_configuration(YR_CONFIG_MAX_STRINGS_PER_RULE, &max_strings_per_rule);
+  yr_set_configuration(
+      YR_CONFIG_MAX_PROCESS_MEMORY_CHUNK, &max_process_memory_chunk);
 
   // Try to load the rules file as a binary file containing
   // compiled rules first

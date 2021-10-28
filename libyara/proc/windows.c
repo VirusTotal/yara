@@ -31,9 +31,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <windows.h>
 #include <yara/error.h>
+#include <yara/libyara.h>
 #include <yara/mem.h>
 #include <yara/proc.h>
-
 
 typedef struct _YR_PROC_INFO
 {
@@ -82,7 +82,6 @@ int _yr_process_attach(int pid, YR_PROC_ITERATOR_CTX* context)
   return ERROR_SUCCESS;
 }
 
-
 int _yr_process_detach(YR_PROC_ITERATOR_CTX* context)
 {
   YR_PROC_INFO* proc_info = (YR_PROC_INFO*) context->proc_info;
@@ -90,7 +89,6 @@ int _yr_process_detach(YR_PROC_ITERATOR_CTX* context)
   CloseHandle(proc_info->hProcess);
   return ERROR_SUCCESS;
 }
-
 
 YR_API const uint8_t* yr_process_fetch_memory_block_data(YR_MEMORY_BLOCK* block)
 {
@@ -130,7 +128,6 @@ YR_API const uint8_t* yr_process_fetch_memory_block_data(YR_MEMORY_BLOCK* block)
   return context->buffer;
 }
 
-
 YR_API YR_MEMORY_BLOCK* yr_process_get_next_memory_block(
     YR_MEMORY_BLOCK_ITERATOR* iterator)
 {
@@ -138,8 +135,12 @@ YR_API YR_MEMORY_BLOCK* yr_process_get_next_memory_block(
   YR_PROC_INFO* proc_info = (YR_PROC_INFO*) context->proc_info;
 
   MEMORY_BASIC_INFORMATION mbi;
-  PVOID address = (PVOID)(
-      context->current_block.base + context->current_block.size);
+  void* address =
+      (void*) (context->current_block.base + context->current_block.size);
+  uint64_t max_process_memory_chunk;
+
+  yr_get_configuration(
+      YR_CONFIG_MAX_PROCESS_MEMORY_CHUNK, (void*) &max_process_memory_chunk);
 
   iterator->last_error = ERROR_SUCCESS;
 
@@ -153,18 +154,26 @@ YR_API YR_MEMORY_BLOCK* yr_process_get_next_memory_block(
 
     if (mbi.State == MEM_COMMIT && ((mbi.Protect & PAGE_NOACCESS) == 0))
     {
-      context->current_block.base = (size_t) mbi.BaseAddress;
-      context->current_block.size = mbi.RegionSize;
+      size_t chuck_size =
+          mbi.RegionSize -
+          (size_t) (((uint8_t*) address) - ((uint8_t*) mbi.BaseAddress));
+
+      if (((uint64_t) chuck_size) > max_process_memory_chunk)
+      {
+        chuck_size = (size_t) max_process_memory_chunk;
+      }
+
+      context->current_block.base = (size_t) address;
+      context->current_block.size = chuck_size;
 
       return &context->current_block;
     }
 
-    address = (uint8_t*) address + mbi.RegionSize;
+    address = (uint8_t*) mbi.BaseAddress + mbi.RegionSize;
   }
 
   return NULL;
 }
-
 
 YR_API YR_MEMORY_BLOCK* yr_process_get_first_memory_block(
     YR_MEMORY_BLOCK_ITERATOR* iterator)

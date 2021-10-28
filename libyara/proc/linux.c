@@ -40,6 +40,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <unistd.h>
 #include <yara/error.h>
 #include <yara/globals.h>
+#include <yara/libyara.h>
 #include <yara/mem.h>
 #include <yara/proc.h>
 
@@ -49,12 +50,13 @@ typedef struct _YR_PROC_INFO
   int mem_fd;
   int pagemap_fd;
   FILE* maps;
+  uint64_t map_offset;
+  uint64_t next_block_end;
   int page_size;
   char map_path[PATH_MAX];
   uint64_t map_dmaj;
   uint64_t map_dmin;
   uint64_t map_ino;
-  uint64_t map_offset;
 } YR_PROC_INFO;
 
 static int page_size = -1;
@@ -78,6 +80,7 @@ int _yr_process_attach(int pid, YR_PROC_ITERATOR_CTX* context)
   proc_info->maps = NULL;
   proc_info->mem_fd = -1;
   proc_info->pagemap_fd = -1;
+  proc_info->next_block_end = 0;
 
   snprintf(buffer, sizeof(buffer), "/proc/%u/maps", pid);
   proc_info->maps = fopen(buffer, "r");
@@ -303,54 +306,89 @@ _exit:;
 YR_API YR_MEMORY_BLOCK* yr_process_get_next_memory_block(
     YR_MEMORY_BLOCK_ITERATOR* iterator)
 {
-  YR_MEMORY_BLOCK* result = NULL;
   YR_PROC_ITERATOR_CTX* context = (YR_PROC_ITERATOR_CTX*) iterator->context;
   YR_PROC_INFO* proc_info = (YR_PROC_INFO*) context->proc_info;
 
   char buffer[PATH_MAX];
   char perm[5];
   uint64_t begin, end;
-  int n, len;
 
-  while (fgets(buffer, sizeof(buffer), proc_info->maps) != NULL)
+  uint64_t current_begin = context->current_block.base +
+                           context->current_block.size;
+
+  uint64_t max_process_memory_chunk;
+
+  yr_get_configuration(
+      YR_CONFIG_MAX_PROCESS_MEMORY_CHUNK, (void*) &max_process_memory_chunk);
+
+  if (proc_info->next_block_end <= current_begin)
   {
-    // If we haven't read the whole line, skip over the rest.
-    if (strrchr(buffer, '\n') == NULL)
+    int n, path_start;
+
+    while (fgets(buffer, sizeof(buffer), proc_info->maps) != NULL)
     {
-      int c;
-      do
+      // If we haven't read the whole line, skip over the rest.
+      if (strrchr(buffer, '\n') == NULL)
       {
-        c = fgetc(proc_info->maps);
-      } while (c >= 0 && c != '\n');
+        int c;
+        do
+        {
+          c = fgetc(proc_info->maps);
+        } while (c >= 0 && c != '\n');
+      }
+
+      // Each row in /proc/$PID/maps describes a region of contiguous virtual
+      // memory in a process or thread. Each row has the following fields:
+      //
+      // address           perms offset  dev   inode   pathname
+      // 08048000-08056000 r-xp 00000000 03:0c 64593   /usr/sbin/gpm
+      //
+      n = sscanf(
+          buffer,
+          "%" SCNx64 "-%" SCNx64 " %4s "
+          "%" SCNx64 " %" SCNx64 ":%" SCNx64 " %" SCNu64 " %n",
+          &begin,
+          &end,
+          perm,
+          &(proc_info->map_offset),
+          &(proc_info->map_dmaj),
+          &(proc_info->map_dmin),
+          &(proc_info->map_ino),
+          &path_start);
+
+      // If the row was parsed correctly sscan must return 7.
+      if (n == 7)
+      {
+        // path_start contains the offset within buffer where the path starts,
+        // the path should start with /.
+        if (buffer[path_start] == '/')
+          strncpy(
+              proc_info->map_path,
+              buffer + path_start,
+              sizeof(proc_info->map_path) - 1);
+        else
+          proc_info->map_path[0] = '\0';
+        break;
+      }
     }
-    n = sscanf(
-        buffer,
-        "%" SCNx64 "-%" SCNx64 " %4s "
-        "%" SCNx64 " %" SCNx64 ":%" SCNx64 " %" SCNu64 " %n",
-        &begin,
-        &end,
-        perm,
-        &(proc_info->map_offset),
-        &(proc_info->map_dmaj),
-        &(proc_info->map_dmin),
-        &(proc_info->map_ino),
-        &len);
+
     if (n == 7)
     {
-      if (buffer[len] == '/')
-        strncpy(
-            proc_info->map_path, buffer + len, sizeof(proc_info->map_path) - 1);
-      else
-        proc_info->map_path[0] = '\0';
-      break;
+      current_begin = begin;
+      proc_info->next_block_end = end;
+    }
+    else
+    {
+      YR_DEBUG_FPRINTF(2, stderr, "+ %s() = NULL\n", __FUNCTION__);
+      return NULL;
     }
   }
-  if (n == 7)
-  {
-    context->current_block.base = begin;
-    context->current_block.size = end - begin;
-    result = &context->current_block;
-  }
+
+  context->current_block.base = current_begin;
+  context->current_block.size = yr_min(
+      proc_info->next_block_end - current_begin, max_process_memory_chunk);
+
+  assert(context->current_block.size > 0);
 
   iterator->last_error = ERROR_SUCCESS;
 
@@ -363,7 +401,7 @@ YR_API YR_MEMORY_BLOCK* yr_process_get_next_memory_block(
       context->current_block.base,
       context->current_block.size);
 
-  return result;
+  return &context->current_block;
 }
 
 YR_API YR_MEMORY_BLOCK* yr_process_get_first_memory_block(
@@ -380,6 +418,8 @@ YR_API YR_MEMORY_BLOCK* yr_process_get_first_memory_block(
     result = NULL;
     goto _exit;
   }
+
+  proc_info->next_block_end = 0;
 
   result = yr_process_get_next_memory_block(iterator);
 
