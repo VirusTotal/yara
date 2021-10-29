@@ -314,7 +314,7 @@ args_option_t options[] = {
         'z',
         _T("skip-larger"),
         &skip_larger,
-        _T("used with --recursive skip files larger than the given limit"),
+        _T("skip files larger than the given size when scanning a directory"),
         _T("NUMBER")),
 
     OPT_INTEGER(

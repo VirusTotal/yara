@@ -146,7 +146,7 @@ Available options are:
 
 .. option:: -z <size> --skip-larger=<size>
 
-  When used with --recursive, skip files larger than the given <size>.
+  Skip files larger than the given <size> in bytes when scanning a directory.
 
   .. versionadded:: 4.2.0
 
