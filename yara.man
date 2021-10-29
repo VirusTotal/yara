@@ -89,9 +89,9 @@ Scan files in directories recursively. It follows symlinks.
 Scan files listed in FILE, one per line.
 .TP
 .BI \-z " size" " --skip-larger=" size
-Used with --recursive skip files larger than the given
+Skip files larger than the given
 .I size
-in bytes.
+in bytes when scanning a directory.
 .TP
 .BI \-k " slots" " --stack-size=" slots
 Set maximum stack size to the specified number of
