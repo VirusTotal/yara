@@ -38,6 +38,11 @@ Print rules named
 .I identifier
 and ignore the rest. This option can be used multiple times.
 .TP
+.BI "    --max-process-memory-chunk=" size
+While scanning process memory read data in chunks of the given
+.I size
+in bytes.
+.TP
 .BI \-l " number" " --max-rules=" number
 Abort scanning after a
 .I number
@@ -82,6 +87,11 @@ Scan files in directories recursively. It follows symlinks.
 .TP
 .BI "    --scan-list"
 Scan files listed in FILE, one per line.
+.TP
+.BI \-z " size" " --skip-larger=" size
+Used with --recursive skip files larger than the given
+.I size
+in bytes.
 .TP
 .BI \-k " slots" " --stack-size=" slots
 Set maximum stack size to the specified number of

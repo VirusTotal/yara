@@ -1,4 +1,4 @@
-﻿/*
+/*
 Copyright (c) 2007-2021. The YARA Authors. All Rights Reserved.
 
 Redistribution and use in source and binary forms, with or without modification,
@@ -161,6 +161,7 @@ static int total_count = 0;
 static int limit = 0;
 static int timeout = 1000000;
 static int stack_size = DEFAULT_STACK_SIZE;
+static int skip_larger = 0;
 static int threads = YR_MAX_THREADS;
 static int max_strings_per_rule = DEFAULT_MAX_STRINGS_PER_RULE;
 static int max_process_memory_chunk = DEFAULT_MAX_PROCESS_MEMORY_CHUNK;
@@ -215,6 +216,14 @@ args_option_t options[] = {
         _T("IDENTIFIER")),
 
     OPT_INTEGER(
+        0,
+        _T("max-process-memory-chunk"),
+        &max_process_memory_chunk,
+        _T("set maximum chunk size while reading process memory")
+        _T(" (default=1073741824)"),
+        _T("NUMBER")),
+
+    OPT_INTEGER(
         'l',
         _T("max-rules"),
         &limit,
@@ -242,6 +251,12 @@ args_option_t options[] = {
         &negate,
         _T("print only not satisfied rules (negate)"),
         NULL),
+
+    OPT_BOOLEAN(
+        'N',
+        _T("no-follow-symlinks"),
+        &follow_symlinks,
+        _T("do not follow symlinks when scanning")),
 
     OPT_BOOLEAN(
         'w',
@@ -290,16 +305,17 @@ args_option_t options[] = {
         _T("recursively search directories")),
 
     OPT_BOOLEAN(
-        'N',
-        _T("no-follow-symlinks"),
-        &follow_symlinks,
-        _T("do not follow symlinks when scanning")),
-
-    OPT_BOOLEAN(
         0,
         _T("scan-list"),
         &scan_list_search,
         _T("scan files listed in FILE, one per line")),
+
+    OPT_INTEGER(
+        'z',
+        _T("skip-larger"),
+        &skip_larger,
+        _T("used with --recursive skip files larger than the given limit"),
+        _T("NUMBER")),
 
     OPT_INTEGER(
         'k',
@@ -307,14 +323,6 @@ args_option_t options[] = {
         &stack_size,
         _T("set maximum stack size (default=16384)"),
         _T("SLOTS")),
-
-    OPT_INTEGER(
-        0,
-        _T("max-process-memory-chunk"),
-        &max_process_memory_chunk,
-        _T("set maximum chunk size while reading process memory")
-        _T(" (default=1073741824)"),
-        _T("NUMBER")),
 
     OPT_STRING_MULTI(
         't',
@@ -654,7 +662,20 @@ static int scan_dir(const char* dir, SCAN_OPTIONS* scan_opts)
       {
         if (S_ISREG(st.st_mode))
         {
-          result = file_queue_put(full_path, scan_opts->deadline);
+          if (skip_larger > st.st_size || skip_larger <= 0)
+          {
+            result = file_queue_put(full_path, scan_opts->deadline);
+          }
+          else
+          {
+            fprintf(
+                stderr,
+                "skipping %s (%" PRId64 " bytes) because it's larger than %d"
+                " bytes.\n",
+                full_path,
+                st.st_size,
+                skip_larger);
+          }
         }
         else if (
             scan_opts->recursive_search && S_ISDIR(st.st_mode) &&
@@ -1321,7 +1342,7 @@ int _tmain(int argc, const char_t** argv)
         YR_VERSION,
         USAGE_STRING);
 
-    args_print_usage(options, 40);
+    args_print_usage(options, 43);
     printf(
         "\nSend bug reports and suggestions to: vmalvarez@virustotal.com.\n");
 
@@ -1413,7 +1434,6 @@ int _tmain(int argc, const char_t** argv)
       result = ERROR_COULD_NOT_OPEN_FILE;
     }
   }
-
   else
   {
     // Rules file didn't contain compiled rules, let's handle it
