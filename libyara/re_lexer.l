@@ -44,8 +44,7 @@ with noyywrap then we can remove this pragma.
 #pragma GCC diagnostic ignored "-Wunused-function"
 #endif
 
-#include <assert.h>
-#include <setjmp.h>
+#include <stdlib.h>
 
 #include <yara/globals.h>
 #include <yara/utils.h>

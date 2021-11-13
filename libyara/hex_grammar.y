@@ -29,8 +29,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 %{
 
-#include <string.h>
-#include <limits.h>
+#include <yara/stdinc.h>
 
 #include <yara/integers.h>
 #include <yara/utils.h>

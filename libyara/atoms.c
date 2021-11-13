@@ -77,8 +77,8 @@ will end up using the "Look" atom alone, but in /a(bcd|efg)h/ atoms "bcd" and
 "efg" will be used because "a" and "h" are too short.
 */
 
-#include <assert.h>
-#include <string.h>
+#include <yara/stdinc.h>
+
 #include <yara/atoms.h>
 #include <yara/error.h>
 #include <yara/globals.h>

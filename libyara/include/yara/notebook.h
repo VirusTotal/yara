@@ -5,7 +5,7 @@
 #ifndef YR_NOTEBOOK_H
 #define YR_NOTEBOOK_H
 
-#include <stdlib.h>
+#include <yara/stdinc.h>
 
 typedef struct YR_NOTEBOOK YR_NOTEBOOK;
 

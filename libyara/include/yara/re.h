@@ -30,7 +30,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef YR_RE_H
 #define YR_RE_H
 
-#include <ctype.h>
+#include <yara/stdinc.h>
+
 #include <yara/arena.h>
 #include <yara/sizedstr.h>
 #include <yara/types.h>

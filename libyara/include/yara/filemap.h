@@ -30,16 +30,14 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef YR_FILEMAP_H
 #define YR_FILEMAP_H
 
-#include <sys/types.h>
+#include <yara/stdinc.h>
 
 #if defined(_WIN32) || defined(__CYGWIN__)
-#include <windows.h>
 #define YR_FILE_DESCRIPTOR HANDLE
 #else
 #define YR_FILE_DESCRIPTOR int
 #endif
 
-#include <stdlib.h>
 #include <yara/integers.h>
 #include <yara/utils.h>
 

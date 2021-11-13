@@ -74,13 +74,7 @@
 /* First part of user prologue.  */
 #line 32 "grammar.y"
 
-  
-#include <assert.h>
-#include <stdio.h>
-#include <string.h>
-#include <limits.h>
-#include <stdlib.h>
-#include <stddef.h>
+#include <yara/stdinc.h>
 
 #include <yara/arena.h>
 #include <yara/integers.h>

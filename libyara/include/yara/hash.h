@@ -30,7 +30,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef YR_HASH_H
 #define YR_HASH_H
 
-#include <stddef.h>
+#include <yara/stdinc.h>
+
 #include <yara/integers.h>
 #include <yara/utils.h>
 

@@ -30,7 +30,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef YR_STREAM_H
 #define YR_STREAM_H
 
-#include <stddef.h>
+#include <yara/stdinc.h>
 
 typedef size_t (*YR_STREAM_READ_FUNC)(
     void* ptr,

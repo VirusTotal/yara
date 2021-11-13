@@ -70,9 +70,8 @@
 /* Copy the first part of user declarations.  */
 #line 30 "hex_grammar.y" /* yacc.c:339  */
 
+#include <yara/stdinc.h>
 
-#include <limits.h>
-#include <string.h>
 #include <yara/error.h>
 #include <yara/hex_lexer.h>
 #include <yara/integers.h>

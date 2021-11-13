@@ -30,8 +30,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef YR_COMPILER_H
 #define YR_COMPILER_H
 
-#include <setjmp.h>
-#include <stdio.h>
+#include <yara/stdinc.h>
+
 #include <yara/ahocorasick.h>
 #include <yara/arena.h>
 #include <yara/filemap.h>

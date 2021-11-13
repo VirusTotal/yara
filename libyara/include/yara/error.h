@@ -30,11 +30,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef YR_ERROR_H
 #define YR_ERROR_H
 
-#include <string.h>
-
-#if defined(_WIN32) || defined(__CYGWIN__)
-#include <windows.h>
-#endif
+#include <yara/stdinc.h>
 
 #ifndef ERROR_SUCCESS
 #define ERROR_SUCCESS 0

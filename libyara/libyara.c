@@ -31,9 +31,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <jemalloc/jemalloc.h>
 #endif
 
-#include <ctype.h>
-#include <stdio.h>
-#include <string.h>
+#include <yara/stdinc.h>
+
 #include <yara/error.h>
 #include <yara/globals.h>
 #include <yara/mem.h>

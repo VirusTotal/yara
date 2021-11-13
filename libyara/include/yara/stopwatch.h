@@ -30,7 +30,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef YR_STOPWATCH_H
 #define YR_STOPWATCH_H
 
-#include <time.h>
+#include <yara/stdinc.h>
+
 #include <yara/integers.h>
 
 #if defined(_WIN32)

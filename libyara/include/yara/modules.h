@@ -30,10 +30,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef YR_MODULES_H
 #define YR_MODULES_H
 
-#include <assert.h>
-#include <math.h>
-#include <stdio.h>
-#include <string.h>
+#include <yara/stdinc.h>
+
 #include <yara/error.h>
 #include <yara/exec.h>
 #include <yara/libyara.h>

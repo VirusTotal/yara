@@ -30,7 +30,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef YR_ARENA_H
 #define YR_ARENA_H
 
-#include <stddef.h>
+#include <yara/stdinc.h>
+
 #include <yara/integers.h>
 #include <yara/limits.h>
 #include <yara/stream.h>

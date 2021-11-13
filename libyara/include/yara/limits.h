@@ -30,9 +30,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef YR_LIMITS_H
 #define YR_LIMITS_H
 
-#if defined(_WIN32) || defined(__CYGWIN__)
-#include <windows.h>
-#endif
+#include <yara/stdinc.h>
 
 #include "utils.h"
 

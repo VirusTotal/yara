@@ -44,12 +44,7 @@ with noyywrap then we can remove this pragma.
 #pragma GCC diagnostic ignored "-Wunused-function"
 #endif
 
-#include <math.h>
-#include <stdarg.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <setjmp.h>
+#include <stdinc.h>
 
 #if defined(_WIN32) || defined(__CYGWIN__)
 #include <windows.h>

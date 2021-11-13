@@ -1,7 +1,8 @@
 #ifndef _DEX_H
 #define _DEX_H
 
-#include <stdlib.h>
+#include <yara/stdinc.h>
+
 #include <yara/integers.h>
 #include <yara/types.h>
 

@@ -30,9 +30,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef YR_STRUTILS_H
 #define YR_STRUTILS_H
 
-#include <assert.h>
-#include <stdlib.h>
-#include <string.h>
+#include <yara/stdinc.h>
+
 #include <yara/integers.h>
 
 #if defined(_WIN32)

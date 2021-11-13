@@ -37,8 +37,8 @@ order to avoid confusion with operating system threads.
 
 */
 
-#include <assert.h>
-#include <string.h>
+#include <yara/stdinc.h>
+
 #include <yara/compiler.h>
 #include <yara/error.h>
 #include <yara/globals.h>

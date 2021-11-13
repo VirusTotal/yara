@@ -27,8 +27,8 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include <stdarg.h>
-#include <stddef.h>
+#include <yara/stdinc.h>
+
 #include <yara/arena.h>
 #include <yara/error.h>
 #include <yara/mem.h>

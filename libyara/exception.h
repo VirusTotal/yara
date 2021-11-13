@@ -30,7 +30,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef YR_EXCEPTION_H
 #define YR_EXCEPTION_H
 
-#include <assert.h>
+#include <yara/stdinc.h>
+
 #include <yara/globals.h>
 
 #if _WIN32 || __CYGWIN__

@@ -30,7 +30,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef YR_UTILS_H
 #define YR_UTILS_H
 
-#include <limits.h>
+#include <yara/stdinc.h>
+
 #include <yara/strutils.h>
 
 #ifndef NULL

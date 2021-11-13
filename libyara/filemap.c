@@ -27,15 +27,7 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include <fcntl.h>
-
-#if defined(_WIN32) || defined(__CYGWIN__)
-#include <windows.h>
-#else
-#include <sys/mman.h>
-#include <sys/stat.h>
-#include <unistd.h>
-#endif
+#include <yara/stdinc.h>
 
 #include <yara/error.h>
 #include <yara/filemap.h>
