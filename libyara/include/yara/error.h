@@ -115,9 +115,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define FAIL_ON_ERROR(x)         \
   {                              \
-    int result = (x);            \
-    if (result != ERROR_SUCCESS) \
-      return result;             \
+    int foe_result = (x);            \
+    if (foe_result != ERROR_SUCCESS) \
+      return foe_result;             \
   }
 
 #define GOTO_EXIT_ON_ERROR_WITH_CLEANUP(x, cleanup) \
@@ -132,11 +132,11 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define FAIL_ON_ERROR_WITH_CLEANUP(x, cleanup) \
   {                                            \
-    int result = (x);                          \
-    if (result != ERROR_SUCCESS)               \
+    int foe_result = (x);                          \
+    if (foe_result != ERROR_SUCCESS)               \
     {                                          \
       cleanup;                                 \
-      return result;                           \
+      return foe_result;                           \
     }                                          \
   }
 

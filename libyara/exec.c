@@ -1135,7 +1135,8 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
       function = object_as_function(r2.o);
       result = ERROR_INTERNAL_FATAL_ERROR;
 
-      for (int i = 0; i < YR_MAX_OVERLOADED_FUNCTIONS; i++)
+      // re-use of i is intentional for assert below
+      for (i = 0; i < YR_MAX_OVERLOADED_FUNCTIONS; i++)
       {
         if (function->prototypes[i].arguments_fmt == NULL)
           break;
