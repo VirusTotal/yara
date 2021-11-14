@@ -70,9 +70,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // of items in the list above.
 #define YR_NUM_SECTIONS 12
 
-// Number of variables used by loops. This doesn't include user defined
-// variables.
-#define YR_INTERNAL_LOOP_VARS 3
 
 typedef struct _YR_EXPRESSION
 {

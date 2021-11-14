@@ -41,7 +41,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <yara/object.h>
 #include <yara/re.h>
 #include <yara/sizedstr.h>
+#ifdef YR_PROFILING_ENABLED
 #include <yara/stopwatch.h>
+#endif
 #include <yara/strutils.h>
 #include <yara/utils.h>
 
@@ -1016,12 +1018,14 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
         r1.i = r1.o->value.i;
         break;
 
+#ifndef MINLIBYARA
       case OBJECT_TYPE_FLOAT:
         if (isnan(r1.o->value.d))
           r1.i = YR_UNDEFINED;
         else
           r1.d = r1.o->value.d;
         break;
+#endif
 
       case OBJECT_TYPE_STRING:
         if (r1.o->value.ss == NULL)

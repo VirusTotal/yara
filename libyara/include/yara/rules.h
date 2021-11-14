@@ -94,6 +94,7 @@ YR_API int yr_rules_scan_mem(
     void* user_data,
     int timeout);
 
+#ifndef MINLIBYARA
 YR_API int yr_rules_scan_file(
     YR_RULES* rules,
     const char* filename,
@@ -119,10 +120,13 @@ YR_API int yr_rules_scan_proc(
     int timeout);
 
 YR_API int yr_rules_save(YR_RULES* rules, const char* filename);
+#endif
 
 YR_API int yr_rules_save_stream(YR_RULES* rules, YR_STREAM* stream);
 
+#ifndef MINLIBYARA
 YR_API int yr_rules_load(const char* filename, YR_RULES** rules);
+#endif
 
 YR_API int yr_rules_load_stream(YR_STREAM* stream, YR_RULES** rules);
 
@@ -138,10 +142,12 @@ YR_API int yr_rules_define_boolean_variable(
     const char* identifier,
     int value);
 
+#ifndef MINLIBYARA
 YR_API int yr_rules_define_float_variable(
     YR_RULES* rules,
     const char* identifier,
     double value);
+#endif
 
 YR_API int yr_rules_define_string_variable(
     YR_RULES* rules,

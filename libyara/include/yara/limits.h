@@ -101,6 +101,11 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define YR_MAX_LOOP_VARS 2
 #endif
 
+// Number of variables used by loops. This doesn't include user defined
+// variables.
+#define YR_INTERNAL_LOOP_VARS 3
+
+
 // Maximum number of nested included files.
 #ifndef YR_MAX_INCLUDE_DEPTH
 #define YR_MAX_INCLUDE_DEPTH 16

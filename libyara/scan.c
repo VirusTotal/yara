@@ -37,7 +37,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <yara/re.h>
 #include <yara/rules.h>
 #include <yara/scan.h>
+#ifdef YR_PROFILING_ENABLED
 #include <yara/stopwatch.h>
+#endif
 #include <yara/strutils.h>
 #include <yara/types.h>
 #include <yara/utils.h>

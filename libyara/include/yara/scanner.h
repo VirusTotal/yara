@@ -59,10 +59,12 @@ YR_API int yr_scanner_define_boolean_variable(
     const char* identifier,
     int value);
 
+#ifndef MINLIBYARA
 YR_API int yr_scanner_define_float_variable(
     YR_SCANNER* scanner,
     const char* identifier,
     double value);
+#endif
 
 YR_API int yr_scanner_define_string_variable(
     YR_SCANNER* scanner,
@@ -78,11 +80,13 @@ YR_API int yr_scanner_scan_mem(
     const uint8_t* buffer,
     size_t buffer_size);
 
+#ifndef MINLIBYARA
 YR_API int yr_scanner_scan_file(YR_SCANNER* scanner, const char* filename);
 
 YR_API int yr_scanner_scan_fd(YR_SCANNER* scanner, YR_FILE_DESCRIPTOR fd);
 
 YR_API int yr_scanner_scan_proc(YR_SCANNER* scanner, int pid);
+#endif
 
 YR_API YR_RULE* yr_scanner_last_error_rule(YR_SCANNER* scanner);
 
@@ -93,6 +97,8 @@ YR_API YR_RULE_PROFILING_INFO* yr_scanner_get_profiling_info(
 
 YR_API void yr_scanner_reset_profiling_info(YR_SCANNER* scanner);
 
+#ifndef MINLIBYARA
 YR_API int yr_scanner_print_profiling_info(YR_SCANNER* scanner);
+#endif
 
 #endif

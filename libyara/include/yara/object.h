@@ -30,6 +30,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef YR_OBJECT_H
 #define YR_OBJECT_H
 
+#ifndef MINLIBYARA
 #ifdef _MSC_VER
 #include <float.h>
 #ifndef isnan
@@ -42,6 +43,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #ifndef NAN
 #define NAN (INFINITY - INFINITY)
+#endif
 #endif
 #endif
 
@@ -57,7 +59,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define OBJECT_TYPE_ARRAY      4
 #define OBJECT_TYPE_FUNCTION   5
 #define OBJECT_TYPE_DICTIONARY 6
+#ifndef MINLIBYARA
 #define OBJECT_TYPE_FLOAT      7
+#endif
 
 int yr_object_create(
     int8_t type,
@@ -94,8 +98,10 @@ YR_OBJECT* yr_object_lookup(
 bool yr_object_has_undefined_value(YR_OBJECT* object, const char* field, ...)
     YR_PRINTF_LIKE(2, 3);
 
+#ifndef MINLIBYARA
 double yr_object_get_float(YR_OBJECT* object, const char* field, ...)
     YR_PRINTF_LIKE(2, 3);
+#endif
 
 int64_t yr_object_get_integer(YR_OBJECT* object, const char* field, ...)
     YR_PRINTF_LIKE(2, 3);
@@ -109,8 +115,10 @@ int yr_object_set_integer(
     const char* field,
     ...) YR_PRINTF_LIKE(3, 4);
 
+#ifndef MINLIBYARA
 int yr_object_set_float(double value, YR_OBJECT* object, const char* field, ...)
     YR_PRINTF_LIKE(3, 4);
+#endif
 
 int yr_object_set_string(
     const char* value,

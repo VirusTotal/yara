@@ -62,9 +62,11 @@ int yr_object_create(
   case OBJECT_TYPE_INTEGER:
     object_size = sizeof(YR_OBJECT);
     break;
+#ifndef MINLIBYARA
   case OBJECT_TYPE_FLOAT:
     object_size = sizeof(YR_OBJECT);
     break;
+#endif
   case OBJECT_TYPE_STRING:
     object_size = sizeof(YR_OBJECT);
     break;
@@ -90,9 +92,11 @@ int yr_object_create(
   case OBJECT_TYPE_INTEGER:
     obj->value.i = YR_UNDEFINED;
     break;
+#ifndef MINLIBYARA
   case OBJECT_TYPE_FLOAT:
     obj->value.d = NAN;
     break;
+#endif
   case OBJECT_TYPE_STRING:
     obj->value.ss = NULL;
     break;
@@ -194,9 +198,11 @@ int yr_object_function_create(
   case 's':
     return_type = OBJECT_TYPE_STRING;
     break;
+#ifndef MINLIBYARA
   case 'f':
     return_type = OBJECT_TYPE_FLOAT;
     break;
+#endif
   default:
     return ERROR_INVALID_FORMAT;
   }
@@ -253,9 +259,11 @@ int yr_object_from_external_variable(
     obj_type = OBJECT_TYPE_INTEGER;
     break;
 
+#ifndef MINLIBYARA
   case EXTERNAL_VARIABLE_TYPE_FLOAT:
     obj_type = OBJECT_TYPE_FLOAT;
     break;
+#endif
 
   case EXTERNAL_VARIABLE_TYPE_STRING:
   case EXTERNAL_VARIABLE_TYPE_MALLOC_STRING:
@@ -277,9 +285,11 @@ int yr_object_from_external_variable(
       result = yr_object_set_integer(external->value.i, obj, NULL);
       break;
 
+#ifndef MINLIBYARA
     case EXTERNAL_VARIABLE_TYPE_FLOAT:
       result = yr_object_set_float(external->value.f, obj, NULL);
       break;
+#endif
 
     case EXTERNAL_VARIABLE_TYPE_STRING:
     case EXTERNAL_VARIABLE_TYPE_MALLOC_STRING:
@@ -541,9 +551,11 @@ int yr_object_copy(YR_OBJECT* object, YR_OBJECT** object_copy)
     copy->value.i = object->value.i;
     break;
 
+#ifndef MINLIBYARA
   case OBJECT_TYPE_FLOAT:
     copy->value.d = object->value.d;
     break;
+#endif
 
   case OBJECT_TYPE_STRING:
 
@@ -847,8 +859,10 @@ bool yr_object_has_undefined_value(YR_OBJECT* object, const char* field, ...)
 
   switch (field_obj->type)
   {
+#ifndef MINLIBYARA
   case OBJECT_TYPE_FLOAT:
     return isnan(field_obj->value.d);
+#endif
   case OBJECT_TYPE_STRING:
     return field_obj->value.ss == NULL;
   case OBJECT_TYPE_INTEGER:
@@ -883,6 +897,7 @@ int64_t yr_object_get_integer(YR_OBJECT* object, const char* field, ...)
   return integer_obj->value.i;
 }
 
+#ifndef MINLIBYARA
 double yr_object_get_float(YR_OBJECT* object, const char* field, ...)
 {
   YR_OBJECT* double_obj;
@@ -907,6 +922,7 @@ double yr_object_get_float(YR_OBJECT* object, const char* field, ...)
 
   return double_obj->value.d;
 }
+#endif
 
 SIZED_STRING* yr_object_get_string(YR_OBJECT* object, const char* field, ...)
 {
@@ -966,6 +982,7 @@ int yr_object_set_integer(
   return ERROR_SUCCESS;
 }
 
+#ifndef MINLIBYARA
 int yr_object_set_float(double value, YR_OBJECT* object, const char* field, ...)
 {
   YR_OBJECT* double_obj;
@@ -994,6 +1011,7 @@ int yr_object_set_float(double value, YR_OBJECT* object, const char* field, ...)
 
   return ERROR_SUCCESS;
 }
+#endif
 
 int yr_object_set_string(
     const char* value,
@@ -1079,6 +1097,7 @@ YR_API void yr_object_print_data(
 
   switch (object->type)
   {
+#ifndef MINLIBYARA
   case OBJECT_TYPE_FLOAT:
     if (object->value.i != YR_UNDEFINED)
       printf(" = %f", object->value.d);
@@ -1086,6 +1105,7 @@ YR_API void yr_object_print_data(
       printf(" = YR_UNDEFINED");
 
     break;
+#endif
 
   case OBJECT_TYPE_INTEGER:
 

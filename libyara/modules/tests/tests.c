@@ -31,6 +31,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define MODULE_NAME tests
 
+#ifndef MINLIBYARA
 define_function(fsum_2)
 {
   double a = float_argument(1);
@@ -47,6 +48,7 @@ define_function(fsum_3)
 
   return_float(a + b + c);
 }
+#endif
 
 define_function(isum_2)
 {
@@ -110,7 +112,9 @@ begin_declarations
 
   begin_struct("undefined")
     declare_integer("i");
+#ifndef MINLIBYARA
     declare_float("f");
+#endif
   end_struct("undefined")
 
   declare_string("module_data");
@@ -146,8 +150,10 @@ begin_declarations
   declare_function("match", "rs", "i", match);
   declare_function("isum", "ii", "i", isum_2);
   declare_function("isum", "iii", "i", isum_3);
+#ifndef MINLIBYARA
   declare_function("fsum", "ff", "f", fsum_2);
   declare_function("fsum", "fff", "f", fsum_3);
+#endif
   declare_function("length", "s", "i", length);
   declare_function("empty", "", "s", empty);
   declare_function("foobar", "i", "s", foobar);

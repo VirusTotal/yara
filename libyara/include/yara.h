@@ -30,9 +30,13 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef YR_YARA_H
 #define YR_YARA_H
 
+#ifndef MINLIBYARA
 #include "yara/compiler.h"
+#endif
 #include "yara/error.h"
+#ifndef MINLIBYARA
 #include "yara/filemap.h"
+#endif
 #include "yara/hash.h"
 #include "yara/libyara.h"
 #include "yara/mem.h"

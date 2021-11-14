@@ -380,6 +380,7 @@ YR_API int yr_scanner_define_boolean_variable(
   return yr_scanner_define_integer_variable(scanner, identifier, value);
 }
 
+#ifndef MINLIBYARA
 YR_API int yr_scanner_define_float_variable(
     YR_SCANNER* scanner,
     const char* identifier,
@@ -396,6 +397,7 @@ YR_API int yr_scanner_define_float_variable(
 
   return yr_object_set_float(value, obj, NULL);
 }
+#endif
 
 YR_API int yr_scanner_define_string_variable(
     YR_SCANNER* scanner,
@@ -670,6 +672,7 @@ YR_API int yr_scanner_scan_mem(
   return result;
 }
 
+#ifndef MINLIBYARA
 YR_API int yr_scanner_scan_file(YR_SCANNER* scanner, const char* filename)
 {
   YR_MAPPED_FILE mfile;
@@ -717,6 +720,7 @@ YR_API int yr_scanner_scan_proc(YR_SCANNER* scanner, int pid)
 
   return result;
 }
+#endif
 
 YR_API YR_STRING* yr_scanner_last_error_string(YR_SCANNER* scanner)
 {
@@ -799,6 +803,7 @@ YR_API void yr_scanner_reset_profiling_info(YR_SCANNER* scanner)
 #endif
 }
 
+#ifndef MINLIBYARA
 YR_API int yr_scanner_print_profiling_info(YR_SCANNER* scanner)
 {
   printf("\n===== PROFILING INFORMATION =====\n\n");
@@ -827,3 +832,4 @@ YR_API int yr_scanner_print_profiling_info(YR_SCANNER* scanner)
 
   return ERROR_SUCCESS;
 }
+#endif

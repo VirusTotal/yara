@@ -93,6 +93,7 @@ const char yr_debug_spaces[] = "                " /* 16 spaces * 1 */
 
 size_t yr_debug_spaces_len = sizeof(yr_debug_spaces);
 
+#ifndef MINLIBYARA
 double yr_debug_get_elapsed_seconds(void)
 {
   if (yr_debug_stopwatch_unstarted)
@@ -107,6 +108,7 @@ double yr_debug_get_elapsed_seconds(void)
 
   return seconds;
 }
+#endif
 
 char *yr_debug_callback_message_as_string(int message)
 {

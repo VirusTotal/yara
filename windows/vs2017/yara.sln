@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 14
-VisualStudioVersion = 14.0.25420.1
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.31829.152
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libyara", "libyara\libyara.vcxproj", "{E236CE39-D8F3-4DB6-985C-F2794FF17746}"
 EndProject
@@ -16,6 +16,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "yarac", "yarac\yarac.vcxpro
 	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "test-alignment", "..\vs2015\test-alignment\test-alignment.vcxproj", "{76A5B2B8-8844-4278-A33E-CE95261AF6A1}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "minlibyara", "minlibyara\minlibyara.vcxproj", "{380C2D56-7764-4282-BFCF-07FE55D91EDB}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -57,8 +59,19 @@ Global
 		{76A5B2B8-8844-4278-A33E-CE95261AF6A1}.Release|x64.Build.0 = Release|x64
 		{76A5B2B8-8844-4278-A33E-CE95261AF6A1}.Release|x86.ActiveCfg = Release|Win32
 		{76A5B2B8-8844-4278-A33E-CE95261AF6A1}.Release|x86.Build.0 = Release|Win32
+		{380C2D56-7764-4282-BFCF-07FE55D91EDB}.Debug|x64.ActiveCfg = Debug|x64
+		{380C2D56-7764-4282-BFCF-07FE55D91EDB}.Debug|x64.Build.0 = Debug|x64
+		{380C2D56-7764-4282-BFCF-07FE55D91EDB}.Debug|x86.ActiveCfg = Debug|Win32
+		{380C2D56-7764-4282-BFCF-07FE55D91EDB}.Debug|x86.Build.0 = Debug|Win32
+		{380C2D56-7764-4282-BFCF-07FE55D91EDB}.Release|x64.ActiveCfg = Release|x64
+		{380C2D56-7764-4282-BFCF-07FE55D91EDB}.Release|x64.Build.0 = Release|x64
+		{380C2D56-7764-4282-BFCF-07FE55D91EDB}.Release|x86.ActiveCfg = Release|Win32
+		{380C2D56-7764-4282-BFCF-07FE55D91EDB}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {C4E699FB-A1FD-4141-9672-D3B6D4029DF9}
 	EndGlobalSection
 EndGlobal
