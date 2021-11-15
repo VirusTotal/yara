@@ -40,6 +40,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 char* unicode_to_ansi(const char_t* str);
 #endif
 
+#ifndef MINLIBYARA
 bool compile_files(
 	YR_COMPILER* compiler,
 	int argc,
@@ -49,6 +50,7 @@ int define_external_variables(
 	char** ext_vars,
 	YR_RULES* rules,
 	YR_COMPILER* compiler);
+#endif
 
 bool is_integer(const char *str);
 

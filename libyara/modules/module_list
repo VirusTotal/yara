@@ -1,7 +1,9 @@
 MODULE(tests)
 MODULE(pe)
 MODULE(elf)
+#ifndef MINLIBYARA
 MODULE(math)
+#endif
 MODULE(time)
 
 #ifdef DOTNET_MODULE

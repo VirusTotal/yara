@@ -267,6 +267,7 @@
     <ClCompile Include="..\..\..\libyara\threading.c" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="..\minyara\minyara.vcxproj" />
     <None Include="packages.config" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

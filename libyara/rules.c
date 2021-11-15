@@ -237,6 +237,7 @@ _exit:
   return result;
 }
 
+#ifndef MINLIBYARA
 YR_API int yr_rules_scan_file(
     YR_RULES* rules,
     const char* filename,
@@ -321,6 +322,7 @@ YR_API int yr_rules_scan_proc(
 
   return result;
 }
+#endif
 
 int yr_rules_from_arena(YR_ARENA* arena, YR_RULES** rules)
 {

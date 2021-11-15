@@ -19,6 +19,11 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "test-alignment", "..\vs2015
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "minlibyara", "minlibyara\minlibyara.vcxproj", "{380C2D56-7764-4282-BFCF-07FE55D91EDB}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "minyara", "minyara\minyara.vcxproj", "{A8592865-DBF3-4FF5-99FC-DC3E37DC3C65}"
+	ProjectSection(ProjectDependencies) = postProject
+		{380C2D56-7764-4282-BFCF-07FE55D91EDB} = {380C2D56-7764-4282-BFCF-07FE55D91EDB}
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -67,6 +72,14 @@ Global
 		{380C2D56-7764-4282-BFCF-07FE55D91EDB}.Release|x64.Build.0 = Release|x64
 		{380C2D56-7764-4282-BFCF-07FE55D91EDB}.Release|x86.ActiveCfg = Release|Win32
 		{380C2D56-7764-4282-BFCF-07FE55D91EDB}.Release|x86.Build.0 = Release|Win32
+		{A8592865-DBF3-4FF5-99FC-DC3E37DC3C65}.Debug|x64.ActiveCfg = Debug|x64
+		{A8592865-DBF3-4FF5-99FC-DC3E37DC3C65}.Debug|x64.Build.0 = Debug|x64
+		{A8592865-DBF3-4FF5-99FC-DC3E37DC3C65}.Debug|x86.ActiveCfg = Debug|Win32
+		{A8592865-DBF3-4FF5-99FC-DC3E37DC3C65}.Debug|x86.Build.0 = Debug|Win32
+		{A8592865-DBF3-4FF5-99FC-DC3E37DC3C65}.Release|x64.ActiveCfg = Release|x64
+		{A8592865-DBF3-4FF5-99FC-DC3E37DC3C65}.Release|x64.Build.0 = Release|x64
+		{A8592865-DBF3-4FF5-99FC-DC3E37DC3C65}.Release|x86.ActiveCfg = Release|Win32
+		{A8592865-DBF3-4FF5-99FC-DC3E37DC3C65}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

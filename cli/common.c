@@ -71,6 +71,7 @@ char* unicode_to_ansi(const char_t* str)
 }
 #endif
 
+#ifndef MINLIBYARA
 bool compile_files(YR_COMPILER* compiler, int argc, const char_t** argv)
 {
   for (int i = 0; i < argc - 1; i++)
@@ -204,6 +205,7 @@ int define_external_variables(
 
   return result;
 }
+#endif
 
 bool is_integer(const char* str)
 {
