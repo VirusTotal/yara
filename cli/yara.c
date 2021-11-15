@@ -1272,6 +1272,8 @@ static int load_modules_data()
 
     if (module_data != NULL)
     {
+      module_data->module_name = modules_data[i];
+
       int result = yr_filemap_map(equal_sign + 1, &module_data->mapped_file);
 
       if (result != ERROR_SUCCESS)
