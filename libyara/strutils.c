@@ -247,3 +247,31 @@ int yr_isalnum(const uint8_t* s)
          (*s >= 0x41 && *s <= 0x5a) ||
          (*s >= 0x61 && *s <= 0x7a);
 }
+
+char* yr_strdup(const char* str)
+{
+  size_t len = strlen(str);
+  char* dup = (char*) yr_malloc(len + 1);
+
+  if (dup == NULL)
+    return NULL;
+
+  memcpy(dup, str, len);
+  dup[len] = '\0';
+
+  return (char*) dup;
+}
+
+char* yr_strndup(const char* str, size_t n)
+{
+  size_t len = strnlen(str, n);
+  char* dup = (char*) yr_malloc(len + 1);
+
+  if (dup == NULL)
+    return NULL;
+
+  memcpy(dup, str, len);
+  dup[len] = '\0';
+
+  return (char*) dup;
+}

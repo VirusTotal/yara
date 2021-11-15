@@ -176,6 +176,7 @@
   <ItemGroup>
     <ClCompile Include="..\..\..\cli\args.c" />
     <ClCompile Include="..\..\..\cli\common.c" />
+    <ClCompile Include="..\..\..\cli\minruntime.c" />
     <ClCompile Include="..\..\..\cli\minyara.c" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
