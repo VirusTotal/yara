@@ -370,7 +370,5 @@ typedef struct _INDEX_SIZES
   uint8_t genericparam;
 } INDEX_SIZES, *PINDEX_SIZES;
 
-bool dotnet_is_dotnet(PE* pe);
-
 #pragma pack(pop)
 #endif

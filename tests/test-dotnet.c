@@ -20,6 +20,7 @@ int main(int argc, char** argv)
       "import \"dotnet\" \
       rule test { \
         condition: \
+          dotnet.is_dotnet and \
           dotnet.assembly.name == \"hpjsoaputility.Sv.resources\" \
       }",
       "tests/data/"
@@ -29,6 +30,7 @@ int main(int argc, char** argv)
       "import \"dotnet\" \
       rule test { \
         condition: \
+          dotnet.is_dotnet and \
           dotnet.number_of_resources == 1 and \
           dotnet.resources[0].offset == 724 and \
           dotnet.resources[0].length == 180 and \
@@ -41,6 +43,7 @@ int main(int argc, char** argv)
       "import \"dotnet\" \
       rule test { \
         condition: \
+          dotnet.is_dotnet and \
           dotnet.number_of_guids == 1 and \
           dotnet.guids[0] == \"3764d539-e21a-4366-bc7c-b56fa67efbb0\" \
       }",
@@ -51,6 +54,7 @@ int main(int argc, char** argv)
       "import \"dotnet\" \
       rule test { \
         condition: \
+          dotnet.is_dotnet and \
           dotnet.number_of_streams == 5 and \
           dotnet.streams[0].name == \"#~\" and \
           dotnet.streams[1].name == \"#Strings\" and \
@@ -65,6 +69,7 @@ int main(int argc, char** argv)
       "import \"dotnet\" \
       rule test { \
         condition: \
+          dotnet.is_dotnet and \
           dotnet.module_name == \"hpjsoaputility.Sv.resources.dll\" and \
           dotnet.version == \"v2.0.50727\" \
       }",

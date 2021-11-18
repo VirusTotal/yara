@@ -30,6 +30,12 @@ using attributes and features of the .NET file format. Let's see some examples:
 Reference
 ---------
 
+.. c:type:: is_dotnet
+
+    Boolean representing if PE file is indeed .NET.
+
+    *Example: dotnet.is_dotnet*
+
 .. c:type:: version
 
     The version string contained in the metadata root.

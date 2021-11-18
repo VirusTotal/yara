@@ -3052,17 +3052,6 @@ define_function(is_64bit)
   return_integer(IS_64BITS_PE(pe) ? 1 : 0);
 }
 
-define_function(is_dotnet)
-{
-  YR_OBJECT* module = module();
-  PE* pe = (PE*) module->data;
-
-  if (pe == NULL)
-    return_integer(YR_UNDEFINED);
-
-  return_integer(dotnet_is_dotnet(pe))
-}
-
 // _rich_version
 //
 // Returns the number of rich signatures that match the specified version and
@@ -3519,7 +3508,6 @@ begin_declarations
   declare_function("is_dll", "", "i", is_dll);
   declare_function("is_32bit", "", "i", is_32bit);
   declare_function("is_64bit", "", "i", is_64bit);
-  declare_function("is_dotnet", "", "i", is_dotnet);
 
   declare_integer("number_of_imports");
   declare_integer("number_of_imported_functions");

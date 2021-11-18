@@ -1309,12 +1309,6 @@ Reference
 
     *Example: pe.is_64bit()*
 
-.. c:function:: is_dotnet()
-
-    Function returning true if the PE is .NET.
-
-    *Example: pe.is_dotnet()*
-
 .. c:function:: rva_to_offset(addr)
 
     .. versionadded:: 3.6.0
