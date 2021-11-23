@@ -75,6 +75,10 @@ MODULES += modules/pb_tests/pb_tests.c
 MODULES += modules/pb_tests/pb_tests.pb-c.c
 endif
 
+if CONSOLE_MODULE
+MODULES += modules/console/console.c
+endif
+
 #
 # Add your modules here:
 #

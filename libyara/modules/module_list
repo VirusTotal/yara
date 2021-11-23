@@ -31,3 +31,7 @@ MODULE(dex)
 #ifdef PB_TESTS_MODULE
 MODULE(pb_tests)
 #endif
+
+#ifdef CONSOLE_MODULE
+MODULE(console)
+#endif
