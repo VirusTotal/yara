@@ -1533,6 +1533,28 @@ static void test_length()
   YR_DEBUG_FPRINTF(1, stderr, "} // %s()\n", __FUNCTION__);
 }
 
+static void test_rule_of()
+{
+  YR_DEBUG_FPRINTF(1, stderr, "+ %s() {\n", __FUNCTION__);
+
+  assert_match_count(
+      "rule a { condition: true } rule b { condition: 1 of (a) }", NULL, 2);
+
+  assert_match_count(
+      "rule a1 { condition: true } "
+      "rule a2 { condition: true } "
+      "rule b { condition: 2 of (a*) }", NULL, 3);
+
+  assert_match_count(
+      "rule a1 { condition: true } "
+      "rule a2 { condition: false } "
+      "rule b { condition: 50% of (a*) }", NULL, 2);
+
+  assert_error("rule a { condition: all of (b*) }", ERROR_UNDEFINED_IDENTIFIER);
+
+  YR_DEBUG_FPRINTF(1, stderr, "} // %s()\n", __FUNCTION__);
+}
+
 static void test_of()
 {
   YR_DEBUG_FPRINTF(1, stderr, "+ %s() {\n", __FUNCTION__);
@@ -3293,6 +3315,7 @@ static void test_pass(int pass)
   test_offset();
   test_length();
   test_of();
+  test_rule_of();
   test_for();
   test_re();
   test_filesize();

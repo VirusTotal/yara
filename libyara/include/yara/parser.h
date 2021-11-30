@@ -117,6 +117,10 @@ int yr_parser_emit_pushes_for_strings(
     yyscan_t yyscanner,
     const char* identifier);
 
+int yr_parser_emit_pushes_for_rules(
+    yyscan_t yyscanner,
+    const char* identifier);
+
 int yr_parser_reduce_external(
     yyscan_t yyscanner,
     const char* identifier,

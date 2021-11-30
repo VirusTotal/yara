@@ -228,6 +228,73 @@ int yr_parser_emit_pushes_for_strings(
   return ERROR_SUCCESS;
 }
 
+int yr_parser_emit_pushes_for_rules(
+    yyscan_t yyscanner,
+    const char* identifier)
+{
+  YR_COMPILER* compiler = yyget_extra(yyscanner);
+
+  // Make sure the compiler is parsing a rule
+  assert(compiler->current_rule_idx != UINT32_MAX);
+
+  YR_RULE* rule;
+
+  const char* rule_identifier;
+  const char* target_identifier;
+
+  int matching = 0;
+
+  YR_NAMESPACE* ns = (YR_NAMESPACE*) yr_arena_get_ptr(
+      compiler->arena,
+      YR_NAMESPACES_TABLE,
+      compiler->current_namespace_idx * sizeof(struct YR_NAMESPACE));
+
+  // Can't use yr_rules_foreach here as that requires the rules to have been
+  // finalized (inserting a NULL rule at the end). This is done when
+  // yr_compiler_get_rules() is called, which also inserts a HALT instruction
+  // into the current position in the code arena. Obviously we aren't done
+  // compiling the rules yet so inserting a HALT is a bad idea. To deal with
+  // this I'm manually walking all the currently compiled rules (up to the
+  // current rule index) and comparing identifiers to see if it is one we should
+  // use.
+  uint32_t rule_idx;
+  for (rule_idx = 0; rule_idx <= compiler->current_rule_idx; rule_idx++)
+  {
+    rule = yr_arena_get_ptr(
+        compiler->arena, YR_RULES_TABLE, rule_idx * (sizeof(YR_RULE)));
+    rule_identifier = rule->identifier;
+    target_identifier = identifier;
+
+    while (*target_identifier != '\0' && *rule_identifier != '\0' &&
+           *target_identifier == *rule_identifier)
+    {
+      target_identifier++;
+      rule_identifier++;
+    }
+
+    if ((*target_identifier == '\0' && *rule_identifier == '\0') ||
+        *target_identifier == '*')
+    {
+      uint32_t rule_idx = yr_hash_table_lookup_uint32(
+          compiler->rules_table, rule->identifier, ns->name);
+      if (rule_idx != UINT32_MAX)
+      {
+        FAIL_ON_ERROR(yr_parser_emit_with_arg(
+            yyscanner, OP_PUSH_RULE, rule_idx, NULL, NULL));
+        matching++;
+      }
+    }
+  }
+
+  if (matching == 0)
+  {
+    yr_compiler_set_error_extra_info(compiler, identifier);
+    return ERROR_UNDEFINED_IDENTIFIER;
+  }
+
+  return ERROR_SUCCESS;
+}
+
 int yr_parser_emit_push_const(yyscan_t yyscanner, uint64_t argument)
 {
   uint64_t u = (uint64_t) argument;

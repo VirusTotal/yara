@@ -176,6 +176,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 %token <c_string> _STRING_LENGTH_                      "string length"
 %token <c_string> _STRING_IDENTIFIER_WITH_WILDCARD_
     "string identifier with wildcard"
+%token <c_string> _IDENTIFIER_WITH_WILDCARD_           "identifier with wildcard"
 %token <integer> _NUMBER_                              "integer number"
 %token <double_> _DOUBLE_                              "floating point number"
 %token <integer> _INTEGER_FUNCTION_                    "integer function"
@@ -281,6 +282,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 %destructor { yr_free($$); $$ = NULL; } _STRING_LENGTH_
 %destructor { yr_free($$); $$ = NULL; } _STRING_IDENTIFIER_
 %destructor { yr_free($$); $$ = NULL; } _STRING_IDENTIFIER_WITH_WILDCARD_
+%destructor { yr_free($$); $$ = NULL; } _IDENTIFIER_WITH_WILDCARD_
 %destructor { yr_free($$); $$ = NULL; } _TEXT_STRING_
 %destructor { yr_free($$); $$ = NULL; } _HEX_STRING_
 %destructor { yr_free($$); $$ = NULL; } _REGEXP_
@@ -1783,7 +1785,13 @@ expression
       }
     | for_expression _OF_ string_set
       {
-        yr_parser_emit(yyscanner, OP_OF, NULL);
+        yr_parser_emit_with_arg(yyscanner, OP_OF, OF_STRING_SET, NULL, NULL);
+
+        $$.type = EXPRESSION_TYPE_BOOLEAN;
+      }
+    | for_expression _OF_ rule_set
+      {
+        yr_parser_emit_with_arg(yyscanner, OP_OF, OF_RULE_SET, NULL, NULL);
 
         $$.type = EXPRESSION_TYPE_BOOLEAN;
       }
@@ -1805,7 +1813,27 @@ expression
           YYERROR;
         }
 
-        yr_parser_emit(yyscanner, OP_OF_PERCENT, NULL);
+        yr_parser_emit_with_arg(yyscanner, OP_OF_PERCENT, OF_STRING_SET, NULL, NULL);
+      }
+    | primary_expression '%' _OF_ rule_set
+      {
+        check_type($1, EXPRESSION_TYPE_INTEGER, "%");
+
+        // The value of primary_expression can be undefined because
+        // it could be a variable for which don't know the value during
+        // compiling time. However, if the value is defined it should be
+        // in the range [1,100].
+        if (!IS_UNDEFINED($1.value.integer) &&
+            ($1.value.integer < 1 || $1.value.integer > 100))
+        {
+          yr_compiler_set_error_extra_info(
+              compiler, "percentage must be between 1 and 100 (inclusive)");
+          compiler->last_error = ERROR_INVALID_PERCENTAGE;
+          yyerror(yyscanner, compiler, NULL);
+          YYERROR;
+        }
+
+        yr_parser_emit_with_arg(yyscanner, OP_OF_PERCENT, OF_RULE_SET, NULL, NULL);
       }
     | for_expression _OF_ string_set _IN_ range
       {
@@ -2225,6 +2253,64 @@ string_enumeration_item
     | _STRING_IDENTIFIER_WITH_WILDCARD_
       {
         int result = yr_parser_emit_pushes_for_strings(yyscanner, $1);
+        yr_free($1);
+
+        fail_if_error(result);
+      }
+    ;
+
+
+rule_set
+    : '('
+      {
+        // Push end-of-list marker
+        yr_parser_emit_push_const(yyscanner, YR_UNDEFINED);
+      }
+      rule_enumeration ')'
+    ;
+
+
+rule_enumeration
+    : rule_enumeration_item
+    | rule_enumeration ',' rule_enumeration_item
+    ;
+
+
+rule_enumeration_item
+    : _IDENTIFIER_
+      {
+        int result = ERROR_SUCCESS;
+
+        YR_NAMESPACE* ns = (YR_NAMESPACE*) yr_arena_get_ptr(
+            compiler->arena,
+            YR_NAMESPACES_TABLE,
+            compiler->current_namespace_idx * sizeof(struct YR_NAMESPACE));
+
+        uint32_t rule_idx = yr_hash_table_lookup_uint32(
+            compiler->rules_table, $1, ns->name);
+
+        if (rule_idx != UINT32_MAX)
+        {
+          result = yr_parser_emit_with_arg(
+              yyscanner,
+              OP_PUSH_RULE,
+              rule_idx,
+              NULL,
+              NULL);
+        }
+        else
+        {
+          yr_compiler_set_error_extra_info(compiler, $1);
+          result = ERROR_UNDEFINED_IDENTIFIER;
+        }
+
+        yr_free($1);
+
+        fail_if_error(result);
+      }
+    | _IDENTIFIER_WITH_WILDCARD_
+      {
+        int result = yr_parser_emit_pushes_for_rules(yyscanner, $1);
         yr_free($1);
 
         fail_if_error(result);

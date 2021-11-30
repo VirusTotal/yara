@@ -1,8 +1,8 @@
-/* A Bison parser, made by GNU Bison 3.7.  */
+/* A Bison parser, made by GNU Bison 3.7.6.  */
 
 /* Bison implementation for Yacc-like parsers in C
 
-   Copyright (C) 1984, 1989-1990, 2000-2015, 2018-2020 Free Software Foundation,
+   Copyright (C) 1984, 1989-1990, 2000-2015, 2018-2021 Free Software Foundation,
    Inc.
 
    This program is free software: you can redistribute it and/or modify
@@ -16,7 +16,7 @@
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
-   along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
+   along with this program.  If not, see <https://www.gnu.org/licenses/>.  */
 
 /* As a special exception, you may create a larger work that contains
    part or all of the Bison parser skeleton and distribute that work
@@ -45,11 +45,11 @@
    define necessary library symbols; they are noted "INFRINGES ON
    USER NAME SPACE" below.  */
 
-/* Identify Bison output.  */
-#define YYBISON 1
+/* Identify Bison output, and Bison version.  */
+#define YYBISON 30706
 
-/* Bison version.  */
-#define YYBISON_VERSION "3.7"
+/* Bison version string.  */
+#define YYBISON_VERSION "3.7.6"
 
 /* Skeleton name.  */
 #define YYSKELETON_NAME "yacc.c"
@@ -240,57 +240,59 @@ extern int yara_yydebug;
     _STRING_OFFSET_ = 269,         /* "string offset"  */
     _STRING_LENGTH_ = 270,         /* "string length"  */
     _STRING_IDENTIFIER_WITH_WILDCARD_ = 271, /* "string identifier with wildcard"  */
-    _NUMBER_ = 272,                /* "integer number"  */
-    _DOUBLE_ = 273,                /* "floating point number"  */
-    _INTEGER_FUNCTION_ = 274,      /* "integer function"  */
-    _TEXT_STRING_ = 275,           /* "text string"  */
-    _HEX_STRING_ = 276,            /* "hex string"  */
-    _REGEXP_ = 277,                /* "regular expression"  */
-    _ASCII_ = 278,                 /* "<ascii>"  */
-    _WIDE_ = 279,                  /* "<wide>"  */
-    _XOR_ = 280,                   /* "<xor>"  */
-    _BASE64_ = 281,                /* "<base64>"  */
-    _BASE64_WIDE_ = 282,           /* "<base64wide>"  */
-    _NOCASE_ = 283,                /* "<nocase>"  */
-    _FULLWORD_ = 284,              /* "<fullword>"  */
-    _AT_ = 285,                    /* "<at>"  */
-    _FILESIZE_ = 286,              /* "<filesize>"  */
-    _ENTRYPOINT_ = 287,            /* "<entrypoint>"  */
-    _ALL_ = 288,                   /* "<all>"  */
-    _ANY_ = 289,                   /* "<any>"  */
-    _NONE_ = 290,                  /* "<none>"  */
-    _IN_ = 291,                    /* "<in>"  */
-    _OF_ = 292,                    /* "<of>"  */
-    _FOR_ = 293,                   /* "<for>"  */
-    _THEM_ = 294,                  /* "<them>"  */
-    _MATCHES_ = 295,               /* "<matches>"  */
-    _CONTAINS_ = 296,              /* "<contains>"  */
-    _STARTSWITH_ = 297,            /* "<startswith>"  */
-    _ENDSWITH_ = 298,              /* "<endswith>"  */
-    _ICONTAINS_ = 299,             /* "<icontains>"  */
-    _ISTARTSWITH_ = 300,           /* "<istartswith>"  */
-    _IENDSWITH_ = 301,             /* "<iendswith>"  */
-    _IEQUALS_ = 302,               /* "<iequals>"  */
-    _IMPORT_ = 303,                /* "<import>"  */
-    _TRUE_ = 304,                  /* "<true>"  */
-    _FALSE_ = 305,                 /* "<false>"  */
-    _OR_ = 306,                    /* "<or>"  */
-    _AND_ = 307,                   /* "<and>"  */
-    _NOT_ = 308,                   /* "<not>"  */
-    _DEFINED_ = 309,               /* "<defined>"  */
-    _EQ_ = 310,                    /* "=="  */
-    _NEQ_ = 311,                   /* "!="  */
-    _LT_ = 312,                    /* "<"  */
-    _LE_ = 313,                    /* "<="  */
-    _GT_ = 314,                    /* ">"  */
-    _GE_ = 315,                    /* ">="  */
-    _SHIFT_LEFT_ = 316,            /* "<<"  */
-    _SHIFT_RIGHT_ = 317,           /* ">>"  */
-    UNARY_MINUS = 318              /* UNARY_MINUS  */
+    _IDENTIFIER_WITH_WILDCARD_ = 272, /* "identifier with wildcard"  */
+    _NUMBER_ = 273,                /* "integer number"  */
+    _DOUBLE_ = 274,                /* "floating point number"  */
+    _INTEGER_FUNCTION_ = 275,      /* "integer function"  */
+    _TEXT_STRING_ = 276,           /* "text string"  */
+    _HEX_STRING_ = 277,            /* "hex string"  */
+    _REGEXP_ = 278,                /* "regular expression"  */
+    _ASCII_ = 279,                 /* "<ascii>"  */
+    _WIDE_ = 280,                  /* "<wide>"  */
+    _XOR_ = 281,                   /* "<xor>"  */
+    _BASE64_ = 282,                /* "<base64>"  */
+    _BASE64_WIDE_ = 283,           /* "<base64wide>"  */
+    _NOCASE_ = 284,                /* "<nocase>"  */
+    _FULLWORD_ = 285,              /* "<fullword>"  */
+    _AT_ = 286,                    /* "<at>"  */
+    _FILESIZE_ = 287,              /* "<filesize>"  */
+    _ENTRYPOINT_ = 288,            /* "<entrypoint>"  */
+    _ALL_ = 289,                   /* "<all>"  */
+    _ANY_ = 290,                   /* "<any>"  */
+    _NONE_ = 291,                  /* "<none>"  */
+    _IN_ = 292,                    /* "<in>"  */
+    _OF_ = 293,                    /* "<of>"  */
+    _FOR_ = 294,                   /* "<for>"  */
+    _THEM_ = 295,                  /* "<them>"  */
+    _MATCHES_ = 296,               /* "<matches>"  */
+    _CONTAINS_ = 297,              /* "<contains>"  */
+    _STARTSWITH_ = 298,            /* "<startswith>"  */
+    _ENDSWITH_ = 299,              /* "<endswith>"  */
+    _ICONTAINS_ = 300,             /* "<icontains>"  */
+    _ISTARTSWITH_ = 301,           /* "<istartswith>"  */
+    _IENDSWITH_ = 302,             /* "<iendswith>"  */
+    _IEQUALS_ = 303,               /* "<iequals>"  */
+    _IMPORT_ = 304,                /* "<import>"  */
+    _TRUE_ = 305,                  /* "<true>"  */
+    _FALSE_ = 306,                 /* "<false>"  */
+    _OR_ = 307,                    /* "<or>"  */
+    _AND_ = 308,                   /* "<and>"  */
+    _NOT_ = 309,                   /* "<not>"  */
+    _DEFINED_ = 310,               /* "<defined>"  */
+    _EQ_ = 311,                    /* "=="  */
+    _NEQ_ = 312,                   /* "!="  */
+    _LT_ = 313,                    /* "<"  */
+    _LE_ = 314,                    /* "<="  */
+    _GT_ = 315,                    /* ">"  */
+    _GE_ = 316,                    /* ">="  */
+    _SHIFT_LEFT_ = 317,            /* "<<"  */
+    _SHIFT_RIGHT_ = 318,           /* ">>"  */
+    UNARY_MINUS = 319              /* UNARY_MINUS  */
   };
   typedef enum yytokentype yytoken_kind_t;
 #endif
 /* Token kinds.  */
+#define YYEMPTY -2
 #define _END_OF_FILE_ 0
 #define YYerror 256
 #define YYUNDEF 257
@@ -308,59 +310,60 @@ extern int yara_yydebug;
 #define _STRING_OFFSET_ 269
 #define _STRING_LENGTH_ 270
 #define _STRING_IDENTIFIER_WITH_WILDCARD_ 271
-#define _NUMBER_ 272
-#define _DOUBLE_ 273
-#define _INTEGER_FUNCTION_ 274
-#define _TEXT_STRING_ 275
-#define _HEX_STRING_ 276
-#define _REGEXP_ 277
-#define _ASCII_ 278
-#define _WIDE_ 279
-#define _XOR_ 280
-#define _BASE64_ 281
-#define _BASE64_WIDE_ 282
-#define _NOCASE_ 283
-#define _FULLWORD_ 284
-#define _AT_ 285
-#define _FILESIZE_ 286
-#define _ENTRYPOINT_ 287
-#define _ALL_ 288
-#define _ANY_ 289
-#define _NONE_ 290
-#define _IN_ 291
-#define _OF_ 292
-#define _FOR_ 293
-#define _THEM_ 294
-#define _MATCHES_ 295
-#define _CONTAINS_ 296
-#define _STARTSWITH_ 297
-#define _ENDSWITH_ 298
-#define _ICONTAINS_ 299
-#define _ISTARTSWITH_ 300
-#define _IENDSWITH_ 301
-#define _IEQUALS_ 302
-#define _IMPORT_ 303
-#define _TRUE_ 304
-#define _FALSE_ 305
-#define _OR_ 306
-#define _AND_ 307
-#define _NOT_ 308
-#define _DEFINED_ 309
-#define _EQ_ 310
-#define _NEQ_ 311
-#define _LT_ 312
-#define _LE_ 313
-#define _GT_ 314
-#define _GE_ 315
-#define _SHIFT_LEFT_ 316
-#define _SHIFT_RIGHT_ 317
-#define UNARY_MINUS 318
+#define _IDENTIFIER_WITH_WILDCARD_ 272
+#define _NUMBER_ 273
+#define _DOUBLE_ 274
+#define _INTEGER_FUNCTION_ 275
+#define _TEXT_STRING_ 276
+#define _HEX_STRING_ 277
+#define _REGEXP_ 278
+#define _ASCII_ 279
+#define _WIDE_ 280
+#define _XOR_ 281
+#define _BASE64_ 282
+#define _BASE64_WIDE_ 283
+#define _NOCASE_ 284
+#define _FULLWORD_ 285
+#define _AT_ 286
+#define _FILESIZE_ 287
+#define _ENTRYPOINT_ 288
+#define _ALL_ 289
+#define _ANY_ 290
+#define _NONE_ 291
+#define _IN_ 292
+#define _OF_ 293
+#define _FOR_ 294
+#define _THEM_ 295
+#define _MATCHES_ 296
+#define _CONTAINS_ 297
+#define _STARTSWITH_ 298
+#define _ENDSWITH_ 299
+#define _ICONTAINS_ 300
+#define _ISTARTSWITH_ 301
+#define _IENDSWITH_ 302
+#define _IEQUALS_ 303
+#define _IMPORT_ 304
+#define _TRUE_ 305
+#define _FALSE_ 306
+#define _OR_ 307
+#define _AND_ 308
+#define _NOT_ 309
+#define _DEFINED_ 310
+#define _EQ_ 311
+#define _NEQ_ 312
+#define _LT_ 313
+#define _LE_ 314
+#define _GT_ 315
+#define _GE_ 316
+#define _SHIFT_LEFT_ 317
+#define _SHIFT_RIGHT_ 318
+#define UNARY_MINUS 319
 
 /* Value type.  */
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 union YYSTYPE
 {
-#line 308 "grammar.y"
+#line 310 "grammar.y"
 
   YR_EXPRESSION   expression;
   SIZED_STRING*   sized_string;
@@ -374,7 +377,7 @@ union YYSTYPE
   YR_ARENA_REF meta;
   YR_ARENA_REF string;
 
-#line 378 "grammar.c"
+#line 381 "grammar.c"
 
 };
 typedef union YYSTYPE YYSTYPE;
@@ -408,121 +411,126 @@ enum yysymbol_kind_t
   YYSYMBOL__STRING_OFFSET_ = 14,           /* "string offset"  */
   YYSYMBOL__STRING_LENGTH_ = 15,           /* "string length"  */
   YYSYMBOL__STRING_IDENTIFIER_WITH_WILDCARD_ = 16, /* "string identifier with wildcard"  */
-  YYSYMBOL__NUMBER_ = 17,                  /* "integer number"  */
-  YYSYMBOL__DOUBLE_ = 18,                  /* "floating point number"  */
-  YYSYMBOL__INTEGER_FUNCTION_ = 19,        /* "integer function"  */
-  YYSYMBOL__TEXT_STRING_ = 20,             /* "text string"  */
-  YYSYMBOL__HEX_STRING_ = 21,              /* "hex string"  */
-  YYSYMBOL__REGEXP_ = 22,                  /* "regular expression"  */
-  YYSYMBOL__ASCII_ = 23,                   /* "<ascii>"  */
-  YYSYMBOL__WIDE_ = 24,                    /* "<wide>"  */
-  YYSYMBOL__XOR_ = 25,                     /* "<xor>"  */
-  YYSYMBOL__BASE64_ = 26,                  /* "<base64>"  */
-  YYSYMBOL__BASE64_WIDE_ = 27,             /* "<base64wide>"  */
-  YYSYMBOL__NOCASE_ = 28,                  /* "<nocase>"  */
-  YYSYMBOL__FULLWORD_ = 29,                /* "<fullword>"  */
-  YYSYMBOL__AT_ = 30,                      /* "<at>"  */
-  YYSYMBOL__FILESIZE_ = 31,                /* "<filesize>"  */
-  YYSYMBOL__ENTRYPOINT_ = 32,              /* "<entrypoint>"  */
-  YYSYMBOL__ALL_ = 33,                     /* "<all>"  */
-  YYSYMBOL__ANY_ = 34,                     /* "<any>"  */
-  YYSYMBOL__NONE_ = 35,                    /* "<none>"  */
-  YYSYMBOL__IN_ = 36,                      /* "<in>"  */
-  YYSYMBOL__OF_ = 37,                      /* "<of>"  */
-  YYSYMBOL__FOR_ = 38,                     /* "<for>"  */
-  YYSYMBOL__THEM_ = 39,                    /* "<them>"  */
-  YYSYMBOL__MATCHES_ = 40,                 /* "<matches>"  */
-  YYSYMBOL__CONTAINS_ = 41,                /* "<contains>"  */
-  YYSYMBOL__STARTSWITH_ = 42,              /* "<startswith>"  */
-  YYSYMBOL__ENDSWITH_ = 43,                /* "<endswith>"  */
-  YYSYMBOL__ICONTAINS_ = 44,               /* "<icontains>"  */
-  YYSYMBOL__ISTARTSWITH_ = 45,             /* "<istartswith>"  */
-  YYSYMBOL__IENDSWITH_ = 46,               /* "<iendswith>"  */
-  YYSYMBOL__IEQUALS_ = 47,                 /* "<iequals>"  */
-  YYSYMBOL__IMPORT_ = 48,                  /* "<import>"  */
-  YYSYMBOL__TRUE_ = 49,                    /* "<true>"  */
-  YYSYMBOL__FALSE_ = 50,                   /* "<false>"  */
-  YYSYMBOL__OR_ = 51,                      /* "<or>"  */
-  YYSYMBOL__AND_ = 52,                     /* "<and>"  */
-  YYSYMBOL__NOT_ = 53,                     /* "<not>"  */
-  YYSYMBOL__DEFINED_ = 54,                 /* "<defined>"  */
-  YYSYMBOL__EQ_ = 55,                      /* "=="  */
-  YYSYMBOL__NEQ_ = 56,                     /* "!="  */
-  YYSYMBOL__LT_ = 57,                      /* "<"  */
-  YYSYMBOL__LE_ = 58,                      /* "<="  */
-  YYSYMBOL__GT_ = 59,                      /* ">"  */
-  YYSYMBOL__GE_ = 60,                      /* ">="  */
-  YYSYMBOL__SHIFT_LEFT_ = 61,              /* "<<"  */
-  YYSYMBOL__SHIFT_RIGHT_ = 62,             /* ">>"  */
-  YYSYMBOL_63_ = 63,                       /* '|'  */
-  YYSYMBOL_64_ = 64,                       /* '^'  */
-  YYSYMBOL_65_ = 65,                       /* '&'  */
-  YYSYMBOL_66_ = 66,                       /* '+'  */
-  YYSYMBOL_67_ = 67,                       /* '-'  */
-  YYSYMBOL_68_ = 68,                       /* '*'  */
-  YYSYMBOL_69_ = 69,                       /* '\\'  */
-  YYSYMBOL_70_ = 70,                       /* '%'  */
-  YYSYMBOL_71_ = 71,                       /* '~'  */
-  YYSYMBOL_UNARY_MINUS = 72,               /* UNARY_MINUS  */
-  YYSYMBOL_73_include_ = 73,               /* "include"  */
-  YYSYMBOL_74_ = 74,                       /* '{'  */
-  YYSYMBOL_75_ = 75,                       /* '}'  */
-  YYSYMBOL_76_ = 76,                       /* ':'  */
-  YYSYMBOL_77_ = 77,                       /* '='  */
-  YYSYMBOL_78_ = 78,                       /* '('  */
-  YYSYMBOL_79_ = 79,                       /* ')'  */
-  YYSYMBOL_80_ = 80,                       /* '.'  */
-  YYSYMBOL_81_ = 81,                       /* '['  */
-  YYSYMBOL_82_ = 82,                       /* ']'  */
-  YYSYMBOL_83_ = 83,                       /* ','  */
-  YYSYMBOL_YYACCEPT = 84,                  /* $accept  */
-  YYSYMBOL_rules = 85,                     /* rules  */
-  YYSYMBOL_import = 86,                    /* import  */
-  YYSYMBOL_rule = 87,                      /* rule  */
-  YYSYMBOL_88_1 = 88,                      /* @1  */
-  YYSYMBOL_89_2 = 89,                      /* $@2  */
-  YYSYMBOL_meta = 90,                      /* meta  */
-  YYSYMBOL_strings = 91,                   /* strings  */
-  YYSYMBOL_condition = 92,                 /* condition  */
-  YYSYMBOL_rule_modifiers = 93,            /* rule_modifiers  */
-  YYSYMBOL_rule_modifier = 94,             /* rule_modifier  */
-  YYSYMBOL_tags = 95,                      /* tags  */
-  YYSYMBOL_tag_list = 96,                  /* tag_list  */
-  YYSYMBOL_meta_declarations = 97,         /* meta_declarations  */
-  YYSYMBOL_meta_declaration = 98,          /* meta_declaration  */
-  YYSYMBOL_string_declarations = 99,       /* string_declarations  */
-  YYSYMBOL_string_declaration = 100,       /* string_declaration  */
-  YYSYMBOL_101_3 = 101,                    /* $@3  */
-  YYSYMBOL_102_4 = 102,                    /* $@4  */
-  YYSYMBOL_103_5 = 103,                    /* $@5  */
-  YYSYMBOL_string_modifiers = 104,         /* string_modifiers  */
-  YYSYMBOL_string_modifier = 105,          /* string_modifier  */
-  YYSYMBOL_regexp_modifiers = 106,         /* regexp_modifiers  */
-  YYSYMBOL_regexp_modifier = 107,          /* regexp_modifier  */
-  YYSYMBOL_hex_modifiers = 108,            /* hex_modifiers  */
-  YYSYMBOL_hex_modifier = 109,             /* hex_modifier  */
-  YYSYMBOL_identifier = 110,               /* identifier  */
-  YYSYMBOL_arguments = 111,                /* arguments  */
-  YYSYMBOL_arguments_list = 112,           /* arguments_list  */
-  YYSYMBOL_regexp = 113,                   /* regexp  */
-  YYSYMBOL_boolean_expression = 114,       /* boolean_expression  */
-  YYSYMBOL_expression = 115,               /* expression  */
-  YYSYMBOL_116_6 = 116,                    /* $@6  */
-  YYSYMBOL_117_7 = 117,                    /* $@7  */
-  YYSYMBOL_118_8 = 118,                    /* $@8  */
-  YYSYMBOL_119_9 = 119,                    /* $@9  */
-  YYSYMBOL_120_10 = 120,                   /* $@10  */
-  YYSYMBOL_for_variables = 121,            /* for_variables  */
-  YYSYMBOL_iterator = 122,                 /* iterator  */
-  YYSYMBOL_integer_set = 123,              /* integer_set  */
-  YYSYMBOL_range = 124,                    /* range  */
-  YYSYMBOL_integer_enumeration = 125,      /* integer_enumeration  */
-  YYSYMBOL_string_set = 126,               /* string_set  */
-  YYSYMBOL_127_11 = 127,                   /* $@11  */
-  YYSYMBOL_string_enumeration = 128,       /* string_enumeration  */
-  YYSYMBOL_string_enumeration_item = 129,  /* string_enumeration_item  */
-  YYSYMBOL_for_expression = 130,           /* for_expression  */
-  YYSYMBOL_primary_expression = 131        /* primary_expression  */
+  YYSYMBOL__IDENTIFIER_WITH_WILDCARD_ = 17, /* "identifier with wildcard"  */
+  YYSYMBOL__NUMBER_ = 18,                  /* "integer number"  */
+  YYSYMBOL__DOUBLE_ = 19,                  /* "floating point number"  */
+  YYSYMBOL__INTEGER_FUNCTION_ = 20,        /* "integer function"  */
+  YYSYMBOL__TEXT_STRING_ = 21,             /* "text string"  */
+  YYSYMBOL__HEX_STRING_ = 22,              /* "hex string"  */
+  YYSYMBOL__REGEXP_ = 23,                  /* "regular expression"  */
+  YYSYMBOL__ASCII_ = 24,                   /* "<ascii>"  */
+  YYSYMBOL__WIDE_ = 25,                    /* "<wide>"  */
+  YYSYMBOL__XOR_ = 26,                     /* "<xor>"  */
+  YYSYMBOL__BASE64_ = 27,                  /* "<base64>"  */
+  YYSYMBOL__BASE64_WIDE_ = 28,             /* "<base64wide>"  */
+  YYSYMBOL__NOCASE_ = 29,                  /* "<nocase>"  */
+  YYSYMBOL__FULLWORD_ = 30,                /* "<fullword>"  */
+  YYSYMBOL__AT_ = 31,                      /* "<at>"  */
+  YYSYMBOL__FILESIZE_ = 32,                /* "<filesize>"  */
+  YYSYMBOL__ENTRYPOINT_ = 33,              /* "<entrypoint>"  */
+  YYSYMBOL__ALL_ = 34,                     /* "<all>"  */
+  YYSYMBOL__ANY_ = 35,                     /* "<any>"  */
+  YYSYMBOL__NONE_ = 36,                    /* "<none>"  */
+  YYSYMBOL__IN_ = 37,                      /* "<in>"  */
+  YYSYMBOL__OF_ = 38,                      /* "<of>"  */
+  YYSYMBOL__FOR_ = 39,                     /* "<for>"  */
+  YYSYMBOL__THEM_ = 40,                    /* "<them>"  */
+  YYSYMBOL__MATCHES_ = 41,                 /* "<matches>"  */
+  YYSYMBOL__CONTAINS_ = 42,                /* "<contains>"  */
+  YYSYMBOL__STARTSWITH_ = 43,              /* "<startswith>"  */
+  YYSYMBOL__ENDSWITH_ = 44,                /* "<endswith>"  */
+  YYSYMBOL__ICONTAINS_ = 45,               /* "<icontains>"  */
+  YYSYMBOL__ISTARTSWITH_ = 46,             /* "<istartswith>"  */
+  YYSYMBOL__IENDSWITH_ = 47,               /* "<iendswith>"  */
+  YYSYMBOL__IEQUALS_ = 48,                 /* "<iequals>"  */
+  YYSYMBOL__IMPORT_ = 49,                  /* "<import>"  */
+  YYSYMBOL__TRUE_ = 50,                    /* "<true>"  */
+  YYSYMBOL__FALSE_ = 51,                   /* "<false>"  */
+  YYSYMBOL__OR_ = 52,                      /* "<or>"  */
+  YYSYMBOL__AND_ = 53,                     /* "<and>"  */
+  YYSYMBOL__NOT_ = 54,                     /* "<not>"  */
+  YYSYMBOL__DEFINED_ = 55,                 /* "<defined>"  */
+  YYSYMBOL__EQ_ = 56,                      /* "=="  */
+  YYSYMBOL__NEQ_ = 57,                     /* "!="  */
+  YYSYMBOL__LT_ = 58,                      /* "<"  */
+  YYSYMBOL__LE_ = 59,                      /* "<="  */
+  YYSYMBOL__GT_ = 60,                      /* ">"  */
+  YYSYMBOL__GE_ = 61,                      /* ">="  */
+  YYSYMBOL__SHIFT_LEFT_ = 62,              /* "<<"  */
+  YYSYMBOL__SHIFT_RIGHT_ = 63,             /* ">>"  */
+  YYSYMBOL_64_ = 64,                       /* '|'  */
+  YYSYMBOL_65_ = 65,                       /* '^'  */
+  YYSYMBOL_66_ = 66,                       /* '&'  */
+  YYSYMBOL_67_ = 67,                       /* '+'  */
+  YYSYMBOL_68_ = 68,                       /* '-'  */
+  YYSYMBOL_69_ = 69,                       /* '*'  */
+  YYSYMBOL_70_ = 70,                       /* '\\'  */
+  YYSYMBOL_71_ = 71,                       /* '%'  */
+  YYSYMBOL_72_ = 72,                       /* '~'  */
+  YYSYMBOL_UNARY_MINUS = 73,               /* UNARY_MINUS  */
+  YYSYMBOL_74_include_ = 74,               /* "include"  */
+  YYSYMBOL_75_ = 75,                       /* '{'  */
+  YYSYMBOL_76_ = 76,                       /* '}'  */
+  YYSYMBOL_77_ = 77,                       /* ':'  */
+  YYSYMBOL_78_ = 78,                       /* '='  */
+  YYSYMBOL_79_ = 79,                       /* '('  */
+  YYSYMBOL_80_ = 80,                       /* ')'  */
+  YYSYMBOL_81_ = 81,                       /* '.'  */
+  YYSYMBOL_82_ = 82,                       /* '['  */
+  YYSYMBOL_83_ = 83,                       /* ']'  */
+  YYSYMBOL_84_ = 84,                       /* ','  */
+  YYSYMBOL_YYACCEPT = 85,                  /* $accept  */
+  YYSYMBOL_rules = 86,                     /* rules  */
+  YYSYMBOL_import = 87,                    /* import  */
+  YYSYMBOL_rule = 88,                      /* rule  */
+  YYSYMBOL_89_1 = 89,                      /* @1  */
+  YYSYMBOL_90_2 = 90,                      /* $@2  */
+  YYSYMBOL_meta = 91,                      /* meta  */
+  YYSYMBOL_strings = 92,                   /* strings  */
+  YYSYMBOL_condition = 93,                 /* condition  */
+  YYSYMBOL_rule_modifiers = 94,            /* rule_modifiers  */
+  YYSYMBOL_rule_modifier = 95,             /* rule_modifier  */
+  YYSYMBOL_tags = 96,                      /* tags  */
+  YYSYMBOL_tag_list = 97,                  /* tag_list  */
+  YYSYMBOL_meta_declarations = 98,         /* meta_declarations  */
+  YYSYMBOL_meta_declaration = 99,          /* meta_declaration  */
+  YYSYMBOL_string_declarations = 100,      /* string_declarations  */
+  YYSYMBOL_string_declaration = 101,       /* string_declaration  */
+  YYSYMBOL_102_3 = 102,                    /* $@3  */
+  YYSYMBOL_103_4 = 103,                    /* $@4  */
+  YYSYMBOL_104_5 = 104,                    /* $@5  */
+  YYSYMBOL_string_modifiers = 105,         /* string_modifiers  */
+  YYSYMBOL_string_modifier = 106,          /* string_modifier  */
+  YYSYMBOL_regexp_modifiers = 107,         /* regexp_modifiers  */
+  YYSYMBOL_regexp_modifier = 108,          /* regexp_modifier  */
+  YYSYMBOL_hex_modifiers = 109,            /* hex_modifiers  */
+  YYSYMBOL_hex_modifier = 110,             /* hex_modifier  */
+  YYSYMBOL_identifier = 111,               /* identifier  */
+  YYSYMBOL_arguments = 112,                /* arguments  */
+  YYSYMBOL_arguments_list = 113,           /* arguments_list  */
+  YYSYMBOL_regexp = 114,                   /* regexp  */
+  YYSYMBOL_boolean_expression = 115,       /* boolean_expression  */
+  YYSYMBOL_expression = 116,               /* expression  */
+  YYSYMBOL_117_6 = 117,                    /* $@6  */
+  YYSYMBOL_118_7 = 118,                    /* $@7  */
+  YYSYMBOL_119_8 = 119,                    /* $@8  */
+  YYSYMBOL_120_9 = 120,                    /* $@9  */
+  YYSYMBOL_121_10 = 121,                   /* $@10  */
+  YYSYMBOL_for_variables = 122,            /* for_variables  */
+  YYSYMBOL_iterator = 123,                 /* iterator  */
+  YYSYMBOL_integer_set = 124,              /* integer_set  */
+  YYSYMBOL_range = 125,                    /* range  */
+  YYSYMBOL_integer_enumeration = 126,      /* integer_enumeration  */
+  YYSYMBOL_string_set = 127,               /* string_set  */
+  YYSYMBOL_128_11 = 128,                   /* $@11  */
+  YYSYMBOL_string_enumeration = 129,       /* string_enumeration  */
+  YYSYMBOL_string_enumeration_item = 130,  /* string_enumeration_item  */
+  YYSYMBOL_rule_set = 131,                 /* rule_set  */
+  YYSYMBOL_132_12 = 132,                   /* $@12  */
+  YYSYMBOL_rule_enumeration = 133,         /* rule_enumeration  */
+  YYSYMBOL_rule_enumeration_item = 134,    /* rule_enumeration_item  */
+  YYSYMBOL_for_expression = 135,           /* for_expression  */
+  YYSYMBOL_primary_expression = 136        /* primary_expression  */
 };
 typedef enum yysymbol_kind_t yysymbol_kind_t;
 
@@ -564,6 +572,18 @@ typedef __INT_LEAST16_TYPE__ yytype_int16;
 typedef int_least16_t yytype_int16;
 #else
 typedef short yytype_int16;
+#endif
+
+/* Work around bug in HP-UX 11.23, which defines these macros
+   incorrectly for preprocessor constants.  This workaround can likely
+   be removed in 2023, as HPE has promised support for HP-UX 11.23
+   (aka HP-UX 11i v2) only through the end of 2022; see Table 2 of
+   <https://h20195.www2.hpe.com/V2/getpdf.aspx/4AA4-7673ENW.pdf>.  */
+#ifdef __hpux
+# undef UINT_LEAST8_MAX
+# undef UINT_LEAST16_MAX
+# define UINT_LEAST8_MAX 255
+# define UINT_LEAST16_MAX 65535
 #endif
 
 #if defined __UINT_LEAST8_MAX__ && __UINT_LEAST8_MAX__ <= __INT_MAX__
@@ -663,9 +683,9 @@ typedef int yy_state_fast_t;
 
 /* Suppress unused-variable warnings by "using" E.  */
 #if ! defined lint || defined __GNUC__
-# define YYUSE(E) ((void) (E))
+# define YY_USE(E) ((void) (E))
 #else
-# define YYUSE(E) /* empty */
+# define YY_USE(E) /* empty */
 #endif
 
 #if defined __GNUC__ && ! defined __ICC && 407 <= __GNUC__ * 100 + __GNUC_MINOR__
@@ -832,19 +852,19 @@ union yyalloc
 /* YYFINAL -- State number of the termination state.  */
 #define YYFINAL  2
 /* YYLAST -- Last index in YYTABLE.  */
-#define YYLAST   487
+#define YYLAST   470
 
 /* YYNTOKENS -- Number of terminals.  */
-#define YYNTOKENS  84
+#define YYNTOKENS  85
 /* YYNNTS -- Number of nonterminals.  */
-#define YYNNTS  48
+#define YYNNTS  52
 /* YYNRULES -- Number of rules.  */
-#define YYNRULES  157
+#define YYNRULES  165
 /* YYNSTATES -- Number of states.  */
-#define YYNSTATES  264
+#define YYNSTATES  275
 
 /* YYMAXUTOK -- Last valid token kind.  */
-#define YYMAXUTOK   319
+#define YYMAXUTOK   320
 
 
 /* YYTRANSLATE(TOKEN-NUM) -- Symbol number corresponding to TOKEN-NUM
@@ -861,16 +881,16 @@ static const yytype_int8 yytranslate[] =
        0,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-       2,     2,     2,     2,     2,     2,     2,    70,    65,     2,
-      78,    79,    68,    66,    83,    67,    80,     2,     2,     2,
-       2,     2,     2,     2,     2,     2,     2,     2,    76,     2,
-       2,    77,     2,     2,     2,     2,     2,     2,     2,     2,
+       2,     2,     2,     2,     2,     2,     2,    71,    66,     2,
+      79,    80,    69,    67,    84,    68,    81,     2,     2,     2,
+       2,     2,     2,     2,     2,     2,     2,     2,    77,     2,
+       2,    78,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-       2,    81,    69,    82,    64,     2,     2,     2,     2,     2,
+       2,    82,    70,    83,    65,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-       2,     2,     2,    74,    63,    75,    71,     2,     2,     2,
+       2,     2,     2,    75,    64,    76,    72,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
@@ -889,29 +909,31 @@ static const yytype_int8 yytranslate[] =
       25,    26,    27,    28,    29,    30,    31,    32,    33,    34,
       35,    36,    37,    38,    39,    40,    41,    42,    43,    44,
       45,    46,    47,    48,    49,    50,    51,    52,    53,    54,
-      55,    56,    57,    58,    59,    60,    61,    62,    72,    73
+      55,    56,    57,    58,    59,    60,    61,    62,    63,    73,
+      74
 };
 
 #if YYDEBUG
   /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
 static const yytype_int16 yyrline[] =
 {
-       0,   326,   326,   327,   328,   329,   330,   331,   332,   340,
-     353,   358,   352,   385,   388,   404,   407,   422,   427,   428,
-     433,   434,   440,   443,   459,   468,   510,   511,   516,   533,
-     547,   561,   575,   593,   594,   600,   599,   616,   615,   636,
-     635,   660,   666,   726,   727,   728,   729,   730,   731,   737,
-     758,   789,   794,   811,   816,   836,   837,   851,   852,   853,
-     854,   855,   859,   860,   874,   878,   973,  1021,  1082,  1129,
-    1130,  1134,  1169,  1222,  1264,  1287,  1293,  1299,  1311,  1321,
-    1331,  1341,  1351,  1361,  1371,  1381,  1395,  1410,  1421,  1498,
-    1536,  1438,  1695,  1694,  1784,  1790,  1810,  1816,  1822,  1828,
-    1827,  1873,  1872,  1916,  1923,  1930,  1937,  1944,  1951,  1958,
-    1962,  1970,  1990,  2018,  2092,  2120,  2128,  2137,  2161,  2176,
-    2196,  2195,  2201,  2212,  2213,  2218,  2225,  2236,  2240,  2245,
-    2250,  2259,  2263,  2271,  2283,  2297,  2304,  2311,  2336,  2348,
-    2360,  2372,  2387,  2399,  2414,  2457,  2478,  2513,  2548,  2582,
-    2607,  2624,  2634,  2644,  2654,  2664,  2684,  2704
+       0,   328,   328,   329,   330,   331,   332,   333,   334,   342,
+     355,   360,   354,   387,   390,   406,   409,   424,   429,   430,
+     435,   436,   442,   445,   461,   470,   512,   513,   518,   535,
+     549,   563,   577,   595,   596,   602,   601,   618,   617,   638,
+     637,   662,   668,   728,   729,   730,   731,   732,   733,   739,
+     760,   791,   796,   813,   818,   838,   839,   853,   854,   855,
+     856,   857,   861,   862,   876,   880,   975,  1023,  1084,  1131,
+    1132,  1136,  1171,  1224,  1266,  1289,  1295,  1301,  1313,  1323,
+    1333,  1343,  1353,  1363,  1373,  1383,  1397,  1412,  1423,  1500,
+    1538,  1440,  1697,  1696,  1786,  1792,  1798,  1818,  1838,  1844,
+    1850,  1856,  1855,  1901,  1900,  1944,  1951,  1958,  1965,  1972,
+    1979,  1986,  1990,  1998,  2018,  2046,  2120,  2148,  2156,  2165,
+    2189,  2204,  2224,  2223,  2229,  2240,  2241,  2246,  2253,  2265,
+    2264,  2274,  2275,  2280,  2311,  2322,  2326,  2331,  2336,  2345,
+    2349,  2357,  2369,  2383,  2390,  2397,  2422,  2434,  2446,  2458,
+    2473,  2485,  2500,  2543,  2564,  2599,  2634,  2668,  2693,  2710,
+    2720,  2730,  2740,  2750,  2770,  2790
 };
 #endif
 
@@ -932,30 +954,31 @@ static const char *const yytname[] =
   "\"<global>\"", "\"<meta>\"", "\"<strings>\"", "\"<condition>\"",
   "\"identifier\"", "\"string identifier\"", "\"string count\"",
   "\"string offset\"", "\"string length\"",
-  "\"string identifier with wildcard\"", "\"integer number\"",
-  "\"floating point number\"", "\"integer function\"", "\"text string\"",
-  "\"hex string\"", "\"regular expression\"", "\"<ascii>\"", "\"<wide>\"",
-  "\"<xor>\"", "\"<base64>\"", "\"<base64wide>\"", "\"<nocase>\"",
-  "\"<fullword>\"", "\"<at>\"", "\"<filesize>\"", "\"<entrypoint>\"",
-  "\"<all>\"", "\"<any>\"", "\"<none>\"", "\"<in>\"", "\"<of>\"",
-  "\"<for>\"", "\"<them>\"", "\"<matches>\"", "\"<contains>\"",
-  "\"<startswith>\"", "\"<endswith>\"", "\"<icontains>\"",
-  "\"<istartswith>\"", "\"<iendswith>\"", "\"<iequals>\"", "\"<import>\"",
-  "\"<true>\"", "\"<false>\"", "\"<or>\"", "\"<and>\"", "\"<not>\"",
-  "\"<defined>\"", "\"==\"", "\"!=\"", "\"<\"", "\"<=\"", "\">\"",
-  "\">=\"", "\"<<\"", "\">>\"", "'|'", "'^'", "'&'", "'+'", "'-'", "'*'",
-  "'\\\\'", "'%'", "'~'", "UNARY_MINUS", "\"include\"", "'{'", "'}'",
-  "':'", "'='", "'('", "')'", "'.'", "'['", "']'", "','", "$accept",
-  "rules", "import", "rule", "@1", "$@2", "meta", "strings", "condition",
-  "rule_modifiers", "rule_modifier", "tags", "tag_list",
-  "meta_declarations", "meta_declaration", "string_declarations",
-  "string_declaration", "$@3", "$@4", "$@5", "string_modifiers",
-  "string_modifier", "regexp_modifiers", "regexp_modifier",
-  "hex_modifiers", "hex_modifier", "identifier", "arguments",
-  "arguments_list", "regexp", "boolean_expression", "expression", "$@6",
-  "$@7", "$@8", "$@9", "$@10", "for_variables", "iterator", "integer_set",
-  "range", "integer_enumeration", "string_set", "$@11",
-  "string_enumeration", "string_enumeration_item", "for_expression",
+  "\"string identifier with wildcard\"", "\"identifier with wildcard\"",
+  "\"integer number\"", "\"floating point number\"",
+  "\"integer function\"", "\"text string\"", "\"hex string\"",
+  "\"regular expression\"", "\"<ascii>\"", "\"<wide>\"", "\"<xor>\"",
+  "\"<base64>\"", "\"<base64wide>\"", "\"<nocase>\"", "\"<fullword>\"",
+  "\"<at>\"", "\"<filesize>\"", "\"<entrypoint>\"", "\"<all>\"",
+  "\"<any>\"", "\"<none>\"", "\"<in>\"", "\"<of>\"", "\"<for>\"",
+  "\"<them>\"", "\"<matches>\"", "\"<contains>\"", "\"<startswith>\"",
+  "\"<endswith>\"", "\"<icontains>\"", "\"<istartswith>\"",
+  "\"<iendswith>\"", "\"<iequals>\"", "\"<import>\"", "\"<true>\"",
+  "\"<false>\"", "\"<or>\"", "\"<and>\"", "\"<not>\"", "\"<defined>\"",
+  "\"==\"", "\"!=\"", "\"<\"", "\"<=\"", "\">\"", "\">=\"", "\"<<\"",
+  "\">>\"", "'|'", "'^'", "'&'", "'+'", "'-'", "'*'", "'\\\\'", "'%'",
+  "'~'", "UNARY_MINUS", "\"include\"", "'{'", "'}'", "':'", "'='", "'('",
+  "')'", "'.'", "'['", "']'", "','", "$accept", "rules", "import", "rule",
+  "@1", "$@2", "meta", "strings", "condition", "rule_modifiers",
+  "rule_modifier", "tags", "tag_list", "meta_declarations",
+  "meta_declaration", "string_declarations", "string_declaration", "$@3",
+  "$@4", "$@5", "string_modifiers", "string_modifier", "regexp_modifiers",
+  "regexp_modifier", "hex_modifiers", "hex_modifier", "identifier",
+  "arguments", "arguments_list", "regexp", "boolean_expression",
+  "expression", "$@6", "$@7", "$@8", "$@9", "$@10", "for_variables",
+  "iterator", "integer_set", "range", "integer_enumeration", "string_set",
+  "$@11", "string_enumeration", "string_enumeration_item", "rule_set",
+  "$@12", "rule_enumeration", "rule_enumeration_item", "for_expression",
   "primary_expression", YY_NULLPTR
 };
 
@@ -977,18 +1000,18 @@ static const yytype_int16 yytoknum[] =
      285,   286,   287,   288,   289,   290,   291,   292,   293,   294,
      295,   296,   297,   298,   299,   300,   301,   302,   303,   304,
      305,   306,   307,   308,   309,   310,   311,   312,   313,   314,
-     315,   316,   317,   124,    94,    38,    43,    45,    42,    92,
-      37,   126,   318,   319,   123,   125,    58,    61,    40,    41,
-      46,    91,    93,    44
+     315,   316,   317,   318,   124,    94,    38,    43,    45,    42,
+      92,    37,   126,   319,   320,   123,   125,    58,    61,    40,
+      41,    46,    91,    93,    44
 };
 #endif
 
-#define YYPACT_NINF (-139)
+#define YYPACT_NINF (-89)
 
 #define yypact_value_is_default(Yyn) \
   ((Yyn) == YYPACT_NINF)
 
-#define YYTABLE_NINF (-128)
+#define YYTABLE_NINF (-136)
 
 #define yytable_value_is_error(Yyn) \
   0
@@ -997,33 +1020,34 @@ static const yytype_int16 yytoknum[] =
      STATE-NUM.  */
 static const yytype_int16 yypact[] =
 {
-    -139,    31,  -139,   -38,  -139,    -1,  -139,  -139,   118,  -139,
-    -139,  -139,  -139,    11,  -139,  -139,  -139,  -139,    -6,    29,
-       4,  -139,    65,    74,  -139,     8,    91,    94,    39,  -139,
-      43,    94,  -139,   114,   120,    22,  -139,    54,   114,  -139,
-      59,    61,  -139,  -139,  -139,  -139,   121,    66,  -139,    79,
-    -139,  -139,   129,   137,   142,  -139,   -27,   132,    89,   102,
-    -139,  -139,    99,  -139,  -139,  -139,  -139,  -139,  -139,  -139,
-     147,  -139,  -139,    79,    79,   209,   209,    79,    38,  -139,
-      96,  -139,   148,   288,  -139,  -139,  -139,   209,   106,   106,
-     209,   209,   209,   209,    84,   397,  -139,  -139,  -139,  -139,
-      96,   107,   248,    79,   177,   209,  -139,  -139,   -34,   175,
-     209,   209,   209,   209,   209,   209,   209,   209,   209,   209,
-     209,   209,   209,   209,   209,   209,   209,   209,   209,   209,
-     209,   209,   176,   116,    80,   195,   397,   209,  -139,  -139,
-     298,   308,   340,   359,  -139,   -34,   191,   209,  -139,  -139,
-     125,   122,   124,  -139,   330,    79,    79,  -139,  -139,   167,
-    -139,   397,   397,   397,   397,   397,   397,   397,   397,   397,
-     397,   397,   397,   397,    85,    85,   407,   183,   417,   104,
-     104,  -139,  -139,   -34,  -139,  -139,  -139,  -139,   128,   131,
-     133,  -139,  -139,  -139,  -139,  -139,  -139,  -139,  -139,  -139,
-    -139,  -139,   196,  -139,  -139,  -139,   134,  -139,    -3,  -139,
-      79,  -139,   163,  -139,     2,   106,  -139,   199,   197,   201,
-     209,  -139,    -9,   208,   124,  -139,  -139,   -62,  -139,  -139,
-     -59,   151,   153,   378,   155,   209,    38,   158,  -139,  -139,
-    -139,  -139,     2,   218,  -139,  -139,  -139,  -139,    79,    -2,
-     196,  -139,  -139,   157,   -36,  -139,   209,   159,  -139,  -139,
-     397,    79,    23,  -139
+     -89,    37,   -89,   -40,   -89,   -16,   -89,   -89,   193,   -89,
+     -89,   -89,   -89,    -4,   -89,   -89,   -89,   -89,   -58,    20,
+       2,   -89,    76,    93,   -89,    26,   111,   130,    73,   -89,
+      75,   130,   -89,   139,   144,    84,   -89,    79,   139,   -89,
+      78,    82,   -89,   -89,   -89,   -89,   146,   114,   -89,    77,
+     -89,   -89,   156,   142,   164,   -89,   -21,   153,    96,   109,
+     -89,   -89,   117,   -89,   -89,   -89,   -89,   -89,   -89,   -89,
+     148,   -89,   -89,    77,    77,   174,   174,    77,   -46,   -89,
+      91,   -89,   163,   253,   -89,   -89,   -89,   174,   123,   123,
+     174,   174,   174,   174,     7,   369,   -89,   -89,   -89,   -89,
+      91,   124,   213,    77,   194,   174,   -89,   -89,    -8,   185,
+     174,   174,   174,   174,   174,   174,   174,   174,   174,   174,
+     174,   174,   174,   174,   174,   174,   174,   174,   174,   174,
+     174,   174,    61,   238,   301,   207,   369,   174,   -89,   -89,
+     270,   280,   312,   331,   -89,    -1,   203,   174,   -89,   -89,
+     135,   133,    95,   -89,   302,    77,    77,   -89,     3,   181,
+     -89,   -89,   369,   369,   369,   369,   369,   369,   369,   369,
+     369,   369,   369,   369,   369,   105,   105,   379,   389,   399,
+     141,   141,   -89,   -89,    -8,   -89,   -89,   -89,   -89,   140,
+     143,   145,   -89,   -89,   -89,   -89,   -89,   -89,   -89,   -89,
+     -89,   -89,   -89,   166,   -89,   -89,   -89,   -89,   149,   -89,
+     -15,   -89,    77,   -89,   168,   -89,     5,   106,   123,   -89,
+     -89,   220,   204,   218,   174,   -89,    -9,   229,    95,   -89,
+     -89,    24,   -89,   -89,   -89,    41,   -89,   -89,   -65,   161,
+     165,   350,   169,   174,   -46,   170,   -89,   -89,   -89,   -89,
+       5,   -89,   106,   225,   -89,   -89,   -89,   -89,    77,    42,
+     166,   -89,   -89,   -89,   172,    62,   -89,   174,   171,   -89,
+     -89,   369,    77,    66,   -89
 };
 
   /* YYDEFACT[STATE-NUM] -- Default reduction number in state STATE-NUM.
@@ -1036,48 +1060,51 @@ static const yytype_uint8 yydefact[] =
        0,    24,    23,    13,    25,     0,    15,     0,     0,    11,
        0,    14,    26,     0,     0,     0,    27,     0,    16,    33,
        0,     0,    29,    28,    31,    32,     0,    35,    34,     0,
-      12,    30,     0,     0,     0,    65,    85,   139,   141,   143,
-     135,   136,     0,   137,    73,   132,   133,   128,   129,   130,
-       0,    75,    76,     0,     0,     0,     0,     0,   144,   157,
-      17,    74,     0,   109,    41,    55,    62,     0,     0,     0,
-       0,     0,     0,     0,     0,   127,    97,    98,   145,   154,
-       0,    74,   109,    69,     0,     0,   101,    99,     0,     0,
+      12,    30,     0,     0,     0,    65,    85,   147,   149,   151,
+     143,   144,     0,   145,    73,   140,   141,   136,   137,   138,
+       0,    75,    76,     0,     0,     0,     0,     0,   152,   165,
+      17,    74,     0,   111,    41,    55,    62,     0,     0,     0,
+       0,     0,     0,     0,     0,   135,    99,   100,   153,   162,
+       0,    74,   111,    69,     0,     0,   103,   101,     0,     0,
        0,     0,     0,     0,     0,     0,     0,     0,     0,     0,
        0,     0,     0,     0,     0,     0,     0,     0,     0,     0,
-       0,     0,     0,    36,    38,    40,    86,     0,    87,   138,
-       0,     0,     0,     0,    88,     0,     0,     0,   110,   131,
-       0,    70,    71,    66,     0,     0,     0,   122,   120,    94,
-      77,    78,    80,    82,    79,    81,    83,    84,   107,   108,
-     103,   105,   104,   106,   155,   156,   153,   151,   152,   146,
-     147,   148,   149,     0,   150,    47,    44,    43,    48,    51,
-      53,    45,    46,    42,    61,    58,    57,    59,    60,    56,
-      64,    63,     0,   140,   142,   134,     0,   111,     0,    68,
-       0,    67,   102,   100,     0,     0,    95,     0,     0,     0,
-       0,    92,     0,     0,    72,   125,   126,     0,   123,    96,
-       0,     0,     0,     0,     0,     0,   113,     0,   114,   116,
-     112,   121,     0,     0,    49,    52,    54,   117,     0,     0,
-     118,    90,   124,     0,     0,   115,     0,     0,    50,    93,
-     119,     0,     0,    91
+       0,     0,     0,    36,    38,    40,    86,     0,    87,   146,
+       0,     0,     0,     0,    88,     0,     0,     0,   112,   139,
+       0,    70,    71,    66,     0,     0,     0,   124,   122,    94,
+      95,    77,    78,    80,    82,    79,    81,    83,    84,   109,
+     110,   105,   107,   106,   108,   163,   164,   161,   159,   160,
+     154,   155,   156,   157,     0,   158,    47,    44,    43,    48,
+      51,    53,    45,    46,    42,    61,    58,    57,    59,    60,
+      56,    64,    63,     0,   148,   150,   142,   122,     0,   113,
+       0,    68,     0,    67,   104,   102,     0,     0,     0,    96,
+      97,     0,     0,     0,     0,    92,     0,     0,    72,   127,
+     128,     0,   125,   133,   134,     0,   131,    98,     0,     0,
+       0,     0,     0,     0,   115,     0,   116,   118,   114,   123,
+       0,   130,     0,     0,    49,    52,    54,   119,     0,     0,
+     120,    90,   126,   132,     0,     0,   117,     0,     0,    50,
+      93,   121,     0,     0,    91
 };
 
   /* YYPGOTO[NTERM-NUM].  */
 static const yytype_int16 yypgoto[] =
 {
-    -139,  -139,   235,   236,  -139,  -139,  -139,  -139,  -139,  -139,
-    -139,  -139,  -139,  -139,   211,  -139,   217,  -139,  -139,  -139,
-    -139,  -139,  -139,  -139,  -139,  -139,    24,  -139,  -139,   160,
-     -49,   -73,  -139,  -139,  -139,  -139,  -139,  -139,  -139,  -139,
-     -88,  -139,  -138,  -139,  -139,    14,   198,   -64
+     -89,   -89,   246,   282,   -89,   -89,   -89,   -89,   -89,   -89,
+     -89,   -89,   -89,   -89,   255,   -89,   249,   -89,   -89,   -89,
+     -89,   -89,   -89,   -89,   -89,   -89,    63,   -89,   -89,   179,
+     -49,   -73,   -89,   -89,   -89,   -89,   -89,   -89,   -89,   -89,
+     -88,   -89,   -60,   -89,   -89,    40,   108,   -89,   -89,    50,
+     233,   -64
 };
 
   /* YYDEFGOTO[NTERM-NUM].  */
 static const yytype_int16 yydefgoto[] =
 {
-      -1,     1,     6,     7,    18,    34,    26,    29,    41,     8,
+       0,     1,     6,     7,    18,    34,    26,    29,    41,     8,
       16,    20,    22,    31,    32,    38,    39,    52,    53,    54,
-     133,   193,   134,   199,   135,   201,    78,   150,   151,    79,
-     100,    81,   146,   257,   234,   156,   155,   208,   237,   238,
-     138,   249,   159,   214,   227,   228,    82,    83
+     133,   194,   134,   200,   135,   202,    78,   150,   151,    79,
+     100,    81,   146,   268,   242,   156,   155,   210,   245,   246,
+     138,   259,   159,   216,   231,   232,   160,   217,   235,   236,
+      82,    83
 };
 
   /* YYTABLE[YYPACT[STATE-NUM]] -- What to do in state STATE-NUM.  If
@@ -1085,162 +1112,162 @@ static const yytype_int16 yydefgoto[] =
      number is the opposite.  If YYTABLE_NINF, syntax error.  */
 static const yytype_int16 yytable[] =
 {
-      80,   139,    55,    87,   101,   157,    95,   206,   243,    88,
-       5,    98,    99,   102,   225,   106,   107,   241,   226,    12,
-     244,   242,    17,   136,    96,    97,   140,   141,   142,   143,
-     152,     2,     3,   222,     4,     9,   -18,   -18,   -18,    42,
-      21,   154,    43,   259,   158,   216,   161,   162,   163,   164,
-     165,   166,   167,   168,   169,   170,   171,   172,   173,   174,
-     175,   176,   177,   178,   179,   180,   181,   182,   184,   235,
-      19,    44,    45,   202,   106,   107,    24,   255,    23,     5,
-     223,   256,    25,   184,    27,   144,   194,   -39,   -37,    46,
-      55,    56,    57,    58,    59,   -89,    60,    61,    62,    63,
-      28,    64,   263,   195,   196,    30,   212,   213,   197,   198,
-      65,    66,    67,    68,    69,    33,   103,    70,   104,   105,
-      35,   145,   185,    13,    14,    15,    37,   229,    71,    72,
-      40,    47,    73,    74,   239,    49,    50,   224,    51,   186,
-     187,   188,   189,   190,   191,   192,    75,   106,   107,    84,
-      76,   128,   129,   130,   131,   147,   233,    77,    55,    85,
-      57,    58,    59,    86,    60,    61,    62,    63,    89,    64,
-      90,   250,   130,   131,   147,   -74,   -74,    92,    65,    66,
-      67,    68,    69,    91,   137,   108,   148,    55,   153,    57,
-      58,    59,   260,    60,    61,    62,    63,    64,    64,   254,
-     220,   200,   207,   215,   209,   210,   217,    65,    66,   218,
-     221,   219,   262,   183,    75,   107,   230,   231,    76,   240,
-      55,   232,    57,    58,    59,    93,    60,    61,    62,    63,
-     245,    64,   246,   248,   251,   253,   258,   261,    10,    11,
-      65,    66,    36,    75,   123,   124,   236,    76,   127,   128,
-     129,   130,   131,   147,    93,    48,   252,   123,   124,   125,
-     126,   127,   128,   129,   130,   131,   147,     0,    94,   160,
-       0,     0,     0,     0,     0,     0,    75,     0,     0,     0,
-      76,     0,     0,     0,     0,  -127,     0,    93,   109,   110,
-     111,   112,   113,   114,   115,   116,     0,     0,     0,     0,
-       0,     0,     0,   117,   118,   119,   120,   121,   122,   123,
-     124,   125,   126,   127,   128,   129,   130,   131,   132,     0,
-       0,     0,     0,     0,     0,  -127,     0,   149,   109,   110,
-     111,   112,   113,   114,   115,   116,     0,     0,     0,     0,
-       0,     0,     0,   117,   118,   119,   120,   121,   122,   123,
-     124,   125,   126,   127,   128,   129,   130,   131,   132,   123,
-     124,   125,   126,   127,   128,   129,   130,   131,   147,   123,
-     124,   125,   126,   127,   128,   129,   130,   131,   147,     0,
-     203,     0,     0,     0,     0,     0,     0,     0,     0,     0,
-     204,   123,   124,   125,   126,   127,   128,   129,   130,   131,
-     147,   123,   124,   125,   126,   127,   128,   129,   130,   131,
-     147,     0,   211,     0,     0,     0,     0,     0,     0,   205,
-     123,   124,   125,   126,   127,   128,   129,   130,   131,   147,
-       0,     0,     0,     0,     0,     0,     0,     0,   149,   123,
-     124,   125,   126,   127,   128,   129,   130,   131,   147,     0,
-       0,     0,     0,     0,     0,     0,     0,   247,   123,   124,
-     125,   126,   127,   128,   129,   130,   131,   147,   123,   124,
-       0,   126,   127,   128,   129,   130,   131,   147,   123,   124,
-       0,     0,     0,   128,   129,   130,   131,   147
+      80,   139,    55,   253,   101,    12,    95,    17,   144,     5,
+      87,    98,    99,   102,  -129,   254,    88,   229,   -89,    19,
+    -129,   230,   226,   136,    96,    97,   140,   141,   142,   143,
+     152,    21,   157,   103,     9,   104,   105,     2,     3,   157,
+       4,   154,   -18,   -18,   -18,   145,   162,   163,   164,   165,
+     166,   167,   168,   169,   170,   171,   172,   173,   174,   175,
+     176,   177,   178,   179,   180,   181,   182,   183,   185,   227,
+     243,   158,    55,   203,    57,    58,    59,    23,   207,    60,
+      61,    62,    63,   185,    64,   208,     5,    24,    55,    56,
+      57,    58,    59,    65,    66,    60,    61,    62,    63,   184,
+      64,    25,    42,    27,   249,    43,   214,   215,   250,    65,
+      66,    67,    68,    69,   106,   107,    70,   233,   106,   107,
+      28,   251,   266,   234,   219,   252,   267,    71,    72,    75,
+     237,    73,    74,    76,    44,    45,   -39,   -37,   247,   228,
+      93,    30,   270,   106,   107,    75,   274,   -74,   -74,    76,
+      33,    37,    46,    35,    40,    49,    77,    47,    50,    55,
+     241,    57,    58,    59,    51,    85,    60,    61,    62,    63,
+     224,    64,   128,   129,   130,   131,   147,    84,    90,   260,
+      65,    66,    67,    68,    69,    55,    86,    57,    58,    59,
+      89,    91,    60,    61,    62,    63,    92,    64,    13,    14,
+      15,   108,   137,   271,   148,   153,    65,    66,    64,   265,
+     130,   131,   147,   201,   209,   211,    75,   212,   218,   221,
+      76,   107,   222,   273,   223,   239,   225,    93,   123,   124,
+     125,   126,   127,   128,   129,   130,   131,   147,   238,   240,
+     248,   255,    75,   264,   186,   256,    76,   261,   258,    10,
+     272,  -135,   269,    93,   109,   110,   111,   112,   113,   114,
+     115,   116,   187,   188,   189,   190,   191,   192,   193,   117,
+     118,   119,   120,   121,   122,   123,   124,   125,   126,   127,
+     128,   129,   130,   131,   132,    11,    36,    48,   161,   244,
+     262,  -135,   220,   149,   109,   110,   111,   112,   113,   114,
+     115,   116,   263,    94,     0,     0,     0,   195,     0,   117,
+     118,   119,   120,   121,   122,   123,   124,   125,   126,   127,
+     128,   129,   130,   131,   132,   196,   197,     0,     0,     0,
+     198,   199,   123,   124,   125,   126,   127,   128,   129,   130,
+     131,   147,   123,   124,   125,   126,   127,   128,   129,   130,
+     131,   147,     0,   204,     0,     0,     0,     0,     0,     0,
+       0,     0,     0,   205,   123,   124,   125,   126,   127,   128,
+     129,   130,   131,   147,   123,   124,   125,   126,   127,   128,
+     129,   130,   131,   147,     0,   213,     0,     0,     0,     0,
+       0,     0,   206,   123,   124,   125,   126,   127,   128,   129,
+     130,   131,   147,     0,     0,     0,     0,     0,     0,     0,
+       0,   149,   123,   124,   125,   126,   127,   128,   129,   130,
+     131,   147,     0,     0,     0,     0,     0,     0,     0,     0,
+     257,   123,   124,   125,   126,   127,   128,   129,   130,   131,
+     147,   123,   124,     0,   126,   127,   128,   129,   130,   131,
+     147,   123,   124,     0,     0,   127,   128,   129,   130,   131,
+     147,   123,   124,     0,     0,     0,   128,   129,   130,   131,
+     147
 };
 
 static const yytype_int16 yycheck[] =
 {
-      49,    89,    11,    30,    77,    39,    70,   145,    67,    36,
-      48,    75,    76,    77,    12,    51,    52,    79,    16,    20,
-      79,    83,    11,    87,    73,    74,    90,    91,    92,    93,
-     103,     0,     1,    36,     3,    73,     5,     6,     7,    17,
-      11,   105,    20,    79,    78,   183,   110,   111,   112,   113,
+      49,    89,    11,    68,    77,    21,    70,    11,     1,    49,
+      31,    75,    76,    77,    11,    80,    37,    12,    11,    77,
+      17,    16,    37,    87,    73,    74,    90,    91,    92,    93,
+     103,    11,    40,    79,    74,    81,    82,     0,     1,    40,
+       3,   105,     5,     6,     7,    38,   110,   111,   112,   113,
      114,   115,   116,   117,   118,   119,   120,   121,   122,   123,
-     124,   125,   126,   127,   128,   129,   130,   131,   132,    78,
-      76,    49,    50,   137,    51,    52,    11,    79,    74,    48,
-      83,    83,     8,   147,    76,     1,     6,    21,    22,    67,
-      11,    12,    13,    14,    15,    11,    17,    18,    19,    20,
-       9,    22,    79,    23,    24,    11,   155,   156,    28,    29,
-      31,    32,    33,    34,    35,    76,    78,    38,    80,    81,
-      77,    37,     6,     5,     6,     7,    12,   215,    49,    50,
-      10,    77,    53,    54,   222,    76,    75,   210,    17,    23,
-      24,    25,    26,    27,    28,    29,    67,    51,    52,    20,
-      71,    66,    67,    68,    69,    70,   220,    78,    11,    22,
-      13,    14,    15,    21,    17,    18,    19,    20,    36,    22,
-      81,   235,    68,    69,    70,    51,    52,    78,    31,    32,
-      33,    34,    35,    81,    78,    37,    79,    11,    11,    13,
-      14,    15,   256,    17,    18,    19,    20,    22,    22,   248,
-       4,     6,    11,    36,    79,    83,    78,    31,    32,    78,
-      76,    78,   261,    37,    67,    52,    17,    20,    71,    11,
-      11,    20,    13,    14,    15,    78,    17,    18,    19,    20,
-      79,    22,    79,    78,    76,    17,    79,    78,     3,     3,
-      31,    32,    31,    67,    61,    62,   222,    71,    65,    66,
-      67,    68,    69,    70,    78,    38,   242,    61,    62,    63,
-      64,    65,    66,    67,    68,    69,    70,    -1,    70,   109,
-      -1,    -1,    -1,    -1,    -1,    -1,    67,    -1,    -1,    -1,
-      71,    -1,    -1,    -1,    -1,    37,    -1,    78,    40,    41,
-      42,    43,    44,    45,    46,    47,    -1,    -1,    -1,    -1,
-      -1,    -1,    -1,    55,    56,    57,    58,    59,    60,    61,
-      62,    63,    64,    65,    66,    67,    68,    69,    70,    -1,
-      -1,    -1,    -1,    -1,    -1,    37,    -1,    79,    40,    41,
-      42,    43,    44,    45,    46,    47,    -1,    -1,    -1,    -1,
-      -1,    -1,    -1,    55,    56,    57,    58,    59,    60,    61,
-      62,    63,    64,    65,    66,    67,    68,    69,    70,    61,
-      62,    63,    64,    65,    66,    67,    68,    69,    70,    61,
-      62,    63,    64,    65,    66,    67,    68,    69,    70,    -1,
-      82,    -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,
-      82,    61,    62,    63,    64,    65,    66,    67,    68,    69,
-      70,    61,    62,    63,    64,    65,    66,    67,    68,    69,
-      70,    -1,    82,    -1,    -1,    -1,    -1,    -1,    -1,    79,
-      61,    62,    63,    64,    65,    66,    67,    68,    69,    70,
-      -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,    79,    61,
-      62,    63,    64,    65,    66,    67,    68,    69,    70,    -1,
-      -1,    -1,    -1,    -1,    -1,    -1,    -1,    79,    61,    62,
-      63,    64,    65,    66,    67,    68,    69,    70,    61,    62,
-      -1,    64,    65,    66,    67,    68,    69,    70,    61,    62,
-      -1,    -1,    -1,    66,    67,    68,    69,    70
+     124,   125,   126,   127,   128,   129,   130,   131,   132,    84,
+      79,    79,    11,   137,    13,    14,    15,    75,    79,    18,
+      19,    20,    21,   147,    23,   145,    49,    11,    11,    12,
+      13,    14,    15,    32,    33,    18,    19,    20,    21,    38,
+      23,     8,    18,    77,    80,    21,   155,   156,    84,    32,
+      33,    34,    35,    36,    52,    53,    39,    11,    52,    53,
+       9,    80,    80,    17,   184,    84,    84,    50,    51,    68,
+     218,    54,    55,    72,    50,    51,    22,    23,   226,   212,
+      79,    11,    80,    52,    53,    68,    80,    52,    53,    72,
+      77,    12,    68,    78,    10,    77,    79,    78,    76,    11,
+     224,    13,    14,    15,    18,    23,    18,    19,    20,    21,
+       4,    23,    67,    68,    69,    70,    71,    21,    82,   243,
+      32,    33,    34,    35,    36,    11,    22,    13,    14,    15,
+      37,    82,    18,    19,    20,    21,    79,    23,     5,     6,
+       7,    38,    79,   267,    80,    11,    32,    33,    23,   258,
+      69,    70,    71,     6,    11,    80,    68,    84,    37,    79,
+      72,    53,    79,   272,    79,    21,    77,    79,    62,    63,
+      64,    65,    66,    67,    68,    69,    70,    71,    18,    21,
+      11,    80,    68,    18,     6,    80,    72,    77,    79,     3,
+      79,    38,    80,    79,    41,    42,    43,    44,    45,    46,
+      47,    48,    24,    25,    26,    27,    28,    29,    30,    56,
+      57,    58,    59,    60,    61,    62,    63,    64,    65,    66,
+      67,    68,    69,    70,    71,     3,    31,    38,   109,   226,
+     250,    38,   184,    80,    41,    42,    43,    44,    45,    46,
+      47,    48,   252,    70,    -1,    -1,    -1,     6,    -1,    56,
+      57,    58,    59,    60,    61,    62,    63,    64,    65,    66,
+      67,    68,    69,    70,    71,    24,    25,    -1,    -1,    -1,
+      29,    30,    62,    63,    64,    65,    66,    67,    68,    69,
+      70,    71,    62,    63,    64,    65,    66,    67,    68,    69,
+      70,    71,    -1,    83,    -1,    -1,    -1,    -1,    -1,    -1,
+      -1,    -1,    -1,    83,    62,    63,    64,    65,    66,    67,
+      68,    69,    70,    71,    62,    63,    64,    65,    66,    67,
+      68,    69,    70,    71,    -1,    83,    -1,    -1,    -1,    -1,
+      -1,    -1,    80,    62,    63,    64,    65,    66,    67,    68,
+      69,    70,    71,    -1,    -1,    -1,    -1,    -1,    -1,    -1,
+      -1,    80,    62,    63,    64,    65,    66,    67,    68,    69,
+      70,    71,    -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,
+      80,    62,    63,    64,    65,    66,    67,    68,    69,    70,
+      71,    62,    63,    -1,    65,    66,    67,    68,    69,    70,
+      71,    62,    63,    -1,    -1,    66,    67,    68,    69,    70,
+      71,    62,    63,    -1,    -1,    -1,    67,    68,    69,    70,
+      71
 };
 
   /* YYSTOS[STATE-NUM] -- The (internal number of the) accessing
      symbol of state STATE-NUM.  */
 static const yytype_uint8 yystos[] =
 {
-       0,    85,     0,     1,     3,    48,    86,    87,    93,    73,
-      86,    87,    20,     5,     6,     7,    94,    11,    88,    76,
-      95,    11,    96,    74,    11,     8,    90,    76,     9,    91,
-      11,    97,    98,    76,    89,    77,    98,    12,    99,   100,
-      10,    92,    17,    20,    49,    50,    67,    77,   100,    76,
-      75,    17,   101,   102,   103,    11,    12,    13,    14,    15,
-      17,    18,    19,    20,    22,    31,    32,    33,    34,    35,
-      38,    49,    50,    53,    54,    67,    71,    78,   110,   113,
-     114,   115,   130,   131,    20,    22,    21,    30,    36,    36,
-      81,    81,    78,    78,   130,   131,   114,   114,   131,   131,
-     114,   115,   131,    78,    80,    81,    51,    52,    37,    40,
-      41,    42,    43,    44,    45,    46,    47,    55,    56,    57,
-      58,    59,    60,    61,    62,    63,    64,    65,    66,    67,
-      68,    69,    70,   104,   106,   108,   131,    78,   124,   124,
-     131,   131,   131,   131,     1,    37,   116,    70,    79,    79,
-     111,   112,   115,    11,   131,   120,   119,    39,    78,   126,
-     113,   131,   131,   131,   131,   131,   131,   131,   131,   131,
-     131,   131,   131,   131,   131,   131,   131,   131,   131,   131,
-     131,   131,   131,    37,   131,     6,    23,    24,    25,    26,
-      27,    28,    29,   105,     6,    23,    24,    28,    29,   107,
-       6,   109,   131,    82,    82,    79,   126,    11,   121,    79,
-      83,    82,   114,   114,   127,    36,   126,    78,    78,    78,
-       4,    76,    36,    83,   115,    12,    16,   128,   129,   124,
-      17,    20,    20,   131,   118,    78,   110,   122,   123,   124,
-      11,    79,    83,    67,    79,    79,    79,    79,    78,   125,
-     131,    76,   129,    17,   114,    79,    83,   117,    79,    79,
-     131,    78,   114,    79
+       0,    86,     0,     1,     3,    49,    87,    88,    94,    74,
+      87,    88,    21,     5,     6,     7,    95,    11,    89,    77,
+      96,    11,    97,    75,    11,     8,    91,    77,     9,    92,
+      11,    98,    99,    77,    90,    78,    99,    12,   100,   101,
+      10,    93,    18,    21,    50,    51,    68,    78,   101,    77,
+      76,    18,   102,   103,   104,    11,    12,    13,    14,    15,
+      18,    19,    20,    21,    23,    32,    33,    34,    35,    36,
+      39,    50,    51,    54,    55,    68,    72,    79,   111,   114,
+     115,   116,   135,   136,    21,    23,    22,    31,    37,    37,
+      82,    82,    79,    79,   135,   136,   115,   115,   136,   136,
+     115,   116,   136,    79,    81,    82,    52,    53,    38,    41,
+      42,    43,    44,    45,    46,    47,    48,    56,    57,    58,
+      59,    60,    61,    62,    63,    64,    65,    66,    67,    68,
+      69,    70,    71,   105,   107,   109,   136,    79,   125,   125,
+     136,   136,   136,   136,     1,    38,   117,    71,    80,    80,
+     112,   113,   116,    11,   136,   121,   120,    40,    79,   127,
+     131,   114,   136,   136,   136,   136,   136,   136,   136,   136,
+     136,   136,   136,   136,   136,   136,   136,   136,   136,   136,
+     136,   136,   136,   136,    38,   136,     6,    24,    25,    26,
+      27,    28,    29,    30,   106,     6,    24,    25,    29,    30,
+     108,     6,   110,   136,    83,    83,    80,    79,   127,    11,
+     122,    80,    84,    83,   115,   115,   128,   132,    37,   127,
+     131,    79,    79,    79,     4,    77,    37,    84,   116,    12,
+      16,   129,   130,    11,    17,   133,   134,   125,    18,    21,
+      21,   136,   119,    79,   111,   123,   124,   125,    11,    80,
+      84,    80,    84,    68,    80,    80,    80,    80,    79,   126,
+     136,    77,   130,   134,    18,   115,    80,    84,   118,    80,
+      80,   136,    79,   115,    80
 };
 
   /* YYR1[YYN] -- Symbol number of symbol that rule YYN derives.  */
 static const yytype_uint8 yyr1[] =
 {
-       0,    84,    85,    85,    85,    85,    85,    85,    85,    86,
-      88,    89,    87,    90,    90,    91,    91,    92,    93,    93,
-      94,    94,    95,    95,    96,    96,    97,    97,    98,    98,
-      98,    98,    98,    99,    99,   101,   100,   102,   100,   103,
-     100,   104,   104,   105,   105,   105,   105,   105,   105,   105,
-     105,   105,   105,   105,   105,   106,   106,   107,   107,   107,
-     107,   107,   108,   108,   109,   110,   110,   110,   110,   111,
-     111,   112,   112,   113,   114,   115,   115,   115,   115,   115,
-     115,   115,   115,   115,   115,   115,   115,   115,   115,   116,
-     117,   115,   118,   115,   115,   115,   115,   115,   115,   119,
-     115,   120,   115,   115,   115,   115,   115,   115,   115,   115,
-     115,   121,   121,   122,   122,   123,   123,   124,   125,   125,
-     127,   126,   126,   128,   128,   129,   129,   130,   130,   130,
-     130,   131,   131,   131,   131,   131,   131,   131,   131,   131,
-     131,   131,   131,   131,   131,   131,   131,   131,   131,   131,
-     131,   131,   131,   131,   131,   131,   131,   131
+       0,    85,    86,    86,    86,    86,    86,    86,    86,    87,
+      89,    90,    88,    91,    91,    92,    92,    93,    94,    94,
+      95,    95,    96,    96,    97,    97,    98,    98,    99,    99,
+      99,    99,    99,   100,   100,   102,   101,   103,   101,   104,
+     101,   105,   105,   106,   106,   106,   106,   106,   106,   106,
+     106,   106,   106,   106,   106,   107,   107,   108,   108,   108,
+     108,   108,   109,   109,   110,   111,   111,   111,   111,   112,
+     112,   113,   113,   114,   115,   116,   116,   116,   116,   116,
+     116,   116,   116,   116,   116,   116,   116,   116,   116,   117,
+     118,   116,   119,   116,   116,   116,   116,   116,   116,   116,
+     116,   120,   116,   121,   116,   116,   116,   116,   116,   116,
+     116,   116,   116,   122,   122,   123,   123,   124,   124,   125,
+     126,   126,   128,   127,   127,   129,   129,   130,   130,   132,
+     131,   133,   133,   134,   134,   135,   135,   135,   135,   136,
+     136,   136,   136,   136,   136,   136,   136,   136,   136,   136,
+     136,   136,   136,   136,   136,   136,   136,   136,   136,   136,
+     136,   136,   136,   136,   136,   136
 };
 
   /* YYR2[YYN] -- Number of symbols on the right hand side of rule YYN.  */
@@ -1255,13 +1282,14 @@ static const yytype_int8 yyr2[] =
        1,     1,     0,     2,     1,     1,     3,     4,     4,     0,
        1,     1,     3,     1,     1,     1,     1,     3,     3,     3,
        3,     3,     3,     3,     3,     1,     3,     3,     3,     0,
-       0,    11,     0,     9,     3,     4,     5,     2,     2,     0,
-       4,     0,     4,     3,     3,     3,     3,     3,     3,     1,
-       3,     1,     3,     1,     1,     3,     1,     5,     1,     3,
-       0,     4,     1,     1,     3,     1,     1,     1,     1,     1,
-       1,     3,     1,     1,     4,     1,     1,     1,     3,     1,
-       4,     1,     4,     1,     1,     2,     3,     3,     3,     3,
-       3,     3,     3,     3,     2,     3,     3,     1
+       0,    11,     0,     9,     3,     3,     4,     4,     5,     2,
+       2,     0,     4,     0,     4,     3,     3,     3,     3,     3,
+       3,     1,     3,     1,     3,     1,     1,     3,     1,     5,
+       1,     3,     0,     4,     1,     1,     3,     1,     1,     0,
+       4,     1,     3,     1,     1,     1,     1,     1,     1,     3,
+       1,     1,     4,     1,     1,     1,     3,     1,     4,     1,
+       4,     1,     1,     2,     3,     3,     3,     3,     3,     3,
+       3,     3,     2,     3,     3,     1
 };
 
 
@@ -1340,9 +1368,9 @@ yy_symbol_value_print (FILE *yyo,
                        yysymbol_kind_t yykind, YYSTYPE const * const yyvaluep, void *yyscanner, YR_COMPILER* compiler)
 {
   FILE *yyoutput = yyo;
-  YYUSE (yyoutput);
-  YYUSE (yyscanner);
-  YYUSE (compiler);
+  YY_USE (yyoutput);
+  YY_USE (yyscanner);
+  YY_USE (compiler);
   if (!yyvaluep)
     return;
 # ifdef YYPRINT
@@ -1350,7 +1378,7 @@ yy_symbol_value_print (FILE *yyo,
     YYPRINT (yyo, yytoknum[yykind], *yyvaluep);
 # endif
   YY_IGNORE_MAYBE_UNINITIALIZED_BEGIN
-  YYUSE (yykind);
+  YY_USE (yykind);
   YY_IGNORE_MAYBE_UNINITIALIZED_END
 }
 
@@ -1464,9 +1492,9 @@ static void
 yydestruct (const char *yymsg,
             yysymbol_kind_t yykind, YYSTYPE *yyvaluep, void *yyscanner, YR_COMPILER* compiler)
 {
-  YYUSE (yyvaluep);
-  YYUSE (yyscanner);
-  YYUSE (compiler);
+  YY_USE (yyvaluep);
+  YY_USE (yyscanner);
+  YY_USE (compiler);
   if (!yymsg)
     yymsg = "Deleting";
   YY_SYMBOL_PRINT (yymsg, yykind, yyvaluep, yylocationp);
@@ -1475,61 +1503,67 @@ yydestruct (const char *yymsg,
   switch (yykind)
     {
     case YYSYMBOL__IDENTIFIER_: /* "identifier"  */
-#line 278 "grammar.y"
+#line 279 "grammar.y"
             { yr_free(((*yyvaluep).c_string)); ((*yyvaluep).c_string) = NULL; }
-#line 1481 "grammar.c"
+#line 1509 "grammar.c"
         break;
 
     case YYSYMBOL__STRING_IDENTIFIER_: /* "string identifier"  */
-#line 282 "grammar.y"
+#line 283 "grammar.y"
             { yr_free(((*yyvaluep).c_string)); ((*yyvaluep).c_string) = NULL; }
-#line 1487 "grammar.c"
+#line 1515 "grammar.c"
         break;
 
     case YYSYMBOL__STRING_COUNT_: /* "string count"  */
-#line 279 "grammar.y"
+#line 280 "grammar.y"
             { yr_free(((*yyvaluep).c_string)); ((*yyvaluep).c_string) = NULL; }
-#line 1493 "grammar.c"
+#line 1521 "grammar.c"
         break;
 
     case YYSYMBOL__STRING_OFFSET_: /* "string offset"  */
-#line 280 "grammar.y"
+#line 281 "grammar.y"
             { yr_free(((*yyvaluep).c_string)); ((*yyvaluep).c_string) = NULL; }
-#line 1499 "grammar.c"
+#line 1527 "grammar.c"
         break;
 
     case YYSYMBOL__STRING_LENGTH_: /* "string length"  */
-#line 281 "grammar.y"
+#line 282 "grammar.y"
             { yr_free(((*yyvaluep).c_string)); ((*yyvaluep).c_string) = NULL; }
-#line 1505 "grammar.c"
+#line 1533 "grammar.c"
         break;
 
     case YYSYMBOL__STRING_IDENTIFIER_WITH_WILDCARD_: /* "string identifier with wildcard"  */
-#line 283 "grammar.y"
+#line 284 "grammar.y"
             { yr_free(((*yyvaluep).c_string)); ((*yyvaluep).c_string) = NULL; }
-#line 1511 "grammar.c"
+#line 1539 "grammar.c"
+        break;
+
+    case YYSYMBOL__IDENTIFIER_WITH_WILDCARD_: /* "identifier with wildcard"  */
+#line 285 "grammar.y"
+            { yr_free(((*yyvaluep).c_string)); ((*yyvaluep).c_string) = NULL; }
+#line 1545 "grammar.c"
         break;
 
     case YYSYMBOL__TEXT_STRING_: /* "text string"  */
-#line 284 "grammar.y"
+#line 286 "grammar.y"
             { yr_free(((*yyvaluep).sized_string)); ((*yyvaluep).sized_string) = NULL; }
-#line 1517 "grammar.c"
+#line 1551 "grammar.c"
         break;
 
     case YYSYMBOL__HEX_STRING_: /* "hex string"  */
-#line 285 "grammar.y"
+#line 287 "grammar.y"
             { yr_free(((*yyvaluep).sized_string)); ((*yyvaluep).sized_string) = NULL; }
-#line 1523 "grammar.c"
+#line 1557 "grammar.c"
         break;
 
     case YYSYMBOL__REGEXP_: /* "regular expression"  */
-#line 286 "grammar.y"
+#line 288 "grammar.y"
             { yr_free(((*yyvaluep).sized_string)); ((*yyvaluep).sized_string) = NULL; }
-#line 1529 "grammar.c"
+#line 1563 "grammar.c"
         break;
 
     case YYSYMBOL_string_modifiers: /* string_modifiers  */
-#line 299 "grammar.y"
+#line 301 "grammar.y"
             {
   if (((*yyvaluep).modifier).alphabet != NULL)
   {
@@ -1537,11 +1571,11 @@ yydestruct (const char *yymsg,
     ((*yyvaluep).modifier).alphabet = NULL;
   }
 }
-#line 1541 "grammar.c"
+#line 1575 "grammar.c"
         break;
 
     case YYSYMBOL_string_modifier: /* string_modifier  */
-#line 291 "grammar.y"
+#line 293 "grammar.y"
             {
   if (((*yyvaluep).modifier).alphabet != NULL)
   {
@@ -1549,19 +1583,19 @@ yydestruct (const char *yymsg,
     ((*yyvaluep).modifier).alphabet = NULL;
   }
 }
-#line 1553 "grammar.c"
+#line 1587 "grammar.c"
         break;
 
     case YYSYMBOL_arguments: /* arguments  */
-#line 288 "grammar.y"
+#line 290 "grammar.y"
             { yr_free(((*yyvaluep).c_string)); ((*yyvaluep).c_string) = NULL; }
-#line 1559 "grammar.c"
+#line 1593 "grammar.c"
         break;
 
     case YYSYMBOL_arguments_list: /* arguments_list  */
-#line 289 "grammar.y"
+#line 291 "grammar.y"
             { yr_free(((*yyvaluep).c_string)); ((*yyvaluep).c_string) = NULL; }
-#line 1565 "grammar.c"
+#line 1599 "grammar.c"
         break;
 
       default:
@@ -1833,15 +1867,15 @@ yyreduce:
   switch (yyn)
     {
   case 8: /* rules: rules "end of included file"  */
-#line 333 "grammar.y"
+#line 335 "grammar.y"
       {
         _yr_compiler_pop_file_name(compiler);
       }
-#line 1841 "grammar.c"
+#line 1875 "grammar.c"
     break;
 
   case 9: /* import: "<import>" "text string"  */
-#line 341 "grammar.y"
+#line 343 "grammar.y"
       {
         int result = yr_parser_reduce_import(yyscanner, (yyvsp[0].sized_string));
 
@@ -1849,20 +1883,20 @@ yyreduce:
 
         fail_if_error(result);
       }
-#line 1853 "grammar.c"
+#line 1887 "grammar.c"
     break;
 
   case 10: /* @1: %empty  */
-#line 353 "grammar.y"
+#line 355 "grammar.y"
       {
         fail_if_error(yr_parser_reduce_rule_declaration_phase_1(
             yyscanner, (int32_t) (yyvsp[-2].integer), (yyvsp[0].c_string), &(yyval.rule)));
       }
-#line 1862 "grammar.c"
+#line 1896 "grammar.c"
     break;
 
   case 11: /* $@2: %empty  */
-#line 358 "grammar.y"
+#line 360 "grammar.y"
       {
         YR_RULE* rule = (YR_RULE*) yr_arena_ref_to_ptr(
             compiler->arena, &(yyvsp[-4].rule));
@@ -1876,11 +1910,11 @@ yyreduce:
         rule->strings = (YR_STRING*) yr_arena_ref_to_ptr(
             compiler->arena, &(yyvsp[0].string));
       }
-#line 1880 "grammar.c"
+#line 1914 "grammar.c"
     break;
 
   case 12: /* rule: rule_modifiers "<rule>" "identifier" @1 tags '{' meta strings $@2 condition '}'  */
-#line 372 "grammar.y"
+#line 374 "grammar.y"
       {
         int result = yr_parser_reduce_rule_declaration_phase_2(
             yyscanner, &(yyvsp[-7].rule)); // rule created in phase 1
@@ -1889,19 +1923,19 @@ yyreduce:
 
         fail_if_error(result);
       }
-#line 1893 "grammar.c"
+#line 1927 "grammar.c"
     break;
 
   case 13: /* meta: %empty  */
-#line 385 "grammar.y"
+#line 387 "grammar.y"
       {
         (yyval.meta) = YR_ARENA_NULL_REF;
       }
-#line 1901 "grammar.c"
+#line 1935 "grammar.c"
     break;
 
   case 14: /* meta: "<meta>" ':' meta_declarations  */
-#line 389 "grammar.y"
+#line 391 "grammar.y"
       {
         YR_META* meta = yr_arena_get_ptr(
             compiler->arena,
@@ -1912,19 +1946,19 @@ yyreduce:
 
         (yyval.meta) = (yyvsp[0].meta);
       }
-#line 1916 "grammar.c"
+#line 1950 "grammar.c"
     break;
 
   case 15: /* strings: %empty  */
-#line 404 "grammar.y"
+#line 406 "grammar.y"
       {
         (yyval.string) = YR_ARENA_NULL_REF;
       }
-#line 1924 "grammar.c"
+#line 1958 "grammar.c"
     break;
 
   case 16: /* strings: "<strings>" ':' string_declarations  */
-#line 408 "grammar.y"
+#line 410 "grammar.y"
       {
         YR_STRING* string = (YR_STRING*) yr_arena_get_ptr(
             compiler->arena,
@@ -1935,43 +1969,43 @@ yyreduce:
 
         (yyval.string) = (yyvsp[0].string);
       }
-#line 1939 "grammar.c"
+#line 1973 "grammar.c"
     break;
 
   case 18: /* rule_modifiers: %empty  */
-#line 427 "grammar.y"
+#line 429 "grammar.y"
                                        { (yyval.integer) = 0;  }
-#line 1945 "grammar.c"
+#line 1979 "grammar.c"
     break;
 
   case 19: /* rule_modifiers: rule_modifiers rule_modifier  */
-#line 428 "grammar.y"
+#line 430 "grammar.y"
                                        { (yyval.integer) = (yyvsp[-1].integer) | (yyvsp[0].integer); }
-#line 1951 "grammar.c"
+#line 1985 "grammar.c"
     break;
 
   case 20: /* rule_modifier: "<private>"  */
-#line 433 "grammar.y"
+#line 435 "grammar.y"
                      { (yyval.integer) = RULE_FLAGS_PRIVATE; }
-#line 1957 "grammar.c"
+#line 1991 "grammar.c"
     break;
 
   case 21: /* rule_modifier: "<global>"  */
-#line 434 "grammar.y"
+#line 436 "grammar.y"
                      { (yyval.integer) = RULE_FLAGS_GLOBAL; }
-#line 1963 "grammar.c"
+#line 1997 "grammar.c"
     break;
 
   case 22: /* tags: %empty  */
-#line 440 "grammar.y"
+#line 442 "grammar.y"
       {
         (yyval.tag) = YR_ARENA_NULL_REF;
       }
-#line 1971 "grammar.c"
+#line 2005 "grammar.c"
     break;
 
   case 23: /* tags: ':' tag_list  */
-#line 444 "grammar.y"
+#line 446 "grammar.y"
       {
         // Tags list is represented in the arena as a sequence
         // of null-terminated strings, the sequence ends with an
@@ -1983,11 +2017,11 @@ yyreduce:
 
         (yyval.tag) = (yyvsp[0].tag);
       }
-#line 1987 "grammar.c"
+#line 2021 "grammar.c"
     break;
 
   case 24: /* tag_list: "identifier"  */
-#line 460 "grammar.y"
+#line 462 "grammar.y"
       {
         int result = yr_arena_write_string(
             yyget_extra(yyscanner)->arena, YR_SZ_POOL, (yyvsp[0].c_string), &(yyval.tag));
@@ -1996,11 +2030,11 @@ yyreduce:
 
         fail_if_error(result);
       }
-#line 2000 "grammar.c"
+#line 2034 "grammar.c"
     break;
 
   case 25: /* tag_list: tag_list "identifier"  */
-#line 469 "grammar.y"
+#line 471 "grammar.y"
       {
         YR_ARENA_REF ref;
 
@@ -2037,23 +2071,23 @@ yyreduce:
 
         (yyval.tag) = (yyvsp[-1].tag);
       }
-#line 2041 "grammar.c"
+#line 2075 "grammar.c"
     break;
 
   case 26: /* meta_declarations: meta_declaration  */
-#line 510 "grammar.y"
+#line 512 "grammar.y"
                                           {  (yyval.meta) = (yyvsp[0].meta); }
-#line 2047 "grammar.c"
+#line 2081 "grammar.c"
     break;
 
   case 27: /* meta_declarations: meta_declarations meta_declaration  */
-#line 511 "grammar.y"
+#line 513 "grammar.y"
                                           {  (yyval.meta) = (yyvsp[-1].meta); }
-#line 2053 "grammar.c"
+#line 2087 "grammar.c"
     break;
 
   case 28: /* meta_declaration: "identifier" '=' "text string"  */
-#line 517 "grammar.y"
+#line 519 "grammar.y"
       {
         SIZED_STRING* sized_string = (yyvsp[0].sized_string);
 
@@ -2070,11 +2104,11 @@ yyreduce:
 
         fail_if_error(result);
       }
-#line 2074 "grammar.c"
+#line 2108 "grammar.c"
     break;
 
   case 29: /* meta_declaration: "identifier" '=' "integer number"  */
-#line 534 "grammar.y"
+#line 536 "grammar.y"
       {
         int result = yr_parser_reduce_meta_declaration(
             yyscanner,
@@ -2088,11 +2122,11 @@ yyreduce:
 
         fail_if_error(result);
       }
-#line 2092 "grammar.c"
+#line 2126 "grammar.c"
     break;
 
   case 30: /* meta_declaration: "identifier" '=' '-' "integer number"  */
-#line 548 "grammar.y"
+#line 550 "grammar.y"
       {
         int result = yr_parser_reduce_meta_declaration(
             yyscanner,
@@ -2106,11 +2140,11 @@ yyreduce:
 
         fail_if_error(result);
       }
-#line 2110 "grammar.c"
+#line 2144 "grammar.c"
     break;
 
   case 31: /* meta_declaration: "identifier" '=' "<true>"  */
-#line 562 "grammar.y"
+#line 564 "grammar.y"
       {
         int result = yr_parser_reduce_meta_declaration(
             yyscanner,
@@ -2124,11 +2158,11 @@ yyreduce:
 
         fail_if_error(result);
       }
-#line 2128 "grammar.c"
+#line 2162 "grammar.c"
     break;
 
   case 32: /* meta_declaration: "identifier" '=' "<false>"  */
-#line 576 "grammar.y"
+#line 578 "grammar.y"
       {
         int result = yr_parser_reduce_meta_declaration(
             yyscanner,
@@ -2142,31 +2176,31 @@ yyreduce:
 
         fail_if_error(result);
       }
-#line 2146 "grammar.c"
+#line 2180 "grammar.c"
     break;
 
   case 33: /* string_declarations: string_declaration  */
-#line 593 "grammar.y"
+#line 595 "grammar.y"
                                               { (yyval.string) = (yyvsp[0].string); }
-#line 2152 "grammar.c"
+#line 2186 "grammar.c"
     break;
 
   case 34: /* string_declarations: string_declarations string_declaration  */
-#line 594 "grammar.y"
+#line 596 "grammar.y"
                                               { (yyval.string) = (yyvsp[-1].string); }
-#line 2158 "grammar.c"
+#line 2192 "grammar.c"
     break;
 
   case 35: /* $@3: %empty  */
-#line 600 "grammar.y"
+#line 602 "grammar.y"
       {
         compiler->current_line = yyget_lineno(yyscanner);
       }
-#line 2166 "grammar.c"
+#line 2200 "grammar.c"
     break;
 
   case 36: /* string_declaration: "string identifier" '=' $@3 "text string" string_modifiers  */
-#line 604 "grammar.y"
+#line 606 "grammar.y"
       {
         int result = yr_parser_reduce_string_declaration(
             yyscanner, (yyvsp[0].modifier), (yyvsp[-4].c_string), (yyvsp[-1].sized_string), &(yyval.string));
@@ -2178,19 +2212,19 @@ yyreduce:
         fail_if_error(result);
         compiler->current_line = 0;
       }
-#line 2182 "grammar.c"
+#line 2216 "grammar.c"
     break;
 
   case 37: /* $@4: %empty  */
-#line 616 "grammar.y"
+#line 618 "grammar.y"
       {
         compiler->current_line = yyget_lineno(yyscanner);
       }
-#line 2190 "grammar.c"
+#line 2224 "grammar.c"
     break;
 
   case 38: /* string_declaration: "string identifier" '=' $@4 "regular expression" regexp_modifiers  */
-#line 620 "grammar.y"
+#line 622 "grammar.y"
       {
         int result;
 
@@ -2206,19 +2240,19 @@ yyreduce:
 
         compiler->current_line = 0;
       }
-#line 2210 "grammar.c"
+#line 2244 "grammar.c"
     break;
 
   case 39: /* $@5: %empty  */
-#line 636 "grammar.y"
+#line 638 "grammar.y"
       {
         compiler->current_line = yyget_lineno(yyscanner);
       }
-#line 2218 "grammar.c"
+#line 2252 "grammar.c"
     break;
 
   case 40: /* string_declaration: "string identifier" '=' $@5 "hex string" hex_modifiers  */
-#line 640 "grammar.y"
+#line 642 "grammar.y"
       {
         int result;
 
@@ -2234,22 +2268,22 @@ yyreduce:
 
         compiler->current_line = 0;
       }
-#line 2238 "grammar.c"
+#line 2272 "grammar.c"
     break;
 
   case 41: /* string_modifiers: %empty  */
-#line 660 "grammar.y"
+#line 662 "grammar.y"
       {
         (yyval.modifier).flags = 0;
         (yyval.modifier).xor_min = 0;
         (yyval.modifier).xor_max = 0;
         (yyval.modifier).alphabet = NULL;
       }
-#line 2249 "grammar.c"
+#line 2283 "grammar.c"
     break;
 
   case 42: /* string_modifiers: string_modifiers string_modifier  */
-#line 667 "grammar.y"
+#line 669 "grammar.y"
       {
         (yyval.modifier) = (yyvsp[-1].modifier);
 
@@ -2305,51 +2339,51 @@ yyreduce:
           (yyval.modifier).flags = (yyval.modifier).flags | (yyvsp[0].modifier).flags;
         }
       }
-#line 2309 "grammar.c"
+#line 2343 "grammar.c"
     break;
 
   case 43: /* string_modifier: "<wide>"  */
-#line 726 "grammar.y"
+#line 728 "grammar.y"
                     { (yyval.modifier).flags = STRING_FLAGS_WIDE; }
-#line 2315 "grammar.c"
+#line 2349 "grammar.c"
     break;
 
   case 44: /* string_modifier: "<ascii>"  */
-#line 727 "grammar.y"
+#line 729 "grammar.y"
                     { (yyval.modifier).flags = STRING_FLAGS_ASCII; }
-#line 2321 "grammar.c"
+#line 2355 "grammar.c"
     break;
 
   case 45: /* string_modifier: "<nocase>"  */
-#line 728 "grammar.y"
+#line 730 "grammar.y"
                     { (yyval.modifier).flags = STRING_FLAGS_NO_CASE; }
-#line 2327 "grammar.c"
+#line 2361 "grammar.c"
     break;
 
   case 46: /* string_modifier: "<fullword>"  */
-#line 729 "grammar.y"
+#line 731 "grammar.y"
                     { (yyval.modifier).flags = STRING_FLAGS_FULL_WORD; }
-#line 2333 "grammar.c"
+#line 2367 "grammar.c"
     break;
 
   case 47: /* string_modifier: "<private>"  */
-#line 730 "grammar.y"
+#line 732 "grammar.y"
                     { (yyval.modifier).flags = STRING_FLAGS_PRIVATE; }
-#line 2339 "grammar.c"
+#line 2373 "grammar.c"
     break;
 
   case 48: /* string_modifier: "<xor>"  */
-#line 732 "grammar.y"
+#line 734 "grammar.y"
       {
         (yyval.modifier).flags = STRING_FLAGS_XOR;
         (yyval.modifier).xor_min = 0;
         (yyval.modifier).xor_max = 255;
       }
-#line 2349 "grammar.c"
+#line 2383 "grammar.c"
     break;
 
   case 49: /* string_modifier: "<xor>" '(' "integer number" ')'  */
-#line 738 "grammar.y"
+#line 740 "grammar.y"
       {
         int result = ERROR_SUCCESS;
 
@@ -2365,11 +2399,11 @@ yyreduce:
         (yyval.modifier).xor_min = (uint8_t) (yyvsp[-1].integer);
         (yyval.modifier).xor_max = (uint8_t) (yyvsp[-1].integer);
       }
-#line 2369 "grammar.c"
+#line 2403 "grammar.c"
     break;
 
   case 50: /* string_modifier: "<xor>" '(' "integer number" '-' "integer number" ')'  */
-#line 759 "grammar.y"
+#line 761 "grammar.y"
       {
         int result = ERROR_SUCCESS;
 
@@ -2400,20 +2434,20 @@ yyreduce:
         (yyval.modifier).xor_min = (uint8_t) (yyvsp[-3].integer);
         (yyval.modifier).xor_max = (uint8_t) (yyvsp[-1].integer);
       }
-#line 2404 "grammar.c"
+#line 2438 "grammar.c"
     break;
 
   case 51: /* string_modifier: "<base64>"  */
-#line 790 "grammar.y"
+#line 792 "grammar.y"
       {
         (yyval.modifier).flags = STRING_FLAGS_BASE64;
         (yyval.modifier).alphabet = ss_new(DEFAULT_BASE64_ALPHABET);
       }
-#line 2413 "grammar.c"
+#line 2447 "grammar.c"
     break;
 
   case 52: /* string_modifier: "<base64>" '(' "text string" ')'  */
-#line 795 "grammar.y"
+#line 797 "grammar.y"
       {
         int result = ERROR_SUCCESS;
 
@@ -2430,20 +2464,20 @@ yyreduce:
         (yyval.modifier).flags = STRING_FLAGS_BASE64;
         (yyval.modifier).alphabet = (yyvsp[-1].sized_string);
       }
-#line 2434 "grammar.c"
+#line 2468 "grammar.c"
     break;
 
   case 53: /* string_modifier: "<base64wide>"  */
-#line 812 "grammar.y"
+#line 814 "grammar.y"
       {
         (yyval.modifier).flags = STRING_FLAGS_BASE64_WIDE;
         (yyval.modifier).alphabet = ss_new(DEFAULT_BASE64_ALPHABET);
       }
-#line 2443 "grammar.c"
+#line 2477 "grammar.c"
     break;
 
   case 54: /* string_modifier: "<base64wide>" '(' "text string" ')'  */
-#line 817 "grammar.y"
+#line 819 "grammar.y"
       {
         int result = ERROR_SUCCESS;
 
@@ -2460,17 +2494,17 @@ yyreduce:
         (yyval.modifier).flags = STRING_FLAGS_BASE64_WIDE;
         (yyval.modifier).alphabet = (yyvsp[-1].sized_string);
       }
-#line 2464 "grammar.c"
+#line 2498 "grammar.c"
     break;
 
   case 55: /* regexp_modifiers: %empty  */
-#line 836 "grammar.y"
+#line 838 "grammar.y"
                                           { (yyval.modifier).flags = 0; }
-#line 2470 "grammar.c"
+#line 2504 "grammar.c"
     break;
 
   case 56: /* regexp_modifiers: regexp_modifiers regexp_modifier  */
-#line 838 "grammar.y"
+#line 840 "grammar.y"
       {
         if ((yyvsp[-1].modifier).flags & (yyvsp[0].modifier).flags)
         {
@@ -2481,47 +2515,47 @@ yyreduce:
           (yyval.modifier).flags = (yyvsp[-1].modifier).flags | (yyvsp[0].modifier).flags;
         }
       }
-#line 2485 "grammar.c"
+#line 2519 "grammar.c"
     break;
 
   case 57: /* regexp_modifier: "<wide>"  */
-#line 851 "grammar.y"
+#line 853 "grammar.y"
                     { (yyval.modifier).flags = STRING_FLAGS_WIDE; }
-#line 2491 "grammar.c"
+#line 2525 "grammar.c"
     break;
 
   case 58: /* regexp_modifier: "<ascii>"  */
-#line 852 "grammar.y"
+#line 854 "grammar.y"
                     { (yyval.modifier).flags = STRING_FLAGS_ASCII; }
-#line 2497 "grammar.c"
+#line 2531 "grammar.c"
     break;
 
   case 59: /* regexp_modifier: "<nocase>"  */
-#line 853 "grammar.y"
+#line 855 "grammar.y"
                     { (yyval.modifier).flags = STRING_FLAGS_NO_CASE; }
-#line 2503 "grammar.c"
+#line 2537 "grammar.c"
     break;
 
   case 60: /* regexp_modifier: "<fullword>"  */
-#line 854 "grammar.y"
+#line 856 "grammar.y"
                     { (yyval.modifier).flags = STRING_FLAGS_FULL_WORD; }
-#line 2509 "grammar.c"
+#line 2543 "grammar.c"
     break;
 
   case 61: /* regexp_modifier: "<private>"  */
-#line 855 "grammar.y"
+#line 857 "grammar.y"
                     { (yyval.modifier).flags = STRING_FLAGS_PRIVATE; }
-#line 2515 "grammar.c"
+#line 2549 "grammar.c"
     break;
 
   case 62: /* hex_modifiers: %empty  */
-#line 859 "grammar.y"
+#line 861 "grammar.y"
                                           { (yyval.modifier).flags = 0; }
-#line 2521 "grammar.c"
+#line 2555 "grammar.c"
     break;
 
   case 63: /* hex_modifiers: hex_modifiers hex_modifier  */
-#line 861 "grammar.y"
+#line 863 "grammar.y"
       {
         if ((yyvsp[-1].modifier).flags & (yyvsp[0].modifier).flags)
         {
@@ -2532,17 +2566,17 @@ yyreduce:
           (yyval.modifier).flags = (yyvsp[-1].modifier).flags | (yyvsp[0].modifier).flags;
         }
       }
-#line 2536 "grammar.c"
+#line 2570 "grammar.c"
     break;
 
   case 64: /* hex_modifier: "<private>"  */
-#line 874 "grammar.y"
+#line 876 "grammar.y"
                     { (yyval.modifier).flags = STRING_FLAGS_PRIVATE; }
-#line 2542 "grammar.c"
+#line 2576 "grammar.c"
     break;
 
   case 65: /* identifier: "identifier"  */
-#line 879 "grammar.y"
+#line 881 "grammar.y"
       {
         YR_EXPRESSION expr;
 
@@ -2637,11 +2671,11 @@ yyreduce:
 
         fail_if_error(result);
       }
-#line 2641 "grammar.c"
+#line 2675 "grammar.c"
     break;
 
   case 66: /* identifier: identifier '.' "identifier"  */
-#line 974 "grammar.y"
+#line 976 "grammar.y"
       {
         int result = ERROR_SUCCESS;
         YR_OBJECT* field = NULL;
@@ -2689,11 +2723,11 @@ yyreduce:
 
         fail_if_error(result);
       }
-#line 2693 "grammar.c"
+#line 2727 "grammar.c"
     break;
 
   case 67: /* identifier: identifier '[' primary_expression ']'  */
-#line 1022 "grammar.y"
+#line 1024 "grammar.y"
       {
         int result = ERROR_SUCCESS;
         YR_OBJECT_ARRAY* array;
@@ -2753,11 +2787,11 @@ yyreduce:
 
         fail_if_error(result);
       }
-#line 2757 "grammar.c"
+#line 2791 "grammar.c"
     break;
 
   case 68: /* identifier: identifier '(' arguments ')'  */
-#line 1083 "grammar.y"
+#line 1085 "grammar.y"
       {
         YR_ARENA_REF ref;
         int result = ERROR_SUCCESS;
@@ -2800,23 +2834,23 @@ yyreduce:
 
         fail_if_error(result);
       }
-#line 2804 "grammar.c"
+#line 2838 "grammar.c"
     break;
 
   case 69: /* arguments: %empty  */
-#line 1129 "grammar.y"
+#line 1131 "grammar.y"
                       { (yyval.c_string) = yr_strdup(""); }
-#line 2810 "grammar.c"
+#line 2844 "grammar.c"
     break;
 
   case 70: /* arguments: arguments_list  */
-#line 1130 "grammar.y"
+#line 1132 "grammar.y"
                       { (yyval.c_string) = (yyvsp[0].c_string); }
-#line 2816 "grammar.c"
+#line 2850 "grammar.c"
     break;
 
   case 71: /* arguments_list: expression  */
-#line 1135 "grammar.y"
+#line 1137 "grammar.y"
       {
         (yyval.c_string) = (char*) yr_malloc(YR_MAX_FUNCTION_ARGS + 1);
 
@@ -2851,11 +2885,11 @@ yyreduce:
             assert(compiler->last_error != ERROR_SUCCESS);
         }
       }
-#line 2855 "grammar.c"
+#line 2889 "grammar.c"
     break;
 
   case 72: /* arguments_list: arguments_list ',' expression  */
-#line 1170 "grammar.y"
+#line 1172 "grammar.y"
       {
         int result = ERROR_SUCCESS;
 
@@ -2904,11 +2938,11 @@ yyreduce:
 
         (yyval.c_string) = (yyvsp[-2].c_string);
       }
-#line 2908 "grammar.c"
+#line 2942 "grammar.c"
     break;
 
   case 73: /* regexp: "regular expression"  */
-#line 1223 "grammar.y"
+#line 1225 "grammar.y"
       {
         YR_ARENA_REF re_ref;
         RE_ERROR error;
@@ -2946,11 +2980,11 @@ yyreduce:
 
         (yyval.expression).type = EXPRESSION_TYPE_REGEXP;
       }
-#line 2950 "grammar.c"
+#line 2984 "grammar.c"
     break;
 
   case 74: /* boolean_expression: expression  */
-#line 1265 "grammar.y"
+#line 1267 "grammar.y"
       {
         if ((yyvsp[0].expression).type == EXPRESSION_TYPE_STRING)
         {
@@ -2970,31 +3004,31 @@ yyreduce:
 
         (yyval.expression).type = EXPRESSION_TYPE_BOOLEAN;
       }
-#line 2974 "grammar.c"
+#line 3008 "grammar.c"
     break;
 
   case 75: /* expression: "<true>"  */
-#line 1288 "grammar.y"
+#line 1290 "grammar.y"
       {
         fail_if_error(yr_parser_emit_push_const(yyscanner, 1));
 
         (yyval.expression).type = EXPRESSION_TYPE_BOOLEAN;
       }
-#line 2984 "grammar.c"
+#line 3018 "grammar.c"
     break;
 
   case 76: /* expression: "<false>"  */
-#line 1294 "grammar.y"
+#line 1296 "grammar.y"
       {
         fail_if_error(yr_parser_emit_push_const(yyscanner, 0));
 
         (yyval.expression).type = EXPRESSION_TYPE_BOOLEAN;
       }
-#line 2994 "grammar.c"
+#line 3028 "grammar.c"
     break;
 
   case 77: /* expression: primary_expression "<matches>" regexp  */
-#line 1300 "grammar.y"
+#line 1302 "grammar.y"
       {
         check_type((yyvsp[-2].expression), EXPRESSION_TYPE_STRING, "matches");
         check_type((yyvsp[0].expression), EXPRESSION_TYPE_REGEXP, "matches");
@@ -3006,11 +3040,11 @@ yyreduce:
 
         (yyval.expression).type = EXPRESSION_TYPE_BOOLEAN;
       }
-#line 3010 "grammar.c"
+#line 3044 "grammar.c"
     break;
 
   case 78: /* expression: primary_expression "<contains>" primary_expression  */
-#line 1312 "grammar.y"
+#line 1314 "grammar.y"
       {
         check_type((yyvsp[-2].expression), EXPRESSION_TYPE_STRING, "contains");
         check_type((yyvsp[0].expression), EXPRESSION_TYPE_STRING, "contains");
@@ -3020,11 +3054,11 @@ yyreduce:
 
         (yyval.expression).type = EXPRESSION_TYPE_BOOLEAN;
       }
-#line 3024 "grammar.c"
+#line 3058 "grammar.c"
     break;
 
   case 79: /* expression: primary_expression "<icontains>" primary_expression  */
-#line 1322 "grammar.y"
+#line 1324 "grammar.y"
       {
         check_type((yyvsp[-2].expression), EXPRESSION_TYPE_STRING, "icontains");
         check_type((yyvsp[0].expression), EXPRESSION_TYPE_STRING, "icontains");
@@ -3034,11 +3068,11 @@ yyreduce:
 
         (yyval.expression).type = EXPRESSION_TYPE_BOOLEAN;
       }
-#line 3038 "grammar.c"
+#line 3072 "grammar.c"
     break;
 
   case 80: /* expression: primary_expression "<startswith>" primary_expression  */
-#line 1332 "grammar.y"
+#line 1334 "grammar.y"
       {
         check_type((yyvsp[-2].expression), EXPRESSION_TYPE_STRING, "startswith");
         check_type((yyvsp[0].expression), EXPRESSION_TYPE_STRING, "startswith");
@@ -3048,11 +3082,11 @@ yyreduce:
 
         (yyval.expression).type = EXPRESSION_TYPE_BOOLEAN;
       }
-#line 3052 "grammar.c"
+#line 3086 "grammar.c"
     break;
 
   case 81: /* expression: primary_expression "<istartswith>" primary_expression  */
-#line 1342 "grammar.y"
+#line 1344 "grammar.y"
       {
         check_type((yyvsp[-2].expression), EXPRESSION_TYPE_STRING, "istartswith");
         check_type((yyvsp[0].expression), EXPRESSION_TYPE_STRING, "istartswith");
@@ -3062,11 +3096,11 @@ yyreduce:
 
         (yyval.expression).type = EXPRESSION_TYPE_BOOLEAN;
       }
-#line 3066 "grammar.c"
+#line 3100 "grammar.c"
     break;
 
   case 82: /* expression: primary_expression "<endswith>" primary_expression  */
-#line 1352 "grammar.y"
+#line 1354 "grammar.y"
       {
         check_type((yyvsp[-2].expression), EXPRESSION_TYPE_STRING, "endswith");
         check_type((yyvsp[0].expression), EXPRESSION_TYPE_STRING, "endswith");
@@ -3076,11 +3110,11 @@ yyreduce:
 
         (yyval.expression).type = EXPRESSION_TYPE_BOOLEAN;
       }
-#line 3080 "grammar.c"
+#line 3114 "grammar.c"
     break;
 
   case 83: /* expression: primary_expression "<iendswith>" primary_expression  */
-#line 1362 "grammar.y"
+#line 1364 "grammar.y"
       {
         check_type((yyvsp[-2].expression), EXPRESSION_TYPE_STRING, "iendswith");
         check_type((yyvsp[0].expression), EXPRESSION_TYPE_STRING, "iendswith");
@@ -3090,11 +3124,11 @@ yyreduce:
 
         (yyval.expression).type = EXPRESSION_TYPE_BOOLEAN;
       }
-#line 3094 "grammar.c"
+#line 3128 "grammar.c"
     break;
 
   case 84: /* expression: primary_expression "<iequals>" primary_expression  */
-#line 1372 "grammar.y"
+#line 1374 "grammar.y"
       {
         check_type((yyvsp[-2].expression), EXPRESSION_TYPE_STRING, "iequals");
         check_type((yyvsp[0].expression), EXPRESSION_TYPE_STRING, "iequals");
@@ -3104,11 +3138,11 @@ yyreduce:
 
         (yyval.expression).type = EXPRESSION_TYPE_BOOLEAN;
       }
-#line 3108 "grammar.c"
+#line 3142 "grammar.c"
     break;
 
   case 85: /* expression: "string identifier"  */
-#line 1382 "grammar.y"
+#line 1384 "grammar.y"
       {
         int result = yr_parser_reduce_string_identifier(
             yyscanner,
@@ -3122,11 +3156,11 @@ yyreduce:
 
         (yyval.expression).type = EXPRESSION_TYPE_BOOLEAN;
       }
-#line 3126 "grammar.c"
+#line 3160 "grammar.c"
     break;
 
   case 86: /* expression: "string identifier" "<at>" primary_expression  */
-#line 1396 "grammar.y"
+#line 1398 "grammar.y"
       {
         int result;
 
@@ -3141,11 +3175,11 @@ yyreduce:
 
         (yyval.expression).type = EXPRESSION_TYPE_BOOLEAN;
       }
-#line 3145 "grammar.c"
+#line 3179 "grammar.c"
     break;
 
   case 87: /* expression: "string identifier" "<in>" range  */
-#line 1411 "grammar.y"
+#line 1413 "grammar.y"
       {
         int result = yr_parser_reduce_string_identifier(
             yyscanner, (yyvsp[-2].c_string), OP_FOUND_IN, YR_UNDEFINED);
@@ -3156,11 +3190,11 @@ yyreduce:
 
         (yyval.expression).type = EXPRESSION_TYPE_BOOLEAN;
       }
-#line 3160 "grammar.c"
+#line 3194 "grammar.c"
     break;
 
   case 88: /* expression: "<for>" for_expression error  */
-#line 1422 "grammar.y"
+#line 1424 "grammar.y"
       {
         // Free all the loop variable identifiers, including the variables for
         // the current loop (represented by loop_index), and set loop_index to
@@ -3177,11 +3211,11 @@ yyreduce:
         compiler->loop_index = -1;
         YYERROR;
       }
-#line 3181 "grammar.c"
+#line 3215 "grammar.c"
     break;
 
   case 89: /* $@6: %empty  */
-#line 1498 "grammar.y"
+#line 1500 "grammar.y"
       {
         // var_frame is used for accessing local variables used in this loop.
         // All local variables are accessed using var_frame as a reference,
@@ -3219,11 +3253,11 @@ yyreduce:
         fail_if_error(yr_parser_emit_with_arg(
             yyscanner, OP_POP_M, var_frame + 2, NULL, NULL));
       }
-#line 3223 "grammar.c"
+#line 3257 "grammar.c"
     break;
 
   case 90: /* $@7: %empty  */
-#line 1536 "grammar.y"
+#line 1538 "grammar.y"
       {
         YR_LOOP_CONTEXT* loop_ctx = &compiler->loop[compiler->loop_index];
         YR_FIXUP* fixup;
@@ -3272,11 +3306,11 @@ yyreduce:
 
         loop_ctx->start_ref = loop_start_ref;
       }
-#line 3276 "grammar.c"
+#line 3310 "grammar.c"
     break;
 
   case 91: /* expression: "<for>" for_expression $@6 for_variables "<in>" iterator ':' $@7 '(' boolean_expression ')'  */
-#line 1585 "grammar.y"
+#line 1587 "grammar.y"
       {
         int32_t jmp_offset;
         YR_FIXUP* fixup;
@@ -3386,11 +3420,11 @@ yyreduce:
 
         (yyval.expression).type = EXPRESSION_TYPE_BOOLEAN;
       }
-#line 3390 "grammar.c"
+#line 3424 "grammar.c"
     break;
 
   case 92: /* $@8: %empty  */
-#line 1695 "grammar.y"
+#line 1697 "grammar.y"
       {
         YR_ARENA_REF ref;
 
@@ -3425,11 +3459,11 @@ yyreduce:
         compiler->loop[compiler->loop_index].vars_internal_count = \
             YR_INTERNAL_LOOP_VARS;
       }
-#line 3429 "grammar.c"
+#line 3463 "grammar.c"
     break;
 
   case 93: /* expression: "<for>" for_expression "<of>" string_set ':' $@8 '(' boolean_expression ')'  */
-#line 1730 "grammar.y"
+#line 1732 "grammar.y"
       {
         int var_frame = 0;
 
@@ -3484,21 +3518,31 @@ yyreduce:
 
         (yyval.expression).type = EXPRESSION_TYPE_BOOLEAN;
       }
-#line 3488 "grammar.c"
+#line 3522 "grammar.c"
     break;
 
   case 94: /* expression: for_expression "<of>" string_set  */
-#line 1785 "grammar.y"
+#line 1787 "grammar.y"
       {
-        yr_parser_emit(yyscanner, OP_OF, NULL);
+        yr_parser_emit_with_arg(yyscanner, OP_OF, OF_STRING_SET, NULL, NULL);
 
         (yyval.expression).type = EXPRESSION_TYPE_BOOLEAN;
       }
-#line 3498 "grammar.c"
+#line 3532 "grammar.c"
     break;
 
-  case 95: /* expression: primary_expression '%' "<of>" string_set  */
-#line 1791 "grammar.y"
+  case 95: /* expression: for_expression "<of>" rule_set  */
+#line 1793 "grammar.y"
+      {
+        yr_parser_emit_with_arg(yyscanner, OP_OF, OF_RULE_SET, NULL, NULL);
+
+        (yyval.expression).type = EXPRESSION_TYPE_BOOLEAN;
+      }
+#line 3542 "grammar.c"
+    break;
+
+  case 96: /* expression: primary_expression '%' "<of>" string_set  */
+#line 1799 "grammar.y"
       {
         check_type((yyvsp[-3].expression), EXPRESSION_TYPE_INTEGER, "%");
 
@@ -3516,42 +3560,66 @@ yyreduce:
           YYERROR;
         }
 
-        yr_parser_emit(yyscanner, OP_OF_PERCENT, NULL);
+        yr_parser_emit_with_arg(yyscanner, OP_OF_PERCENT, OF_STRING_SET, NULL, NULL);
       }
-#line 3522 "grammar.c"
+#line 3566 "grammar.c"
     break;
 
-  case 96: /* expression: for_expression "<of>" string_set "<in>" range  */
-#line 1811 "grammar.y"
+  case 97: /* expression: primary_expression '%' "<of>" rule_set  */
+#line 1819 "grammar.y"
+      {
+        check_type((yyvsp[-3].expression), EXPRESSION_TYPE_INTEGER, "%");
+
+        // The value of primary_expression can be undefined because
+        // it could be a variable for which don't know the value during
+        // compiling time. However, if the value is defined it should be
+        // in the range [1,100].
+        if (!IS_UNDEFINED((yyvsp[-3].expression).value.integer) &&
+            ((yyvsp[-3].expression).value.integer < 1 || (yyvsp[-3].expression).value.integer > 100))
+        {
+          yr_compiler_set_error_extra_info(
+              compiler, "percentage must be between 1 and 100 (inclusive)");
+          compiler->last_error = ERROR_INVALID_PERCENTAGE;
+          yyerror(yyscanner, compiler, NULL);
+          YYERROR;
+        }
+
+        yr_parser_emit_with_arg(yyscanner, OP_OF_PERCENT, OF_RULE_SET, NULL, NULL);
+      }
+#line 3590 "grammar.c"
+    break;
+
+  case 98: /* expression: for_expression "<of>" string_set "<in>" range  */
+#line 1839 "grammar.y"
       {
         yr_parser_emit(yyscanner, OP_OF_FOUND_IN, NULL);
 
         (yyval.expression).type = EXPRESSION_TYPE_BOOLEAN;
       }
-#line 3532 "grammar.c"
+#line 3600 "grammar.c"
     break;
 
-  case 97: /* expression: "<not>" boolean_expression  */
-#line 1817 "grammar.y"
+  case 99: /* expression: "<not>" boolean_expression  */
+#line 1845 "grammar.y"
       {
         yr_parser_emit(yyscanner, OP_NOT, NULL);
 
         (yyval.expression).type = EXPRESSION_TYPE_BOOLEAN;
       }
-#line 3542 "grammar.c"
+#line 3610 "grammar.c"
     break;
 
-  case 98: /* expression: "<defined>" boolean_expression  */
-#line 1823 "grammar.y"
+  case 100: /* expression: "<defined>" boolean_expression  */
+#line 1851 "grammar.y"
       {
         yr_parser_emit(yyscanner, OP_DEFINED, NULL);
         (yyval.expression).type = EXPRESSION_TYPE_BOOLEAN;
       }
-#line 3551 "grammar.c"
+#line 3619 "grammar.c"
     break;
 
-  case 99: /* $@9: %empty  */
-#line 1828 "grammar.y"
+  case 101: /* $@9: %empty  */
+#line 1856 "grammar.y"
       {
         YR_FIXUP* fixup;
         YR_ARENA_REF jmp_offset_ref;
@@ -3573,11 +3641,11 @@ yyreduce:
         fixup->next = compiler->fixup_stack_head;
         compiler->fixup_stack_head = fixup;
       }
-#line 3577 "grammar.c"
+#line 3645 "grammar.c"
     break;
 
-  case 100: /* expression: boolean_expression "<and>" $@9 boolean_expression  */
-#line 1850 "grammar.y"
+  case 102: /* expression: boolean_expression "<and>" $@9 boolean_expression  */
+#line 1878 "grammar.y"
       {
         YR_FIXUP* fixup;
 
@@ -3600,11 +3668,11 @@ yyreduce:
 
         (yyval.expression).type = EXPRESSION_TYPE_BOOLEAN;
       }
-#line 3604 "grammar.c"
+#line 3672 "grammar.c"
     break;
 
-  case 101: /* $@10: %empty  */
-#line 1873 "grammar.y"
+  case 103: /* $@10: %empty  */
+#line 1901 "grammar.y"
       {
         YR_FIXUP* fixup;
         YR_ARENA_REF jmp_offset_ref;
@@ -3625,11 +3693,11 @@ yyreduce:
         fixup->next = compiler->fixup_stack_head;
         compiler->fixup_stack_head = fixup;
       }
-#line 3629 "grammar.c"
+#line 3697 "grammar.c"
     break;
 
-  case 102: /* expression: boolean_expression "<or>" $@10 boolean_expression  */
-#line 1894 "grammar.y"
+  case 104: /* expression: boolean_expression "<or>" $@10 boolean_expression  */
+#line 1922 "grammar.y"
       {
         YR_FIXUP* fixup;
 
@@ -3652,93 +3720,93 @@ yyreduce:
 
         (yyval.expression).type = EXPRESSION_TYPE_BOOLEAN;
       }
-#line 3656 "grammar.c"
+#line 3724 "grammar.c"
     break;
 
-  case 103: /* expression: primary_expression "<" primary_expression  */
-#line 1917 "grammar.y"
+  case 105: /* expression: primary_expression "<" primary_expression  */
+#line 1945 "grammar.y"
       {
         fail_if_error(yr_parser_reduce_operation(
             yyscanner, "<", (yyvsp[-2].expression), (yyvsp[0].expression)));
 
         (yyval.expression).type = EXPRESSION_TYPE_BOOLEAN;
       }
-#line 3667 "grammar.c"
+#line 3735 "grammar.c"
     break;
 
-  case 104: /* expression: primary_expression ">" primary_expression  */
-#line 1924 "grammar.y"
+  case 106: /* expression: primary_expression ">" primary_expression  */
+#line 1952 "grammar.y"
       {
         fail_if_error(yr_parser_reduce_operation(
             yyscanner, ">", (yyvsp[-2].expression), (yyvsp[0].expression)));
 
         (yyval.expression).type = EXPRESSION_TYPE_BOOLEAN;
       }
-#line 3678 "grammar.c"
+#line 3746 "grammar.c"
     break;
 
-  case 105: /* expression: primary_expression "<=" primary_expression  */
-#line 1931 "grammar.y"
+  case 107: /* expression: primary_expression "<=" primary_expression  */
+#line 1959 "grammar.y"
       {
         fail_if_error(yr_parser_reduce_operation(
             yyscanner, "<=", (yyvsp[-2].expression), (yyvsp[0].expression)));
 
         (yyval.expression).type = EXPRESSION_TYPE_BOOLEAN;
       }
-#line 3689 "grammar.c"
+#line 3757 "grammar.c"
     break;
 
-  case 106: /* expression: primary_expression ">=" primary_expression  */
-#line 1938 "grammar.y"
+  case 108: /* expression: primary_expression ">=" primary_expression  */
+#line 1966 "grammar.y"
       {
         fail_if_error(yr_parser_reduce_operation(
             yyscanner, ">=", (yyvsp[-2].expression), (yyvsp[0].expression)));
 
         (yyval.expression).type = EXPRESSION_TYPE_BOOLEAN;
       }
-#line 3700 "grammar.c"
+#line 3768 "grammar.c"
     break;
 
-  case 107: /* expression: primary_expression "==" primary_expression  */
-#line 1945 "grammar.y"
+  case 109: /* expression: primary_expression "==" primary_expression  */
+#line 1973 "grammar.y"
       {
         fail_if_error(yr_parser_reduce_operation(
             yyscanner, "==", (yyvsp[-2].expression), (yyvsp[0].expression)));
 
         (yyval.expression).type = EXPRESSION_TYPE_BOOLEAN;
       }
-#line 3711 "grammar.c"
+#line 3779 "grammar.c"
     break;
 
-  case 108: /* expression: primary_expression "!=" primary_expression  */
-#line 1952 "grammar.y"
+  case 110: /* expression: primary_expression "!=" primary_expression  */
+#line 1980 "grammar.y"
       {
         fail_if_error(yr_parser_reduce_operation(
             yyscanner, "!=", (yyvsp[-2].expression), (yyvsp[0].expression)));
 
         (yyval.expression).type = EXPRESSION_TYPE_BOOLEAN;
       }
-#line 3722 "grammar.c"
+#line 3790 "grammar.c"
     break;
 
-  case 109: /* expression: primary_expression  */
-#line 1959 "grammar.y"
+  case 111: /* expression: primary_expression  */
+#line 1987 "grammar.y"
       {
         (yyval.expression) = (yyvsp[0].expression);
       }
-#line 3730 "grammar.c"
+#line 3798 "grammar.c"
     break;
 
-  case 110: /* expression: '(' expression ')'  */
-#line 1963 "grammar.y"
+  case 112: /* expression: '(' expression ')'  */
+#line 1991 "grammar.y"
       {
         (yyval.expression) = (yyvsp[-1].expression);
       }
-#line 3738 "grammar.c"
+#line 3806 "grammar.c"
     break;
 
-  case 111: /* for_variables: "identifier"  */
-#line 1971 "grammar.y"
+  case 113: /* for_variables: "identifier"  */
+#line 1999 "grammar.y"
       {
         int result = ERROR_SUCCESS;
 
@@ -3758,11 +3826,11 @@ yyreduce:
 
         assert(loop_ctx->vars_count <= YR_MAX_LOOP_VARS);
       }
-#line 3762 "grammar.c"
+#line 3830 "grammar.c"
     break;
 
-  case 112: /* for_variables: for_variables ',' "identifier"  */
-#line 1991 "grammar.y"
+  case 114: /* for_variables: for_variables ',' "identifier"  */
+#line 2019 "grammar.y"
       {
         int result = ERROR_SUCCESS;
 
@@ -3787,11 +3855,11 @@ yyreduce:
 
         loop_ctx->vars[loop_ctx->vars_count++].identifier.ptr = (yyvsp[0].c_string);
       }
-#line 3791 "grammar.c"
+#line 3859 "grammar.c"
     break;
 
-  case 113: /* iterator: identifier  */
-#line 2019 "grammar.y"
+  case 115: /* iterator: identifier  */
+#line 2047 "grammar.y"
       {
         YR_LOOP_CONTEXT* loop_ctx = &compiler->loop[compiler->loop_index];
 
@@ -3865,11 +3933,11 @@ yyreduce:
 
         fail_if_error(result);
       }
-#line 3869 "grammar.c"
+#line 3937 "grammar.c"
     break;
 
-  case 114: /* iterator: integer_set  */
-#line 2093 "grammar.y"
+  case 116: /* iterator: integer_set  */
+#line 2121 "grammar.y"
       {
         int result = ERROR_SUCCESS;
 
@@ -3893,11 +3961,11 @@ yyreduce:
 
         fail_if_error(result);
       }
-#line 3897 "grammar.c"
+#line 3965 "grammar.c"
     break;
 
-  case 115: /* integer_set: '(' integer_enumeration ')'  */
-#line 2121 "grammar.y"
+  case 117: /* integer_set: '(' integer_enumeration ')'  */
+#line 2149 "grammar.y"
       {
         // $2 contains the number of integers in the enumeration
         fail_if_error(yr_parser_emit_push_const(yyscanner, (yyvsp[-1].integer)));
@@ -3905,20 +3973,20 @@ yyreduce:
         fail_if_error(yr_parser_emit(
             yyscanner, OP_ITER_START_INT_ENUM, NULL));
       }
-#line 3909 "grammar.c"
+#line 3977 "grammar.c"
     break;
 
-  case 116: /* integer_set: range  */
-#line 2129 "grammar.y"
+  case 118: /* integer_set: range  */
+#line 2157 "grammar.y"
       {
         fail_if_error(yr_parser_emit(
             yyscanner, OP_ITER_START_INT_RANGE, NULL));
       }
-#line 3918 "grammar.c"
+#line 3986 "grammar.c"
     break;
 
-  case 117: /* range: '(' primary_expression ".." primary_expression ')'  */
-#line 2138 "grammar.y"
+  case 119: /* range: '(' primary_expression ".." primary_expression ')'  */
+#line 2166 "grammar.y"
       {
         int result = ERROR_SUCCESS;
 
@@ -3938,11 +4006,11 @@ yyreduce:
 
         fail_if_error(result);
       }
-#line 3942 "grammar.c"
+#line 4010 "grammar.c"
     break;
 
-  case 118: /* integer_enumeration: primary_expression  */
-#line 2162 "grammar.y"
+  case 120: /* integer_enumeration: primary_expression  */
+#line 2190 "grammar.y"
       {
         int result = ERROR_SUCCESS;
 
@@ -3957,11 +4025,11 @@ yyreduce:
 
         (yyval.integer) = 1;
       }
-#line 3961 "grammar.c"
+#line 4029 "grammar.c"
     break;
 
-  case 119: /* integer_enumeration: integer_enumeration ',' primary_expression  */
-#line 2177 "grammar.y"
+  case 121: /* integer_enumeration: integer_enumeration ',' primary_expression  */
+#line 2205 "grammar.y"
       {
         int result = ERROR_SUCCESS;
 
@@ -3976,96 +4044,151 @@ yyreduce:
 
         (yyval.integer) = (yyvsp[-2].integer) + 1;
       }
-#line 3980 "grammar.c"
+#line 4048 "grammar.c"
     break;
 
-  case 120: /* $@11: %empty  */
-#line 2196 "grammar.y"
+  case 122: /* $@11: %empty  */
+#line 2224 "grammar.y"
       {
         // Push end-of-list marker
         yr_parser_emit_push_const(yyscanner, YR_UNDEFINED);
       }
-#line 3989 "grammar.c"
+#line 4057 "grammar.c"
     break;
 
-  case 122: /* string_set: "<them>"  */
-#line 2202 "grammar.y"
+  case 124: /* string_set: "<them>"  */
+#line 2230 "grammar.y"
       {
         fail_if_error(yr_parser_emit_push_const(yyscanner, YR_UNDEFINED));
 
         fail_if_error(yr_parser_emit_pushes_for_strings(
             yyscanner, "$*"));
       }
-#line 4000 "grammar.c"
+#line 4068 "grammar.c"
     break;
 
-  case 125: /* string_enumeration_item: "string identifier"  */
-#line 2219 "grammar.y"
+  case 127: /* string_enumeration_item: "string identifier"  */
+#line 2247 "grammar.y"
       {
         int result = yr_parser_emit_pushes_for_strings(yyscanner, (yyvsp[0].c_string));
         yr_free((yyvsp[0].c_string));
 
         fail_if_error(result);
       }
-#line 4011 "grammar.c"
+#line 4079 "grammar.c"
     break;
 
-  case 126: /* string_enumeration_item: "string identifier with wildcard"  */
-#line 2226 "grammar.y"
+  case 128: /* string_enumeration_item: "string identifier with wildcard"  */
+#line 2254 "grammar.y"
       {
         int result = yr_parser_emit_pushes_for_strings(yyscanner, (yyvsp[0].c_string));
         yr_free((yyvsp[0].c_string));
 
         fail_if_error(result);
       }
-#line 4022 "grammar.c"
+#line 4090 "grammar.c"
     break;
 
-  case 127: /* for_expression: primary_expression  */
-#line 2237 "grammar.y"
+  case 129: /* $@12: %empty  */
+#line 2265 "grammar.y"
+      {
+        // Push end-of-list marker
+        yr_parser_emit_push_const(yyscanner, YR_UNDEFINED);
+      }
+#line 4099 "grammar.c"
+    break;
+
+  case 133: /* rule_enumeration_item: "identifier"  */
+#line 2281 "grammar.y"
+      {
+        int result = ERROR_SUCCESS;
+
+        YR_NAMESPACE* ns = (YR_NAMESPACE*) yr_arena_get_ptr(
+            compiler->arena,
+            YR_NAMESPACES_TABLE,
+            compiler->current_namespace_idx * sizeof(struct YR_NAMESPACE));
+
+        uint32_t rule_idx = yr_hash_table_lookup_uint32(
+            compiler->rules_table, (yyvsp[0].c_string), ns->name);
+
+        if (rule_idx != UINT32_MAX)
+        {
+          result = yr_parser_emit_with_arg(
+              yyscanner,
+              OP_PUSH_RULE,
+              rule_idx,
+              NULL,
+              NULL);
+        }
+        else
+        {
+          yr_compiler_set_error_extra_info(compiler, (yyvsp[0].c_string));
+          result = ERROR_UNDEFINED_IDENTIFIER;
+        }
+
+        yr_free((yyvsp[0].c_string));
+
+        fail_if_error(result);
+      }
+#line 4134 "grammar.c"
+    break;
+
+  case 134: /* rule_enumeration_item: "identifier with wildcard"  */
+#line 2312 "grammar.y"
+      {
+        int result = yr_parser_emit_pushes_for_rules(yyscanner, (yyvsp[0].c_string));
+        yr_free((yyvsp[0].c_string));
+
+        fail_if_error(result);
+      }
+#line 4145 "grammar.c"
+    break;
+
+  case 135: /* for_expression: primary_expression  */
+#line 2323 "grammar.y"
       {
         (yyval.integer) = FOR_EXPRESSION_ANY;
       }
-#line 4030 "grammar.c"
+#line 4153 "grammar.c"
     break;
 
-  case 128: /* for_expression: "<all>"  */
-#line 2241 "grammar.y"
+  case 136: /* for_expression: "<all>"  */
+#line 2327 "grammar.y"
       {
         yr_parser_emit_push_const(yyscanner, YR_UNDEFINED);
         (yyval.integer) = FOR_EXPRESSION_ALL;
       }
-#line 4039 "grammar.c"
+#line 4162 "grammar.c"
     break;
 
-  case 129: /* for_expression: "<any>"  */
-#line 2246 "grammar.y"
+  case 137: /* for_expression: "<any>"  */
+#line 2332 "grammar.y"
       {
         yr_parser_emit_push_const(yyscanner, 1);
         (yyval.integer) = FOR_EXPRESSION_ANY;
       }
-#line 4048 "grammar.c"
+#line 4171 "grammar.c"
     break;
 
-  case 130: /* for_expression: "<none>"  */
-#line 2251 "grammar.y"
+  case 138: /* for_expression: "<none>"  */
+#line 2337 "grammar.y"
       {
         yr_parser_emit_push_const(yyscanner, 0);
         (yyval.integer) = FOR_EXPRESSION_NONE;
       }
-#line 4057 "grammar.c"
+#line 4180 "grammar.c"
     break;
 
-  case 131: /* primary_expression: '(' primary_expression ')'  */
-#line 2260 "grammar.y"
+  case 139: /* primary_expression: '(' primary_expression ')'  */
+#line 2346 "grammar.y"
       {
         (yyval.expression) = (yyvsp[-1].expression);
       }
-#line 4065 "grammar.c"
+#line 4188 "grammar.c"
     break;
 
-  case 132: /* primary_expression: "<filesize>"  */
-#line 2264 "grammar.y"
+  case 140: /* primary_expression: "<filesize>"  */
+#line 2350 "grammar.y"
       {
         fail_if_error(yr_parser_emit(
             yyscanner, OP_FILESIZE, NULL));
@@ -4073,11 +4196,11 @@ yyreduce:
         (yyval.expression).type = EXPRESSION_TYPE_INTEGER;
         (yyval.expression).value.integer = YR_UNDEFINED;
       }
-#line 4077 "grammar.c"
+#line 4200 "grammar.c"
     break;
 
-  case 133: /* primary_expression: "<entrypoint>"  */
-#line 2272 "grammar.y"
+  case 141: /* primary_expression: "<entrypoint>"  */
+#line 2358 "grammar.y"
       {
         yywarning(yyscanner,
             "Using deprecated \"entrypoint\" keyword. Use the \"entry_point\" "
@@ -4089,11 +4212,11 @@ yyreduce:
         (yyval.expression).type = EXPRESSION_TYPE_INTEGER;
         (yyval.expression).value.integer = YR_UNDEFINED;
       }
-#line 4093 "grammar.c"
+#line 4216 "grammar.c"
     break;
 
-  case 134: /* primary_expression: "integer function" '(' primary_expression ')'  */
-#line 2284 "grammar.y"
+  case 142: /* primary_expression: "integer function" '(' primary_expression ')'  */
+#line 2370 "grammar.y"
       {
         check_type((yyvsp[-1].expression), EXPRESSION_TYPE_INTEGER, "intXXXX or uintXXXX");
 
@@ -4107,33 +4230,33 @@ yyreduce:
         (yyval.expression).type = EXPRESSION_TYPE_INTEGER;
         (yyval.expression).value.integer = YR_UNDEFINED;
       }
-#line 4111 "grammar.c"
+#line 4234 "grammar.c"
     break;
 
-  case 135: /* primary_expression: "integer number"  */
-#line 2298 "grammar.y"
+  case 143: /* primary_expression: "integer number"  */
+#line 2384 "grammar.y"
       {
         fail_if_error(yr_parser_emit_push_const(yyscanner, (yyvsp[0].integer)));
 
         (yyval.expression).type = EXPRESSION_TYPE_INTEGER;
         (yyval.expression).value.integer = (yyvsp[0].integer);
       }
-#line 4122 "grammar.c"
+#line 4245 "grammar.c"
     break;
 
-  case 136: /* primary_expression: "floating point number"  */
-#line 2305 "grammar.y"
+  case 144: /* primary_expression: "floating point number"  */
+#line 2391 "grammar.y"
       {
         fail_if_error(yr_parser_emit_with_arg_double(
             yyscanner, OP_PUSH, (yyvsp[0].double_), NULL, NULL));
 
         (yyval.expression).type = EXPRESSION_TYPE_FLOAT;
       }
-#line 4133 "grammar.c"
+#line 4256 "grammar.c"
     break;
 
-  case 137: /* primary_expression: "text string"  */
-#line 2312 "grammar.y"
+  case 145: /* primary_expression: "text string"  */
+#line 2398 "grammar.y"
       {
         YR_ARENA_REF ref;
 
@@ -4158,11 +4281,11 @@ yyreduce:
         (yyval.expression).type = EXPRESSION_TYPE_STRING;
         (yyval.expression).value.sized_string_ref = ref;
       }
-#line 4162 "grammar.c"
+#line 4285 "grammar.c"
     break;
 
-  case 138: /* primary_expression: "string count" "<in>" range  */
-#line 2337 "grammar.y"
+  case 146: /* primary_expression: "string count" "<in>" range  */
+#line 2423 "grammar.y"
       {
         int result = yr_parser_reduce_string_identifier(
             yyscanner, (yyvsp[-2].c_string), OP_COUNT_IN, YR_UNDEFINED);
@@ -4174,11 +4297,11 @@ yyreduce:
         (yyval.expression).type = EXPRESSION_TYPE_INTEGER;
         (yyval.expression).value.integer = YR_UNDEFINED;
       }
-#line 4178 "grammar.c"
+#line 4301 "grammar.c"
     break;
 
-  case 139: /* primary_expression: "string count"  */
-#line 2349 "grammar.y"
+  case 147: /* primary_expression: "string count"  */
+#line 2435 "grammar.y"
       {
         int result = yr_parser_reduce_string_identifier(
             yyscanner, (yyvsp[0].c_string), OP_COUNT, YR_UNDEFINED);
@@ -4190,11 +4313,11 @@ yyreduce:
         (yyval.expression).type = EXPRESSION_TYPE_INTEGER;
         (yyval.expression).value.integer = YR_UNDEFINED;
       }
-#line 4194 "grammar.c"
+#line 4317 "grammar.c"
     break;
 
-  case 140: /* primary_expression: "string offset" '[' primary_expression ']'  */
-#line 2361 "grammar.y"
+  case 148: /* primary_expression: "string offset" '[' primary_expression ']'  */
+#line 2447 "grammar.y"
       {
         int result = yr_parser_reduce_string_identifier(
             yyscanner, (yyvsp[-3].c_string), OP_OFFSET, YR_UNDEFINED);
@@ -4206,11 +4329,11 @@ yyreduce:
         (yyval.expression).type = EXPRESSION_TYPE_INTEGER;
         (yyval.expression).value.integer = YR_UNDEFINED;
       }
-#line 4210 "grammar.c"
+#line 4333 "grammar.c"
     break;
 
-  case 141: /* primary_expression: "string offset"  */
-#line 2373 "grammar.y"
+  case 149: /* primary_expression: "string offset"  */
+#line 2459 "grammar.y"
       {
         int result = yr_parser_emit_push_const(yyscanner, 1);
 
@@ -4225,11 +4348,11 @@ yyreduce:
         (yyval.expression).type = EXPRESSION_TYPE_INTEGER;
         (yyval.expression).value.integer = YR_UNDEFINED;
       }
-#line 4229 "grammar.c"
+#line 4352 "grammar.c"
     break;
 
-  case 142: /* primary_expression: "string length" '[' primary_expression ']'  */
-#line 2388 "grammar.y"
+  case 150: /* primary_expression: "string length" '[' primary_expression ']'  */
+#line 2474 "grammar.y"
       {
         int result = yr_parser_reduce_string_identifier(
             yyscanner, (yyvsp[-3].c_string), OP_LENGTH, YR_UNDEFINED);
@@ -4241,11 +4364,11 @@ yyreduce:
         (yyval.expression).type = EXPRESSION_TYPE_INTEGER;
         (yyval.expression).value.integer = YR_UNDEFINED;
       }
-#line 4245 "grammar.c"
+#line 4368 "grammar.c"
     break;
 
-  case 143: /* primary_expression: "string length"  */
-#line 2400 "grammar.y"
+  case 151: /* primary_expression: "string length"  */
+#line 2486 "grammar.y"
       {
         int result = yr_parser_emit_push_const(yyscanner, 1);
 
@@ -4260,11 +4383,11 @@ yyreduce:
         (yyval.expression).type = EXPRESSION_TYPE_INTEGER;
         (yyval.expression).value.integer = YR_UNDEFINED;
       }
-#line 4264 "grammar.c"
+#line 4387 "grammar.c"
     break;
 
-  case 144: /* primary_expression: identifier  */
-#line 2415 "grammar.y"
+  case 152: /* primary_expression: identifier  */
+#line 2501 "grammar.y"
       {
         int result = ERROR_SUCCESS;
 
@@ -4307,11 +4430,11 @@ yyreduce:
 
         fail_if_error(result);
       }
-#line 4311 "grammar.c"
+#line 4434 "grammar.c"
     break;
 
-  case 145: /* primary_expression: '-' primary_expression  */
-#line 2458 "grammar.y"
+  case 153: /* primary_expression: '-' primary_expression  */
+#line 2544 "grammar.y"
       {
         int result = ERROR_SUCCESS;
 
@@ -4332,11 +4455,11 @@ yyreduce:
 
         fail_if_error(result);
       }
-#line 4336 "grammar.c"
+#line 4459 "grammar.c"
     break;
 
-  case 146: /* primary_expression: primary_expression '+' primary_expression  */
-#line 2479 "grammar.y"
+  case 154: /* primary_expression: primary_expression '+' primary_expression  */
+#line 2565 "grammar.y"
       {
         int result = yr_parser_reduce_operation(
             yyscanner, "+", (yyvsp[-2].expression), (yyvsp[0].expression));
@@ -4371,11 +4494,11 @@ yyreduce:
 
         fail_if_error(result);
       }
-#line 4375 "grammar.c"
+#line 4498 "grammar.c"
     break;
 
-  case 147: /* primary_expression: primary_expression '-' primary_expression  */
-#line 2514 "grammar.y"
+  case 155: /* primary_expression: primary_expression '-' primary_expression  */
+#line 2600 "grammar.y"
       {
         int result = yr_parser_reduce_operation(
             yyscanner, "-", (yyvsp[-2].expression), (yyvsp[0].expression));
@@ -4410,11 +4533,11 @@ yyreduce:
 
         fail_if_error(result);
       }
-#line 4414 "grammar.c"
+#line 4537 "grammar.c"
     break;
 
-  case 148: /* primary_expression: primary_expression '*' primary_expression  */
-#line 2549 "grammar.y"
+  case 156: /* primary_expression: primary_expression '*' primary_expression  */
+#line 2635 "grammar.y"
       {
         int result = yr_parser_reduce_operation(
             yyscanner, "*", (yyvsp[-2].expression), (yyvsp[0].expression));
@@ -4448,11 +4571,11 @@ yyreduce:
 
         fail_if_error(result);
       }
-#line 4452 "grammar.c"
+#line 4575 "grammar.c"
     break;
 
-  case 149: /* primary_expression: primary_expression '\\' primary_expression  */
-#line 2583 "grammar.y"
+  case 157: /* primary_expression: primary_expression '\\' primary_expression  */
+#line 2669 "grammar.y"
       {
         int result = yr_parser_reduce_operation(
             yyscanner, "\\", (yyvsp[-2].expression), (yyvsp[0].expression));
@@ -4477,11 +4600,11 @@ yyreduce:
 
         fail_if_error(result);
       }
-#line 4481 "grammar.c"
+#line 4604 "grammar.c"
     break;
 
-  case 150: /* primary_expression: primary_expression '%' primary_expression  */
-#line 2608 "grammar.y"
+  case 158: /* primary_expression: primary_expression '%' primary_expression  */
+#line 2694 "grammar.y"
       {
         check_type((yyvsp[-2].expression), EXPRESSION_TYPE_INTEGER, "%");
         check_type((yyvsp[0].expression), EXPRESSION_TYPE_INTEGER, "%");
@@ -4498,11 +4621,11 @@ yyreduce:
           fail_if_error(ERROR_DIVISION_BY_ZERO);
         }
       }
-#line 4502 "grammar.c"
+#line 4625 "grammar.c"
     break;
 
-  case 151: /* primary_expression: primary_expression '^' primary_expression  */
-#line 2625 "grammar.y"
+  case 159: /* primary_expression: primary_expression '^' primary_expression  */
+#line 2711 "grammar.y"
       {
         check_type((yyvsp[-2].expression), EXPRESSION_TYPE_INTEGER, "^");
         check_type((yyvsp[0].expression), EXPRESSION_TYPE_INTEGER, "^");
@@ -4512,11 +4635,11 @@ yyreduce:
         (yyval.expression).type = EXPRESSION_TYPE_INTEGER;
         (yyval.expression).value.integer = OPERATION(^, (yyvsp[-2].expression).value.integer, (yyvsp[0].expression).value.integer);
       }
-#line 4516 "grammar.c"
+#line 4639 "grammar.c"
     break;
 
-  case 152: /* primary_expression: primary_expression '&' primary_expression  */
-#line 2635 "grammar.y"
+  case 160: /* primary_expression: primary_expression '&' primary_expression  */
+#line 2721 "grammar.y"
       {
         check_type((yyvsp[-2].expression), EXPRESSION_TYPE_INTEGER, "^");
         check_type((yyvsp[0].expression), EXPRESSION_TYPE_INTEGER, "^");
@@ -4526,11 +4649,11 @@ yyreduce:
         (yyval.expression).type = EXPRESSION_TYPE_INTEGER;
         (yyval.expression).value.integer = OPERATION(&, (yyvsp[-2].expression).value.integer, (yyvsp[0].expression).value.integer);
       }
-#line 4530 "grammar.c"
+#line 4653 "grammar.c"
     break;
 
-  case 153: /* primary_expression: primary_expression '|' primary_expression  */
-#line 2645 "grammar.y"
+  case 161: /* primary_expression: primary_expression '|' primary_expression  */
+#line 2731 "grammar.y"
       {
         check_type((yyvsp[-2].expression), EXPRESSION_TYPE_INTEGER, "|");
         check_type((yyvsp[0].expression), EXPRESSION_TYPE_INTEGER, "|");
@@ -4540,11 +4663,11 @@ yyreduce:
         (yyval.expression).type = EXPRESSION_TYPE_INTEGER;
         (yyval.expression).value.integer = OPERATION(|, (yyvsp[-2].expression).value.integer, (yyvsp[0].expression).value.integer);
       }
-#line 4544 "grammar.c"
+#line 4667 "grammar.c"
     break;
 
-  case 154: /* primary_expression: '~' primary_expression  */
-#line 2655 "grammar.y"
+  case 162: /* primary_expression: '~' primary_expression  */
+#line 2741 "grammar.y"
       {
         check_type((yyvsp[0].expression), EXPRESSION_TYPE_INTEGER, "~");
 
@@ -4554,11 +4677,11 @@ yyreduce:
         (yyval.expression).value.integer = ((yyvsp[0].expression).value.integer == YR_UNDEFINED) ?
             YR_UNDEFINED : ~((yyvsp[0].expression).value.integer);
       }
-#line 4558 "grammar.c"
+#line 4681 "grammar.c"
     break;
 
-  case 155: /* primary_expression: primary_expression "<<" primary_expression  */
-#line 2665 "grammar.y"
+  case 163: /* primary_expression: primary_expression "<<" primary_expression  */
+#line 2751 "grammar.y"
       {
         int result;
 
@@ -4578,11 +4701,11 @@ yyreduce:
 
         fail_if_error(result);
       }
-#line 4582 "grammar.c"
+#line 4705 "grammar.c"
     break;
 
-  case 156: /* primary_expression: primary_expression ">>" primary_expression  */
-#line 2685 "grammar.y"
+  case 164: /* primary_expression: primary_expression ">>" primary_expression  */
+#line 2771 "grammar.y"
       {
         int result;
 
@@ -4602,19 +4725,19 @@ yyreduce:
 
         fail_if_error(result);
       }
-#line 4606 "grammar.c"
+#line 4729 "grammar.c"
     break;
 
-  case 157: /* primary_expression: regexp  */
-#line 2705 "grammar.y"
+  case 165: /* primary_expression: regexp  */
+#line 2791 "grammar.y"
       {
         (yyval.expression) = (yyvsp[0].expression);
       }
-#line 4614 "grammar.c"
+#line 4737 "grammar.c"
     break;
 
 
-#line 4618 "grammar.c"
+#line 4741 "grammar.c"
 
       default: break;
     }
@@ -4808,5 +4931,5 @@ yyreturn:
   return yyresult;
 }
 
-#line 2710 "grammar.y"
+#line 2796 "grammar.y"
 
