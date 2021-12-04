@@ -245,6 +245,7 @@ YR_API int yr_compiler_create(YR_COMPILER** compiler)
   new_compiler->fixup_stack_head = NULL;
   new_compiler->loop_index = -1;
   new_compiler->loop_for_of_var_index = -1;
+  new_compiler->wildcard_identifiers_head = NULL;
 
   new_compiler->atoms_config.get_atom_quality = yr_atoms_heuristic_quality;
   new_compiler->atoms_config.quality_warning_threshold =
@@ -257,6 +258,10 @@ YR_API int yr_compiler_create(YR_COMPILER** compiler)
 
   if (result == ERROR_SUCCESS)
     result = yr_hash_table_create(10000, &new_compiler->strings_table);
+
+  if (result == ERROR_SUCCESS)
+    result = yr_hash_table_create(
+        1000, &new_compiler->wildcard_identifiers_table);
 
   if (result == ERROR_SUCCESS)
     result = yr_hash_table_create(10000, &new_compiler->sz_table);
@@ -291,6 +296,8 @@ YR_API void yr_compiler_destroy(YR_COMPILER* compiler)
 
   yr_hash_table_destroy(compiler->strings_table, NULL);
 
+  yr_hash_table_destroy(compiler->wildcard_identifiers_table, NULL);
+
   yr_hash_table_destroy(compiler->sz_table, NULL);
 
   yr_hash_table_destroy(
@@ -310,6 +317,16 @@ YR_API void yr_compiler_destroy(YR_COMPILER* compiler)
     YR_FIXUP* next_fixup = fixup->next;
     yr_free(fixup);
     fixup = next_fixup;
+  }
+
+  YR_WILDCARD_IDENTIFIER* wildcard = compiler->wildcard_identifiers_head;
+
+  while (wildcard != NULL)
+  {
+    YR_WILDCARD_IDENTIFIER* prev = wildcard->prev;
+    yr_free(wildcard->identifier);
+    yr_free(wildcard);
+    wildcard = prev;
   }
 
   yr_free(compiler);
@@ -1020,6 +1037,13 @@ YR_API char* yr_compiler_get_error_message(
     break;
   case ERROR_DUPLICATED_MODIFIER:
     snprintf(buffer, buffer_size, "duplicated modifier");
+    break;
+  case ERROR_IDENTIFIER_MATCHES_WILDCARD:
+    snprintf(
+        buffer,
+        buffer_size,
+        "rule identifier matches previously used wildcard rule set \"%s\"",
+        compiler->last_error_extra_info);
     break;
   }
 

@@ -1552,6 +1552,21 @@ static void test_rule_of()
 
   assert_error("rule a { condition: all of (b*) }", ERROR_UNDEFINED_IDENTIFIER);
 
+  assert_error(
+      "rule a0 { condition: true } "
+      "rule b { condition: 1 of (a*) } "
+      "rule a1 { condition: true } ", ERROR_IDENTIFIER_MATCHES_WILDCARD);
+
+  // Make sure repeating the rule set works
+  assert_match_count(
+      "rule a { condition: true } "
+      "rule b { condition: 1 of (a*) } "
+      "rule c { condition: 1 of (a*) }", NULL, 3);
+
+  // This will compile but is false for the same reason that
+  // "rule x { condition: x }" is compiles but is false.
+  assert_false_rule("rule a { condition: 1 of (a*) }", NULL);
+
   YR_DEBUG_FPRINTF(1, stderr, "} // %s()\n", __FUNCTION__);
 }
 

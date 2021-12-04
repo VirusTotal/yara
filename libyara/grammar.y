@@ -2310,6 +2310,48 @@ rule_enumeration_item
       }
     | _IDENTIFIER_WITH_WILDCARD_
       {
+        YR_NAMESPACE* ns = (YR_NAMESPACE*) yr_arena_get_ptr(
+            compiler->arena,
+            YR_NAMESPACES_TABLE,
+            compiler->current_namespace_idx * sizeof(struct YR_NAMESPACE));
+
+        uint32_t idx = yr_hash_table_lookup_uint32(
+            compiler->wildcard_identifiers_table, $1, ns->name);
+
+        if (idx == UINT32_MAX)
+        {
+          // Add the new identifier with wildcard to the list of identifiers.
+          YR_WILDCARD_IDENTIFIER* node = (YR_WILDCARD_IDENTIFIER*) yr_malloc(
+              sizeof(YR_WILDCARD_IDENTIFIER));
+          if (node == NULL)
+          {
+            yr_free($1);
+            fail_with_error(ERROR_INSUFFICIENT_MEMORY);
+          }
+
+          node->identifier = (char*) yr_malloc(strlen($1) + 1);
+          if (node->identifier == NULL)
+          {
+            yr_free($1);
+            fail_with_error(ERROR_INSUFFICIENT_MEMORY);
+          }
+          memset(node->identifier, 0, strlen($1) + 1);
+
+          node->prev = NULL;
+          strcpy(node->identifier, $1);
+
+          if (compiler->wildcard_identifiers_head != NULL)
+            node->prev = compiler->wildcard_identifiers_head;
+          compiler->wildcard_identifiers_head = node;
+
+          // Add it to the hash table for fast lookup.
+          yr_hash_table_add_uint32(
+              compiler->wildcard_identifiers_table,
+              $1,
+              ns->name,
+              1);
+        }
+
         int result = yr_parser_emit_pushes_for_rules(yyscanner, $1);
         yr_free($1);
 

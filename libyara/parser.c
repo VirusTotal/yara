@@ -939,6 +939,23 @@ int yr_parser_reduce_rule_declaration_phase_1(
         compiler, identifier) return ERROR_DUPLICATED_IDENTIFIER;
   }
 
+  YR_WILDCARD_IDENTIFIER* wildcard = compiler->wildcard_identifiers_head;
+  while (wildcard != NULL)
+  {
+    char* p = strstr(wildcard->identifier, "*");
+    if (p == NULL)
+      return ERROR_INTERNAL_FATAL_ERROR;
+
+    if (!strncmp(wildcard->identifier, identifier, p - wildcard->identifier))
+    {
+      // This rule matches an existing wildcard rule set.
+      yr_compiler_set_error_extra_info(compiler, wildcard->identifier);
+      return ERROR_IDENTIFIER_MATCHES_WILDCARD;
+    }
+
+    wildcard = wildcard->prev;
+  }
+
   FAIL_ON_ERROR(yr_arena_allocate_struct(
       compiler->arena,
       YR_RULES_TABLE,
