@@ -111,6 +111,118 @@ int main(int argc, char** argv)
       }",
       "CCABACC");
 
+  assert_true_rule_blob(
+      "import \"math\" \
+      rule test { \
+        condition: \
+          math.entropy(\"AAAAA\") == 0.0 \
+      }",
+      "A");
+
+  assert_true_rule_blob(
+      "import \"math\" \
+      rule test { \
+        condition: \
+          math.entropy(\"AABB\") == 1.0 \
+      }",
+      "A");
+
+  assert_true_rule_blob(
+      "import \"math\" \
+      rule test { \
+        condition: \
+          math.entropy(2, 3) == 0.0 \
+      }",
+      "CCAAACC");
+
+  assert_true_rule_blob(
+      "import \"math\" \
+      rule test { \
+        condition: \
+          math.deviation(\"AAAAA\", 0.0) == 65.0 \
+      }",
+      "A");
+
+  assert_true_rule_blob(
+      "import \"math\" \
+      rule test { \
+        condition: \
+          math.deviation(\"ABAB\", 65.0) == 0.5 \
+      }",
+      "A");
+
+  assert_true_rule_blob(
+      "import \"math\" \
+      rule test { \
+        condition: \
+          math.deviation(2, 4, 65.0) == 0.5 \
+      }",
+      "ABABABAB");
+
+  assert_true_rule_blob(
+      "import \"math\" \
+      rule test { \
+        condition: \
+          math.mean(\"ABCABC\") == 66.0 \
+      }",
+      "A");
+
+  assert_true_rule_blob(
+      "import \"math\" \
+      rule test { \
+        condition: \
+          math.mean(0, 3) == 66.0 \
+      }",
+      "ABCABC");
+
+  assert_true_rule_blob(
+      "import \"math\" \
+      rule test { \
+        condition: \
+          math.serial_correlation(\"BCAB\") == -0.5 \
+      }",
+      "A");
+
+  assert_true_rule_blob(
+      "import \"math\" \
+      rule test { \
+        condition: \
+          math.serial_correlation(1, 4) == -0.5 \
+      }",
+      "ABCABC");
+
+  assert_true_rule_blob(
+      "import \"math\" \
+      rule test { \
+        condition: \
+          math.in_range(2.0, 1.0, 3.0) \
+      }",
+      "A");
+
+  assert_true_rule_blob(
+      "import \"math\" \
+      rule test { \
+        condition: \
+          math.in_range(6.0, 1.0, 3.0) == 0 \
+      }",
+      "A");
+
+  assert_true_rule_blob(
+      "import \"math\" \
+      rule test { \
+        condition: \
+          math.monte_carlo_pi(\"ABCDEF123456987\") < 0.3 \
+      }",
+      "A");
+
+  assert_true_rule_blob(
+      "import \"math\" \
+      rule test { \
+        condition: \
+          math.monte_carlo_pi(3, 15) < 0.3 \
+      }",
+      "123ABCDEF123456987DE");
+
   yr_finalize();
 
   YR_DEBUG_FPRINTF(
