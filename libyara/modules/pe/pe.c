@@ -262,6 +262,20 @@ static void pe_parse_rich_signature(PE* pe, uint64_t base_address)
     *rich_ptr ^= rich_signature->key1;
   }
 
+  /* Calculate the MD5 of the decrypted Rich data */
+  unsigned char rich_hash[YR_MD5_LEN];
+
+  MD5_CTX ctx;
+  yr_md5_init(&ctx);
+  yr_md5_update(&ctx, clear_data, rich_len);
+  yr_md5_final(rich_hash, &ctx);
+
+  char rich_hash_ascii[YR_MD5_LEN * 2 + 1];
+  for (int i = 0; i < YR_MD5_LEN; ++i)
+    sprintf(rich_hash_ascii + (i * 2), "%02x", rich_hash[i]);
+
+  set_string(rich_hash_ascii, pe->object, "rich_signature.hash");
+
   set_sized_string(
       (char*) raw_data, rich_len, pe->object, "rich_signature.raw_data");
 
@@ -3471,6 +3485,7 @@ begin_declarations
     declare_integer("key");
     declare_string("raw_data");
     declare_string("clear_data");
+    declare_string("hash");
     declare_function("version", "i", "i", rich_version);
     declare_function("version", "ii", "i", rich_version_toolid);
     declare_function("toolid", "i", "i", rich_toolid);

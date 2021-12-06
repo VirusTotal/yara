@@ -924,6 +924,10 @@ Reference
 
         Data after being decrypted by XORing it with the key.
 
+    .. c:member:: hash
+
+        MD5 hash of the clear rich header data.
+
     .. c:function:: version(version, [toolid])
 
         .. versionadded:: 3.5.0
