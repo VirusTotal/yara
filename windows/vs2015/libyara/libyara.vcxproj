@@ -266,6 +266,7 @@
     <ClCompile Include="..\..\..\libyara\stream.c" />
     <ClCompile Include="..\..\..\libyara\strutils.c" />
     <ClCompile Include="..\..\..\libyara\threading.c" />
+    <ClCompile Include="..\..\..\libyara\simple_str.c" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
