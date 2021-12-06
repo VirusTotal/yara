@@ -153,6 +153,7 @@ yarainclude_HEADERS = \
 	include/yara/rules.h \
 	include/yara/scan.h \
 	include/yara/scanner.h \
+	include/yara/simple_str.h \
 	include/yara/sizedstr.h \
 	include/yara/stack.h \
 	include/yara/stopwatch.h \
@@ -221,6 +222,7 @@ libyara_la_SOURCES = \
 	rules.c \
 	scan.c \
 	scanner.c \
+	simple_str.c \
 	sizedstr.c \
 	stack.c \
 	stopwatch.c \
