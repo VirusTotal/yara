@@ -265,7 +265,7 @@ static void pe_parse_rich_signature(PE* pe, uint64_t base_address)
   /* Calculate the MD5 of the decrypted Rich data */
   unsigned char rich_hash[YR_MD5_LEN];
 
-  MD5_CTX ctx;
+  yr_md5_ctx ctx;
   yr_md5_init(&ctx);
   yr_md5_update(&ctx, clear_data, rich_len);
   yr_md5_final(rich_hash, &ctx);
