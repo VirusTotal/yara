@@ -57,8 +57,6 @@ int _yr_process_attach(int pid, YR_PROC_ITERATOR_CTX* context)
 
   memset(proc_info, 0, sizeof(YR_PROC_INFO));
 
-  context->proc_info = proc_info;
-
   proc_info->pid = pid;
   if (ptrace(PT_ATTACH, pid, NULL, 0) == -1)
   {
@@ -76,6 +74,8 @@ int _yr_process_attach(int pid, YR_PROC_ITERATOR_CTX* context)
 
     return ERROR_COULD_NOT_ATTACH_TO_PROCESS;
   }
+
+  context->proc_info = proc_info;
 
   return ERROR_SUCCESS;
 }
