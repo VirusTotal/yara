@@ -111,21 +111,21 @@ int main(int argc, char** argv)
       }",
       "CCABACC");
 
-  assert_true_rule_blob(
+  assert_true_rule(
       "import \"math\" \
       rule test { \
         condition: \
           math.entropy(\"AAAAA\") == 0.0 \
       }",
-      "A");
+      NULL);
 
-  assert_true_rule_blob(
+  assert_true_rule(
       "import \"math\" \
       rule test { \
         condition: \
           math.entropy(\"AABB\") == 1.0 \
       }",
-      "A");
+      NULL);
 
   assert_true_rule_blob(
       "import \"math\" \
@@ -135,21 +135,21 @@ int main(int argc, char** argv)
       }",
       "CCAAACC");
 
-  assert_true_rule_blob(
+  assert_true_rule(
       "import \"math\" \
       rule test { \
         condition: \
           math.deviation(\"AAAAA\", 0.0) == 65.0 \
       }",
-      "A");
+      NULL);
 
-  assert_true_rule_blob(
+  assert_true_rule(
       "import \"math\" \
       rule test { \
         condition: \
           math.deviation(\"ABAB\", 65.0) == 0.5 \
       }",
-      "A");
+      NULL);
 
   assert_true_rule_blob(
       "import \"math\" \
@@ -159,13 +159,13 @@ int main(int argc, char** argv)
       }",
       "ABABABAB");
 
-  assert_true_rule_blob(
+  assert_true_rule(
       "import \"math\" \
       rule test { \
         condition: \
           math.mean(\"ABCABC\") == 66.0 \
       }",
-      "A");
+      NULL);
 
   assert_true_rule_blob(
       "import \"math\" \
@@ -175,13 +175,13 @@ int main(int argc, char** argv)
       }",
       "ABCABC");
 
-  assert_true_rule_blob(
+  assert_true_rule(
       "import \"math\" \
       rule test { \
         condition: \
           math.serial_correlation(\"BCAB\") == -0.5 \
       }",
-      "A");
+      NULL);
 
   assert_true_rule_blob(
       "import \"math\" \
@@ -191,29 +191,29 @@ int main(int argc, char** argv)
       }",
       "ABCABC");
 
-  assert_true_rule_blob(
+  assert_true_rule(
       "import \"math\" \
       rule test { \
         condition: \
           math.in_range(2.0, 1.0, 3.0) \
       }",
-      "A");
+      NULL);
 
-  assert_true_rule_blob(
+  assert_false_rule(
       "import \"math\" \
       rule test { \
         condition: \
-          math.in_range(6.0, 1.0, 3.0) == 0 \
+          math.in_range(6.0, 1.0, 3.0) \
       }",
-      "A");
+      NULL);
 
-  assert_true_rule_blob(
+  assert_true_rule(
       "import \"math\" \
       rule test { \
         condition: \
           math.monte_carlo_pi(\"ABCDEF123456987\") < 0.3 \
       }",
-      "A");
+      NULL);
 
   assert_true_rule_blob(
       "import \"math\" \
