@@ -61,7 +61,7 @@ extern "C"
 #define INT8_MIN (-127i8 - 1)
 #endif
 
-#ifndef INT8_MIN
+#ifndef INT16_MIN
 #define INT16_MIN (-32767i16 - 1)
 #endif
 
