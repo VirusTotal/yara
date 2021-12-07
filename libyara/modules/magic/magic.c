@@ -67,11 +67,15 @@ static int get_cache(MAGIC_CACHE** cache)
     (*cache)->magic_cookie = magic_open(0);
 
     if ((*cache)->magic_cookie == NULL)
+    {
+      yr_free(*cache);
       return ERROR_INSUFFICIENT_MEMORY;
+    }
 
     if (magic_load((*cache)->magic_cookie, NULL) != 0)
     {
       magic_close((*cache)->magic_cookie);
+      yr_free(*cache);
       return ERROR_INTERNAL_FATAL_ERROR;
     }
 
