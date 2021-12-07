@@ -150,7 +150,7 @@ typedef struct _IMAGE_FILE_HEADER
 // Local symbols stripped from file.
 #define IMAGE_FILE_LOCAL_SYMS_STRIPPED     0x0008
 // Aggressively trim working set
-#define IMAGE_FILE_AGGRESIVE_WS_TRIM       0x0010
+#define IMAGE_FILE_AGGRESSIVE_WS_TRIM      0x0010
 // App can handle >2gb addresses
 #define IMAGE_FILE_LARGE_ADDRESS_AWARE     0x0020
 // Bytes of machine word are reversed.
