@@ -508,7 +508,7 @@ int main(int argc, char** argv)
           pe.rich_signature.toolid(1, 0) > 40 and pe.rich_signature.toolid(1, 0) < 45 and \
           pe.rich_signature.version(30319) and \
           pe.rich_signature.version(40219, 170) == 11 and \
-          pe.rich_signature.hash == \"acc92f51ede1b8553e81789764e1a55c\" \
+          pe.rich_signature.md5 == \"acc92f51ede1b8553e81789764e1a55c\" \
       }",
       "tests/data/"
       "079a472d22290a94ebb212aa8015cdc8dd28a968c6b4d3b88acdd58ce2d3b885");
@@ -523,7 +523,7 @@ int main(int argc, char** argv)
           pe.rich_signature.offset == 0x200 and \
           pe.rich_signature.length == 64 and \
           pe.rich_signature.key == 0x9f1d8511 and \
-          pe.rich_signature.hash == \"c776c17a2e491b6fbb8a81eb0fe1bdd2\" and \
+          pe.rich_signature.md5 == \"c776c17a2e491b6fbb8a81eb0fe1bdd2\" and \
           pe.rich_signature.clear_data == \"DanS\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x01\\x00\\x11\\x00\\x00\\x00\\xc3\\x0f]\\x00\\x03\\x00\\x00\\x00\\x09x\\x95\\x00\\x01\\x00\\x00\\x00\\x09x\\x83\\x00\\x05\\x00\\x00\\x00\\x09x\\x94\\x00\\x01\\x00\\x00\\x00\\x09x\\x91\\x00\\x01\\x00\\x00\\x00\" \
       }",
       "tests/data/weird_rich");

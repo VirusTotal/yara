@@ -274,7 +274,7 @@ static void pe_parse_rich_signature(PE* pe, uint64_t base_address)
   for (int i = 0; i < YR_MD5_LEN; ++i)
     sprintf(rich_hash_ascii + (i * 2), "%02x", rich_hash[i]);
 
-  set_string(rich_hash_ascii, pe->object, "rich_signature.hash");
+  set_string(rich_hash_ascii, pe->object, "rich_signature.md5");
 
   set_sized_string(
       (char*) raw_data, rich_len, pe->object, "rich_signature.raw_data");
@@ -3485,7 +3485,7 @@ begin_declarations
     declare_integer("key");
     declare_string("raw_data");
     declare_string("clear_data");
-    declare_string("hash");
+    declare_string("md5");
     declare_function("version", "i", "i", rich_version);
     declare_function("version", "ii", "i", rich_version_toolid);
     declare_function("toolid", "i", "i", rich_toolid);

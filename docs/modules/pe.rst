@@ -924,7 +924,7 @@ Reference
 
         Data after being decrypted by XORing it with the key.
 
-    .. c:member:: hash
+    .. c:member:: md5
 
         MD5 hash of the clear rich header data.
 
