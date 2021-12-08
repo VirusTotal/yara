@@ -3262,7 +3262,7 @@ begin_declarations
   declare_integer("EXECUTABLE_IMAGE");
   declare_integer("LINE_NUMS_STRIPPED");
   declare_integer("LOCAL_SYMS_STRIPPED");
-  declare_integer("AGGRESSIVE_WS_TRIM");
+  declare_integer("AGGRESIVE_WS_TRIM");
   declare_integer("LARGE_ADDRESS_AWARE");
   declare_integer("BYTES_REVERSED_LO");
   declare_integer("MACHINE_32BIT");
@@ -3715,7 +3715,7 @@ int module_load(
       IMAGE_FILE_LINE_NUMS_STRIPPED, module_object, "LINE_NUMS_STRIPPED");
   set_integer(
       IMAGE_FILE_LOCAL_SYMS_STRIPPED, module_object, "LOCAL_SYMS_STRIPPED");
-  set_integer(IMAGE_FILE_AGGRESSIVE_WS_TRIM, module_object, "AGGRESSIVE_WS_TRIM");
+  set_integer(IMAGE_FILE_AGGRESIVE_WS_TRIM, module_object, "AGGRESIVE_WS_TRIM");
   set_integer(
       IMAGE_FILE_LARGE_ADDRESS_AWARE, module_object, "LARGE_ADDRESS_AWARE");
   set_integer(IMAGE_FILE_BYTES_REVERSED_LO, module_object, "BYTES_REVERSED_LO");
