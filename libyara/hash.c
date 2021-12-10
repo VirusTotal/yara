@@ -244,14 +244,13 @@ YR_API int yr_hash_table_iterate(
     YR_HASH_TABLE_ITERATE_FUNC iterate_func,
     void* data)
 {
-  int i;
   int result;
   YR_HASH_TABLE_ENTRY* entry;
 
   if (table == NULL)
     return ERROR_INTERNAL_FATAL_ERROR;
 
-  for (i = 0; i < table->size; i++)
+  for (int i = 0; i < table->size; i++)
   {
     entry = table->buckets[i];
     while (entry != NULL)
