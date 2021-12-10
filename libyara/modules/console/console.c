@@ -49,10 +49,37 @@ define_function(log_string)
   return_integer(1);
 }
 
+define_function(log_string_msg)
+{
+  size_t i = 0;
+  char* m = string_argument(1);
+  // We are intentionally using sized strings here as we may be needing to
+  // output strings with a null character in the middle.
+  SIZED_STRING* s = sized_string_argument(2);
+  printf("%s", m);
+  for (i = 0; i < s->length; i++)
+  {
+    if (isprint((unsigned char) s->c_string[i]))
+      printf("%c", s->c_string[i]);
+    else
+      printf("\\x%02x", (unsigned char) s->c_string[i]);
+  }
+  printf("\n");
+  return_integer(1);
+}
+
 define_function(log_integer)
 {
   int64_t i = integer_argument(1);
   printf("%lli\n", i);
+  return_integer(1);
+}
+
+define_function(log_integer_msg)
+{
+  SIZED_STRING* s = sized_string_argument(1);
+  int64_t i = integer_argument(2);
+  printf("%s%lli\n", s->c_string, i);
   return_integer(1);
 }
 
@@ -63,6 +90,14 @@ define_function(log_float)
   return_integer(1);
 }
 
+define_function(log_float_msg)
+{
+  SIZED_STRING* s = sized_string_argument(1);
+  double f = float_argument(2);
+  printf("%s%f\n", s->c_string, f);
+  return_integer(1);
+}
+
 define_function(hex_integer)
 {
   int64_t i = integer_argument(1);
@@ -70,11 +105,23 @@ define_function(hex_integer)
   return_integer(1);
 }
 
+define_function(hex_integer_msg)
+{
+  SIZED_STRING* s = sized_string_argument(1);
+  int64_t i = integer_argument(2);
+  printf("%s0x%llx\n", s->c_string, i);
+  return_integer(1);
+}
+
 begin_declarations
   declare_function("log", "s", "i", log_string);
+  declare_function("log", "ss", "i", log_string_msg);
   declare_function("log", "i", "i", log_integer);
+  declare_function("log", "si", "i", log_integer_msg);
   declare_function("log", "f", "i", log_float);
+  declare_function("log", "sf", "i", log_float_msg);
   declare_function("hex", "i", "i", hex_integer);
+  declare_function("hex", "si", "i", hex_integer_msg);
 end_declarations
 
 
