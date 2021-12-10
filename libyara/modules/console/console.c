@@ -27,6 +27,9 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+#include <stdio.h>
+
+#include <yara/mem.h>
 #include <yara/modules.h>
 
 #define MODULE_NAME console
@@ -36,80 +39,192 @@ define_function(log_string)
 {
   // We are intentionally using sized strings here as we may be needing to
   // output strings with a null character in the middle.
-  size_t i = 0;
   SIZED_STRING* s = sized_string_argument(1);
-  for (i = 0; i < s->length; i++)
+  YR_SCAN_CONTEXT* ctx = __context;
+  YR_CALLBACK_FUNC callback = __context->callback;
+
+  // Assume the entire string is non-printable, so allocate 4 times the
+  // space so that we can represent each byte as an escaped value. eg: \x00
+  // Add two extra bytes for the newline and NULL terminator.
+  char* msg = (char*) yr_calloc((s->length * 4) + 2, sizeof(char));
+  if (msg == NULL)
+    return_integer(YR_UNDEFINED);
+
+  char* p = msg;
+  for (size_t i = 0; i < s->length; i++)
   {
     if (isprint((unsigned char) s->c_string[i]))
-      printf("%c", s->c_string[i]);
+      *p++ = s->c_string[i];
     else
-      printf("\\x%02x", (unsigned char) s->c_string[i]);
+    {
+      sprintf(p, "\\x%02x", (unsigned char) s->c_string[i]);
+      p += 4;
+    }
   }
-  printf("\n");
+  *p = '\n';
+
+  // result is ignored, as we have no way to signal to the library that it
+  // should abort or continue.
+  callback(ctx, CALLBACK_MSG_CONSOLE_LOG, (void*) msg, ctx->user_data);
+
+  yr_free(msg);
   return_integer(1);
 }
 
 define_function(log_string_msg)
 {
-  size_t i = 0;
   char* m = string_argument(1);
   // We are intentionally using sized strings here as we may be needing to
   // output strings with a null character in the middle.
   SIZED_STRING* s = sized_string_argument(2);
-  printf("%s", m);
-  for (i = 0; i < s->length; i++)
+  YR_SCAN_CONTEXT* ctx = __context;
+  YR_CALLBACK_FUNC callback = __context->callback;
+
+  // Assume the entire string is non-printable, so allocate 4 times the
+  // space so that we can represent each byte as an escaped value. eg: \x00
+  // Add two extra bytes for the newline and NULL terminator.
+  size_t msg_len = strlen(m) + (s->length * 4) + 2;
+  char* msg = (char*) yr_calloc(msg_len, sizeof(char));
+  if (msg == NULL)
+    return_integer(YR_UNDEFINED);
+
+  char* p = msg;
+  strlcpy(msg, m, msg_len);
+  p += strlen(m);
+  for (size_t i = 0; i < s->length; i++)
   {
     if (isprint((unsigned char) s->c_string[i]))
-      printf("%c", s->c_string[i]);
+      *p++ = s->c_string[i];
     else
-      printf("\\x%02x", (unsigned char) s->c_string[i]);
+    {
+      sprintf(p, "\\x%02x", (unsigned char) s->c_string[i]);
+      p += 4;
+    }
   }
-  printf("\n");
+  *p = '\n';
+
+  // result is ignored, as we have no way to signal to the library that it
+  // should abort or continue.
+  callback(ctx, CALLBACK_MSG_CONSOLE_LOG, (void*) msg, ctx->user_data);
+
+  yr_free(msg);
   return_integer(1);
 }
 
 define_function(log_integer)
 {
+  char* msg = NULL;
   int64_t i = integer_argument(1);
-  printf("%lli\n", i);
+  YR_SCAN_CONTEXT* ctx = __context;
+  YR_CALLBACK_FUNC callback = __context->callback;
+
+  asprintf(&msg, "%lli\n", i);
+  if (msg == NULL)
+    return_integer(YR_UNDEFINED);
+
+  // result is ignored, as we have no way to signal to the library that it
+  // should abort or continue.
+  callback(ctx, CALLBACK_MSG_CONSOLE_LOG, (void*) msg, ctx->user_data);
+
+  yr_free(msg);
   return_integer(1);
 }
 
 define_function(log_integer_msg)
 {
-  SIZED_STRING* s = sized_string_argument(1);
+  char* msg = NULL;
+  char* s = string_argument(1);
   int64_t i = integer_argument(2);
-  printf("%s%lli\n", s->c_string, i);
+  YR_SCAN_CONTEXT* ctx = __context;
+  YR_CALLBACK_FUNC callback = __context->callback;
+
+  asprintf(&msg, "%s%lli\n", s, i);
+  if (msg == NULL)
+    return_integer(YR_UNDEFINED);
+
+  // result is ignored, as we have no way to signal to the library that it
+  // should abort or continue.
+  callback(ctx, CALLBACK_MSG_CONSOLE_LOG, (void*) msg, ctx->user_data);
+
+  yr_free(msg);
   return_integer(1);
 }
 
 define_function(log_float)
 {
+  char* msg = NULL;
   double f = float_argument(1);
-  printf("%f\n", f);
+  YR_SCAN_CONTEXT* ctx = __context;
+  YR_CALLBACK_FUNC callback = __context->callback;
+
+  asprintf(&msg, "%f\n", f);
+  if (msg == NULL)
+    return_integer(YR_UNDEFINED);
+
+  // result is ignored, as we have no way to signal to the library that it
+  // should abort or continue.
+  callback(ctx, CALLBACK_MSG_CONSOLE_LOG, (void*) msg, ctx->user_data);
+
+  yr_free(msg);
   return_integer(1);
 }
 
 define_function(log_float_msg)
 {
-  SIZED_STRING* s = sized_string_argument(1);
+  char* msg = NULL;
+  char* s = string_argument(1);
   double f = float_argument(2);
-  printf("%s%f\n", s->c_string, f);
+  YR_SCAN_CONTEXT* ctx = __context;
+  YR_CALLBACK_FUNC callback = __context->callback;
+
+  asprintf(&msg, "%s%f\n", s, f);
+  if (msg == NULL)
+    return_integer(YR_UNDEFINED);
+
+  // result is ignored, as we have no way to signal to the library that it
+  // should abort or continue.
+  callback(ctx, CALLBACK_MSG_CONSOLE_LOG, (void*) msg, ctx->user_data);
+
+  yr_free(msg);
   return_integer(1);
 }
 
 define_function(hex_integer)
 {
+  char* msg = NULL;
   int64_t i = integer_argument(1);
-  printf("0x%llx\n", i);
+  YR_SCAN_CONTEXT* ctx = __context;
+  YR_CALLBACK_FUNC callback = __context->callback;
+
+  asprintf(&msg, "0x%llx\n", i);
+  if (msg == NULL)
+    return_integer(YR_UNDEFINED);
+
+  // result is ignored, as we have no way to signal to the library that it
+  // should abort or continue.
+  callback(ctx, CALLBACK_MSG_CONSOLE_LOG, (void*) msg, ctx->user_data);
+
+  yr_free(msg);
   return_integer(1);
 }
 
 define_function(hex_integer_msg)
 {
-  SIZED_STRING* s = sized_string_argument(1);
+  char* msg = NULL;
+  char* s = string_argument(1);
   int64_t i = integer_argument(2);
-  printf("%s0x%llx\n", s->c_string, i);
+  YR_SCAN_CONTEXT* ctx = __context;
+  YR_CALLBACK_FUNC callback = __context->callback;
+
+  asprintf(&msg, "%s0x%llx\n", s, i);
+  if (msg == NULL)
+    return_integer(YR_UNDEFINED);
+
+  // result is ignored, as we have no way to signal to the library that it
+  // should abort or continue.
+  callback(ctx, CALLBACK_MSG_CONSOLE_LOG, (void*) msg, ctx->user_data);
+
+  yr_free(msg);
   return_integer(1);
 }
 
