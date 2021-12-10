@@ -2773,9 +2773,28 @@ static void test_hash_module()
             and \
           hash.crc32(0, filesize) == 0x8587d865 \
             and \
-          hash.crc32(\"TEST STRING\") == 0x51f9be31 \
+          hash.checksum32(0, filesize) == 0x1ef \
       }",
       blob);
+
+  assert_true_rule(
+      "import \"hash\" \
+       rule test { \
+        condition: \
+          hash.md5(\"TEST STRING\") == \
+            \"2d7d687432758a8eeeca7b7e5d518e7f\" \
+            and \
+          hash.sha1(\"TEST STRING\") == \
+            \"d39d009c05797a93a79720952e99c7054a24e7c4\" \
+            and \
+          hash.sha256(\"TEST STRING\") == \
+            \"fb6ca29024bd42f1894620ffa45fd976217e72d988b04ee02bb4793ab9d0c862\" \
+            and \
+          hash.crc32(\"TEST STRING\") == 0x51f9be31 \
+            and \
+          hash.checksum32(\"TEST STRING\") == 0x337 \
+      }",
+      NULL);
 
   // Test hash caching mechanism
 
