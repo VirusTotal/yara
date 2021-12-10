@@ -245,7 +245,6 @@ YR_API int yr_compiler_create(YR_COMPILER** compiler)
   new_compiler->fixup_stack_head = NULL;
   new_compiler->loop_index = -1;
   new_compiler->loop_for_of_var_index = -1;
-  new_compiler->wildcard_identifiers_head = NULL;
 
   new_compiler->atoms_config.get_atom_quality = yr_atoms_heuristic_quality;
   new_compiler->atoms_config.quality_warning_threshold =
@@ -317,16 +316,6 @@ YR_API void yr_compiler_destroy(YR_COMPILER* compiler)
     YR_FIXUP* next_fixup = fixup->next;
     yr_free(fixup);
     fixup = next_fixup;
-  }
-
-  YR_WILDCARD_IDENTIFIER* wildcard = compiler->wildcard_identifiers_head;
-
-  while (wildcard != NULL)
-  {
-    YR_WILDCARD_IDENTIFIER* prev = wildcard->prev;
-    yr_free(wildcard->identifier);
-    yr_free(wildcard);
-    wildcard = prev;
   }
 
   yr_free(compiler);
@@ -1042,7 +1031,7 @@ YR_API char* yr_compiler_get_error_message(
     snprintf(
         buffer,
         buffer_size,
-        "rule identifier matches previously used wildcard rule set \"%s\"",
+        "rule identifier \"%s\" matches previously used wildcard rule set",
         compiler->last_error_extra_info);
     break;
   }

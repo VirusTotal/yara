@@ -914,12 +914,34 @@ _exit:
   return result;
 }
 
+static int wildcard_iterator(
+    void* key,
+    size_t key_length,
+    void* _value,
+    void* data)
+{
+  char* wildcard_identifier = (char*) key;
+  const char* identifier = (const char*) data;
+  char* p = strstr(wildcard_identifier, "*");
+  if (p == NULL)
+    return ERROR_INTERNAL_FATAL_ERROR;
+
+  if (!strncmp(wildcard_identifier, identifier, p - wildcard_identifier))
+  {
+    // Extra info for the compiler is set in the caller.
+    return ERROR_IDENTIFIER_MATCHES_WILDCARD;
+  }
+
+  return ERROR_SUCCESS;
+}
+
 int yr_parser_reduce_rule_declaration_phase_1(
     yyscan_t yyscanner,
     int32_t flags,
     const char* identifier,
     YR_ARENA_REF* rule_ref)
 {
+  int result;
   YR_FIXUP* fixup;
   YR_COMPILER* compiler = yyget_extra(yyscanner);
 
@@ -935,25 +957,23 @@ int yr_parser_reduce_rule_declaration_phase_1(
     // A rule or variable with the same identifier already exists, return the
     // appropriate error.
 
-    yr_compiler_set_error_extra_info(
-        compiler, identifier) return ERROR_DUPLICATED_IDENTIFIER;
+    yr_compiler_set_error_extra_info(compiler, identifier);
+    return ERROR_DUPLICATED_IDENTIFIER;
   }
 
-  YR_WILDCARD_IDENTIFIER* wildcard = compiler->wildcard_identifiers_head;
-  while (wildcard != NULL)
+  result = yr_hash_table_iterate(
+      compiler->wildcard_identifiers_table,
+      ns->name,
+      wildcard_iterator,
+      (void*) identifier);
+  if (result != ERROR_SUCCESS)
   {
-    char* p = strstr(wildcard->identifier, "*");
-    if (p == NULL)
-      return ERROR_INTERNAL_FATAL_ERROR;
-
-    if (!strncmp(wildcard->identifier, identifier, p - wildcard->identifier))
+    if (result == ERROR_IDENTIFIER_MATCHES_WILDCARD)
     {
       // This rule matches an existing wildcard rule set.
-      yr_compiler_set_error_extra_info(compiler, wildcard->identifier);
-      return ERROR_IDENTIFIER_MATCHES_WILDCARD;
+      yr_compiler_set_error_extra_info(compiler, identifier);
     }
-
-    wildcard = wildcard->prev;
+    return result;
   }
 
   FAIL_ON_ERROR(yr_arena_allocate_struct(

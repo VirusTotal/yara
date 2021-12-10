@@ -238,6 +238,36 @@ YR_API void yr_hash_table_destroy(
   yr_free(table);
 }
 
+YR_API int yr_hash_table_iterate(
+    YR_HASH_TABLE* table,
+    const char* ns,
+    YR_HASH_TABLE_ITERATE_FUNC iterate_func,
+    void* data)
+{
+  int i;
+  int result;
+  YR_HASH_TABLE_ENTRY* entry;
+
+  if (table == NULL)
+    return ERROR_INTERNAL_FATAL_ERROR;
+
+  for (i = 0; i < table->size; i++)
+  {
+    entry = table->buckets[i];
+    while (entry != NULL)
+    {
+      if (!strcmp(entry->ns, ns))
+      {
+        result = iterate_func(entry->key, entry->key_length, entry->value, data);
+        if (result != ERROR_SUCCESS)
+          return result;
+      }
+      entry = entry->next;
+    }
+  }
+  return ERROR_SUCCESS;
+}
+
 YR_API void* yr_hash_table_lookup_raw_key(
     YR_HASH_TABLE* table,
     const void* key,
