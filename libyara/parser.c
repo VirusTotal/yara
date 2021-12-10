@@ -257,11 +257,12 @@ int yr_parser_emit_pushes_for_rules(
   // this I'm manually walking all the currently compiled rules (up to the
   // current rule index) and comparing identifiers to see if it is one we should
   // use.
-  uint32_t rule_idx;
-  for (rule_idx = 0; rule_idx <= compiler->current_rule_idx; rule_idx++)
+  //
+  // Further, we have to get compiler->current_rule_idx before we start because
+  // if we emit an OP_PUSH_RULE
+  rule = yr_arena_get_ptr(compiler->arena, YR_RULES_TABLE, 0);
+  for (uint32_t i = 0; i <= compiler->current_rule_idx; i++)
   {
-    rule = yr_arena_get_ptr(
-        compiler->arena, YR_RULES_TABLE, rule_idx * (sizeof(YR_RULE)));
     rule_identifier = rule->identifier;
     target_identifier = identifier;
 
@@ -284,6 +285,7 @@ int yr_parser_emit_pushes_for_rules(
         matching++;
       }
     }
+    rule++;
   }
 
   if (matching == 0)
