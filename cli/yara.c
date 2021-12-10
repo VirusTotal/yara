@@ -1199,7 +1199,7 @@ static int callback(
     return CALLBACK_CONTINUE;
 
   case CALLBACK_MSG_CONSOLE_LOG:
-    printf("%s", (char*) message_data);
+    printf("%s\n", (char*) message_data);
     return CALLBACK_CONTINUE;
   }
 

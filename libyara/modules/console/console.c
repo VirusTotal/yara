@@ -45,8 +45,8 @@ define_function(log_string)
 
   // Assume the entire string is non-printable, so allocate 4 times the
   // space so that we can represent each byte as an escaped value. eg: \x00
-  // Add two extra bytes for the newline and NULL terminator.
-  char* msg = (char*) yr_calloc((s->length * 4) + 2, sizeof(char));
+  // Add an extra byte for the NULL terminator.
+  char* msg = (char*) yr_calloc((s->length * 4) + 1, sizeof(char));
   if (msg == NULL)
     return_integer(YR_UNDEFINED);
 
@@ -61,7 +61,6 @@ define_function(log_string)
       p += 4;
     }
   }
-  *p = '\n';
 
   // result is ignored, as we have no way to signal to the library that it
   // should abort or continue.
@@ -82,8 +81,8 @@ define_function(log_string_msg)
 
   // Assume the entire string is non-printable, so allocate 4 times the
   // space so that we can represent each byte as an escaped value. eg: \x00
-  // Add two extra bytes for the newline and NULL terminator.
-  size_t msg_len = strlen(m) + (s->length * 4) + 2;
+  // Add an extra byte for the NULL terminator.
+  size_t msg_len = strlen(m) + (s->length * 4) + 1;
   char* msg = (char*) yr_calloc(msg_len, sizeof(char));
   if (msg == NULL)
     return_integer(YR_UNDEFINED);
@@ -101,7 +100,6 @@ define_function(log_string_msg)
       p += 4;
     }
   }
-  *p = '\n';
 
   // result is ignored, as we have no way to signal to the library that it
   // should abort or continue.
@@ -118,7 +116,7 @@ define_function(log_integer)
   YR_SCAN_CONTEXT* ctx = __context;
   YR_CALLBACK_FUNC callback = __context->callback;
 
-  asprintf(&msg, "%lli\n", i);
+  asprintf(&msg, "%lli", i);
   if (msg == NULL)
     return_integer(YR_UNDEFINED);
 
@@ -138,7 +136,7 @@ define_function(log_integer_msg)
   YR_SCAN_CONTEXT* ctx = __context;
   YR_CALLBACK_FUNC callback = __context->callback;
 
-  asprintf(&msg, "%s%lli\n", s, i);
+  asprintf(&msg, "%s%lli", s, i);
   if (msg == NULL)
     return_integer(YR_UNDEFINED);
 
@@ -157,7 +155,7 @@ define_function(log_float)
   YR_SCAN_CONTEXT* ctx = __context;
   YR_CALLBACK_FUNC callback = __context->callback;
 
-  asprintf(&msg, "%f\n", f);
+  asprintf(&msg, "%f", f);
   if (msg == NULL)
     return_integer(YR_UNDEFINED);
 
@@ -177,7 +175,7 @@ define_function(log_float_msg)
   YR_SCAN_CONTEXT* ctx = __context;
   YR_CALLBACK_FUNC callback = __context->callback;
 
-  asprintf(&msg, "%s%f\n", s, f);
+  asprintf(&msg, "%s%f", s, f);
   if (msg == NULL)
     return_integer(YR_UNDEFINED);
 
@@ -196,7 +194,7 @@ define_function(hex_integer)
   YR_SCAN_CONTEXT* ctx = __context;
   YR_CALLBACK_FUNC callback = __context->callback;
 
-  asprintf(&msg, "0x%llx\n", i);
+  asprintf(&msg, "0x%llx", i);
   if (msg == NULL)
     return_integer(YR_UNDEFINED);
 
@@ -216,7 +214,7 @@ define_function(hex_integer_msg)
   YR_SCAN_CONTEXT* ctx = __context;
   YR_CALLBACK_FUNC callback = __context->callback;
 
-  asprintf(&msg, "%s0x%llx\n", s, i);
+  asprintf(&msg, "%s0x%llx", s, i);
   if (msg == NULL)
     return_integer(YR_UNDEFINED);
 
