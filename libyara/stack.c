@@ -72,7 +72,7 @@ void yr_stack_destroy(YR_STACK* stack)
 
 ////////////////////////////////////////////////////////////////////////////////
 // Pushes an item into the stack. If the stack has reached its capacity the
-// funtion tries to double the capacity. This operation can fail with
+// function tries to double the capacity. This operation can fail with
 // ERROR_INSUFFICIENT_MEMORY.
 //
 int yr_stack_push(YR_STACK* stack, void* item)
