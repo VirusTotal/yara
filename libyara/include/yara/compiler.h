@@ -241,11 +241,8 @@ typedef struct _YR_COMPILER
   // rule a2 { condition: true }
   //
   // This must be a compiler error when parsing a2 because b has already been
-  // parsed and the instructions to check _ONLY_ a1 has been emitted. Rule b
+  // parsed and the instructions to check _ONLY_ a1 have been emitted. Rule b
   // has no concept of a2 and would not work as expected.
-  //
-  // This is used as a quick lookup to see if we have already stored this
-  // identifier in the linked list.
   YR_HASH_TABLE* wildcard_identifiers_table;
 
   // Hash table that contains all the strings that has been written to the
