@@ -198,13 +198,6 @@ AC_ARG_ENABLE([pb-tests],
     PC_REQUIRES_PRIVATE="$PC_REQUIRES_PRIVATE libprotobuf-c"
   fi])
 
-AC_ARG_ENABLE([console],
-  [AS_HELP_STRING([--enable-console], [enable console module])],
-  [if test x$enableval = xyes; then
-    build_console_module=true
-    CFLAGS="$CFLAGS -DCONSOLE_MODULE"
-  fi])
-
 AC_ARG_WITH([jemalloc],
   [AS_HELP_STRING([--with-jemalloc],
     [use jemalloc to debug heap-related issues])],
@@ -341,7 +334,6 @@ AM_CONDITIONAL([MACHO_MODULE], [test x$build_macho_module = xtrue])
 AM_CONDITIONAL([PB_TESTS_MODULE], [test x$build_pb_tests_module = xtrue])
 AM_CONDITIONAL([DEX_MODULE], [test x$build_dex_module = xtrue])
 AM_CONDITIONAL([DEBUG_DEX_MODULE], [test x$debug_dex_module = xtrue])
-AM_CONDITIONAL([CONSOLE_MODULE], [test x$build_console_module = xtrue])
 
 AM_CONDITIONAL([USE_WINDOWS_PROC], [test x$proc_interface = xwindows ])
 AM_CONDITIONAL([USE_LINUX_PROC], [test x$proc_interface = xlinux ])
