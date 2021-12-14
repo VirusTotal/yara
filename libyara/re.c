@@ -1699,12 +1699,14 @@ int yr_re_exec(
 
   if (flags & RE_FLAGS_BACKWARDS)
   {
+    // Signedness conversion is sound as long as YR_RE_SCAN_LIMIT <= INT_MAX
     max_bytes_matched = (int) yr_min(input_backwards_size, YR_RE_SCAN_LIMIT);
     input -= character_size;
     input_incr = -input_incr;
   }
   else
   {
+    // Signedness conversion is sound as long as YR_RE_SCAN_LIMIT <= INT_MAX
     max_bytes_matched = (int) yr_min(input_forwards_size, YR_RE_SCAN_LIMIT);
   }
 
@@ -2084,8 +2086,8 @@ int yr_re_fast_exec(
 
   int input_incr = flags & RE_FLAGS_BACKWARDS ? -1 : 1;
   int max_bytes_matched = flags & RE_FLAGS_BACKWARDS
-                              ? (int) input_backwards_size
-                              : (int) input_forwards_size;
+                              ? (int) yr_min(input_backwards_size, INT_MAX)
+                              : (int) yr_min(input_forwards_size, INT_MAX);
   int bytes_matched;
 
   const uint8_t* ip = code;
