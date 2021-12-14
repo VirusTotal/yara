@@ -1135,7 +1135,7 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
       function = object_as_function(r2.o);
       result = ERROR_INTERNAL_FATAL_ERROR;
 
-      for (int i = 0; i < YR_MAX_OVERLOADED_FUNCTIONS; i++)
+      for (i = 0; i < YR_MAX_OVERLOADED_FUNCTIONS; i++)
       {
         if (function->prototypes[i].arguments_fmt == NULL)
           break;
@@ -1266,7 +1266,8 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
       break;
 
     case OP_COUNT_IN:
-      YR_DEBUG_FPRINTF(2, stderr, "- case OP_COUNT_IN: // %s()\n", __FUNCTION__);
+      YR_DEBUG_FPRINTF(
+          2, stderr, "- case OP_COUNT_IN: // %s()\n", __FUNCTION__);
       pop(r3);
       pop(r2);
       pop(r1);
@@ -1435,8 +1436,7 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
         pop(r3);
       }
 
-      pop(r1)
-      r1.i = count >= r1.i ? 1 : 0;
+      pop(r1) r1.i = count >= r1.i ? 1 : 0;
 
       push(r1);
       break;

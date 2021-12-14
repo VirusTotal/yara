@@ -74,8 +74,6 @@ int _yr_process_attach(int pid, YR_PROC_ITERATOR_CTX* context)
   if (proc_info == NULL)
     return ERROR_INSUFFICIENT_MEMORY;
 
-  context->proc_info = proc_info;
-
   proc_info->pid = pid;
   proc_info->maps = NULL;
   proc_info->mem_fd = -1;
@@ -99,6 +97,8 @@ int _yr_process_attach(int pid, YR_PROC_ITERATOR_CTX* context)
 
   if (proc_info->mem_fd == -1)
     goto err;
+
+  context->proc_info = proc_info;
 
   return ERROR_SUCCESS;
 
