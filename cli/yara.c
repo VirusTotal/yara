@@ -164,7 +164,7 @@ static int stack_size = DEFAULT_STACK_SIZE;
 static int skip_larger = 0;
 static int threads = YR_MAX_THREADS;
 static int max_strings_per_rule = DEFAULT_MAX_STRINGS_PER_RULE;
-static int max_process_memory_chunk = DEFAULT_MAX_PROCESS_MEMORY_CHUNK;
+static uint64_t max_process_memory_chunk = DEFAULT_MAX_PROCESS_MEMORY_CHUNK;
 
 #define USAGE_STRING \
   "Usage: yara [OPTION]... [NAMESPACE:]RULES_FILE... FILE | DIR | PID"
