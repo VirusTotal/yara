@@ -113,13 +113,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
       goto _exit;                \
   }
 
-#define FAIL_ON_ERROR(x)         \
-  {                              \
-    int result = (x);            \
-    if (result != ERROR_SUCCESS) \
-      return result;             \
-  }
-
 #define GOTO_EXIT_ON_ERROR_WITH_CLEANUP(x, cleanup) \
   {                                                 \
     result = (x);                                   \
@@ -130,13 +123,22 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
     }                                               \
   }
 
+
+#define FAIL_ON_ERROR(x)          \
+  {                               \
+    int __error = (x);            \
+    if (__error != ERROR_SUCCESS) \
+      return __error;             \
+  }
+
+
 #define FAIL_ON_ERROR_WITH_CLEANUP(x, cleanup) \
   {                                            \
-    int result = (x);                          \
-    if (result != ERROR_SUCCESS)               \
+    int __error = (x);                         \
+    if (__error != ERROR_SUCCESS)              \
     {                                          \
       cleanup;                                 \
-      return result;                           \
+      return __error;                          \
     }                                          \
   }
 
