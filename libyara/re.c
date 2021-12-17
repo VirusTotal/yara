@@ -2085,10 +2085,13 @@ int yr_re_fast_exec(
   RE_FAST_EXEC_POSITION* last;
 
   int input_incr = flags & RE_FLAGS_BACKWARDS ? -1 : 1;
-  int max_bytes_matched = flags & RE_FLAGS_BACKWARDS
-                              ? (int) yr_min(input_backwards_size, INT_MAX)
-                              : (int) yr_min(input_forwards_size, INT_MAX);
   int bytes_matched;
+  int max_bytes_matched;
+
+  if (flags & RE_FLAGS_BACKWARDS)
+    max_bytes_matched = (int) yr_min(input_backwards_size, YR_RE_SCAN_LIMIT);
+  else
+    max_bytes_matched = (int) yr_min(input_forwards_size, YR_RE_SCAN_LIMIT);
 
   const uint8_t* ip = code;
 
