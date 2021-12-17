@@ -228,7 +228,9 @@ int _tmain(int argc, const char_t** argv)
   cr.errors = 0;
   cr.warnings = 0;
 
-  yr_set_configuration(YR_CONFIG_MAX_STRINGS_PER_RULE, &max_strings_per_rule);
+  yr_set_configuration_uint32(
+      YR_CONFIG_MAX_STRINGS_PER_RULE, max_strings_per_rule);
+
   yr_compiler_set_callback(compiler, report_error, &cr);
 
   if (!compile_files(compiler, argc, argv))

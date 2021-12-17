@@ -303,7 +303,7 @@ normal python warning system for you and scanning will continue.
 You may also find that the default sizes for the stack for the matching engine in
 yara or the default size for the maximum number of strings per rule is too low. In
 the C libyara API, you can modify these using the ``YR_CONFIG_STACK_SIZE`` and
-``YR_CONFIG_MAX_STRINGS_PER_RULE`` variables via the ``yr_set_configuration``
+``YR_CONFIG_MAX_STRINGS_PER_RULE`` variables via the ``yr_set_configuration_uint32``
 function in libyara. The command-line tool exposes these as the ``--stack-size``
 (``-k``) and ``--max-strings-per-rule`` command-line arguments. In order to set
 these values via the Python API, you can use ``yara.set_config`` with either or
@@ -313,7 +313,7 @@ strings per rule was ``10000``.
 
 Also, ``yara.set_config`` accepts the `max_match_data` argument for controlling
 the maximum number of bytes that will be returned for each matching string. This
-is equivalent to using ``YR_CONFIG_MAX_MATCH_DATA`` with the ``yr_set_configuration``
+is equivalent to using ``YR_CONFIG_MAX_MATCH_DATA`` with the ``yr_set_configuration_uint32``
 in the C API. By the default this is set to 512.
 
 Here are a few example calls:

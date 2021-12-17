@@ -369,7 +369,7 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
 
   uint8_t opcode;
 
-  yr_get_configuration(YR_CONFIG_STACK_SIZE, (void*) &stack.capacity);
+  yr_get_configuration_uint32(YR_CONFIG_STACK_SIZE, &stack.capacity);
 
   stack.sp = 0;
   stack.items = (YR_VALUE*) yr_malloc(stack.capacity * sizeof(YR_VALUE));
