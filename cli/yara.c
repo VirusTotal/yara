@@ -1389,10 +1389,13 @@ int _tmain(int argc, const char_t** argv)
     exit_with_code(EXIT_FAILURE);
   }
 
-  yr_set_configuration(YR_CONFIG_STACK_SIZE, &stack_size);
-  yr_set_configuration(YR_CONFIG_MAX_STRINGS_PER_RULE, &max_strings_per_rule);
-  yr_set_configuration(
-      YR_CONFIG_MAX_PROCESS_MEMORY_CHUNK, &max_process_memory_chunk);
+  yr_set_configuration_uint32(YR_CONFIG_STACK_SIZE, stack_size);
+
+  yr_set_configuration_uint32(
+      YR_CONFIG_MAX_STRINGS_PER_RULE, max_strings_per_rule);
+
+  yr_set_configuration_uint64(
+      YR_CONFIG_MAX_PROCESS_MEMORY_CHUNK, max_process_memory_chunk);
 
   // Try to load the rules file as a binary file containing
   // compiled rules first

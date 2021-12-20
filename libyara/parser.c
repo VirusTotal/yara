@@ -44,8 +44,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <yara/strutils.h>
 #include <yara/utils.h>
 
-#define todigit(x) \
-  ((x) >= 'A' && (x) <= 'F') ? ((uint8_t)(x - 'A' + 10)) : ((uint8_t)(x - '0'))
+#define todigit(x)                                        \
+  ((x) >= 'A' && (x) <= 'F') ? ((uint8_t) (x - 'A' + 10)) \
+                             : ((uint8_t) (x - '0'))
 
 int yr_parser_emit(
     yyscan_t yyscanner,
@@ -948,8 +949,8 @@ int yr_parser_reduce_rule_declaration_phase_2(
   YR_STRING* string;
   YR_COMPILER* compiler = yyget_extra(yyscanner);
 
-  yr_get_configuration(
-      YR_CONFIG_MAX_STRINGS_PER_RULE, (void*) &max_strings_per_rule);
+  yr_get_configuration_uint32(
+      YR_CONFIG_MAX_STRINGS_PER_RULE, &max_strings_per_rule);
 
   YR_RULE* rule = (YR_RULE*) yr_arena_ref_to_ptr(compiler->arena, rule_ref);
 

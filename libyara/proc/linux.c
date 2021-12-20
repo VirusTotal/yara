@@ -318,8 +318,8 @@ YR_API YR_MEMORY_BLOCK* yr_process_get_next_memory_block(
 
   uint64_t max_process_memory_chunk;
 
-  yr_get_configuration(
-      YR_CONFIG_MAX_PROCESS_MEMORY_CHUNK, (void*) &max_process_memory_chunk);
+  yr_get_configuration_uint64(
+      YR_CONFIG_MAX_PROCESS_MEMORY_CHUNK, &max_process_memory_chunk);
 
   if (proc_info->next_block_end <= current_begin)
   {
