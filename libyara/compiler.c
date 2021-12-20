@@ -1000,7 +1000,8 @@ YR_API char* yr_compiler_get_error_message(
     snprintf(buffer, buffer_size, "regular expression is too complex");
     break;
   case ERROR_TOO_MANY_STRINGS:
-    yr_get_configuration(YR_CONFIG_MAX_STRINGS_PER_RULE, &max_strings_per_rule);
+    yr_get_configuration_uint32(
+        YR_CONFIG_MAX_STRINGS_PER_RULE, &max_strings_per_rule);
     snprintf(
         buffer,
         buffer_size,

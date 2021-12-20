@@ -127,8 +127,8 @@ YR_API YR_MEMORY_BLOCK* yr_process_get_next_memory_block(
   vm_address_t address = current_begin;
   uint64_t max_process_memory_chunk;
 
-  yr_get_configuration(
-      YR_CONFIG_MAX_PROCESS_MEMORY_CHUNK, (void*) &max_process_memory_chunk);
+  yr_get_configuration_uint64(
+      YR_CONFIG_MAX_PROCESS_MEMORY_CHUNK, &max_process_memory_chunk);
 
   iterator->last_error = ERROR_SUCCESS;
 
