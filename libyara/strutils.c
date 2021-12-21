@@ -275,6 +275,6 @@ void yr_asprintf(char** strp, const char* fmt, ...)
 {
   va_list ap;
   va_start(ap, fmt);
-  vasprintf(strp, fmt, ap);
+  yr_vasprintf(strp, fmt, ap);
   va_end(ap);
 }
