@@ -1197,6 +1197,10 @@ static int callback(
       return CALLBACK_ERROR;
 
     return CALLBACK_CONTINUE;
+
+  case CALLBACK_MSG_CONSOLE_LOG:
+    printf("%s\n", (char*) message_data);
+    return CALLBACK_CONTINUE;
   }
 
   return CALLBACK_ERROR;

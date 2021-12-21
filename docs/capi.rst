@@ -226,6 +226,7 @@ Possible values for ``message`` are::
   CALLBACK_MSG_IMPORT_MODULE
   CALLBACK_MSG_MODULE_IMPORTED
   CALLBACK_MSG_TOO_MANY_MATCHES
+  CALLBACK_MSG_CONSOLE_LOG
 
 Your callback function will be called once for each rule with either
 a ``CALLBACK_MSG_RULE_MATCHING`` or ``CALLBACK_MSG_RULE_NOT_MATCHING`` message,
@@ -259,6 +260,12 @@ will be called once with the ``CALLBACK_MSG_TOO_MANY_MATCHES``. When this happen
 ``message_data`` is a ``YR_STRING*`` which points to the string which caused the
 warning. If your callback returns ``CALLBACK_CONTINUE``, the string will be disabled
 and scanning will continue, otherwise scanning will be halted.
+
+Your callback will be called from the console module (:ref:`console-module)
+with the ``CALLBACK_MSG_CONSOLE_LOG`` message. When this happens, the
+``message_data`` argument will be a ``char*`` that is the string generated
+by the console module. Your callback can do whatever it wants with this string,
+including logging it to an external logging source, or printing it to stdout.
 
 Lastly, the callback function is also called with the
 ``CALLBACK_MSG_SCAN_FINISHED`` message when the scan is finished. In this case
