@@ -238,6 +238,7 @@
     <ClCompile Include="..\..\..\libyara\libyara.c" />
     <ClCompile Include="..\..\..\libyara\mem.c" />
     <ClCompile Include="..\..\..\libyara\modules.c" />
+    <ClCompile Include="..\..\..\libyara\modules\console\console.c" />
     <ClCompile Include="..\..\..\libyara\modules\cuckoo\cuckoo.c" />
     <ClCompile Include="..\..\..\libyara\modules\dex\dex.c" />
     <ClCompile Include="..\..\..\libyara\modules\dotnet\dotnet.c" />
