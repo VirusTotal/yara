@@ -229,6 +229,75 @@ int yr_parser_emit_pushes_for_strings(
   return ERROR_SUCCESS;
 }
 
+int yr_parser_emit_pushes_for_rules(
+    yyscan_t yyscanner,
+    const char* identifier)
+{
+  YR_COMPILER* compiler = yyget_extra(yyscanner);
+
+  // Make sure the compiler is parsing a rule
+  assert(compiler->current_rule_idx != UINT32_MAX);
+
+  YR_RULE* rule;
+
+  const char* rule_identifier;
+  const char* target_identifier;
+
+  int matching = 0;
+
+  YR_NAMESPACE* ns = (YR_NAMESPACE*) yr_arena_get_ptr(
+      compiler->arena,
+      YR_NAMESPACES_TABLE,
+      compiler->current_namespace_idx * sizeof(struct YR_NAMESPACE));
+
+  // Can't use yr_rules_foreach here as that requires the rules to have been
+  // finalized (inserting a NULL rule at the end). This is done when
+  // yr_compiler_get_rules() is called, which also inserts a HALT instruction
+  // into the current position in the code arena. Obviously we aren't done
+  // compiling the rules yet so inserting a HALT is a bad idea. To deal with
+  // this I'm manually walking all the currently compiled rules (up to the
+  // current rule index) and comparing identifiers to see if it is one we should
+  // use.
+  //
+  // Further, we have to get compiler->current_rule_idx before we start because
+  // if we emit an OP_PUSH_RULE
+  rule = yr_arena_get_ptr(compiler->arena, YR_RULES_TABLE, 0);
+  for (uint32_t i = 0; i <= compiler->current_rule_idx; i++)
+  {
+    rule_identifier = rule->identifier;
+    target_identifier = identifier;
+
+    while (*target_identifier != '\0' && *rule_identifier != '\0' &&
+           *target_identifier == *rule_identifier)
+    {
+      target_identifier++;
+      rule_identifier++;
+    }
+
+    if ((*target_identifier == '\0' && *rule_identifier == '\0') ||
+        *target_identifier == '*')
+    {
+      uint32_t rule_idx = yr_hash_table_lookup_uint32(
+          compiler->rules_table, rule->identifier, ns->name);
+      if (rule_idx != UINT32_MAX)
+      {
+        FAIL_ON_ERROR(yr_parser_emit_with_arg(
+            yyscanner, OP_PUSH_RULE, rule_idx, NULL, NULL));
+        matching++;
+      }
+    }
+    rule++;
+  }
+
+  if (matching == 0)
+  {
+    yr_compiler_set_error_extra_info(compiler, identifier);
+    return ERROR_UNDEFINED_IDENTIFIER;
+  }
+
+  return ERROR_SUCCESS;
+}
+
 int yr_parser_emit_push_const(yyscan_t yyscanner, uint64_t argument)
 {
   uint64_t u = (uint64_t) argument;
@@ -848,12 +917,34 @@ _exit:
   return result;
 }
 
+static int wildcard_iterator(
+    void* key,
+    size_t key_length,
+    void* _value,
+    void* data)
+{
+  char* wildcard_identifier = (char*) key;
+  const char* identifier = (const char*) data;
+  char* p = strstr(wildcard_identifier, "*");
+  if (p == NULL)
+    return ERROR_INTERNAL_FATAL_ERROR;
+
+  if (!strncmp(wildcard_identifier, identifier, p - wildcard_identifier))
+  {
+    // Extra info for the compiler is set in the caller.
+    return ERROR_IDENTIFIER_MATCHES_WILDCARD;
+  }
+
+  return ERROR_SUCCESS;
+}
+
 int yr_parser_reduce_rule_declaration_phase_1(
     yyscan_t yyscanner,
     int32_t flags,
     const char* identifier,
     YR_ARENA_REF* rule_ref)
 {
+  int result;
   YR_FIXUP* fixup;
   YR_COMPILER* compiler = yyget_extra(yyscanner);
 
@@ -869,8 +960,23 @@ int yr_parser_reduce_rule_declaration_phase_1(
     // A rule or variable with the same identifier already exists, return the
     // appropriate error.
 
-    yr_compiler_set_error_extra_info(
-        compiler, identifier) return ERROR_DUPLICATED_IDENTIFIER;
+    yr_compiler_set_error_extra_info(compiler, identifier);
+    return ERROR_DUPLICATED_IDENTIFIER;
+  }
+
+  result = yr_hash_table_iterate(
+      compiler->wildcard_identifiers_table,
+      ns->name,
+      wildcard_iterator,
+      (void*) identifier);
+  if (result != ERROR_SUCCESS)
+  {
+    if (result == ERROR_IDENTIFIER_MATCHES_WILDCARD)
+    {
+      // This rule matches an existing wildcard rule set.
+      yr_compiler_set_error_extra_info(compiler, identifier);
+    }
+    return result;
   }
 
   FAIL_ON_ERROR(yr_arena_allocate_struct(

@@ -1533,6 +1533,43 @@ static void test_length()
   YR_DEBUG_FPRINTF(1, stderr, "} // %s()\n", __FUNCTION__);
 }
 
+static void test_rule_of()
+{
+  YR_DEBUG_FPRINTF(1, stderr, "+ %s() {\n", __FUNCTION__);
+
+  assert_match_count(
+      "rule a { condition: true } rule b { condition: 1 of (a) }", NULL, 2);
+
+  assert_match_count(
+      "rule a1 { condition: true } "
+      "rule a2 { condition: true } "
+      "rule b { condition: 2 of (a*) }", NULL, 3);
+
+  assert_match_count(
+      "rule a1 { condition: true } "
+      "rule a2 { condition: false } "
+      "rule b { condition: 50% of (a*) }", NULL, 2);
+
+  assert_error("rule a { condition: all of (b*) }", ERROR_UNDEFINED_IDENTIFIER);
+
+  assert_error(
+      "rule a0 { condition: true } "
+      "rule b { condition: 1 of (a*) } "
+      "rule a1 { condition: true } ", ERROR_IDENTIFIER_MATCHES_WILDCARD);
+
+  // Make sure repeating the rule set works
+  assert_match_count(
+      "rule a { condition: true } "
+      "rule b { condition: 1 of (a*) } "
+      "rule c { condition: 1 of (a*) }", NULL, 3);
+
+  // This will compile but is false for the same reason that
+  // "rule x { condition: x }" is compiles but is false.
+  assert_false_rule("rule a { condition: 1 of (a*) }", NULL);
+
+  YR_DEBUG_FPRINTF(1, stderr, "} // %s()\n", __FUNCTION__);
+}
+
 static void test_of()
 {
   YR_DEBUG_FPRINTF(1, stderr, "+ %s() {\n", __FUNCTION__);
@@ -3312,6 +3349,7 @@ static void test_pass(int pass)
   test_offset();
   test_length();
   test_of();
+  test_rule_of();
   test_for();
   test_re();
   test_filesize();

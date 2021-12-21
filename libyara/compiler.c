@@ -259,6 +259,10 @@ YR_API int yr_compiler_create(YR_COMPILER** compiler)
     result = yr_hash_table_create(10000, &new_compiler->strings_table);
 
   if (result == ERROR_SUCCESS)
+    result = yr_hash_table_create(
+        1000, &new_compiler->wildcard_identifiers_table);
+
+  if (result == ERROR_SUCCESS)
     result = yr_hash_table_create(10000, &new_compiler->sz_table);
 
   if (result == ERROR_SUCCESS)
@@ -290,6 +294,8 @@ YR_API void yr_compiler_destroy(YR_COMPILER* compiler)
   yr_hash_table_destroy(compiler->rules_table, NULL);
 
   yr_hash_table_destroy(compiler->strings_table, NULL);
+
+  yr_hash_table_destroy(compiler->wildcard_identifiers_table, NULL);
 
   yr_hash_table_destroy(compiler->sz_table, NULL);
 
@@ -1021,6 +1027,13 @@ YR_API char* yr_compiler_get_error_message(
     break;
   case ERROR_DUPLICATED_MODIFIER:
     snprintf(buffer, buffer_size, "duplicated modifier");
+    break;
+  case ERROR_IDENTIFIER_MATCHES_WILDCARD:
+    snprintf(
+        buffer,
+        buffer_size,
+        "rule identifier \"%s\" matches previously used wildcard rule set",
+        compiler->last_error_extra_info);
     break;
   }
 

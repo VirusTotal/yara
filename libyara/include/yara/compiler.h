@@ -231,6 +231,20 @@ typedef struct _YR_COMPILER
   YR_HASH_TABLE* objects_table;
   YR_HASH_TABLE* strings_table;
 
+  // Hash table that contains all the identifiers with wildcards used in
+  // conditions. This is used to make sure we error out if we are parsing a
+  // rule _AFTER_ an existing rule has referenced it in a condition. For
+  // example:
+  //
+  // rule a1 { condition: true }
+  // rule b { condition: 1 of (a*) }
+  // rule a2 { condition: true }
+  //
+  // This must be a compiler error when parsing a2 because b has already been
+  // parsed and the instructions to check _ONLY_ a1 have been emitted. Rule b
+  // has no concept of a2 and would not work as expected.
+  YR_HASH_TABLE* wildcard_identifiers_table;
+
   // Hash table that contains all the strings that has been written to the
   // YR_SZ_POOL buffer in the compiler's arena. Values in the hash table are
   // the offset within the YR_SZ_POOL where the string resides. This allows to
