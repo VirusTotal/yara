@@ -29,6 +29,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <stdio.h>
 #include <string.h>
+#include <yara/mem.h>
 #include <yara/strutils.h>
 
 uint64_t xtoi(const char* hexstr)
@@ -52,7 +53,7 @@ uint64_t xtoi(const char* hexstr)
     case '7':
     case '8':
     case '9':
-      r |= ((uint64_t)(hexstr[i] - '0')) << ((l - i - 1) * 4);
+      r |= ((uint64_t) (hexstr[i] - '0')) << ((l - i - 1) * 4);
       break;
     case 'a':
     case 'b':
@@ -60,7 +61,7 @@ uint64_t xtoi(const char* hexstr)
     case 'd':
     case 'e':
     case 'f':
-      r |= ((uint64_t)(hexstr[i] - 'a' + 10)) << ((l - i - 1) * 4);
+      r |= ((uint64_t) (hexstr[i] - 'a' + 10)) << ((l - i - 1) * 4);
       break;
     case 'A':
     case 'B':
@@ -68,7 +69,7 @@ uint64_t xtoi(const char* hexstr)
     case 'D':
     case 'E':
     case 'F':
-      r |= ((uint64_t)(hexstr[i] - 'A' + 10)) << ((l - i - 1) * 4);
+      r |= ((uint64_t) (hexstr[i] - 'A' + 10)) << ((l - i - 1) * 4);
       break;
     default:
       i = l;  // force loop exit
@@ -86,7 +87,6 @@ the following implementations were taken from OpenBSD.
 */
 
 #if !HAVE_STRLCPY && !defined(strlcpy)
-
 size_t strlcpy(char* dst, const char* src, size_t size)
 {
   register char* d = dst;
@@ -118,12 +118,9 @@ size_t strlcpy(char* dst, const char* src, size_t size)
 
   return (s - src - 1);  // count does not include NULL
 }
-
 #endif
 
-
 #if !HAVE_STRLCAT && !defined(strlcat)
-
 size_t strlcat(char* dst, const char* src, size_t size)
 {
   register char* d = dst;
@@ -155,9 +152,7 @@ size_t strlcat(char* dst, const char* src, size_t size)
 
   return (dlen + (s - src));  // count does not include NULL
 }
-
 #endif
-
 
 int strnlen_w(const char* w_str)
 {
@@ -171,7 +166,6 @@ int strnlen_w(const char* w_str)
 
   return len;
 }
-
 
 int strcmp_w(const char* w_str, const char* str)
 {
@@ -188,7 +182,6 @@ int strcmp_w(const char* w_str, const char* str)
 
   return w_str[0] - *str;
 }
-
 
 size_t strlcpy_w(char* dst, const char* w_src, size_t n)
 {
@@ -209,7 +202,6 @@ size_t strlcpy_w(char* dst, const char* w_src, size_t n)
 
   return (s - w_src) / 2;
 }
-
 
 #if !HAVE_MEMMEM && !defined(memmem)
 void* memmem(
@@ -240,10 +232,49 @@ void* memmem(
 }
 #endif
 
-
+///////////////////////////////////////////////////////////////////////////////
+// This our own implementation of isalnum(). The library version is locale
+// dependent in some platforms and can consider non-ASCII characters to be
+// alphanumeric.
+//
 int yr_isalnum(const uint8_t* s)
 {
-  return (*s >= 0x30 && *s <= 0x39) ||
-         (*s >= 0x41 && *s <= 0x5a) ||
+  return (*s >= 0x30 && *s <= 0x39) || (*s >= 0x41 && *s <= 0x5a) ||
          (*s >= 0x61 && *s <= 0x7a);
+}
+
+//////////////////////////////////////////////////////////////////////////
+// This our own implementation of vasprintf(), as it is not available on
+// some platforms. It is based on the implementation of vsnprintf but it
+// allocates memory using yr_malloc, and therefore the caller must free
+// the memory using yr_free.
+//
+void yr_vasprintf(char** strp, const char* fmt, va_list ap)
+{
+  va_list ap_copy;
+  va_copy(ap_copy, ap);
+  *strp = NULL;
+
+  int len = vsnprintf(NULL, 0, fmt, ap_copy);
+
+  if (len < 0)
+    return;
+
+  *strp = (char*) yr_malloc(len + 1);
+
+  if (*strp == NULL)
+    return;
+
+  vsnprintf(*strp, len + 1, fmt, ap);
+}
+
+//////////////////////////////////////////////////////////////////////////
+// This our own implementation of asprintf(), see yr_vasprintf() for details.
+//
+void yr_asprintf(char** strp, const char* fmt, ...)
+{
+  va_list ap;
+  va_start(ap, fmt);
+  vasprintf(strp, fmt, ap);
+  va_end(ap);
 }

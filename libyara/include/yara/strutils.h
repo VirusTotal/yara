@@ -31,6 +31,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define YR_STRUTILS_H
 
 #include <assert.h>
+#include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
 #include <yara/integers.h>
@@ -101,3 +102,7 @@ size_t strlcpy_w(char* dst, const char* w_src, size_t n);
 #endif
 
 int yr_isalnum(const uint8_t* s);
+
+void yr_vasprintf(char** strp, const char* fmt, va_list ap);
+
+void yr_asprintf(char** strp, const char* fmt, ...);

@@ -31,9 +31,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <yara/mem.h>
 #include <yara/modules.h>
+#include <yara/strutils.h>
 
 #define MODULE_NAME console
-
 
 define_function(log_string)
 {
@@ -120,7 +120,8 @@ define_function(log_integer)
   YR_SCAN_CONTEXT* ctx = scan_context();
   YR_CALLBACK_FUNC callback = ctx->callback;
 
-  asprintf(&msg, "%lli", i);
+  yr_asprintf(&msg, "%lli", i);
+
   if (msg == NULL)
     return_integer(YR_UNDEFINED);
 
@@ -140,7 +141,8 @@ define_function(log_integer_msg)
   YR_SCAN_CONTEXT* ctx = scan_context();
   YR_CALLBACK_FUNC callback = ctx->callback;
 
-  asprintf(&msg, "%s%lli", s, i);
+  yr_asprintf(&msg, "%s%lli", s, i);
+
   if (msg == NULL)
     return_integer(YR_UNDEFINED);
 
@@ -159,7 +161,8 @@ define_function(log_float)
   YR_SCAN_CONTEXT* ctx = scan_context();
   YR_CALLBACK_FUNC callback = ctx->callback;
 
-  asprintf(&msg, "%f", f);
+  yr_asprintf(&msg, "%f", f);
+
   if (msg == NULL)
     return_integer(YR_UNDEFINED);
 
@@ -179,7 +182,8 @@ define_function(log_float_msg)
   YR_SCAN_CONTEXT* ctx = scan_context();
   YR_CALLBACK_FUNC callback = ctx->callback;
 
-  asprintf(&msg, "%s%f", s, f);
+  yr_asprintf(&msg, "%s%f", s, f);
+
   if (msg == NULL)
     return_integer(YR_UNDEFINED);
 
@@ -198,7 +202,8 @@ define_function(hex_integer)
   YR_SCAN_CONTEXT* ctx = scan_context();
   YR_CALLBACK_FUNC callback = ctx->callback;
 
-  asprintf(&msg, "0x%llx", i);
+  yr_asprintf(&msg, "0x%llx", i);
+
   if (msg == NULL)
     return_integer(YR_UNDEFINED);
 
@@ -218,7 +223,8 @@ define_function(hex_integer_msg)
   YR_SCAN_CONTEXT* ctx = scan_context();
   YR_CALLBACK_FUNC callback = ctx->callback;
 
-  asprintf(&msg, "%s0x%llx", s, i);
+  yr_asprintf(&msg, "%s0x%llx", s, i);
+
   if (msg == NULL)
     return_integer(YR_UNDEFINED);
 
@@ -241,12 +247,10 @@ begin_declarations
   declare_function("hex", "si", "i", hex_integer_msg);
 end_declarations
 
-
 int module_initialize(YR_MODULE* module)
 {
   return ERROR_SUCCESS;
 }
-
 
 int module_finalize(YR_MODULE* module)
 {
@@ -262,8 +266,7 @@ int module_load(
   return ERROR_SUCCESS;
 }
 
-int module_unload(
-    YR_OBJECT* module_object)
+int module_unload(YR_OBJECT* module_object)
 {
   return ERROR_SUCCESS;
 }
