@@ -46,6 +46,8 @@ MODULES += modules/time/time.c
 MODULES += modules/pe/pe.c
 MODULES += modules/pe/pe_utils.c
 
+MODULES += modules/console/console.c
+
 if CUCKOO_MODULE
 MODULES += modules/cuckoo/cuckoo.c
 endif
