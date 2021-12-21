@@ -158,7 +158,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define RE_MAX_STACK 1024
 #endif
 
-// Maximum input size scanned by yr_re_exec
+// Maximum input size scanned by yr_re_exec and yr_re_fast_exec
 #ifndef YR_RE_SCAN_LIMIT
 #define YR_RE_SCAN_LIMIT 4096
 #endif
