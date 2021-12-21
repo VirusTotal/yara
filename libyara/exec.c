@@ -902,7 +902,7 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
       }
       else
       {
-        if yr_bitmask_is_set (context->rule_matches_flags, r1.i)
+        if yr_bitmask_is_set(context->rule_matches_flags, r1.i)
           r2.i = 1;
         else
           r2.i = 0;
@@ -1357,15 +1357,26 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
 
     case OP_OF:
     case OP_OF_PERCENT:
+      memcpy(&r2.i, ip, sizeof(uint64_t));
+      ip += sizeof(uint64_t);
+      assert(r2.i == OF_STRING_SET || r2.i == OF_RULE_SET);
       found = 0;
       count = 0;
       pop(r1);
 
       while (!is_undef(r1))
       {
-        if (context->matches[r1.s->idx].tail != NULL)
+        if (r2.i == OF_STRING_SET)
         {
-          found++;
+          if (context->matches[r1.s->idx].tail != NULL)
+          {
+            found++;
+          }
+        }
+        else
+        {
+          // r1.i is 1 if the rule has already matched and zero otherwise.
+          found += r1.i;
         }
         count++;
         pop(r1);
