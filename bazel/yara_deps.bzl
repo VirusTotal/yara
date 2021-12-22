@@ -36,9 +36,9 @@ def yara_deps():
     maybe(
         http_archive,
         name = "openssl",
-        url = "https://github.com/openssl/openssl/archive/OpenSSL_1_1_0h.tar.gz",
-        sha256 = "f56dd7d81ce8d3e395f83285bd700a1098ed5a4cb0a81ce9522e41e6db7e0389",
-        strip_prefix = "openssl-OpenSSL_1_1_0h",
+        url = "https://github.com/openssl/openssl/archive/OpenSSL_1_1_1h.tar.gz",
+        sha256 = "d1f723c1f6b6d1eaf26655caa50d2f60d4d33f4b04977b1da63def878f386fcc",
+        strip_prefix = "openssl-OpenSSL_1_1_1h",
         build_file = "@com_github_virustotal_yara//:bazel/openssl.BUILD",
     )
     maybe(

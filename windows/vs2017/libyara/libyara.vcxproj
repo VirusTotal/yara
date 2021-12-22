@@ -246,6 +246,11 @@
     <ClCompile Include="..\..\..\libyara\modules\math\math.c" />
     <ClCompile Include="..\..\..\libyara\modules\macho\macho.c" />
     <ClCompile Include="..\..\..\libyara\modules\pe\pe.c" />
+    <ClCompile Include="..\..\..\libyara\modules\pe\authenticode-parser\authenticode.c" />
+    <ClCompile Include="..\..\..\libyara\modules\pe\authenticode-parser\helper.c" />
+    <ClCompile Include="..\..\..\libyara\modules\pe\authenticode-parser\countersignature.c" />
+    <ClCompile Include="..\..\..\libyara\modules\pe\authenticode-parser\structs.c" />
+    <ClCompile Include="..\..\..\libyara\modules\pe\authenticode-parser\certificate.c" />
     <ClCompile Include="..\..\..\libyara\modules\pe\pe_utils.c" />
     <ClCompile Include="..\..\..\libyara\modules\tests\tests.c" />
     <ClCompile Include="..\..\..\libyara\modules\time\time.c" />
