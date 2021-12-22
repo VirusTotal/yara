@@ -228,6 +228,9 @@ libyara_la_SOURCES = \
 	stopwatch.c \
 	strutils.c \
 	stream.c \
+	tlshc/tlsh.c \
+	tlshc/tlsh_impl.c \
+	tlshc/tlsh_util.c \
 	threading.c
 
 

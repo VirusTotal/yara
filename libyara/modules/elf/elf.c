@@ -28,17 +28,247 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include <limits.h>
+#include <stdlib.h>
 #include <string.h>
+#include <tlshc/tlsh.h>
 #include <yara/elf.h>
+#include <yara/elf_utils.h>
 #include <yara/endian.h>
 #include <yara/mem.h>
 #include <yara/modules.h>
+#include <yara/simple_str.h>
 #include <yara/utils.h>
-
+#include "../crypto.h"
 
 #define MODULE_NAME elf
 
 #define CLASS_DATA(c, d) ((c << 8) | d)
+
+static int sort_strcmp(const void* a, const void* b)
+{
+  return strcmp(*(const char**) a, *(const char**) b);
+}
+
+define_function(telfhash)
+{
+  YR_OBJECT* obj = module();
+  ELF* elf = (ELF*) obj->data;
+  if (elf == NULL)
+    return_string(YR_UNDEFINED);
+
+  if (elf->telfhash)
+    return_string(elf->telfhash);
+
+  /* We prefer dynsym if possible */
+  ELF_SYMBOL_LIST* list = elf->dynsym ? elf->dynsym : elf->symtab;
+  if (!list)
+    return_string(YR_UNDEFINED);
+
+  /* exclusions are based on the original implementation
+     https://github.com/trendmicro/telfhash/blob/master/telfhash/telfhash.py */
+  char* exclude_strings[] = {
+      "__libc_start_main",
+      "main",
+      "abort",
+      "cachectl",
+      "cacheflush",
+      "puts",
+      "atol",
+      "malloc_trim"};
+
+  SIMPLE_STR* sstr = NULL;
+
+  int symbol_count = 0;
+  char** clean_names = yr_malloc(list->count * sizeof(*clean_names));
+  if (!clean_names)
+    return_string(YR_UNDEFINED);
+
+  for (ELF_SYMBOL* i = list->symbols; i != NULL; i = i->next)
+  {
+    char* name = i->name;
+
+    if (!name)
+      continue;
+
+    /* Use only global code symbols */
+    if (i->bind != ELF_STB_GLOBAL || i->type != ELF_STT_FUNC ||
+        i->visibility != ELF_STV_DEFAULT)
+      continue;
+
+    /* ignore:
+        x86-64 specific functions
+        string functions (str.* and mem.*), gcc changes them depending on arch
+        symbols starting with . or _ */
+    bool is_bad_prefix = name[0] == '.' || name[0] == '_';
+    bool is_x86_64 = name[0] == '.' || name[0] == '_';
+    bool is_mem_or_str = strncmp(name, "str", 3) == 0 ||
+                         strncmp(name, "mem", 3) == 0;
+
+    if (is_bad_prefix || is_x86_64 || is_mem_or_str)
+      continue;
+
+    /* Exclude any symbols that match the excluded ones */
+    bool is_excluded = false;
+    for (int i = 0; i < sizeof(exclude_strings) / sizeof(*exclude_strings); i++)
+    {
+      if (strcmp(name, exclude_strings[i]) == 0)
+      {
+        is_excluded = true;
+        break;
+      }
+    }
+
+    if (is_excluded)
+      continue;
+
+    clean_names[symbol_count] = yr_malloc(strlen(name) + 1);
+    if (!clean_names[symbol_count])
+      goto cleanup;
+
+    /* Convert it to lowercase */
+    int j;
+    for (j = 0; name[j]; j++) clean_names[symbol_count][j] = tolower(name[j]);
+
+    clean_names[symbol_count][j] = '\0';
+
+    symbol_count++;
+  }
+
+  if (!symbol_count)
+    goto cleanup;
+
+  /* Now we have all the valid symbols, sort them, concat them */
+  qsort(clean_names, symbol_count, sizeof(*clean_names), &sort_strcmp);
+
+  sstr = sstr_newf("%s", clean_names[0]);
+  if (!sstr)
+    goto cleanup;
+
+  /* We've already written first symbol, start at 1 */
+  for (int i = 1; i < symbol_count; ++i)
+  {
+    if (!sstr_appendf(sstr, ",%s", clean_names[i]))
+      goto cleanup;
+  }
+
+  Tlsh* tlsh = tlsh_new();
+  if (!tlsh)
+    goto cleanup;
+
+  tlsh_final(tlsh, (const unsigned char*) sstr->str, sstr->len, 0);
+
+  const char* telfhash = tlsh_get_hash(tlsh, true);
+  elf->telfhash = yr_strdup(telfhash);  // cache it
+  if (!elf->telfhash)
+    goto cleanup;
+
+  for (int i = 0; i < symbol_count; ++i) yr_free(clean_names[i]);
+  yr_free(clean_names);
+  sstr_free(sstr);
+  tlsh_free(tlsh);
+
+  return_string(elf->telfhash);
+
+cleanup:
+  for (int i = 0; i < symbol_count; ++i) yr_free(clean_names[i]);
+  yr_free(clean_names);
+  sstr_free(sstr);
+
+  return_string(YR_UNDEFINED);
+}
+
+define_function(import_md5)
+{
+  YR_OBJECT* obj = module();
+  ELF* elf = (ELF*) obj->data;
+  if (elf == NULL)
+    return_string(YR_UNDEFINED);
+
+  if (elf->import_hash)
+    return_string(elf->import_hash);
+
+  ELF_SYMBOL_LIST* list = elf->dynsym ? elf->dynsym : elf->symtab;
+  if (!list)
+    return_string(YR_UNDEFINED);
+
+  SIMPLE_STR* sstr = NULL;
+
+  int symbol_count = 0;
+  char** clean_names = yr_malloc(list->count * sizeof(*clean_names));
+  if (!clean_names)
+    return_string(YR_UNDEFINED);
+
+  for (ELF_SYMBOL* i = list->symbols; i != NULL; i = i->next)
+  {
+    char* name = i->name;
+
+    if (!name)
+      continue;
+
+    if (i->shndx != ELF_SHN_UNDEF)
+      continue;
+
+    // skip empty names
+    if (strlen(i->name) == 0)
+      continue;
+
+    clean_names[symbol_count] = yr_malloc(strlen(name) + 1);
+    if (!clean_names[symbol_count])
+      goto cleanup;
+
+    /* Convert it to lowercase */
+    int j;
+    for (j = 0; name[j]; j++) clean_names[symbol_count][j] = tolower(name[j]);
+
+    clean_names[symbol_count][j] = '\0';
+
+    symbol_count++;
+  }
+
+  if (!symbol_count)
+    goto cleanup;
+
+  /* Now we have all the valid symbols, sort them, concat them */
+  qsort(clean_names, symbol_count, sizeof(*clean_names), &sort_strcmp);
+
+  sstr = sstr_newf("%s", clean_names[0]);
+  if (!sstr)
+    goto cleanup;
+
+  /* We've already written first symbol, start at 1 */
+  for (int i = 1; i < symbol_count; ++i)
+  {
+    if (!sstr_appendf(sstr, ",%s", clean_names[i]))
+      goto cleanup;
+  }
+
+  unsigned char hash[YR_MD5_LEN];
+
+  yr_md5_ctx ctx;
+  yr_md5_init(&ctx);
+  yr_md5_update(&ctx, sstr->str, sstr->len);
+  yr_md5_final(hash, &ctx);
+
+  elf->import_hash = yr_malloc(YR_MD5_LEN * 2 + 1);
+  if (!elf->import_hash)
+    goto cleanup;
+
+  for (int i = 0; i < YR_MD5_LEN; ++i)
+    sprintf(elf->import_hash + (i * 2), "%02x", hash[i]);
+
+  for (int i = 0; i < symbol_count; ++i) yr_free(clean_names[i]);
+  yr_free(clean_names);
+  sstr_free(sstr);
+
+  return_string(elf->import_hash);
+
+cleanup:
+  for (int i = 0; i < symbol_count; ++i) yr_free(clean_names[i]);
+  yr_free(clean_names);
+  sstr_free(sstr);
+
+  return_string(YR_UNDEFINED);
+}
 
 int get_elf_class_data(const uint8_t* buffer, size_t buffer_length)
 {
@@ -207,7 +437,8 @@ static const char* str_table_entry(
   }
 
 #define PARSE_ELF_HEADER(bits, bo)                                                        \
-  void parse_elf_header_##bits##_##bo(                                                    \
+  int parse_elf_header_##bits##_##bo(                                                     \
+      ELF* elf_data,                                                                      \
       elf##bits##_header_t* elf,                                                          \
       uint64_t base_address,                                                              \
       size_t elf_size,                                                                    \
@@ -227,6 +458,8 @@ static const char* str_table_entry(
     uint##bits##_t sym_str_table_size = 0;                                                \
     uint##bits##_t dyn_sym_table_size = 0;                                                \
     uint##bits##_t dyn_sym_str_table_size = 0;                                            \
+                                                                                          \
+    elf_data->symtab = elf_data->dynsym = NULL;                                           \
                                                                                           \
     elf##bits##_section_header_t* section_table;                                          \
     elf##bits##_section_header_t* section;                                                \
@@ -340,7 +573,7 @@ static const char* str_table_entry(
           {                                                                               \
             dyn_sym_table = elf_raw + yr_##bo##bits##toh(section->offset);                \
             dyn_sym_str_table = elf_raw +                                                 \
-                            yr_##bo##bits##toh(dynstr_section->offset);                   \
+                                yr_##bo##bits##toh(dynstr_section->offset);               \
             dyn_sym_table_size = yr_##bo##bits##toh(section->size);                       \
             dyn_sym_str_table_size = yr_##bo##bits##toh(dynstr_section->size);            \
           }                                                                               \
@@ -351,57 +584,148 @@ static const char* str_table_entry(
           is_valid_ptr(elf, elf_size, sym_table, sym_table_size))                         \
       {                                                                                   \
         elf##bits##_sym_t* sym = (elf##bits##_sym_t*) sym_table;                          \
+        elf_data->symtab = (ELF_SYMBOL_LIST*) yr_malloc(                                  \
+            sizeof(ELF_SYMBOL_LIST));                                                     \
+                                                                                          \
+        if (elf_data->symtab == NULL)                                                     \
+          return ERROR_INSUFFICIENT_MEMORY;                                               \
+                                                                                          \
+        ELF_SYMBOL** symbol = &(elf_data->symtab->symbols);                               \
+        *symbol = NULL;                                                                   \
                                                                                           \
         for (j = 0; j < sym_table_size / sizeof(elf##bits##_sym_t);                       \
              j++, sym++)                                                                  \
         {                                                                                 \
+          *symbol = (ELF_SYMBOL*) yr_malloc(sizeof(ELF_SYMBOL));                          \
+          if (*symbol == NULL)                                                            \
+            return ERROR_INSUFFICIENT_MEMORY;                                             \
+                                                                                          \
+          (*symbol)->name = NULL;                                                         \
+          (*symbol)->next = NULL;                                                         \
+                                                                                          \
           const char* sym_name = str_table_entry(                                         \
               sym_str_table,                                                              \
               sym_str_table + sym_str_table_size,                                         \
               yr_##bo##32toh(sym->name));                                                 \
                                                                                           \
           if (sym_name)                                                                   \
+          {                                                                               \
             set_string(sym_name, elf_obj, "symtab[%i].name", j);                          \
+            (*symbol)->name = (char*) yr_malloc(strlen(sym_name) + 1);                    \
+            if ((*symbol)->name == NULL)                                                  \
+              return ERROR_INSUFFICIENT_MEMORY;                                           \
                                                                                           \
-          set_integer(sym->info >> 4, elf_obj, "symtab[%i].bind", j);                     \
-          set_integer(sym->info & 0xf, elf_obj, "symtab[%i].type", j);                    \
-          set_integer(                                                                    \
-              yr_##bo##16toh(sym->shndx), elf_obj, "symtab[%i].shndx", j);                \
+            strcpy((*symbol)->name, sym_name);                                            \
+          }                                                                               \
+                                                                                          \
+          int bind = sym->info >> 4;                                                      \
+          (*symbol)->bind = bind;                                                         \
+          set_integer(bind, elf_obj, "symtab[%i].bind", j);                               \
+                                                                                          \
+          int type = sym->info & 0xf;                                                     \
+          (*symbol)->type = type;                                                         \
+          set_integer(type, elf_obj, "symtab[%i].type", j);                               \
+                                                                                          \
+          int shndx = yr_##bo##16toh(sym->shndx);                                         \
+          (*symbol)->shndx = shndx;                                                       \
+          set_integer(shndx, elf_obj, "symtab[%i].shndx", j);                             \
+                                                                                          \
+          int value = yr_##bo##bits##toh(sym->value);                                     \
+          (*symbol)->value = value;                                                       \
           set_integer(                                                                    \
               yr_##bo##bits##toh(sym->value), elf_obj, "symtab[%i].value", j);            \
+                                                                                          \
+          int size = yr_##bo##bits##toh(sym->size);                                       \
+          (*symbol)->size = size;                                                         \
           set_integer(                                                                    \
               yr_##bo##bits##toh(sym->size), elf_obj, "symtab[%i].size", j);              \
+                                                                                          \
+          int other = yr_##bo##bits##toh(sym->other);                                     \
+          (*symbol)->visibility = other & 0x3;                                            \
+                                                                                          \
+          symbol = &((*symbol)->next);                                                    \
         }                                                                                 \
                                                                                           \
+        elf_data->symtab->count = j;                                                      \
         set_integer(j, elf_obj, "symtab_entries");                                        \
       }                                                                                   \
                                                                                           \
-      if (is_valid_ptr(elf, elf_size, dyn_sym_str_table, dyn_sym_str_table_size) &&       \
+      if (is_valid_ptr(                                                                   \
+              elf, elf_size, dyn_sym_str_table, dyn_sym_str_table_size) &&                \
           is_valid_ptr(elf, elf_size, dyn_sym_table, dyn_sym_table_size))                 \
       {                                                                                   \
         elf##bits##_sym_t* dynsym = (elf##bits##_sym_t*) dyn_sym_table;                   \
                                                                                           \
+        elf_data->dynsym = (ELF_SYMBOL_LIST*) yr_malloc(                                  \
+            sizeof(ELF_SYMBOL_LIST));                                                     \
+                                                                                          \
+        if (elf_data->dynsym == NULL)                                                     \
+          return ERROR_INSUFFICIENT_MEMORY;                                               \
+                                                                                          \
+        ELF_SYMBOL** symbol = &(elf_data->dynsym->symbols);                               \
+        *symbol = NULL;                                                                   \
+                                                                                          \
         for (m = 0; m < dyn_sym_table_size / sizeof(elf##bits##_sym_t);                   \
              m++, dynsym++)                                                               \
         {                                                                                 \
+          *symbol = (ELF_SYMBOL*) yr_malloc(sizeof(ELF_SYMBOL));                          \
+          if (*symbol == NULL)                                                            \
+            return ERROR_INSUFFICIENT_MEMORY;                                             \
+                                                                                          \
+          (*symbol)->name = NULL;                                                         \
+          (*symbol)->next = NULL;                                                         \
+                                                                                          \
           const char* dynsym_name = str_table_entry(                                      \
               dyn_sym_str_table,                                                          \
               dyn_sym_str_table + dyn_sym_str_table_size,                                 \
               yr_##bo##32toh(dynsym->name));                                              \
                                                                                           \
           if (dynsym_name)                                                                \
+          {                                                                               \
             set_string(dynsym_name, elf_obj, "dynsym[%i].name", m);                       \
+            (*symbol)->name = (char*) yr_malloc(strlen(dynsym_name) + 1);                 \
+            if ((*symbol)->name == NULL)                                                  \
+              return ERROR_INSUFFICIENT_MEMORY;                                           \
                                                                                           \
+            strcpy((*symbol)->name, dynsym_name);                                         \
+          }                                                                               \
+                                                                                          \
+          int bind = dynsym->info >> 4;                                                   \
+          (*symbol)->bind = bind;                                                         \
           set_integer(dynsym->info >> 4, elf_obj, "dynsym[%i].bind", m);                  \
+                                                                                          \
+          int type = dynsym->info & 0xf;                                                  \
+          (*symbol)->type = type;                                                         \
           set_integer(dynsym->info & 0xf, elf_obj, "dynsym[%i].type", m);                 \
+                                                                                          \
+          int shndx = yr_##bo##16toh(dynsym->shndx);                                      \
+          (*symbol)->shndx = shndx;                                                       \
           set_integer(                                                                    \
               yr_##bo##16toh(dynsym->shndx), elf_obj, "dynsym[%i].shndx", m);             \
+                                                                                          \
+          int value = yr_##bo##bits##toh(dynsym->value);                                  \
+          (*symbol)->value = value;                                                       \
           set_integer(                                                                    \
-              yr_##bo##bits##toh(dynsym->value), elf_obj, "dynsym[%i].value", m);         \
+              yr_##bo##bits##toh(dynsym->value),                                          \
+              elf_obj,                                                                    \
+              "dynsym[%i].value",                                                         \
+              m);                                                                         \
+                                                                                          \
+          int size = yr_##bo##bits##toh(dynsym->size);                                    \
+          (*symbol)->size = size;                                                         \
           set_integer(                                                                    \
-              yr_##bo##bits##toh(dynsym->size), elf_obj, "dynsym[%i].size", m);           \
+              yr_##bo##bits##toh(dynsym->size),                                           \
+              elf_obj,                                                                    \
+              "dynsym[%i].size",                                                          \
+              m);                                                                         \
+                                                                                          \
+          int other = yr_##bo##bits##toh(dynsym->other);                                  \
+          (*symbol)->visibility = other & 0x3;                                            \
+                                                                                          \
+          symbol = &((*symbol)->next);                                                    \
         }                                                                                 \
                                                                                           \
+        elf_data->dynsym->count = m;                                                      \
         set_integer(m, elf_obj, "dynsym_entries");                                        \
       }                                                                                   \
     }                                                                                     \
@@ -476,6 +800,7 @@ static const char* str_table_entry(
         }                                                                                 \
       }                                                                                   \
     }                                                                                     \
+    return ERROR_SUCCESS;                                                                 \
   }
 
 ELF_RVA_TO_OFFSET(32, le);
@@ -646,6 +971,9 @@ begin_declarations
     declare_integer("shndx");
   end_struct_array("dynsym")
 
+  declare_function("telfhash", "", "s", telfhash);
+  declare_function("import_md5", "", "s", import_md5);
+
 end_declarations
 
 
@@ -771,6 +1099,8 @@ int module_load(
   set_integer(ELF_PF_W, module_object, "PF_W");
   set_integer(ELF_PF_R, module_object, "PF_R");
 
+  uint64_t parse_result = ERROR_SUCCESS;
+
   foreach_memory_block(iterator, block)
   {
     const uint8_t* block_data = block->fetch_data(block);
@@ -778,6 +1108,11 @@ int module_load(
     if (block_data == NULL)
       continue;
 
+    ELF* elf = (ELF*) yr_calloc(1, sizeof(ELF));
+    if (elf == NULL)
+      return ERROR_INSUFFICIENT_MEMORY;
+
+    module_object->data = elf;
     switch (get_elf_class_data(block_data, block->size))
     {
     case CLASS_DATA(ELF_CLASS_32, ELF_DATA_2LSB):
@@ -789,7 +1124,8 @@ int module_load(
         if (!(context->flags & SCAN_FLAGS_PROCESS_MEMORY) ||
             yr_le16toh(elf_header32->type) == ELF_ET_EXEC)
         {
-          parse_elf_header_32_le(
+          parse_result = parse_elf_header_32_le(
+              elf,
               elf_header32,
               block->base,
               block->size,
@@ -809,7 +1145,8 @@ int module_load(
         if (!(context->flags & SCAN_FLAGS_PROCESS_MEMORY) ||
             yr_be16toh(elf_header32->type) == ELF_ET_EXEC)
         {
-          parse_elf_header_32_be(
+          parse_result = parse_elf_header_32_be(
+              elf,
               elf_header32,
               block->base,
               block->size,
@@ -829,7 +1166,8 @@ int module_load(
         if (!(context->flags & SCAN_FLAGS_PROCESS_MEMORY) ||
             yr_le16toh(elf_header64->type) == ELF_ET_EXEC)
         {
-          parse_elf_header_64_le(
+          parse_result = parse_elf_header_64_le(
+              elf,
               elf_header64,
               block->base,
               block->size,
@@ -849,7 +1187,8 @@ int module_load(
         if (!(context->flags & SCAN_FLAGS_PROCESS_MEMORY) ||
             yr_be16toh(elf_header64->type) == ELF_ET_EXEC)
         {
-          parse_elf_header_64_be(
+          parse_result = parse_elf_header_64_be(
+              elf,
               elf_header64,
               block->base,
               block->size,
@@ -862,11 +1201,46 @@ int module_load(
     }
   }
 
-  return ERROR_SUCCESS;
+  return parse_result;
 }
-
 
 int module_unload(YR_OBJECT* module_object)
 {
+  ELF* elf = (ELF*) module_object->data;
+  if (elf == NULL)
+    return ERROR_SUCCESS;
+
+  if (elf->symtab != NULL)
+  {
+    ELF_SYMBOL *act = NULL, *next = NULL;
+    for (act = elf->symtab->symbols; act != NULL; act = next)
+    {
+      next = act->next;
+      if (act->name != NULL)
+        yr_free(act->name);
+      yr_free(act);
+    }
+    yr_free(elf->symtab);
+  }
+
+  if (elf->dynsym != NULL)
+  {
+    ELF_SYMBOL *act = NULL, *next = NULL;
+    for (act = elf->dynsym->symbols; act != NULL; act = next)
+    {
+      next = act->next;
+      if (act->name != NULL)
+        yr_free(act->name);
+      yr_free(act);
+    }
+    yr_free(elf->dynsym);
+  }
+
+  yr_free(elf->telfhash);
+  yr_free(elf->import_hash);
+  yr_free(elf);
+
+  module_object->data = NULL;
+
   return ERROR_SUCCESS;
 }
