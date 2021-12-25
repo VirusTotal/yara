@@ -352,6 +352,13 @@ static void pe_parse_debug_directory(PE* pe)
       if (struct_fits_in_pe(pe, pdb70, CV_INFO_PDB70))
         pdb_path = (char*) (pdb70->PdbFileName);
     }
+    else if (yr_le32toh(cv_hdr->dwSignature) == CODEVIEW_SIGNATURE_MTOC)
+    {
+      PMTOC_ENTRY mtoc = (PMTOC_ENTRY) cv_hdr;
+
+      if (struct_fits_in_pe(pe, mtoc, MTOC_ENTRY))
+        pdb_path = (char*) (mtoc->PdbFileName);
+    }
 
     if (pdb_path != NULL)
     {
