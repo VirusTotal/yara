@@ -30,20 +30,18 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #if defined(USE_WINDOWS_PROC)
 
 #include <windows.h>
-
-#include <yara/mem.h>
 #include <yara/error.h>
+#include <yara/libyara.h>
+#include <yara/mem.h>
 #include <yara/proc.h>
 
-
-typedef struct _YR_PROC_INFO {
-  HANDLE          hProcess;
-  SYSTEM_INFO     si;
+typedef struct _YR_PROC_INFO
+{
+  HANDLE hProcess;
+  SYSTEM_INFO si;
 } YR_PROC_INFO;
 
-int _yr_process_attach(
-    int pid,
-    YR_PROC_ITERATOR_CTX* context)
+int _yr_process_attach(int pid, YR_PROC_ITERATOR_CTX* context)
 {
   TOKEN_PRIVILEGES tokenPriv;
   LUID luidDebug;
@@ -62,21 +60,14 @@ int _yr_process_attach(
     tokenPriv.Privileges[0].Attributes = SE_PRIVILEGE_ENABLED;
 
     AdjustTokenPrivileges(
-        hToken,
-        FALSE,
-        &tokenPriv,
-        sizeof(tokenPriv),
-        NULL,
-        NULL);
+        hToken, FALSE, &tokenPriv, sizeof(tokenPriv), NULL, NULL);
   }
 
   if (hToken != NULL)
     CloseHandle(hToken);
 
   proc_info->hProcess = OpenProcess(
-      PROCESS_VM_READ | PROCESS_QUERY_INFORMATION,
-      FALSE,
-      pid);
+      PROCESS_VM_READ | PROCESS_QUERY_INFORMATION, FALSE, pid);
 
   if (proc_info->hProcess == NULL)
   {
@@ -91,19 +82,15 @@ int _yr_process_attach(
   return ERROR_SUCCESS;
 }
 
-
-int _yr_process_detach(
-    YR_PROC_ITERATOR_CTX* context)
+int _yr_process_detach(YR_PROC_ITERATOR_CTX* context)
 {
-  YR_PROC_INFO* proc_info = (YR_PROC_INFO*)context->proc_info;
+  YR_PROC_INFO* proc_info = (YR_PROC_INFO*) context->proc_info;
 
   CloseHandle(proc_info->hProcess);
   return ERROR_SUCCESS;
 }
 
-
-YR_API const uint8_t* yr_process_fetch_memory_block_data(
-    YR_MEMORY_BLOCK* block)
+YR_API const uint8_t* yr_process_fetch_memory_block_data(YR_MEMORY_BLOCK* block)
 {
   SIZE_T read;
 
@@ -129,18 +116,17 @@ YR_API const uint8_t* yr_process_fetch_memory_block_data(
   }
 
   if (ReadProcessMemory(
-        proc_info->hProcess,
-        (LPCVOID) block->base,
-        (LPVOID) context->buffer,
-        (SIZE_T) block->size,
-        &read) == FALSE)
-    {
-      return NULL;
-    }
+          proc_info->hProcess,
+          (LPCVOID) block->base,
+          (LPVOID) context->buffer,
+          (SIZE_T) block->size,
+          &read) == FALSE)
+  {
+    return NULL;
+  }
 
   return context->buffer;
 }
-
 
 YR_API YR_MEMORY_BLOCK* yr_process_get_next_memory_block(
     YR_MEMORY_BLOCK_ITERATOR* iterator)
@@ -149,8 +135,14 @@ YR_API YR_MEMORY_BLOCK* yr_process_get_next_memory_block(
   YR_PROC_INFO* proc_info = (YR_PROC_INFO*) context->proc_info;
 
   MEMORY_BASIC_INFORMATION mbi;
-  PVOID address = (PVOID) (context->current_block.base + \
-                           context->current_block.size);
+  void* address =
+      (void*) (context->current_block.base + context->current_block.size);
+  uint64_t max_process_memory_chunk;
+
+  yr_get_configuration_uint64(
+      YR_CONFIG_MAX_PROCESS_MEMORY_CHUNK, &max_process_memory_chunk);
+
+  iterator->last_error = ERROR_SUCCESS;
 
   while (address < proc_info->si.lpMaximumApplicationAddress &&
          VirtualQueryEx(proc_info->hProcess, address, &mbi, sizeof(mbi)) != 0)
@@ -162,18 +154,26 @@ YR_API YR_MEMORY_BLOCK* yr_process_get_next_memory_block(
 
     if (mbi.State == MEM_COMMIT && ((mbi.Protect & PAGE_NOACCESS) == 0))
     {
-      context->current_block.base = (size_t) mbi.BaseAddress;
-      context->current_block.size = mbi.RegionSize;
+      size_t chuck_size =
+          mbi.RegionSize -
+          (size_t) (((uint8_t*) address) - ((uint8_t*) mbi.BaseAddress));
+
+      if (((uint64_t) chuck_size) > max_process_memory_chunk)
+      {
+        chuck_size = (size_t) max_process_memory_chunk;
+      }
+
+      context->current_block.base = (size_t) address;
+      context->current_block.size = chuck_size;
 
       return &context->current_block;
     }
 
-    address = (uint8_t*) address + mbi.RegionSize;
+    address = (uint8_t*) mbi.BaseAddress + mbi.RegionSize;
   }
 
   return NULL;
 }
-
 
 YR_API YR_MEMORY_BLOCK* yr_process_get_first_memory_block(
     YR_MEMORY_BLOCK_ITERATOR* iterator)
@@ -182,8 +182,8 @@ YR_API YR_MEMORY_BLOCK* yr_process_get_first_memory_block(
   YR_PROC_INFO* proc_info = (YR_PROC_INFO*) context->proc_info;
 
   context->current_block.size = 0;
-  context->current_block.base = \
-      (size_t) proc_info->si.lpMinimumApplicationAddress;
+  context->current_block.base = (size_t)
+                                    proc_info->si.lpMinimumApplicationAddress;
 
   return yr_process_get_next_memory_block(iterator);
 }

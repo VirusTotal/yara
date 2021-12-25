@@ -34,39 +34,27 @@ typedef struct YR_STACK YR_STACK;
 
 struct YR_STACK
 {
-    // Pointer to a heap-allocated array containing the void* values put in
-    // in the stack. This array starts with a fixed size and it's grown as
-    // required when new items are pushed into the stack.
-    void* items;
+  // Pointer to a heap-allocated array containing the void* values put in
+  // in the stack. This array starts with a fixed size and it's grown as
+  // required when new items are pushed into the stack.
+  void* items;
 
-    // Current capacity (i.e: the number of items that fit into the array)
-    int capacity;
+  // Current capacity (i.e: the number of items that fit into the array)
+  int capacity;
 
-    // Size of each individual item in the stack.
-    int item_size;
+  // Size of each individual item in the stack.
+  int item_size;
 
-    // Index of the stack's top in the items array.
-    int top;
+  // Index of the stack's top in the items array.
+  int top;
 };
 
+int yr_stack_create(int initial_capacity, int item_size, YR_STACK** stack);
 
-int yr_stack_create(
-    int initial_capacity,
-    int item_size,
-    YR_STACK** stack);
+void yr_stack_destroy(YR_STACK* stack);
 
+int yr_stack_push(YR_STACK* stack, void* item);
 
-void yr_stack_destroy(
-    YR_STACK* stack);
-
-
-int yr_stack_push(
-    YR_STACK* stack,
-    void* item);
-
-
-int yr_stack_pop(
-    YR_STACK* stack,
-    void* item);
+int yr_stack_pop(YR_STACK* stack, void* item);
 
 #endif

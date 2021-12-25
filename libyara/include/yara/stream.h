@@ -38,13 +38,11 @@ typedef size_t (*YR_STREAM_READ_FUNC)(
     size_t count,
     void* user_data);
 
-
 typedef size_t (*YR_STREAM_WRITE_FUNC)(
     const void* ptr,
     size_t size,
     size_t count,
     void* user_data);
-
 
 typedef struct _YR_STREAM
 {
@@ -55,13 +53,7 @@ typedef struct _YR_STREAM
 
 } YR_STREAM;
 
-
-size_t yr_stream_read(
-    void* ptr,
-    size_t size,
-    size_t count,
-    YR_STREAM* stream);
-
+size_t yr_stream_read(void* ptr, size_t size, size_t count, YR_STREAM* stream);
 
 size_t yr_stream_write(
     const void* ptr,

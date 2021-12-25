@@ -29,30 +29,24 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #if defined(USE_FREEBSD_PROC)
 
-#include <sys/ptrace.h>
-#include <sys/wait.h>
-
-#include <fcntl.h>
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/ptrace.h>
-#include <sys/wait.h>
 #include <errno.h>
-
+#include <fcntl.h>
+#include <sys/ptrace.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <unistd.h>
 #include <yara/error.h>
-#include <yara/proc.h>
+#include <yara/libyara.h>
 #include <yara/mem.h>
+#include <yara/proc.h>
 
-
-typedef struct _YR_PROC_INFO {
-  int                    pid;
+typedef struct _YR_PROC_INFO
+{
+  int pid;
   struct ptrace_vm_entry vm_entry;
 } YR_PROC_INFO;
 
-
-int _yr_process_attach(
-    int pid,
-    YR_PROC_ITERATOR_CTX* context)
+int _yr_process_attach(int pid, YR_PROC_ITERATOR_CTX* context)
 {
   int status;
 
@@ -61,7 +55,7 @@ int _yr_process_attach(
   if (proc_info == NULL)
     return ERROR_INSUFFICIENT_MEMORY;
 
-  context->proc_info = proc_info;
+  memset(proc_info, 0, sizeof(YR_PROC_INFO));
 
   proc_info->pid = pid;
   if (ptrace(PT_ATTACH, pid, NULL, 0) == -1)
@@ -81,12 +75,12 @@ int _yr_process_attach(
     return ERROR_COULD_NOT_ATTACH_TO_PROCESS;
   }
 
+  context->proc_info = proc_info;
+
   return ERROR_SUCCESS;
 }
 
-
-int _yr_process_detach(
-    YR_PROC_ITERATOR_CTX* context)
+int _yr_process_detach(YR_PROC_ITERATOR_CTX* context)
 {
   YR_PROC_INFO* proc_info = (YR_PROC_INFO*) context->proc_info;
 
@@ -96,9 +90,7 @@ int _yr_process_detach(
   return ERROR_SUCCESS;
 }
 
-
-YR_API const uint8_t* yr_process_fetch_memory_block_data(
-    YR_MEMORY_BLOCK* block)
+YR_API const uint8_t* yr_process_fetch_memory_block_data(YR_MEMORY_BLOCK* block)
 {
   YR_PROC_ITERATOR_CTX* context = (YR_PROC_ITERATOR_CTX*) block->context;
   YR_PROC_INFO* proc_info = (YR_PROC_INFO*) context->proc_info;
@@ -123,18 +115,17 @@ YR_API const uint8_t* yr_process_fetch_memory_block_data(
   }
 
   io_desc.piod_op = PIOD_READ_D;
-  io_desc.piod_offs = (void*)block->base;
-  io_desc.piod_addr = (void*)context->buffer;
+  io_desc.piod_offs = (void*) block->base;
+  io_desc.piod_addr = (void*) context->buffer;
   io_desc.piod_len = block->size;
 
-  if (ptrace(PT_IO, proc_info->pid, (char*)&io_desc, 0) == -1)
+  if (ptrace(PT_IO, proc_info->pid, (char*) &io_desc, 0) == -1)
   {
     return NULL;
   }
 
   return context->buffer;
 }
-
 
 YR_API YR_MEMORY_BLOCK* yr_process_get_next_memory_block(
     YR_MEMORY_BLOCK_ITERATOR* iterator)
@@ -147,17 +138,39 @@ YR_API YR_MEMORY_BLOCK* yr_process_get_next_memory_block(
   proc_info->vm_entry.pve_path = buf;
   proc_info->vm_entry.pve_pathlen = sizeof(buf);
 
-  if (ptrace(PT_VM_ENTRY, proc_info->pid, (char*)(&proc_info->vm_entry), 0) == -1) {
-    return NULL;
+  iterator->last_error = ERROR_SUCCESS;
+
+  uint64_t current_begin = context->current_block.base +
+                           context->current_block.size;
+
+  uint64_t max_process_memory_chunk;
+
+  yr_get_configuration_uint64(
+      YR_CONFIG_MAX_PROCESS_MEMORY_CHUNK, &max_process_memory_chunk);
+
+  if (proc_info->vm_entry.pve_end <= current_begin)
+  {
+    if (ptrace(
+            PT_VM_ENTRY, proc_info->pid, (char*) (&proc_info->vm_entry), 0) ==
+        -1)
+    {
+      return NULL;
+    }
+    else
+    {
+      current_begin = proc_info->vm_entry.pve_start;
+    }
   }
 
-  context->current_block.base = proc_info->vm_entry.pve_start;
-  context->current_block.size =
-    proc_info->vm_entry.pve_end - proc_info->vm_entry.pve_start + 1;
+  context->current_block.base = current_begin;
+  context->current_block.size = yr_min(
+      proc_info->vm_entry.pve_end - current_begin + 1,
+      max_process_memory_chunk);
+
+  assert(context->current_block.size > 0);
 
   return &context->current_block;
 }
-
 
 YR_API YR_MEMORY_BLOCK* yr_process_get_first_memory_block(
     YR_MEMORY_BLOCK_ITERATOR* iterator)

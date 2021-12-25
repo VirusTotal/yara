@@ -1,3 +1,22 @@
+# ABI_VERSION is passed to libtool as --version-number $(ABI_VERSION). This is
+# not related to YARA's release version, this is used for tracking changes in
+# the ABI, not in the project as a whole.
+#
+# The three number mean [current]:[revision]:[age], and they should updated as
+# follow:
+#
+# 1. With every release increment "revision".
+#
+# 2. If any interfaces have been added, removed, or changed since the last
+#    update, increment "current" and set "revision" to 0.
+#
+# 3. If the changes in the interface were backward compatible (i.e: only adding
+#    new APIs) increment "age", or set it to 0 if otherwise.
+#
+# See https://autotools.io/libtool/version.html for more details.
+#
+ABI_VERSION = 8:0:0
+
 # Rules for generating YARA modules from .proto files. For each .proto file
 # three files are generated: .c, .pb-c.c, and .pb-c.h. The .c file is generated
 # by protoc-gen-yara and the other two by protoc-gen-c. This is done only if
@@ -26,6 +45,8 @@ MODULES += modules/time/time.c
 
 MODULES += modules/pe/pe.c
 MODULES += modules/pe/pe_utils.c
+
+MODULES += modules/console/console.c
 
 if CUCKOO_MODULE
 MODULES += modules/cuckoo/cuckoo.c
@@ -62,11 +83,24 @@ endif
 # MODULES += modules/yourmodule.c
 #
 
-AM_YFLAGS=-d
+#
+# When bison is used in POSIX yacc emulation mode (-y/--yacc option) it
+# produces warnings if we use Bison-specific features that are not supported
+# by yacc. With -Wno-yacc we turn off those warnings. Ideally we should call
+# bison without the -y/--yacc option, but autoconf insists on using bison in
+# yacc compatibility mode because of AC_PROG_YACC, and AC_PROG_BISON doesn't
+# exist.
+#
+AM_YFLAGS=-d -Wno-yacc
 
 AM_CFLAGS=-Wall -Wno-deprecated-declarations \
 	-D_GNU_SOURCE \
 	-I$(srcdir)/include
+
+if GCOV
+MOSTLYCLEANFILES = {.,proc,modules/*}/*.gc{no,da,ov}
+AM_CFLAGS+=-O0 -g -ftest-coverage -fprofile-arcs
+else
 
 if DEBUG
 AM_CFLAGS+=-g
@@ -77,6 +111,9 @@ AM_CFLAGS+=-O3
 else
 AM_CFLAGS+=-O0
 endif
+
+endif
+
 
 if ADDRESS_SANITIZER
 AM_CFLAGS+=-fsanitize=address
@@ -108,6 +145,7 @@ yarainclude_HEADERS = \
 	include/yara/limits.h \
 	include/yara/mem.h \
 	include/yara/modules.h \
+	include/yara/notebook.h \
 	include/yara/object.h \
 	include/yara/parser.h \
 	include/yara/proc.h \
@@ -143,7 +181,7 @@ dist_noinst_DATA = pb/yara.proto
 
 lib_LTLIBRARIES = libyara.la
 
-libyara_la_LDFLAGS = -version-number 3:11:0
+libyara_la_LDFLAGS = -version-number $(ABI_VERSION)
 
 BUILT_SOURCES = \
 	lexer.c \
@@ -173,6 +211,7 @@ libyara_la_SOURCES = \
 	libyara.c \
 	mem.c \
 	modules.c \
+	notebook.c \
 	object.c \
 	parser.c \
 	proc.c \

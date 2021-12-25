@@ -31,16 +31,19 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define YR_STRUTILS_H
 
 #include <assert.h>
+#include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
-
 #include <yara/integers.h>
 
-
-#if defined(_WIN32) || defined(__CYGWIN__)
+#if defined(_WIN32)
 
 #if !defined(PRIu64)
 #define PRIu64 "I64u"
+#endif
+
+#if !defined(PRIu32)
+#define PRIu32 "I32u"
 #endif
 
 #if !defined(PRIx64)
@@ -51,10 +54,13 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define PRId64 "I64d"
 #endif
 
+#if !defined(PRIi32)
+#define PRIi32 "I32i"
+#endif
+
 #else
 #include <inttypes.h>
 #endif
-
 
 // Cygwin already has these functions.
 #if defined(_WIN32) && !defined(__CYGWIN__)
@@ -65,52 +71,38 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #endif
 
 #endif
-#define strcasecmp _stricmp
+#define strcasecmp  _stricmp
 #define strncasecmp _strnicmp
 #endif
 
-
-uint64_t xtoi(
-    const char* hexstr);
-
+uint64_t xtoi(const char* hexstr);
 
 #if !HAVE_STRLCPY && !defined(strlcpy)
-size_t strlcpy(
-    char *dst,
-    const char *src,
-    size_t size);
+size_t strlcpy(char* dst, const char* src, size_t size);
 #endif
-
 
 #if !HAVE_STRLCAT && !defined(strlcat)
-size_t strlcat(
-    char *dst,
-    const char *src,
-    size_t size);
+size_t strlcat(char* dst, const char* src, size_t size);
 #endif
-
 
 #if !HAVE_MEMMEM && !defined(memmem)
 void* memmem(
-    const void *haystack,
+    const void* haystack,
     size_t haystack_size,
-    const void *needle,
+    const void* needle,
     size_t needle_size);
 #endif
 
+int strnlen_w(const char* w_str);
 
-int strnlen_w(
-    const char* w_str);
+int strcmp_w(const char* w_str, const char* str);
 
-
-int strcmp_w(
-    const char* w_str,
-    const char* str);
-
-
-size_t strlcpy_w(
-    char* dst,
-    const char* w_src,
-    size_t n);
+size_t strlcpy_w(char* dst, const char* w_src, size_t n);
 
 #endif
+
+int yr_isalnum(const uint8_t* s);
+
+void yr_vasprintf(char** strp, const char* fmt, va_list ap);
+
+void yr_asprintf(char** strp, const char* fmt, ...);

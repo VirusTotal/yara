@@ -12,8 +12,8 @@ Compiling and installing YARA
 
 Download the source tarball and get prepared for compiling it::
 
-    tar -zxf yara-3.11.0.tar.gz
-    cd yara-3.11.0
+    tar -zxf yara-4.2.0.tar.gz
+    cd yara-4.2.0
     ./bootstrap.sh
 
 Make sure you have ``automake``, ``libtool``, ``make``  and ``gcc`` and ``pkg-config`` installed in your system. Ubuntu and Debian users can use::
@@ -27,6 +27,7 @@ If you plan to modify YARA's source code you may also need ``flex`` and
 
 Compile and install YARA in the standard way::
 
+    ./bootstrap.sh
     ./configure
     make
     sudo make install
@@ -88,7 +89,8 @@ You can also download and install YARA using the `vcpkg <https://github.com/Micr
     ./vcpkg integrate install
     vcpkg install yara
 
-The YARA port in vcpkg is kept up to date by Microsoft team members and community contributors. If the version is out of date, please `create an issue or pull request <https://github.com/Microsoft/vcpkg/>`_ on the vcpkg repository.
+The YARA port in vcpkg is kept up to date by Microsoft team members and community contributors. If the version is out
+of date, please `create an issue or pull request <https://github.com/Microsoft/vcpkg/>`_ on the vcpkg repository.
 
 
 Installing on Windows
@@ -98,10 +100,11 @@ Compiled binaries for Windows in both 32 and 64 bit flavors can be found in the
 link below. Just download the version you want, unzip the archive, and put the
 ``yara.exe`` and ``yarac.exe`` binaries anywhere in your disk.
 
-To install the ``yara-python`` extension download and execute the installer
-corresponding to the version of Python you're using.
+`Download Windows binaries <https://github.com/VirusTotal/yara/releases/latest>`_
 
-`Download Windows binaries <https://www.dropbox.com/sh/umip8ndplytwzj1/AADdLRsrpJL1CM1vPVAxc5JZa?dl=0>`_
+To install YARA using `Scoop <https://scoop.sh>`_ or `Chocolatey <https://chocolatey.org>`_, simply type
+``scoop install yara`` or ``choco install yara``. The integration with both `Scoop` and `Chocolatey` are
+not maintained their respective teams, not by the YARA authors.
 
 
 Installing on Mac OS X with Homebrew
@@ -111,7 +114,7 @@ To install YARA using `Homebrew <https://brew.sh>`_, simply type
 ``brew install yara``.
 
 
-Installing yara-python
+Installing ``yara-python``
 ----------------------
 
 If you plan to use YARA from your Python scripts you need to install the
@@ -152,3 +155,12 @@ libraries in this path by default, we must instruct it to do so by adding
 
     sudo sh -c 'echo "/usr/local/lib" >> /etc/ld.so.conf'
     sudo ldconfig
+
+If you're using Windows PowerShell as your command shell, ``yara my_first_rule my_first_rule`` may return this error::
+
+    my_first_rule(1): error: non-ascii character
+
+You can avoid this by using the ``Set-Content`` cmdlet to specify ascii output when creating your rule file::
+
+    Set-Content -path .\my_first_rule -Value "rule dummy { condition: true }" -Encoding Ascii
+    .\yara my_first_rule my_first_rule

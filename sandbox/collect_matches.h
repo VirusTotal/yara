@@ -30,11 +30,14 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef SANDBOX_COLLECT_MATCHES_H_
 #define SANDBOX_COLLECT_MATCHES_H_
 
+struct YR_SCAN_CONTEXT;
+
 namespace yara {
 
 // Callback function for yr_scan_mem() that collects YARA matches in a
 // YaraMatches proto given in user_data.
-int CollectMatches(int message, void* message_data, void* user_data);
+int CollectMatches(YR_SCAN_CONTEXT*, int message, void* message_data,
+                   void* user_data);
 
 }  // namespace yara
 

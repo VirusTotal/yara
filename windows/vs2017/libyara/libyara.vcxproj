@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
@@ -88,10 +88,10 @@
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
-      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;CUCKOO_MODULE;HASH_MODULE;DOTNET_MODULE;HAVE_LIBCRYPTO;USE_WINDOWS_PROC;YR_BUILDING_STATIC_LIB;PROFILING_ENABLED</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\..\..\libyara;..\..\..\libyara\include;..\..\..;..\packages\YARA.Jansson.x86.1.1.0\include;..\packages\YARA.OpenSSL.x86.1.1.0\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;CUCKOO_MODULE;HASH_MODULE;DOTNET_MODULE;HAVE_LIBCRYPTO;USE_WINDOWS_PROC;YR_BUILDING_STATIC_LIB;YR_PROFILING_ENABLED</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>..\..\..\libyara;..\..\..\libyara\include;..\..\..;..\packages\YARA.Jansson.x86.1.1.0\include;..\packages\YARA.OpenSSL.x86.1.1.1\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DisableSpecificWarnings>4005;4273;4090</DisableSpecificWarnings>
-      <CompileAs>CompileAsCpp</CompileAs>
+      <CompileAs>CompileAsC</CompileAs>
       <ObjectFileName>$(IntDir)/%(RelativeDir)</ObjectFileName>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <PrecompiledHeaderFile />
@@ -102,7 +102,7 @@
       <AdditionalDependencies>jansson.lib;libcrypto.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <LinkTimeCodeGeneration>true</LinkTimeCodeGeneration>
       <TargetMachine>MachineX86</TargetMachine>
-      <AdditionalLibraryDirectories>..\packages\YARA.OpenSSL.x86.1.1.0\lib;..\packages\YARA.Jansson.x86.1.1.0\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>..\packages\YARA.OpenSSL.x86.1.1.1\lib;..\packages\YARA.Jansson.x86.1.1.0\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalOptions>/IGNORE:4221</AdditionalOptions>
     </Lib>
     <ProjectReference>
@@ -115,10 +115,10 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
-      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;CUCKOO_MODULE;HASH_MODULE;DOTNET_MODULE;HAVE_LIBCRYPTO;USE_WINDOWS_PROC;YR_BUILDING_STATIC_LIBC;PROFILING_ENABLED</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\..\..\libyara;..\..\..\libyara\include;..\..\..;..\packages\YARA.Jansson.x64.1.1.0\include;..\packages\YARA.OpenSSL.x64.1.1.0\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;CUCKOO_MODULE;HASH_MODULE;DOTNET_MODULE;HAVE_LIBCRYPTO;USE_WINDOWS_PROC;YR_BUILDING_STATIC_LIBC;YR_PROFILING_ENABLED</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>..\..\..\libyara;..\..\..\libyara\include;..\..\..;..\packages\YARA.Jansson.x64.1.1.0\include;..\packages\YARA.OpenSSL.x64.1.1.1\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DisableSpecificWarnings>4005;4273;4090</DisableSpecificWarnings>
-      <CompileAs>CompileAsCpp</CompileAs>
+      <CompileAs>CompileAsC</CompileAs>
       <ObjectFileName>$(IntDir)/%(RelativeDir)</ObjectFileName>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <OmitFramePointers>false</OmitFramePointers>
@@ -129,7 +129,7 @@
       <OutputFile>$(OutDir)$(TargetName)$(TargetExt)</OutputFile>
       <AdditionalDependencies>crypt32.lib;ws2_32.lib;advapi32.lib;jansson.lib;libcrypto.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <LinkTimeCodeGeneration>true</LinkTimeCodeGeneration>
-      <AdditionalLibraryDirectories>..\packages\YARA.OpenSSL.x64.1.1.0\lib;..\packages\YARA.Jansson.x64.1.1.0\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>..\packages\YARA.OpenSSL.x64.1.1.1\lib;..\packages\YARA.Jansson.x64.1.1.0\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalOptions>/IGNORE:4221</AdditionalOptions>
     </Lib>
     <ProjectReference>
@@ -143,9 +143,9 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;CUCKOO_MODULE;HASH_MODULE;DOTNET_MODULE;HAVE_LIBCRYPTO;USE_WINDOWS_PROC;YR_BUILDING_STATIC_LIB</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\..\..\libyara;..\..\..\libyara\include;..\..\..;..\packages\YARA.Jansson.x86.1.1.0\include;..\packages\YARA.OpenSSL.x86.1.1.0\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\..\libyara;..\..\..\libyara\include;..\..\..;..\packages\YARA.Jansson.x86.1.1.0\include;..\packages\YARA.OpenSSL.x86.1.1.1\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DisableSpecificWarnings>4005;4273;4090</DisableSpecificWarnings>
-      <CompileAs>CompileAsCpp</CompileAs>
+      <CompileAs>CompileAsC</CompileAs>
       <ObjectFileName>$(IntDir)/%(RelativeDir)</ObjectFileName>
       <PrecompiledHeaderFile />
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
@@ -154,7 +154,7 @@
       <AdditionalDependencies>jansson.lib;libcrypto.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <LinkTimeCodeGeneration>true</LinkTimeCodeGeneration>
       <TargetMachine>MachineX86</TargetMachine>
-      <AdditionalLibraryDirectories>..\packages\YARA.OpenSSL.x86.1.1.0\lib;..\packages\YARA.Jansson.x86.1.1.0\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>..\packages\YARA.OpenSSL.x86.1.1.1\lib;..\packages\YARA.Jansson.x86.1.1.0\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalOptions>/IGNORE:4221</AdditionalOptions>
     </Lib>
     <Link>
@@ -168,9 +168,9 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;CUCKOO_MODULE;HASH_MODULE;DOTNET_MODULE;HAVE_LIBCRYPTO;USE_WINDOWS_PROC;YR_BUILDING_STATIC_LIB</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\..\..\libyara;..\..\..\libyara\include;..\..\..;..\packages\YARA.Jansson.x64.1.1.0\include;..\packages\YARA.OpenSSL.x64.1.1.0\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\..\libyara;..\..\..\libyara\include;..\..\..;..\packages\YARA.Jansson.x64.1.1.0\include;..\packages\YARA.OpenSSL.x64.1.1.1\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DisableSpecificWarnings>4005;4273;4090</DisableSpecificWarnings>
-      <CompileAs>CompileAsCpp</CompileAs>
+      <CompileAs>CompileAsC</CompileAs>
       <ObjectFileName>$(IntDir)/%(RelativeDir)</ObjectFileName>
       <OmitFramePointers>false</OmitFramePointers>
       <PrecompiledHeaderFile />
@@ -180,7 +180,7 @@
       <AdditionalDependencies>jansson.lib;libcrypto.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <LinkTimeCodeGeneration>false</LinkTimeCodeGeneration>
-      <AdditionalLibraryDirectories>..\packages\YARA.OpenSSL.x64.1.1.0\lib;..\packages\YARA.Jansson.x64.1.1.0\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>..\packages\YARA.OpenSSL.x64.1.1.1\lib;..\packages\YARA.Jansson.x64.1.1.0\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalOptions>/IGNORE:4221</AdditionalOptions>
     </Lib>
     <Link>
@@ -195,9 +195,9 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='StaticRelease|x64'">
     <ClCompile>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;CUCKOO_MODULE;HASH_MODULE;DOTNET_MODULE;HAVE_LIBCRYPTO;USE_WINDOWS_PROC;YR_BUILDING_STATIC_LIB;NDEBUG=1</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\..\..\libyara;..\..\..\libyara\include;..\..\..;..\packages\YARA.Jansson.x64.1.1.0\include;..\packages\YARA.OpenSSL.x64.1.1.0\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\..\libyara;..\..\..\libyara\include;..\..\..;..\packages\YARA.Jansson.x64.1.1.0\include;..\packages\YARA.OpenSSL.x64.1.1.1\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DisableSpecificWarnings>4005;4273;4090</DisableSpecificWarnings>
-      <CompileAs>CompileAsCpp</CompileAs>
+      <CompileAs>CompileAsC</CompileAs>
       <ObjectFileName>$(IntDir)/%(RelativeDir)</ObjectFileName>
       <OmitFramePointers>false</OmitFramePointers>
       <PrecompiledHeaderFile />
@@ -207,7 +207,7 @@
       <AdditionalDependencies>jansson.lib;libcrypto.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <LinkTimeCodeGeneration>false</LinkTimeCodeGeneration>
-      <AdditionalLibraryDirectories>..\packages\YARA.OpenSSL.x64.1.1.0\lib;..\packages\YARA.Jansson.x64.1.1.0\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>..\packages\YARA.OpenSSL.x64.1.1.1\lib;..\packages\YARA.Jansson.x64.1.1.0\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalOptions>/IGNORE:4221</AdditionalOptions>
     </Lib>
     <Link>
@@ -237,6 +237,7 @@
     <ClCompile Include="..\..\..\libyara\libyara.c" />
     <ClCompile Include="..\..\..\libyara\mem.c" />
     <ClCompile Include="..\..\..\libyara\modules.c" />
+    <ClCompile Include="..\..\..\libyara\modules\console\console.c" />
     <ClCompile Include="..\..\..\libyara\modules\cuckoo\cuckoo.c" />
     <ClCompile Include="..\..\..\libyara\modules\dex\dex.c" />
     <ClCompile Include="..\..\..\libyara\modules\dotnet\dotnet.c" />
@@ -248,6 +249,7 @@
     <ClCompile Include="..\..\..\libyara\modules\pe\pe_utils.c" />
     <ClCompile Include="..\..\..\libyara\modules\tests\tests.c" />
     <ClCompile Include="..\..\..\libyara\modules\time\time.c" />
+    <ClCompile Include="..\..\..\libyara\notebook.c" />
     <ClCompile Include="..\..\..\libyara\object.c" />
     <ClCompile Include="..\..\..\libyara\parser.c" />
     <ClCompile Include="..\..\..\libyara\proc.c" />

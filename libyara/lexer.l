@@ -196,11 +196,19 @@ octdigit      [0-7]
 "for"                   { return _FOR_;         }
 "all"                   { return _ALL_;         }
 "any"                   { return _ANY_;         }
+"none"                  { return _NONE_;        }
 "entrypoint"            { return _ENTRYPOINT_;  }
 "filesize"              { return _FILESIZE_;    }
 "matches"               { return _MATCHES_;     }
 "contains"              { return _CONTAINS_;    }
+"startswith"            { return _STARTSWITH_;  }
+"endswith"              { return _ENDSWITH_;    }
+"icontains"             { return _ICONTAINS_;   }
+"istartswith"           { return _ISTARTSWITH_; }
+"iendswith"             { return _IENDSWITH_;   }
+"iequals"               { return _IEQUALS_;     }
 "import"                { return _IMPORT_;      }
+"defined"               { return _DEFINED_;     }
 
 
 "/*"                    { BEGIN(comment);       }
@@ -276,10 +284,15 @@ include[ \t]+\"         {
       }
     }
 
+    YR_NAMESPACE* ns = (YR_NAMESPACE*) yr_arena_get_ptr(
+        compiler->arena,
+        YR_NAMESPACES_TABLE,
+        compiler->current_namespace_idx * sizeof(struct YR_NAMESPACE));
+
     included_rules = compiler->include_callback(
         include_path,
         current_file_name,
-        compiler->current_namespace->name,
+        ns->name,
         compiler->incl_clbk_user_data);
 
     if (included_rules != NULL)
@@ -432,6 +445,17 @@ $({letter}|{digit}|_)*  {
 }
 
 
+({letter}|_)({letter}|{digit}|_)*"*"  {
+
+  yylval->c_string = yr_strdup(yytext);
+
+  if (yylval->c_string == NULL)
+    error(ERROR_INSUFFICIENT_MEMORY);
+
+  return _IDENTIFIER_WITH_WILDCARD_;
+}
+
+
 u?int(8|16|32)(be)? {
 
   char* text = yytext;
@@ -569,6 +593,7 @@ u?int(8|16|32)(be)? {
 
   *yyextra->lex_buf_ptr = '\0';
   memcpy(s->c_string, yyextra->lex_buf, yyextra->lex_buf_len + 1);
+
   yylval->sized_string = s;
 
   BEGIN(INITIAL);
@@ -581,6 +606,14 @@ u?int(8|16|32)(be)? {
 
   lex_check_space_ok("\t", yyextra->lex_buf_len, YR_LEX_BUF_SIZE);
   *yyextra->lex_buf_ptr++ = '\t';
+  yyextra->lex_buf_len++;
+}
+
+
+<str>\\r   {
+
+  lex_check_space_ok("\r", yyextra->lex_buf_len, YR_LEX_BUF_SIZE);
+  *yyextra->lex_buf_ptr++ = '\r';
   yyextra->lex_buf_len++;
 }
 
@@ -611,12 +644,12 @@ u?int(8|16|32)(be)? {
 
 <str>\\x{hexdigit}{2} {
 
-   int result;
+  int result;
 
-   sscanf( yytext + 2, "%x", &result );
-   lex_check_space_ok("X", yyextra->lex_buf_len, YR_LEX_BUF_SIZE);
-   *yyextra->lex_buf_ptr++ = result;
-   yyextra->lex_buf_len++;
+  sscanf(yytext + 2, "%x", &result);
+  lex_check_space_ok("X", yyextra->lex_buf_len, YR_LEX_BUF_SIZE);
+  *yyextra->lex_buf_ptr++ = result;
+  yyextra->lex_buf_len++;
 }
 
 
@@ -647,6 +680,7 @@ u?int(8|16|32)(be)? {
 
     *yyextra->lex_buf_ptr = '\0';
     strlcpy(s->c_string, yyextra->lex_buf, s->length + 1);
+
     yylval->sized_string = s;
   }
   else
@@ -763,10 +797,19 @@ void yywarning(
 
   vsnprintf(message, sizeof(message), message_fmt, message_args);
 
+  YR_RULE* current_rule = NULL;
+
+  if (compiler->current_rule_idx != UINT32_MAX)
+    current_rule = yr_arena_get_ptr(
+        compiler->arena,
+        YR_RULES_TABLE,
+        compiler->current_rule_idx * sizeof(YR_RULE));
+
   compiler->callback(
       YARA_ERROR_LEVEL_WARNING,
       file_name,
       compiler->current_line ? compiler->current_line : yyget_lineno(yyscanner),
+      current_rule,
       message,
       compiler->user_data);
 
@@ -817,6 +860,14 @@ void yyerror(
     file_name = NULL;
   }
 
+  YR_RULE* current_rule = NULL;
+
+  if (compiler->current_rule_idx != UINT32_MAX)
+    current_rule = yr_arena_get_ptr(
+        compiler->arena,
+        YR_RULES_TABLE,
+        compiler->current_rule_idx * sizeof(YR_RULE));
+
   if (error_message != NULL)
   {
     yr_compiler_set_error_extra_info(compiler, error_message);
@@ -828,6 +879,7 @@ void yyerror(
           YARA_ERROR_LEVEL_ERROR,
           file_name,
           compiler->last_error_line,
+          current_rule,
           error_message,
           compiler->user_data);
     }
@@ -837,11 +889,12 @@ void yyerror(
     yr_compiler_get_error_message(compiler, message, sizeof(message));
 
     compiler->callback(
-      YARA_ERROR_LEVEL_ERROR,
-      file_name,
-      compiler->last_error_line,
-      message,
-      compiler->user_data);
+        YARA_ERROR_LEVEL_ERROR,
+        file_name,
+        compiler->last_error_line,
+        current_rule,
+        message,
+        compiler->user_data);
   }
 }
 

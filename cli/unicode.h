@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2013. The YARA Authors. All Rights Reserved.
+Copyright (c) 2021. The YARA Authors. All Rights Reserved.
 
 Redistribution and use in source and binary forms, with or without modification,
 are permitted provided that the following conditions are met:
@@ -27,66 +27,42 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+#ifndef YR_UNICODE_H
+#define YR_UNICODE_H
 
-#ifndef THREADING_H
-#define THREADING_H
-
-#if defined(_WIN32) || defined(__CYGWIN__)
-#include <windows.h>
-#else
-#include <sys/stat.h>
-#include <pthread.h>
-#include <semaphore.h>
-#endif
-
-#if defined(_WIN32) || defined(__CYGWIN__)
-
-typedef HANDLE SEMAPHORE;
-typedef CRITICAL_SECTION MUTEX;
-typedef HANDLE THREAD;
-
-typedef LPTHREAD_START_ROUTINE THREAD_START_ROUTINE;
+#ifdef _MSC_VER
+#include <tchar.h>
+#define char_t TCHAR
+#define PF_S "hs"
+#define PF_C "hc"
 
 #else
+#define char_t char
+#define _T(x) x
+#define PF_S "s"
+#define PF_C "c"
 
-typedef sem_t* SEMAPHORE;
-typedef pthread_mutex_t MUTEX;
-typedef pthread_t THREAD;
-typedef void *(*THREAD_START_ROUTINE) (void *);
-
+#ifdef __CYGWIN__
+#define _tcstok_s strtok_r
+#else
+#define _tcstok_s strtok_s
 #endif
 
-int mutex_init(
-    MUTEX* mutex);
-
-void mutex_destroy(
-    MUTEX* mutex);
-
-void mutex_lock(
-    MUTEX* mutex);
-
-void mutex_unlock(
-    MUTEX* mutex);
-
-int semaphore_init(
-    SEMAPHORE* semaphore,
-    int value);
-
-void semaphore_destroy(
-    SEMAPHORE* semaphore);
-
-void semaphore_wait(
-    SEMAPHORE* semaphore);
-
-void semaphore_release(
-    SEMAPHORE* semaphore);
-
-int create_thread(
-    THREAD* thread,
-    THREAD_START_ROUTINE start_routine,
-    void* param);
-
-void thread_join(
-    THREAD* thread);
+#define _tcscmp strcmp
+#define _tcsdup strdup
+#define _tcschr strchr
+#define _tcslen strlen
+#define _tcsstr strstr
+#define _tcstol strtol
+#define _tstoi atoi
+#define _tstof atof
+#define _tisdigit isdigit
+#define _tfopen fopen
+#define _ftprintf fprintf
+#define _stprintf sprintf
+#define _tprintf printf
+#define _tmain main
+#define _sntprintf snprintf
+#endif
 
 #endif
