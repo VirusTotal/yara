@@ -44,12 +44,12 @@ genrule(
 
 cc_library(
     name = "jansson",
+    srcs = glob(["src/*.c"]),
     hdrs = glob(["src/*.h"]) + [
         "jansson_config.h",
         "jansson_private_config.h",
     ],
-    srcs = glob(["src/*.c"]),
-    includes = [".", "src"],
+    copts = ["-Wno-unused-function"],
     # These defines are usually in jansson_config.h but we define them here,
     # as jansson_config.h is just an empty file.
     defines = [
@@ -57,26 +57,43 @@ cc_library(
         "JSON_INLINE=inline",
         "JSON_PARSER_MAX_DEPTH=2048",
     ],
-    copts = ["-Wno-unused-function"],
+    includes = [
+        ".",
+        "src",
+    ],
     visibility = ["//visibility:public"],
 )
-
 
 load("@com_github_virustotal_yara//:bazel/jansson.bzl", "jansson_api_test")
 
 jansson_api_test("test_array")
+
 jansson_api_test("test_chaos")
+
 jansson_api_test("test_copy")
+
 jansson_api_test("test_dump")
+
 jansson_api_test("test_dump_callback")
+
 jansson_api_test("test_equal")
+
 jansson_api_test("test_load")
+
 jansson_api_test("test_load_callback")
+
 jansson_api_test("test_loadb")
+
 jansson_api_test("test_memory_funcs")
+
 jansson_api_test("test_number")
+
 jansson_api_test("test_object")
+
 jansson_api_test("test_pack")
+
 jansson_api_test("test_simple")
+
 jansson_api_test("test_sprintf")
+
 jansson_api_test("test_unpack")

@@ -1,0 +1,22 @@
+#!/bin/sh
+
+# pseudo code:
+# - find all .[ch] files in libyara/
+# - grep for non-portable modifiers
+
+set -e
+find . -type f | egrep "\.[ch]$" | xargs egrep --line-number "\%\'{0,1}l[dux]" | perl -lane '
+  printf qq[- convention: non-portable modifier: %s\n], $_;
+  $single_quote = chr(0x27);
+  s~\%$single_quote{0,1}l([dux])~\%" PRI${1}64 "~g;
+  printf qq[- convention:     portable modifier: %s\n], $_;
+  $violation_count ++;
+  sub END {
+    if ($violation_count > 0) {
+      printf qq[- convention: non-portable modifier: %u instances found above; please fix\n], $violation_count;
+      exit(1);
+    }
+    printf qq[- convention: non-portable modifier: none found\n];
+  }'
+
+exit 0

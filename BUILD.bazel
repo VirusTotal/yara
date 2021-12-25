@@ -53,11 +53,14 @@ config_setting(
     values = {"define": "yara_crypto_library=boringssl"},
 )
 
-
 yara_library(
     name = "libyara",
+    crypto_libs = select({
+        ":crypto_library_boringssl": ["@boringssl//:crypto"],
+        "//conditions:default": ["@openssl//:crypto"],
+    }),
     defines = select({
-        ":profiling_enabled": ["PROFILING_ENABLED"],
+        ":profiling_enabled": ["YR_PROFILING_ENABLED"],
         "//conditions:default": [],
     }) + select({
         ":crypto_library_boringssl": ["BORINGSSL"],
@@ -90,28 +93,25 @@ yara_library(
         "libyara/modules/tests/tests.c",
         "libyara/modules/time/time.c",
     ],
-    crypto_libs = select({
-        ":crypto_library_boringssl": ["@boringssl//:crypto"],
-        "//conditions:default": ["@openssl//:crypto"],
-    }),
     deps = [
-        "@jansson//:jansson",
-        "@magic//:magic",
-    ]
+        "@jansson",
+        "@magic",
+    ],
 )
-
 
 # Code shared by the command-line tools.
 cc_library(
     name = "cli_shared",
     srcs = [
-        "args.c",
-        "threading.c",
+        "cli/args.c",
+        "cli/common.c",
+        "cli/threading.c",
     ],
     hdrs = [
-        "args.h",
-        "common.h",
-        "threading.h",
+        "cli/args.h",
+        "cli/common.h",
+        "cli/threading.h",
+        "cli/unicode.h",
     ],
     deps = [":libyara"],
 )
@@ -119,7 +119,7 @@ cc_library(
 # YARA command-line tool
 cc_binary(
     name = "yara",
-    srcs = ["yara.c"],
+    srcs = ["cli/yara.c"],
     visibility = ["//visibility:public"],
     deps = [
         ":cli_shared",
@@ -130,7 +130,7 @@ cc_binary(
 # YARA compiler
 cc_binary(
     name = "yarac",
-    srcs = ["yarac.c"],
+    srcs = ["cli/yarac.c"],
     visibility = ["//visibility:public"],
     deps = [
         ":cli_shared",

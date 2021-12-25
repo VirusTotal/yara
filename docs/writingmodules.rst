@@ -951,8 +951,8 @@ depending on the function's return type. In all cases *x* is a constant,
 variable, or expression evaluating to ``char*``, ``int64_t`` or ``double``
 respectively.
 
-You can use ``return_string(UNDEFINED)``, ``return_float(UNDEFINED)`` and
-``return_integer(UNDEFINED)`` to return undefined values from the function.
+You can use ``return_string(YR_UNDEFINED)``, ``return_float(YR_UNDEFINED)`` and
+``return_integer(YR_UNDEFINED)`` to return undefined values from the function.
 This is useful in many situations, for example if the arguments passed to the
 functions don't make sense, or if your module expects a particular file format
 and the scanned file is from another format, or in any other case where your

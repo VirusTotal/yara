@@ -1,7 +1,7 @@
-AC_INIT([yara], [3.11.0], [vmalvarez@virustotal.com])
+AC_INIT([yara], [4.2.0], [vmalvarez@virustotal.com])
 
 AM_SILENT_RULES([yes])
-AC_CONFIG_SRCDIR([yara.c])
+AC_CONFIG_SRCDIR([cli/yara.c])
 
 AC_CONFIG_AUX_DIR([build-aux])
 
@@ -29,7 +29,6 @@ AC_PROG_YACC
 # inline to __inline__ or __inline if it accepts one of those, otherwise define
 # inline to be empty.
 AC_C_INLINE
-
 # Defines WORDS_BIGENDIAN if building in a big-endian host.
 AC_C_BIGENDIAN
 
@@ -85,6 +84,8 @@ ACX_PTHREAD(
 
 AC_CHECK_LIB(m, isnan)
 AC_CHECK_LIB(m, log2)
+AS_IF([test "ac_cv_lib_m_isnan" = yes || test "$ac_cv_lib_m_log2" = yes],
+    [PC_LIBS_PRIVATE="$PC_LIBS_PRIVATE -lm"])
 AC_CHECK_FUNCS([strlcpy strlcat memmem timegm _mkgmtime clock_gettime])
 AC_CHECK_HEADERS([stdbool.h])
 
@@ -92,6 +93,12 @@ AC_ARG_ENABLE([debug],
   [AS_HELP_STRING([--enable-debug], [compiles with -g option])],
   [if test x$enableval = xyes; then
     debug=true
+  fi])
+
+AC_ARG_ENABLE([gcov],
+  [AS_HELP_STRING([--enable-gcov], [compiles with -O0 -g -ftest-coverage -fprofile-arcs])],
+  [if test x$enableval = xyes; then
+    gcov=true
   fi])
 
 AC_ARG_ENABLE([optimization],
@@ -111,7 +118,15 @@ AC_ARG_ENABLE([profiling],
   [AS_HELP_STRING([--enable-profiling], [enable rules profiling support])],
   [if test x$enableval = xyes; then
     profiling_enabled=true
-    CFLAGS="$CFLAGS -DPROFILING_ENABLED"
+    CFLAGS="$CFLAGS -DYR_PROFILING_ENABLED"
+  fi])
+
+AC_ARG_WITH([debug-verbose],
+  [AS_HELP_STRING([--with-debug-verbose=[[NUM]]], [Turn on runtime debugging information])],
+  [if test $withval -gt 0; then
+    AC_DEFINE_UNQUOTED([YR_DEBUG_VERBOSITY], [$withval])
+   else
+    AC_MSG_ERROR([debug verbosity must be greater than 0])
   fi])
 
 AC_ARG_ENABLE([cuckoo],
@@ -176,8 +191,8 @@ AC_ARG_ENABLE([pb-tests],
     # AC_CHECK_PROG(PROTOC_GEN_YARA, protoc-gen-yara, protoc-gen-yara)
     # AS_IF([test "x${PROTOC_GEN_YARA}" == "x"],
     #    [AC_MSG_ERROR([please install https://github.com/VirusTotal/protoc-gen-yara])])
-    PKG_CHECK_MODULES(PROTOBUF_C, libprotobuf-c >= 1.0.0)
-    AC_CHECK_LIB(protobuf-c, protobuf_c_message_unpack,,
+    PKG_CHECK_MODULES([PROTOBUF_C], [libprotobuf-c >= 1.0.0])
+    AC_CHECK_LIB([protobuf-c], protobuf_c_message_unpack,,
       AC_MSG_ERROR([please install libprotobuf-c library]))
     CFLAGS="$CFLAGS -DPB_TESTS_MODULE"
     PC_REQUIRES_PRIVATE="$PC_REQUIRES_PRIVATE libprotobuf-c"
@@ -192,6 +207,7 @@ AC_ARG_WITH([jemalloc],
     AC_CHECK_LIB(jemalloc, $jemalloc_prefix$mallctl,,
       AC_MSG_ERROR([please install jemalloc library]))
     CFLAGS="$CFLAGS -DJEMALLOC -Dmallctl=$jemalloc_prefix$mallctl -Dmalloc_stats_print=$jemalloc_prefix$malloc_stats_print $no_std_allocator"
+    PC_REQUIRES_PRIVATE="$PC_REQUIRES_PRIVATE jemalloc"
   fi])
 
 AC_ARG_WITH([tcmalloc],
@@ -204,6 +220,7 @@ AC_ARG_WITH([tcmalloc],
     AC_CHECK_LIB(tcmalloc, tc_cfree,,
       AC_MSG_ERROR([please install https://github.com/gperftools/gperftools]))
     CFLAGS="$CFLAGS -DTCMALLOC $no_std_allocator"
+    PC_REQUIRES_PRIVATE="$PC_REQUIRES_PRIVATE tcmalloc"
   fi])
 
 AC_ARG_WITH([cpu-profiler],
@@ -212,6 +229,7 @@ AC_ARG_WITH([cpu-profiler],
   [if test x$withval = xyes; then
     AC_CHECK_LIB(profiler, ProfilerStart,,
       AC_MSG_ERROR([please install https://github.com/gperftools/gperftools]))
+    PC_REQUIRES_PRIVATE="$PC_REQUIRES_PRIVATE libprofiler"
   fi])
 
 AC_ARG_WITH([crypto],
@@ -303,6 +321,7 @@ AS_IF([test "x$have_crypto" = "xno"],
 AM_CONDITIONAL([GCC], [test "x$GCC" = xyes])
 AM_CONDITIONAL([PROTOC], [test "x${PROTOC}" != "x"])
 AM_CONDITIONAL([DEBUG], [test x$debug = xtrue])
+AM_CONDITIONAL([GCOV], [test x$gcov = xtrue])
 AM_CONDITIONAL([POSIX], [test x$posix = xtrue])
 AM_CONDITIONAL([PROFILING_ENABLED], [test x$profiling_enabled = xtrue])
 AM_CONDITIONAL([OPTIMIZATION], [test x$optimization = xtrue])

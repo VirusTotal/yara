@@ -44,16 +44,16 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #undef YY_FATAL_ERROR
 #undef YY_EXTRA_TYPE
 
-#define yyparse       yara_yyparse
-#define yylex         yara_yylex
-#define yyerror       yara_yyerror
-#define yyfatal       yara_yyfatal
-#define yywarning     yara_yywarning
-#define yychar        yara_yychar
-#define yydebug       yara_yydebug
-#define yynerrs       yara_yynerrs
-#define yyget_extra   yara_yyget_extra
-#define yyget_lineno  yara_yyget_lineno
+#define yyparse      yara_yyparse
+#define yylex        yara_yylex
+#define yyerror      yara_yyerror
+#define yyfatal      yara_yyfatal
+#define yywarning    yara_yywarning
+#define yychar       yara_yychar
+#define yydebug      yara_yydebug
+#define yynerrs      yara_yynerrs
+#define yyget_extra  yara_yyget_extra
+#define yyget_lineno yara_yyget_lineno
 
 
 #ifndef YY_TYPEDEF_YY_SCANNER_T
@@ -63,8 +63,9 @@ typedef void* yyscan_t;
 
 union YYSTYPE;
 
-#define YY_DECL int yylex( \
-    union YYSTYPE* yylval_param, yyscan_t yyscanner, YR_COMPILER* compiler)
+#define YY_DECL \
+  int yylex(    \
+      union YYSTYPE* yylval_param, yyscan_t yyscanner, YR_COMPILER* compiler)
 
 
 #define YY_FATAL_ERROR(msg) yara_yyfatal(yyscanner, msg)
@@ -81,35 +82,22 @@ int yylex(
     yyscan_t yyscanner,
     YR_COMPILER* compiler);
 
-int yyparse(
-    void *yyscanner,
-    YR_COMPILER* compiler);
+int yyparse(void* yyscanner, YR_COMPILER* compiler);
 
 void yyerror(
     yyscan_t yyscanner,
     YR_COMPILER* compiler,
-    const char *error_message);
+    const char* error_message);
 
-void yywarning(
-    yyscan_t yyscanner,
-    const char *message_fmt,
-    ...) YR_PRINTF_LIKE(2, 3);
+void yywarning(yyscan_t yyscanner, const char* message_fmt, ...)
+    YR_PRINTF_LIKE(2, 3);
 
-void yyfatal(
-    yyscan_t yyscanner,
-    const char *error_message);
+void yyfatal(yyscan_t yyscanner, const char* error_message);
 
-YY_EXTRA_TYPE yyget_extra(
-    yyscan_t yyscanner);
+YY_EXTRA_TYPE yyget_extra(yyscan_t yyscanner);
 
-int yr_lex_parse_rules_string(
-    const char* rules_string,
-    YR_COMPILER* compiler);
+int yr_lex_parse_rules_string(const char* rules_string, YR_COMPILER* compiler);
 
-int yr_lex_parse_rules_file(
-    FILE* rules_file,
-    YR_COMPILER* compiler);
+int yr_lex_parse_rules_file(FILE* rules_file, YR_COMPILER* compiler);
 
-int yr_lex_parse_rules_fd(
-    YR_FILE_DESCRIPTOR rules_fd,
-    YR_COMPILER* compiler);
+int yr_lex_parse_rules_fd(YR_FILE_DESCRIPTOR rules_fd, YR_COMPILER* compiler);

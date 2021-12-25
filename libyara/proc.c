@@ -28,25 +28,35 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include <yara/error.h>
-#include <yara/proc.h>
+#include <yara/exec.h>
+#include <yara/globals.h>
 #include <yara/mem.h>
+#include <yara/proc.h>
 
 int _yr_process_attach(int, YR_PROC_ITERATOR_CTX*);
 int _yr_process_detach(YR_PROC_ITERATOR_CTX*);
 
-YR_API int yr_process_open_iterator(
-    int pid,
-    YR_MEMORY_BLOCK_ITERATOR* iterator)
+YR_API int yr_process_open_iterator(int pid, YR_MEMORY_BLOCK_ITERATOR* iterator)
 {
-  YR_PROC_ITERATOR_CTX* context = (YR_PROC_ITERATOR_CTX*) \
-      yr_malloc(sizeof(YR_PROC_ITERATOR_CTX));
+  YR_DEBUG_FPRINTF(2, stderr, "+ %s(pid=%d) {\n", __FUNCTION__, pid);
+
+  int result = ERROR_INTERNAL_FATAL_ERROR;
+
+  YR_PROC_ITERATOR_CTX* context = (YR_PROC_ITERATOR_CTX*) yr_malloc(
+      sizeof(YR_PROC_ITERATOR_CTX));
 
   if (context == NULL)
-    return ERROR_INSUFFICIENT_MEMORY;
+  {
+    result = ERROR_INSUFFICIENT_MEMORY;
+    goto _exit;
+  }
 
   iterator->context = context;
   iterator->first = yr_process_get_first_memory_block;
   iterator->next = yr_process_get_next_memory_block;
+  // In a process scan file size is undefined, when the file_size function is
+  // set to NULL the value returned by the filesize keyword is YR_UNDEFINED.
+  iterator->file_size = NULL;
 
   context->buffer = NULL;
   context->buffer_size = 0;
@@ -56,17 +66,22 @@ YR_API int yr_process_open_iterator(
   context->current_block.fetch_data = yr_process_fetch_memory_block_data;
   context->proc_info = NULL;
 
-  FAIL_ON_ERROR_WITH_CLEANUP(
-      _yr_process_attach(pid, context),
-      yr_free(context));
+  GOTO_EXIT_ON_ERROR_WITH_CLEANUP(
+      _yr_process_attach(pid, context), yr_free(context));
 
-  return ERROR_SUCCESS;
+  result = ERROR_SUCCESS;
+
+_exit:
+
+  YR_DEBUG_FPRINTF(2, stderr, "} = %d // %s()\n", result, __FUNCTION__);
+
+  return result;
 }
 
-
-YR_API int yr_process_close_iterator(
-    YR_MEMORY_BLOCK_ITERATOR* iterator)
+YR_API int yr_process_close_iterator(YR_MEMORY_BLOCK_ITERATOR* iterator)
 {
+  YR_DEBUG_FPRINTF(2, stderr, "- %s() {}\n", __FUNCTION__);
+
   YR_PROC_ITERATOR_CTX* context = (YR_PROC_ITERATOR_CTX*) iterator->context;
 
   if (context != NULL)

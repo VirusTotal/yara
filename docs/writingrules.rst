@@ -11,63 +11,75 @@ YARA, which does absolutely nothing:
     rule dummy
     {
         condition:
-           false
+            false
     }
 
 Each rule in YARA starts with the keyword ``rule`` followed by a rule
 identifier. Identifiers must follow the same lexical conventions of the C
 programming language, they can contain any alphanumeric character and the
-underscore character, but the first character can not be a digit. Rule
+underscore character, but the first character cannot be a digit. Rule
 identifiers are case sensitive and cannot exceed 128 characters. The following
 keywords are reserved and cannot be used as an identifier:
 
 
 .. list-table:: YARA keywords
-   :widths: 10 10 10 10 10 10 10
+   :widths: 10 10 10 10 10 10 10 10
 
    * - all
      - and
      - any
      - ascii
      - at
+     - base64
+     - base64wide
      - condition
-     - contains
-   * - entrypoint
+   * - contains
+     - endswith
+     - entrypoint
      - false
      - filesize
-     - fullword
      - for
+     - fullword
      - global
-     - in
    * - import
+     - icontains
+     - iendswith
+     - iequals
+     - in
      - include
-     - int8
      - int16
-     - int32
-     - int8be
      - int16be
-   * - int32be
+   * - int32
+     - int32be
+     - int8
+     - int8be
+     - istartswith
      - matches
      - meta
      - nocase
+   * - none
      - not
-     - or
      - of
-   * - private
+     - or
+     - private
      - rule
+     - startswith
      - strings
-     - them
+   * - them
      - true
-     - uint8
      - uint16
-   * - uint32
-     - uint8be
      - uint16be
+     - uint32
      - uint32be
-     - wide
+     - uint8
+     - uint8be
+   * - wide
      - xor
-     - base64
-     - base64wide
+     - defined
+     -
+     -
+     -
+     -
      -
 
 Rules are generally composed of two sections: strings definition and condition.
@@ -118,7 +130,7 @@ single-line and multi-line C-style comments are supported.
     rule CommentExample   // ... and this is single-line comment
     {
         condition:
-           false  // just a dummy rule, don't do this
+            false  // just a dummy rule, don't do this
     }
 
 Strings
@@ -145,10 +157,10 @@ you have an example of a hexadecimal string with wild-cards:
     rule WildcardExample
     {
         strings:
-           $hex_string = { E2 34 ?? C8 A? FB }
+            $hex_string = { E2 34 ?? C8 A? FB }
 
         condition:
-           $hex_string
+            $hex_string
     }
 
 As shown in the example the wild-cards are nibble-wise, which means that you can
@@ -163,11 +175,11 @@ length. In those situations you can use jumps instead of wild-cards:
 
     rule JumpExample
     {
-            strings:
-               $hex_string = { F4 23 [4-6] 62 B4 }
+        strings:
+            $hex_string = { F4 23 [4-6] 62 B4 }
 
-            condition:
-               $hex_string
+        condition:
+            $hex_string
     }
 
 In the example above we have a pair of numbers enclosed in square brackets and
@@ -219,10 +231,10 @@ can use a syntax which resembles a regular expression:
     rule AlternativesExample1
     {
         strings:
-           $hex_string = { F4 23 ( 62 B4 | 56 ) 45 }
+            $hex_string = { F4 23 ( 62 B4 | 56 ) 45 }
 
         condition:
-           $hex_string
+            $hex_string
     }
 
 This rule will match any file containing ``F42362B445`` or ``F4235645``.
@@ -236,10 +248,10 @@ their lengths.
     rule AlternativesExample2
     {
         strings:
-           $hex_string = { F4 23 ( 62 B4 | 56 | 45 ?? 67 ) 45 }
+            $hex_string = { F4 23 ( 62 B4 | 56 | 45 ?? 67 ) 45 }
 
         condition:
-           $hex_string
+            $hex_string
     }
 
 As can be seen also in the above example, strings containing wild-cards are
@@ -258,7 +270,7 @@ As shown in previous sections, text strings are generally defined like this:
             $text_string = "foobar"
 
         condition:
-           $text_string
+            $text_string
     }
 
 This is the simplest case: an ASCII-encoded, case-sensitive string. However,
@@ -276,6 +288,8 @@ available in the C language:
      - Double quote
    * - ``\\``
      - Backslash
+   * - ``\r``
+     - Carriage return
    * - ``\t``
      - Horizontal tab
    * - ``\n``
@@ -283,11 +297,21 @@ available in the C language:
    * - ``\xdd``
      - Any byte in hexadecimal notation
 
+In all versions of YARA before 4.1.0 text strings accepted any kind of unicode
+characters, regardless of their encoding. Those characters were interpreted by
+YARA as raw bytes, and therefore the final string was actually determined by the
+encoding format used by your text editor. This never meant to be a feature, the
+original intention always was that YARA strings should be ASCII-only and YARA
+4.1.0 started to raise warnings about non-ASCII characters in strings. This
+limitation does not apply to strings in the metadata section or comments. See
+more details [here](https://github.com/VirusTotal/yara/wiki/Unicode-characters-in-YARA)
+
+
 Case-insensitive strings
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
 Text strings in YARA are case-sensitive by default, however you can turn your
-string into case-insensitive mode by appending the modifier nocase at the end
+string into case-insensitive mode by appending the modifier ``nocase`` at the end
 of the string definition, in the same line:
 
 .. code-block:: yara
@@ -302,15 +326,14 @@ of the string definition, in the same line:
     }
 
 With the ``nocase`` modifier the string *foobar* will match *Foobar*, *FOOBAR*,
-and *fOoBaR*. This modifier can be used in conjunction with any other modifier.
+and *fOoBaR*. This modifier can be used in conjunction with any modifier,
+except ``base64`` and ``base64wide``.
 
 Wide-character strings
 ^^^^^^^^^^^^^^^^^^^^^^
 
 The ``wide`` modifier can be used to search for strings encoded with two bytes
 per character, something typical in many executable binaries.
-
-
 
 For example, if the string "Borland" appears encoded as two bytes per
 character (i.e. ``B\x00o\x00r\x00l\x00a\x00n\x00d\x00``), then the following rule will match:
@@ -323,7 +346,7 @@ character (i.e. ``B\x00o\x00r\x00l\x00a\x00n\x00d\x00``), then the following rul
             $wide_string = "Borland" wide
 
         condition:
-           $wide_string
+            $wide_string
     }
 
 However, keep in mind that this modifier just interleaves the ASCII codes of
@@ -340,7 +363,7 @@ with ``wide`` , no matter the order in which they appear.
             $wide_and_ascii_string = "Borland" wide ascii
 
         condition:
-           $wide_and_ascii_string
+            $wide_and_ascii_string
     }
 
 The ``ascii`` modifier can appear alone, without an accompanying ``wide``
@@ -350,10 +373,10 @@ string is assumed to be ASCII by default.
 XOR strings
 ^^^^^^^^^^^
 
-The ``xor`` modifier can be used to search for strings with a single byte xor
+The ``xor`` modifier can be used to search for strings with a single byte XOR
 applied to them.
 
-The following rule will search for every single byte xor applied to the string
+The following rule will search for every single byte XOR applied to the string
 "This program cannot" (including the plaintext string):
 
 .. code-block:: yara
@@ -377,14 +400,14 @@ The above rule is logically equivalent to:
             $xor_string_00 = "This program cannot"
             $xor_string_01 = "Uihr!qsnfs`l!b`oonu"
             $xor_string_02 = "Vjkq\"rpmepco\"acllmv"
-            // Repeat for every single byte xor
+            // Repeat for every single byte XOR
         condition:
             any of them
     }
 
 You can also combine the ``xor`` modifier with ``wide`` and ``ascii``
 modifiers. For example, to search for the ``wide`` and ``ascii`` versions of a
-string after every single byte xor has been applied you would use:
+string after every single byte XOR has been applied you would use:
 
 .. code-block:: yara
 
@@ -397,7 +420,7 @@ string after every single byte xor has been applied you would use:
     }
 
 The ``xor`` modifier is applied after every other modifier. This means that
-using the ``xor`` and ``wide`` together results in the xor applying to the
+using the ``xor`` and ``wide`` together results in the XOR applying to the
 interleaved zero bytes. For example, the following two rules are logically
 equivalent:
 
@@ -417,12 +440,12 @@ equivalent:
             $xor_string_00 = "T\x00h\x00i\x00s\x00 \x00p\x00r\x00o\x00g\x00r\x00a\x00m\x00 \x00c\x00a\x00n\x00n\x00o\x00t\x00"
             $xor_string_01 = "U\x01i\x01h\x01r\x01!\x01q\x01s\x01n\x01f\x01s\x01`\x01l\x01!\x01b\x01`\x01o\x01o\x01n\x01u\x01"
             $xor_string_02 = "V\x02j\x02k\x02q\x02\"\x02r\x02p\x02m\x02e\x02p\x02c\x02o\x02\"\x02a\x02c\x02l\x02l\x02m\x02v\x02"
-            // Repeat for every single byte xor operation.
+            // Repeat for every single byte XOR operation.
         condition:
             any of them
     }
 
-If you want more control over the range of bytes used with the xor modifier use:
+Since YARA 3.11, if you want more control over the range of bytes used with the ``xor`` modifier use:
 
 .. code-block:: yara
 
@@ -437,13 +460,13 @@ If you want more control over the range of bytes used with the xor modifier use:
 The above example will apply the bytes from 0x01 to 0xff, inclusively, to the
 string when searching. The general syntax is ``xor(minimum-maximum)``.
 
-base64 strings
+Base64 strings
 ^^^^^^^^^^^^^^
 
 The ``base64`` modifier can be used to search for strings that have been base64
 encoded. A good explanation of the technique is at:
 
-https://www.leeholmes.com/blog/2019/12/10/searching-for-content-in-base-64-strings-2/
+https://www.leeholmes.com/searching-for-content-in-base-64-strings/
 
 The following rule will search for the three base64 permutations of the string
 "This program cannot":
@@ -461,12 +484,12 @@ The following rule will search for the three base64 permutations of the string
 
 This will cause YARA to search for these three permutations:
 
-VGhpcyBwcm9ncmFtIGNhbm5vd
-RoaXMgcHJvZ3JhbSBjYW5ub3
-UaGlzIHByb2dyYW0gY2Fubm90
+| VGhpcyBwcm9ncmFtIGNhbm5vd
+| RoaXMgcHJvZ3JhbSBjYW5ub3
+| UaGlzIHByb2dyYW0gY2Fubm90
 
-The ``base64wide`` modifier works just like the base64 modifier but the results
-of the base64 modifier are converted to wide.
+The ``base64wide`` modifier works just like the ``base64`` modifier but the results
+of the ``base64`` modifier are converted to wide.
 
 The interaction between ``base64`` (or ``base64wide``) and ``wide`` and
 ``ascii`` is as you might expect. ``wide`` and ``ascii`` are applied to the
@@ -493,8 +516,17 @@ The alphabet must be 64 bytes long.
 
 The ``base64`` and ``base64wide`` modifiers are only supported with text
 strings. Using these modifiers with a hexadecimal string or a regular expression
-will cause a compiler error. Also, the ``xor`` and ``nocase`` modifiers used in
-combination with ``base64`` or ``base64wide`` will cause a compiler error.
+will cause a compiler error. Also, the ``xor``, ``fullword``, and ``nocase``
+modifiers used in combination with ``base64`` or ``base64wide`` will cause
+a compiler error.
+
+Because of the way that YARA strips the leading and trailing characters after
+base64 encoding, one of the base64 encodings of "Dhis program cannow" and
+"This program cannot" are identical. Similarly, using the ``base64`` keyword on
+single ASCII characters is not recommended. For example, "a" with the
+``base64`` keyword matches "\`", "b", "c", "!", "\\xA1", or "\\xE1" after base64
+encoding, and will not match where the base64 encoding matches the
+``[GWm2][EFGH]`` regular expression.
 
 Searching for full words
 ^^^^^^^^^^^^^^^^^^^^^^^^
@@ -528,11 +560,32 @@ Regular expressions can be also followed by ``nocase``, ``ascii``, ``wide``,
 and ``fullword`` modifiers just like in text strings. The semantics of these
 modifiers are the same in both cases.
 
+Additionally, they can be followed by the characters ``i`` and ``s`` just after
+the closing slash, which is a very common convention for specifying that the
+regular expression is case-insensitive and that the dot (``.``) can match
+new-line characters. For example:
+
+.. code-block:: yara
+
+    rule RegExpExample2
+    {
+        strings:
+            $re1 = /foo/i    // This regexp is case-insentitive
+            $re2 = /bar./s   // In this regexp the dot matches everything, including new-line
+            $re3 = /baz./is  // Both modifiers can be used together
+        condition:
+            any of them
+    }
+
+Notice that ``/foo/i`` is equivalent to ``/foo/ nocase``, but we recommend the
+latter when defining strings. The ``/foo/i`` syntax is useful when writting
+case-insentive regular expressions for the ``matches`` operator.
+
 In previous versions of YARA, external libraries like PCRE and RE2 were used
 to perform regular expression matching, but starting with version 2.0 YARA uses
 its own regular expression engine. This new engine implements most features
 found in PCRE, except a few of them like capture groups, POSIX character
-classes and backreferences.
+classes ([[:isalpha:]], [[:isdigit:]], etc) and backreferences.
 
 YARA’s regular expressions recognise the following metacharacters:
 
@@ -542,9 +595,12 @@ YARA’s regular expressions recognise the following metacharacters:
    * - ``\``
      - Quote the next metacharacter
    * - ``^``
-     - Match the beginning of the file
+     - Match the beginning of the file or negates a character class when used
+       as the first character after the opening bracket
    * - ``$``
      - Match the end of the file
+   * - ``.``
+     - Matches any single character except a newline character
    * - ``|``
      - Alternation
    * - ``()``
@@ -641,6 +697,7 @@ Starting with version 3.3.0 these zero-width assertions are also recognized:
    * - ``\B``
      - Match except at a word boundary
 
+
 Private strings
 ---------------
 
@@ -661,6 +718,53 @@ the C API.
             $text_string
     }
 
+String Modifier Summary
+-----------------------
+
+The following string modifiers are processed in the following order, but are only applicable
+to the string types listed.
+
+.. list-table:: Text string modifiers
+   :widths: 3 5 10 10
+   :header-rows: 1
+
+   * - Keyword
+     - String Types
+     - Summary
+     - Restrictions
+   * - ``nocase``
+     - Text, Regex
+     - Ignore case
+     - Cannot use with ``xor``, ``base64``, or ``base64wide``
+   * - ``wide``
+     - Text, Regex
+     - Emulate UTF16 by interleaving null (0x00) characters
+     - None
+   * - ``ascii``
+     - Text, Regex
+     - Also match ASCII characters, only required if ``wide`` is used
+     - None
+   * - ``xor``
+     - Text
+     - XOR text string with single byte keys
+     - Cannot use with ``nocase``, ``base64``, or ``base64wide``
+   * - ``base64``
+     - Text
+     - Convert to 3 base64 encoded strings
+     - Cannot use with ``nocase``, ``xor``, or ``fullword``
+   * - ``base64wide``
+     - Text
+     - Convert to 3 base64 encoded strings, then interleaving null characters like ``wide``
+     - Cannot use with ``nocase``, ``xor``, or ``fullword``
+   * - ``fullword``
+     - Text, Regex
+     - Match is not preceded or followed by an alphanumeric character
+     - Cannot use with ``base64`` or ``base64wide``
+   * - ``private``
+     - Hex, Text, Regex
+     - Match never included in output
+     - None
+
 
 Conditions
 ==========
@@ -668,9 +772,9 @@ Conditions
 Conditions are nothing more than Boolean expressions as those that can be found
 in all programming languages, for example in an *if* statement. They can contain
 the typical Boolean operators ``and``, ``or``, and ``not``, and relational operators
-``>=``, ``<=``, ``<``, ``>``, ``==`` and ``!=``. Also, the arithmetic operators (``+``, ``-``, ``*``, ``\``, ``%``)
-and bitwise operators (``&``, ``|``, ``<<``, ``>>``, ``~``, ``^``) can be used on numerical
-expressions.
+``>=``, ``<=``, ``<``, ``>``, ``==`` and ``!=``. Also, the arithmetic operators
+(``+``, ``-``, ``*``, ``\``, ``%``) and bitwise operators
+(``&``, ``|``, ``<<``, ``>>``, ``~``, ``^``) can be used on numerical expressions.
 
 Integers are always 64-bits long, even the results of functions like `uint8`,
 `uint16` and `uint32` are promoted to 64-bits. This is something you must take
@@ -683,55 +787,71 @@ on a higher row in the list are grouped prior operators listed in rows further
 below it. Operators within the same row have the same precedence, if they appear
 together in a expression the associativity determines how they are grouped.
 
-==========  ========  =========================================  =============
-Precedence  Operator  Description                                Associativity
-==========  ========  =========================================  =============
-1           []        Array subscripting                         Left-to-right
+==========  ===========  =========================================  =============
+Precedence  Operator     Description                                Associativity
+==========  ===========  =========================================  =============
+1           []           Array subscripting                         Left-to-right
 
-            .         Structure member access
-----------  --------  -----------------------------------------  -------------
-2           `-`       Unary minus                                Right-to-left
+            .            Structure member access
+----------  -----------  -----------------------------------------  -------------
+2           `-`          Unary minus                                Right-to-left
 
-            `~`       Bitwise not
-----------  --------  -----------------------------------------  -------------
-3           `*`       Multiplication                             Left-to-right
+            `~`          Bitwise not
+----------  -----------  -----------------------------------------  -------------
+3           `*`          Multiplication                             Left-to-right
 
-            \\        Division
+            \\           Division
 
-            %         Remainder
-----------  --------  -----------------------------------------  -------------
-4           `+`       Addition                                   Left-to-right
+            %            Remainder
+----------  -----------  -----------------------------------------  -------------
+4           `+`          Addition                                   Left-to-right
 
-            `-`       Substraction
-----------  --------  -----------------------------------------  -------------
-5           `<<`      Bitwise left shift                         Left-to-right
+            `-`          Subtraction
+----------  -----------  -----------------------------------------  -------------
+5           `<<`         Bitwise left shift                         Left-to-right
 
-            `>>`      Bitwise right shift
-----------  --------  -----------------------------------------  -------------
-6           &         Bitwise and                                Left-to-right
-----------  --------  -----------------------------------------  -------------
-7           ^         Bitwise xor                                Left-to-right
-----------  --------  -----------------------------------------  -------------
-8           `|`       Bitwise or                                 Left-to-right
-----------  --------  -----------------------------------------  -------------
-9           <         Less than                                  Left-to-right
+            `>>`         Bitwise right shift
+----------  -----------  -----------------------------------------  -------------
+6           &            Bitwise AND                                Left-to-right
+----------  -----------  -----------------------------------------  -------------
+7           ^            Bitwise XOR                                Left-to-right
+----------  -----------  -----------------------------------------  -------------
+8           `|`          Bitwise OR                                 Left-to-right
+----------  -----------  -----------------------------------------  -------------
+9           <            Less than                                  Left-to-right
 
-            <=        Less than or equal to
+            <=           Less than or equal to
 
-            >         Greater than
+            >            Greater than
 
-            >=        Greater than or equal to
-----------  --------  -----------------------------------------  -------------
-10          ==        Equal to                                   Left-to-right
+            >=           Greater than or equal to
+----------  -----------  -----------------------------------------  -------------
+10          ==           Equal to                                   Left-to-right
 
-            !=        Not equal to
-----------  --------  -----------------------------------------  -------------
-11          not       Logical not                                Right-to-left
-----------  --------  -----------------------------------------  -------------
-12          and       Logical and                                Left-to-right
-----------  --------  -----------------------------------------  -------------
-13          or        Logical or                                 Left-to-right
-==========  ========  =========================================  =============
+            !=           Not equal to
+
+            contains     String contains substring
+
+            icontains    Like contains but case-insensitive
+
+            startswith   String starts with substring
+
+            istartswith  Like startswith but case-insensitive
+
+            endswith     String ends with substring
+
+            iendswith    Like endswith but case-insensitive
+
+            iequals      Case-insensitive string comparison
+
+            matches      String matches regular expression
+----------  -----------  -----------------------------------------  -------------
+11          not          Logical NOT                                Right-to-left
+----------  -----------  -----------------------------------------  -------------
+12          and          Logical AND                                Left-to-right
+----------  -----------  -----------------------------------------  -------------
+13          or           Logical OR                                 Left-to-right
+==========  ===========  =========================================  =============
 
 
 String identifiers can be also used within a condition, acting as Boolean
@@ -778,6 +898,16 @@ For example:
 
 This rule matches any file or process containing the string $a exactly six times,
 and more than ten occurrences of string $b.
+
+Starting with YARA 4.2.0 it is possible to express the count of a string in an
+integer range, like this:
+
+.. code-block:: yara
+
+    #a in (filesize-500..filesize) == 2
+
+In this example the number of 'a' strings in the last 500 bytes of the file must
+equal exactly 2.
 
 .. _string-offsets:
 
@@ -833,7 +963,7 @@ Again, numbers are decimal by default.
 
 You can also get the offset or virtual address of the i-th occurrence of string
 $a by using @a[i]. The indexes are one-based, so the first occurrence would be
-@a[1] the second one @a[2] and so on. If you provide an index greater then the
+@a[1] the second one @a[2] and so on. If you provide an index greater than the
 number of occurrences of the string, the result will be a NaN (Not A Number)
 value.
 
@@ -866,7 +996,7 @@ the size of the file being scanned. The size is expressed in bytes.
     rule FileSizeExample
     {
         condition:
-           filesize > 200KB
+            filesize > 200KB
     }
 
 The previous example also demonstrates the use of the ``KB`` postfix. This
@@ -897,7 +1027,7 @@ or simple file infectors.
             $a = { E8 00 00 00 00 }
 
         condition:
-           $a at entrypoint
+            $a at entrypoint
     }
 
     rule EntryPointExample2
@@ -906,7 +1036,7 @@ or simple file infectors.
             $a = { 9C 50 66 A1 ?? ?? ?? 00 66 A9 ?? ?? 58 0F 85 }
 
         condition:
-           $a in (entrypoint..entrypoint + 10)
+            $a in (entrypoint..entrypoint + 10)
     }
 
 The presence of the ``entrypoint`` variable in a rule implies that only PE or
@@ -955,13 +1085,15 @@ itself. As an example let's see a rule to distinguish PE files:
 
     rule IsPE
     {
-      condition:
-         // MZ signature at offset 0 and ...
-         uint16(0) == 0x5A4D and
-         // ... PE signature at offset stored in MZ header at 0x3C
-         uint32(uint32(0x3C)) == 0x00004550
+        condition:
+            // MZ signature at offset 0 and ...
+            uint16(0) == 0x5A4D and
+            // ... PE signature at offset stored in MZ header at 0x3C
+            uint32(uint32(0x3C)) == 0x00004550
     }
 
+
+.. _sets-of-strings:
 
 Sets of strings
 ---------------
@@ -1036,7 +1168,7 @@ the equivalent keyword ``them`` for more legibility.
 
 In all the examples above, the number of strings have been specified by a
 numeric constant, but any expression returning a numeric value can be used.
-The keywords ``any`` and ``all`` can be used as well.
+The keywords ``any``, ``all`` and ``none`` can be used as well.
 
 .. code-block:: yara
 
@@ -1045,6 +1177,17 @@ The keywords ``any`` and ``all`` can be used as well.
     all of ($a*)      // all strings whose identifier starts by $a
     any of ($a,$b,$c) // any of $a, $b or $c
     1 of ($*)         // same that "any of them"
+    none of ($b*)     // zero of the set of strings that start with "$b"
+
+
+Starting with YARA 4.2.0 it is possible to express a set of strings in an
+integer range, like this:
+
+.. code-block:: yara
+
+    all of ($a*) in (filesize-500..filesize)
+    any of ($a*, $b*) in (1000..2000)
+
 
 Applying the same condition to many strings
 -------------------------------------------
@@ -1070,13 +1213,13 @@ evaluated. Take a look at the following expression:
 
 .. code-block:: yara
 
-    for any of ($a,$b,$c) : ( $ at entrypoint  )
+    for any of ($a,$b,$c) : ( $ at pe.entry_point  )
 
 The $ symbol in the boolean expression is not tied to any particular string,
 it will be $a, and then $b, and then $c in the three successive evaluations
 of the expression.
 
-Maybe you already realised that the ``of`` operator is an special case of
+Maybe you already realised that the ``of`` operator is a special case of
 ``for..of``. The following expressions are the same:
 
 .. code-block:: yara
@@ -1084,13 +1227,14 @@ Maybe you already realised that the ``of`` operator is an special case of
     any of ($a,$b,$c)
     for any of ($a,$b,$c) : ( $ )
 
-You can also employ the symbols # and @ to make reference to the number of
-occurrences and the first offset of each string respectively.
+You can also employ the symbols #, @, and ! to make reference to the number of
+occurrences, the first offset, and the length of each string respectively.
 
 .. code-block:: yara
 
     for all of them : ( # > 3 )
     for all of ($a*) : ( @ > @b )
+
 
 Using anonymous strings with ``of`` and ``for..of``
 ---------------------------------------------------
@@ -1138,8 +1282,9 @@ they satisfy a given condition. For example:
             for all i in (1,2,3) : ( @a[i] + 10 == @b[i] )
     }
 
-The previous rule says that the first three occurrences of $b should be 10
-bytes away from the first three occurrences of $a.
+The previous rule says that the first occurrence of $b should be 10 bytes
+after the first occurrence of $a, and the same should happen with the second
+and third ocurrences of the two strings.
 
 The same condition could be written also as:
 
@@ -1178,11 +1323,11 @@ In summary, the syntax of this operator is:
 Iterators
 ---------
 
-In YARA 3.12 the ``for..of`` operator was improved and now it can be used to
+In YARA 4.0 the ``for..of`` operator was improved and now it can be used to
 iterate not only over integer enumerations and ranges (e.g: 1,2,3,4 and 1..4),
 but also over any kind of iterable data type, like arrays and dictionaries
 defined by YARA modules. For example, the following expression is valid in
-YARA 3.12:
+YARA 4.0:
 
 .. code-block:: yara
 
@@ -1197,8 +1342,8 @@ This is equivalent to:
 The new syntax is more natural and easy to understand, and is the recommended
 way of expressing this type of conditions in newer versions of YARA.
 
-For while iterating dictionaries you must provide to variable names that will
-hold the key and value of each entry in the dictionary, for example:
+While iterating dictionaries you must provide two variable names that will
+hold the key and value for each entry in the dictionary, for example:
 
 .. code-block:: yara
 
@@ -1251,6 +1396,54 @@ As can be seen in the example, a file will satisfy Rule2 only if it contains
 the string "dummy2" and satisfies Rule1. Note that it is strictly necessary to
 define the rule being invoked before the one that will make the invocation.
 
+Another way to reference other rules was introduced in 4.2.0 and that is sets
+of rules, which operate similarly to sets of strings (see
+:ref:`sets-of-strings)`. For example:
+
+.. code-block:: yara
+
+    rule Rule1
+    {
+        strings:
+            $a = "dummy1"
+
+        condition:
+            $a
+    }
+
+    rule Rule2
+    {
+        strings:
+            $a = "dummy2"
+
+        condition:
+            $a
+    }
+
+    rule MainRule
+    {
+        strings:
+            $a = "dummy2"
+
+        condition:
+            any of (Rule*)
+    }
+
+This example demonstrates how to use rule sets to describe higher order logic
+in a way which automatically grows with your rules. If you define another rule
+named ``Rule3`` before ``MainRule`` then it will automatically be included in
+the expansion of ``Rule*`` in the condition for MainRule.
+
+To use rule sets all of the rules included in the set **must** exist prior to
+the rule set being used. For example, the following will produce a compiler
+error because ``a2`` is defined after the rule set is used in ``x``:
+
+.. code-block:: yara
+
+    rule a1 { condition: true }
+    rule x { condition: 1 of (a*) }
+    rule a2 { condition: true }
+
 More about rules
 ================
 
@@ -1262,8 +1455,8 @@ Global rules
 ------------
 
 Global rules give you the possibility of imposing restrictions in all your
-rules at once. For example, suppose that you want all your rules ignoring
-those files that exceed a certain size limit, you could go rule by rule making
+rules at once. For example, suppose that you want all your rules to ignore
+files that exceed a certain size limit. You could go rule by rule making
 the required modifications to their conditions, or just write a global rule
 like this one:
 
@@ -1357,9 +1550,9 @@ identifier/value pairs like in the following example:
 
 As can be seen in the example, metadata identifiers are always followed by
 an equals sign and the value assigned to them. The assigned values can be
-strings, integers, or one of the boolean values true or false. Note that
-identifier/value pairs defined in the metadata section can not be used in
-the condition section, their only purpose is to store additional information
+strings (valid UTF8 only), integers, or one of the boolean values true or false.
+Note that identifier/value pairs defined in the metadata section cannot be used
+in the condition section, their only purpose is to store additional information
 about the rule.
 
 .. _using-modules:
@@ -1397,7 +1590,7 @@ Undefined values
 
 Modules often leave variables in an undefined state, for example when the
 variable doesn't make sense in the current context (think of ``pe.entry_point``
-while scanning a non-PE file). YARA handles undefined values in way that allows
+while scanning a non-PE file). YARA handles undefined values in a way that allows
 the rule to keep its meaningfulness. Take a look at this rule:
 
 .. code-block:: yara
@@ -1406,11 +1599,11 @@ the rule to keep its meaningfulness. Take a look at this rule:
 
     rule Test
     {
-      strings:
-          $a = "some string"
+        strings:
+            $a = "some string"
 
-      condition:
-          $a and pe.entry_point == 0x1000
+        condition:
+            $a and pe.entry_point == 0x1000
     }
 
 If the scanned file is not a PE you wouldn't expect this rule to match the file,
@@ -1423,24 +1616,52 @@ if the condition is changed to:
     $a or pe.entry_point == 0x1000
 
 You would expect the rule to match in this case if the file contains the string,
-even if it isn't a PE file. That's exactly how YARA behaves. The logic is
-simple: any arithmetic, comparison, or boolean operation will result in an
-undefined value if one of its operands is undefined, except for *OR* operations
-where an undefined operand is interpreted as a False.
+even if it isn't a PE file. That's exactly how YARA behaves. The logic is as
+follows:
+
+* If the expression in the condition is undefined, it would be translated to
+  ``false`` and the rule won't match.
+
+* Boolean operators ``and`` and ``or`` will treat undefined operands as ``false``,
+  Which means that:
+
+  * ``undefined and true`` is ``false``
+  * ``undefined and false`` is ``false``
+  * ``undefined or true`` is ``true``
+  * ``undefined or false`` is ``false``
+
+* All the remaining operators, including the ``not`` operator, return undefined
+  if any of their operands is undefined.
+
+In the expression above, ``pe.entry_point == 0x1000`` will be undefined for non-PE
+files, because ``pe.entry_point`` is undefined for those files. This implies that
+``$a or pe.entry_point == 0x1000`` will be ``true`` if and only if ``$a`` is ``true``.
+
+If the condition is ``pe.entry_point == 0x1000`` alone, it will evaluate to ``false``
+for non-PE files, and so will do ``pe.entry_point != 0x1000`` and
+``not pe.entry_point == 0x1000``, as non of these expressions make sense for non-PE
+files.
+
+To check if expression is defined use unary operator ``defined``. Example:
+
+.. code-block:: yara
+
+    defined pe.entry_point
+
 
 
 External variables
 ==================
 
-External variables allow you to define rules which depends on values provided
-from the outside. For example you can write the following rule:
+External variables allow you to define rules that depend on values provided
+from the outside. For example, you can write the following rule:
 
 .. code-block:: yara
 
     rule ExternalVariableExample1
     {
         condition:
-           ext_var == 10
+            ext_var == 10
     }
 
 In this case ``ext_var`` is an external variable whose value is assigned at
@@ -1456,23 +1677,49 @@ For example:
     rule ExternalVariableExample2
     {
         condition:
-           bool_ext_var or filesize < int_ext_var
+            bool_ext_var or filesize < int_ext_var
     }
 
-External variables of type string can be used with the operators: ``contains``
-and ``matches``. The ``contains`` operator returns true if the string contains
-the specified substring. The ``matches`` operator returns true if the string
-matches the given regular expression.
+External variables of type string can be used with the operators: ``contains``,
+``startswith``, ``endswith`` and their case-insensitive counterparts: ``icontains``,
+``istartswith`` and ``iendswith``. They can be used also with the ``matches``
+operator, which returns true if the string matches a given regular expression.
+Case-insensitive string comparison can be done through special operator ``iequals``
+which only works with strings. For case-sensitive comparison use regular ``==``.
 
 .. code-block:: yara
 
-    rule ExternalVariableExample3
+    rule ContainsExample
     {
         condition:
             string_ext_var contains "text"
     }
 
-    rule ExternalVariableExample4
+    rule CaseInsensitiveContainsExample
+    {
+        condition:
+            string_ext_var icontains "text"
+    }
+
+    rule StartsWithExample
+    {
+        condition:
+            string_ext_var startswith "prefix"
+    }
+
+    rule EndsWithExample
+    {
+        condition:
+            string_ext_var endswith "suffix"
+    }
+
+    rule IequalsExample
+    {
+        condition:
+            string_ext_var iequals "string"
+    }
+
+    rule MatchesExample
     {
         condition:
             string_ext_var matches /[a-z]+/
@@ -1499,6 +1746,7 @@ Keep in mind that every external variable used in your rules must be defined
 at run-time, either by using the ``-d`` option of the command-line tool, or by
 providing the ``externals`` parameter to the appropriate method in
 ``yara-python``.
+
 
 Including files
 ===============

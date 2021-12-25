@@ -78,7 +78,7 @@ extern int re_yydebug;
 
 union YYSTYPE
 {
-#line 73 "re_grammar.y" /* yacc.c:1916  */
+#line 75 "re_grammar.y" /* yacc.c:1916  */
 
   int integer;
   uint32_t range;

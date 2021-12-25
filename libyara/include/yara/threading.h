@@ -30,8 +30,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef YR_MUTEX_H
 #define YR_MUTEX_H
 
-
-
 #if defined(_WIN32) || defined(__CYGWIN__)
 
 #include <windows.h>
@@ -40,6 +38,8 @@ typedef DWORD YR_THREAD_ID;
 typedef DWORD YR_THREAD_STORAGE_KEY;
 typedef HANDLE YR_MUTEX;
 
+#define YR_TLS __declspec(thread)
+
 #else
 
 #include <pthread.h>
@@ -47,6 +47,8 @@ typedef HANDLE YR_MUTEX;
 typedef pthread_t YR_THREAD_ID;
 typedef pthread_key_t YR_THREAD_STORAGE_KEY;
 typedef pthread_mutex_t YR_MUTEX;
+
+#define YR_TLS __thread
 
 #endif
 

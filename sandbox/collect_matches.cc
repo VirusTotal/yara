@@ -32,10 +32,16 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "libyara/include/yara.h"
 #include "sandbox/yara_matches.pb.h"
 
-namespace yara {
-
-int CollectMatches(int message, void* message_data, void* user_data) {
-  if (message != CALLBACK_MSG_RULE_MATCHING) {
+namespace yara
+{
+int CollectMatches(
+    YR_SCAN_CONTEXT*,
+    int message,
+    void* message_data,
+    void* user_data)
+{
+  if (message != CALLBACK_MSG_RULE_MATCHING)
+  {
     return ERROR_SUCCESS;  // There are no matching rules, simply return
   }
 
@@ -43,23 +49,28 @@ int CollectMatches(int message, void* message_data, void* user_data) {
   YR_META* rule_meta = rule->metas;
 
   auto* match = reinterpret_cast<YaraMatches*>(user_data)->add_match();
-  if (rule->ns != nullptr && rule->ns->name != nullptr) {
+
+  if (rule->ns != nullptr && rule->ns->name != nullptr)
+  {
     match->mutable_id()->set_rule_namespace(rule->ns->name);
   }
+
   match->mutable_id()->set_rule_name(rule->identifier);
-  while (!META_IS_NULL(rule_meta)) {
+
+  yr_rule_metas_foreach(rule, rule_meta)
+  {
     auto* meta = match->add_meta();
     meta->set_identifier(rule_meta->identifier);
-    switch (rule_meta->type) {
-      case META_TYPE_BOOLEAN:
-      case META_TYPE_INTEGER:
-        meta->set_int_value(rule_meta->integer);
-        break;
-      case META_TYPE_STRING:
-        meta->set_bytes_value(rule_meta->string);
-        break;
+    switch (rule_meta->type)
+    {
+    case META_TYPE_BOOLEAN:
+    case META_TYPE_INTEGER:
+      meta->set_int_value(rule_meta->integer);
+      break;
+    case META_TYPE_STRING:
+      meta->set_bytes_value(rule_meta->string);
+      break;
     }
-    ++rule_meta;
   }
 
   return ERROR_SUCCESS;

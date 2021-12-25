@@ -28,7 +28,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include <time.h>
-
 #include <yara/modules.h>
 
 #define MODULE_NAME time
@@ -38,27 +37,23 @@ define_function(now)
 {
   time_t now = time(NULL);
   if (now == -1)
-    return_integer(UNDEFINED);
+    return_integer(YR_UNDEFINED);
   return_integer((long) now);
 }
 
 
-begin_declarations;
-
+begin_declarations
   declare_function("now", "", "i", now);
-
 end_declarations;
 
 
-int module_initialize(
-    YR_MODULE* module)
+int module_initialize(YR_MODULE* module)
 {
   return ERROR_SUCCESS;
 }
 
 
-int module_finalize(
-    YR_MODULE* module)
+int module_finalize(YR_MODULE* module)
 {
   return ERROR_SUCCESS;
 }
@@ -74,8 +69,7 @@ int module_load(
 }
 
 
-int module_unload(
-    YR_OBJECT* module_object)
+int module_unload(YR_OBJECT* module_object)
 {
   return ERROR_SUCCESS;
 }

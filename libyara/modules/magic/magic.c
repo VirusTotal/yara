@@ -33,112 +33,152 @@ The original idea and inspiration for this module comes from Armin Buescher.
 
 */
 
-#include <yara/modules.h>
 #include <magic.h>
+#include <yara/mem.h>
+#include <yara/modules.h>
 
 #define MODULE_NAME magic
 
-magic_t magic_cookie[YR_MAX_THREADS];
 
-const char* cached_types[YR_MAX_THREADS];
-const char* cached_mime_types[YR_MAX_THREADS];
+// Thread-local storage key used to store a pointer to a MAGIC_CACHE struct.
+YR_THREAD_STORAGE_KEY magic_tls;
+
+
+typedef struct
+{
+  magic_t magic_cookie;
+  const char* cached_type;
+  const char* cached_mime_type;
+
+} MAGIC_CACHE;
+
+
+static int get_cache(MAGIC_CACHE** cache)
+{
+  *cache = (MAGIC_CACHE*) yr_thread_storage_get_value(&magic_tls);
+
+  if (*cache == NULL)
+  {
+    *cache = (MAGIC_CACHE*) yr_malloc(sizeof(MAGIC_CACHE));
+
+    if (*cache == NULL)
+      return ERROR_INSUFFICIENT_MEMORY;
+
+    (*cache)->magic_cookie = magic_open(0);
+
+    if ((*cache)->magic_cookie == NULL)
+    {
+      yr_free(*cache);
+      return ERROR_INSUFFICIENT_MEMORY;
+    }
+
+    if (magic_load((*cache)->magic_cookie, NULL) != 0)
+    {
+      magic_close((*cache)->magic_cookie);
+      yr_free(*cache);
+      return ERROR_INTERNAL_FATAL_ERROR;
+    }
+
+    (*cache)->cached_type = NULL;
+    (*cache)->cached_mime_type = NULL;
+
+    return yr_thread_storage_set_value(&magic_tls, *cache);
+  }
+
+  return ERROR_SUCCESS;
+}
 
 
 define_function(magic_mime_type)
 {
-  YR_MEMORY_BLOCK* block;
   YR_SCAN_CONTEXT* context = scan_context();
+  YR_MEMORY_BLOCK* block;
+  MAGIC_CACHE* cache;
 
   const uint8_t* block_data;
 
   if (context->flags & SCAN_FLAGS_PROCESS_MEMORY)
-    return_string(UNDEFINED);
+    return_string(YR_UNDEFINED);
 
-  if (cached_mime_types[context->tidx] == NULL)
+  FAIL_ON_ERROR(get_cache(&cache));
+
+  if (cache->cached_mime_type == NULL)
   {
     block = first_memory_block(context);
     block_data = block->fetch_data(block);
 
     if (block_data != NULL)
     {
-      magic_setflags(magic_cookie[context->tidx], MAGIC_MIME_TYPE);
+      magic_setflags(cache->magic_cookie, MAGIC_MIME_TYPE);
 
-      cached_mime_types[context->tidx] = magic_buffer(
-          magic_cookie[context->tidx],
-          block_data,
-          block->size);
+      cache->cached_mime_type = magic_buffer(
+          cache->magic_cookie, block_data, block->size);
     }
   }
 
-  if (cached_mime_types[context->tidx] == NULL)
-    return_string(UNDEFINED);
+  if (cache->cached_mime_type == NULL)
+    return_string(YR_UNDEFINED);
 
-  return_string((char*) cached_mime_types[context->tidx]);
+  return_string((char*) cache->cached_mime_type);
 }
 
 
 define_function(magic_type)
 {
+  MAGIC_CACHE* cache;
   YR_MEMORY_BLOCK* block;
   YR_SCAN_CONTEXT* context = scan_context();
 
   const uint8_t* block_data;
 
   if (context->flags & SCAN_FLAGS_PROCESS_MEMORY)
-    return_string(UNDEFINED);
+    return_string(YR_UNDEFINED);
 
-  if (cached_types[context->tidx] == NULL)
+  FAIL_ON_ERROR(get_cache(&cache));
+
+  if (cache->cached_type == NULL)
   {
     block = first_memory_block(context);
     block_data = block->fetch_data(block);
 
     if (block_data != NULL)
     {
-      magic_setflags(magic_cookie[context->tidx], 0);
+      magic_setflags(cache->magic_cookie, 0);
 
-      cached_types[context->tidx] = magic_buffer(
-          magic_cookie[context->tidx],
-          block_data,
-          block->size);
+      cache->cached_type = magic_buffer(
+          cache->magic_cookie, block_data, block->size);
     }
   }
 
-  if (cached_types[context->tidx] == NULL)
-    return_string(UNDEFINED);
+  if (cache->cached_type == NULL)
+    return_string(YR_UNDEFINED);
 
-  return_string((char*) cached_types[context->tidx]);
+  return_string((char*) cache->cached_type);
 }
 
-begin_declarations;
-
+begin_declarations
   declare_function("mime_type", "", "s", magic_mime_type);
   declare_function("type", "", "s", magic_type);
+end_declarations
 
-end_declarations;
 
-
-int module_initialize(
-    YR_MODULE* module)
+int module_initialize(YR_MODULE* module)
 {
-  int i;
-
-  for (i = 0; i < YR_MAX_THREADS; i++)
-    magic_cookie[i] = NULL;
-
-  return ERROR_SUCCESS;
+  return yr_thread_storage_create(&magic_tls);
 }
 
 
-int module_finalize(
-    YR_MODULE* module)
+int module_finalize(YR_MODULE* module)
 {
-  int i;
+  MAGIC_CACHE* cache = (MAGIC_CACHE*) yr_thread_storage_get_value(&magic_tls);
 
-  for (i = 0; i < YR_MAX_THREADS; i++)
-    if (magic_cookie[i] != NULL)
-      magic_close(magic_cookie[i]);
+  if (cache != NULL)
+  {
+    magic_close(cache->magic_cookie);
+    yr_free(cache);
+  }
 
-  return ERROR_SUCCESS;
+  return yr_thread_storage_destroy(&magic_tls);
 }
 
 
@@ -148,33 +188,19 @@ int module_load(
     void* module_data,
     size_t module_data_size)
 {
-  cached_types[context->tidx] = NULL;
-  cached_mime_types[context->tidx] = NULL;
-
-  if (magic_cookie[context->tidx] == NULL)
-  {
-    magic_cookie[context->tidx] = magic_open(0);
-
-    if (magic_cookie[context->tidx] != NULL)
-    {
-      if (magic_load(magic_cookie[context->tidx], NULL) != 0)
-      {
-        magic_close(magic_cookie[context->tidx]);
-        return ERROR_INTERNAL_FATAL_ERROR;
-      }
-    }
-    else
-    {
-      return ERROR_INSUFFICIENT_MEMORY;
-    }
-  }
-
   return ERROR_SUCCESS;
 }
 
 
-int module_unload(
-    YR_OBJECT* module)
+int module_unload(YR_OBJECT* module)
 {
+  MAGIC_CACHE* cache = (MAGIC_CACHE*) yr_thread_storage_get_value(&magic_tls);
+
+  if (cache != NULL)
+  {
+    cache->cached_type = NULL;
+    cache->cached_mime_type = NULL;
+  }
+
   return ERROR_SUCCESS;
 }

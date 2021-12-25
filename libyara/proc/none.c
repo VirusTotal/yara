@@ -32,21 +32,17 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <yara/error.h>
 #include <yara/proc.h>
 
-int _yr_process_attach(
-    int pid,
-    YR_PROC_ITERATOR_CTX* context)
+int _yr_process_attach(int pid, YR_PROC_ITERATOR_CTX* context)
 {
   return ERROR_COULD_NOT_ATTACH_TO_PROCESS;
 }
 
-int _yr_process_detach(
-    YR_PROC_ITERATOR_CTX* context)
+int _yr_process_detach(YR_PROC_ITERATOR_CTX* context)
 {
   return ERROR_INVALID_ARGUMENT;
 }
 
-YR_API const uint8_t* yr_process_fetch_memory_block_data(
-    YR_MEMORY_BLOCK* block)
+YR_API const uint8_t* yr_process_fetch_memory_block_data(YR_MEMORY_BLOCK* block)
 {
   return NULL;
 }
@@ -54,6 +50,7 @@ YR_API const uint8_t* yr_process_fetch_memory_block_data(
 YR_API YR_MEMORY_BLOCK* yr_process_get_next_memory_block(
     YR_MEMORY_BLOCK_ITERATOR* iterator)
 {
+  iterator->last_error = ERROR_SUCCESS;
   return NULL;
 }
 

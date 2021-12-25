@@ -31,39 +31,32 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define YR_MEM_H
 
 #include <stdio.h>
+#include <yara/utils.h>
 
 #ifdef DMALLOC
 
-#define yr_malloc malloc
-#define yr_calloc calloc
+#define yr_malloc  malloc
+#define yr_calloc  calloc
 #define yr_realloc realloc
-#define yr_free free
-#define yr_strdup strdup
+#define yr_free    free
+#define yr_strdup  strdup
 #define yr_strndup strndup
 
 #include <dmalloc.h>
 
 #else
 
-void* yr_calloc(
-    size_t count,
-    size_t size);
+void* yr_calloc(size_t count, size_t size);
 
-void* yr_malloc(
-    size_t size);
+void* yr_malloc(size_t size);
 
-void* yr_realloc(
-    void* ptr,
-    size_t size);
+void* yr_realloc(void* ptr, size_t size);
 
-void yr_free(
-    void *ptr);
+char* yr_strdup(const char* str);
 
-char* yr_strdup(
-    const char *str);
+char* yr_strndup(const char* str, size_t n);
 
-char* yr_strndup(
-	const char *str, size_t n);
+YR_API void yr_free(void* ptr);
 
 #endif
 
