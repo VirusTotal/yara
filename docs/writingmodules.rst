@@ -204,24 +204,24 @@ The second step is modifying the *Makefile.am* to tell the *make* program that
 the source code for your module must be compiled and linked into YARA. At the
 very beginning of *libyara/Makefile.am* you'll find this::
 
-    MODULES =  modules/tests.c
-    MODULES += modules/pe.c
+    MODULES =  modules/tests/tests.c
+    MODULES += modules/pe/pe.c
 
     if CUCKOO_MODULE
-    MODULES += modules/cuckoo.c
+    MODULES += modules/cuckoo/cuckoo.c
     endif
 
 
 Just add a new line for your module::
 
-    MODULES =  modules/tests.c
-    MODULES += modules/pe.c
+    MODULES =  modules/tests/tests.c
+    MODULES += modules/pe/pe.c
 
     if CUCKOO_MODULE
-    MODULES += modules/cuckoo.c
+    MODULES += modules/cuckoo/cuckoo.c
     endif
 
-    MODULES += modules/demo.c
+    MODULES += modules/demo/demo.c
 
 And that's all! Now you're ready to build YARA with your brand-new module
 included. Just go to the source tree root directory and type as always::
