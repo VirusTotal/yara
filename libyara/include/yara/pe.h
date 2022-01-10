@@ -777,6 +777,7 @@ typedef struct _IMAGE_SYMBOL_EX
 
 #define CVINFO_PDB70_CVSIGNATURE 0x53445352  // "RSDS"
 #define CVINFO_PDB20_CVSIGNATURE 0x3031424e  // "NB10"
+#define CODEVIEW_SIGNATURE_MTOC 0x434f544d  // "MTOC"
 
 typedef struct _CV_HEADER
 {
@@ -799,6 +800,13 @@ typedef struct _CV_INFO_PDB70
   DWORD Age;
   BYTE PdbFileName[1];
 } CV_INFO_PDB70, *PCV_INFO_PDB70;
+
+typedef struct _MTOC_ENTRY
+{
+  DWORD Signature;
+  BYTE uuid[16];
+  BYTE PdbFileName[1];
+} MTOC_ENTRY, *PMTOC_ENTRY;
 
 typedef struct _VERSION_INFO
 {
