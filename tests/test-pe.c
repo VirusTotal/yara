@@ -405,6 +405,14 @@ int main(int argc, char** argv)
       "tests/data/"
       "079a472d22290a94ebb212aa8015cdc8dd28a968c6b4d3b88acdd58ce2d3b885");
 
+  assert_true_rule_file(
+      "import \"pe\" \
+      rule test { \
+        condition: \
+          pe.pdb_path == \"/Users/runner/work/OpenCorePkg/OpenCorePkg/UDK/Build/OpenCorePkg/DEBUG_XCODE5/X64/OpenCorePkg/Application/ChipTune/ChipTune/DEBUG/ChipTune.dll\" \
+      }",
+      "tests/data/ChipTune.efi");
+
   assert_false_rule_file(
       "import \"pe\" \
       rule test { \
