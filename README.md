@@ -59,6 +59,7 @@ awesome list of [YARA-related stuff](https://github.com/InQuest/awesome-yara).
 * [ActiveCanopy](https://activecanopy.com/)
 * [Adlice](https://www.adlice.com/)
 * [AlienVault](https://otx.alienvault.com/)
+* [Apple](https://www.apple.com)
 * [Avast](https://www.avast.com/)
 * [BAE Systems](https://www.baesystems.com/home?r=ai)
 * [Bayshore Networks, Inc.](https://www.bayshorenetworks.com)
