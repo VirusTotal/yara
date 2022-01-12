@@ -30,7 +30,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // clang-format off
 
 %{
-  
+
 #include <assert.h>
 #include <stdio.h>
 #include <string.h>
@@ -228,6 +228,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // in the list. Operators that appear in the same line have the same precedence.
 %left _OR_
 %left _AND_
+%right _NOT_ _DEFINED_
 %left _EQ_ _NEQ_ _CONTAINS_ _ICONTAINS_ _STARTSWITH_ _ENDSWITH_ _ISTARTSWITH_ _IENDSWITH_ _IEQUALS_ _MATCHES_
 %left _LT_ _LE_ _GT_ _GE_
 %left '|'
@@ -236,8 +237,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 %left _SHIFT_LEFT_ _SHIFT_RIGHT_
 %left '+' '-'
 %left '*' '\\' '%'
-%right _NOT_ '~' UNARY_MINUS
-%right _DEFINED_
+%right '~' UNARY_MINUS
 
 %type <rule>   rule
 
