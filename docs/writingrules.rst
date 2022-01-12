@@ -847,6 +847,7 @@ Precedence  Operator     Description                                Associativit
             matches      String matches regular expression
 ----------  -----------  -----------------------------------------  -------------
 11          not          Logical NOT                                Right-to-left
+            defined      Check if an expression is defined
 ----------  -----------  -----------------------------------------  -------------
 12          and          Logical AND                                Left-to-right
 ----------  -----------  -----------------------------------------  -------------
@@ -1639,7 +1640,7 @@ files, because ``pe.entry_point`` is undefined for those files. This implies tha
 
 If the condition is ``pe.entry_point == 0x1000`` alone, it will evaluate to ``false``
 for non-PE files, and so will do ``pe.entry_point != 0x1000`` and
-``not pe.entry_point == 0x1000``, as non of these expressions make sense for non-PE
+``not pe.entry_point == 0x1000``, as none of these expressions make sense for non-PE
 files.
 
 To check if expression is defined use unary operator ``defined``. Example:
