@@ -153,13 +153,6 @@ AC_ARG_ENABLE([magic],
     PC_LIBS_PRIVATE="$PC_LIBS_PRIVATE -lmagic"
   fi])
 
-AC_ARG_ENABLE([dotnet],
-  [AS_HELP_STRING([--enable-dotnet], [enable dotnet module])],
-  [if test x$enableval = xyes; then
-    build_dotnet_module=true
-    CFLAGS="$CFLAGS -DDOTNET_MODULE"
-  fi])
-
 AC_ARG_ENABLE([macho],
   [AS_HELP_STRING([--enable-macho], [enable macho module])],
   [if test x$enableval = xyes; then
@@ -197,6 +190,17 @@ AC_ARG_ENABLE([pb-tests],
     CFLAGS="$CFLAGS -DPB_TESTS_MODULE"
     PC_REQUIRES_PRIVATE="$PC_REQUIRES_PRIVATE libprotobuf-c"
   fi])
+
+# "dotnet" module is enabled by default. It can be disabled with --disable-dotnet.
+AC_ARG_ENABLE([dotnet],
+  [AS_HELP_STRING([--disable-dotnet], [disable dotnet module])],
+  [if test x$enableval = xyes; then
+    build_dotnet_module=false
+  fi],
+  [
+    build_dotnet_module=true
+    CFLAGS="$CFLAGS -DDOTNET_MODULE"
+  ] )
 
 AC_ARG_WITH([jemalloc],
   [AS_HELP_STRING([--with-jemalloc],
