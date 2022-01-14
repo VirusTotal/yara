@@ -229,9 +229,9 @@ int yr_parser_emit_pushes_for_strings(
   return ERROR_SUCCESS;
 }
 
-int yr_parser_emit_pushes_for_rules(
-    yyscan_t yyscanner,
-    const char* identifier)
+// Emit OP_PUSH_RULE instructions for all rules whose identifier has given
+// prefix.
+int yr_parser_emit_pushes_for_rules(yyscan_t yyscanner, const char* prefix)
 {
   YR_COMPILER* compiler = yyget_extra(yyscanner);
 
@@ -239,10 +239,6 @@ int yr_parser_emit_pushes_for_rules(
   assert(compiler->current_rule_idx != UINT32_MAX);
 
   YR_RULE* rule;
-
-  const char* rule_identifier;
-  const char* target_identifier;
-
   int matching = 0;
 
   YR_NAMESPACE* ns = (YR_NAMESPACE*) yr_arena_get_ptr(
@@ -262,23 +258,15 @@ int yr_parser_emit_pushes_for_rules(
   // Further, we have to get compiler->current_rule_idx before we start because
   // if we emit an OP_PUSH_RULE
   rule = yr_arena_get_ptr(compiler->arena, YR_RULES_TABLE, 0);
+
   for (uint32_t i = 0; i <= compiler->current_rule_idx; i++)
   {
-    rule_identifier = rule->identifier;
-    target_identifier = identifier;
-
-    while (*target_identifier != '\0' && *rule_identifier != '\0' &&
-           *target_identifier == *rule_identifier)
-    {
-      target_identifier++;
-      rule_identifier++;
-    }
-
-    if ((*target_identifier == '\0' && *rule_identifier == '\0') ||
-        *target_identifier == '*')
+    // Is rule->identifier prefixed by prefix?
+    if (strncmp(prefix, rule->identifier, strlen(prefix)) == 0)
     {
       uint32_t rule_idx = yr_hash_table_lookup_uint32(
           compiler->rules_table, rule->identifier, ns->name);
+
       if (rule_idx != UINT32_MAX)
       {
         FAIL_ON_ERROR(yr_parser_emit_with_arg(
@@ -286,12 +274,13 @@ int yr_parser_emit_pushes_for_rules(
         matching++;
       }
     }
+
     rule++;
   }
 
   if (matching == 0)
   {
-    yr_compiler_set_error_extra_info(compiler, identifier);
+    yr_compiler_set_error_extra_info(compiler, prefix);
     return ERROR_UNDEFINED_IDENTIFIER;
   }
 
@@ -918,20 +907,16 @@ _exit:
 }
 
 static int wildcard_iterator(
-    void* key,
+    void* prefix,
     size_t key_length,
     void* _value,
     void* data)
 {
-  char* wildcard_identifier = (char*) key;
   const char* identifier = (const char*) data;
-  char* p = strstr(wildcard_identifier, "*");
-  if (p == NULL)
-    return ERROR_INTERNAL_FATAL_ERROR;
 
-  if (!strncmp(wildcard_identifier, identifier, p - wildcard_identifier))
+  // If the identifier is prefixed by prefix, then it matches the wildcard.
+  if (!strncmp(prefix, identifier, strlen(prefix)))
   {
-    // Extra info for the compiler is set in the caller.
     return ERROR_IDENTIFIER_MATCHES_WILDCARD;
   }
 
@@ -964,20 +949,22 @@ int yr_parser_reduce_rule_declaration_phase_1(
     return ERROR_DUPLICATED_IDENTIFIER;
   }
 
+  // Iterate over all identifiers in wildcard_identifiers_table, and check if
+  // any of them are a prefix of the identifier being declared. If so, return
+  // ERROR_IDENTIFIER_MATCHES_WILDCARD.
   result = yr_hash_table_iterate(
       compiler->wildcard_identifiers_table,
       ns->name,
       wildcard_iterator,
       (void*) identifier);
-  if (result != ERROR_SUCCESS)
+
+  if (result == ERROR_IDENTIFIER_MATCHES_WILDCARD)
   {
-    if (result == ERROR_IDENTIFIER_MATCHES_WILDCARD)
-    {
-      // This rule matches an existing wildcard rule set.
-      yr_compiler_set_error_extra_info(compiler, identifier);
-    }
-    return result;
+    // This rule matches an existing wildcard rule set.
+    yr_compiler_set_error_extra_info(compiler, identifier);
   }
+
+  FAIL_ON_ERROR(result);
 
   FAIL_ON_ERROR(yr_arena_allocate_struct(
       compiler->arena,
