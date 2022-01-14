@@ -908,17 +908,15 @@ _exit:
 
 static int wildcard_iterator(
     void* prefix,
-    size_t key_length,
+    size_t prefix_len,
     void* _value,
     void* data)
 {
   const char* identifier = (const char*) data;
 
   // If the identifier is prefixed by prefix, then it matches the wildcard.
-  if (!strncmp(prefix, identifier, strlen(prefix)))
-  {
+  if (!strncmp(prefix, identifier, prefix_len))
     return ERROR_IDENTIFIER_MATCHES_WILDCARD;
-  }
 
   return ERROR_SUCCESS;
 }
