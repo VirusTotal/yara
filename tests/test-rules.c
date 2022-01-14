@@ -76,6 +76,14 @@ static void test_boolean_operators()
 
   assert_false_rule("rule test { condition: false or false }", NULL);
 
+  assert_true_rule("rule test { condition: not var_false }", NULL);
+
+  assert_true_rule("rule test { condition: var_true }", NULL);
+
+  assert_false_rule("rule test { condition: var_false }", NULL);
+
+  assert_false_rule("rule test { condition: not var_true }", NULL);
+
   assert_false_rule(
       "import \"tests\" rule test { condition: not tests.undefined.i }", NULL);
 
@@ -268,6 +276,10 @@ static void test_arithmetic_operators()
   assert_true_rule("rule test { condition: 0o100 == 64 }", NULL);
 
   assert_true_rule("rule test { condition: 0o755 == 493 }", NULL);
+
+  // Test cases for issue #1631.
+  assert_true_rule("rule test { condition: var_one*3 == 3}", NULL);
+  assert_true_rule("rule test { condition: var_zero*3 == 0}", NULL);
 
   // TODO: This should return ERROR_INTEGER_OVERFLOW, but right now it returns
   // ERROR_SYNTAX_ERROR because after the lexer aborts with
