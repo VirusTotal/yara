@@ -445,17 +445,6 @@ $({letter}|{digit}|_)*  {
 }
 
 
-({letter}|_)({letter}|{digit}|_)*"*"  {
-
-  yylval->c_string = yr_strdup(yytext);
-
-  if (yylval->c_string == NULL)
-    error(ERROR_INSUFFICIENT_MEMORY);
-
-  return _IDENTIFIER_WITH_WILDCARD_;
-}
-
-
 u?int(8|16|32)(be)? {
 
   char* text = yytext;
