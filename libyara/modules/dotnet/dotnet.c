@@ -33,7 +33,6 @@ limitations under the License.
 static uint32_t max_rows(int count, ...)
 {
   va_list ap;
-  int i;
   uint32_t biggest;
   uint32_t x;
 
@@ -43,7 +42,7 @@ static uint32_t max_rows(int count, ...)
   va_start(ap, count);
   biggest = va_arg(ap, uint32_t);
 
-  for (i = 1; i < count; i++)
+  for (int i = 1; i < count; i++)
   {
     x = va_arg(ap, uint32_t);
     biggest = (x > biggest) ? x : biggest;
@@ -199,12 +198,12 @@ char* pe_get_dotnet_string(
 
 static bool is_nested(uint32_t flags)
 {
-  /* ECMA 335 II.22.37
-  Whether a type is nested can be determined by the value of its
-  Flags.Visibility sub-field – it shall be one of the set
-  { NestedPublic, NestedPrivate, NestedFamily, NestedAssembly,
-  NestedFamANDAssem, NestedFamORAssem }
-  */
+  // ECMA 335 II.22.37
+  // Whether a type is nested can be determined by the value of its
+  // Flags.Visibility sub-field – it shall be one of the set
+  // { NestedPublic, NestedPrivate, NestedFamily, NestedAssembly,
+  // NestedFamANDAssem, NestedFamORAssem }
+
   switch (flags & TYPE_ATTR_VISIBILITY_MASK)
   {
   case TYPE_ATTR_NESTED_PRIVATE:
@@ -508,13 +507,13 @@ static uint32_t read_blob_unsigned(const uint8_t** data, uint32_t* len)
   if (*len < 1)
     return 0;
 
-  /* first byte is enough to decode the length
-    without worrying about endiannity
-    Compressed integers use big-endian order */
+  // first byte is enough to decode the length
+  // without worrying about endiannity
+  // Compressed integers use big-endian order
   uint8_t first_byte = *(*data);
 
-  /* If the value lies between 0 (0x00) and 127 (0x7F), inclusive, encode as a
-    one-byte integer (bit 7 is clear, value held in bits 6 through 0) */
+  // If the value lies between 0 (0x00) and 127 (0x7F), inclusive, encode as a
+  // one-byte integer (bit 7 is clear, value held in bits 6 through 0)
   if (!(first_byte & 0x80))
   {
     *data += sizeof(uint8_t);
@@ -525,9 +524,9 @@ static uint32_t read_blob_unsigned(const uint8_t** data, uint32_t* len)
   if (*len < 2)
     return 0;
 
-  /* If the value lies between 2^8 (0x80) and 2^14 – 1 (0x3FFF), inclusive,
-    encode as a 2-byte integer with bit 15 set, bit 14 clear (value held in
-    bits 13 through 0) */
+  // If the value lies between 2^8 (0x80) and 2^14 – 1 (0x3FFF), inclusive,
+  // encode as a 2-byte integer with bit 15 set, bit 14 clear (value held in
+  // bits 13 through 0)
   if ((first_byte & 0xC0) == 0x80)
   {
     uint32_t result = yr_be16toh(*(uint16_t*) *data);
@@ -540,8 +539,8 @@ static uint32_t read_blob_unsigned(const uint8_t** data, uint32_t* len)
   if (*len < 4)
     return 0;
 
-  /* Otherwise, encode as a 4-byte integer, with bit 31 set, bit 30 set,
-    bit 29 clear (value held in bits 28 through 0) */
+  // Otherwise, encode as a 4-byte integer, with bit 31 set, bit 30 set,
+  // bit 29 clear (value held in bits 28 through 0)
   if ((first_byte & 0xE0) == 0xC0)
   {
     uint32_t result = yr_be32toh(*(uint32_t*) *data);
@@ -562,12 +561,12 @@ static int32_t read_blob_signed(const uint8_t** data, uint32_t* len)
   if (*len < 1)
     return 0;
 
-  /* first byte is enough to decode the length
-     without worrying about endiannity */
+  // first byte is enough to decode the length
+  // without worrying about endiannity
   uint8_t first_byte = *(*data);
 
-  /* Encode as a one-byte integer, bit 7 clear, rotated value in bits 6
-     through 0, giving 0x01 (-2^6) to 0x7E (2^6-1). */
+  // Encode as a one-byte integer, bit 7 clear, rotated value in bits 6
+  // through 0, giving 0x01 (-2^6) to 0x7E (2^6-1).
   if (!(first_byte & 0x80))
   {
     uint8_t tmp = first_byte >> 1;
@@ -584,8 +583,8 @@ static int32_t read_blob_signed(const uint8_t** data, uint32_t* len)
   if (*len < 2)
     return 0;
 
-  /* Encode as a two-byte integer: bit 15 set, bit 14 clear, rotated value
-    in bits 13 through 0, giving 0x8001 (-2^13) to 0xBFFE (2^13-1). */
+  // Encode as a two-byte integer: bit 15 set, bit 14 clear, rotated value
+  // in bits 13 through 0, giving 0x8001 (-2^13) to 0xBFFE (2^13-1).
   if ((first_byte & 0xC0) == 0x80)
   {
     uint16_t tmp1 = yr_be16toh(*(uint16_t*) *data);
@@ -601,9 +600,9 @@ static int32_t read_blob_signed(const uint8_t** data, uint32_t* len)
     return (int32_t) tmp2;
   }
 
-  /* Encode as a four-byte integer: bit 31 set, 30 set, bit 29 clear,
-    rotated value in bits 28 through 0, giving 0xC0000001 (-2^28) to
-    0xDFFFFFFE (2^28-1). */
+  // Encode as a four-byte integer: bit 31 set, 30 set, bit 29 clear,
+  // rotated value in bits 28 through 0, giving 0xC0000001 (-2^28) to
+  // 0xDFFFFFFE (2^28-1).
   if ((first_byte & 0xE0) == 0xC0)
   {
     uint32_t tmp1 = yr_be32toh(*(uint32_t*) *data);
@@ -729,7 +728,7 @@ static char* parse_signature_type(
     uint32_t* len,
     GENERIC_PARAMETERS* class_gen_params,
     GENERIC_PARAMETERS* method_gen_params,
-    uint32_t depth  // against cycles
+    uint32_t depth  // against loops
 )
 {
   // If atleast first type fits and we are not too nested
@@ -1353,16 +1352,15 @@ static void parse_methods(
 
     uint32_t param_count = 0;
     char* return_type = NULL;
-    /* If there is valid blob and atleast minimum to parse
-     (flags, paramCount, retType) parse these basic information*/
+    // If there is valid blob and atleast minimum to parse
+    // (flags, paramCount, retType) parse these basic information
     if (blob_res.size && sig_len >= 3)
     {
       uint8_t flags = read_u8(&sig_data);
       sig_len -= 1;
-      // Is generic
       if (flags & SIG_FLAG_GENERIC)
-        /* Generic param count, ignored as we get the
-         information from generic param table */
+        // Generic param count, ignored as we get the
+        // information from generic param table
         (void) read_blob_unsigned(&sig_data, &sig_len);
 
       // Regular param count
@@ -1499,9 +1497,8 @@ static char* parse_enclosing_types(
       const char* namespace = pe_get_dotnet_string(
           ctx->pe, str_heap, str_size, typedef_row.Namespace);
 
-      /* Type might be further nested, try to find correct namespace,
-      check for self-reference
-      Note - it's possible to create cycle here in corrupted samples */
+      // Type might be further nested, try to find correct namespace,
+      // check for self-reference
       if (is_nested(typedef_row.Flags) &&
           nested_row.EnclosingClass != nested_row.NestedClass)
       {
@@ -1617,10 +1614,10 @@ static void parse_user_types(const CLASS_CONTEXT* ctx)
     // Find type and interfaces the type inherits
     parse_type_parents(ctx, row.Extends, idx + 1, out_idx, &gen_params);
 
-    /* To get the number of methods, we must peek where the MethodList
-    of the next type is, then there is next.MethodList - this.MethodList
-    number of methods, or if there is no following type,
-    the rest of the MethodDef table is used */
+    // To get the number of methods, we must peek where the MethodList
+    // of the next type is, then there is next.MethodList - this.MethodList
+    // number of methods, or if there is no following type,
+    // the rest of the MethodDef table is used
     uint32_t method_count = 0;
     // If there is next method
     if (idx + 1 < ctx->tables->typedef_.RowCount)
