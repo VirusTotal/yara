@@ -177,6 +177,9 @@ cleanup:
   return_string(YR_UNDEFINED);
 }
 
+#if defined(HAVE_LIBCRYPTO) || defined(HAVE_WINCRYPT_H) || \
+    defined(HAVE_COMMONCRYPTO_COMMONCRYPTO_H)
+
 define_function(import_md5)
 {
   YR_OBJECT* obj = module();
@@ -269,6 +272,8 @@ cleanup:
 
   return_string(YR_UNDEFINED);
 }
+
+#endif  // defined(HAVE_LIBCRYPTO) || defined(HAVE_WINCRYPT_H)
 
 int get_elf_class_data(const uint8_t* buffer, size_t buffer_length)
 {
@@ -972,7 +977,11 @@ begin_declarations
   end_struct_array("dynsym")
 
   declare_function("telfhash", "", "s", telfhash);
+
+#if defined(HAVE_LIBCRYPTO) || defined(HAVE_WINCRYPT_H) || \
+    defined(HAVE_COMMONCRYPTO_COMMONCRYPTO_H)
   declare_function("import_md5", "", "s", import_md5);
+#endif  // defined(HAVE_LIBCRYPTO) || defined(HAVE_WINCRYPT_H)
 
 end_declarations
 
