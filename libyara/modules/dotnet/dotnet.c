@@ -1617,6 +1617,15 @@ static bool dotnet_is_dotnet(PE* pe)
   PIMAGE_DATA_DIRECTORY directory = pe_get_directory_entry(
       pe, IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR);
 
+  uint32_t cached_result = yr_hash_table_lookup_uint32(
+      pe->hash_table, "is_dotnet", NULL);
+
+  if (cached_result != UINT32_MAX)
+    return (bool) cached_result;
+
+  // Due to many early returns, set false by default and override if true
+  yr_hash_table_add_uint32(pe->hash_table, "is_dotnet", NULL, false);
+
   if (!directory)
     return false;
 
@@ -1670,7 +1679,21 @@ static bool dotnet_is_dotnet(PE* pe)
       return false;
   }
 
+  yr_hash_table_add_uint32(pe->hash_table, "is_dotnet", NULL, true);
+
   return true;
+}
+
+define_function(is_dotnet)
+{
+  YR_OBJECT* module = module();
+  PE* pe = (PE*) module->data;
+
+  if (!pe)
+    return_integer(false);
+
+  // dotnet_is_dotnet already deals with caching
+  return_integer(dotnet_is_dotnet(pe));
 }
 
 void dotnet_parse_com(PE* pe)
@@ -1685,12 +1708,7 @@ void dotnet_parse_com(PE* pe)
   uint32_t md_len;
 
   if (!dotnet_is_dotnet(pe))
-  {
-    set_integer(false, pe->object, "is_dotnet");
     return;
-  }
-
-  set_integer(true, pe->object, "is_dotnet");
 
   directory = pe_get_directory_entry(pe, IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR);
   if (directory == NULL)
@@ -1757,7 +1775,6 @@ void dotnet_parse_com(PE* pe)
 }
 
 begin_declarations
-  declare_integer("is_dotnet");
   declare_string("version");
   declare_string("module_name");
 
@@ -1814,6 +1831,8 @@ begin_declarations
 
   declare_integer_array("field_offsets");
   declare_integer("number_of_field_offsets");
+
+  declare_function("is_dotnet", "", "i", is_dotnet);
 end_declarations
 
 int module_initialize(YR_MODULE* module)
@@ -1859,6 +1878,9 @@ int module_load(
         if (pe == NULL)
           return ERROR_INSUFFICIENT_MEMORY;
 
+        FAIL_ON_ERROR_WITH_CLEANUP(
+            yr_hash_table_create(1, &pe->hash_table), yr_free(pe));
+
         pe->data = block_data;
         pe->data_size = block->size;
         pe->object = module_object;
@@ -1882,6 +1904,9 @@ int module_unload(YR_OBJECT* module_object)
 
   if (pe == NULL)
     return ERROR_SUCCESS;
+
+  if (pe->hash_table != NULL)
+    yr_hash_table_destroy(pe->hash_table, NULL);
 
   yr_free(pe);
 
