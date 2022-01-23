@@ -3536,7 +3536,7 @@ begin_declarations
       declare_string("subject");
       declare_integer("version");
       declare_string("algorithm");
-			declare_string("algorithm_oid");
+      declare_string("algorithm_oid");
       declare_string("serial");
       declare_integer("not_before");
       declare_integer("not_after");
@@ -3553,7 +3553,7 @@ begin_declarations
         declare_string("subject");
         declare_integer("version");
         declare_string("algorithm");
-				declare_string("algorithm_oid");
+        declare_string("algorithm_oid");
         declare_string("serial");
         declare_integer("not_before");
         declare_integer("not_after");
@@ -3573,7 +3573,7 @@ begin_declarations
         declare_string("subject");
         declare_integer("version");
         declare_string("algorithm");
-				declare_string("algorithm_oid");
+        declare_string("algorithm_oid");
         declare_string("serial");
         declare_integer("not_before");
         declare_integer("not_after");
