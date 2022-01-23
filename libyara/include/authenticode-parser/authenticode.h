@@ -105,6 +105,7 @@ typedef struct {
     ByteArray sha256;         /* SHA256 of the DER representation of the cert */
     char* key_alg;            /* Name of the key algorithm */
     char* sig_alg;            /* Name of the signature algorithm */
+    char* sig_alg_oid;        /* OID of the signature algorithm */
     time_t not_before;        /* NotBefore validity */
     time_t not_after;         /* NotAfter validity */
     char* key;                /* PEM encoded public key */

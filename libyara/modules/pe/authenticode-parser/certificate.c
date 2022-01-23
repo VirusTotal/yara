@@ -282,7 +282,11 @@ Certificate* certificate_new(X509* x509)
     result->serial = integer_to_serial(X509_get_serialNumber(x509));
     result->not_after = ASN1_TIME_to_time_t(X509_get0_notAfter(x509));
     result->not_before = ASN1_TIME_to_time_t(X509_get0_notBefore(x509));
-    result->sig_alg = strdup(OBJ_nid2ln(X509_get_signature_nid(x509)));
+    int sig_nid = X509_get_signature_nid(x509);
+    result->sig_alg = strdup(OBJ_nid2ln(sig_nid));
+
+    OBJ_obj2txt(buffer, sizeof(buffer), OBJ_nid2obj(sig_nid), 1);
+    result->sig_alg_oid = strdup(buffer);
 
     EVP_PKEY* pkey = X509_get0_pubkey(x509);
     if (pkey) {
@@ -360,6 +364,7 @@ void certificate_free(Certificate* cert)
         free(cert->issuer);
         free(cert->subject);
         free(cert->sig_alg);
+        free(cert->sig_alg_oid);
         free(cert->key_alg);
         free(cert->key);
         free(cert->sha1.data);

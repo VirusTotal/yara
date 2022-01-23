@@ -256,11 +256,8 @@ Countersignature* ms_countersig_new(const uint8_t* data, long size, ASN1_STRING*
 
     bool isValid = TS_RESP_verify_token(ctx, p7) == 1;
 
-    /* VERIFY_CTX_free tries to free these, we don't want that */
-    TS_VERIFY_CTX_set_imprint(ctx, NULL, 0);
-    TS_VERIFY_CTS_set_certs(ctx, NULL);
-
-    TS_VERIFY_CTX_free(ctx);
+    X509_STORE_free(store);
+    OPENSSL_free(ctx);
 
     if (!isValid) {
         result->verify_flags = COUNTERSIGNATURE_VFY_INVALID;

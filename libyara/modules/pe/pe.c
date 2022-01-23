@@ -1606,6 +1606,8 @@ static void pe_parse_exports(PE* pe)
     /* Versions are zero based, so add one.  */                                \
     set_integer(cert->version + 1, pe->object, fmt ".version", __VA_ARGS__);   \
     set_string(cert->sig_alg, pe->object, fmt ".algorithm", __VA_ARGS__);      \
+    set_string(                                                                \
+        cert->sig_alg_oid, pe->object, fmt ".algorithm_oid", __VA_ARGS__);     \
     set_string(cert->serial, pe->object, fmt ".serial", __VA_ARGS__);          \
     set_integer(cert->not_before, pe->object, fmt ".not_before", __VA_ARGS__); \
     set_integer(cert->not_after, pe->object, fmt ".not_after", __VA_ARGS__);   \
@@ -1688,12 +1690,6 @@ void _process_authenticode(
       if (signer->chain && signer->chain->count >= 1)
       {
         const Certificate* sign_cert = signer->chain->certs[0];
-        write_certificate(sign_cert, pe, "signatures[%i]", *sig_count);
-
-        char thumbprint_ascii[YR_SHA1_LEN * 2 + 1];
-        for (int j = 0; j < sign_cert->sha1.len; ++j)
-          sprintf(thumbprint_ascii + (j * 2), "%02x", sign_cert->sha1.data[j]);
-
         write_certificate(sign_cert, pe, "signatures[%i]", *sig_count);
       }
 
@@ -3540,6 +3536,7 @@ begin_declarations
       declare_string("subject");
       declare_integer("version");
       declare_string("algorithm");
+			declare_string("algorithm_oid");
       declare_string("serial");
       declare_integer("not_before");
       declare_integer("not_after");
@@ -3556,6 +3553,7 @@ begin_declarations
         declare_string("subject");
         declare_integer("version");
         declare_string("algorithm");
+				declare_string("algorithm_oid");
         declare_string("serial");
         declare_integer("not_before");
         declare_integer("not_after");
@@ -3575,6 +3573,7 @@ begin_declarations
         declare_string("subject");
         declare_integer("version");
         declare_string("algorithm");
+				declare_string("algorithm_oid");
         declare_string("serial");
         declare_integer("not_before");
         declare_integer("not_after");

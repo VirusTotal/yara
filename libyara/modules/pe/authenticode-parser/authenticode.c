@@ -531,6 +531,11 @@ AuthenticodeArray* parse_authenticode(const uint8_t* pe_data, long pe_len)
     if (pe_len < dos_hdr_size)
         return NULL;
 
+    /* Check if it has DOS signature, so we don't parse random gibberish */
+    uint8_t dos_prefix[] = {0x4d, 0x5a};
+    if (memcmp(pe_data, dos_prefix, sizeof(dos_prefix)) != 0)
+        return NULL;
+
     /* offset to pointer in DOS header, that points to PE header */
     const int pe_hdr_ptr_offset = 0x3c;
     /* Read the PE offset */
@@ -553,8 +558,9 @@ AuthenticodeArray* parse_authenticode(const uint8_t* pe_data, long pe_len)
     if (pe_len < pe_cert_table_addr + 2 * sizeof(uint32_t))
         return NULL;
 
-    uint32_t cert_addr = letoh32(*(uint32_t*)(pe_data + pe_cert_table_addr));
-    uint32_t cert_len = letoh32(*(uint32_t*)(pe_data + pe_cert_table_addr + 4));
+    /* Use 64bit type due to the potential overflow in crafted binaries */
+    uint64_t cert_addr = letoh32(*(uint32_t*)(pe_data + pe_cert_table_addr));
+    uint64_t cert_len = letoh32(*(uint32_t*)(pe_data + pe_cert_table_addr + 4));
 
     /* we need atleast 8 bytes to read dwLength, revision and certType */
     if (cert_len < 8 || pe_len < cert_addr + cert_len)
