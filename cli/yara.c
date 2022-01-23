@@ -157,14 +157,14 @@ static bool negate = false;
 static bool print_count_only = false;
 static bool fail_on_warnings = false;
 static bool rules_are_compiled = false;
-static int total_count = 0;
-static int limit = 0;
-static int timeout = 1000000;
-static int stack_size = DEFAULT_STACK_SIZE;
-static int skip_larger = 0;
-static int threads = YR_MAX_THREADS;
-static int max_strings_per_rule = DEFAULT_MAX_STRINGS_PER_RULE;
-static int max_process_memory_chunk = DEFAULT_MAX_PROCESS_MEMORY_CHUNK;
+static long total_count = 0;
+static long limit = 0;
+static long timeout = 1000000;
+static long stack_size = DEFAULT_STACK_SIZE;
+static long skip_larger = 0;
+static long threads = YR_MAX_THREADS;
+static long max_strings_per_rule = DEFAULT_MAX_STRINGS_PER_RULE;
+static long max_process_memory_chunk = DEFAULT_MAX_PROCESS_MEMORY_CHUNK;
 
 #define USAGE_STRING \
   "Usage: yara [OPTION]... [NAMESPACE:]RULES_FILE... FILE | DIR | PID"
@@ -670,7 +670,7 @@ static int scan_dir(const char* dir, SCAN_OPTIONS* scan_opts)
           {
             fprintf(
                 stderr,
-                "skipping %s (%" PRId64 " bytes) because it's larger than %d"
+                "skipping %s (%" PRId64 " bytes) because it's larger than %ld"
                 " bytes.\n",
                 full_path,
                 st.st_size,
