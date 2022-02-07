@@ -87,6 +87,7 @@ will end up using the "Look" atom alone, but in /a(bcd|efg)h/ atoms "bcd" and
 #include <yara/stack.h>
 #include <yara/types.h>
 #include <yara/utils.h>
+#include <yara/re.h>
 
 ////////////////////////////////////////////////////////////////////////////////
 // Returns a numeric value indicating the quality of an atom. The quality
@@ -123,10 +124,10 @@ int yr_atoms_heuristic_quality(YR_ATOMS_CONFIG* config, YR_ATOM* atom)
       quality -= 6;
       break;
     case 0x0F:
-      quality += 1;
+      quality += 2;
       break;
     case 0xF0:
-      quality += 1;
+      quality += 2;
       break;
     case 0xFF:
       switch (atom->bytes[i])
@@ -158,7 +159,8 @@ int yr_atoms_heuristic_quality(YR_ATOMS_CONFIG* config, YR_ATOM* atom)
   }
 
   // If all the bytes in the atom are equal and very common, let's penalize
-  // it heavily.
+  // it heavily. If all the bytes in the atom are equal but not very common
+  // penalize it less.
   if (unique_bytes == 1 && (yr_bitmask_is_set(seen_bytes, 0x00) ||
                             yr_bitmask_is_set(seen_bytes, 0x20) ||
                             yr_bitmask_is_set(seen_bytes, 0x90) ||
@@ -166,6 +168,8 @@ int yr_atoms_heuristic_quality(YR_ATOMS_CONFIG* config, YR_ATOM* atom)
                             yr_bitmask_is_set(seen_bytes, 0xFF)))
   {
     quality -= 10 * atom->length;
+  } else if (unique_bytes == 1 && atom->length > 1) {
+    quality -= atom->length;
   }
 
   return YR_MAX_ATOM_QUALITY - 20 * YR_MAX_ATOM_LENGTH + quality;

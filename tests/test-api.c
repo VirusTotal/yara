@@ -826,9 +826,9 @@ void test_rules_stats()
   assert_true_expr(stats.num_strings == 6);
   assert_true_expr(stats.ac_matches == 6);
   assert_true_expr(stats.ac_root_match_list_length == 0);
-  assert_true_expr(stats.top_ac_match_list_lengths[0] == 3);
-  assert_true_expr(stats.ac_match_list_length_pctls[1] == 3);
-  assert_true_expr(stats.ac_match_list_length_pctls[100] == 3);
+  assert_true_expr(stats.top_ac_match_list_lengths[0] == 1);
+  assert_true_expr(stats.ac_match_list_length_pctls[1] == 1);
+  assert_true_expr(stats.ac_match_list_length_pctls[100] == 1);
 
   stats_for_rules(
       "\
@@ -849,9 +849,9 @@ void test_rules_stats()
   assert_true_expr(stats.num_strings == 8);
   assert_true_expr(stats.ac_matches == 8);
   assert_true_expr(stats.ac_root_match_list_length == 0);
-  assert_true_expr(stats.top_ac_match_list_lengths[0] == 3);
+  assert_true_expr(stats.top_ac_match_list_lengths[0] == 1);
   assert_true_expr(stats.ac_match_list_length_pctls[1] == 1);
-  assert_true_expr(stats.ac_match_list_length_pctls[100] == 3);
+  assert_true_expr(stats.ac_match_list_length_pctls[100] == 1);
 
   stats_for_rules(
       "\
