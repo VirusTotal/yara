@@ -1447,7 +1447,8 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
         pop(r3);
       }
 
-      pop(r1) r1.i = count >= r1.i ? 1 : 0;
+      pop(r1);
+      r1.i = count >= r1.i ? 1 : 0;
 
       push(r1);
       break;
