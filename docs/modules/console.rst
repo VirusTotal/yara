@@ -69,7 +69,7 @@ the proper output. For example:
 
     *Example: console.hex(uint32(0))*
 
-.. c:function:: log(message, float)
+.. c:function:: hex(message, integer)
 
     Function which sends the integer to the main callback, formatted as a hex
     string.
