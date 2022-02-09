@@ -324,17 +324,25 @@ YR_API YR_MEMORY_BLOCK* yr_process_get_next_memory_block(
   if (proc_info->next_block_end <= current_begin)
   {
     int n, path_start;
+    char *p;
 
     while (fgets(buffer, sizeof(buffer), proc_info->maps) != NULL)
     {
+      // locate the '\n' character
+      p = strrchr(buffer, '\n');
       // If we haven't read the whole line, skip over the rest.
-      if (strrchr(buffer, '\n') == NULL)
+      if (p == NULL)
       {
         int c;
         do
         {
           c = fgetc(proc_info->maps);
         } while (c >= 0 && c != '\n');
+      }
+      // otherwise remove '\n' at the end of the line
+      else
+      {
+        *p = '\0';
       }
 
       // Each row in /proc/$PID/maps describes a region of contiguous virtual

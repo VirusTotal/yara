@@ -76,6 +76,14 @@ static void test_boolean_operators()
 
   assert_false_rule("rule test { condition: false or false }", NULL);
 
+  assert_true_rule("rule test { condition: not var_false }", NULL);
+
+  assert_true_rule("rule test { condition: var_true }", NULL);
+
+  assert_false_rule("rule test { condition: var_false }", NULL);
+
+  assert_false_rule("rule test { condition: not var_true }", NULL);
+
   assert_false_rule(
       "import \"tests\" rule test { condition: not tests.undefined.i }", NULL);
 
@@ -268,6 +276,10 @@ static void test_arithmetic_operators()
   assert_true_rule("rule test { condition: 0o100 == 64 }", NULL);
 
   assert_true_rule("rule test { condition: 0o755 == 493 }", NULL);
+
+  // Test cases for issue #1631.
+  assert_true_rule("rule test { condition: var_one*3 == 3}", NULL);
+  assert_true_rule("rule test { condition: var_zero*3 == 0}", NULL);
 
   // TODO: This should return ERROR_INTEGER_OVERFLOW, but right now it returns
   // ERROR_SYNTAX_ERROR because after the lexer aborts with
@@ -1543,25 +1555,32 @@ static void test_rule_of()
   assert_match_count(
       "rule a1 { condition: true } "
       "rule a2 { condition: true } "
-      "rule b { condition: 2 of (a*) }", NULL, 3);
+      "rule b { condition: 2 of (a*) }",
+      NULL,
+      3);
 
   assert_match_count(
       "rule a1 { condition: true } "
       "rule a2 { condition: false } "
-      "rule b { condition: 50% of (a*) }", NULL, 2);
+      "rule b { condition: 50% of (a*) }",
+      NULL,
+      2);
 
   assert_error("rule a { condition: all of (b*) }", ERROR_UNDEFINED_IDENTIFIER);
 
   assert_error(
       "rule a0 { condition: true } "
       "rule b { condition: 1 of (a*) } "
-      "rule a1 { condition: true } ", ERROR_IDENTIFIER_MATCHES_WILDCARD);
+      "rule a1 { condition: true } ",
+      ERROR_IDENTIFIER_MATCHES_WILDCARD);
 
   // Make sure repeating the rule set works
   assert_match_count(
       "rule a { condition: true } "
       "rule b { condition: 1 of (a*) } "
-      "rule c { condition: 1 of (a*) }", NULL, 3);
+      "rule c { condition: 1 of (a*) }",
+      NULL,
+      3);
 
   // This will compile but is false for the same reason that
   // "rule x { condition: x }" is compiles but is false.
@@ -3264,10 +3283,7 @@ static void test_meta()
 
 void test_defined()
 {
-
-  assert_true_rule(
-      "rule t { condition: defined 1 }",
-      NULL);
+  assert_true_rule("rule t { condition: defined 1 }", NULL);
 
   assert_false_rule(
       "import \"pe\" \
@@ -3285,6 +3301,37 @@ void test_defined()
       }",
       NULL);
 
+  assert_false_rule(
+      "import \"pe\" \
+      rule t { \
+        condition: \
+          defined not pe.number_of_resources \
+      }",
+      NULL);
+
+  assert_false_rule(
+      "import \"pe\" \
+      rule t { \
+        condition: \
+          defined pe.number_of_resources and pe.number_of_resources == 0 \
+      }",
+      NULL);
+
+  assert_true_rule(
+      "import \"pe\" \
+      rule t { \
+        condition: \
+          defined (pe.number_of_resources and pe.number_of_resources == 0) \
+      }",
+      NULL);
+
+  assert_true_rule(
+      "import \"pe\" \
+      rule t { \
+        condition: \
+          defined \"foo\" contains \"f\" \
+      }",
+      NULL);
 }
 
 static void test_pass(int pass)

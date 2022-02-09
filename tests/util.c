@@ -403,6 +403,12 @@ int compile_rule(char* string, YR_RULES** rules)
 
   yr_compiler_set_callback(compiler, _compiler_callback, &warnings);
 
+  // Define some variables that will be used in test cases.
+  yr_compiler_define_integer_variable(compiler, "var_zero", 0);
+  yr_compiler_define_integer_variable(compiler, "var_one", 1);
+  yr_compiler_define_boolean_variable(compiler, "var_true", 1);
+  yr_compiler_define_boolean_variable(compiler, "var_false", 0);
+
   if (yr_compiler_add_string(compiler, string, NULL) != 0)
   {
     result = compiler->last_error;
@@ -515,7 +521,11 @@ int matches_blob(
 
   if (scan_result != ERROR_SUCCESS)
   {
-    fprintf(stderr, "failed to scan using rule << %s >>: error: %d\n", rule, scan_result);
+    fprintf(
+        stderr,
+        "failed to scan using rule << %s >>: error: %d\n",
+        rule,
+        scan_result);
     exit(EXIT_FAILURE);
   }
 
@@ -592,12 +602,16 @@ int capture_string(char* rule, char* string, char* expected_string)
   f.found = 0;
   f.expected = expected_string;
 
-  int scan_result = yr_rules_scan_mem(rules, (uint8_t*)string, strlen(string), 0,
-      capture_matches, &f, 0);
+  int scan_result = yr_rules_scan_mem(
+      rules, (uint8_t*) string, strlen(string), 0, capture_matches, &f, 0);
 
   if (scan_result != ERROR_SUCCESS)
   {
-    fprintf(stderr, "failed to scan using rule << %s >>: error %d\n", rule, scan_result);
+    fprintf(
+        stderr,
+        "failed to scan using rule << %s >>: error %d\n",
+        rule,
+        scan_result);
     exit(EXIT_FAILURE);
   }
 

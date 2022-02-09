@@ -30,7 +30,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // clang-format off
 
 %{
-  
+
 #include <assert.h>
 #include <stdio.h>
 #include <string.h>
@@ -176,7 +176,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 %token <c_string> _STRING_LENGTH_                      "string length"
 %token <c_string> _STRING_IDENTIFIER_WITH_WILDCARD_
     "string identifier with wildcard"
-%token <c_string> _IDENTIFIER_WITH_WILDCARD_           "identifier with wildcard"
 %token <integer> _NUMBER_                              "integer number"
 %token <double_> _DOUBLE_                              "floating point number"
 %token <integer> _INTEGER_FUNCTION_                    "integer function"
@@ -228,6 +227,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // in the list. Operators that appear in the same line have the same precedence.
 %left _OR_
 %left _AND_
+%right _NOT_ _DEFINED_
 %left _EQ_ _NEQ_ _CONTAINS_ _ICONTAINS_ _STARTSWITH_ _ENDSWITH_ _ISTARTSWITH_ _IENDSWITH_ _IEQUALS_ _MATCHES_
 %left _LT_ _LE_ _GT_ _GE_
 %left '|'
@@ -236,8 +236,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 %left _SHIFT_LEFT_ _SHIFT_RIGHT_
 %left '+' '-'
 %left '*' '\\' '%'
-%right _NOT_ '~' UNARY_MINUS
-%right _DEFINED_
+%right '~' UNARY_MINUS
 
 %type <rule>   rule
 
@@ -282,7 +281,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 %destructor { yr_free($$); $$ = NULL; } _STRING_LENGTH_
 %destructor { yr_free($$); $$ = NULL; } _STRING_IDENTIFIER_
 %destructor { yr_free($$); $$ = NULL; } _STRING_IDENTIFIER_WITH_WILDCARD_
-%destructor { yr_free($$); $$ = NULL; } _IDENTIFIER_WITH_WILDCARD_
 %destructor { yr_free($$); $$ = NULL; } _TEXT_STRING_
 %destructor { yr_free($$); $$ = NULL; } _HEX_STRING_
 %destructor { yr_free($$); $$ = NULL; } _REGEXP_
@@ -2308,7 +2306,7 @@ rule_enumeration_item
 
         fail_if_error(result);
       }
-    | _IDENTIFIER_WITH_WILDCARD_
+    | _IDENTIFIER_ '*'
       {
         YR_NAMESPACE* ns = (YR_NAMESPACE*) yr_arena_get_ptr(
             compiler->arena,
