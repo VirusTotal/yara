@@ -3595,9 +3595,9 @@ end_declarations
 int module_initialize(YR_MODULE* module)
 {
 #if defined(HAVE_LIBCRYPTO)
-  // Not checking return value here because if it fails we will not parse the
-  // nested signature silently.
-  OBJ_create(SPC_NESTED_SIGNATURE_OBJID, NULL, NULL);
+  // Initialize OpenSSL global objects for the auth library before any
+  // multithreaded environment as it is not thread-safe
+  initialize_authenticode_parser();
 #endif
   return ERROR_SUCCESS;
 }

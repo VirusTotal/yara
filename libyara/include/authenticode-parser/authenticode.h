@@ -156,6 +156,13 @@ typedef struct {
 } AuthenticodeArray;
 
 /**
+ * @brief Initializes all globals OpenSSl objects we need for parsing, this is not thread-safe and
+ *        needs to be called only once, before any multithreading environment
+ *        https://github.com/openssl/openssl/issues/13524
+ */
+void initialize_authenticode_parser();
+
+/**
  * @brief Constructs AuthenticodeArray from PE file data. Authenticode can
  *        contains nested Authenticode signatures as its unsigned attribute,
  *        which can also contain nested signatures. For this reason the function returns

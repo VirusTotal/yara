@@ -273,8 +273,9 @@ static bool authenticode_verify(PKCS7* p7, PKCS7_SIGNER_INFO* si, X509* signCert
     return isValid;
 }
 
-/* Creates all the Authenticode objects so we can parse them with OpenSSL */
-static void initialize_openssl()
+/* Creates all the Authenticode objects so we can parse them with OpenSSL, is not thread-safe, needs
+ * to be called once before any multi-threading environmentt - https://github.com/openssl/openssl/issues/13524 */
+void initialize_authenticode_parser()
 {
     OBJ_create("1.3.6.1.4.1.311.2.1.12", "spcSpOpusInfo", "SPC_SP_OPUS_INFO_OBJID");
     OBJ_create("1.3.6.1.4.1.311.3.3.1", "spcMsCountersignature", "SPC_MICROSOFT_COUNTERSIGNATURE");
@@ -288,9 +289,6 @@ AuthenticodeArray* authenticode_new(const uint8_t* data, long len)
 {
     if (!data || len == 0)
         return NULL;
-
-    /* We need to initialize all the custom objects for further parsing */
-    initialize_openssl();
 
     AuthenticodeArray* result = (AuthenticodeArray*)calloc(1, sizeof(*result));
     if (!result)
