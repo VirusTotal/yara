@@ -226,6 +226,14 @@ void test_heuristic_quality()
   assert_true_expr(qFFFFFFFF < q01010101);
 
   assert_true_expr(q01020304 == YR_MAX_ATOM_QUALITY);
+
+  // https://github.com/VirusTotal/yara/issues/1646
+  assert_re_atoms(
+      "foobar\\.{128}",
+      1,
+      (struct atom[]){
+          {4, {0x72, 0x2e, 0x2e, 0x2e}},
+      });
 }
 
 void test_atom_choose()
