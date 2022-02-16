@@ -134,6 +134,7 @@ awesome list of [YARA-related stuff](https://github.com/InQuest/awesome-yara).
 * [Trend Micro](https://www.trendmicro.com)
 * [VirusTotal Intelligence](https://www.virustotal.com/intelligence/)
 * [VMRay](https://www.vmray.com/)
+* [Volexity](https://www.volexity.com/products-overview/volcano/)
 * [We Watch Your Website](https://www.wewatchyourwebsite.com/)
 * [x64dbg](https://x64dbg.com)
 * [YALIH](https://github.com/Masood-M/YALIH)
