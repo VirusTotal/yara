@@ -1199,7 +1199,7 @@ static int callback(
     return CALLBACK_CONTINUE;
 
   case CALLBACK_MSG_CONSOLE_LOG:
-    printf("%s\n", (char*) message_data);
+    _tprintf(_T("%"PF_S"\n"), (char*) message_data);
     return CALLBACK_CONTINUE;
   }
 
@@ -1598,7 +1598,7 @@ int _tmain(int argc, const char_t** argv)
     if (result == ERROR_COULD_NOT_OPEN_FILE)
     {
       // Is it a PID? To be a PID it must be made up entirely of digits.
-      char* endptr = NULL;
+      char_t* endptr = NULL;
       long pid = _tcstol(argv[argc - 1], &endptr, 10);
 
       if (pid > 0 && argv[argc - 1] != NULL && *endptr == '\x00')
