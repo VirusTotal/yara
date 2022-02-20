@@ -58,6 +58,12 @@ end:
 
 int byte_array_init(ByteArray* arr, const uint8_t* data, int len)
 {
+    if (len == 0) {
+        arr->data = NULL;
+        arr->len = 0;
+        return 0;
+    }
+
     arr->data = (uint8_t*)malloc(len);
     if (!arr->data)
         return -1;
