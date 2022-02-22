@@ -351,7 +351,11 @@ void dotnet_parse_tilde_2(
   PASSEMBLYREF_TABLE assemblyref_table;
   PFIELDRVA_TABLE fieldrva_table;
   PMANIFESTRESOURCE_TABLE manifestresource_table;
+  PMETHODDEF_TABLE methoddef_table;
+  PMEMBERREF_TABLE memberref_table;
   PMODULEREF_TABLE moduleref_table;
+  PTYPEREF_TABLE typeref_table;
+  PIMPLMAP_TABLE implmap_table;
   PCUSTOMATTRIBUTE_TABLE customattribute_table;
   PCONSTANT_TABLE constant_table;
   DWORD resource_size, implementation;
@@ -394,6 +398,7 @@ void dotnet_parse_tilde_2(
   // CustomAttribute through MemberRef to TypeRef.
 
   uint8_t* typeref_ptr = NULL;
+  uint8_t* implmap_ptr = NULL;
   uint8_t* memberref_ptr = NULL;
   uint32_t typeref_row_size = 0;
   uint32_t memberref_row_size = 0;
@@ -487,6 +492,53 @@ void dotnet_parse_tilde_2(
       row_size = (index_size + (index_sizes.string * 2));
       typeref_row_size = row_size;
       typeref_ptr = table_offset;
+      for (i = 0; i < num_rows; i++)
+      {
+        typeref_table = (PTYPEREF_TABLE) typeref_ptr;
+
+        if (!fits_in_pe(pe, typeref_table, row_size))
+          break;
+
+        // Name has variable sized fields prior in struct
+        if (index_sizes.string == 4)
+          name = pe_get_dotnet_string(
+              pe,
+              string_offset,
+              yr_le32toh(*(DWORD*) (typeref_ptr + index_size)));
+        else
+          name = pe_get_dotnet_string(
+              pe,
+              string_offset,
+              yr_le16toh(*(WORD*) (typeref_ptr + index_size)));
+
+        if (name != NULL)
+        {
+          set_string(name, pe->object, "typerefs[%i].name", i);
+        }
+
+        // Namespace has variable sized fields prior in struct
+        if (index_sizes.string == 4)
+          name = pe_get_dotnet_string(
+              pe,
+              string_offset,
+              yr_le32toh(
+                  *(DWORD*) (typeref_ptr + index_size + index_sizes.string)));
+        else
+          name = pe_get_dotnet_string(
+              pe,
+              string_offset,
+              yr_le16toh(
+                  *(WORD*) (typeref_ptr + index_size + index_sizes.string)));
+        if (name != NULL)
+        {
+          set_string(name, pe->object, "typerefs[%i].namespace", i);
+        }
+
+        typeref_ptr += typeref_row_size;
+      }
+
+      set_integer(i, pe->object, "number_of_typerefs");
+
       table_offset += row_size * num_rows;
       break;
 
@@ -522,9 +574,48 @@ void dotnet_parse_tilde_2(
       break;
 
     case BIT_METHODDEF:
-      table_offset += (4 + 2 + 2 + index_sizes.string + index_sizes.blob +
-                       index_sizes.param) *
-                      num_rows;
+      row_size =
+          (4 + 2 + 2 + index_sizes.string + index_sizes.blob +
+           index_sizes.param);
+
+      row_ptr = table_offset;
+
+      for (i = 0; i < num_rows; i++)
+      {
+        methoddef_table = (PMETHODDEF_TABLE) row_ptr;
+
+        if (!struct_fits_in_pe(pe, methoddef_table, METHODDEF_TABLE))
+          break;
+
+        set_integer(
+            yr_le32toh(methoddef_table->RVA), pe->object, "methods[%i].rva", i);
+
+        set_integer(
+            yr_le32toh(methoddef_table->ImplFlags),
+            pe->object,
+            "methods[%i].impl_flags",
+            i);
+
+        set_integer(
+            yr_le32toh(methoddef_table->Flags),
+            pe->object,
+            "methods[%i].flags",
+            i);
+
+        name = pe_get_dotnet_string(
+            pe, string_offset, DOTNET_STRING_INDEX(methoddef_table->Name));
+
+        if (name != NULL)
+        {
+          set_string(name, pe->object, "methods[%i].name", i);
+        }
+
+        row_ptr += row_size;
+      }
+
+      set_integer(i, pe->object, "number_of_methods");
+
+      table_offset += row_size * num_rows;
       break;
 
     case BIT_PARAM:
@@ -562,6 +653,35 @@ void dotnet_parse_tilde_2(
       row_size = (index_size + index_sizes.string + index_sizes.blob);
       memberref_row_size = row_size;
       memberref_ptr = table_offset;
+
+      for (i = 0; i < num_rows; i++)
+      {
+        memberref_table = (PMEMBERREF_TABLE) memberref_ptr;
+
+        if (!fits_in_pe(pe, memberref_table, row_size))
+          break;
+
+        if (index_sizes.string == 4)
+          name = pe_get_dotnet_string(
+              pe,
+              string_offset,
+              yr_le32toh(*(DWORD*) (memberref_ptr + index_size)));
+        else
+          name = pe_get_dotnet_string(
+              pe,
+              string_offset,
+              yr_le16toh(*(WORD*) (memberref_ptr + index_size)));
+
+        if (name != NULL)
+        {
+          set_string(name, pe->object, "memberrefs[%i].name", i);
+        }
+
+        memberref_ptr += row_size;
+      }
+
+      set_integer(i, pe->object, "number_of_memberrefs");
+
       table_offset += row_size * num_rows;
       break;
 
@@ -1051,16 +1171,59 @@ void dotnet_parse_tilde_2(
 
     case BIT_IMPLMAP:
       row_count = max_rows(
-          2, yr_le32toh(rows.field), yr_le32toh(rows.methoddef));
+          3, 
+          yr_le32toh(rows.field), 
+          yr_le32toh(rows.methoddef),
+          yr_le32toh(rows.moduleref));
 
       if (row_count > (0xFFFF >> 0x01))
         index_size = 4;
       else
         index_size = 2;
 
-      table_offset += (2 + index_size + index_sizes.string +
-                       index_sizes.moduleref) *
-                      num_rows;
+      row_size = (2 + index_size + index_sizes.string + index_sizes.moduleref);
+      implmap_ptr = table_offset;
+
+      for (i = 0; i < num_rows; i++)
+      {
+        implmap_table = (PIMPLMAP_TABLE) implmap_ptr;
+
+        if (!fits_in_pe(pe, implmap_table, row_size))
+          break;
+
+        set_integer(
+          yr_le16toh(implmap_table->MappingFlags), 
+          pe->object, 
+          "impl_maps[%i].mapping_flags",
+          i);
+
+        // Names can be NULL, but still add it to list. This will support
+        // tracing references to MemberForward and Import Scope. 
+        // PInvoke doesn't have to fill in the name if the MemberForwad
+        // method is a native unmanaged method. This can be seen with
+        // implicit PInvoke examples.
+        if (index_sizes.string == 4)
+          name = pe_get_dotnet_string(
+              pe,
+              string_offset,
+              yr_le32toh(*(DWORD*) (implmap_ptr + 2 +  index_size)));
+        else
+          name = pe_get_dotnet_string(
+              pe,
+              string_offset,
+              yr_le16toh(*(WORD*) (implmap_ptr + 2 + index_size)));
+
+        if (name != NULL)
+        {
+          set_string(name, pe->object, "impl_maps[%i].import_name", i);
+        }
+
+        implmap_ptr += row_size;
+      }
+
+      set_integer(i, pe->object, "number_of_impl_maps");
+
+      table_offset += row_size * num_rows;
       break;
 
     case BIT_FIELDRVA:
@@ -1633,6 +1796,21 @@ void dotnet_parse_com(PE* pe)
 
   cli_header = (PCLI_HEADER)(pe->data + offset);
 
+  set_integer(yr_le32toh(cli_header->Flags), pe->object, "flags");
+
+  set_integer(
+      yr_le16toh(cli_header->MajorRuntimeVersion),
+      pe->object,
+      "major_runtime_version");
+
+  set_integer(
+      yr_le16toh(cli_header->MinorRuntimeVersion),
+      pe->object,
+      "minor_runtime_version");
+
+  set_integer(
+      yr_le32toh(cli_header->EntryPointToken), pe->object, "entry_point");
+
   offset = metadata_root = pe_rva_to_offset(
       pe, yr_le32toh(cli_header->MetaData.VirtualAddress));
 
@@ -1692,6 +1870,69 @@ void dotnet_parse_com(PE* pe)
 begin_declarations
   declare_string("version");
   declare_string("module_name");
+  declare_integer("COMIMAGE_FLAGS_ILONLY");
+  declare_integer("COMIMAGE_FLAGS_32BITREQUIRED");
+  declare_integer("COMIMAGE_FLAGS_IL_LIBRARY");
+  declare_integer("COMIMAGE_FLAGS_STRONGNAMESIGNED");
+  declare_integer("COMIMAGE_FLAGS_NATIVE_ENTRYPOINT");
+  declare_integer("COMIMAGE_FLAGS_TRACKDEBUGDATA");
+
+  declare_integer("METHOD_FLAGS_MEMBER_ACCESS_MASK");
+  declare_integer("METHOD_FLAGS_COMPILER_CONTROLLED");
+  declare_integer("METHOD_FLAGS_FAM_AND_ASSEM");
+  declare_integer("METHOD_FLAGS_ASSEM");
+  declare_integer("METHOD_FLAGS_FAMILY");
+  declare_integer("METHOD_FLAGS_FAM_OR_ASSEM");
+  declare_integer("METHOD_FLAGS_PUBLIC");
+  declare_integer("METHOD_FLAGS_STATIC");
+  declare_integer("METHOD_FLAGS_FINAL");
+  declare_integer("METHOD_FLAGS_VIRTUAL");
+  declare_integer("METHOD_FLAGS_HIDE_BY_SIG");
+  declare_integer("METHOD_FLAGS_VTABLE_LAYOUT_MASK");
+  declare_integer("METHOD_FLAGS_REUSE_SLOT");
+  declare_integer("METHOD_FLAGS_NEW_SLOT");
+  declare_integer("METHOD_FLAGS_STRICT");
+  declare_integer("METHOD_FLAGS_ABSTRACT");
+  declare_integer("METHOD_FLAGS_SPECIAL_NAME");
+  declare_integer("METHOD_FLAGS_PINVOKE_IMPL");
+  declare_integer("METHOD_FLAGS_UNMANAGED_EXPORT");
+  declare_integer("METHOD_FLAGS_RTS_SPECIAL_NAME");
+  declare_integer("METHOD_FLAGS_HAS_SECURITY");
+  declare_integer("METHOD_FLAGS_REQUIRE_SEC_OBJECT");
+
+  declare_integer("METHOD_IMPL_FLAGS_CODE_TYPE_MASK");
+  declare_integer("METHOD_IMPL_FLAGS_IL");
+  declare_integer("METHOD_IMPL_FLAGS_IS_NATIVE");
+  declare_integer("METHOD_IMPL_FLAGS_OPTIL");
+  declare_integer("METHOD_IMPL_FLAGS_RUNTIME");
+  declare_integer("METHOD_IMPL_FLAGS_MANAGED_MASK");
+  declare_integer("METHOD_IMPL_FLAGS_UNMANAGED");
+  declare_integer("METHOD_IMPL_FLAGS_MANAGED");
+  declare_integer("METHOD_IMPL_FLAGS_FORWARD_REF");
+  declare_integer("METHOD_IMPL_FLAGS_PRESERVE_SIG");
+  declare_integer("METHOD_IMPL_FLAGS_INTERNAL_CALL");
+  declare_integer("METHOD_IMPL_FLAGS_SYNCHRONIZED");
+  declare_integer("METHOD_IMPL_FLAGS_NO_INLINING");
+  declare_integer("METHOD_IMPL_FLAGS_NO_OPTIMIZATION");
+
+  declare_integer("PINVOKE_FLAGS_NO_MANGLE");
+  declare_integer("PINVOKE_FLAGS_CHAR_SET_MASK");
+  declare_integer("PINVOKE_FLAGS_CHAR_SET_NOT_SPEC");
+  declare_integer("PINVOKE_FLAGS_CHAR_SET_ANSI");
+  declare_integer("PINVOKE_FLAGS_CHAR_SET_UNICODE");
+  declare_integer("PINVOKE_FLAGS_CHAR_SET_AUTO");
+  declare_integer("PINVOKE_FLAGS_SUPPORT_GET_LAST_ERROR");
+  declare_integer("PINVOKE_FLAGS_CALL_CONV_MASK");
+  declare_integer("PINVOKE_FLAGS_CALL_CONV_PLATFORM_API");
+  declare_integer("PINVOKE_FLAGS_CALL_CONV_CDECL");
+  declare_integer("PINVOKE_FLAGS_CALL_CONV_STDCALL");
+  declare_integer("PINVOKE_FLAGS_CALL_CONV_THISCALL");
+  declare_integer("PINVOKE_FLAGS_CALL_CONV_FASTCALL");
+
+  declare_integer("flags");
+  declare_integer("major_runtime_version");
+  declare_integer("minor_runtime_version");
+  declare_integer("entry_point");
 
   begin_struct_array("streams")
     declare_string("name");
@@ -1700,6 +1941,35 @@ begin_declarations
   end_struct_array("streams")
 
   declare_integer("number_of_streams");
+
+  begin_struct_array("memberrefs")
+    declare_string("name");
+  end_struct_array("memberrefs")
+
+  declare_integer("number_of_memberrefs");
+
+  begin_struct_array("methods")
+    declare_integer("rva");
+    declare_integer("impl_flags");
+    declare_integer("flags");
+    declare_string("name");
+  end_struct_array("methods");
+
+  declare_integer("number_of_methods");
+
+  begin_struct_array("typerefs")
+    declare_string("name");
+    declare_string("namespace");
+  end_struct_array("typerefs");
+
+  declare_integer("number_of_typerefs");
+
+  begin_struct_array("impl_maps")
+    declare_integer("mapping_flags");
+    declare_string("import_name");
+  end_struct_array("impl_maps");
+
+  declare_integer("number_of_impl_maps");
 
   declare_string_array("guids");
   declare_integer("number_of_guids");
@@ -1767,6 +2037,177 @@ int module_load(
   YR_MEMORY_BLOCK* block;
   YR_MEMORY_BLOCK_ITERATOR* iterator = context->iterator;
   const uint8_t* block_data = NULL;
+
+  // Runtime Flags
+  set_integer(COMIMAGE_FLAGS_ILONLY, module_object, "COMIMAGE_FLAGS_ILONLY");
+  set_integer(
+      COMIMAGE_FLAGS_32BITREQUIRED, module_object, "COMIMAGE_FLAGS_32BITREQUIRED");
+  set_integer(COMIMAGE_FLAGS_IL_LIBRARY, module_object, "COMIMAGE_FLAGS_IL_LIBRARY");
+  set_integer(
+      COMIMAGE_FLAGS_STRONGNAMESIGNED,
+      module_object,
+      "COMIMAGE_FLAGS_STRONGNAMESIGNED");
+  set_integer(
+      COMIMAGE_FLAGS_NATIVE_ENTRYPOINT,
+      module_object,
+      "COMIMAGE_FLAGS_NATIVE_ENTRYPOINT");
+  set_integer(
+      COMIMAGE_FLAGS_TRACKDEBUGDATA,
+      module_object,
+      "COMIMAGE_FLAGS_TRACKDEBUGDATA");
+
+  // Flags for methods [MethodAttributes]
+  set_integer(
+      METHOD_FLAGS_MEMBER_ACCESS_MASK,
+      module_object,
+      "METHOD_FLAGS_MEMBER_ACCESS_MASK");
+  set_integer(
+      METHOD_FLAGS_COMPILER_CONTROLLED,
+      module_object,
+      "METHOD_FLAGS_COMPILER_CONTROLLED");
+  set_integer(METHOD_FLAGS_PRIVATE, module_object, "METHOD_FLAGS_PRIVATE");
+  set_integer(
+      METHOD_FLAGS_FAM_AND_ASSEM, module_object, "METHOD_FLAGS_FAM_AND_ASSEM");
+  set_integer(METHOD_FLAGS_ASSEM, module_object, "METHOD_FLAGS_ASSEM");
+  set_integer(METHOD_FLAGS_FAMILY, module_object, "METHOD_FLAGS_FAMILY");
+  set_integer(
+      METHOD_FLAGS_FAM_OR_ASSEM, module_object, "METHOD_FLAGS_FAM_OR_ASSEM");
+  set_integer(METHOD_FLAGS_PUBLIC, module_object, "METHOD_FLAGS_PUBLIC");
+  set_integer(METHOD_FLAGS_STATIC, module_object, "METHOD_FLAGS_STATIC");
+  set_integer(METHOD_FLAGS_FINAL, module_object, "METHOD_FLAGS_FINAL");
+  set_integer(METHOD_FLAGS_VIRTUAL, module_object, "METHOD_FLAGS_VIRTUAL");
+  set_integer(
+      METHOD_FLAGS_HIDE_BY_SIG, module_object, "METHOD_FLAGS_HIDE_BY_SIG");
+  set_integer(
+      METHOD_FLAGS_VTABLE_LAYOUT_MASK,
+      module_object,
+      "METHOD_FLAGS_VTABLE_LAYOUT_MASK");
+  set_integer(
+      METHOD_FLAGS_REUSE_SLOT, module_object, "METHOD_FLAGS_REUSE_SLOT");
+  set_integer(METHOD_FLAGS_NEW_SLOT, module_object, "METHOD_FLAGS_NEW_SLOT");
+  set_integer(METHOD_FLAGS_STRICT, module_object, "METHOD_FLAGS_STRICT");
+  set_integer(METHOD_FLAGS_ABSTRACT, module_object, "METHOD_FLAGS_ABSTRACT");
+  set_integer(
+      METHOD_FLAGS_SPECIAL_NAME, module_object, "METHOD_FLAGS_SPECIAL_NAME");
+  set_integer(
+      METHOD_FLAGS_PINVOKE_IMPL, module_object, "METHOD_FLAGS_PINVOKE_IMPL");
+  set_integer(
+      METHOD_FLAGS_UNMANAGED_EXPORT,
+      module_object,
+      "METHOD_FLAGS_UNMANAGED_EXPORT");
+  set_integer(
+      METHOD_FLAGS_RTS_SPECIAL_NAME,
+      module_object,
+      "METHOD_FLAGS_RTS_SPECIAL_NAME");
+  set_integer(
+      METHOD_FLAGS_HAS_SECURITY, module_object, "METHOD_FLAGS_HAS_SECURITY");
+  set_integer(
+      METHOD_FLAGS_REQUIRE_SEC_OBJECT,
+      module_object,
+      "METHOD_FLAGS_REQUIRE_SEC_OBJECT");
+
+  // Flags for methods [MethodImplAttributes]
+  set_integer(
+      METHOD_IMPL_FLAGS_CODE_TYPE_MASK,
+      module_object,
+      "METHOD_IMPL_FLAGS_CODE_TYPE_MASK");
+  set_integer(METHOD_IMPL_FLAGS_IL, module_object, "METHOD_IMPL_FLAGS_IL");
+  set_integer(
+      METHOD_IMPL_FLAGS_IS_NATIVE,
+      module_object,
+      "METHOD_IMPL_FLAGS_IS_NATIVE");
+  set_integer(
+      METHOD_IMPL_FLAGS_OPTIL, module_object, "METHOD_IMPL_FLAGS_OPTIL");
+  set_integer(
+      METHOD_IMPL_FLAGS_RUNTIME, module_object, "METHOD_IMPL_FLAGS_RUNTIME");
+  set_integer(
+      METHOD_IMPL_FLAGS_MANAGED_MASK,
+      module_object,
+      "METHOD_IMPL_FLAGS_MANAGED_MASK");
+  set_integer(
+      METHOD_IMPL_FLAGS_UNMANAGED,
+      module_object,
+      "METHOD_IMPL_FLAGS_UNMANAGED");
+  set_integer(
+      METHOD_IMPL_FLAGS_MANAGED, module_object, "METHOD_IMPL_FLAGS_MANAGED");
+  set_integer(
+      METHOD_IMPL_FLAGS_FORWARD_REF,
+      module_object,
+      "METHOD_IMPL_FLAGS_FORWARD_REF");
+  set_integer(
+      METHOD_IMPL_FLAGS_PRESERVE_SIG,
+      module_object,
+      "METHOD_IMPL_FLAGS_PRESERVE_SIG");
+  set_integer(
+      METHOD_IMPL_FLAGS_INTERNAL_CALL,
+      module_object,
+      "METHOD_IMPL_FLAGS_INTERNAL_CALL");
+  set_integer(
+      METHOD_IMPL_FLAGS_SYNCHRONIZED,
+      module_object,
+      "METHOD_IMPL_FLAGS_SYNCHRONIZED");
+  set_integer(
+      METHOD_IMPL_FLAGS_NO_INLINING,
+      module_object,
+      "METHOD_IMPL_FLAGS_NO_INLINING");
+  set_integer(
+      METHOD_IMPL_FLAGS_NO_OPTIMIZATION,
+      module_object,
+      "METHOD_IMPL_FLAGS_NO_OPTIMIZATION");
+
+  // ImplMap Flags
+  set_integer(
+    PINVOKE_FLAGS_NO_MANGLE,
+    module_object,
+    "PINVOKE_FLAGS_NO_MANGLE");
+  set_integer(
+    PINVOKE_FLAGS_CHAR_SET_MASK,
+    module_object,
+    "PINVOKE_FLAGS_CHAR_SET_MASK");
+  set_integer(
+    PINVOKE_FLAGS_CHAR_SET_NOT_SPEC,
+    module_object,
+    "PINVOKE_FLAGS_CHAR_SET_NOT_SPEC");
+  set_integer(
+    PINVOKE_FLAGS_CHAR_SET_ANSI,
+    module_object,
+    "PINVOKE_FLAGS_CHAR_SET_ANSI");
+  set_integer(
+    PINVOKE_FLAGS_CHAR_SET_UNICODE,
+    module_object,
+    "PINVOKE_FLAGS_CHAR_SET_UNICODE");
+  set_integer(
+    PINVOKE_FLAGS_CHAR_SET_AUTO,
+    module_object,
+    "PINVOKE_FLAGS_CHAR_SET_AUTO");
+  set_integer(
+    PINVOKE_FLAGS_SUPPORT_GET_LAST_ERROR,
+    module_object,
+    "PINVOKE_FLAGS_SUPPORT_GET_LAST_ERROR");
+  set_integer(
+    PINVOKE_FLAGS_CALL_CONV_MASK,
+    module_object,
+    "PINVOKE_FLAGS_CALL_CONV_MASK");
+  set_integer(
+    PINVOKE_FLAGS_CALL_CONV_PLATFORM_API,
+    module_object,
+    "PINVOKE_FLAGS_CALL_CONV_PLATFORM_API");
+  set_integer(
+    PINVOKE_FLAGS_CALL_CONV_CDECL,
+    module_object,
+    "PINVOKE_FLAGS_CALL_CONV_CDECL");
+  set_integer(
+    PINVOKE_FLAGS_CALL_CONV_STDCALL,
+    module_object,
+    "PINVOKE_FLAGS_CALL_CONV_STDCALL");
+  set_integer(
+    PINVOKE_FLAGS_CALL_CONV_THISCALL,
+    module_object,
+    "PINVOKE_FLAGS_CALL_CONV_THISCALL");
+  set_integer(
+    PINVOKE_FLAGS_CALL_CONV_FASTCALL,
+    module_object,
+    "PINVOKE_FLAGS_CALL_CONV_FASTCALL");    
 
   foreach_memory_block(iterator, block)
   {
