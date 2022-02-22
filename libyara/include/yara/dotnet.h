@@ -28,6 +28,101 @@ typedef struct _CLI_HEADER
 #define NET_METADATA_MAGIC 0x424a5342
 
 //
+// Runtime flags
+// ECMA-335 Section II.25.3.3.1
+//
+// COMIMAGE_FLAGS_IL_LIBRARY is not part of ECMA-335, but it is in Windows
+// header files, to include winnt.h
+#define COMIMAGE_FLAGS_ILONLY                 0x00000001
+#define COMIMAGE_FLAGS_32BITREQUIRED          0x00000002
+#define COMIMAGE_FLAGS_IL_LIBRARY             0x00000004
+#define COMIMAGE_FLAGS_STRONGNAMESIGNED       0x00000008
+#define COMIMAGE_FLAGS_NATIVE_ENTRYPOINT      0x00000010
+#define COMIMAGE_FLAGS_TRACKDEBUGDATA         0x00010000
+
+//
+// Flags for methods [MethodAttributes]
+// ECMA-335 Section II.23.1.10
+//
+// These three bits contain one of the following values
+#define METHOD_FLAGS_MEMBER_ACCESS_MASK       0x0007
+#define METHOD_FLAGS_COMPILER_CONTROLLED      0x0000
+#define METHOD_FLAGS_PRIVATE                  0x0001
+#define METHOD_FLAGS_FAM_AND_ASSEM            0x0002
+#define METHOD_FLAGS_ASSEM                    0x0003
+#define METHOD_FLAGS_FAMILY                   0x0004
+#define METHOD_FLAGS_FAM_OR_ASSEM             0x0005
+#define METHOD_FLAGS_PUBLIC                   0x0006
+
+#define METHOD_FLAGS_STATIC                   0x0010
+#define METHOD_FLAGS_FINAL                    0x0020
+#define METHOD_FLAGS_VIRTUAL                  0x0040
+#define METHOD_FLAGS_HIDE_BY_SIG              0x0080
+
+// Use this mask to retrieve vtable attributes. This bit
+// contains one of the following values
+#define METHOD_FLAGS_VTABLE_LAYOUT_MASK       0x0100
+#define METHOD_FLAGS_REUSE_SLOT               0x0000
+#define METHOD_FLAGS_NEW_SLOT                 0x0100
+
+#define METHOD_FLAGS_STRICT                   0x0200
+#define METHOD_FLAGS_ABSTRACT                 0x0400
+#define METHOD_FLAGS_SPECIAL_NAME             0x0800
+
+// Interop attributes
+#define METHOD_FLAGS_PINVOKE_IMPL             0x2000
+#define METHOD_FLAGS_UNMANAGED_EXPORT         0x0008
+
+// Additional flags
+#define METHOD_FLAGS_RTS_SPECIAL_NAME         0x1000
+#define METHOD_FLAGS_HAS_SECURITY             0x4000
+#define METHOD_FLAGS_REQUIRE_SEC_OBJECT       0x8000
+
+//
+// Flags for methods [MethodImplAttributes]
+// ECMA-335 Section II.23.1.11
+//
+
+// these two bits contain one of the follwing values
+#define METHOD_IMPL_FLAGS_CODE_TYPE_MASK      0x0003
+#define METHOD_IMPL_FLAGS_IL                  0x0000
+#define METHOD_IMPL_FLAGS_IS_NATIVE           0x0001
+#define METHOD_IMPL_FLAGS_OPTIL               0x0002
+#define METHOD_IMPL_FLAGS_RUNTIME             0x0003
+
+// Flags specifying whether code is managed or unmanaged.
+// This bit contains one of the following values
+#define METHOD_IMPL_FLAGS_MANAGED_MASK        0x0004
+#define METHOD_IMPL_FLAGS_UNMANAGED           0x0004
+#define METHOD_IMPL_FLAGS_MANAGED             0x0000
+
+// Implementation info and interop
+#define METHOD_IMPL_FLAGS_FORWARD_REF         0x0010
+#define METHOD_IMPL_FLAGS_PRESERVE_SIG        0x0080
+#define METHOD_IMPL_FLAGS_INTERNAL_CALL       0x1000
+#define METHOD_IMPL_FLAGS_SYNCHRONIZED        0x0020
+#define METHOD_IMPL_FLAGS_NO_INLINING         0x0008
+#define METHOD_IMPL_FLAGS_NO_OPTIMIZATION     0x0040
+
+//
+// Flags for ImplMap [PInvokeAttributes]
+// ECMA-335 Section II.23.1.8
+//
+#define PINVOKE_FLAGS_NO_MANGLE               0x0001
+#define PINVOKE_FLAGS_CHAR_SET_MASK           0x0006
+#define PINVOKE_FLAGS_CHAR_SET_NOT_SPEC       0x0000
+#define PINVOKE_FLAGS_CHAR_SET_ANSI           0x0002
+#define PINVOKE_FLAGS_CHAR_SET_UNICODE        0x0004
+#define PINVOKE_FLAGS_CHAR_SET_AUTO           0x0006
+#define PINVOKE_FLAGS_SUPPORT_GET_LAST_ERROR  0x0040
+#define PINVOKE_FLAGS_CALL_CONV_MASK          0x0700
+#define PINVOKE_FLAGS_CALL_CONV_PLATFORM_API  0x0100
+#define PINVOKE_FLAGS_CALL_CONV_CDECL         0x0200
+#define PINVOKE_FLAGS_CALL_CONV_STDCALL       0x0300
+#define PINVOKE_FLAGS_CALL_CONV_THISCALL      0x0400
+#define PINVOKE_FLAGS_CALL_CONV_FASTCALL      0x0500
+
+//
 // CLI MetaData
 // ECMA-335 Section II.24.2.1
 //
@@ -140,6 +235,29 @@ typedef struct _TILDE_HEADER
 
 //
 // Module table
+// ECMA-335 Section II.22.25
+//
+typedef struct _MEMBERREF_TABLE
+{
+  union
+  {
+    WORD Class_Short;
+    DWORD Class_Long;
+  } Class;
+  union
+  {
+    WORD Name_Short;
+    DWORD Name_Long;
+  } Name;
+  union
+  {
+    WORD Signature_Short;
+    DWORD Signature_Long;
+  } Signature;
+}MEMBERREF_TABLE, *PMEMBERREF_TABLE;
+
+//
+// Module table
 // ECMA-335 Section II.22.30
 //
 typedef struct _MODULE_TABLE
@@ -216,6 +334,30 @@ typedef struct _ASSEMBLYREF_TABLE
 
 //
 // Manifest Resource Table
+// ECMA-335 Section II.22.22
+//
+typedef struct _IMPLMAP_TABLE
+{
+  WORD MappingFlags;
+  union
+  {
+    WORD MemberForwarded_Short;
+    DWORD MemberForwarded_Long;
+  } MemberForwarded;
+  union
+  {
+    WORD Name_Short;
+    DWORD Name_Long;
+  } ImportName;
+  union
+  {
+    WORD ImportScope_Short;
+    DWORD ImportScope_Long;
+  } ImportScope;
+} IMPLMAP_TABLE, *PIMPLMAP_TABLE;
+
+//
+// Manifest Resource Table
 // ECMA-335 Section II.22.24
 //
 typedef struct _MANIFESTRESOURCE_TABLE
@@ -233,6 +375,55 @@ typedef struct _MANIFESTRESOURCE_TABLE
     DWORD Implementation_Long;
   } Implementation;
 } MANIFESTRESOURCE_TABLE, *PMANIFESTRESOURCE_TABLE;
+
+//
+// TypeRef Table
+// ECMA-335 Section II.22.38
+//
+typedef struct _TYPEREF_TABLE
+{
+  union
+  {
+    WORD ResolutionScope_Short;
+    DWORD ResolutionScope_Long;
+  } ResolutionScope;
+  union
+  {
+    WORD Name_Short;
+    DWORD Name_Long;
+  } Name;
+  union
+  {
+    WORD Name_Short;
+    DWORD Name_Long;
+  } Namespace;
+} TYPEREF_TABLE, *PTYPEREF_TABLE;
+
+//
+// MethodDef Table
+// ECMA-335 Section II.22.26
+//
+typedef struct _METHODDEF_TABLE
+{
+  DWORD RVA;
+  WORD ImplFlags;
+  WORD Flags;
+  union
+  {
+    WORD Name_Short;
+    DWORD Name_Long;
+  } Name;
+  union
+  {
+    WORD Signature_Short;
+    DWORD Signature_Long;
+  } Signature;
+  union
+  {
+    WORD ParamList_Short;
+    DWORD ParamList_Long;
+  } ParamList;
+} METHODDEF_TABLE, *PMETHODDEF_TABLE;
 
 //
 // ModuleRef Table
