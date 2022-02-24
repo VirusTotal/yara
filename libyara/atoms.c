@@ -914,7 +914,7 @@ static int _yr_atoms_extract_from_re(
 
   // This first item pushed in the stack is the last one to be poped out, the
   // sole purpose of this item is forcing that any pending leaf is appended to
-  // current_appending_node during the last iteration of the loop.
+  // appending_node during the last iteration of the loop.
   si.re_node = NULL;
   si.new_appending_node = appending_node;
 
@@ -968,6 +968,7 @@ static int _yr_atoms_extract_from_re(
       }
 
       current_appending_node = si.new_appending_node;
+      best_quality = -1;
     }
 
     if (si.re_node != NULL)
