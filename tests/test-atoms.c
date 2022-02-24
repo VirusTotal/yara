@@ -533,6 +533,13 @@ void test_atom_choose()
           {3, {0x00, 0x00, 0x58}},
       });
 
+  assert_hex_atoms(
+      "{69 ?? a0 0d 00}",
+      1,
+      (struct atom[]){
+          {3, {0xa0, 0x0d, 0x00}},
+      });
+
   // Test case for https://github.com/VirusTotal/yara/issues/1025
   assert_hex_atoms(
       "{?? 11 22 33 ?? 55 66}",

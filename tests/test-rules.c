@@ -3156,7 +3156,7 @@ void test_performance_warnings()
         strings: $a = { 01 ?? 02 1? } \
         condition: $a }");
 
-  assert_no_warnings("rule test { \
+  assert_warning("rule test { \
         strings: $a = { 68 ?? 00 ?? 00 68 ?? 00 ?? 00} \
         condition: $a }");
 

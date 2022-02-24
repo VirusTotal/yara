@@ -117,35 +117,34 @@ int yr_atoms_heuristic_quality(YR_ATOMS_CONFIG* config, YR_ATOM* atom)
   // Each byte in the atom contributes a certain amount of points to the
   // quality. Bytes [a-zA-Z] contribute 18 points each, common bytes like
   // 0x00, 0x20 and 0xFF contribute only 12 points, and the rest of the
-  // bytes contribute 20 points. The ?? mask substracts 6 points, and masks
-  // X? and ?X contribute 2 points. An additional boost consisting in 2x the
+  // bytes contribute 20 points. The ?? mask substracts 10 points, and masks
+  // X? and ?X contribute 4 points. An additional boost consisting in 2x the
   // number of unique bytes in the atom is added to the quality. This are
   // some examples of the quality of atoms:
   //
   //   01 02 03 04   quality = 20 + 20 + 20 + 20 + 8 = 88
-  //   01 ?? 03 04   quality = 20 -  6 + 20 + 20 + 6 = 60
-  //   01 0? 03      quality = 20 +  2 + 20      + 4 = 46
+  //   01 ?? 03 04   quality = 20 - 10 + 20 + 20 + 6 = 56
+  //   01 0? 03      quality = 20 +  4 + 20      + 4 = 48
   //   01 02         quality = 20 + 20           + 4 = 44
-  //   01 ?? ?3 04   quality = 20 -  6 +  2 + 20 + 4 = 40
+  //   01 ?? ?3 04   quality = 20 - 10 +  2 + 20 + 4 = 36
   //   61 62         quality = 18 + 18           + 4 = 40
   //   61 61         quality = 18 + 18           + 2 = 38  <- warning threshold
-  //   00 01         quality = 10 + 20           + 4 = 34
-  //   01 ?? 02      quality = 20 -  6 + 20      + 4 = 38
+  //   00 01         quality = 12 + 20           + 4 = 36
+  //   01 ?? 02      quality = 20 - 10 + 20      + 4 = 34
   //   01            quality = 20                + 1 = 21
-  //
 
   for (int i = 0; i < atom->length; i++)
   {
     switch (atom->mask[i])
     {
     case 0x00:
-      quality -= 6;
+      quality -= 10;
       break;
     case 0x0F:
-      quality += 2;
+      quality += 4;
       break;
     case 0xF0:
-      quality += 2;
+      quality += 4;
       break;
     case 0xFF:
       switch (atom->bytes[i])
@@ -1368,6 +1367,19 @@ int yr_atoms_extract_from_re(
     (*atoms)->forward_code_ref = re_ast->root_node->forward_code_ref;
     (*atoms)->backward_code_ref = YR_ARENA_NULL_REF;
     (*atoms)->next = NULL;
+  }
+
+  for (YR_ATOM_LIST_ITEM* atom_li = *atoms; atom_li != NULL;
+       atom_li = atom_li->next)
+  {
+    printf("atom: ");
+    for (int i = 0; i < atom_li->atom.length; i++)
+      printf("%02x", atom_li->atom.bytes[i]);
+
+    printf(
+        "q: %d\n",
+        yr_atoms_heuristic_quality(config, &atom_li->atom) -
+            YR_MAX_ATOM_QUALITY + 22 * YR_MAX_ATOM_LENGTH);
   }
 
   return ERROR_SUCCESS;
