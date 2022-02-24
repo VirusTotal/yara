@@ -507,7 +507,7 @@ void test_atom_choose()
           {3, {0x61, 0x62, 0x63}},
       });
 
-  assert_hex_atoms("{61 6? 63 [1-5] 65 66 }", 16, atoms_61_6X_63);
+  assert_hex_atoms("{61 6? 63 [1-5] 65 66}", 16, atoms_61_6X_63);
 
   assert_hex_atoms(
       "{(61 62 63 | 65 66 67 68)}",
@@ -520,15 +520,22 @@ void test_atom_choose()
   assert_hex_atoms("{61 62 0? 64}", 16, atoms_61_62_0X_64);
 
   assert_hex_atoms(
-      "{11 ?? 11 ?? 22 33 44 55 66 }",
+      "{11 ?? 11 ?? 22 33 44 55 66}",
       1,
       (struct atom[]){
           {4, {0x22, 0x33, 0x44, 0x55}},
       });
 
+  assert_hex_atoms(
+      "{68 ?? ?? 00 00 58}",
+      1,
+      (struct atom[]){
+          {3, {0x00, 0x00, 0x58}},
+      });
+
   // Test case for issue #1025
   assert_hex_atoms(
-      "{?? 11 22 33 ?? 55 66 }",
+      "{?? 11 22 33 ?? 55 66}",
       1,
       (struct atom[]){
           {3, {0x11, 0x22, 0x33}},
