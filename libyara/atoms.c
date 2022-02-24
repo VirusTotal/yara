@@ -1369,19 +1369,6 @@ int yr_atoms_extract_from_re(
     (*atoms)->next = NULL;
   }
 
-  for (YR_ATOM_LIST_ITEM* atom_li = *atoms; atom_li != NULL;
-       atom_li = atom_li->next)
-  {
-    printf("atom: ");
-    for (int i = 0; i < atom_li->atom.length; i++)
-      printf("%02x", atom_li->atom.bytes[i]);
-
-    printf(
-        "q: %d\n",
-        yr_atoms_heuristic_quality(config, &atom_li->atom) -
-            YR_MAX_ATOM_QUALITY + 22 * YR_MAX_ATOM_LENGTH);
-  }
-
   return ERROR_SUCCESS;
 }
 
