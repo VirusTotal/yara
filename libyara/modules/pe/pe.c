@@ -4108,7 +4108,7 @@ int module_load(
 
   set_integer(0, module_object, "is_pe");
 
-  PVOID base = NULL;
+  void* base = ((void *)0);
 
 #if defined(USE_WINDOWS_PROC)
 
