@@ -3240,6 +3240,10 @@ void test_performance_warnings()
         strings: $a = \"MZ\" \
         condition: $a }");
 
+  assert_no_warnings("rule test { \
+        strings: $a = \"ZZ\" \
+        condition: $a }");
+
   assert_warning("rule test { \
         strings: $a = \"                    \" xor(0x20) \
         condition: $a }");
