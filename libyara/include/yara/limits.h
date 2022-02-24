@@ -82,7 +82,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // must specify the threshold when calling yr_compiler_set_atom_quality_table.
 #ifndef YR_ATOM_QUALITY_WARNING_THRESHOLD
 #define YR_ATOM_QUALITY_WARNING_THRESHOLD \
-  YR_MAX_ATOM_QUALITY - 20 * YR_MAX_ATOM_LENGTH + 38
+  YR_MAX_ATOM_QUALITY - 22 * YR_MAX_ATOM_LENGTH + 38
 #endif
 
 // If a rule generates more than this number of atoms a warning is shown.

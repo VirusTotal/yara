@@ -156,6 +156,23 @@ void test_heuristic_quality()
       .bytes = {0x01, 0x01, 0x01, 0x01},
       .mask = {0xFF, 0xFF, 0xFF, 0xFF}};
 
+  YR_ATOM a01020102 = {
+      .length = 4,
+      .bytes = {0x01, 0x02, 0x01, 0x02},
+      .mask = {0xFF, 0xFF, 0xFF, 0xFF}};
+
+  // abcd
+  YR_ATOM a61626364 = {
+      .length = 4,
+      .bytes = {0x61, 0x62, 0x63, 0x64},
+      .mask = {0xFF, 0xFF, 0xFF, 0xFF}};
+
+  // abc.
+  YR_ATOM a6162632E = {
+      .length = 4,
+      .bytes = {0x61, 0x62, 0x63, 0x2E},
+      .mask = {0xFF, 0xFF, 0xFF, 0xFF}};
+
   c.get_atom_quality = yr_atoms_heuristic_quality;
 
   int q00000000 = yr_atoms_heuristic_quality(&c, &a00000000);
@@ -172,10 +189,13 @@ void test_heuristic_quality()
   int q01020000 = yr_atoms_heuristic_quality(&c, &a01020000);
   int q0102XX04 = yr_atoms_heuristic_quality(&c, &a0102XX04);
   int q01010101 = yr_atoms_heuristic_quality(&c, &a01010101);
+  int q01020102 = yr_atoms_heuristic_quality(&c, &a01020102);
   int q20202020 = yr_atoms_heuristic_quality(&c, &a20202020);
   int q90909090 = yr_atoms_heuristic_quality(&c, &a90909090);
   int qCCCCCCCC = yr_atoms_heuristic_quality(&c, &aCCCCCCCC);
   int qFFFFFFFF = yr_atoms_heuristic_quality(&c, &aFFFFFFFF);
+  int q61626364 = yr_atoms_heuristic_quality(&c, &a61626364);
+  int q6162632E = yr_atoms_heuristic_quality(&c, &a6162632E);
 
   a010203.mask[1] = 0x00;
 
@@ -214,12 +234,18 @@ void test_heuristic_quality()
   assert_true_expr(q010X0X > q01);
   assert_true_expr(q010X0X < q010203);
   assert_true_expr(q01020000 > q0102XX04);
+  assert_true_expr(q01020102 > q01010101);
+  assert_true_expr(q01020304 > q01020102);
+  assert_true_expr(q01020102 > q010203);
+  assert_true_expr(q01020304 > q61626364);
+  assert_true_expr(q010203 < q61626364);
+  assert_true_expr(q6162632E > q61626364);
 
   // Byte sequences like 90 90 90 90 and CC CC CC CC are using as function
-  // padding by compilers (sequences of NOP and INT 3 instructions respectively)
-  // and therefore are very common. FF FF FF FF and 20 20 20 20 (spaces) are
-  // also very common sequences. All these common sequences are penalized and
-  // have lower qualities than 01 01 01 01.
+  // padding by compilers (sequences of NOP and INT 3 instructions
+  // respectively) and therefore are very common. FF FF FF FF and 20 20 20
+  // 20 (spaces) are also very common sequences. All these common sequences
+  // are penalized and have lower qualities than 01 01 01 01.
   assert_true_expr(q90909090 < q01010101);
   assert_true_expr(q20202020 < q01010101);
   assert_true_expr(qCCCCCCCC < q01010101);
@@ -506,6 +532,14 @@ void test_atom_choose()
       1,
       (struct atom[]){
           {3, {0x11, 0x22, 0x33}},
+      });
+
+  // https://github.com/VirusTotal/yara/issues/1646
+  assert_re_atoms(
+      "foobar\\.{128}",
+      1,
+      (struct atom[]){
+          {4, {0x62, 0x61, 0x72, 0x2e}},
       });
 }
 

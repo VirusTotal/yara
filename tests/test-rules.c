@@ -3148,11 +3148,11 @@ void test_performance_warnings()
         strings: $a = { 01 ?? ?? 02 } \
         condition: $a }");
 
-  assert_warning("rule test { \
+  assert_no_warnings("rule test { \
         strings: $a = { 01 ?? ?2 03 } \
         condition: $a }");
 
-  assert_warning("rule test { \
+  assert_no_warnings("rule test { \
         strings: $a = { 01 ?? 02 1? } \
         condition: $a }");
 
