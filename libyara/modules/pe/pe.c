@@ -1569,7 +1569,7 @@ static void pe_parse_exports(PE* pe)
   if (offset > 0)
   {
     remaining = pe->data_size - (size_t) offset;
-    char* name;
+    char* name = NULL;
     if (pe->memory)
     {
       get_data_pointer_memory(pe, offset, name, char*);
@@ -1723,7 +1723,7 @@ static void pe_parse_exports(PE* pe)
 
           if (offset > 0)
           {
-            char* name;
+            char* name = NULL;
             if (pe->memory)
             {
               get_data_pointer_memory_with_size(pe, offset, name, char*, remaining);

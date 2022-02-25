@@ -52,6 +52,7 @@ case $host_os in
              proc_interface=mach
              jemalloc_prefix=je_ ;;
     mingw*|cygwin*) CFLAGS="$CFLAGS -DUSE_WINDOWS_PROC"
+            LDFLAGS="$LDFLAGS -lntdll"
             proc_interface=windows
             jemalloc_prefix= ;;
     linux*|netbsd*|dragonfly*|kfreebsd*)
