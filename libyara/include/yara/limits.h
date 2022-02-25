@@ -87,7 +87,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 // If a rule generates more than this number of atoms a warning is shown.
 #ifndef YR_ATOMS_PER_RULE_WARNING_THRESHOLD
-#define YR_ATOMS_PER_RULE_WARNING_THRESHOLD 10000
+#define YR_ATOMS_PER_RULE_WARNING_THRESHOLD 12000
 #endif
 
 // Maximum number of nested "for" loops in rule. Rules ith nested loops
