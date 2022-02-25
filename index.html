@@ -1,51 +1,54 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <meta charset='utf-8'>
-    <meta http-equiv="X-UA-Compatible" content="chrome=1">
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-    <meta name="keywords" content="pattern matching,virus,signature,malware,classification">
-    <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen" />
-    <link rel="stylesheet" type="text/css" href="stylesheets/pygment_trac.css" media="screen" />
-    <link rel="stylesheet" type="text/css" href="stylesheets/print.css" media="print" />
-    <link rel="stylesheet" type="text/css" href="font-awesome/css/font-awesome.min.css" media="screen" />
 
-    <!--[if lt IE 9]>
+<head>
+  <meta charset='utf-8'>
+  <meta http-equiv="X-UA-Compatible" content="chrome=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="keywords" content="pattern matching,virus,signature,malware,classification">
+  <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen" />
+  <link rel="stylesheet" type="text/css" href="stylesheets/pygment_trac.css" media="screen" />
+  <link rel="stylesheet" type="text/css" href="stylesheets/print.css" media="print" />
+  <link rel="stylesheet" type="text/css" href="font-awesome/css/font-awesome.min.css" media="screen" />
+
+  <!--[if lt IE 9]>
     <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
     <![endif]-->
 
-    <title>YARA - The pattern matching swiss knife for malware researchers</title>
+  <title>YARA - The pattern matching swiss knife for malware researchers</title>
 
-    <script>
-      (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-      (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
-      m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-      })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  <script>
+    (function (i, s, o, g, r, a, m) {
+      i['GoogleAnalyticsObject'] = r; i[r] = i[r] || function () {
+        (i[r].q = i[r].q || []).push(arguments)
+      }, i[r].l = 1 * new Date(); a = s.createElement(o),
+        m = s.getElementsByTagName(o)[0]; a.async = 1; a.src = g; m.parentNode.insertBefore(a, m)
+    })(window, document, 'script', '//www.google-analytics.com/analytics.js', 'ga');
 
-      ga('create', 'UA-4224338-5', 'plusvic.github.io');
-      ga('send', 'pageview');
-    </script>
-  </head>
+    ga('create', 'UA-4224338-5', 'plusvic.github.io');
+    ga('send', 'pageview');
+  </script>
+</head>
 
-  <body>
-    <header>
-      <div class="inner">
-        <img src="images/logo.png" style="position:relative;left:-5px">
-        <h2>The pattern matching swiss knife for malware researchers <small>(and everyone else)</small></h2>
-      </div>
-    </header>
+<body>
+  <header>
+    <div class="inner">
+      <img src="images/logo.png" style="position:relative;left:-5px">
+      <h2>The pattern matching swiss knife for malware researchers <small>(and everyone else)</small></h2>
+    </div>
+  </header>
 
-    <div id="content-wrapper">
-      <div class="inner clearfix">
-        <section id="main-content">
+  <div id="content-wrapper">
+    <div class="inner clearfix">
+      <section id="main-content">
 
-<h2 id="yara-in-a-nutshell">YARA in a nutshell</h2>
-<p>YARA is a tool aimed at (but not limited to) helping malware researchers to
-identify and classify malware samples. With YARA you can create descriptions of
-malware families (or whatever you want to describe) based on textual or binary
-patterns. Each description, a.k.a rule, consists of a set of strings and a
-boolean expression which determine its logic. Let's see an example:</p>
-<pre><code>rule silent_banker : banker
+        <h2 id="yara-in-a-nutshell">YARA in a nutshell</h2>
+        <p>YARA is a tool aimed at (but not limited to) helping malware researchers to
+          identify and classify malware samples. With YARA you can create descriptions of
+          malware families (or whatever you want to describe) based on textual or binary
+          patterns. Each description, a.k.a rule, consists of a set of strings and a
+          boolean expression which determine its logic. Let's see an example:</p>
+        <pre><code>rule silent_banker : banker
 {
     meta:
         description = "This is just an example"
@@ -60,144 +63,155 @@ boolean expression which determine its logic. Let's see an example:</p>
     condition:
         $a or $b or $c
 }
-</code></pre><p>The above rule is telling YARA that any file containing one of the three strings
-must be reported as <em>silent_banker</em>. This is just a simple example, more
-complex and powerful rules can be created by using wild-cards, case-insensitive
-strings, regular expressions, special operators and many other features that
-you'll find explained in <a href="http://yara.readthedocs.org/">YARA's documentation</a>.</p>
-<p>YARA is multi-platform, running on Windows, Linux and Mac OS X, and can be used
-through its command-line interface or from your own Python scripts with the
-yara-python extension.
-</p>
-<h2><a id="additional-resources"></a>Additional resources</h2>
-<p>Do you use GitHub for storing you YARA rules? <a href="https://yara-ci.cloud.virustotal.com">YARA-CI</a>
-may be a useful addition to your toolbelt. This is GitHub application that provides
-continuous testing for your rules, helping you to identify common mistakes and
-false positives.</p>
-<p>If you plan to use YARA to scan compressed files (.zip, .tar, etc) you should
-take a look at <a href="https://github.com/BayshoreNetworks/yextend">yextend</a>, a very
-helpful extension to YARA developed and open-sourced by Bayshore Networks.</p>
-<p>Additionally, the guys from <a href="https://inquest.net/">InQuest</a> have curated an
-aweseome list of <a href="https://github.com/InQuest/awesome-yara">YARA-related stuff</a>.</p>
-<h2 id="who-s-using-yara">Who's using YARA</h2>
-<ul>
-<li><a href="http://www.activecanopy.com/">ActiveCanopy</a></li>
-<li><a href="http://www.adlice.com/">Adlice</a></li>
-<li><a href="https://otx.alienvault.com/">AlienVault</a></li>
-<li><a href="https://www.avast.com/">Avast</a></li>
-<li><a href="http://www.baesystems.com/home?r=ai">BAE Systems</a></li>
-<li><a href="http://www.bayshorenetworks.com">Bayshore Networks, Inc.</a></li>
-<li><a href="https://github.com/airbnb/binaryalert">BinaryAlert</a></li>
-<li><a href="http://www.bluecoat.com/products/malware-analysis-appliance">Blue Coat</a></li>
-<li><a href="http://www.blueliv.com">Blueliv</a></li>
-<li><a href="https://claroty.com/continuous-threat-detection">Claroty</a></li>
-<li><a href="https://cofense.com">Cofense</a></li>
-<li><a href="http://www.conix.fr">Conix</a></li>
-<li><a href="https://github.com/CrowdStrike/CrowdFMS">CrowdStrike FMS</a></li>
-<li><a href="https://cuckoosandbox.org/">Cuckoo Sandbox</a></li>
-<li><a href="http://www.cybertriage.com">Cyber Triage</a></li>
-<li><a href="https://digitasecurity.com/product/uxprotect">Digita Security</a></li>
-<li><a href="https://dragos.com/platform/">Dragos Platform</a></li>
-<li><a href="https://dtexsystems.com">Dtex Systems</a></li>
-<li><a href="https://www.eset.com">ESET</a></li>
-<li><a href="https://www.estsecurity.com">ESTSecurity</a></li>
-<li><a href="http://www.fidelissecurity.com/network-security-appliance/Fidelis-XPS">Fidelis XPS</a></li>
-<li><a href="http://www.fireeye.com">FireEye, Inc.</a></li>
-<li><a href="https://www.fox-it.com">Fox-IT</a></li>
-<li><a href="https://github.com/EmersonElectricCo/fsf">FSF</a></li>
-<li><a href="http://www.guidancesoftware.com/endpointsecurity">Guidance Software</a></li>
-<li><a href="https://heroku.com">Heroku</a></li>
-<li><a href="https://www.hornetsecurity.com/en/">Hornetsecurity</a></li>
-<li><a href="https://www.inquest.net">InQuest</a></li>
-<li><a href="http://jask.io/">JASK</a></li>
-<li><a href="https://www.joesecurity.org/">Joe Security</a></li>
-<li><a href="http://jsunpack.jeek.org/">jsunpack-n</a></li>
-<li><a href="http://www.kaspersky.com">Kaspersky Lab</a></li>
-<li><a href="http://www.knowbe4.com">KnowBe4</a></li>
-<li><a href="https://koodous.com/">Koodous</a></li>
-<li><a href="https://github.com/lmco/laikaboss">Laika BOSS</a></li>
-<li><a href="http://www.lastline.com">Lastline, Inc.</a></li>
-<li><a href="http://limacharlie.io">LimaCharlie</a></li>
-<li><a href="http://mcafee.com/atd">McAfee Advanced Threat Defense</a></li>
-<li><a href="http://www.metaflows.com">Metaflows</a></li>
-<li><a href="https://www.nbs-system.com">NBS System</a></li>
-<li><a href="http://www.nozominetworks.com">Nozomi Networks</a></li>
-<li><a href="http://www.osquery.io">osquery</a></li>
-<li><a href="https://www.payload-security.com">Payload Security</a></li>
-<li><a href="http://phishme.com/">PhishMe</a></li>
-<li><a href="http://www.picussecurity.com">Picus Security</a></li>
-<li><a href="http://rada.re">Radare2</a></li>
-<li><a href="http://www.raytheoncyber.com/capabilities/products/sureview-threatprotection/">Raytheon Cyber Products, Inc.</a></li>
-<li><a href="https://redsocks.eu">RedSocks Security</a></li>
-<li><a href="http://reversinglabs.com">ReversingLabs</a></li>
-<li><a href="https://www.root9b.com">root9B</a></li>
-<li><a href="https://scanii.com">Scanii</a></li>
-<li><a href="http://www.emc.com/security/rsa-ecat.htm">RSA ECAT</a></li>
-<li><a href="https://www.spamstopshere.com">SpamStopsHere</a></li>
-<li><a href="http://stoq.punchcyber.com">stoQ</a></li>
-<li><a href="http://www.symantec.com">Symantec</a></li>
-<li><a href="http://www.tanium.com/">Tanium</a></li>
-<li><a href="https://www.tenable.com/">Tenable Network Security</a></li>
-<li><a href="http://www.digitrustgroup.com/">The DigiTrust Group</a></li>
-<li><a href="http://www.threatconnect.com">ThreatConnect</a></li>
-<li><a href="http://threatstream.com">ThreatStream, Inc.</a></li>
-<li><a href="https://github.com/buffer/thug">Thug</a></li>
-<li><a href="http://www.trendmicro.com">Trend Micro</a></li>
-<li><a href="https://www.virustotal.com/intelligence/">VirusTotal Intelligence</a></li>
-<li><a href="https://www.vmray.com/">VMRay</a></li>
-<li><a href="http://www.wewatchyourwebsite.com/">We Watch Your Website</a></li>
-<li><a href="http://www.websense.com">Websense</a></li>
-<li><a href="http://x64dbg.com">x64dbg</a></li>
-<li><a href="https://github.com/Masood-M/YALIH">YALIH</a></li>
-</ul>
-<p>Are you using it? Want to see your site listed here?</p>
+</code></pre>
+        <p>The above rule is telling YARA that any file containing one of the three strings
+          must be reported as <em>silent_banker</em>. This is just a simple example, more
+          complex and powerful rules can be created by using wild-cards, case-insensitive
+          strings, regular expressions, special operators and many other features that
+          you'll find explained in <a href="http://yara.readthedocs.org/">YARA's documentation</a>.</p>
+        <p>YARA is multi-platform, running on Windows, Linux and Mac OS X, and can be used
+          through its command-line interface or from your own Python scripts with the
+          yara-python extension.
+        </p>
+        <h2><a id="additional-resources"></a>Additional resources</h2>
+        <p>Do you use GitHub for storing you YARA rules? <a href="https://yara-ci.cloud.virustotal.com">YARA-CI</a>
+          may be a useful addition to your toolbelt. This is GitHub application that provides
+          continuous testing for your rules, helping you to identify common mistakes and
+          false positives.</p>
+        <p>If you plan to use YARA to scan compressed files (.zip, .tar, etc) you should
+          take a look at <a href="https://github.com/BayshoreNetworks/yextend">yextend</a>, a very
+          helpful extension to YARA developed and open-sourced by Bayshore Networks.</p>
+        <p>Additionally, the guys from <a href="https://inquest.net/">InQuest</a> have curated an
+          aweseome list of <a href="https://github.com/InQuest/awesome-yara">YARA-related stuff</a>.</p>
+        <h2 id="who-s-using-yara">Who's using YARA</h2>
+        <ul>
+          <li><a href="http://www.activecanopy.com/">ActiveCanopy</a></li>
+          <li><a href="http://www.adlice.com/">Adlice</a></li>
+          <li><a href="https://otx.alienvault.com/">AlienVault</a></li>
+          <li><a href="https://www.avast.com/">Avast</a></li>
+          <li><a href="http://www.baesystems.com/home?r=ai">BAE Systems</a></li>
+          <li><a href="http://www.bayshorenetworks.com">Bayshore Networks, Inc.</a></li>
+          <li><a href="https://github.com/airbnb/binaryalert">BinaryAlert</a></li>
+          <li><a href="http://www.blueliv.com">Blueliv</a></li>
+          <li><a href="https://talosintelligence.com/">Cisco Talos Intelligence Group</a></li>
+          <li><a href="https://claroty.com/continuous-threat-detection">Claroty</a></li>
+          <li><a href="https://cloudina.co.uk/">Cloudina Security</a></li>
+          <li><a href="https://cofense.com">Cofense</a></li>
+          <li><a href="http://www.conix.fr">Conix</a></li>
+          <li><a href="https://www.countercraft.eu/">CounterCraft</a></li>
+          <li><a href="https://cuckoosandbox.org/">Cuckoo Sandbox</a></li>
+          <li><a href="http://www.cybertriage.com">Cyber Triage</a></li>
+          <li><a href="https://digitasecurity.com/product/uxprotect">Digita Security</a></li>
+          <li><a href="https://dragos.com/platform/">Dragos Platform</a></li>
+          <li><a href="https://dtexsystems.com">Dtex Systems</a></li>
+          <li><a href="https://www.eset.com">ESET</a></li>
+          <li><a href="https://www.estsecurity.com">ESTSecurity</a></li>
+          <li><a href="http://www.fidelissecurity.com/network-security-appliance/Fidelis-XPS">Fidelis XPS</a></li>
+          <li><a href="http://www.fireeye.com">FireEye, Inc.</a></li>
+          <li><a href="https://www.forcepoint.com/">Forcepoint</a></li>
+          <li><a href="https://www.fox-it.com">Fox-IT</a></li>
+          <li><a href="https://github.com/EmersonElectricCo/fsf">FSF</a></li>
+          <li><a href="http://www.guidancesoftware.com/endpointsecurity">Guidance Software</a></li>
+          <li><a href="https://heroku.com">Heroku</a></li>
+          <li><a href="https://www.hornetsecurity.com/en/">Hornetsecurity</a></li>
+          <li><a href="https://icsdefense.net/">ICS Defense</a></li>
+          <li><a href="https://www.inquest.net">InQuest</a></li>
+          <li><a href="https://www.joesecurity.org/">Joe Security</a></li>
+          <li><a href="http://www.kaspersky.com">Kaspersky Lab</a></li>
+          <li><a href="http://www.knowbe4.com">KnowBe4</a></li>
+          <li><a href="https://koodous.com/">Koodous</a></li>
+          <li><a href="https://github.com/lmco/laikaboss">Laika BOSS</a></li>
+          <li><a href="http://www.lastline.com">Lastline, Inc.</a></li>
+          <li><a href="https://www.libguestfs.org/">libguestfs</a></li>
+          <li><a href="http://limacharlie.io">LimaCharlie</a></li>
+          <li><a href="https://malpedia.caad.fkie.fraunhofer.de/">Malpedia</a></li>
+          <li><a href="https://malwation.com/">Malwation</a></li>
+          <li><a href="http://mcafee.com/atd">McAfee Advanced Threat Defense</a></li>
+          <li><a href="http://www.metaflows.com">Metaflows</a></li>
+          <li><a href="https://www.nbs-system.com">NBS System</a></li>
+          <li><a href="https://www.nextron-systems.com/">Nextron Systems</a></li>
+          <li><a href="http://www.nozominetworks.com">Nozomi Networks</a></li>
+          <li><a href="http://www.osquery.io">osquery</a></li>
+          <li><a href="https://www.payload-security.com">Payload Security</a></li>
+          <li><a href="http://phishme.com/">PhishMe</a></li>
+          <li><a href="http://www.picussecurity.com">Picus Security</a></li>
+          <li><a href="http://rada.re">Radare2</a></li>
+          <li><a href="http://www.raytheoncyber.com/capabilities/products/sureview-threatprotection/">Raytheon Cyber
+              Products, Inc.</a></li>
+          <li><a href="https://redsocks.eu">RedSocks Security</a></li>
+          <li><a href="http://reversinglabs.com">ReversingLabs</a></li>
+          <li><a href="http://www.emc.com/security/rsa-ecat.htm">RSA ECAT</a></li>
+          <li><a href="https://scanii.com">Scanii</a></li>
+          <li><a href="https://www.secondwrite.com/">SecondWrite</a></li>
+          <li><a href="https://www.sonicwall.com/">SonicWall</a></li>
+          <li><a href="https://www.spamstopshere.com">SpamStopsHere</a></li>
+          <li><a href="https://github.com/spyre-project/spyre">Spyre</a></li>
+          <li><a href="http://stoq.punchcyber.com">stoQ</a></li>
+          <li><a href="https://sumologic.com/">SumoLogic</a></li>
+          <li><a href="http://www.tanium.com/">Tanium</a></li>
+          <li><a href="https://www.tenable.com/">Tenable Network Security</a></li>
+          <li><a href="http://www.digitrustgroup.com/">The DigiTrust Group</a></li>
+          <li><a href="http://www.threatconnect.com">ThreatConnect</a></li>
+          <li><a href="http://threatstream.com">ThreatStream, Inc.</a></li>
+          <li><a href="https://github.com/buffer/thug">Thug</a></li>
+          <li><a href="http://www.trendmicro.com">Trend Micro</a></li>
+          <li><a href="https://www.virustotal.com/intelligence/">VirusTotal Intelligence</a></li>
+          <li><a href="https://www.vmray.com/">VMRay</a></li>
+          <li><a href="https://www.volexity.com/products-overview/volcano/">Volexity</a></li>
+          <li><a href="http://www.wewatchyourwebsite.com/">We Watch Your Website</a></li>
+          <li><a href="http://www.websense.com">Websense</a></li>
+          <li><a href="http://x64dbg.com">x64dbg</a></li>
+          <li><a href="https://github.com/Masood-M/YALIH">YALIH</a></li>
+        </ul>
+        <p>Are you using it? Want to see your site listed here?</p>
 
 
 
-        </section>
+      </section>
 
-        <aside id="sidebar">
+      <aside id="sidebar">
 
-          <a href="https://github.com/virustotal/yara" class="btn btn-lg">
-            <i class="fa fa-github-alt fa-2x"></i>
-            <small>View project in</small>GitHub
-          </a>
+        <a href="https://github.com/virustotal/yara" class="btn btn-lg">
+          <i class="fa fa-github-alt fa-2x"></i>
+          <small>View project in</small>GitHub
+        </a>
 
-          <a href="https://github.com/virustotal/yara/releases/latest" class="btn btn-lg">
-            <i class="fa fa-download fa-2x"></i>
-            <small>Download</small>Latest release
-          </a>
+        <a href="https://github.com/virustotal/yara/releases/latest" class="btn btn-lg">
+          <i class="fa fa-download fa-2x"></i>
+          <small>Download</small>Latest release
+        </a>
 
-          <a href="http://yara.readthedocs.org" class="btn btn-lg">
-            <i class="fa fa-book fa-2x"></i>
-            <small>Read the</small>Documentation
-          </a>
+        <a href="http://yara.readthedocs.org" class="btn btn-lg">
+          <i class="fa fa-book fa-2x"></i>
+          <small>Read the</small>Documentation
+        </a>
 
-          <a href="https://groups.google.com/forum/#!forum/yara-project" class="btn btn-lg">
-            <i class="fa fa-comments fa-2x"></i>
-            <small>Ask for help at</small>YARA's group
-          </a>
+        <a href="https://groups.google.com/forum/#!forum/yara-project" class="btn btn-lg">
+          <i class="fa fa-comments fa-2x"></i>
+          <small>Ask for help at</small>YARA's group
+        </a>
 
-          <a href="https://github.com/virustotal/yara/issues/new" class="btn btn-lg">
-            <i class="fa fa-bug fa-2x"></i>
-            <small>Send</small>Bug Report
-          </a>
-
-
-          <div style="margin-top:25px">
-            <span style="font-size:11px">Contact the author:&nbsp;<span>
-            <a href="http://www.linkedin.com/in/vmalvarez">
-              <i class="fa fa-linkedin-square fa-2x"></i>
-            </a>
-
-            <a href="http://twitter.com/plusvic">
-              <i class="fa fa-twitter fa-2x"></i>
-            </a>
-          </div>
+        <a href="https://github.com/virustotal/yara/issues/new" class="btn btn-lg">
+          <i class="fa fa-bug fa-2x"></i>
+          <small>Send</small>Bug Report
+        </a>
 
 
-        </aside>
-      </div>
+        <div style="margin-top:25px">
+          <span style="font-size:11px">Contact the author:&nbsp;<span>
+              <a href="http://www.linkedin.com/in/vmalvarez">
+                <i class="fa fa-linkedin-square fa-2x"></i>
+              </a>
+
+              <a href="http://twitter.com/plusvic">
+                <i class="fa fa-twitter fa-2x"></i>
+              </a>
+        </div>
+
+
+      </aside>
     </div>
-  </body>
+  </div>
+</body>
+
 </html>
