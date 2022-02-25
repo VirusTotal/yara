@@ -54,6 +54,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <yara/modules.h>
 #include <yara/pe.h>
 #include <yara/pe_utils.h>
+#include <yara/dotnet.h>
 #include <yara/strutils.h>
 #include <yara/utils.h>
 

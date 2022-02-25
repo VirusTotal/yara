@@ -16,6 +16,7 @@ limitations under the License.
 
 #include <ctype.h>
 #include <stdarg.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <time.h>
 #include <yara/dotnet.h>
@@ -1611,6 +1612,90 @@ void dotnet_parse_tilde(
       streams);
 }
 
+static bool dotnet_is_dotnet(PE* pe)
+{
+  PIMAGE_DATA_DIRECTORY directory = pe_get_directory_entry(
+      pe, IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR);
+
+  uint32_t cached_result = yr_hash_table_lookup_uint32(
+      pe->hash_table, "is_dotnet", NULL);
+
+  if (cached_result != UINT32_MAX)
+    return (bool) cached_result;
+
+  // Due to many early returns, set false by default and override if true
+  yr_hash_table_add_uint32(pe->hash_table, "is_dotnet", NULL, false);
+
+  if (!directory)
+    return false;
+
+  int64_t offset = pe_rva_to_offset(pe, yr_le32toh(directory->VirtualAddress));
+
+  if (offset < 0 || !struct_fits_in_pe(pe, pe->data + offset, CLI_HEADER))
+    return false;
+
+  CLI_HEADER* cli_header = (CLI_HEADER*) (pe->data + offset);
+
+  if (yr_le32toh(cli_header->Size) != sizeof(CLI_HEADER))
+    return false;
+
+  int64_t metadata_root = pe_rva_to_offset(
+      pe, yr_le32toh(cli_header->MetaData.VirtualAddress));
+
+  if (!struct_fits_in_pe(pe, pe->data + metadata_root, NET_METADATA))
+    return false;
+
+  NET_METADATA* metadata = (NET_METADATA*) (pe->data + metadata_root);
+
+  if (yr_le32toh(metadata->Magic) != NET_METADATA_MAGIC)
+    return false;
+
+  // Version length must be between 1 and 255, and be a multiple of 4.
+  // Also make sure it fits in pe.
+  uint32_t md_len = yr_le32toh(metadata->Length);
+  if (md_len == 0 || md_len > 255 || md_len % 4 != 0 ||
+      !fits_in_pe(pe, pe->data + offset, md_len))
+  {
+    return false;
+  }
+
+  if (IS_64BITS_PE(pe))
+  {
+    if (yr_le16toh(OptionalHeader(pe, NumberOfRvaAndSizes)) <
+        IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR)
+      return false;
+  }
+  else if (!(pe->header->FileHeader.Characteristics & IMAGE_FILE_DLL))  // 32bit
+  {
+    // Check first 2 bytes of the Entry point are equal to 0xFF 0x25
+    int64_t entry_offset = pe_rva_to_offset(
+        pe, yr_le32toh(pe->header->OptionalHeader.AddressOfEntryPoint));
+
+    if (offset < 0 || !fits_in_pe(pe, pe->data + entry_offset, 2))
+      return false;
+
+    const uint8_t* entry_data = pe->data + entry_offset;
+    if (!(entry_data[0] == 0xFF && entry_data[1] == 0x25))
+      return false;
+  }
+
+  yr_hash_table_add_uint32(pe->hash_table, "is_dotnet", NULL, true);
+
+  return true;
+}
+
+define_function(is_dotnet)
+{
+  YR_OBJECT* module = module();
+  PE* pe = (PE*) module->data;
+
+  if (!pe)
+    return_integer(false);
+
+  // dotnet_is_dotnet already deals with caching
+  return_integer(dotnet_is_dotnet(pe));
+}
+
 void dotnet_parse_com(PE* pe)
 {
   PIMAGE_DATA_DIRECTORY directory;
@@ -1621,6 +1706,9 @@ void dotnet_parse_com(PE* pe)
   STREAMS headers;
   WORD num_streams;
   uint32_t md_len;
+
+  if (!dotnet_is_dotnet(pe))
+    return;
 
   directory = pe_get_directory_entry(pe, IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR);
   if (directory == NULL)
@@ -1640,9 +1728,6 @@ void dotnet_parse_com(PE* pe)
     return;
 
   metadata = (PNET_METADATA)(pe->data + offset);
-
-  if (yr_le32toh(metadata->Magic) != NET_METADATA_MAGIC)
-    return;
 
   // Version length must be between 1 and 255, and be a multiple of 4.
   // Also make sure it fits in pe.
@@ -1746,6 +1831,8 @@ begin_declarations
 
   declare_integer_array("field_offsets");
   declare_integer("number_of_field_offsets");
+
+  declare_function("is_dotnet", "", "i", is_dotnet);
 end_declarations
 
 int module_initialize(YR_MODULE* module)
@@ -1791,6 +1878,9 @@ int module_load(
         if (pe == NULL)
           return ERROR_INSUFFICIENT_MEMORY;
 
+        FAIL_ON_ERROR_WITH_CLEANUP(
+            yr_hash_table_create(1, &pe->hash_table), yr_free(pe));
+
         pe->data = block_data;
         pe->data_size = block->size;
         pe->object = module_object;
@@ -1814,6 +1904,9 @@ int module_unload(YR_OBJECT* module_object)
 
   if (pe == NULL)
     return ERROR_SUCCESS;
+
+  if (pe->hash_table != NULL)
+    yr_hash_table_destroy(pe->hash_table, NULL);
 
   yr_free(pe);
 

@@ -187,3 +187,9 @@ Reference
     can be accessed by using the [] operator.
 
     *Example: dotnet.field_offsets[0] == 8675309*
+
+.. c:function:: is_dotnet()
+
+    Function returning true if the PE is indeed .NET.
+
+    *Example: dotnet.is_dotnet()*
