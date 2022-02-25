@@ -188,8 +188,10 @@ Reference
 
     *Example: dotnet.field_offsets[0] == 8675309*
 
-.. c:function:: is_dotnet()
+.. c:type:: is_dotnet
+
+    .. versionadded:: 4.2.0
 
     Function returning true if the PE is indeed .NET.
 
-    *Example: dotnet.is_dotnet()*
+    *Example: dotnet.is_dotnet*
