@@ -1616,15 +1616,6 @@ static bool dotnet_is_dotnet(PE* pe)
   PIMAGE_DATA_DIRECTORY directory = pe_get_directory_entry(
       pe, IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR);
 
-  uint32_t cached_result = yr_hash_table_lookup_uint32(
-      pe->hash_table, "is_dotnet", NULL);
-
-  if (cached_result != UINT32_MAX)
-    return (bool) cached_result;
-
-  // Due to many early returns, set false by default and override if true
-  yr_hash_table_add_uint32(pe->hash_table, "is_dotnet", NULL, false);
-
   if (!directory)
     return false;
 
@@ -1678,21 +1669,7 @@ static bool dotnet_is_dotnet(PE* pe)
       return false;
   }
 
-  yr_hash_table_add_uint32(pe->hash_table, "is_dotnet", NULL, true);
-
   return true;
-}
-
-define_function(is_dotnet)
-{
-  YR_OBJECT* module = module();
-  PE* pe = (PE*) module->data;
-
-  if (!pe)
-    return_integer(false);
-
-  // dotnet_is_dotnet already deals with caching
-  return_integer(dotnet_is_dotnet(pe));
 }
 
 void dotnet_parse_com(PE* pe)
@@ -1707,7 +1684,12 @@ void dotnet_parse_com(PE* pe)
   uint32_t md_len;
 
   if (!dotnet_is_dotnet(pe))
+  {
+    set_integer(0, pe->object, "is_dotnet");
     return;
+  }
+
+  set_integer(1, pe->object, "is_dotnet");
 
   directory = pe_get_directory_entry(pe, IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR);
   if (directory == NULL)
@@ -1774,6 +1756,7 @@ void dotnet_parse_com(PE* pe)
 }
 
 begin_declarations
+  declare_integer("is_dotnet");
   declare_string("version");
   declare_string("module_name");
 
@@ -1830,8 +1813,6 @@ begin_declarations
 
   declare_integer_array("field_offsets");
   declare_integer("number_of_field_offsets");
-
-  declare_function("is_dotnet", "", "i", is_dotnet);
 end_declarations
 
 int module_initialize(YR_MODULE* module)
