@@ -265,7 +265,7 @@ STREAMS dotnet_parse_stream_headers(
 
   memset(&headers, '\0', sizeof(STREAMS));
 
-  stream_header = (PSTREAM_HEADER)(pe->data + offset);
+  stream_header = (PSTREAM_HEADER) (pe->data + offset);
 
   for (i = 0; i < num_streams; i++)
   {
@@ -318,9 +318,8 @@ STREAMS dotnet_parse_stream_headers(
       headers.us = stream_header;
 
     // Stream name is padded to a multiple of 4.
-    stream_header = (PSTREAM_HEADER)(
-        (uint8_t*) stream_header + sizeof(STREAM_HEADER) + strlen(stream_name) +
-        4 - (strlen(stream_name) % 4));
+    stream_header =
+        (PSTREAM_HEADER) ((uint8_t*) stream_header + sizeof(STREAM_HEADER) + strlen(stream_name) + 4 - (strlen(stream_name) % 4));
   }
 
   set_integer(i, pe->object, "number_of_streams");
@@ -605,7 +604,7 @@ void dotnet_parse_tilde_2(
           blob_index = *(DWORD*) blob_offset;
         else
           // Cast the value (index into blob table) to a 32bit value.
-          blob_index = (DWORD)(*(WORD*) blob_offset);
+          blob_index = (DWORD) (*(WORD*) blob_offset);
 
         // Everything checks out. Make sure the index into the blob field
         // is valid (non-null and within range).
@@ -723,8 +722,8 @@ void dotnet_parse_tilde_2(
           }
 
           // Check the Type field.
-          customattribute_table = (PCUSTOMATTRIBUTE_TABLE)(
-              row_ptr + index_size);
+          customattribute_table =
+              (PCUSTOMATTRIBUTE_TABLE) (row_ptr + index_size);
 
           if (index_size2 == 4)
           {
@@ -751,7 +750,7 @@ void dotnet_parse_tilde_2(
             }
 
             // Cast the index to a 32bit value.
-            type_index = (DWORD)((*(WORD*) customattribute_table >> 3));
+            type_index = (DWORD) ((*(WORD*) customattribute_table >> 3));
           }
 
           if (type_index > 0)
@@ -788,7 +787,7 @@ void dotnet_parse_tilde_2(
             }
 
             // Cast the index to a 32bit value.
-            class_index = (DWORD)(*(WORD*) memberref_row >> 3);
+            class_index = (DWORD) (*(WORD*) memberref_row >> 3);
           }
 
           if (class_index > 0)
@@ -832,14 +831,14 @@ void dotnet_parse_tilde_2(
           }
 
           // Get the Value field.
-          customattribute_table = (PCUSTOMATTRIBUTE_TABLE)(
-              row_ptr + index_size + index_size2);
+          customattribute_table =
+              (PCUSTOMATTRIBUTE_TABLE) (row_ptr + index_size + index_size2);
 
           if (index_sizes.blob == 4)
             blob_index = *(DWORD*) customattribute_table;
           else
             // Cast the value (index into blob table) to a 32bit value.
-            blob_index = (DWORD)(*(WORD*) customattribute_table);
+            blob_index = (DWORD) (*(WORD*) customattribute_table);
 
           // Everything checks out. Make sure the index into the blob field
           // is valid (non-null and within range).
@@ -1481,8 +1480,8 @@ void dotnet_parse_tilde(
   // Default index sizes are 2. Will be bumped to 4 if necessary.
   memset(&index_sizes, 2, sizeof(index_sizes));
 
-  tilde_header = (PTILDE_HEADER)(
-      pe->data + metadata_root + yr_le32toh(streams->tilde->Offset));
+  tilde_header =
+      (PTILDE_HEADER) (pe->data + metadata_root + yr_le32toh(streams->tilde->Offset));
 
   if (!struct_fits_in_pe(pe, tilde_header, TILDE_HEADER))
     return;
@@ -1719,7 +1718,7 @@ void dotnet_parse_com(PE* pe)
   if (offset < 0 || !struct_fits_in_pe(pe, pe->data + offset, CLI_HEADER))
     return;
 
-  cli_header = (PCLI_HEADER)(pe->data + offset);
+  cli_header = (PCLI_HEADER) (pe->data + offset);
 
   offset = metadata_root = pe_rva_to_offset(
       pe, yr_le32toh(cli_header->MetaData.VirtualAddress));
@@ -1727,7 +1726,7 @@ void dotnet_parse_com(PE* pe)
   if (!struct_fits_in_pe(pe, pe->data + offset, NET_METADATA))
     return;
 
-  metadata = (PNET_METADATA)(pe->data + offset);
+  metadata = (PNET_METADATA) (pe->data + offset);
 
   // Version length must be between 1 and 255, and be a multiple of 4.
   // Also make sure it fits in pe.
