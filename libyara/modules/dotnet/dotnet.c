@@ -286,12 +286,14 @@ STREAMS dotnet_parse_stream_headers(
     stream_name[DOTNET_STREAM_NAME_SIZE] = '\0';
 
     set_string(stream_name, pe->object, "streams[%i].name", i);
+
     // Offset is relative to metadata_root.
     set_integer(
         metadata_root + yr_le32toh(stream_header->Offset),
         pe->object,
         "streams[%i].offset",
         i);
+
     set_integer(
         yr_le32toh(stream_header->Size), pe->object, "streams[%i].size", i);
 
@@ -1713,6 +1715,7 @@ void dotnet_parse_com(PE* pe)
   // Version length must be between 1 and 255, and be a multiple of 4.
   // Also make sure it fits in pe.
   md_len = yr_le32toh(metadata->Length);
+
   if (md_len == 0 || md_len > 255 || md_len % 4 != 0 ||
       !fits_in_pe(pe, pe->data + offset, md_len))
   {
@@ -1723,6 +1726,7 @@ void dotnet_parse_com(PE* pe)
   // 4. We need to exclude the terminator and the padding, so search for the
   // first NULL byte.
   end = (char*) memmem((void*) metadata->Version, md_len, "\0", 1);
+
   if (end != NULL)
     set_sized_string(
         metadata->Version, (end - metadata->Version), pe->object, "version");
@@ -1858,9 +1862,6 @@ int module_load(
         if (pe == NULL)
           return ERROR_INSUFFICIENT_MEMORY;
 
-        FAIL_ON_ERROR_WITH_CLEANUP(
-            yr_hash_table_create(1, &pe->hash_table), yr_free(pe));
-
         pe->data = block_data;
         pe->data_size = block->size;
         pe->object = module_object;
@@ -1884,9 +1885,6 @@ int module_unload(YR_OBJECT* module_object)
 
   if (pe == NULL)
     return ERROR_SUCCESS;
-
-  if (pe->hash_table != NULL)
-    yr_hash_table_destroy(pe->hash_table, NULL);
 
   yr_free(pe);
 
