@@ -50,8 +50,9 @@ char* pe_get_dotnet_string(
   start = (char*) (string_offset + string_index);
   eos = (char*) memmem((void*) start, remaining, "\0", 1);
 
-  if (eos == NULL)
-    return eos;
+  // If no NULL terminator was found or the string is too large, return NULL.
+  if (eos == NULL || eos - start > 1024)
+    return NULL;
 
   return start;
 }
@@ -437,13 +438,17 @@ void dotnet_parse_tilde_2(
     if (!((yr_le64toh(tilde_header->Valid) >> bit_check) & 0x01))
       continue;
 
-    // Make sure table_offset doesn't go crazy by inserting a large value
-    // for num_rows. For example edc05e49dd3810be67942b983455fd43 sets a
-    // large value for number of rows for the BIT_MODULE section.
-    if (!fits_in_pe(pe, table_offset, 1))
+    num_rows = yr_le32toh(*(row_offset + matched_bits));
+
+    // Make sure that num_rows has a reasonable value. For example
+    // edc05e49dd3810be67942b983455fd43 sets a large value for number of
+    // rows for the BIT_MODULE section.
+    if (num_rows > 10000)
       return;
 
-    num_rows = yr_le32toh(*(row_offset + matched_bits));
+    // Make sure that table_offset is within the bounds of the PE.
+    if (!fits_in_pe(pe, table_offset, 1))
+      return;
 
     // Those tables which exist, but that we don't care about must be
     // skipped.
