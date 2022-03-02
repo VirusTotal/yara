@@ -339,7 +339,7 @@ int main(int argc, char** argv)
         condition: \
           pe.number_of_signatures == 1 and \
           pe.signatures[0].thumbprint == \"c1bf1b8f751bf97626ed77f755f0a393106f2454\" and \
-          pe.signatures[0].subject == \"/C=US/ST=California/L=Menlo Park/O=Quicken, Inc./OU=Operations/CN=Quicken, Inc.\" \
+          pe.signatures[0].subject == \"C = US, ST = California, L = Menlo Park, O = \"Quicken, Inc.\", OU = Operations, CN = \"Quicken, Inc.\"\" \
       }",
       "tests/data/"
       "079a472d22290a94ebb212aa8015cdc8dd28a968c6b4d3b88acdd58ce2d3b885");
