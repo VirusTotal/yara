@@ -2729,12 +2729,13 @@ define_function(imphash)
 
 #endif  // defined(HAVE_LIBCRYPTO) || defined(HAVE_WINCRYPT_H)
 
-long long pe_imports_dll(IMPORTED_DLL* dll, char* dll_name)
+int64_t pe_imports_dll(IMPORTED_DLL* dll, char* dll_name)
 {
   if (dll == NULL)
     return 0;
 
-  long long result = 0;
+  int64_t result = 0;
+
   for (; dll != NULL; dll = dll->next)
   {
     if (strcasecmp(dll->name, dll_name) == 0)
@@ -2746,10 +2747,11 @@ long long pe_imports_dll(IMPORTED_DLL* dll, char* dll_name)
       }
     }
   }
+
   return result;
 }
 
-long long pe_imports(IMPORTED_DLL* dll, char* dll_name, char* fun_name)
+int64_t pe_imports(IMPORTED_DLL* dll, char* dll_name, char* fun_name)
 {
   if (dll == NULL)
     return 0;
@@ -2766,10 +2768,11 @@ long long pe_imports(IMPORTED_DLL* dll, char* dll_name, char* fun_name)
       }
     }
   }
+
   return 0;
 }
 
-long long pe_imports_regexp(
+int64_t pe_imports_regexp(
     YR_SCAN_CONTEXT* context,
     IMPORTED_DLL* dll,
     RE* dll_name,
@@ -2778,7 +2781,8 @@ long long pe_imports_regexp(
   if (dll == NULL)
     return 0;
 
-  long long result = 0;
+  int64_t result = 0;
+
   for (; dll != NULL; dll = dll->next)
   {
     if (yr_re_match(context, dll_name, dll->name) > 0)
@@ -2791,13 +2795,11 @@ long long pe_imports_regexp(
       }
     }
   }
+
   return result;
 }
 
-long long pe_imports_ordinal(
-    IMPORTED_DLL* dll,
-    char* dll_name,
-    uint64_t ordinal)
+int64_t pe_imports_ordinal(IMPORTED_DLL* dll, char* dll_name, uint64_t ordinal)
 {
   if (dll == NULL)
     return 0;
@@ -2814,6 +2816,7 @@ long long pe_imports_ordinal(
       }
     }
   }
+
   return 0;
 }
 
@@ -2848,11 +2851,13 @@ define_function(imports)
   {
     return_integer(1);
   }
+
   if (flags & IMPORT_DELAYED &&
       pe_imports(pe->delay_imported_dlls, dll_name, function_name))
   {
     return_integer(1);
   }
+
   return_integer(0);
 }
 
@@ -2872,7 +2877,7 @@ define_function(imports_standard_ordinal)
 
 define_function(imports_ordinal)
 {
-  int flags = integer_argument(1);
+  int64_t flags = integer_argument(1);
   char* dll_name = string_argument(2);
   int64_t ordinal = integer_argument(3);
 
@@ -2887,11 +2892,13 @@ define_function(imports_ordinal)
   {
     return_integer(1);
   }
+
   if (flags & IMPORT_DELAYED &&
       pe_imports_ordinal(pe->delay_imported_dlls, dll_name, ordinal))
   {
     return_integer(1);
   }
+
   return_integer(0);
 }
 
@@ -2922,17 +2929,16 @@ define_function(imports_regex)
   if (!pe)
     return_integer(YR_UNDEFINED);
 
-  long long result = 0;
+  int64_t result = 0;
+
   if (flags & IMPORT_STANDARD)
-  {
     result += pe_imports_regexp(
         scan_context(), pe->imported_dlls, dll_name, function_name);
-  }
+
   if (flags & IMPORT_DELAYED)
-  {
     result += pe_imports_regexp(
         scan_context(), pe->delay_imported_dlls, dll_name, function_name);
-  }
+
   return_integer(result);
 }
 
@@ -2951,7 +2957,7 @@ define_function(imports_standard_dll)
 
 define_function(imports_dll)
 {
-  int flags = integer_argument(1);
+  int64_t flags = integer_argument(1);
   char* dll_name = string_argument(2);
 
   YR_OBJECT* module = module();
@@ -2960,15 +2966,14 @@ define_function(imports_dll)
   if (!pe)
     return_integer(YR_UNDEFINED);
 
-  long long result = 0;
+  int64_t result = 0;
+
   if (flags & IMPORT_STANDARD)
-  {
     result += pe_imports_dll(pe->imported_dlls, dll_name);
-  }
+
   if (flags & IMPORT_DELAYED)
-  {
     result += pe_imports_dll(pe->delay_imported_dlls, dll_name);
-  }
+
   return_integer(result);
 }
 
