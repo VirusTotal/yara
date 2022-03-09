@@ -902,7 +902,7 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
       }
       else
       {
-        if yr_bitmask_is_set(context->rule_matches_flags, r1.i)
+        if (yr_bitmask_is_set(context->rule_matches_flags, r1.i))
           r2.i = 1;
         else
           r2.i = 0;
@@ -1019,7 +1019,7 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
         break;
 
       case OBJECT_TYPE_FLOAT:
-        if (isnan(r1.o->value.d))
+        if (yr_isnan(r1.o->value.d))
           r1.i = YR_UNDEFINED;
         else
           r1.d = r1.o->value.d;
