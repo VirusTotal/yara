@@ -1414,6 +1414,7 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
       YR_DEBUG_FPRINTF(
           2, stderr, "- case OP_OF_FOUND_IN: // %s()\n", __FUNCTION__);
 
+      found = 0;
       count = 0;
       pop(r2);
       pop(r1);
@@ -1434,7 +1435,7 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
           if (match->base + match->offset >= r1.i &&
               match->base + match->offset <= r2.i)
           {
-            count++;
+            found++;
             break;
           }
 
@@ -1444,11 +1445,15 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
           match = match->next;
         }
 
+        count++;
         pop(r3);
       }
 
       pop(r1);
-      r1.i = count >= r1.i ? 1 : 0;
+      if (is_undef(r1))
+        r1.i = found >= count ? 1 : 0;
+      else
+        r1.i = found >= r1.i ? 1 : 0;
 
       push(r1);
       break;

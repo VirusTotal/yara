@@ -631,6 +631,18 @@ static void test_strings()
        }",
       "foobarbaz" TEXT_1024_BYTES);
 
+  // https://github.com/VirusTotal/yara/issues/1660
+  assert_false_rule(
+      "rule test {\n\
+         strings:\n\
+             $a = \"foo\"\n\
+             $b = \"bar\"\n\
+             $c = \"baz\"\n\
+         condition:\n\
+             all of them in (0..1)\n\
+       }",
+      TEXT_1024_BYTES);
+
   assert_true_rule(
       "rule test {\n\
          strings:\n\
