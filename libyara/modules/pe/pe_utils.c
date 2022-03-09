@@ -36,6 +36,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <yara/pe_utils.h>
 #include <yara/strutils.h>
 #include <yara/utils.h>
+#include <yara/dotnet.h>
 
 PIMAGE_NT_HEADERS32 pe_get_header(const uint8_t* data, size_t data_size)
 {

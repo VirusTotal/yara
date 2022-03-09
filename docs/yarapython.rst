@@ -307,6 +307,7 @@ yara-python, but you can handle them in your own callback using the
 Here is an example:
 
 .. code-block:: python
+
   import yara
 
   r = """
