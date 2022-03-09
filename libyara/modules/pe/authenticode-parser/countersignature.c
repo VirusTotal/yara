@@ -52,25 +52,26 @@ Countersignature* pkcs9_countersig_new(
     int digestnid = OBJ_obj2nid(si->digest_alg->algorithm);
     result->digest_alg = strdup(OBJ_nid2ln(digestnid));
 
-    /* Get digest that corresponds to decrypted encrypted digest in signature */
-    ASN1_TYPE* messageDigest = PKCS7_get_signed_attribute(si, NID_pkcs9_messageDigest);
-
     const ASN1_TYPE* sign_time = PKCS7_get_signed_attribute(si, NID_pkcs9_signingTime);
-    result->sign_time = ASN1_TIME_to_time_t(sign_time->value.utctime);
-
-    X509* signCert = X509_find_by_issuer_and_serial(
-        certs, si->issuer_and_serial->issuer, si->issuer_and_serial->serial);
-    /* PKCS9 stores certificates in the corresponding PKCS7 it countersigns */
-    result->chain = parse_signer_chain(signCert, certs);
-
     if (!sign_time) {
         result->verify_flags = COUNTERSIGNATURE_VFY_TIME_MISSING;
         goto end;
     }
+
+    result->sign_time = ASN1_TIME_to_time_t(sign_time->value.utctime);
+
+    X509* signCert = X509_find_by_issuer_and_serial(
+        certs, si->issuer_and_serial->issuer, si->issuer_and_serial->serial);
     if (!signCert) {
         result->verify_flags = COUNTERSIGNATURE_VFY_NO_SIGNER_CERT;
         goto end;
     }
+
+    /* PKCS9 stores certificates in the corresponding PKCS7 it countersigns */
+    result->chain = parse_signer_chain(signCert, certs);
+
+    /* Get digest that corresponds to decrypted encrypted digest in signature */
+    ASN1_TYPE* messageDigest = PKCS7_get_signed_attribute(si, NID_pkcs9_messageDigest);
     if (!messageDigest) {
         result->verify_flags = COUNTERSIGNATURE_VFY_DIGEST_MISSING;
         goto end;
@@ -132,12 +133,17 @@ Countersignature* pkcs9_countersig_new(
 
     /* compare the encrypted digest and calculated digest */
     bool isValid = false;
+     
+#if OPENSSL_VERSION_NUMBER >= 0x3000000fL
+    size_t mdLen = EVP_MD_get_size(md);
+#else
+    size_t mdLen = EVP_MD_size(md);
+#endif
     /* Sometimes signed data contains DER encoded DigestInfo structure which contains hash of
      * authenticated attributes (39c9d136f026a9ad18fb9f41a64f76dd8418e8de625dce5d3a372bd242fc5edd)
      * but other times it is just purely and I didn't find another way to  distinguish it but only
      * based on the length of data we get. Found mention of this in openssl mailing list:
      * https://mta.openssl.org/pipermail/openssl-users/2015-September/002054.html */
-    size_t mdLen = EVP_MD_size(md);
     if (mdLen == decLen) {
         isValid = !memcmp(calc_digest, decData, mdLen);
     } else {
@@ -192,23 +198,26 @@ Countersignature* ms_countersig_new(const uint8_t* data, long size, ASN1_STRING*
     }
 
     const ASN1_TIME* rawTime = TS_TST_INFO_get_time(ts);
+    if (!rawTime) {
+        result->verify_flags = COUNTERSIGNATURE_VFY_TIME_MISSING;
+        TS_TST_INFO_free(ts);
+        PKCS7_free(p7);
+        return result;
+    }
+
     result->sign_time = ASN1_TIME_to_time_t(rawTime);
 
     STACK_OF(X509)* sigs = PKCS7_get0_signers(p7, p7->d.sign->cert, 0);
     X509* signCert = sk_X509_value(sigs, 0);
-    result->chain = parse_signer_chain(signCert, p7->d.sign->cert);
-
-    /* Imprint == digest */
-    TS_MSG_IMPRINT* imprint = TS_TST_INFO_get_msg_imprint(ts);
-
-    if (!rawTime) {
-        result->verify_flags = COUNTERSIGNATURE_VFY_TIME_MISSING;
-        goto end;
-    }
     if (!signCert) {
         result->verify_flags = COUNTERSIGNATURE_VFY_NO_SIGNER_CERT;
         goto end;
     }
+
+    result->chain = parse_signer_chain(signCert, p7->d.sign->cert);
+
+    /* Imprint == digest */
+    TS_MSG_IMPRINT* imprint = TS_TST_INFO_get_msg_imprint(ts);
     if (!imprint) {
         result->verify_flags = COUNTERSIGNATURE_VFY_DIGEST_MISSING;
         goto end;
@@ -238,7 +247,12 @@ Countersignature* ms_countersig_new(const uint8_t* data, long size, ASN1_STRING*
 
     uint8_t calc_digest[EVP_MAX_MD_SIZE];
     calculate_digest(md, enc_digest->data, enc_digest->length, calc_digest);
+
+#if OPENSSL_VERSION_NUMBER >= 0x3000000fL
+    int mdLen = EVP_MD_get_size(md);
+#else
     int mdLen = EVP_MD_size(md);
+#endif
 
     if (digestLen != mdLen || memcmp(calc_digest, digestData, mdLen) != 0) {
         result->verify_flags = COUNTERSIGNATURE_VFY_DOESNT_MATCH_SIGNATURE;
@@ -251,7 +265,11 @@ Countersignature* ms_countersig_new(const uint8_t* data, long size, ASN1_STRING*
 
     TS_VERIFY_CTX_set_flags(ctx, TS_VFY_VERSION | TS_VFY_IMPRINT);
     TS_VERIFY_CTX_set_store(ctx, store);
+#if OPENSSL_VERSION_NUMBER >= 0x3000000fL
+    TS_VERIFY_CTX_set_certs(ctx, p7->d.sign->cert);
+#else
     TS_VERIFY_CTS_set_certs(ctx, p7->d.sign->cert);
+#endif
     TS_VERIFY_CTX_set_imprint(ctx, calc_digest, mdLen);
 
     bool isValid = TS_RESP_verify_token(ctx, p7) == 1;

@@ -561,14 +561,14 @@ AuthenticodeArray* parse_authenticode(const uint8_t* pe_data, long pe_len)
     uint64_t cert_len = letoh32(*(uint32_t*)(pe_data + pe_cert_table_addr + 4));
 
     /* we need atleast 8 bytes to read dwLength, revision and certType */
-    if (cert_len < 8 || pe_len < cert_addr + cert_len)
+    if (cert_len < 8 || pe_len < cert_addr + 8)
         return NULL;
 
     uint32_t dwLength = letoh32(*(uint32_t*)(pe_data + cert_addr));
     if (pe_len < cert_addr + dwLength)
         return NULL;
-
-    AuthenticodeArray* auth_array = authenticode_new(pe_data + cert_addr + 0x8, dwLength);
+    /* dwLength = offsetof(WIN_CERTIFICATE, bCertificate) + (size of the variable-length binary array contained within bCertificate) */
+    AuthenticodeArray* auth_array = authenticode_new(pe_data + cert_addr + 0x8, dwLength - 0x8);
     if (!auth_array)
         return NULL;
 
@@ -585,7 +585,11 @@ AuthenticodeArray* parse_authenticode(const uint8_t* pe_data, long pe_len)
             continue;
         }
 
+#if OPENSSL_VERSION_NUMBER >= 0x3000000fL
+        int mdlen = EVP_MD_get_size(md);
+#else
         int mdlen = EVP_MD_size(md);
+#endif
         sig->file_digest.len = mdlen;
         sig->file_digest.data = (uint8_t*)malloc(mdlen);
         if (!sig->file_digest.data)
