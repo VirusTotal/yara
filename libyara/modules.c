@@ -177,9 +177,7 @@ int yr_modules_load(const char* module_name, YR_SCAN_CONTEXT* context)
 
 int yr_modules_unload_all(YR_SCAN_CONTEXT* context)
 {
-  int i;
-
-  for (i = 0; i < sizeof(yr_modules_table) / sizeof(YR_MODULE); i++)
+  for (int i = 0; i < sizeof(yr_modules_table) / sizeof(YR_MODULE); i++)
   {
     YR_OBJECT* module_structure = (YR_OBJECT*) yr_hash_table_remove(
         context->objects_table, yr_modules_table[i].name, NULL);
