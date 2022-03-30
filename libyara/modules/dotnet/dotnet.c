@@ -16,6 +16,7 @@ limitations under the License.
 
 #include <ctype.h>
 #include <stdarg.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <time.h>
 #include <yara/dotnet.h>
@@ -49,8 +50,9 @@ char* pe_get_dotnet_string(
   start = (char*) (string_offset + string_index);
   eos = (char*) memmem((void*) start, remaining, "\0", 1);
 
-  if (eos == NULL)
-    return eos;
+  // If no NULL terminator was found or the string is too large, return NULL.
+  if (eos == NULL || eos - start > 1024)
+    return NULL;
 
   return start;
 }
@@ -264,7 +266,7 @@ STREAMS dotnet_parse_stream_headers(
 
   memset(&headers, '\0', sizeof(STREAMS));
 
-  stream_header = (PSTREAM_HEADER)(pe->data + offset);
+  stream_header = (PSTREAM_HEADER) (pe->data + offset);
 
   for (i = 0; i < num_streams; i++)
   {
@@ -285,12 +287,14 @@ STREAMS dotnet_parse_stream_headers(
     stream_name[DOTNET_STREAM_NAME_SIZE] = '\0';
 
     set_string(stream_name, pe->object, "streams[%i].name", i);
+
     // Offset is relative to metadata_root.
     set_integer(
         metadata_root + yr_le32toh(stream_header->Offset),
         pe->object,
         "streams[%i].offset",
         i);
+
     set_integer(
         yr_le32toh(stream_header->Size), pe->object, "streams[%i].size", i);
 
@@ -317,9 +321,8 @@ STREAMS dotnet_parse_stream_headers(
       headers.us = stream_header;
 
     // Stream name is padded to a multiple of 4.
-    stream_header = (PSTREAM_HEADER)(
-        (uint8_t*) stream_header + sizeof(STREAM_HEADER) + strlen(stream_name) +
-        4 - (strlen(stream_name) % 4));
+    stream_header =
+        (PSTREAM_HEADER) ((uint8_t*) stream_header + sizeof(STREAM_HEADER) + strlen(stream_name) + 4 - (strlen(stream_name) % 4));
   }
 
   set_integer(i, pe->object, "number_of_streams");
@@ -440,13 +443,16 @@ void dotnet_parse_tilde_2(
     if (!((yr_le64toh(tilde_header->Valid) >> bit_check) & 0x01))
       continue;
 
-    // Make sure table_offset doesn't go crazy by inserting a large value
-    // for num_rows. For example edc05e49dd3810be67942b983455fd43 sets a
-    // large value for number of rows for the BIT_MODULE section.
-    if (!fits_in_pe(pe, table_offset, 1))
+    if (!fits_in_pe(pe, row_offset + matched_bits, sizeof(uint32_t)))
       return;
 
     num_rows = yr_le32toh(*(row_offset + matched_bits));
+
+    // Make sure that num_rows has a reasonable value. For example
+    // edc05e49dd3810be67942b983455fd43 sets a large value for number of
+    // rows for the BIT_MODULE section.
+    if (num_rows > 10000)
+      return;
 
     // Those tables which exist, but that we don't care about must be
     // skipped.
@@ -724,7 +730,7 @@ void dotnet_parse_tilde_2(
           blob_index = *(DWORD*) blob_offset;
         else
           // Cast the value (index into blob table) to a 32bit value.
-          blob_index = (DWORD)(*(WORD*) blob_offset);
+          blob_index = (DWORD) (*(WORD*) blob_offset);
 
         // Everything checks out. Make sure the index into the blob field
         // is valid (non-null and within range).
@@ -842,8 +848,8 @@ void dotnet_parse_tilde_2(
           }
 
           // Check the Type field.
-          customattribute_table = (PCUSTOMATTRIBUTE_TABLE)(
-              row_ptr + index_size);
+          customattribute_table =
+              (PCUSTOMATTRIBUTE_TABLE) (row_ptr + index_size);
 
           if (index_size2 == 4)
           {
@@ -870,7 +876,7 @@ void dotnet_parse_tilde_2(
             }
 
             // Cast the index to a 32bit value.
-            type_index = (DWORD)((*(WORD*) customattribute_table >> 3));
+            type_index = (DWORD) ((*(WORD*) customattribute_table >> 3));
           }
 
           if (type_index > 0)
@@ -907,7 +913,7 @@ void dotnet_parse_tilde_2(
             }
 
             // Cast the index to a 32bit value.
-            class_index = (DWORD)(*(WORD*) memberref_row >> 3);
+            class_index = (DWORD) (*(WORD*) memberref_row >> 3);
           }
 
           if (class_index > 0)
@@ -951,14 +957,14 @@ void dotnet_parse_tilde_2(
           }
 
           // Get the Value field.
-          customattribute_table = (PCUSTOMATTRIBUTE_TABLE)(
-              row_ptr + index_size + index_size2);
+          customattribute_table =
+              (PCUSTOMATTRIBUTE_TABLE) (row_ptr + index_size + index_size2);
 
           if (index_sizes.blob == 4)
             blob_index = *(DWORD*) customattribute_table;
           else
             // Cast the value (index into blob table) to a 32bit value.
-            blob_index = (DWORD)(*(WORD*) customattribute_table);
+            blob_index = (DWORD) (*(WORD*) customattribute_table);
 
           // Everything checks out. Make sure the index into the blob field
           // is valid (non-null and within range).
@@ -1643,8 +1649,8 @@ void dotnet_parse_tilde(
   // Default index sizes are 2. Will be bumped to 4 if necessary.
   memset(&index_sizes, 2, sizeof(index_sizes));
 
-  tilde_header = (PTILDE_HEADER)(
-      pe->data + metadata_root + yr_le32toh(streams->tilde->Offset));
+  tilde_header =
+      (PTILDE_HEADER) (pe->data + metadata_root + yr_le32toh(streams->tilde->Offset));
 
   if (!struct_fits_in_pe(pe, tilde_header, TILDE_HEADER))
     return;
@@ -1774,6 +1780,67 @@ void dotnet_parse_tilde(
       streams);
 }
 
+static bool dotnet_is_dotnet(PE* pe)
+{
+  PIMAGE_DATA_DIRECTORY directory = pe_get_directory_entry(
+      pe, IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR);
+
+  if (!directory)
+    return false;
+
+  int64_t offset = pe_rva_to_offset(pe, yr_le32toh(directory->VirtualAddress));
+
+  if (offset < 0 || !struct_fits_in_pe(pe, pe->data + offset, CLI_HEADER))
+    return false;
+
+  CLI_HEADER* cli_header = (CLI_HEADER*) (pe->data + offset);
+
+  if (yr_le32toh(cli_header->Size) != sizeof(CLI_HEADER))
+    return false;
+
+  int64_t metadata_root = pe_rva_to_offset(
+      pe, yr_le32toh(cli_header->MetaData.VirtualAddress));
+
+  if (!struct_fits_in_pe(pe, pe->data + metadata_root, NET_METADATA))
+    return false;
+
+  NET_METADATA* metadata = (NET_METADATA*) (pe->data + metadata_root);
+
+  if (yr_le32toh(metadata->Magic) != NET_METADATA_MAGIC)
+    return false;
+
+  // Version length must be between 1 and 255, and be a multiple of 4.
+  // Also make sure it fits in pe.
+  uint32_t md_len = yr_le32toh(metadata->Length);
+  if (md_len == 0 || md_len > 255 || md_len % 4 != 0 ||
+      !fits_in_pe(pe, pe->data + offset, md_len))
+  {
+    return false;
+  }
+
+  if (IS_64BITS_PE(pe))
+  {
+    if (yr_le16toh(OptionalHeader(pe, NumberOfRvaAndSizes)) <
+        IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR)
+      return false;
+  }
+  else if (!(pe->header->FileHeader.Characteristics & IMAGE_FILE_DLL))  // 32bit
+  {
+    // Check first 2 bytes of the Entry point are equal to 0xFF 0x25
+    int64_t entry_offset = pe_rva_to_offset(
+        pe, yr_le32toh(pe->header->OptionalHeader.AddressOfEntryPoint));
+
+    if (offset < 0 || !fits_in_pe(pe, pe->data + entry_offset, 2))
+      return false;
+
+    const uint8_t* entry_data = pe->data + entry_offset;
+    if (!(entry_data[0] == 0xFF && entry_data[1] == 0x25))
+      return false;
+  }
+
+  return true;
+}
+
 void dotnet_parse_com(PE* pe)
 {
   PIMAGE_DATA_DIRECTORY directory;
@@ -1785,6 +1852,14 @@ void dotnet_parse_com(PE* pe)
   WORD num_streams;
   uint32_t md_len;
 
+  if (!dotnet_is_dotnet(pe))
+  {
+    set_integer(0, pe->object, "is_dotnet");
+    return;
+  }
+
+  set_integer(1, pe->object, "is_dotnet");
+
   directory = pe_get_directory_entry(pe, IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR);
   if (directory == NULL)
     return;
@@ -1794,7 +1869,7 @@ void dotnet_parse_com(PE* pe)
   if (offset < 0 || !struct_fits_in_pe(pe, pe->data + offset, CLI_HEADER))
     return;
 
-  cli_header = (PCLI_HEADER)(pe->data + offset);
+  cli_header = (PCLI_HEADER) (pe->data + offset);
 
   set_integer(yr_le32toh(cli_header->Flags), pe->object, "flags");
 
@@ -1817,14 +1892,12 @@ void dotnet_parse_com(PE* pe)
   if (!struct_fits_in_pe(pe, pe->data + offset, NET_METADATA))
     return;
 
-  metadata = (PNET_METADATA)(pe->data + offset);
-
-  if (yr_le32toh(metadata->Magic) != NET_METADATA_MAGIC)
-    return;
+  metadata = (PNET_METADATA) (pe->data + offset);
 
   // Version length must be between 1 and 255, and be a multiple of 4.
   // Also make sure it fits in pe.
   md_len = yr_le32toh(metadata->Length);
+
   if (md_len == 0 || md_len > 255 || md_len % 4 != 0 ||
       !fits_in_pe(pe, pe->data + offset, md_len))
   {
@@ -1835,6 +1908,7 @@ void dotnet_parse_com(PE* pe)
   // 4. We need to exclude the terminator and the padding, so search for the
   // first NULL byte.
   end = (char*) memmem((void*) metadata->Version, md_len, "\0", 1);
+
   if (end != NULL)
     set_sized_string(
         metadata->Version, (end - metadata->Version), pe->object, "version");
@@ -1868,6 +1942,7 @@ void dotnet_parse_com(PE* pe)
 }
 
 begin_declarations
+  declare_integer("is_dotnet");
   declare_string("version");
   declare_string("module_name");
   declare_integer("COMIMAGE_FLAGS_ILONLY");

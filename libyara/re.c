@@ -1061,7 +1061,7 @@ static int _yr_re_emit(
       if (bookmark_2 - bookmark_3 < INT32_MIN)
         return ERROR_REGULAR_EXPRESSION_TOO_LARGE;
 
-      repeat_args.offset = (int32_t)(bookmark_2 - bookmark_3);
+      repeat_args.offset = (int32_t) (bookmark_2 - bookmark_3);
 
       FAIL_ON_ERROR(_yr_emit_inst_arg_struct(
           emit_context,
@@ -1080,7 +1080,7 @@ static int _yr_re_emit(
       if (bookmark_4 - bookmark_1 > INT32_MAX)
         return ERROR_REGULAR_EXPRESSION_TOO_LARGE;
 
-      repeat_start_args_addr->offset = (int32_t)(bookmark_4 - bookmark_1);
+      repeat_start_args_addr->offset = (int32_t) (bookmark_4 - bookmark_1);
     }
 
     if (emit_split)
@@ -1114,7 +1114,7 @@ static int _yr_re_emit(
       split_offset_addr = (int16_t*) yr_arena_ref_to_ptr(
           emit_context->arena, &split_offset_ref);
 
-      *split_offset_addr = (int16_t)(bookmark_2 - bookmark_1);
+      *split_offset_addr = (int16_t) (bookmark_2 - bookmark_1);
     }
 
     break;
@@ -2139,8 +2139,8 @@ int yr_re_fast_exec(
       }
 
       bytes_matched = flags & RE_FLAGS_BACKWARDS
-                          ? input_data - current->input - 1
-                          : current->input - input_data;
+                          ? (int) (input_data - current->input - 1)
+                          : (int) (current->input - input_data);
       uint8_t mask;
       uint8_t value;
 
@@ -2457,6 +2457,30 @@ static void _yr_re_print_node(RE_NODE* re_node, uint32_t indent)
       if (_yr_re_is_char_in_class(re_node->re_class, i, false))
         printf("%02X,", i);
     printf(")");
+    break;
+
+  case RE_NODE_EMPTY:
+    printf("Empty");
+    break;
+
+  case RE_NODE_ANCHOR_START:
+    printf("AnchorStart");
+    break;
+
+  case RE_NODE_ANCHOR_END:
+    printf("AnchorEnd");
+    break;
+
+  case RE_NODE_WORD_BOUNDARY:
+    printf("WordBoundary");
+    break;
+
+  case RE_NODE_NON_WORD_BOUNDARY:
+    printf("NonWordBoundary");
+    break;
+
+  case RE_NODE_RANGE_ANY:
+    printf("RangeAny");
     break;
 
   default:

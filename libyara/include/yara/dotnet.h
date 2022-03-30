@@ -2,6 +2,7 @@
 #define YR_DOTNET_H
 
 #include <yara/pe.h>
+#include <yara/pe_utils.h>
 
 #pragma pack(push, 1)
 
