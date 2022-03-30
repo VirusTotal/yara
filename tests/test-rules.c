@@ -631,6 +631,18 @@ static void test_strings()
        }",
       "foobarbaz" TEXT_1024_BYTES);
 
+  // https://github.com/VirusTotal/yara/issues/1660
+  assert_false_rule(
+      "rule test {\n\
+         strings:\n\
+             $a = \"foo\"\n\
+             $b = \"bar\"\n\
+             $c = \"baz\"\n\
+         condition:\n\
+             all of them in (0..1)\n\
+       }",
+      TEXT_1024_BYTES);
+
   assert_true_rule(
       "rule test {\n\
          strings:\n\
@@ -3148,12 +3160,20 @@ void test_performance_warnings()
         strings: $a = { 01 ?? ?? 02 } \
         condition: $a }");
 
-  assert_warning("rule test { \
+  assert_no_warnings("rule test { \
         strings: $a = { 01 ?? ?2 03 } \
         condition: $a }");
 
-  assert_warning("rule test { \
+  assert_no_warnings("rule test { \
         strings: $a = { 01 ?? 02 1? } \
+        condition: $a }");
+
+  assert_warning("rule test { \
+        strings: $a = { 68 ?? 00 ?? 00 68 ?? 00 ?? 00} \
+        condition: $a }");
+
+  assert_no_warnings("rule test { \
+        strings: $a = { (61 62 63 64 ?? | 65 ?? ?? 00 00 66)} \
         condition: $a }");
 
   assert_warning("rule test { \
@@ -3230,6 +3250,10 @@ void test_performance_warnings()
 
   assert_no_warnings("rule test { \
         strings: $a = \"MZ\" \
+        condition: $a }");
+
+  assert_no_warnings("rule test { \
+        strings: $a = \"ZZ\" \
         condition: $a }");
 
   assert_warning("rule test { \

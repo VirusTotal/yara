@@ -853,7 +853,7 @@ bool yr_object_has_undefined_value(YR_OBJECT* object, const char* field, ...)
   switch (field_obj->type)
   {
   case OBJECT_TYPE_FLOAT:
-    return isnan(field_obj->value.d);
+    return yr_isnan(field_obj->value.d);
   case OBJECT_TYPE_STRING:
     return field_obj->value.ss == NULL;
   case OBJECT_TYPE_INTEGER:
