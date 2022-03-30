@@ -2459,6 +2459,30 @@ static void _yr_re_print_node(RE_NODE* re_node, uint32_t indent)
     printf(")");
     break;
 
+  case RE_NODE_EMPTY:
+    printf("Empty");
+    break;
+
+  case RE_NODE_ANCHOR_START:
+    printf("AnchorStart");
+    break;
+
+  case RE_NODE_ANCHOR_END:
+    printf("AnchorEnd");
+    break;
+
+  case RE_NODE_WORD_BOUNDARY:
+    printf("WordBoundary");
+    break;
+
+  case RE_NODE_NON_WORD_BOUNDARY:
+    printf("NonWordBoundary");
+    break;
+
+  case RE_NODE_RANGE_ANY:
+    printf("RangeAny");
+    break;
+
   default:
     printf("???");
     break;
