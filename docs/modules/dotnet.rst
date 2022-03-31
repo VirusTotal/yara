@@ -42,12 +42,12 @@ Reference
 
     CLI header runtime flags contains the following values
     
-    .. c:type:: CORHEADER_IL_ONLY
-    .. c:type:: CORHEADER_32_BIT_REQUIRED    
-    .. c:type:: CORHEADER_IL_LIBRARY       
-    .. c:type:: CORHEADER_STRONG_NAME_SIGNED 
-    .. c:type:: CORHEADER_NATIVE_ENTRYPOINT
-    .. c:type:: CORHEADER_TRACK_DEBUG_DATA
+    .. c:type:: COMIMAGE_FLAGS_ILONLY 
+    .. c:type:: COMIMAGE_FLAGS_32BITREQUIRED    
+    .. c:type:: COMIMAGE_FLAGS_IL_LIBRARY       
+    .. c:type:: COMIMAGE_FLAGS_STRONGNAMESIGNED 
+    .. c:type:: COMIMAGE_FLAGS_NATIVE_ENTRYPOINT
+    .. c:type:: COMIMAGE_FLAGS_TRACKDEBUGDATA
 
 .. c:type:: entry_point
 
