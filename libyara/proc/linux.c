@@ -324,8 +324,8 @@ YR_API YR_MEMORY_BLOCK* yr_process_get_next_memory_block(
 
   if (proc_info->next_block_end <= current_begin)
   {
-    int n, path_start;
-    char *p;
+    int path_start, n = 0;
+    char* p;
 
     while (fgets(buffer, sizeof(buffer), proc_info->maps) != NULL)
     {
