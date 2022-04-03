@@ -146,8 +146,8 @@ shown below.
 Hexadecimal strings
 -------------------
 
-Hexadecimal strings allow three special constructions that make them more
-flexible: wild-cards, jumps, and alternatives. Wild-cards are just placeholders
+Hexadecimal strings allow four special constructions that make them more
+flexible: wild-cards, not operators, jumps, and alternatives. Wild-cards are just placeholders
 that you can put into the string indicating that some bytes are unknown and they
 should match anything. The placeholder character is the question mark (?). Here
 you have an example of a hexadecimal string with wild-cards:
@@ -170,6 +170,21 @@ Wild-cards are useful when defining strings whose content can vary but you know
 the length of the variable chunks, however, this is not always the case. In some
 circumstances you may need to define strings with chunks of variable content and
 length. In those situations you can use jumps instead of wild-cards:
+
+.. code-block:: yara
+
+    rule NotExample
+    {
+        strings:
+            $hex_string = { F4 23 ~00 62 B4 }
+
+        condition:
+            $hex_string
+    }
+
+In the exmaple above we have a byte prefixed with a tilda (~), which is a NOT operator.
+This defines that the byte in that location can take any value except the value specified.
+In this case the string will only match if the byte is not 00.
 
 .. code-block:: yara
 
