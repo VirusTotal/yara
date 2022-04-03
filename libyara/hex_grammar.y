@@ -82,6 +82,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 %token <integer> _BYTE_
 %token <integer> _MASKED_BYTE_
+%token <integer> _NOT_BYTE_
 %token <integer> _NUMBER_
 
 %type <re_node> tokens
@@ -320,6 +321,15 @@ byte
     : _BYTE_
       {
         $$ = yr_re_node_create(RE_NODE_LITERAL);
+
+        fail_if($$ == NULL, ERROR_INSUFFICIENT_MEMORY);
+
+        $$->value = (int) $1;
+        $$->mask = 0xFF;
+      }
+    | _NOT_BYTE_
+      {
+        $$ = yr_re_node_create(RE_NODE_NOT_LITERAL);
 
         fail_if($$ == NULL, ERROR_INSUFFICIENT_MEMORY);
 
