@@ -1299,6 +1299,24 @@ static void test_hex_strings()
         condition: $a }",
       TEXT_1024_BYTES "1234567890");
 
+  assert_true_rule(
+      "rule test { \
+        strings: $a = { 31 32 ~32 34 35 } \
+        condition: $a }",
+      TEXT_1024_BYTES "1234567890");
+  
+  assert_false_rule(
+      "rule test { \
+        strings: $a = { 31 32 ~33 34 35 } \
+        condition: $a }",
+      TEXT_1024_BYTES "1234567890");
+
+  assert_true_rule(
+      "rule test { \
+        strings: $a = { ( 31 32 ~32 34 35 | 31 32 ~33 34 35 ) } \
+        condition: $a }",
+      TEXT_1024_BYTES "1234567890");    
+
   assert_false_rule(
       "rule test { \
         strings: $a = { 35 36 [-] 31 32 } \
@@ -1411,6 +1429,18 @@ static void test_hex_strings()
         strings: $a = { 01 02 (03 | 04 [-]) } \
         condition: $a ",
       ERROR_INVALID_HEX_STRING);
+
+  assert_error(
+      "rule test { \
+        strings: $a = { 01 02 ~ } \
+        condition: $a ",
+      ERROR_INVALID_HEX_STRING);
+
+    assert_error(
+      "rule test { \
+        strings: $a = { 01 ~0 11 } \
+        condition: $a ",
+      ERROR_INVALID_HEX_STRING);    
 
   /* TODO: tests.py:551 ff. */
 
