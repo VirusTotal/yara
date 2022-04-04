@@ -2515,7 +2515,12 @@ int yr_parse_hex_string(
 
   (*re_ast)->flags |= RE_FLAGS_DOT_ALL;
 
-  yylex_init(&yyscanner);
+  if (yylex_init(&yyscanner) != 0)
+  {
+    yr_re_ast_destroy(*re_ast);
+    return ERROR_INSUFFICIENT_MEMORY;
+  }
+
   yyset_extra(*re_ast, yyscanner);
   yy_scan_string(hex_string, yyscanner);
   yyparse(yyscanner, &lex_env);
