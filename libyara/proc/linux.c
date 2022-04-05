@@ -435,7 +435,7 @@ YR_API YR_MEMORY_BLOCK* yr_process_get_first_memory_block(
 _exit:
 
   if (result == NULL)
-    iterator->last_result = ERROR_COULD_NOT_READ_PROCESS_MEMORY;
+    iterator->last_error = ERROR_COULD_NOT_READ_PROCESS_MEMORY;
 
   YR_DEBUG_FPRINTF(2, stderr, "} = %p // %s()\n", result, __FUNCTION__);
 
