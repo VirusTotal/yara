@@ -166,10 +166,8 @@ you have an example of a hexadecimal string with wild-cards:
 As shown in the example the wild-cards are nibble-wise, which means that you can
 define just one nibble of the byte and leave the other unknown.
 
-Wild-cards are useful when defining strings whose content can vary but you know
-the length of the variable chunks, however, this is not always the case. In some
-circumstances you may need to define strings with chunks of variable content and
-length. In those situations you can use jumps instead of wild-cards:
+In some cases you may wish to specify that a byte is not a specific value. For
+that you can use the not operator with a byte value:
 
 .. code-block:: yara
 
@@ -182,9 +180,14 @@ length. In those situations you can use jumps instead of wild-cards:
             $hex_string
     }
 
-In the exmaple above we have a byte prefixed with a tilda (~), which is a NOT operator.
+In the example above we have a byte prefixed with a tilda (~), which is the not operator.
 This defines that the byte in that location can take any value except the value specified.
 In this case the string will only match if the byte is not 00.
+
+Wild-cards and not operators are useful when defining strings whose content can vary but you know
+the length of the variable chunks, however, this is not always the case. In some
+circumstances you may need to define strings with chunks of variable content and
+length. In those situations you can use jumps instead of wild-cards:
 
 .. code-block:: yara
 
