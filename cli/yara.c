@@ -492,7 +492,7 @@ static int scan_dir(const char_t* dir, SCAN_OPTIONS* scan_opts)
           _ftprintf(
               stderr,
               _T("skipping %s (%" PRIu64
-                 " bytes) because it's larger than %ld bytes.\n"),
+                 " bytes) because it's larger than %lld bytes.\n"),
               path,
               file_size.QuadPart,
               skip_larger);
