@@ -96,7 +96,21 @@ args_error_type_t args_parse_option(
     *(bool*) opt->value = !(*(bool*) opt->value);
     break;
 
-  case ARGS_OPT_INTEGER:
+  case ARGS_OPT_LONG:
+    if (opt_arg == NULL)
+      return ARGS_ERROR_REQUIRED_INTEGER_ARG;
+
+    *(long*) opt->value = _tcstol(opt_arg, &endptr, 0);
+
+    if (*endptr != '\0')
+      return ARGS_ERROR_REQUIRED_INTEGER_ARG;
+
+    if (opt_arg_was_used != NULL)
+      *opt_arg_was_used = 1;
+
+    break;
+
+  case ARGS_OPT_LONG_LONG:
     if (opt_arg == NULL)
       return ARGS_ERROR_REQUIRED_INTEGER_ARG;
 
@@ -268,7 +282,8 @@ void args_print_usage(args_option_t* options, int help_alignment)
     if (options->long_name != NULL)
       len += _stprintf(buffer + len, _T("--%s"), options->long_name);
 
-    if (options->type == ARGS_OPT_STRING || options->type == ARGS_OPT_INTEGER)
+    if (options->type == ARGS_OPT_STRING || options->type == ARGS_OPT_LONG ||
+        options->type == ARGS_OPT_LONG_LONG)
     {
       len += _stprintf(
           buffer + len,
