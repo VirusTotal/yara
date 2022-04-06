@@ -2487,6 +2487,7 @@ int yr_parse_hex_string(
   if (yylex_init(&yyscanner) != 0)
   {
     yr_re_ast_destroy(*re_ast);
+    *re_ast = NULL;
     return ERROR_INSUFFICIENT_MEMORY;
   }
 
