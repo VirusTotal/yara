@@ -100,7 +100,7 @@ args_error_type_t args_parse_option(
     if (opt_arg == NULL)
       return ARGS_ERROR_REQUIRED_INTEGER_ARG;
 
-    *(long*) opt->value = _tcstol(opt_arg, &endptr, 0);
+    *(long long*) opt->value = _tcstoll(opt_arg, &endptr, 0);
 
     if (*endptr != '\0')
       return ARGS_ERROR_REQUIRED_INTEGER_ARG;

@@ -157,14 +157,14 @@ static bool negate = false;
 static bool print_count_only = false;
 static bool fail_on_warnings = false;
 static bool rules_are_compiled = false;
-static long total_count = 0;
-static long limit = 0;
-static long timeout = 1000000;
-static long stack_size = DEFAULT_STACK_SIZE;
-static long skip_larger = 0;
-static long threads = YR_MAX_THREADS;
-static long max_strings_per_rule = DEFAULT_MAX_STRINGS_PER_RULE;
-static long max_process_memory_chunk = DEFAULT_MAX_PROCESS_MEMORY_CHUNK;
+static long long total_count = 0;
+static long long limit = 0;
+static long long timeout = 1000000;
+static long long stack_size = DEFAULT_STACK_SIZE;
+static long long skip_larger = 0;
+static long long threads = YR_MAX_THREADS;
+static long long max_strings_per_rule = DEFAULT_MAX_STRINGS_PER_RULE;
+static long long max_process_memory_chunk = DEFAULT_MAX_PROCESS_MEMORY_CHUNK;
 
 #define USAGE_STRING \
   "Usage: yara [OPTION]... [NAMESPACE:]RULES_FILE... FILE | DIR | PID"
@@ -478,7 +478,25 @@ static int scan_dir(const char_t* dir, SCAN_OPTIONS* scan_opts)
 
       if (!(FindFileData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
       {
-        result = file_queue_put(path, scan_opts->deadline);
+        ULARGE_INTEGER file_size;
+
+        file_size.HighPart = FindFileData.nFileSizeHigh;
+        file_size.LowPart = FindFileData.nFileSizeLow;
+
+        if (skip_larger > file_size.QuadPart || skip_larger <= 0)
+        {
+          result = file_queue_put(path, scan_opts->deadline);
+        }
+        else
+        {
+          _ftprintf(
+              stderr,
+              _T("skipping %s (%" PRIu64
+                 " bytes) because it's larger than %ld bytes.\n"),
+              path,
+              file_size,
+              skip_larger);
+        }
       }
       else if (
           scan_opts->recursive_search &&
@@ -670,7 +688,7 @@ static int scan_dir(const char* dir, SCAN_OPTIONS* scan_opts)
           {
             fprintf(
                 stderr,
-                "skipping %s (%" PRId64 " bytes) because it's larger than %ld"
+                "skipping %s (%" PRId64 " bytes) because it's larger than %lld"
                 " bytes.\n",
                 full_path,
                 st.st_size,
@@ -1199,7 +1217,7 @@ static int callback(
     return CALLBACK_CONTINUE;
 
   case CALLBACK_MSG_CONSOLE_LOG:
-    _tprintf(_T("%"PF_S"\n"), (char*) message_data);
+    _tprintf(_T("%" PF_S "\n"), (char*) message_data);
     return CALLBACK_CONTINUE;
   }
 

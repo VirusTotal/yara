@@ -33,14 +33,14 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifdef _MSC_VER
 #include <tchar.h>
 #define char_t TCHAR
-#define PF_S "hs"
-#define PF_C "hc"
+#define PF_S   "hs"
+#define PF_C   "hc"
 
 #else
 #define char_t char
-#define _T(x) x
-#define PF_S "s"
-#define PF_C "c"
+#define _T(x)  x
+#define PF_S   "s"
+#define PF_C   "c"
 
 #ifdef __CYGWIN__
 #define _tcstok_s strtok_r
@@ -48,20 +48,21 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define _tcstok_s strtok_s
 #endif
 
-#define _tcscmp strcmp
-#define _tcsdup strdup
-#define _tcschr strchr
-#define _tcslen strlen
-#define _tcsstr strstr
-#define _tcstol strtol
-#define _tstoi atoi
-#define _tstof atof
-#define _tisdigit isdigit
-#define _tfopen fopen
-#define _ftprintf fprintf
-#define _stprintf sprintf
-#define _tprintf printf
-#define _tmain main
+#define _tcscmp    strcmp
+#define _tcsdup    strdup
+#define _tcschr    strchr
+#define _tcslen    strlen
+#define _tcsstr    strstr
+#define _tcstol    strtol
+#define _tcstoll   strtoll
+#define _tstoi     atoi
+#define _tstof     atof
+#define _tisdigit  isdigit
+#define _tfopen    fopen
+#define _ftprintf  fprintf
+#define _stprintf  sprintf
+#define _tprintf   printf
+#define _tmain     main
 #define _sntprintf snprintf
 #endif
 
