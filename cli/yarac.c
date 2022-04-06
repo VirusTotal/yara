@@ -103,7 +103,7 @@ args_option_t options[] = {
 
     OPT_BOOLEAN('h', _T("help"), &show_help, _T("show this help and exit")),
 
-    OPT_INTEGER(
+    OPT_LONG(
         0,
         _T("max-strings-per-rule"),
         &max_strings_per_rule,
