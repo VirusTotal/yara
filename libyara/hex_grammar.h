@@ -1,8 +1,9 @@
-/* A Bison parser, made by GNU Bison 3.0.5.  */
+/* A Bison parser, made by GNU Bison 3.5.1.  */
 
 /* Bison interface for Yacc-like parsers in C
 
-   Copyright (C) 1984, 1989-1990, 2000-2015, 2018 Free Software Foundation, Inc.
+   Copyright (C) 1984, 1989-1990, 2000-2015, 2018-2020 Free Software Foundation,
+   Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -30,11 +31,14 @@
    This special exception was added by the Free Software Foundation in
    version 2.2 of Bison.  */
 
+/* Undocumented macros, especially those whose name start with YY_,
+   are private implementation details.  Do not rely on them.  */
+
 #ifndef YY_HEX_YY_HEX_GRAMMAR_H_INCLUDED
-#define YY_HEX_YY_HEX_GRAMMAR_H_INCLUDED
+# define YY_HEX_YY_HEX_GRAMMAR_H_INCLUDED
 /* Debug traces.  */
 #ifndef YYDEBUG
-#define YYDEBUG 0
+# define YYDEBUG 0
 #endif
 #if YYDEBUG
 extern int hex_yydebug;
@@ -42,38 +46,40 @@ extern int hex_yydebug;
 
 /* Token type.  */
 #ifndef YYTOKENTYPE
-#define YYTOKENTYPE
-enum yytokentype
-{
-  _BYTE_ = 258,
-  _MASKED_BYTE_ = 259,
-  _NUMBER_ = 260
-};
+# define YYTOKENTYPE
+  enum yytokentype
+  {
+    _BYTE_ = 258,
+    _MASKED_BYTE_ = 259,
+    _NOT_BYTE_ = 260,
+    _NUMBER_ = 261
+  };
 #endif
 /* Tokens.  */
-#define _BYTE_        258
+#define _BYTE_ 258
 #define _MASKED_BYTE_ 259
-#define _NUMBER_      260
+#define _NOT_BYTE_ 260
+#define _NUMBER_ 261
 
 /* Value type.  */
-#if !defined YYSTYPE && !defined YYSTYPE_IS_DECLARED
-
+#if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 union YYSTYPE
 {
-#line 78 "hex_grammar.y" /* yacc.c:1916  */
+#line 78 "hex_grammar.y"
 
   int64_t integer;
   RE_NODE *re_node;
 
-#line 69 "hex_grammar.h" /* yacc.c:1916  */
-};
+#line 74 "hex_grammar.h"
 
+};
 typedef union YYSTYPE YYSTYPE;
-#define YYSTYPE_IS_TRIVIAL  1
-#define YYSTYPE_IS_DECLARED 1
+# define YYSTYPE_IS_TRIVIAL 1
+# define YYSTYPE_IS_DECLARED 1
 #endif
 
 
-int hex_yyparse(void *yyscanner, HEX_LEX_ENVIRONMENT *lex_env);
+
+int hex_yyparse (void *yyscanner, HEX_LEX_ENVIRONMENT *lex_env);
 
 #endif /* !YY_HEX_YY_HEX_GRAMMAR_H_INCLUDED  */

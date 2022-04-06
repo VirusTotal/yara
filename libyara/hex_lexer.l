@@ -108,6 +108,12 @@ hexdigit      [a-fA-F0-9]
   return _MASKED_BYTE_;
 }
 
+\~{hexdigit}{2}  {
+
+  yylval->integer = xtoi(&(yytext[1]));
+  return _NOT_BYTE_;
+}
+
 \?{hexdigit}  {
 
   yytext[0] = '0'; // replace ? by 0
@@ -126,6 +132,19 @@ hexdigit      [a-fA-F0-9]
   yyerror(yyscanner, lex_env, "uneven number of digits in hex string");
   yyterminate();
 }
+
+\~{hexdigit}{2}  {
+
+  yylval->integer = xtoi(&(yytext[1]));
+  return _NOT_BYTE_;
+}
+
+\~  {
+  
+  yyerror(yyscanner, lex_env, "invalid not operator (~) in hex string");
+  yyterminate();
+}
+
 
 \[ {
 
