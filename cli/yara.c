@@ -494,7 +494,7 @@ static int scan_dir(const char_t* dir, SCAN_OPTIONS* scan_opts)
               _T("skipping %s (%" PRIu64
                  " bytes) because it's larger than %ld bytes.\n"),
               path,
-              file_size,
+              file_size.QuadPart,
               skip_larger);
         }
       }
