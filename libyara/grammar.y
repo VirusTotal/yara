@@ -64,21 +64,36 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define FOR_EXPRESSION_ANY  2
 #define FOR_EXPRESSION_NONE 3
 
+
+// fail_with_error() is used in parser actions for aborting the parsing with
+// an error. If the error is recoverable (like syntax errors), the parser will
+// report the error and continue parsing the next rule. If the error is a
+// fatal, non-recoverable error, the parser will be completely aborted.
 #define fail_with_error(e) \
+    switch (e) \
     { \
+    case ERROR_INSUFFICIENT_MEMORY: \
+      compiler->last_error = e; \
+      yyfatal(yyscanner, NULL); \
+      break; \
+    default: \
       compiler->last_error = e; \
       yyerror(yyscanner, compiler, NULL); \
       YYERROR; \
     }
 
-
+// fail_if_error() is used in parser actions for aborting the parsing if an
+// error has occurred. See fail_with_error for details.
 #define fail_if_error(e) \
     if (e != ERROR_SUCCESS) \
     { \
       fail_with_error(e); \
-    } \
+    }
 
 
+// check_type(expression, EXPRESSION_TYPE_INTEGER | EXPRESSION_TYPE_FLOAT) is
+// used to ensure that the type of "expression" is either integer or float,
+// the cleanup statements are executed if the condition is not met.
 #define check_type_with_cleanup(expression, expected_type, op, cleanup) \
     if (((expression.type) & (expected_type)) == 0) \
     { \

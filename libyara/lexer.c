@@ -3517,12 +3517,6 @@ void yyerror(
   char message[512] = {'\0'};
   char* file_name = NULL;
 
-  /*
-    if error_message != NULL the error comes from yyparse internal code
-    else the error comes from my code and the error code is set in
-    compiler->last_error
-  */
-
   compiler->errors++;
 
   if (compiler->current_line != 0)
@@ -3548,6 +3542,10 @@ void yyerror(
         compiler->arena,
         YR_RULES_TABLE,
         compiler->current_rule_idx * sizeof(YR_RULE));
+
+  // if error_message != NULL the error comes from yyparse internal code
+  // else the error comes from my code and the error code is set in
+  // compiler->last_error
 
   if (error_message != NULL)
   {
