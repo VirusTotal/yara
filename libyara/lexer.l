@@ -888,6 +888,39 @@ void yyerror(
 }
 
 
+int yr_lex_parse_rules_bytes(
+    const void* rules_data,
+    size_t rules_size,
+    YR_COMPILER* compiler)
+{
+  yyscan_t yyscanner;
+
+  compiler->errors = 0;
+
+  if (yylex_init(&yyscanner) != 0)
+  {
+    compiler->errors = 1;
+    compiler->last_error = ERROR_INSUFFICIENT_MEMORY;
+    return compiler->errors;
+  }
+
+  if (setjmp(compiler->error_recovery) != 0)
+    return compiler->errors;
+
+  #if YYDEBUG
+  yydebug = 1;
+  #endif
+
+  yyset_extra(compiler, yyscanner);
+  yy_scan_bytes(rules_data, rules_size, yyscanner);
+  yyset_lineno(1, yyscanner);
+  yyparse(yyscanner, compiler);
+  yylex_destroy(yyscanner);
+
+  return compiler->errors;
+}
+
+
 int yr_lex_parse_rules_string(
     const char* rules_string,
     YR_COMPILER* compiler)

@@ -367,6 +367,12 @@ YR_API int yr_compiler_add_fd(
     const char* namespace_,
     const char* file_name);
 
+YR_API int yr_compiler_add_bytes(
+    YR_COMPILER* compiler,
+    const void* rules_data,
+    size_t rules_size,
+    const char* namespace_);
+
 YR_API int yr_compiler_add_string(
     YR_COMPILER* compiler,
     const char* rules_string,
