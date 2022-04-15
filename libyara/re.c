@@ -739,6 +739,15 @@ static int _yr_re_emit(
         NULL));
     break;
 
+  case RE_NODE_MASKED_NOT_LITERAL:
+    FAIL_ON_ERROR(_yr_emit_inst_arg_uint16(
+        emit_context,
+        RE_OPCODE_MASKED_NOT_LITERAL,
+        re_node->mask << 8 | re_node->value,
+        &instruction_ref,
+        NULL));
+    break;
+
   case RE_NODE_WORD_CHAR:
     FAIL_ON_ERROR(
         _yr_emit_inst(emit_context, RE_OPCODE_WORD_CHAR, &instruction_ref));
@@ -1815,6 +1824,20 @@ int yr_re_exec(
         fiber->ip += 3;
         break;
 
+      case RE_OPCODE_MASKED_NOT_LITERAL:
+        prolog;
+        value = *(int16_t*) (ip + 1) & 0xFF;
+        mask = *(int16_t*) (ip + 1) >> 8;
+
+        // We don't need to take into account the case-insensitive
+        // case because this opcode is only used with hex strings,
+        // which can't be case-insensitive.
+
+        match = ((*input & mask) != value);
+        action = match ? ACTION_NONE : ACTION_KILL;
+        fiber->ip += 3;
+        break;
+
       case RE_OPCODE_CLASS:
         prolog;
         match = _yr_re_is_char_in_class(
@@ -2074,6 +2097,8 @@ static void _yr_re_fast_exec_destroy_position_list(
 //
 //   * RE_OPCODE_LITERAL
 //   * RE_OPCODE_MASKED_LITERAL,
+//   * RE_OPCODE_NOT_LITERAL
+//   * RE_OPCODE_MASKED_NOT_LITERAL
 //   * RE_OPCODE_ANY
 //   * RE_OPCODE_REPEAT_ANY_UNGREEDY
 //   * RE_OPCODE_MATCH.
@@ -2207,6 +2232,20 @@ int yr_re_fast_exec(
         mask = *(int16_t*) (ip + 1) >> 8;
 
         if ((*current->input & mask) == value)
+        {
+          match = true;
+          current->input += input_incr;
+        }
+        break;
+      
+      case RE_OPCODE_MASKED_NOT_LITERAL:
+        if (bytes_matched >= max_bytes_matched)
+          break;
+
+        value = *(int16_t*) (ip + 1) & 0xFF;
+        mask = *(int16_t*) (ip + 1) >> 8;
+
+        if ((*current->input & mask) != value)
         {
           match = true;
           current->input += input_incr;
@@ -2376,6 +2415,7 @@ int yr_re_fast_exec(
       ip += 2;
       break;
     case RE_OPCODE_MASKED_LITERAL:
+    case RE_OPCODE_MASKED_NOT_LITERAL:
       ip += 3;
       break;
     case RE_OPCODE_REPEAT_ANY_UNGREEDY:

@@ -1,6 +1,6 @@
-#line 1 "hex_lexer.c"
+#line 2 "hex_lexer.c"
 
-#line 3 "hex_lexer.c"
+#line 4 "hex_lexer.c"
 
 #define  YY_INT_ALIGNED short int
 
@@ -580,8 +580,8 @@ static void yynoreturn yy_fatal_error ( const char* msg , yyscan_t yyscanner );
 	yyg->yy_hold_char = *yy_cp; \
 	*yy_cp = '\0'; \
 	yyg->yy_c_buf_p = yy_cp;
-#define YY_NUM_RULES 22
-#define YY_END_OF_BUFFER 23
+#define YY_NUM_RULES 23
+#define YY_END_OF_BUFFER 24
 /* This struct is not used in this scanner,
    but its presence is necessary. */
 struct yy_trans_info
@@ -589,12 +589,12 @@ struct yy_trans_info
 	flex_int32_t yy_verify;
 	flex_int32_t yy_nxt;
 	};
-static const flex_int16_t yy_accept[37] =
+static const flex_int16_t yy_accept[40] =
     {   0,
-        0,    0,    0,    0,    0,    0,   23,   21,   19,   19,
-       20,   21,    6,   21,    9,    8,   12,   12,   18,   17,
-       17,   14,   15,   16,   10,   13,    1,    2,    4,    5,
-        0,   11,   15,   13,    3,    0
+        0,    0,    0,    0,    0,    0,   24,   22,   20,   20,
+       21,   22,    8,   22,   10,    9,   13,   13,   19,   18,
+       18,   15,   16,   17,   11,   14,    1,    2,    4,    5,
+        0,    0,   12,   16,   14,    3,    6,    7,    0
     } ;
 
 static const YY_CHAR yy_ec[256] =
@@ -635,51 +635,53 @@ static const YY_CHAR yy_meta[14] =
         1,    1,    1
     } ;
 
-static const flex_int16_t yy_base[44] =
+static const flex_int16_t yy_base[48] =
     {   0,
-        0,    0,   27,   25,   12,   23,   28,   55,   55,   55,
-       55,   31,   18,   14,   55,    0,   55,   15,   55,   55,
-       55,   55,   13,   55,   55,    0,   55,   55,   55,   55,
-        0,   55,   11,    0,   55,   55,   38,   42,   44,   46,
-       14,   50,   13
+        0,    0,   28,   27,   12,   23,   30,   59,   59,   59,
+       59,   31,   19,   18,   59,   14,   59,   15,   59,   59,
+       59,   59,   13,   59,   59,    0,   59,   59,   59,   59,
+       10,    0,   59,    9,    0,   59,   59,   59,   59,   38,
+       42,   44,   46,   48,   52,   54,   13
     } ;
 
-static const flex_int16_t yy_def[44] =
+static const flex_int16_t yy_def[48] =
     {   0,
-       36,    1,   37,   37,   38,   38,   36,   36,   36,   36,
-       36,   36,   39,   40,   36,   41,   36,   36,   36,   36,
-       36,   36,   36,   36,   36,   42,   36,   36,   36,   36,
-       43,   36,   36,   42,   36,    0,   36,   36,   36,   36,
-       36,   36,   36
+       39,    1,   40,   40,   41,   41,   39,   39,   39,   39,
+       39,   39,   42,   43,   39,   44,   39,   39,   39,   39,
+       39,   39,   39,   39,   39,   45,   39,   39,   39,   39,
+       46,   47,   39,   39,   45,   39,   39,   39,    0,   39,
+       39,   39,   39,   39,   39,   39,   39
     } ;
 
-static const flex_int16_t yy_nxt[69] =
+static const flex_int16_t yy_nxt[73] =
     {   0,
         8,    9,   10,   11,    8,    8,   12,   13,   14,   13,
-       15,    8,   16,   20,   21,   35,   31,   22,   33,   23,
-       33,   32,   30,   24,   20,   21,   28,   36,   22,   18,
-       23,   18,   36,   36,   24,   25,   36,   26,   17,   17,
+       15,    8,   16,   20,   21,   38,   34,   22,   37,   23,
+       34,   33,   32,   24,   20,   21,   30,   28,   22,   39,
+       23,   18,   18,   39,   24,   25,   39,   26,   17,   17,
        17,   17,   19,   19,   19,   19,   27,   27,   29,   29,
-       34,   36,   34,   34,    7,   36,   36,   36,   36,   36,
-       36,   36,   36,   36,   36,   36,   36,   36
+       31,   31,   35,   39,   35,   35,   36,   36,    7,   39,
+       39,   39,   39,   39,   39,   39,   39,   39,   39,   39,
+       39,   39
     } ;
 
-static const flex_int16_t yy_chk[69] =
+static const flex_int16_t yy_chk[73] =
     {   0,
         1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
-        1,    1,    1,    5,    5,   43,   41,    5,   33,    5,
-       23,   18,   14,    5,    6,    6,   13,    7,    6,    4,
-        6,    3,    0,    0,    6,   12,    0,   12,   37,   37,
-       37,   37,   38,   38,   38,   38,   39,   39,   40,   40,
-       42,    0,   42,   42,   36,   36,   36,   36,   36,   36,
-       36,   36,   36,   36,   36,   36,   36,   36
+        1,    1,    1,    5,    5,   47,   34,    5,   31,    5,
+       23,   18,   16,    5,    6,    6,   14,   13,    6,    7,
+        6,    4,    3,    0,    6,   12,    0,   12,   40,   40,
+       40,   40,   41,   41,   41,   41,   42,   42,   43,   43,
+       44,   44,   45,    0,   45,   45,   46,   46,   39,   39,
+       39,   39,   39,   39,   39,   39,   39,   39,   39,   39,
+       39,   39
     } ;
 
 /* Table of booleans, true if rule could match eol. */
-static const flex_int32_t yy_rule_can_match_eol[23] =
+static const flex_int32_t yy_rule_can_match_eol[24] =
     {   0,
-0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 1, 
-    0, 0, 0,     };
+0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 
+    1, 0, 0, 0,     };
 
 /* The intent behind this definition is that it'll catch
  * any uses of REJECT which flex missed.
@@ -758,11 +760,11 @@ with noyywrap then we can remove this pragma.
       YYABORT; \
     } \
 
-#line 761 "hex_lexer.c"
+#line 764 "hex_lexer.c"
 #define YY_NO_UNISTD_H 1
 #define YY_NO_INPUT 1
 
-#line 765 "hex_lexer.c"
+#line 768 "hex_lexer.c"
 
 #define INITIAL 0
 #define comment 1
@@ -1040,7 +1042,7 @@ YY_DECL
 
 
 
-#line 1043 "hex_lexer.c"
+#line 1046 "hex_lexer.c"
 
 	while ( /*CONSTCOND*/1 )		/* loops until end-of-file is reached */
 		{
@@ -1067,13 +1069,13 @@ yy_match:
 			while ( yy_chk[yy_base[yy_current_state] + yy_c] != yy_current_state )
 				{
 				yy_current_state = (int) yy_def[yy_current_state];
-				if ( yy_current_state >= 37 )
+				if ( yy_current_state >= 40 )
 					yy_c = yy_meta[yy_c];
 				}
 			yy_current_state = yy_nxt[yy_base[yy_current_state] + yy_c];
 			++yy_cp;
 			}
-		while ( yy_current_state != 36 );
+		while ( yy_current_state != 39 );
 		yy_cp = yyg->yy_last_accepting_cpos;
 		yy_current_state = yyg->yy_last_accepting_state;
 
@@ -1157,134 +1159,145 @@ YY_RULE_SETUP
 #line 130 "hex_lexer.l"
 {
 
-  yyerror(yyscanner, lex_env, "uneven number of digits in hex string");
-  yyterminate();
+  yytext[2] = '0'; // replace ? by 0
+  yylval->integer = xtoi(&(yytext[1])) | 0xF000 ;
+  return _MASKED_NOT_BYTE_;
 }
 	YY_BREAK
 case 7:
 YY_RULE_SETUP
-#line 136 "hex_lexer.l"
+#line 137 "hex_lexer.l"
 {
 
-  yylval->integer = xtoi(&(yytext[1]));
-  return _NOT_BYTE_;
+  yytext[1] = '0'; // replace ? by 0
+  yylval->integer = xtoi(&(yytext[1])) | 0x0F00 ;
+  return _MASKED_NOT_BYTE_;
 }
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
-#line 142 "hex_lexer.l"
+#line 144 "hex_lexer.l"
+{
+
+  yyerror(yyscanner, lex_env, "uneven number of digits in hex string");
+  yyterminate();
+}
+	YY_BREAK
+case 9:
+YY_RULE_SETUP
+#line 150 "hex_lexer.l"
 {
   
   yyerror(yyscanner, lex_env, "invalid not operator (~) in hex string");
   yyterminate();
 }
 	YY_BREAK
-case 9:
+case 10:
 YY_RULE_SETUP
-#line 149 "hex_lexer.l"
+#line 157 "hex_lexer.l"
 {
 
   BEGIN(range);
   return yytext[0];
 }
 	YY_BREAK
-case 10:
+case 11:
 YY_RULE_SETUP
-#line 155 "hex_lexer.l"
+#line 163 "hex_lexer.l"
 {
 
   BEGIN(comment);
 }
 	YY_BREAK
-case 11:
+case 12:
 YY_RULE_SETUP
-#line 160 "hex_lexer.l"
+#line 168 "hex_lexer.l"
 {
 
   BEGIN(INITIAL);
 }
 	YY_BREAK
-case 12:
-/* rule 12 can match eol */
-YY_RULE_SETUP
-#line 165 "hex_lexer.l"
-// skip comments
-	YY_BREAK
 case 13:
+/* rule 13 can match eol */
 YY_RULE_SETUP
-#line 167 "hex_lexer.l"
-// skip single-line comments
+#line 173 "hex_lexer.l"
+// skip comments
 	YY_BREAK
 case 14:
 YY_RULE_SETUP
-#line 169 "hex_lexer.l"
+#line 175 "hex_lexer.l"
+// skip single-line comments
+	YY_BREAK
+case 15:
+YY_RULE_SETUP
+#line 177 "hex_lexer.l"
 {
 
   return yytext[0];
 }
 	YY_BREAK
-case 15:
+case 16:
 YY_RULE_SETUP
-#line 174 "hex_lexer.l"
+#line 182 "hex_lexer.l"
 {
 
   yylval->integer = atoi(yytext);
   return _NUMBER_;
 }
 	YY_BREAK
-case 16:
+case 17:
 YY_RULE_SETUP
-#line 180 "hex_lexer.l"
+#line 188 "hex_lexer.l"
 {
 
   BEGIN(INITIAL);
   return yytext[0];
 }
 	YY_BREAK
-case 17:
-/* rule 17 can match eol */
+case 18:
+/* rule 18 can match eol */
 YY_RULE_SETUP
-#line 186 "hex_lexer.l"
+#line 194 "hex_lexer.l"
 // skip whitespaces
 	YY_BREAK
-case 18:
+case 19:
 YY_RULE_SETUP
-#line 188 "hex_lexer.l"
+#line 196 "hex_lexer.l"
 {
 
   yyerror(yyscanner, lex_env, "invalid character in hex string jump");
   yyterminate();
 }
 	YY_BREAK
-case 19:
-/* rule 19 can match eol */
+case 20:
+/* rule 20 can match eol */
 YY_RULE_SETUP
-#line 194 "hex_lexer.l"
+#line 202 "hex_lexer.l"
 // skip whitespaces
 	YY_BREAK
-case 20:
+case 21:
 YY_RULE_SETUP
-#line 196 "hex_lexer.l"
+#line 204 "hex_lexer.l"
 {        // pass valid characters to the parser
 
   return yytext[0];
 }
 	YY_BREAK
-case 21:
+case 22:
 YY_RULE_SETUP
-#line 201 "hex_lexer.l"
+#line 209 "hex_lexer.l"
 {               // reject all other characters
 
   yyerror(yyscanner, lex_env, "invalid character in hex string");
   yyterminate();
 }
 	YY_BREAK
-case 22:
+case 23:
 YY_RULE_SETUP
-#line 207 "hex_lexer.l"
+#line 215 "hex_lexer.l"
 ECHO;
 	YY_BREAK
-#line 1287 "hex_lexer.c"
+#line 1301 "hex_lexer.c"
 case YY_STATE_EOF(INITIAL):
 case YY_STATE_EOF(comment):
 case YY_STATE_EOF(range):
@@ -1586,7 +1599,7 @@ static int yy_get_next_buffer (yyscan_t yyscanner)
 		while ( yy_chk[yy_base[yy_current_state] + yy_c] != yy_current_state )
 			{
 			yy_current_state = (int) yy_def[yy_current_state];
-			if ( yy_current_state >= 37 )
+			if ( yy_current_state >= 40 )
 				yy_c = yy_meta[yy_c];
 			}
 		yy_current_state = yy_nxt[yy_base[yy_current_state] + yy_c];
@@ -1615,11 +1628,11 @@ static int yy_get_next_buffer (yyscan_t yyscanner)
 	while ( yy_chk[yy_base[yy_current_state] + yy_c] != yy_current_state )
 		{
 		yy_current_state = (int) yy_def[yy_current_state];
-		if ( yy_current_state >= 37 )
+		if ( yy_current_state >= 40 )
 			yy_c = yy_meta[yy_c];
 		}
 	yy_current_state = yy_nxt[yy_base[yy_current_state] + yy_c];
-	yy_is_jam = (yy_current_state == 36);
+	yy_is_jam = (yy_current_state == 39);
 
 	(void)yyg;
 	return yy_is_jam ? 0 : yy_current_state;
@@ -2437,7 +2450,7 @@ void yyfree (void * ptr , yyscan_t yyscanner)
 
 #define YYTABLES_NAME "yytables"
 
-#line 207 "hex_lexer.l"
+#line 215 "hex_lexer.l"
 
 
 //
