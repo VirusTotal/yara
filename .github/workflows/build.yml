@@ -26,6 +26,10 @@ jobs:
             protobuf-compiler \
             protobuf-c-compiler \
             libprotobuf-c-dev
+      - name: Print versions
+        run: |
+          YACC --version
+          GCC --version
       - name: Prepare for building
         run: |
           ./bootstrap.sh
