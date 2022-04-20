@@ -74,7 +74,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
     { \
     case ERROR_INSUFFICIENT_MEMORY: \
       compiler->last_error = e; \
-      yyfatal(yyscanner, NULL); \
+      YYNOMEM; \
       break; \
     default: \
       compiler->last_error = e; \
@@ -1821,9 +1821,8 @@ expression
         {
           yr_compiler_set_error_extra_info(
               compiler, "percentage must be between 1 and 100 (inclusive)");
-          compiler->last_error = ERROR_INVALID_PERCENTAGE;
-          yyerror(yyscanner, compiler, NULL);
-          YYERROR;
+
+          fail_with_error(ERROR_INVALID_PERCENTAGE);
         }
 
         yr_parser_emit_with_arg(yyscanner, OP_OF_PERCENT, OF_STRING_SET, NULL, NULL);
@@ -1841,9 +1840,8 @@ expression
         {
           yr_compiler_set_error_extra_info(
               compiler, "percentage must be between 1 and 100 (inclusive)");
-          compiler->last_error = ERROR_INVALID_PERCENTAGE;
-          yyerror(yyscanner, compiler, NULL);
-          YYERROR;
+
+          fail_with_error(ERROR_INVALID_PERCENTAGE);
         }
 
         yr_parser_emit_with_arg(yyscanner, OP_OF_PERCENT, OF_RULE_SET, NULL, NULL);
