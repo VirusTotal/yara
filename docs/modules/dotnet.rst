@@ -78,8 +78,8 @@ Reference
     stream object has the following attributes:
 
     .. c:member:: name
-    
-        Stream name
+
+        Stream name.
 
     .. c:member:: offset
 
