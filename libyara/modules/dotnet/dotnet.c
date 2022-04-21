@@ -1163,7 +1163,7 @@ static bool parse_method_params(
   uint32_t str_size = ctx->str_size;
 
   // Array to hold all the possible parameters
-  PARAMETERS* params = yr_malloc(param_count * sizeof(PARAMETERS));
+  PARAMETERS* params = yr_calloc(param_count, sizeof(PARAMETERS));
   if (!params)
     return false;
 
@@ -1180,7 +1180,17 @@ static bool parse_method_params(
       PARAM_ROW row = {0};
       bool result = read_param(ctx, data, &row);
       if (!result)
-        continue;
+      {  // Cleanup and return
+        for (uint32_t j = 0; j < idx; ++j)
+        {
+          if (params[j].alloc)
+            yr_free(params[j].name);
+
+          yr_free(params[j].type);
+        }
+        yr_free(params);
+        return false;
+      }
 
       name = pe_get_dotnet_string(ctx->pe, str_heap, str_size, row.Name);
     }
