@@ -70,16 +70,16 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // report the error and continue parsing the next rule. If the error is a
 // fatal, non-recoverable error, the parser will be completely aborted.
 #define fail_with_error(e) \
-    switch (e) \
     { \
-    case ERROR_INSUFFICIENT_MEMORY: \
-      compiler->last_error = e; \
-      YYNOMEM; \
-      break; \
-    default: \
       compiler->last_error = e; \
       yyerror(yyscanner, compiler, NULL); \
-      YYERROR; \
+      switch (e) \
+      { \
+      case ERROR_INSUFFICIENT_MEMORY: \
+        YYABORT; \
+      default: \
+        YYERROR; \
+      } \
     }
 
 // fail_if_error() is used in parser actions for aborting the parsing if an
