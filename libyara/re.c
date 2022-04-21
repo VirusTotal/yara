@@ -721,10 +721,28 @@ static int _yr_re_emit(
         NULL));
     break;
 
+  case RE_NODE_NOT_LITERAL:
+    FAIL_ON_ERROR(_yr_emit_inst_arg_uint8(
+        emit_context,
+        RE_OPCODE_NOT_LITERAL,
+        re_node->value,
+        &instruction_ref,
+        NULL));
+    break;
+
   case RE_NODE_MASKED_LITERAL:
     FAIL_ON_ERROR(_yr_emit_inst_arg_uint16(
         emit_context,
         RE_OPCODE_MASKED_LITERAL,
+        re_node->mask << 8 | re_node->value,
+        &instruction_ref,
+        NULL));
+    break;
+
+  case RE_NODE_MASKED_NOT_LITERAL:
+    FAIL_ON_ERROR(_yr_emit_inst_arg_uint16(
+        emit_context,
+        RE_OPCODE_MASKED_NOT_LITERAL,
         re_node->mask << 8 | re_node->value,
         &instruction_ref,
         NULL));
@@ -1779,6 +1797,18 @@ int yr_re_exec(
         action = match ? ACTION_NONE : ACTION_KILL;
         fiber->ip += 2;
         break;
+      
+      case RE_OPCODE_NOT_LITERAL:
+        prolog;
+        
+        // We don't need to take into account the case-insensitive
+        // case because this opcode is only used with hex strings,
+        // which can't be case-insensitive.
+  
+        match = (*input != *(ip + 1));
+        action = match ? ACTION_NONE : ACTION_KILL;
+        fiber->ip += 2;
+        break;
 
       case RE_OPCODE_MASKED_LITERAL:
         prolog;
@@ -1790,6 +1820,20 @@ int yr_re_exec(
         // which can't be case-insensitive.
 
         match = ((*input & mask) == value);
+        action = match ? ACTION_NONE : ACTION_KILL;
+        fiber->ip += 3;
+        break;
+
+      case RE_OPCODE_MASKED_NOT_LITERAL:
+        prolog;
+        value = *(int16_t*) (ip + 1) & 0xFF;
+        mask = *(int16_t*) (ip + 1) >> 8;
+
+        // We don't need to take into account the case-insensitive
+        // case because this opcode is only used with hex strings,
+        // which can't be case-insensitive.
+
+        match = ((*input & mask) != value);
         action = match ? ACTION_NONE : ACTION_KILL;
         fiber->ip += 3;
         break;
@@ -2053,6 +2097,8 @@ static void _yr_re_fast_exec_destroy_position_list(
 //
 //   * RE_OPCODE_LITERAL
 //   * RE_OPCODE_MASKED_LITERAL,
+//   * RE_OPCODE_NOT_LITERAL
+//   * RE_OPCODE_MASKED_NOT_LITERAL
 //   * RE_OPCODE_ANY
 //   * RE_OPCODE_REPEAT_ANY_UNGREEDY
 //   * RE_OPCODE_MATCH.
@@ -2166,6 +2212,17 @@ int yr_re_fast_exec(
           current->input += input_incr;
         }
         break;
+      
+      case RE_OPCODE_NOT_LITERAL:
+        if (bytes_matched >= max_bytes_matched)
+          break;
+
+        if (*current->input != *(ip + 1))
+        {
+          match = true;
+          current->input += input_incr;
+        }
+        break;
 
       case RE_OPCODE_MASKED_LITERAL:
         if (bytes_matched >= max_bytes_matched)
@@ -2175,6 +2232,20 @@ int yr_re_fast_exec(
         mask = *(int16_t*) (ip + 1) >> 8;
 
         if ((*current->input & mask) == value)
+        {
+          match = true;
+          current->input += input_incr;
+        }
+        break;
+      
+      case RE_OPCODE_MASKED_NOT_LITERAL:
+        if (bytes_matched >= max_bytes_matched)
+          break;
+
+        value = *(int16_t*) (ip + 1) & 0xFF;
+        mask = *(int16_t*) (ip + 1) >> 8;
+
+        if ((*current->input & mask) != value)
         {
           match = true;
           current->input += input_incr;
@@ -2340,9 +2411,11 @@ int yr_re_fast_exec(
       ip += 1;
       break;
     case RE_OPCODE_LITERAL:
+    case RE_OPCODE_NOT_LITERAL:
       ip += 2;
       break;
     case RE_OPCODE_MASKED_LITERAL:
+    case RE_OPCODE_MASKED_NOT_LITERAL:
       ip += 3;
       break;
     case RE_OPCODE_REPEAT_ANY_UNGREEDY:
@@ -2411,6 +2484,10 @@ static void _yr_re_print_node(RE_NODE* re_node, uint32_t indent)
 
   case RE_NODE_LITERAL:
     printf("Lit(%c)", re_node->value);
+    break;
+
+  case RE_NODE_NOT_LITERAL:
+    printf("NotLit(%c)", re_node->value);
     break;
 
   case RE_NODE_MASKED_LITERAL:

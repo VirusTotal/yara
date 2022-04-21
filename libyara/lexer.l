@@ -729,7 +729,7 @@ u?int(8|16|32)(be)? {
 }
 
 
-\{(({hexdigit}|[ \-|\?\[\]\(\)\n\r\t]|\/\*(\/|\**[^*/])*\*+\/)+|\/\/.*)+\}  {
+\{(({hexdigit}|[ \-|\~\?\[\]\(\)\n\r\t]|\/\*(\/|\**[^*/])*\*+\/)+|\/\/.*)+\}  {
   // Match hex-digits with whitespace or comments. The latter are stripped
   // out by hex_lexer.l
   // TODO(vmalvarez): Integrate the hex string lexer and parser into this one,
@@ -896,10 +896,15 @@ int yr_lex_parse_rules_string(
 
   compiler->errors = 0;
 
+  if (yylex_init(&yyscanner) != 0)
+  {
+    compiler->errors = 1;
+    compiler->last_error = ERROR_INSUFFICIENT_MEMORY;
+    return compiler->errors;
+  }
+
   if (setjmp(compiler->error_recovery) != 0)
     return compiler->errors;
-
-  yylex_init(&yyscanner);
 
   #if YYDEBUG
   yydebug = 1;
@@ -923,10 +928,15 @@ int yr_lex_parse_rules_file(
 
   compiler->errors = 0;
 
+  if (yylex_init(&yyscanner) != 0)
+  {
+    compiler->errors = 1;
+    compiler->last_error = ERROR_INSUFFICIENT_MEMORY;
+    return compiler->errors;
+  }
+
   if (setjmp(compiler->error_recovery) != 0)
     return compiler->errors;
-
-  yylex_init(&yyscanner);
 
   #if YYDEBUG
   yydebug = 1;
@@ -992,7 +1002,13 @@ int yr_lex_parse_rules_fd(
     return compiler->errors;
   }
 
-  yylex_init(&yyscanner);
+  if (yylex_init(&yyscanner) != 0)
+  {
+    yr_free(buffer);
+    compiler->errors = 1;
+    compiler->last_error = ERROR_INSUFFICIENT_MEMORY;
+    return compiler->errors;
+  }
 
   #if YYDEBUG
   yydebug = 1;

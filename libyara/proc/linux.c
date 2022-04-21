@@ -312,8 +312,8 @@ YR_API YR_MEMORY_BLOCK* yr_process_get_next_memory_block(
 
   char buffer[PATH_MAX];
   char perm[5];
-  uint64_t begin, end;
 
+  uint64_t begin, end;
   uint64_t current_begin = context->current_block.base +
                            context->current_block.size;
 
@@ -322,10 +322,12 @@ YR_API YR_MEMORY_BLOCK* yr_process_get_next_memory_block(
   yr_get_configuration_uint64(
       YR_CONFIG_MAX_PROCESS_MEMORY_CHUNK, &max_process_memory_chunk);
 
+  iterator->last_error = ERROR_SUCCESS;
+
   if (proc_info->next_block_end <= current_begin)
   {
-    int n, path_start;
-    char *p;
+    int path_start, n = 0;
+    char* p;
 
     while (fgets(buffer, sizeof(buffer), proc_info->maps) != NULL)
     {
@@ -399,8 +401,6 @@ YR_API YR_MEMORY_BLOCK* yr_process_get_next_memory_block(
 
   assert(context->current_block.size > 0);
 
-  iterator->last_error = ERROR_SUCCESS;
-
   YR_DEBUG_FPRINTF(
       2,
       stderr,
@@ -433,6 +433,9 @@ YR_API YR_MEMORY_BLOCK* yr_process_get_first_memory_block(
   result = yr_process_get_next_memory_block(iterator);
 
 _exit:
+
+  if (result == NULL)
+    iterator->last_error = ERROR_COULD_NOT_READ_PROCESS_MEMORY;
 
   YR_DEBUG_FPRINTF(2, stderr, "} = %p // %s()\n", result, __FUNCTION__);
 

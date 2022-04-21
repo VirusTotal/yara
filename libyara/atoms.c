@@ -1142,6 +1142,8 @@ static int _yr_atoms_extract_from_re(
       case RE_NODE_ANCHOR_END:
       case RE_NODE_WORD_BOUNDARY:
       case RE_NODE_NON_WORD_BOUNDARY:
+      case RE_NODE_NOT_LITERAL:
+      case RE_NODE_MASKED_NOT_LITERAL:
 
         si.new_appending_node = current_appending_node;
         si.re_node = NULL;

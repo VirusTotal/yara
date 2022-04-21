@@ -2871,7 +2871,13 @@ int yr_parse_re_string(
 
   FAIL_ON_ERROR(yr_re_ast_create(re_ast));
 
-  yylex_init(&yyscanner);
+  if (yylex_init(&yyscanner) != 0)
+  {
+    yr_re_ast_destroy(*re_ast);
+    *re_ast = NULL;
+    return ERROR_INSUFFICIENT_MEMORY;
+  }
+
   yyset_extra(*re_ast, yyscanner);
   yy_scan_string(re_string, yyscanner);
   yyparse(yyscanner, &lex_env);

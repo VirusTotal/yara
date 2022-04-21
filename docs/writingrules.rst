@@ -146,8 +146,8 @@ shown below.
 Hexadecimal strings
 -------------------
 
-Hexadecimal strings allow three special constructions that make them more
-flexible: wild-cards, jumps, and alternatives. Wild-cards are just placeholders
+Hexadecimal strings allow four special constructions that make them more
+flexible: wild-cards, not operators, jumps, and alternatives. Wild-cards are just placeholders
 that you can put into the string indicating that some bytes are unknown and they
 should match anything. The placeholder character is the question mark (?). Here
 you have an example of a hexadecimal string with wild-cards:
@@ -166,7 +166,27 @@ you have an example of a hexadecimal string with wild-cards:
 As shown in the example the wild-cards are nibble-wise, which means that you can
 define just one nibble of the byte and leave the other unknown.
 
-Wild-cards are useful when defining strings whose content can vary but you know
+In some cases you may wish to specify that a byte is not a specific value. For
+that you can use the not operator with a byte value:
+
+.. code-block:: yara
+
+    rule NotExample
+    {
+        strings:
+            $hex_string = { F4 23 ~00 62 B4 }
+            $hex_string2 = { F4 23 ~?0 62 B4 }
+        condition:
+            $hex_string and $hex_string2
+    }
+
+In the example above we have a byte prefixed with a tilda (~), which is the not operator.
+This defines that the byte in that location can take any value except the value specified.
+In this case the first string will only match if the byte is not 00. The not operator can
+also be used with nibble-wise wild-cards, so the second string will only match if the
+second nibble is not zero. It doe 
+
+Wild-cards and not operators are useful when defining strings whose content can vary but you know
 the length of the variable chunks, however, this is not always the case. In some
 circumstances you may need to define strings with chunks of variable content and
 length. In those situations you can use jumps instead of wild-cards:
