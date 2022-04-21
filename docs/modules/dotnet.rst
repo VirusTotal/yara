@@ -79,7 +79,7 @@ Reference
 
     .. c:member:: name
 
-        Stream name.
+        Stream name
 
     .. c:member:: offset
 
@@ -87,7 +87,7 @@ Reference
 
     .. c:member:: size
 
-        Stream size.
+        Stream size
 
     *Example: dotnet.streams[0].name == "#~"*
 
@@ -208,8 +208,6 @@ Reference
         memberref name
 
         *Example: dotnet.memberrefs[18].name == "CompareTo"*
-
-    
 
 .. c:type:: number_of_methods
 
