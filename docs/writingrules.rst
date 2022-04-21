@@ -180,11 +180,11 @@ that you can use the not operator with a byte value:
             $hex_string and $hex_string2
     }
 
-In the example above we have a byte prefixed with a tilda (~), which is the not operator.
+In the example above we have a byte prefixed with a tilde (~), which is the not operator.
 This defines that the byte in that location can take any value except the value specified.
 In this case the first string will only match if the byte is not 00. The not operator can
 also be used with nibble-wise wild-cards, so the second string will only match if the
-second nibble is not zero. It doe 
+second nibble is not zero.
 
 Wild-cards and not operators are useful when defining strings whose content can vary but you know
 the length of the variable chunks, however, this is not always the case. In some
