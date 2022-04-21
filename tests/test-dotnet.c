@@ -109,7 +109,7 @@ int main(int argc, char** argv)
             typeref.name == \"AssemblyTitleAttribute\") \
       }",
       "tests/data/"
-      "3b8b90159fa9b6048cc5410c5d53f116943564e4d05b04a843f9b3d0540d0c1c");
+      "0ca09bde7602769120fadc4f7a4147347a7a97271370583586c9e587fd396171");
 
   assert_true_rule_file(
       "import \"dotnet\" \
