@@ -53,7 +53,7 @@ Reference
 
     If CORHEADER_NATIVE_ENTRYPOINT is set, entry_point represents an RVA 
     to a native entrypoint. If CORHEADER_NATIVE_ENTRYPOINT is not set, 
-    entry_point represents a managed entrypoint.
+    entry_point represents a metadata token for entrypoint.
 
 .. c:type:: version
 
