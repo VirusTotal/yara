@@ -36,7 +36,7 @@ Reference
 
 .. c:type:: minor_runtime_version
 
-    The major version contained in the CLI header
+    The minor version contained in the CLI header
 
 .. c:type:: flags
 
