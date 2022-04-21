@@ -20,6 +20,22 @@ int main(int argc, char** argv)
       "import \"pe\" \
       rule test { \
         condition: \
+          pe.is_pe \
+      }",
+      "tests/data/tiny");
+
+  assert_true_rule_file(
+      "import \"pe\" \
+      rule test { \
+        condition: \
+          not pe.is_pe \
+      }",
+      "tests/data/tiny-macho");
+
+  assert_true_rule_file(
+      "import \"pe\" \
+      rule test { \
+        condition: \
           pe.imports(\"KERNEL32.dll\", \"DeleteCriticalSection\") \
       }",
       "tests/data/tiny");
@@ -129,7 +145,6 @@ int main(int argc, char** argv)
           pe.imports(pe.IMPORT_STANDARD, /.*/, /.*CriticalSection/) \
       }",
       "tests/data/tiny-idata-5200");
-
 
   assert_true_rule_file(
       "import \"pe\" \
@@ -256,13 +271,13 @@ int main(int argc, char** argv)
       }",
       "")
 
-  assert_true_rule_file(
-      "import \"pe\" \
+      assert_true_rule_file(
+          "import \"pe\" \
       rule test { \
         condition: \
           pe.number_of_sections == 7 \
       }",
-      "tests/data/tiny");
+          "tests/data/tiny");
 
   assert_true_rule_file(
       "import \"pe\" \
@@ -405,6 +420,14 @@ int main(int argc, char** argv)
       "tests/data/"
       "079a472d22290a94ebb212aa8015cdc8dd28a968c6b4d3b88acdd58ce2d3b885");
 
+  assert_true_rule_file(
+      "import \"pe\" \
+      rule test { \
+        condition: \
+          pe.pdb_path == \"/Users/runner/work/OpenCorePkg/OpenCorePkg/UDK/Build/OpenCorePkg/DEBUG_XCODE5/X64/OpenCorePkg/Application/ChipTune/ChipTune/DEBUG/ChipTune.dll\" \
+      }",
+      "tests/data/ChipTune.efi");
+
   assert_false_rule_file(
       "import \"pe\" \
       rule test { \
@@ -545,7 +568,8 @@ int main(int argc, char** argv)
               version.value == \"27.1.9.33\" \
           ) \
       }",
-      "tests/data/079a472d22290a94ebb212aa8015cdc8dd28a968c6b4d3b88acdd58ce2d3b885");
+      "tests/data/"
+      "079a472d22290a94ebb212aa8015cdc8dd28a968c6b4d3b88acdd58ce2d3b885");
 
   assert_true_rule_file(
       "import \"pe\" \
@@ -569,7 +593,8 @@ int main(int argc, char** argv)
                 )\
             )\
       }",
-      "tests/data/079a472d22290a94ebb212aa8015cdc8dd28a968c6b4d3b88acdd58ce2d3b885");
+      "tests/data/"
+      "079a472d22290a94ebb212aa8015cdc8dd28a968c6b4d3b88acdd58ce2d3b885");
 
   assert_true_rule_file(
       "import \"pe\" \
@@ -584,8 +609,8 @@ int main(int argc, char** argv)
             pe.version_info[\"PrivateBuild\"] == \"\" and \
             pe.version_info[\"SpecialBuild\"] == \"\" \
       }",
-      "tests/data/ca21e1c32065352d352be6cde97f89c141d7737ea92434831f998080783d5386");
-
+      "tests/data/"
+      "ca21e1c32065352d352be6cde97f89c141d7737ea92434831f998080783d5386");
 
   assert_true_rule_file(
       "import \"pe\" \

@@ -1,8 +1,8 @@
-/* A Bison parser, made by GNU Bison 3.7.  */
+/* A Bison parser, made by GNU Bison 3.8.2.  */
 
 /* Bison interface for Yacc-like parsers in C
 
-   Copyright (C) 1984, 1989-1990, 2000-2015, 2018-2020 Free Software Foundation,
+   Copyright (C) 1984, 1989-1990, 2000-2015, 2018-2021 Free Software Foundation,
    Inc.
 
    This program is free software: you can redistribute it and/or modify
@@ -16,7 +16,7 @@
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
-   along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
+   along with this program.  If not, see <https://www.gnu.org/licenses/>.  */
 
 /* As a special exception, you may create a larger work that contains
    part or all of the Bison parser skeleton and distribute that work
@@ -119,6 +119,7 @@ extern int yara_yydebug;
   typedef enum yytokentype yytoken_kind_t;
 #endif
 /* Token kinds.  */
+#define YYEMPTY -2
 #define _END_OF_FILE_ 0
 #define YYerror 256
 #define YYUNDEF 257
@@ -202,7 +203,7 @@ union YYSTYPE
   YR_ARENA_REF meta;
   YR_ARENA_REF string;
 
-#line 206 "grammar.h"
+#line 207 "grammar.h"
 
 };
 typedef union YYSTYPE YYSTYPE;
@@ -212,6 +213,8 @@ typedef union YYSTYPE YYSTYPE;
 
 
 
+
 int yara_yyparse (void *yyscanner, YR_COMPILER* compiler);
+
 
 #endif /* !YY_YARA_YY_GRAMMAR_H_INCLUDED  */

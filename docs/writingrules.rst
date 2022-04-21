@@ -847,6 +847,7 @@ Precedence  Operator     Description                                Associativit
             matches      String matches regular expression
 ----------  -----------  -----------------------------------------  -------------
 11          not          Logical NOT                                Right-to-left
+            defined      Check if an expression is defined
 ----------  -----------  -----------------------------------------  -------------
 12          and          Logical AND                                Left-to-right
 ----------  -----------  -----------------------------------------  -------------
@@ -1092,6 +1093,8 @@ itself. As an example let's see a rule to distinguish PE files:
             uint32(uint32(0x3C)) == 0x00004550
     }
 
+
+.. _sets-of-strings:
 
 Sets of strings
 ---------------
@@ -1394,6 +1397,54 @@ As can be seen in the example, a file will satisfy Rule2 only if it contains
 the string "dummy2" and satisfies Rule1. Note that it is strictly necessary to
 define the rule being invoked before the one that will make the invocation.
 
+Another way to reference other rules was introduced in 4.2.0 and that is sets
+of rules, which operate similarly to sets of strings (see
+:ref:`sets-of-strings)`. For example:
+
+.. code-block:: yara
+
+    rule Rule1
+    {
+        strings:
+            $a = "dummy1"
+
+        condition:
+            $a
+    }
+
+    rule Rule2
+    {
+        strings:
+            $a = "dummy2"
+
+        condition:
+            $a
+    }
+
+    rule MainRule
+    {
+        strings:
+            $a = "dummy2"
+
+        condition:
+            any of (Rule*)
+    }
+
+This example demonstrates how to use rule sets to describe higher order logic
+in a way which automatically grows with your rules. If you define another rule
+named ``Rule3`` before ``MainRule`` then it will automatically be included in
+the expansion of ``Rule*`` in the condition for MainRule.
+
+To use rule sets all of the rules included in the set **must** exist prior to
+the rule set being used. For example, the following will produce a compiler
+error because ``a2`` is defined after the rule set is used in ``x``:
+
+.. code-block:: yara
+
+    rule a1 { condition: true }
+    rule x { condition: 1 of (a*) }
+    rule a2 { condition: true }
+
 More about rules
 ================
 
@@ -1589,7 +1640,7 @@ files, because ``pe.entry_point`` is undefined for those files. This implies tha
 
 If the condition is ``pe.entry_point == 0x1000`` alone, it will evaluate to ``false``
 for non-PE files, and so will do ``pe.entry_point != 0x1000`` and
-``not pe.entry_point == 0x1000``, as non of these expressions make sense for non-PE
+``not pe.entry_point == 0x1000``, as none of these expressions make sense for non-PE
 files.
 
 To check if expression is defined use unary operator ``defined``. Example:

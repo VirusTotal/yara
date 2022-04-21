@@ -490,7 +490,7 @@ static int _yr_scan_verify_chained_string_match(
     uint32_t max_match_data;
 
     FAIL_ON_ERROR(
-        yr_get_configuration(YR_CONFIG_MAX_MATCH_DATA, &max_match_data))
+        yr_get_configuration_uint32(YR_CONFIG_MAX_MATCH_DATA, &max_match_data))
 
     if (STRING_IS_CHAIN_TAIL(matching_string))
     {
@@ -545,8 +545,8 @@ static int _yr_scan_verify_chained_string_match(
           _yr_scan_remove_match_from_list(
               match, &context->unconfirmed_matches[string->idx]);
 
-          match->match_length = (int32_t)(
-              match_offset - match->offset + match_length);
+          match->match_length =
+              (int32_t) (match_offset - match->offset + match_length);
 
           match->data_length = yr_min(
               match->match_length, (int32_t) max_match_data);
@@ -694,7 +694,7 @@ static int _yr_scan_match_callback(
     uint32_t max_match_data;
 
     FAIL_ON_ERROR(
-        yr_get_configuration(YR_CONFIG_MAX_MATCH_DATA, &max_match_data));
+        yr_get_configuration_uint32(YR_CONFIG_MAX_MATCH_DATA, &max_match_data));
 
     new_match = yr_notebook_alloc(
         callback_args->context->matches_notebook, sizeof(YR_MATCH));

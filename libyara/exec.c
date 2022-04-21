@@ -369,7 +369,7 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
 
   uint8_t opcode;
 
-  yr_get_configuration(YR_CONFIG_STACK_SIZE, (void*) &stack.capacity);
+  yr_get_configuration_uint32(YR_CONFIG_STACK_SIZE, &stack.capacity);
 
   stack.sp = 0;
   stack.items = (YR_VALUE*) yr_malloc(stack.capacity * sizeof(YR_VALUE));
@@ -902,7 +902,7 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
       }
       else
       {
-        if yr_bitmask_is_set (context->rule_matches_flags, r1.i)
+        if (yr_bitmask_is_set(context->rule_matches_flags, r1.i))
           r2.i = 1;
         else
           r2.i = 0;
@@ -1019,7 +1019,7 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
         break;
 
       case OBJECT_TYPE_FLOAT:
-        if (isnan(r1.o->value.d))
+        if (yr_isnan(r1.o->value.d))
           r1.i = YR_UNDEFINED;
         else
           r1.d = r1.o->value.d;
@@ -1135,7 +1135,7 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
       function = object_as_function(r2.o);
       result = ERROR_INTERNAL_FATAL_ERROR;
 
-      for (int i = 0; i < YR_MAX_OVERLOADED_FUNCTIONS; i++)
+      for (i = 0; i < YR_MAX_OVERLOADED_FUNCTIONS; i++)
       {
         if (function->prototypes[i].arguments_fmt == NULL)
           break;
@@ -1266,7 +1266,8 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
       break;
 
     case OP_COUNT_IN:
-      YR_DEBUG_FPRINTF(2, stderr, "- case OP_COUNT_IN: // %s()\n", __FUNCTION__);
+      YR_DEBUG_FPRINTF(
+          2, stderr, "- case OP_COUNT_IN: // %s()\n", __FUNCTION__);
       pop(r3);
       pop(r2);
       pop(r1);
@@ -1356,15 +1357,26 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
 
     case OP_OF:
     case OP_OF_PERCENT:
+      memcpy(&r2.i, ip, sizeof(uint64_t));
+      ip += sizeof(uint64_t);
+      assert(r2.i == OF_STRING_SET || r2.i == OF_RULE_SET);
       found = 0;
       count = 0;
       pop(r1);
 
       while (!is_undef(r1))
       {
-        if (context->matches[r1.s->idx].tail != NULL)
+        if (r2.i == OF_STRING_SET)
         {
-          found++;
+          if (context->matches[r1.s->idx].tail != NULL)
+          {
+            found++;
+          }
+        }
+        else
+        {
+          // r1.i is 1 if the rule has already matched and zero otherwise.
+          found += r1.i;
         }
         count++;
         pop(r1);
@@ -1402,6 +1414,7 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
       YR_DEBUG_FPRINTF(
           2, stderr, "- case OP_OF_FOUND_IN: // %s()\n", __FUNCTION__);
 
+      found = 0;
       count = 0;
       pop(r2);
       pop(r1);
@@ -1422,7 +1435,7 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
           if (match->base + match->offset >= r1.i &&
               match->base + match->offset <= r2.i)
           {
-            count++;
+            found++;
             break;
           }
 
@@ -1432,11 +1445,15 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
           match = match->next;
         }
 
+        count++;
         pop(r3);
       }
 
-      pop(r1)
-      r1.i = count >= r1.i ? 1 : 0;
+      pop(r1);
+      if (is_undef(r1))
+        r1.i = found >= count ? 1 : 0;
+      else
+        r1.i = found >= r1.i ? 1 : 0;
 
       push(r1);
       break;

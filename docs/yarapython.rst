@@ -299,11 +299,36 @@ Here is an example:
 If you do not use a warning callback a warning message will be sent to the
 normal python warning system for you and scanning will continue.
 
+With YARA 4.2.0 a new ``console`` module was introduced which allows you to
+send log messages within YARA. These are, by default, printed to stdout in
+yara-python, but you can handle them in your own callback using the
+``console_callback`` parameter.
+
+Here is an example:
+
+.. code-block:: python
+
+  import yara
+
+  r = """
+  import "console"
+
+  rule a { condition: console.log("Hello from Python!") }
+  """
+
+  def console(message):
+      print(f"Callback: {message}")
+
+  rules = yara.compile(source=r)
+  rules.match("/bin/ls", console_callback=console)
+  rules.match("/bin/ls")
+
+The type of the ``message`` parameter is a string.
 
 You may also find that the default sizes for the stack for the matching engine in
 yara or the default size for the maximum number of strings per rule is too low. In
 the C libyara API, you can modify these using the ``YR_CONFIG_STACK_SIZE`` and
-``YR_CONFIG_MAX_STRINGS_PER_RULE`` variables via the ``yr_set_configuration``
+``YR_CONFIG_MAX_STRINGS_PER_RULE`` variables via the ``yr_set_configuration_uint32``
 function in libyara. The command-line tool exposes these as the ``--stack-size``
 (``-k``) and ``--max-strings-per-rule`` command-line arguments. In order to set
 these values via the Python API, you can use ``yara.set_config`` with either or
@@ -313,7 +338,7 @@ strings per rule was ``10000``.
 
 Also, ``yara.set_config`` accepts the `max_match_data` argument for controlling
 the maximum number of bytes that will be returned for each matching string. This
-is equivalent to using ``YR_CONFIG_MAX_MATCH_DATA`` with the ``yr_set_configuration``
+is equivalent to using ``YR_CONFIG_MAX_MATCH_DATA`` with the ``yr_set_configuration_uint32``
 in the C API. By the default this is set to 512.
 
 Here are a few example calls:
@@ -393,7 +418,7 @@ Reference
   Instances of this class are returned by :py:func:`yara.compile` and represents
   a set of compiled rules.
 
-  .. py:method:: match(filepath, pid, data, externals=None, callback=None, fast=False, timeout=None, modules_data=None, modules_callback=None, warnings_callback=None, which_callbacks=CALLBACK_ALL)
+  .. py:method:: match(filepath, pid, data, externals=None, callback=None, fast=False, timeout=None, modules_data=None, modules_callback=None, warnings_callback=None, which_callbacks=CALLBACK_ALL, console_callback=None)
 
     Scan a file, process memory or data string.
 
@@ -417,6 +442,7 @@ Reference
     :param int which_callbacks: An integer that indicates in which cases the
       callback function must be called. Possible values are ``yara.CALLBACK_ALL``,
       ``yara.CALLBACK_MATCHES`` and ``yara.CALLBACK_NON_MATCHES``.
+    :param function console_callback: Callback function invoked for each console module call.
     :raises yara.TimeoutError: If the timeout was reached.
     :raises yara.Error: If an error occurred during the scan.
 

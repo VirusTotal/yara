@@ -822,8 +822,8 @@ union YR_VALUE
 
 struct YR_VALUE_STACK
 {
-  int32_t sp;
-  int32_t capacity;
+  uint32_t sp;
+  uint32_t capacity;
   YR_VALUE* items;
 };
 

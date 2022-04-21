@@ -105,19 +105,13 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define ERROR_DUPLICATED_MODIFIER            60
 #define ERROR_BLOCK_NOT_READY                61
 #define ERROR_INVALID_PERCENTAGE             62
+#define ERROR_IDENTIFIER_MATCHES_WILDCARD    63
 
 #define GOTO_EXIT_ON_ERROR(x)    \
   {                              \
     result = (x);                \
     if (result != ERROR_SUCCESS) \
       goto _exit;                \
-  }
-
-#define FAIL_ON_ERROR(x)         \
-  {                              \
-    int result = (x);            \
-    if (result != ERROR_SUCCESS) \
-      return result;             \
   }
 
 #define GOTO_EXIT_ON_ERROR_WITH_CLEANUP(x, cleanup) \
@@ -130,13 +124,22 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
     }                                               \
   }
 
+
+#define FAIL_ON_ERROR(x)          \
+  {                               \
+    int __error = (x);            \
+    if (__error != ERROR_SUCCESS) \
+      return __error;             \
+  }
+
+
 #define FAIL_ON_ERROR_WITH_CLEANUP(x, cleanup) \
   {                                            \
-    int result = (x);                          \
-    if (result != ERROR_SUCCESS)               \
+    int __error = (x);                         \
+    if (__error != ERROR_SUCCESS)              \
     {                                          \
       cleanup;                                 \
-      return result;                           \
+      return __error;                          \
     }                                          \
   }
 

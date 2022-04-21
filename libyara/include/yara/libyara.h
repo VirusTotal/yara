@@ -88,7 +88,11 @@ YR_API int yr_initialize(void);
 YR_API int yr_finalize(void);
 
 YR_API int yr_set_configuration(YR_CONFIG_NAME, void*);
+YR_API int yr_set_configuration_uint32(YR_CONFIG_NAME, uint32_t);
+YR_API int yr_set_configuration_uint64(YR_CONFIG_NAME, uint64_t);
 
 YR_API int yr_get_configuration(YR_CONFIG_NAME, void*);
+YR_API int yr_get_configuration_uint32(YR_CONFIG_NAME, uint32_t*);
+YR_API int yr_get_configuration_uint64(YR_CONFIG_NAME, uint64_t*);
 
 #endif

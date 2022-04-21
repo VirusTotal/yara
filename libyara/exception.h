@@ -37,7 +37,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <windows.h>
 
-// If compiling with Microsoft's compiler use structered exception handling.
+// If compiling with Microsoft's compiler use structured exception handling.
 
 #ifdef _MSC_VER
 

@@ -76,6 +76,14 @@ static void test_boolean_operators()
 
   assert_false_rule("rule test { condition: false or false }", NULL);
 
+  assert_true_rule("rule test { condition: not var_false }", NULL);
+
+  assert_true_rule("rule test { condition: var_true }", NULL);
+
+  assert_false_rule("rule test { condition: var_false }", NULL);
+
+  assert_false_rule("rule test { condition: not var_true }", NULL);
+
   assert_false_rule(
       "import \"tests\" rule test { condition: not tests.undefined.i }", NULL);
 
@@ -268,6 +276,10 @@ static void test_arithmetic_operators()
   assert_true_rule("rule test { condition: 0o100 == 64 }", NULL);
 
   assert_true_rule("rule test { condition: 0o755 == 493 }", NULL);
+
+  // Test cases for issue #1631.
+  assert_true_rule("rule test { condition: var_one*3 == 3}", NULL);
+  assert_true_rule("rule test { condition: var_zero*3 == 0}", NULL);
 
   // TODO: This should return ERROR_INTEGER_OVERFLOW, but right now it returns
   // ERROR_SYNTAX_ERROR because after the lexer aborts with
@@ -618,6 +630,18 @@ static void test_strings()
              all of them in (0..10)\n\
        }",
       "foobarbaz" TEXT_1024_BYTES);
+
+  // https://github.com/VirusTotal/yara/issues/1660
+  assert_false_rule(
+      "rule test {\n\
+         strings:\n\
+             $a = \"foo\"\n\
+             $b = \"bar\"\n\
+             $c = \"baz\"\n\
+         condition:\n\
+             all of them in (0..1)\n\
+       }",
+      TEXT_1024_BYTES);
 
   assert_true_rule(
       "rule test {\n\
@@ -1529,6 +1553,50 @@ static void test_length()
       "rule test { strings: $a = { 6D 69 73 73 [-] 70 69 } condition: !a == "
       "11}",
       TEXT_1024_BYTES "mississippi");
+
+  YR_DEBUG_FPRINTF(1, stderr, "} // %s()\n", __FUNCTION__);
+}
+
+static void test_rule_of()
+{
+  YR_DEBUG_FPRINTF(1, stderr, "+ %s() {\n", __FUNCTION__);
+
+  assert_match_count(
+      "rule a { condition: true } rule b { condition: 1 of (a) }", NULL, 2);
+
+  assert_match_count(
+      "rule a1 { condition: true } "
+      "rule a2 { condition: true } "
+      "rule b { condition: 2 of (a*) }",
+      NULL,
+      3);
+
+  assert_match_count(
+      "rule a1 { condition: true } "
+      "rule a2 { condition: false } "
+      "rule b { condition: 50% of (a*) }",
+      NULL,
+      2);
+
+  assert_error("rule a { condition: all of (b*) }", ERROR_UNDEFINED_IDENTIFIER);
+
+  assert_error(
+      "rule a0 { condition: true } "
+      "rule b { condition: 1 of (a*) } "
+      "rule a1 { condition: true } ",
+      ERROR_IDENTIFIER_MATCHES_WILDCARD);
+
+  // Make sure repeating the rule set works
+  assert_match_count(
+      "rule a { condition: true } "
+      "rule b { condition: 1 of (a*) } "
+      "rule c { condition: 1 of (a*) }",
+      NULL,
+      3);
+
+  // This will compile but is false for the same reason that
+  // "rule x { condition: x }" is compiles but is false.
+  assert_false_rule("rule a { condition: 1 of (a*) }", NULL);
 
   YR_DEBUG_FPRINTF(1, stderr, "} // %s()\n", __FUNCTION__);
 }
@@ -2773,9 +2841,28 @@ static void test_hash_module()
             and \
           hash.crc32(0, filesize) == 0x8587d865 \
             and \
-          hash.crc32(\"TEST STRING\") == 0x51f9be31 \
+          hash.checksum32(0, filesize) == 0x1ef \
       }",
       blob);
+
+  assert_true_rule(
+      "import \"hash\" \
+       rule test { \
+        condition: \
+          hash.md5(\"TEST STRING\") == \
+            \"2d7d687432758a8eeeca7b7e5d518e7f\" \
+            and \
+          hash.sha1(\"TEST STRING\") == \
+            \"d39d009c05797a93a79720952e99c7054a24e7c4\" \
+            and \
+          hash.sha256(\"TEST STRING\") == \
+            \"fb6ca29024bd42f1894620ffa45fd976217e72d988b04ee02bb4793ab9d0c862\" \
+            and \
+          hash.crc32(\"TEST STRING\") == 0x51f9be31 \
+            and \
+          hash.checksum32(\"TEST STRING\") == 0x337 \
+      }",
+      NULL);
 
   // Test hash caching mechanism
 
@@ -3073,12 +3160,20 @@ void test_performance_warnings()
         strings: $a = { 01 ?? ?? 02 } \
         condition: $a }");
 
-  assert_warning("rule test { \
+  assert_no_warnings("rule test { \
         strings: $a = { 01 ?? ?2 03 } \
         condition: $a }");
 
-  assert_warning("rule test { \
+  assert_no_warnings("rule test { \
         strings: $a = { 01 ?? 02 1? } \
+        condition: $a }");
+
+  assert_warning("rule test { \
+        strings: $a = { 68 ?? 00 ?? 00 68 ?? 00 ?? 00} \
+        condition: $a }");
+
+  assert_no_warnings("rule test { \
+        strings: $a = { (61 62 63 64 ?? | 65 ?? ?? 00 00 66)} \
         condition: $a }");
 
   assert_warning("rule test { \
@@ -3157,6 +3252,10 @@ void test_performance_warnings()
         strings: $a = \"MZ\" \
         condition: $a }");
 
+  assert_no_warnings("rule test { \
+        strings: $a = \"ZZ\" \
+        condition: $a }");
+
   assert_warning("rule test { \
         strings: $a = \"                    \" xor(0x20) \
         condition: $a }");
@@ -3208,10 +3307,7 @@ static void test_meta()
 
 void test_defined()
 {
-
-  assert_true_rule(
-      "rule t { condition: defined 1 }",
-      NULL);
+  assert_true_rule("rule t { condition: defined 1 }", NULL);
 
   assert_false_rule(
       "import \"pe\" \
@@ -3229,6 +3325,37 @@ void test_defined()
       }",
       NULL);
 
+  assert_false_rule(
+      "import \"pe\" \
+      rule t { \
+        condition: \
+          defined not pe.number_of_resources \
+      }",
+      NULL);
+
+  assert_false_rule(
+      "import \"pe\" \
+      rule t { \
+        condition: \
+          defined pe.number_of_resources and pe.number_of_resources == 0 \
+      }",
+      NULL);
+
+  assert_true_rule(
+      "import \"pe\" \
+      rule t { \
+        condition: \
+          defined (pe.number_of_resources and pe.number_of_resources == 0) \
+      }",
+      NULL);
+
+  assert_true_rule(
+      "import \"pe\" \
+      rule t { \
+        condition: \
+          defined \"foo\" contains \"f\" \
+      }",
+      NULL);
 }
 
 static void test_pass(int pass)
@@ -3293,6 +3420,7 @@ static void test_pass(int pass)
   test_offset();
   test_length();
   test_of();
+  test_rule_of();
   test_for();
   test_re();
   test_filesize();

@@ -56,6 +56,8 @@ typedef struct _YR_HASH_TABLE
 
 
 typedef int (*YR_HASH_TABLE_FREE_VALUE_FUNC)(void* value);
+typedef int (*YR_HASH_TABLE_ITERATE_FUNC)(
+      void* key, size_t key_length, void* value, void* data);
 
 
 uint32_t yr_hash(uint32_t seed, const void* buffer, size_t len);
@@ -72,6 +74,13 @@ YR_API void yr_hash_table_clean(
 YR_API void yr_hash_table_destroy(
     YR_HASH_TABLE* table,
     YR_HASH_TABLE_FREE_VALUE_FUNC free_value);
+
+
+YR_API int yr_hash_table_iterate(
+    YR_HASH_TABLE* table,
+    const char* ns,
+    YR_HASH_TABLE_ITERATE_FUNC iterate_func,
+    void* data);
 
 
 YR_API void* yr_hash_table_lookup(

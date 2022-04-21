@@ -196,11 +196,11 @@ void test_max_string_per_rules()
 
   yr_initialize();
 
-  yr_get_configuration(
-      YR_CONFIG_MAX_STRINGS_PER_RULE, (void*) &old_max_strings_per_rule);
+  yr_get_configuration_uint32(
+      YR_CONFIG_MAX_STRINGS_PER_RULE, &old_max_strings_per_rule);
 
-  yr_set_configuration(
-      YR_CONFIG_MAX_STRINGS_PER_RULE, (void*) &new_max_strings_per_rule);
+  yr_set_configuration_uint32(
+      YR_CONFIG_MAX_STRINGS_PER_RULE, new_max_strings_per_rule);
 
   assert_error(
       "rule test { \
@@ -213,8 +213,8 @@ void test_max_string_per_rules()
 
   new_max_strings_per_rule = 2;
 
-  yr_set_configuration(
-      YR_CONFIG_MAX_STRINGS_PER_RULE, (void*) &new_max_strings_per_rule);
+  yr_set_configuration_uint32(
+      YR_CONFIG_MAX_STRINGS_PER_RULE, new_max_strings_per_rule);
 
   assert_error(
       "rule test { \
@@ -225,8 +225,8 @@ void test_max_string_per_rules()
            all of them }",
       ERROR_SUCCESS);
 
-  yr_set_configuration(
-      YR_CONFIG_MAX_STRINGS_PER_RULE, (void*) &old_max_strings_per_rule);
+  yr_set_configuration_uint32(
+      YR_CONFIG_MAX_STRINGS_PER_RULE, old_max_strings_per_rule);
 
   yr_finalize();
 }
@@ -268,9 +268,8 @@ void test_max_match_data()
 
   yr_initialize();
 
-  yr_get_configuration(YR_CONFIG_MAX_MATCH_DATA, (void*) &old_max_match_data);
-
-  yr_set_configuration(YR_CONFIG_MAX_MATCH_DATA, (void*) &new_max_match_data);
+  yr_get_configuration_uint32(YR_CONFIG_MAX_MATCH_DATA, &old_max_match_data);
+  yr_set_configuration_uint32(YR_CONFIG_MAX_MATCH_DATA, new_max_match_data);
 
   if (compile_rule(rules_str, &rules) != ERROR_SUCCESS)
   {
@@ -827,9 +826,9 @@ void test_rules_stats()
   assert_true_expr(stats.num_strings == 6);
   assert_true_expr(stats.ac_matches == 6);
   assert_true_expr(stats.ac_root_match_list_length == 0);
-  assert_true_expr(stats.top_ac_match_list_lengths[0] == 3);
-  assert_true_expr(stats.ac_match_list_length_pctls[1] == 3);
-  assert_true_expr(stats.ac_match_list_length_pctls[100] == 3);
+  assert_true_expr(stats.top_ac_match_list_lengths[0] == 1);
+  assert_true_expr(stats.ac_match_list_length_pctls[1] == 1);
+  assert_true_expr(stats.ac_match_list_length_pctls[100] == 1);
 
   stats_for_rules(
       "\
@@ -850,9 +849,9 @@ void test_rules_stats()
   assert_true_expr(stats.num_strings == 8);
   assert_true_expr(stats.ac_matches == 8);
   assert_true_expr(stats.ac_root_match_list_length == 0);
-  assert_true_expr(stats.top_ac_match_list_lengths[0] == 3);
+  assert_true_expr(stats.top_ac_match_list_lengths[0] == 1);
   assert_true_expr(stats.ac_match_list_length_pctls[1] == 1);
-  assert_true_expr(stats.ac_match_list_length_pctls[100] == 3);
+  assert_true_expr(stats.ac_match_list_length_pctls[100] == 1);
 
   stats_for_rules(
       "\

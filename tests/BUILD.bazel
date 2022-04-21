@@ -124,6 +124,8 @@ cc_test(
         "data/tiny-idata-5200",
         "data/tiny-overlay",
         "data/weird_rich",
+        "data/ChipTune.efi",
+        "data/tiny-macho"
     ],
     linkstatic = True,
     deps = [
@@ -240,6 +242,22 @@ cc_test(
     name = "test_dex",
     srcs = ["test-dex.c"],
     copts = COPTS,
+    linkstatic = True,
+    deps = [
+        ":blob",
+        ":util",
+        "@//:libyara",
+    ],
+)
+
+cc_test(
+    name = "test_dotnet",
+    srcs = ["test-dotnet.c"],
+    copts = COPTS,
+    data = [
+        "data/tiny",
+        "data/0ca09bde7602769120fadc4f7a4147347a7a97271370583586c9e587fd396171",
+    ],
     linkstatic = True,
     deps = [
         ":blob",

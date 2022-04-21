@@ -15,7 +15,7 @@
 #
 # See https://autotools.io/libtool/version.html for more details.
 #
-ABI_VERSION = 8:0:0
+ABI_VERSION = 9:0:1
 
 # Rules for generating YARA modules from .proto files. For each .proto file
 # three files are generated: .c, .pb-c.c, and .pb-c.h. The .c file is generated
@@ -45,6 +45,8 @@ MODULES += modules/time/time.c
 
 MODULES += modules/pe/pe.c
 MODULES += modules/pe/pe_utils.c
+
+MODULES += modules/console/console.c
 
 if CUCKOO_MODULE
 MODULES += modules/cuckoo/cuckoo.c

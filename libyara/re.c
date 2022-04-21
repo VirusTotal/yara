@@ -371,7 +371,7 @@ int _yr_re_node_has_unbounded_quantifier_for_dot(RE_NODE* re_node)
 ////////////////////////////////////////////////////////////////////////////////
 // Detects the use of .*, .+ or .{x,} in a regexp. The use of wildcards with
 // quantifiers that don't have a reasonably small upper bound causes a
-// performance penalty. This function dectects such cases in order to warn the
+// performance penalty. This function detects such cases in order to warn the
 // user about this.
 //
 int yr_re_ast_has_unbounded_quantifier_for_dot(RE_AST* re_ast)
@@ -1061,7 +1061,7 @@ static int _yr_re_emit(
       if (bookmark_2 - bookmark_3 < INT32_MIN)
         return ERROR_REGULAR_EXPRESSION_TOO_LARGE;
 
-      repeat_args.offset = (int32_t)(bookmark_2 - bookmark_3);
+      repeat_args.offset = (int32_t) (bookmark_2 - bookmark_3);
 
       FAIL_ON_ERROR(_yr_emit_inst_arg_struct(
           emit_context,
@@ -1080,7 +1080,7 @@ static int _yr_re_emit(
       if (bookmark_4 - bookmark_1 > INT32_MAX)
         return ERROR_REGULAR_EXPRESSION_TOO_LARGE;
 
-      repeat_start_args_addr->offset = (int32_t)(bookmark_4 - bookmark_1);
+      repeat_start_args_addr->offset = (int32_t) (bookmark_4 - bookmark_1);
     }
 
     if (emit_split)
@@ -1114,7 +1114,7 @@ static int _yr_re_emit(
       split_offset_addr = (int16_t*) yr_arena_ref_to_ptr(
           emit_context->arena, &split_offset_ref);
 
-      *split_offset_addr = (int16_t)(bookmark_2 - bookmark_1);
+      *split_offset_addr = (int16_t) (bookmark_2 - bookmark_1);
     }
 
     break;
@@ -1699,12 +1699,14 @@ int yr_re_exec(
 
   if (flags & RE_FLAGS_BACKWARDS)
   {
+    // Signedness conversion is sound as long as YR_RE_SCAN_LIMIT <= INT_MAX
     max_bytes_matched = (int) yr_min(input_backwards_size, YR_RE_SCAN_LIMIT);
     input -= character_size;
     input_incr = -input_incr;
   }
   else
   {
+    // Signedness conversion is sound as long as YR_RE_SCAN_LIMIT <= INT_MAX
     max_bytes_matched = (int) yr_min(input_forwards_size, YR_RE_SCAN_LIMIT);
   }
 
@@ -2083,10 +2085,13 @@ int yr_re_fast_exec(
   RE_FAST_EXEC_POSITION* last;
 
   int input_incr = flags & RE_FLAGS_BACKWARDS ? -1 : 1;
-  int max_bytes_matched = flags & RE_FLAGS_BACKWARDS
-                              ? (int) input_backwards_size
-                              : (int) input_forwards_size;
   int bytes_matched;
+  int max_bytes_matched;
+
+  if (flags & RE_FLAGS_BACKWARDS)
+    max_bytes_matched = (int) yr_min(input_backwards_size, YR_RE_SCAN_LIMIT);
+  else
+    max_bytes_matched = (int) yr_min(input_forwards_size, YR_RE_SCAN_LIMIT);
 
   const uint8_t* ip = code;
 
@@ -2134,8 +2139,8 @@ int yr_re_fast_exec(
       }
 
       bytes_matched = flags & RE_FLAGS_BACKWARDS
-                          ? input_data - current->input - 1
-                          : current->input - input_data;
+                          ? (int) (input_data - current->input - 1)
+                          : (int) (current->input - input_data);
       uint8_t mask;
       uint8_t value;
 

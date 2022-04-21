@@ -85,5 +85,6 @@ windows/*/packages/
 .dirstamp
 
 .idea/
+.vscode/
 
 tests/mapper

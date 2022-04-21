@@ -157,14 +157,14 @@ static bool negate = false;
 static bool print_count_only = false;
 static bool fail_on_warnings = false;
 static bool rules_are_compiled = false;
-static int total_count = 0;
-static int limit = 0;
-static int timeout = 1000000;
-static int stack_size = DEFAULT_STACK_SIZE;
-static int skip_larger = 0;
-static int threads = YR_MAX_THREADS;
-static int max_strings_per_rule = DEFAULT_MAX_STRINGS_PER_RULE;
-static int max_process_memory_chunk = DEFAULT_MAX_PROCESS_MEMORY_CHUNK;
+static long total_count = 0;
+static long limit = 0;
+static long timeout = 1000000;
+static long stack_size = DEFAULT_STACK_SIZE;
+static long skip_larger = 0;
+static long threads = YR_MAX_THREADS;
+static long max_strings_per_rule = DEFAULT_MAX_STRINGS_PER_RULE;
+static long max_process_memory_chunk = DEFAULT_MAX_PROCESS_MEMORY_CHUNK;
 
 #define USAGE_STRING \
   "Usage: yara [OPTION]... [NAMESPACE:]RULES_FILE... FILE | DIR | PID"
@@ -670,7 +670,7 @@ static int scan_dir(const char* dir, SCAN_OPTIONS* scan_opts)
           {
             fprintf(
                 stderr,
-                "skipping %s (%" PRId64 " bytes) because it's larger than %d"
+                "skipping %s (%" PRId64 " bytes) because it's larger than %ld"
                 " bytes.\n",
                 full_path,
                 st.st_size,
@@ -1197,6 +1197,10 @@ static int callback(
       return CALLBACK_ERROR;
 
     return CALLBACK_CONTINUE;
+
+  case CALLBACK_MSG_CONSOLE_LOG:
+    _tprintf(_T("%"PF_S"\n"), (char*) message_data);
+    return CALLBACK_CONTINUE;
   }
 
   return CALLBACK_ERROR;
@@ -1389,10 +1393,13 @@ int _tmain(int argc, const char_t** argv)
     exit_with_code(EXIT_FAILURE);
   }
 
-  yr_set_configuration(YR_CONFIG_STACK_SIZE, &stack_size);
-  yr_set_configuration(YR_CONFIG_MAX_STRINGS_PER_RULE, &max_strings_per_rule);
-  yr_set_configuration(
-      YR_CONFIG_MAX_PROCESS_MEMORY_CHUNK, &max_process_memory_chunk);
+  yr_set_configuration_uint32(YR_CONFIG_STACK_SIZE, stack_size);
+
+  yr_set_configuration_uint32(
+      YR_CONFIG_MAX_STRINGS_PER_RULE, max_strings_per_rule);
+
+  yr_set_configuration_uint64(
+      YR_CONFIG_MAX_PROCESS_MEMORY_CHUNK, max_process_memory_chunk);
 
   // Try to load the rules file as a binary file containing
   // compiled rules first
@@ -1591,7 +1598,7 @@ int _tmain(int argc, const char_t** argv)
     if (result == ERROR_COULD_NOT_OPEN_FILE)
     {
       // Is it a PID? To be a PID it must be made up entirely of digits.
-      char* endptr = NULL;
+      char_t* endptr = NULL;
       long pid = _tcstol(argv[argc - 1], &endptr, 10);
 
       if (pid > 0 && argv[argc - 1] != NULL && *endptr == '\x00')

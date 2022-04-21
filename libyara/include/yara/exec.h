@@ -38,6 +38,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define YR_UNDEFINED    0xFFFABADAFABADAFFLL
 #define IS_UNDEFINED(x) ((size_t)(x) == (size_t) YR_UNDEFINED)
 
+// Used to tell OP_OF and OP_OF_PERCENT what kind of set is being used.
+#define OF_STRING_SET 0
+#define OF_RULE_SET   1
+
 #define OP_ERROR 0
 #define OP_HALT  255
 #define OP_NOP   254

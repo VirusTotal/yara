@@ -1,6 +1,6 @@
-#line 2 "lexer.c"
+#line 1 "lexer.c"
 
-#line 4 "lexer.c"
+#line 3 "lexer.c"
 
 #define  YY_INT_ALIGNED short int
 
@@ -1068,11 +1068,11 @@ static bool is_absolute_path(
   #endif
 }
 
-#line 1072 "lexer.c"
+#line 1071 "lexer.c"
 #define YY_NO_UNISTD_H 1
 #define YY_NO_INPUT 1
 
-#line 1076 "lexer.c"
+#line 1075 "lexer.c"
 
 #define INITIAL 0
 #define str 1
@@ -1351,7 +1351,7 @@ YY_DECL
 #line 163 "lexer.l"
 
 
-#line 1355 "lexer.c"
+#line 1354 "lexer.c"
 
 	while ( /*CONSTCOND*/1 )		/* loops until end-of-file is reached */
 		{
@@ -2302,7 +2302,7 @@ YY_RULE_SETUP
 #line 763 "lexer.l"
 ECHO;
 	YY_BREAK
-#line 2306 "lexer.c"
+#line 2305 "lexer.c"
 
 	case YY_END_OF_BUFFER:
 		{
