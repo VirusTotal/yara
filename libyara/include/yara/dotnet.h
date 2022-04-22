@@ -249,7 +249,7 @@ typedef struct _MEMBERREF_TABLE
     WORD Signature_Short;
     DWORD Signature_Long;
   } Signature;
-}MEMBERREF_TABLE, *PMEMBERREF_TABLE;
+} MEMBERREF_TABLE, *PMEMBERREF_TABLE;
 
 //
 // Module table
