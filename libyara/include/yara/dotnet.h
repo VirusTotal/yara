@@ -328,7 +328,7 @@ typedef struct _ASSEMBLYREF_TABLE
 } ASSEMBLYREF_TABLE, *PASSEMBLYREF_TABLE;
 
 //
-// Manifest Resource Table
+// ImplMap Table
 // ECMA-335 Section II.22.22
 //
 typedef struct _IMPLMAP_TABLE
