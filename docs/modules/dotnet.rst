@@ -312,7 +312,7 @@ Reference
     about unmanaged methods that can be reached from managed code, using PInvoke 
     dispatch. A row is entered in the impl_map table for each parent method that
     is defined with a .pinvokeimpl interoperation attribute. Individual 
-    impl_maps can be accessed by using the [] operator.Each impl_map has the 
+    impl_maps can be accessed by using the [] operator. Each impl_map has the 
     following attributes.
 
     .. c:member:: import_name
