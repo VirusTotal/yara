@@ -1952,7 +1952,6 @@ begin_declarations
   declare_integer("COMIMAGE_FLAGS_NATIVE_ENTRYPOINT");
   declare_integer("COMIMAGE_FLAGS_TRACKDEBUGDATA");
 
-  declare_integer("METHOD_FLAGS_MEMBER_ACCESS_MASK");
   declare_integer("METHOD_FLAGS_COMPILER_CONTROLLED");
   declare_integer("METHOD_FLAGS_FAM_AND_ASSEM");
   declare_integer("METHOD_FLAGS_ASSEM");
@@ -1963,7 +1962,6 @@ begin_declarations
   declare_integer("METHOD_FLAGS_FINAL");
   declare_integer("METHOD_FLAGS_VIRTUAL");
   declare_integer("METHOD_FLAGS_HIDE_BY_SIG");
-  declare_integer("METHOD_FLAGS_VTABLE_LAYOUT_MASK");
   declare_integer("METHOD_FLAGS_REUSE_SLOT");
   declare_integer("METHOD_FLAGS_NEW_SLOT");
   declare_integer("METHOD_FLAGS_STRICT");
@@ -1975,12 +1973,10 @@ begin_declarations
   declare_integer("METHOD_FLAGS_HAS_SECURITY");
   declare_integer("METHOD_FLAGS_REQUIRE_SEC_OBJECT");
 
-  declare_integer("METHOD_IMPL_FLAGS_CODE_TYPE_MASK");
   declare_integer("METHOD_IMPL_FLAGS_IL");
   declare_integer("METHOD_IMPL_FLAGS_IS_NATIVE");
   declare_integer("METHOD_IMPL_FLAGS_OPTIL");
   declare_integer("METHOD_IMPL_FLAGS_RUNTIME");
-  declare_integer("METHOD_IMPL_FLAGS_MANAGED_MASK");
   declare_integer("METHOD_IMPL_FLAGS_UNMANAGED");
   declare_integer("METHOD_IMPL_FLAGS_MANAGED");
   declare_integer("METHOD_IMPL_FLAGS_FORWARD_REF");
@@ -1991,13 +1987,11 @@ begin_declarations
   declare_integer("METHOD_IMPL_FLAGS_NO_OPTIMIZATION");
 
   declare_integer("PINVOKE_FLAGS_NO_MANGLE");
-  declare_integer("PINVOKE_FLAGS_CHAR_SET_MASK");
   declare_integer("PINVOKE_FLAGS_CHAR_SET_NOT_SPEC");
   declare_integer("PINVOKE_FLAGS_CHAR_SET_ANSI");
   declare_integer("PINVOKE_FLAGS_CHAR_SET_UNICODE");
   declare_integer("PINVOKE_FLAGS_CHAR_SET_AUTO");
   declare_integer("PINVOKE_FLAGS_SUPPORT_GET_LAST_ERROR");
-  declare_integer("PINVOKE_FLAGS_CALL_CONV_MASK");
   declare_integer("PINVOKE_FLAGS_CALL_CONV_PLATFORM_API");
   declare_integer("PINVOKE_FLAGS_CALL_CONV_CDECL");
   declare_integer("PINVOKE_FLAGS_CALL_CONV_STDCALL");
@@ -2133,10 +2127,6 @@ int module_load(
 
   // Flags for methods [MethodAttributes]
   set_integer(
-      METHOD_FLAGS_MEMBER_ACCESS_MASK,
-      module_object,
-      "METHOD_FLAGS_MEMBER_ACCESS_MASK");
-  set_integer(
       METHOD_FLAGS_COMPILER_CONTROLLED,
       module_object,
       "METHOD_FLAGS_COMPILER_CONTROLLED");
@@ -2153,10 +2143,6 @@ int module_load(
   set_integer(METHOD_FLAGS_VIRTUAL, module_object, "METHOD_FLAGS_VIRTUAL");
   set_integer(
       METHOD_FLAGS_HIDE_BY_SIG, module_object, "METHOD_FLAGS_HIDE_BY_SIG");
-  set_integer(
-      METHOD_FLAGS_VTABLE_LAYOUT_MASK,
-      module_object,
-      "METHOD_FLAGS_VTABLE_LAYOUT_MASK");
   set_integer(
       METHOD_FLAGS_REUSE_SLOT, module_object, "METHOD_FLAGS_REUSE_SLOT");
   set_integer(METHOD_FLAGS_NEW_SLOT, module_object, "METHOD_FLAGS_NEW_SLOT");
@@ -2182,10 +2168,6 @@ int module_load(
       "METHOD_FLAGS_REQUIRE_SEC_OBJECT");
 
   // Flags for methods [MethodImplAttributes]
-  set_integer(
-      METHOD_IMPL_FLAGS_CODE_TYPE_MASK,
-      module_object,
-      "METHOD_IMPL_FLAGS_CODE_TYPE_MASK");
   set_integer(METHOD_IMPL_FLAGS_IL, module_object, "METHOD_IMPL_FLAGS_IL");
   set_integer(
       METHOD_IMPL_FLAGS_IS_NATIVE,
@@ -2195,10 +2177,6 @@ int module_load(
       METHOD_IMPL_FLAGS_OPTIL, module_object, "METHOD_IMPL_FLAGS_OPTIL");
   set_integer(
       METHOD_IMPL_FLAGS_RUNTIME, module_object, "METHOD_IMPL_FLAGS_RUNTIME");
-  set_integer(
-      METHOD_IMPL_FLAGS_MANAGED_MASK,
-      module_object,
-      "METHOD_IMPL_FLAGS_MANAGED_MASK");
   set_integer(
       METHOD_IMPL_FLAGS_UNMANAGED,
       module_object,
@@ -2236,10 +2214,6 @@ int module_load(
     module_object,
     "PINVOKE_FLAGS_NO_MANGLE");
   set_integer(
-    PINVOKE_FLAGS_CHAR_SET_MASK,
-    module_object,
-    "PINVOKE_FLAGS_CHAR_SET_MASK");
-  set_integer(
     PINVOKE_FLAGS_CHAR_SET_NOT_SPEC,
     module_object,
     "PINVOKE_FLAGS_CHAR_SET_NOT_SPEC");
@@ -2259,10 +2233,6 @@ int module_load(
     PINVOKE_FLAGS_SUPPORT_GET_LAST_ERROR,
     module_object,
     "PINVOKE_FLAGS_SUPPORT_GET_LAST_ERROR");
-  set_integer(
-    PINVOKE_FLAGS_CALL_CONV_MASK,
-    module_object,
-    "PINVOKE_FLAGS_CALL_CONV_MASK");
   set_integer(
     PINVOKE_FLAGS_CALL_CONV_PLATFORM_API,
     module_object,
