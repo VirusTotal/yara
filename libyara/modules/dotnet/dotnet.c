@@ -1205,7 +1205,7 @@ void dotnet_parse_tilde_2(
 
         // Names can be NULL, but still add it to list. This will support
         // tracing references to MemberForward and Import Scope. 
-        // PInvoke doesn't have to fill in the name if the MemberForwad
+        // PInvoke doesn't have to fill in the name if the MemberForward
         // method is a native unmanaged method. This can be seen with
         // implicit PInvoke examples.
         if (index_sizes.string == 4)

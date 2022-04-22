@@ -46,7 +46,6 @@ typedef struct _CLI_HEADER
 // ECMA-335 Section II.23.1.10
 //
 // These three bits contain one of the following values
-#define METHOD_FLAGS_MEMBER_ACCESS_MASK       0x0007
 #define METHOD_FLAGS_COMPILER_CONTROLLED      0x0000
 #define METHOD_FLAGS_PRIVATE                  0x0001
 #define METHOD_FLAGS_FAM_AND_ASSEM            0x0002
@@ -62,7 +61,6 @@ typedef struct _CLI_HEADER
 
 // Use this mask to retrieve vtable attributes. This bit
 // contains one of the following values
-#define METHOD_FLAGS_VTABLE_LAYOUT_MASK       0x0100
 #define METHOD_FLAGS_REUSE_SLOT               0x0000
 #define METHOD_FLAGS_NEW_SLOT                 0x0100
 
@@ -85,7 +83,6 @@ typedef struct _CLI_HEADER
 //
 
 // these two bits contain one of the follwing values
-#define METHOD_IMPL_FLAGS_CODE_TYPE_MASK      0x0003
 #define METHOD_IMPL_FLAGS_IL                  0x0000
 #define METHOD_IMPL_FLAGS_IS_NATIVE           0x0001
 #define METHOD_IMPL_FLAGS_OPTIL               0x0002
@@ -93,7 +90,6 @@ typedef struct _CLI_HEADER
 
 // Flags specifying whether code is managed or unmanaged.
 // This bit contains one of the following values
-#define METHOD_IMPL_FLAGS_MANAGED_MASK        0x0004
 #define METHOD_IMPL_FLAGS_UNMANAGED           0x0004
 #define METHOD_IMPL_FLAGS_MANAGED             0x0000
 
@@ -110,13 +106,11 @@ typedef struct _CLI_HEADER
 // ECMA-335 Section II.23.1.8
 //
 #define PINVOKE_FLAGS_NO_MANGLE               0x0001
-#define PINVOKE_FLAGS_CHAR_SET_MASK           0x0006
 #define PINVOKE_FLAGS_CHAR_SET_NOT_SPEC       0x0000
 #define PINVOKE_FLAGS_CHAR_SET_ANSI           0x0002
 #define PINVOKE_FLAGS_CHAR_SET_UNICODE        0x0004
 #define PINVOKE_FLAGS_CHAR_SET_AUTO           0x0006
 #define PINVOKE_FLAGS_SUPPORT_GET_LAST_ERROR  0x0040
-#define PINVOKE_FLAGS_CALL_CONV_MASK          0x0700
 #define PINVOKE_FLAGS_CALL_CONV_PLATFORM_API  0x0100
 #define PINVOKE_FLAGS_CALL_CONV_CDECL         0x0200
 #define PINVOKE_FLAGS_CALL_CONV_STDCALL       0x0300
@@ -255,7 +249,7 @@ typedef struct _MEMBERREF_TABLE
     WORD Signature_Short;
     DWORD Signature_Long;
   } Signature;
-}MEMBERREF_TABLE, *PMEMBERREF_TABLE;
+} MEMBERREF_TABLE, *PMEMBERREF_TABLE;
 
 //
 // Module table
@@ -334,7 +328,7 @@ typedef struct _ASSEMBLYREF_TABLE
 } ASSEMBLYREF_TABLE, *PASSEMBLYREF_TABLE;
 
 //
-// Manifest Resource Table
+// ImplMap Table
 // ECMA-335 Section II.22.22
 //
 typedef struct _IMPLMAP_TABLE

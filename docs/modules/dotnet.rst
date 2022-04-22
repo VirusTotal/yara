@@ -36,7 +36,7 @@ Reference
 
 .. c:type:: minor_runtime_version
 
-    The major version contained in the CLI header
+    The minor version contained in the CLI header
 
 .. c:type:: flags
 
@@ -53,7 +53,7 @@ Reference
 
     If CORHEADER_NATIVE_ENTRYPOINT is set, entry_point represents an RVA 
     to a native entrypoint. If CORHEADER_NATIVE_ENTRYPOINT is not set, 
-    entry_point represents a managed entrypoint.
+    entry_point represents a metadata token for entrypoint.
 
 .. c:type:: version
 
@@ -78,7 +78,7 @@ Reference
     stream object has the following attributes:
 
     .. c:member:: name
-    
+
         Stream name
 
     .. c:member:: offset
@@ -87,7 +87,7 @@ Reference
 
     .. c:member:: size
 
-        Stream size.
+        Stream size
 
     *Example: dotnet.streams[0].name == "#~"*
 
@@ -209,8 +209,6 @@ Reference
 
         *Example: dotnet.memberrefs[18].name == "CompareTo"*
 
-    
-
 .. c:type:: number_of_methods
 
     the number of methods in the file
@@ -314,7 +312,7 @@ Reference
     about unmanaged methods that can be reached from managed code, using PInvoke 
     dispatch. A row is entered in the impl_map table for each parent method that
     is defined with a .pinvokeimpl interoperation attribute. Individual 
-    impl_maps can be accessed by using the [] operator.Each impl_map has the 
+    impl_maps can be accessed by using the [] operator. Each impl_map has the 
     following attributes.
 
     .. c:member:: import_name
