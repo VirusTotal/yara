@@ -227,13 +227,11 @@ Reference
 
         Integer representing method implementation attributes with one of the 
         following values:
-
-        .. c:type:: METHOD_IMPL_FLAGS_CODE_TYPE_MASK      
+    
         .. c:type:: METHOD_IMPL_FLAGS_IL            
         .. c:type:: METHOD_IMPL_FLAGS_IS_NATIVE     
         .. c:type:: METHOD_IMPL_FLAGS_OPTIL                
-        .. c:type:: METHOD_IMPL_FLAGS_RUNTIME              
-        .. c:type:: METHOD_IMPL_FLAGS_MANAGED_MASK         
+        .. c:type:: METHOD_IMPL_FLAGS_RUNTIME                    
         .. c:type:: METHOD_IMPL_FLAGS_UNMANAGED            
         .. c:type:: METHOD_IMPL_FLAGS_MANAGED               
         .. c:type:: METHOD_IMPL_FLAGS_FORWARD_REF          
@@ -247,7 +245,6 @@ Reference
 
     .. c:member:: flags
 
-        .. c:type:: METHOD_FLAGS_MEMBER_ACCESS_MASK
         .. c:type:: METHOD_FLAGS_COMPILER_CONTROLLED
         .. c:type:: METHOD_FLAGS_PRIVATE           
         .. c:type:: METHOD_FLAGS_FAM_AND_ASSEM     
@@ -259,7 +256,6 @@ Reference
         .. c:type:: METHOD_FLAGS_FINAL             
         .. c:type:: METHOD_FLAGS_VIRTUAL           
         .. c:type:: METHOD_FLAGS_HIDE_BY_SIG       
-        .. c:type:: METHOD_FLAGS_VTABLE_LAYOUT_MASK
         .. c:type:: METHOD_FLAGS_REUSE_SLOT        
         .. c:type:: METHOD_FLAGS_NEW_SLOT          
         .. c:type:: METHOD_FLAGS_STRICT            
@@ -325,13 +321,11 @@ Reference
         following values:
 
         .. c:type:: PINVOKE_FLAGS_NO_MANGLE
-        .. c:type:: PINVOKE_FLAGS_CHAR_SET_MASK
         .. c:type:: PINVOKE_FLAGS_CHAR_SET_NOT_SPEC
         .. c:type:: PINVOKE_FLAGS_CHAR_SET_ANSI       
         .. c:type:: PINVOKE_FLAGS_CHAR_SET_UNICODE      
         .. c:type:: PINVOKE_FLAGS_CHAR_SET_AUTO      
-        .. c:type:: PINVOKE_FLAGS_SUPPORT_GET_LAST_ERROR      
-        .. c:type:: PINVOKE_FLAGS_CALL_CONV_MASK      
+        .. c:type:: PINVOKE_FLAGS_SUPPORT_GET_LAST_ERROR         
         .. c:type:: PINVOKE_FLAGS_CALL_CONV_PLATFORM_API      
         .. c:type:: PINVOKE_FLAGS_CALL_CONV_CDECL       
         .. c:type:: PINVOKE_FLAGS_CALL_CONV_STDCALL        
