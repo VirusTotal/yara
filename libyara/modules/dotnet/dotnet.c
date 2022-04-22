@@ -498,6 +498,9 @@ void dotnet_parse_tilde_2(
       row_size = (index_size + (index_sizes.string * 2));
       typeref_row_size = row_size;
       typeref_ptr = table_offset;
+      counter = 0;
+      char* namespace;
+
       for (i = 0; i < num_rows; i++)
       {
         typeref_table = (PTYPEREF_TABLE) typeref_ptr;
@@ -517,33 +520,36 @@ void dotnet_parse_tilde_2(
               string_offset,
               yr_le16toh(*(WORD*) (typeref_ptr + index_size)));
 
-        if (name != NULL)
-        {
-          set_string(name, pe->object, "typerefs[%i].name", i);
-        }
-
         // Namespace has variable sized fields prior in struct
         if (index_sizes.string == 4)
-          name = pe_get_dotnet_string(
+          namespace = pe_get_dotnet_string(
               pe,
               string_offset,
               yr_le32toh(
                   *(DWORD*) (typeref_ptr + index_size + index_sizes.string)));
         else
-          name = pe_get_dotnet_string(
+          namespace = pe_get_dotnet_string(
               pe,
               string_offset,
               yr_le16toh(
                   *(WORD*) (typeref_ptr + index_size + index_sizes.string)));
-        if (name != NULL)
+
+        // Only require name or namespace to increment counter.
+        if (name || namespace)
         {
-          set_string(name, pe->object, "typerefs[%i].namespace", i);
+          counter++;
+
+          if (name != NULL)
+            set_string(name, pe->object, "typerefs[%i].name", i);
+
+          if (name != NULL)
+            set_string(namespace, pe->object, "typerefs[%i].namespace", i);
         }
 
         typeref_ptr += typeref_row_size;
       }
 
-      set_integer(i, pe->object, "number_of_typerefs");
+      set_integer(counter, pe->object, "number_of_typerefs");
 
       table_offset += row_size * num_rows;
       break;
@@ -659,6 +665,7 @@ void dotnet_parse_tilde_2(
       row_size = (index_size + index_sizes.string + index_sizes.blob);
       memberref_row_size = row_size;
       memberref_ptr = table_offset;
+      counter = 0;
 
       for (i = 0; i < num_rows; i++)
       {
@@ -681,12 +688,13 @@ void dotnet_parse_tilde_2(
         if (name != NULL)
         {
           set_string(name, pe->object, "memberrefs[%i].name", i);
+          counter++;
         }
-
+        
         memberref_ptr += row_size;
       }
 
-      set_integer(i, pe->object, "number_of_memberrefs");
+      set_integer(counter, pe->object, "number_of_memberrefs");
 
       table_offset += row_size * num_rows;
       break;
@@ -1204,8 +1212,9 @@ void dotnet_parse_tilde_2(
           i);
 
         // Names can be NULL, but still add it to list. This will support
-        // tracing references to MemberForward and Import Scope. 
-        // PInvoke doesn't have to fill in the name if the MemberForward
+        // tracing references to MemberForward and Import Scope. Also
+        // a signature can be created off of a NULL name with specific
+        // flags. PInvoke doesn't have to fill in the name if the MemberForward
         // method is a native unmanaged method. This can be seen with
         // implicit PInvoke examples.
         if (index_sizes.string == 4)
