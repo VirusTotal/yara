@@ -308,7 +308,7 @@ hex_digit     [0-9a-fA-F]
 
 
 
-<char_class>(\\x{hex_digit}{2}|\\.|[^\\])\-[^]] {
+<char_class>(\\x{hex_digit}{2}|\\.|[^\\\]])\-[^]] {
 
   // A range inside a character class.
   //  [abc0-9]
