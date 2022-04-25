@@ -2280,6 +2280,8 @@ void test_re()
   assert_true_regexp("[a-z]-b", "c-b-c", "c-b");  // Issue #1690
   assert_true_regexp("a[]-]b", "a]b", "a]b");
   assert_true_regexp("a[]-]b", "a-b", "a-b");
+  assert_true_regexp("[\\.-z]*", "...abc", "...abc");
+  assert_true_regexp("[\\.-]*", "...abc", "...");
   assert_true_regexp("a[\\]]b", "a]b", "a]b");
   assert_true_regexp("a[^bc]d", "aed", "aed");
   assert_false_regexp("a[^bc]d", "abd");
