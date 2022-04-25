@@ -308,16 +308,28 @@ hex_digit     [0-9a-fA-F]
 
 
 
-<char_class>(\\x{hex_digit}{2}|[^]\\])-[^]] {
+<char_class>(\\x{hex_digit}{2}|\\.|[^]\\])-[^]] {
 
-  // A range inside a character class.
+  // A range inside a character class. The regexp is...
   //
-  // Matches an hex digit (i.e: \x01), or any character that is
-  // not ] or \, followed by -, followed by any character that is
-  // not ]
+  //   ( \x{hex_digit}{2}    Hex digit (i.e: \x01) ...
+  //   | \.                  ...or any escaped character (i.e. \\, \-) ...
+  //   | [^]\]               ...or any character except ] and \ ...
+  //   )
+  //   -                     ... followed by -
+  //   [^]]                  ... followed by any character except ]
+  //
+  // Some examples:
   //
   //  [abc0-9]
-  //      ^- matching here
+  //      ^-^ matching range 0-9
+  //
+  //  [a-za-]
+  //   ^-^- matching range a-z
+  //
+  //  [\.-a]
+  //   ^--^- matching range \.-a
+  //
 
   uint16_t c;
   uint8_t start = yytext[0];

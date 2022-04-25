@@ -593,9 +593,9 @@ static const flex_int16_t yy_accept[45] =
     {   0,
         0,    0,    0,    0,   30,    7,    7,   28,    6,   17,
         7,   27,   29,   26,   18,    5,    3,   16,   15,   13,
-       11,    9,   14,   12,   10,    8,    0,    0,    0,   25,
-       23,   21,   24,   22,   20,    0,    4,    0,    1,    2,
-       19,    0,    0,    0
+       11,    9,   14,   12,   10,    8,    0,    0,    0,    0,
+       25,   23,   21,   24,   22,   20,    0,    4,    0,    1,
+        2,   19,    0,    0
     } ;
 
 static const YY_CHAR yy_ec[256] =
@@ -632,57 +632,61 @@ static const YY_CHAR yy_ec[256] =
 
 static const YY_CHAR yy_meta[23] =
     {   0,
-        1,    1,    1,    1,    1,    2,    2,    2,    2,    1,
-        1,    1,    1,    3,    1,    2,    2,    1,    1,    1,
+        1,    2,    1,    1,    3,    4,    4,    4,    4,    1,
+        1,    1,    1,    5,    1,    4,    4,    1,    1,    1,
         1,    1
     } ;
 
-static const flex_int16_t yy_base[50] =
+static const flex_int16_t yy_base[51] =
     {   0,
-        0,   20,    3,    5,   37,   76,   76,   76,   10,   36,
-        0,   31,   29,   47,   76,   76,   17,   23,   76,   76,
-       76,   76,   76,   76,   76,   76,    4,    5,    0,   76,
-       76,   76,   76,   76,   76,    0,   76,    8,   76,   76,
-       76,    0,   23,   76,   67,   70,   73,   18,    6
+        0,   20,    3,    5,   49,   89,   89,   89,   10,   36,
+        0,   43,   38,   47,   89,   89,   26,   33,   89,   89,
+       89,   89,   89,   89,   89,   89,    4,    5,    0,   33,
+       32,   31,   29,   26,   24,   23,   15,   89,    8,   89,
+       89,   89,    0,   89,   67,   72,   77,   82,   84,    4
     } ;
 
-static const flex_int16_t yy_def[50] =
+static const flex_int16_t yy_def[51] =
     {   0,
        45,   45,   46,   46,   44,   44,   44,   44,   44,   44,
-       44,   44,   44,   44,   44,   44,   44,   44,   44,   44,
-       44,   44,   44,   44,   44,   44,   44,   44,   47,   44,
-       44,   44,   44,   44,   44,   48,   44,   44,   44,   44,
-       44,   49,   44,    0,   44,   44,   44,   44,   44
+       44,   44,   44,   47,   44,   44,   44,   44,   44,   44,
+       44,   44,   44,   44,   44,   44,   44,   44,   48,   44,
+       44,   44,   44,   44,   44,   44,   49,   44,   44,   44,
+       44,   44,   50,    0,   44,   44,   44,   44,   44,   44
     } ;
 
-static const flex_int16_t yy_nxt[99] =
+static const flex_int16_t yy_nxt[112] =
     {   0,
-       44,    7,    8,   27,   13,   28,   13,   43,   27,   38,
-       28,    9,   10,   38,    8,   14,   15,   14,   15,   42,
-       11,    7,    8,   16,   17,   39,   40,   29,   18,   39,
-       37,    9,   10,   29,    8,   29,   44,   44,   44,   44,
-       11,   18,   44,   19,   20,   21,   22,   44,   44,   44,
-       44,   23,   24,   25,   26,   30,   31,   32,   44,   44,
-       44,   44,   44,   33,   34,   35,   36,    6,    6,    6,
-       12,   12,   12,   41,   41,    5,   44,   44,   44,   44,
+       44,    7,    8,   27,   13,   28,   13,   30,   27,   39,
+       28,    9,   10,   39,    8,   14,   15,   14,   15,   29,
+       11,    7,    8,   16,   17,   40,   41,   29,   29,   40,
+       29,    9,   10,   29,    8,   29,   29,   29,   18,   38,
+       11,   18,   29,   19,   20,   21,   22,   29,   44,   44,
+       44,   23,   24,   25,   26,   31,   32,   33,   44,   44,
+       44,   44,   44,   34,   35,   36,   37,    6,    6,    6,
+        6,    6,   12,   12,   12,   12,   12,   30,   44,   30,
+       30,   30,   42,   42,   42,   42,   43,   43,    5,   44,
        44,   44,   44,   44,   44,   44,   44,   44,   44,   44,
-       44,   44,   44,   44,   44,   44,   44,   44
 
+       44,   44,   44,   44,   44,   44,   44,   44,   44,   44,
+       44
     } ;
 
-static const flex_int16_t yy_chk[99] =
+static const flex_int16_t yy_chk[112] =
     {   0,
-        0,    1,    1,   11,    3,   11,    4,   49,   28,   27,
-       28,    1,    1,   38,    1,    3,    3,    4,    4,   48,
-        1,    2,    2,    9,    9,   27,   28,   43,   18,   38,
-       17,    2,    2,   13,    2,   12,    5,    0,    0,    0,
-        2,   10,    0,   10,   10,   10,   10,    0,    0,    0,
+        0,    1,    1,   11,    3,   11,    4,   50,   28,   27,
+       28,    1,    1,   39,    1,    3,    3,    4,    4,   37,
+        1,    2,    2,    9,    9,   27,   28,   36,   35,   39,
+       34,    2,    2,   33,    2,   32,   31,   30,   18,   17,
+        2,   10,   13,   10,   10,   10,   10,   12,    5,    0,
         0,   10,   10,   10,   10,   14,   14,   14,    0,    0,
         0,    0,    0,   14,   14,   14,   14,   45,   45,   45,
-       46,   46,   46,   47,   47,   44,   44,   44,   44,   44,
+       45,   45,   46,   46,   46,   46,   46,   47,    0,   47,
+       47,   47,   48,   48,   48,   48,   49,   49,   44,   44,
        44,   44,   44,   44,   44,   44,   44,   44,   44,   44,
-       44,   44,   44,   44,   44,   44,   44,   44
 
+       44,   44,   44,   44,   44,   44,   44,   44,   44,   44,
+       44
     } ;
 
 /* Table of booleans, true if rule could match eol. */
@@ -787,10 +791,10 @@ int read_escaped_char(
     yyscan_t yyscanner,
     uint8_t* escaped_char);
 
-#line 790 "re_lexer.c"
+#line 794 "re_lexer.c"
 #define YY_NO_UNISTD_H 1
 
-#line 793 "re_lexer.c"
+#line 797 "re_lexer.c"
 
 #define INITIAL 0
 #define char_class 1
@@ -1066,7 +1070,7 @@ YY_DECL
 #line 111 "re_lexer.l"
 
 
-#line 1069 "re_lexer.c"
+#line 1073 "re_lexer.c"
 
 	while ( /*CONSTCOND*/1 )		/* loops until end-of-file is reached */
 		{
@@ -1373,14 +1377,26 @@ YY_RULE_SETUP
 #line 311 "re_lexer.l"
 {
 
-  // A range inside a character class.
+  // A range inside a character class. The regexp is...
   //
-  // Matches an hex digit (i.e: \x01), or any character that is
-  // not ] or \, followed by -, followed by any character that is
-  // not ]
+  //   ( \x{hex_digit}{2}    Hex digit (i.e: \x01) ...
+  //   | \.                  ...or any escaped character (i.e. \\, \-) ...
+  //   | [^]\]               ...or any character except ] and \ ...
+  //   )
+  //   -                     ... followed by -
+  //   [^]]                  ... followed by any character except ]
+  //
+  // Some examples:
   //
   //  [abc0-9]
-  //      ^- matching here
+  //      ^-^ matching range 0-9
+  //
+  //  [a-za-]
+  //   ^-^- matching range a-z
+  //
+  //  [\.-a]
+  //   ^--^- matching range \.-a
+  //
 
   uint16_t c;
   uint8_t start = yytext[0];
@@ -1423,7 +1439,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 20:
 YY_RULE_SETUP
-#line 362 "re_lexer.l"
+#line 374 "re_lexer.l"
 {
 
   for (int i = 0; i < 32; i++)
@@ -1432,7 +1448,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 21:
 YY_RULE_SETUP
-#line 369 "re_lexer.l"
+#line 381 "re_lexer.l"
 {
 
   for (int i = 0; i < 32; i++)
@@ -1441,7 +1457,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 22:
 YY_RULE_SETUP
-#line 376 "re_lexer.l"
+#line 388 "re_lexer.l"
 {
 
   for (int i = 0; i < 32; i++)
@@ -1450,7 +1466,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 23:
 YY_RULE_SETUP
-#line 383 "re_lexer.l"
+#line 395 "re_lexer.l"
 {
 
   for (int i = 0; i < 32; i++)
@@ -1459,7 +1475,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 24:
 YY_RULE_SETUP
-#line 390 "re_lexer.l"
+#line 402 "re_lexer.l"
 {
 
   for (char c = '0'; c <= '9'; c++)
@@ -1468,7 +1484,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 25:
 YY_RULE_SETUP
-#line 397 "re_lexer.l"
+#line 409 "re_lexer.l"
 {
 
   for (int i = 0; i < 32; i++)
@@ -1488,7 +1504,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 26:
 YY_RULE_SETUP
-#line 415 "re_lexer.l"
+#line 427 "re_lexer.l"
 {
 
   uint8_t c;
@@ -1506,7 +1522,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 27:
 YY_RULE_SETUP
-#line 431 "re_lexer.l"
+#line 443 "re_lexer.l"
 {
 
   if (yytext[0] >= 32 && yytext[0] < 127)
@@ -1524,7 +1540,7 @@ YY_RULE_SETUP
 }
 	YY_BREAK
 case YY_STATE_EOF(char_class):
-#line 448 "re_lexer.l"
+#line 460 "re_lexer.l"
 {
 
   // End of regexp reached while scanning a character class.
@@ -1535,7 +1551,7 @@ case YY_STATE_EOF(char_class):
 	YY_BREAK
 case 28:
 YY_RULE_SETUP
-#line 457 "re_lexer.l"
+#line 469 "re_lexer.l"
 {
 
   if (yytext[0] >= 32 && yytext[0] < 127)
@@ -1550,7 +1566,7 @@ YY_RULE_SETUP
 }
 	YY_BREAK
 case YY_STATE_EOF(INITIAL):
-#line 471 "re_lexer.l"
+#line 483 "re_lexer.l"
 {
 
   yyterminate();
@@ -1558,10 +1574,10 @@ case YY_STATE_EOF(INITIAL):
 	YY_BREAK
 case 29:
 YY_RULE_SETUP
-#line 476 "re_lexer.l"
+#line 488 "re_lexer.l"
 ECHO;
 	YY_BREAK
-#line 1564 "re_lexer.c"
+#line 1580 "re_lexer.c"
 
 	case YY_END_OF_BUFFER:
 		{
@@ -2710,7 +2726,7 @@ void yyfree (void * ptr , yyscan_t yyscanner)
 
 #define YYTABLES_NAME "yytables"
 
-#line 476 "re_lexer.l"
+#line 488 "re_lexer.l"
 
 
 int escaped_char_value(
