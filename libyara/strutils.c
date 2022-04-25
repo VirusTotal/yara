@@ -251,7 +251,7 @@ int yr_isalnum(const uint8_t* s)
 //
 void yr_vasprintf(char** strp, const char* fmt, va_list ap)
 {
-  va_list ap_copy;
+  va_list ap_copy = { 0 };
   va_copy(ap_copy, ap);
   *strp = NULL;
 

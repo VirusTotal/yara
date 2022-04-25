@@ -1,0 +1,249 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{76C5DC28-20DA-4C90-BD42-A414C3A4BA86}</ProjectGuid>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v120_xp</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v120_xp</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v120_xp</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v120_xp</PlatformToolset>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="..\..\..\..\property_sheets\windows_general.props" />
+    <Import Project="..\..\..\..\property_sheets\windows_release.props" />
+    <Import Project="..\..\..\..\property_sheets\windows_x86.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="..\..\..\..\property_sheets\windows_general.props" />
+    <Import Project="..\..\..\..\property_sheets\windows_debug.props" />
+    <Import Project="..\..\..\..\property_sheets\windows_x86.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="..\..\..\..\property_sheets\windows_general.props" />
+    <Import Project="..\..\..\..\property_sheets\windows_release.props" />
+    <Import Project="..\..\..\..\property_sheets\windows_x64.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="..\..\..\..\property_sheets\windows_general.props" />
+    <Import Project="..\..\..\..\property_sheets\windows_debug.props" />
+    <Import Project="..\..\..\..\property_sheets\windows_x64.props" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" />
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>..\..;..\..\libyara;..\..\libyara\include;..\..\windows\include;%(AdditionalIncludeDirectories);$(SolutionDir)\..\lib\mbedtls\mbedtls-2.1.2\include\;C:\openssl-1.1.0f-vs2010\include64\</AdditionalIncludeDirectories>
+      <DisableSpecificWarnings>4005;4273;4090;4293;</DisableSpecificWarnings>
+      <WarningLevel>Level1</WarningLevel>
+      <PreprocessorDefinitions>_WIN32_WINNT=0x502;%(PreprocessorDefinitions);HAVE_MBEDTLS;YR_BUILDING_STATIC_LIB;USE_WINDOWS_PROC;HASH_MODULE;HAVE_LIBCRYPTO;NO_RPAL</PreprocessorDefinitions>
+      <ObjectFileName>$(IntDir)\%(RelativeDir)\</ObjectFileName>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+    </ClCompile>
+    <Lib>
+      <AdditionalDependencies>advapi32.lib;%(AdditionalDependencies);libcryptoMT.lib;crypt32.lib;alloca16.obj</AdditionalDependencies>
+      <AdditionalLibraryDirectories>C:\openssl-1.1.0f-vs2010\lib;..\lib;$(SolutionDir)\..\include\windows_supplemental</AdditionalLibraryDirectories>
+      <AdditionalOptions>/ignore:4006 /ignore:4221 %(AdditionalOptions)</AdditionalOptions>
+    </Lib>
+    <Link>
+      <AdditionalLibraryDirectories>..\lib</AdditionalLibraryDirectories>
+      <AdditionalDependencies>advapi32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>..\..;..\..\libyara;..\..\libyara\include;..\..\windows\include;%(AdditionalIncludeDirectories);$(SolutionDir)\..\lib\mbedtls\mbedtls-2.1.2\include\;C:\openssl-1.1.0f-vs2010\include64\</AdditionalIncludeDirectories>
+      <DisableSpecificWarnings>4005;4273;4090;4293;</DisableSpecificWarnings>
+      <WarningLevel>Level1</WarningLevel>
+      <PreprocessorDefinitions>_WIN32_WINNT=0x502;%(PreprocessorDefinitions);HAVE_MBEDTLS;YR_BUILDING_STATIC_LIB;USE_WINDOWS_PROC;HASH_MODULE;HAVE_LIBCRYPTO;NO_RPAL</PreprocessorDefinitions>
+      <ObjectFileName>$(IntDir)\%(RelativeDir)\</ObjectFileName>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+    </ClCompile>
+    <Lib>
+      <AdditionalDependencies>advapi32.lib;%(AdditionalDependencies);libcryptoMT.lib;crypt32.lib</AdditionalDependencies>
+      <AdditionalLibraryDirectories>..\lib;C:\openssl-1.1.0f-vs2010\lib64</AdditionalLibraryDirectories>
+      <AdditionalOptions>/ignore:4006 /ignore:4221 %(AdditionalOptions)</AdditionalOptions>
+      <MinimumRequiredVersion>5.02</MinimumRequiredVersion>
+    </Lib>
+    <Link>
+      <AdditionalLibraryDirectories>..\lib</AdditionalLibraryDirectories>
+      <AdditionalDependencies>advapi32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>..\..;..\..\libyara;..\..\libyara\include;..\..\windows\include;%(AdditionalIncludeDirectories);$(SolutionDir)\..\lib\mbedtls\mbedtls-2.1.2\include\;C:\openssl-1.1.0f-vs2010\include\</AdditionalIncludeDirectories>
+      <DisableSpecificWarnings>4005;4273;4090;4293;%(DisableSpecificWarnings)</DisableSpecificWarnings>
+      <WarningLevel>Level1</WarningLevel>
+      <PreprocessorDefinitions>_WIN32_WINNT=0x502;%(PreprocessorDefinitions);HAVE_MBEDTLS;YR_BUILDING_STATIC_LIB;USE_WINDOWS_PROC;HASH_MODULE;HAVE_LIBCRYPTO;NO_RPAL</PreprocessorDefinitions>
+      <ObjectFileName>$(IntDir)\%(RelativeDir)\</ObjectFileName>
+    </ClCompile>
+    <Lib>
+      <AdditionalDependencies>advapi32.lib;%(AdditionalDependencies);libcryptoMT.lib;crypt32.lib;alloca16.obj</AdditionalDependencies>
+      <AdditionalLibraryDirectories>C:\openssl-1.1.0f-vs2010\lib;..\lib;$(SolutionDir)\..\include\windows_supplemental</AdditionalLibraryDirectories>
+      <AdditionalOptions>/ignore:4006 /ignore:4221 %(AdditionalOptions)</AdditionalOptions>
+    </Lib>
+    <Link>
+      <AdditionalDependencies>advapi32.lib;jansson32.lib;libeay32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>..\lib</AdditionalLibraryDirectories>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>..\..;..\..\libyara;..\..\libyara\include;..\..\windows\include;%(AdditionalIncludeDirectories);$(SolutionDir)\..\lib\mbedtls\mbedtls-2.1.2\include\;C:\openssl-1.1.0f-vs2010\include\</AdditionalIncludeDirectories>
+      <DisableSpecificWarnings>4005;4273;4090;4293;4293;%(DisableSpecificWarnings)</DisableSpecificWarnings>
+      <WarningLevel>Level1</WarningLevel>
+      <PreprocessorDefinitions>_WIN32_WINNT=0x502;%(PreprocessorDefinitions);HAVE_MBEDTLS;YR_BUILDING_STATIC_LIB;USE_WINDOWS_PROC;HASH_MODULE;HAVE_LIBCRYPTO;NO_RPAL</PreprocessorDefinitions>
+      <ObjectFileName>$(IntDir)\%(RelativeDir)\</ObjectFileName>
+    </ClCompile>
+    <Lib>
+      <AdditionalDependencies>advapi32.lib;%(AdditionalDependencies);libcryptoMT.lib;crypt32.lib</AdditionalDependencies>
+      <AdditionalLibraryDirectories>..\lib;C:\openssl-1.1.0f-vs2010\lib64</AdditionalLibraryDirectories>
+      <AdditionalOptions>/ignore:4006 /ignore:4221 %(AdditionalOptions)</AdditionalOptions>
+    </Lib>
+    <Link>
+      <AdditionalLibraryDirectories>..\lib</AdditionalLibraryDirectories>
+      <AdditionalDependencies>advapi32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\libyara\ahocorasick.c" />
+    <ClCompile Include="..\..\libyara\arena.c" />
+    <ClCompile Include="..\..\libyara\atoms.c" />
+    <ClCompile Include="..\..\libyara\base64.c" />
+    <ClCompile Include="..\..\libyara\bitmask.c" />
+    <ClCompile Include="..\..\libyara\compiler.c" />
+    <ClCompile Include="..\..\libyara\endian.c" />
+    <ClCompile Include="..\..\libyara\exec.c" />
+    <ClCompile Include="..\..\libyara\exefiles.c" />
+    <ClCompile Include="..\..\libyara\filemap.c" />
+    <ClCompile Include="..\..\libyara\grammar.c" />
+    <ClCompile Include="..\..\libyara\hash.c" />
+    <ClCompile Include="..\..\libyara\hex_grammar.c" />
+    <ClCompile Include="..\..\libyara\hex_lexer.c" />
+    <ClCompile Include="..\..\libyara\lexer.c" />
+    <ClCompile Include="..\..\libyara\libyara.c" />
+    <ClCompile Include="..\..\libyara\mem.c" />
+    <ClCompile Include="..\..\libyara\modules.c" />
+    <ClCompile Include="..\..\libyara\modules\console\console.c" />
+    <ClCompile Include="..\..\libyara\modules\dotnet\dotnet.c" />
+    <ClCompile Include="..\..\libyara\modules\elf\elf.c" />
+    <ClCompile Include="..\..\libyara\modules\hash\hash.c" />
+    <ClCompile Include="..\..\libyara\modules\math\math.c" />
+    <ClCompile Include="..\..\libyara\modules\pe\pe.c" />
+    <ClCompile Include="..\..\libyara\modules\pe\pe_utils.c" />
+    <ClCompile Include="..\..\libyara\modules\tests\tests.c" />
+    <ClCompile Include="..\..\libyara\modules\time\time.c" />
+    <ClCompile Include="..\..\libyara\notebook.c" />
+    <ClCompile Include="..\..\libyara\object.c" />
+    <ClCompile Include="..\..\libyara\parser.c" />
+    <ClCompile Include="..\..\libyara\proc.c" />
+    <ClCompile Include="..\..\libyara\proc\windows.c" />
+    <ClCompile Include="..\..\libyara\re.c" />
+    <ClCompile Include="..\..\libyara\re_grammar.c" />
+    <ClCompile Include="..\..\libyara\re_lexer.c" />
+    <ClCompile Include="..\..\libyara\rules.c" />
+    <ClCompile Include="..\..\libyara\scan.c" />
+    <ClCompile Include="..\..\libyara\scanner.c" />
+    <ClCompile Include="..\..\libyara\sizedstr.c" />
+    <ClCompile Include="..\..\libyara\stack.c" />
+    <ClCompile Include="..\..\libyara\stopwatch.c" />
+    <ClCompile Include="..\..\libyara\stream.c" />
+    <ClCompile Include="..\..\libyara\strutils.c" />
+    <ClCompile Include="..\..\libyara\threading.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\mbedtls\mbedtls-2.1.2\visualc\VS2010\mbedTLS.vcxproj">
+      <Project>{46cf2d25-6a36-4189-b59c-e4815388e554}</Project>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\libyara\crypto.h" />
+    <ClInclude Include="..\..\libyara\include\yara\ahocorasick.h" />
+    <ClInclude Include="..\..\libyara\include\yara\arena.h" />
+    <ClInclude Include="..\..\libyara\include\yara\atoms.h" />
+    <ClInclude Include="..\..\libyara\include\yara\bitmask.h" />
+    <ClInclude Include="..\..\libyara\include\yara\compiler.h" />
+    <ClInclude Include="..\..\libyara\include\yara\dex.h" />
+    <ClInclude Include="..\..\libyara\include\yara\dotnet.h" />
+    <ClInclude Include="..\..\libyara\include\yara\elf.h" />
+    <ClInclude Include="..\..\libyara\include\yara\endian.h" />
+    <ClInclude Include="..\..\libyara\include\yara\error.h" />
+    <ClInclude Include="..\..\libyara\include\yara\exec.h" />
+    <ClInclude Include="..\..\libyara\include\yara\exefiles.h" />
+    <ClInclude Include="..\..\libyara\include\yara\filemap.h" />
+    <ClInclude Include="..\..\libyara\include\yara\globals.h" />
+    <ClInclude Include="..\..\libyara\include\yara\hash.h" />
+    <ClInclude Include="..\..\libyara\include\yara\hex_lexer.h" />
+    <ClInclude Include="..\..\libyara\include\yara\integers.h" />
+    <ClInclude Include="..\..\libyara\include\yara\lexer.h" />
+    <ClInclude Include="..\..\libyara\include\yara\libyara.h" />
+    <ClInclude Include="..\..\libyara\include\yara\limits.h" />
+    <ClInclude Include="..\..\libyara\include\yara\macho.h" />
+    <ClInclude Include="..\..\libyara\include\yara\mem.h" />
+    <ClInclude Include="..\..\libyara\include\yara\modules.h" />
+    <ClInclude Include="..\..\libyara\include\yara\object.h" />
+    <ClInclude Include="..\..\libyara\include\yara\parser.h" />
+    <ClInclude Include="..\..\libyara\include\yara\pe.h" />
+    <ClInclude Include="..\..\libyara\include\yara\pe_utils.h" />
+    <ClInclude Include="..\..\libyara\include\yara\proc.h" />
+    <ClInclude Include="..\..\libyara\include\yara\re.h" />
+    <ClInclude Include="..\..\libyara\include\yara\re_lexer.h" />
+    <ClInclude Include="..\..\libyara\include\yara\rules.h" />
+    <ClInclude Include="..\..\libyara\include\yara\scan.h" />
+    <ClInclude Include="..\..\libyara\include\yara\scanner.h" />
+    <ClInclude Include="..\..\libyara\include\yara\sizedstr.h" />
+    <ClInclude Include="..\..\libyara\include\yara\stopwatch.h" />
+    <ClInclude Include="..\..\libyara\include\yara\stream.h" />
+    <ClInclude Include="..\..\libyara\include\yara\strutils.h" />
+    <ClInclude Include="..\..\libyara\include\yara\threading.h" />
+    <ClInclude Include="..\..\libyara\include\yara\types.h" />
+    <ClInclude Include="..\..\libyara\include\yara\utils.h" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

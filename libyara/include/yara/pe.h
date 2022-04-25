@@ -64,6 +64,46 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define IMAGE_FILE_MACHINE_TARGET_HOST 0x0001
 #endif
 
+// Bridge definitions for Visual Studio 2013.
+typedef struct _IMAGE_DELAYLOAD_DESCRIPTOR
+{
+    union
+    {
+        DWORD AllAttributes;
+        struct
+        {
+            DWORD RvaBased : 1;  // Delay load version 2
+            DWORD ReservedAttributes : 31;
+        } DUMMYSTRUCTNAME;
+    } Attributes;
+
+    // RVA to the name of the target library (NULL-terminate ASCII string)
+    DWORD DllNameRVA;
+    // RVA to the HMODULE caching location (PHMODULE)
+    DWORD ModuleHandleRVA;
+    // RVA to the start of the IAT (PIMAGE_THUNK_DATA)
+    DWORD ImportAddressTableRVA;
+    // RVA to the start of the name table (PIMAGE_THUNK_DATA::AddressOfData)
+    DWORD ImportNameTableRVA;
+    // RVA to an optional bound IAT
+    DWORD BoundImportAddressTableRVA;
+    // RVA to an optional unload info table
+    DWORD UnloadInformationTableRVA;
+    // 0 if not bound, otherwise, date/time of the target DLL
+    DWORD TimeDateStamp;
+
+} IMAGE_DELAYLOAD_DESCRIPTOR, *PIMAGE_DELAYLOAD_DESCRIPTOR;
+
+#define IMAGE_SUBSYSTEM_WINDOWS_BOOT_APPLICATION 16
+
+#define IMAGE_DLLCHARACTERISTICS_HIGH_ENTROPY_VA       0x0020
+#define IMAGE_DLLCHARACTERISTICS_DYNAMIC_BASE          0x0040
+#define IMAGE_DLLCHARACTERISTICS_FORCE_INTEGRITY       0x0080
+#define IMAGE_DLLCHARACTERISTICS_NX_COMPAT             0x0100
+
+#define IMAGE_DLLCHARACTERISTICS_APPCONTAINER          0x1000
+#define IMAGE_DLLCHARACTERISTICS_GUARD_CF              0x4000
+
 #else
 
 #include <stdlib.h>
