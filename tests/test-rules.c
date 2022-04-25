@@ -1303,7 +1303,7 @@ static void test_hex_strings()
         strings: $a = { 31 32 ~32 34 35 } \
         condition: $a }",
       TEXT_1024_BYTES "1234567890");
-  
+
   assert_false_rule(
       "rule test { \
         strings: $a = { 31 32 ~33 34 35 } \
@@ -1314,37 +1314,37 @@ static void test_hex_strings()
       "rule test { \
         strings: $a = { ( 31 32 ~32 34 35 | 31 32 ~33 34 35 ) } \
         condition: $a }",
-      TEXT_1024_BYTES "1234567890");    
-  
+      TEXT_1024_BYTES "1234567890");
+
   assert_true_rule(
       "rule test { \
         strings: $a = { 31 32 ~?2 34 35 } \
         condition: $a }",
       TEXT_1024_BYTES "1234567890");
-  
+
   assert_false_rule(
       "rule test { \
         strings: $a = { 31 32 ~?3 34 35 } \
         condition: $a }",
       TEXT_1024_BYTES "1234567890");
-  
+
   assert_true_rule(
       "rule test { \
         strings: $a = { 31 32 ~4? 34 35 } \
         condition: $a }",
       TEXT_1024_BYTES "1234567890");
-  
+
   assert_false_rule(
       "rule test { \
         strings: $a = { 31 32 ~3? 34 35 } \
         condition: $a }",
       TEXT_1024_BYTES "1234567890");
-  
+
   assert_true_rule(
       "rule test { \
         strings: $a = { ( 31 32 ~3? 34 35 | 31 32 ~?2 34 35 ) } \
         condition: $a }",
-      TEXT_1024_BYTES "1234567890");    
+      TEXT_1024_BYTES "1234567890");
 
   assert_false_rule(
       "rule test { \
@@ -1470,12 +1470,12 @@ static void test_hex_strings()
         strings: $a = { 01 ~0 11 } \
         condition: $a ",
       ERROR_INVALID_HEX_STRING);
-  
+
   assert_error(
       "rule test { \
         strings: $a = { 01 ~?? 11 } \
         condition: $a ",
-      ERROR_INVALID_HEX_STRING);   
+      ERROR_INVALID_HEX_STRING);
 
   /* TODO: tests.py:551 ff. */
 
@@ -2277,6 +2277,9 @@ void test_re()
   assert_true_regexp("a[\\-b]", "ab", "ab");
   assert_true_regexp("a]", "a]", "a]");
   assert_true_regexp("a[]]b", "a]b", "a]b");
+  assert_true_regexp("[a-z]-b", "c-b-c", "c-b");  // Issue #1690
+  assert_true_regexp("a[]-]b", "a]b", "a]b");
+  assert_true_regexp("a[]-]b", "a-b", "a-b");
   assert_true_regexp("a[\\]]b", "a]b", "a]b");
   assert_true_regexp("a[^bc]d", "aed", "aed");
   assert_false_regexp("a[^bc]d", "abd");
