@@ -1680,6 +1680,11 @@ static void test_of()
       "condition: none of them }",
       TEXT_1024_BYTES "AXSERS");
 
+  assert_false_rule(
+      "rule test { strings: $a = \"AXS\" $b = \"mis\" $c = \"oops\" "
+      "condition: none of them }",
+      TEXT_1024_BYTES "AXSERS");
+
   assert_true_rule(
       "rule test { strings: $a = \"ssi\" $b = \"mis\" private $c = \"oops\" "
       "condition: 1 of them }",
@@ -1697,6 +1702,11 @@ static void test_of()
 
   assert_true_rule(
       "rule test { strings: $a1 = \"dummy1\" $b1 = \"dummy1\" $b2 = \"ssi\""
+      "condition: none of ($a*, $b*) }",
+      TEXT_1024_BYTES "AXSERS");
+
+  assert_false_rule(
+      "rule test { strings: $a1 = \"AXS\" $b1 = \"ERS\" $b2 = \"ssi\""
       "condition: none of ($a*, $b*) }",
       TEXT_1024_BYTES "AXSERS");
 
@@ -1821,6 +1831,15 @@ void test_for()
           $a = \"ssi\" \
         condition: \
           for all i in (1..#a) : (@a[i] == (1024+5)) \
+      }",
+      TEXT_1024_BYTES "mississippi");
+
+  assert_false_rule(
+      "rule test { \
+        strings: \
+          $a = \"ssi\" \
+        condition: \
+          for none of them : ( $ ) \
       }",
       TEXT_1024_BYTES "mississippi");
 
@@ -1959,6 +1978,13 @@ void test_for()
           for any k,v in tests.struct_dict : ( \
             k == \"foo\" and v.s == \"foo\" and v.i == 1 \
           ) \
+      }",
+      NULL);
+
+  assert_false_rule(
+      "rule test { \
+        condition: \
+          for none i in (1, 2, 3) : (i > 2) \
       }",
       NULL);
 

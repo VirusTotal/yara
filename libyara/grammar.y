@@ -1530,7 +1530,7 @@ expression
         // This loop uses internal variables besides the ones explicitly
         // defined by the user.
         compiler->loop[compiler->loop_index].vars_internal_count = \
-       		YR_INTERNAL_LOOP_VARS;
+            YR_INTERNAL_LOOP_VARS;
 
         // Initialize the number of variables, this number will be incremented
         // as variable declaration are processed by for_variables.
@@ -1691,6 +1691,16 @@ expression
         fail_if_error(yr_parser_emit(
             yyscanner, OP_INT_GE, NULL));
 
+        // When "none" is used as a for expression, it's the same as
+        // "not any". In order to gain benefits of short circuiting of
+        // "any", we can just simulate it as if it was "any" and then
+        // negate the result.
+        if ($2 == FOR_EXPRESSION_NONE)
+        {
+            fail_if_error(yr_parser_emit(
+                yyscanner, OP_NOT, NULL));
+        }
+
         jmp_offset = \
             yr_arena_get_current_offset(compiler->arena, YR_CODE_SECTION) -
             jmp_offset_ref.offset + 1;
@@ -1790,6 +1800,16 @@ expression
 
         yr_parser_emit(yyscanner, OP_INT_LE, NULL);
 
+        // When "none" is used as a for expression, it's the same as
+        // "not any". In order to gain benefits of short circuiting of
+        // "any", we can just simulate it as if it was "any" and then
+        // negate the result.
+        if ($2 == FOR_EXPRESSION_NONE)
+        {
+            fail_if_error(yr_parser_emit(
+                yyscanner, OP_NOT, NULL));
+        }
+
         loop_vars_cleanup(compiler->loop_index);
 
         compiler->loop_index--;
@@ -1800,11 +1820,31 @@ expression
       {
         yr_parser_emit_with_arg(yyscanner, OP_OF, OF_STRING_SET, NULL, NULL);
 
+        // When "none" is used as a for expression, it's the same as
+        // "not any". In order to gain benefits of short circuiting of
+        // "any", we can just simulate it as if it was "any" and then
+        // negate the result.
+        if ($1 == FOR_EXPRESSION_NONE)
+        {
+            fail_if_error(yr_parser_emit(
+                yyscanner, OP_NOT, NULL));
+        }
+
         $$.type = EXPRESSION_TYPE_BOOLEAN;
       }
     | for_expression _OF_ rule_set
       {
         yr_parser_emit_with_arg(yyscanner, OP_OF, OF_RULE_SET, NULL, NULL);
+
+        // When "none" is used as a for expression, it's the same as
+        // "not any". In order to gain benefits of short circuiting of
+        // "any", we can just simulate it as if it was "any" and then
+        // negate the result.
+        if ($1 == FOR_EXPRESSION_NONE)
+        {
+            fail_if_error(yr_parser_emit(
+                yyscanner, OP_NOT, NULL));
+        }
 
         $$.type = EXPRESSION_TYPE_BOOLEAN;
       }
@@ -1849,6 +1889,16 @@ expression
     | for_expression _OF_ string_set _IN_ range
       {
         yr_parser_emit(yyscanner, OP_OF_FOUND_IN, NULL);
+
+        // When "none" is used as a for expression, it's the same as
+        // "not any". In order to gain benefits of short circuiting of
+        // "any", we can just simulate it as if it was "any" and then
+        // negate the result.
+        if ($1 == FOR_EXPRESSION_NONE)
+        {
+            fail_if_error(yr_parser_emit(
+                yyscanner, OP_NOT, NULL));
+        }
 
         $$.type = EXPRESSION_TYPE_BOOLEAN;
       }
@@ -2357,7 +2407,9 @@ for_expression
       }
     | _NONE_
       {
-        yr_parser_emit_push_const(yyscanner, 0);
+        // "none" is simulated as "any" with the negation at the end
+        // so we are using 1 as if there was "any"
+        yr_parser_emit_push_const(yyscanner, 1);
         $$ = FOR_EXPRESSION_NONE;
       }
     ;
