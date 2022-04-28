@@ -631,6 +631,17 @@ static void test_strings()
        }",
       "foobarbaz" TEXT_1024_BYTES);
 
+  // https://github.com/VirusTotal/yara/issues/1695
+  assert_false_rule(
+      "rule test {\n\
+         strings:\n\
+             $a = \"AXS\"\n\
+             $b = \"ERS\"\n\
+         condition:\n\
+             none of them in (0..10)\n\
+       }",
+      "AXSERS" TEXT_1024_BYTES);
+
   // https://github.com/VirusTotal/yara/issues/1660
   assert_false_rule(
       "rule test {\n\
@@ -1629,6 +1640,10 @@ static void test_rule_of()
   assert_match_count(
       "rule a { condition: true } rule b { condition: 1 of (a) }", NULL, 2);
 
+  // https://github.com/VirusTotal/yara/issues/1695
+  assert_match_count(
+      "rule a { condition: false } rule b { condition: none of (a) }", NULL, 1);
+
   assert_match_count(
       "rule a1 { condition: true } "
       "rule a2 { condition: true } "
@@ -1680,6 +1695,12 @@ static void test_of()
       "condition: none of them }",
       TEXT_1024_BYTES "AXSERS");
 
+  // https://github.com/VirusTotal/yara/issues/1695
+  assert_false_rule(
+      "rule test { strings: $a = \"dummy1\" $b = \"dummy2\" $c = \"ssi\" "
+      "condition: none of them }",
+      TEXT_1024_BYTES "mississippi");
+
   assert_true_rule(
       "rule test { strings: $a = \"ssi\" $b = \"mis\" private $c = \"oops\" "
       "condition: 1 of them }",
@@ -1691,14 +1712,21 @@ static void test_of()
       TEXT_1024_BYTES "mississippi");
 
   assert_true_rule(
-      "rule test { strings: $a1 = \"dummy1\" $b1 = \"dummy1\" $b2 = \"ssi\""
+      "rule test { strings: $a1 = \"dummy1\" $b1 = \"dummy1\" $b2 = \"ssi\" "
       "condition: any of ($a*, $b*) }",
       TEXT_1024_BYTES "mississippi");
 
   assert_true_rule(
-      "rule test { strings: $a1 = \"dummy1\" $b1 = \"dummy1\" $b2 = \"ssi\""
+      "rule test { strings: $a1 = \"dummy1\" $b1 = \"dummy1\" $b2 = \"ssi\" "
       "condition: none of ($a*, $b*) }",
       TEXT_1024_BYTES "AXSERS");
+
+  // https://github.com/VirusTotal/yara/issues/1695
+  assert_false_rule(
+      "rule test { strings: $a1 = \"dummy1\" $b1 = \"dummy2\" $b2 = \"ssi\" "
+      "condition: none of ($a*, $b*) }",
+      TEXT_1024_BYTES "mississippi");
+
 
   assert_true_rule_blob(
       "rule test { \

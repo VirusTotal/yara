@@ -1390,8 +1390,13 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
 
         if (is_undef(r2))
           r1.i = found >= count ? 1 : 0;
-        else
-          r1.i = found >= r2.i ? 1 : 0;
+        else {
+          // https://github.com/VirusTotal/yara/issues/1695
+          if (r2.i == 0)
+            r1.i = found == r2.i ? 1 : 0;
+          else
+            r1.i = found >= r2.i ? 1 : 0;
+        }
       }
       else  // OP_OF_PERCENT
       {
@@ -1452,8 +1457,13 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
       pop(r1);
       if (is_undef(r1))
         r1.i = found >= count ? 1 : 0;
-      else
-        r1.i = found >= r1.i ? 1 : 0;
+      else {
+        // https://github.com/VirusTotal/yara/issues/1695
+        if (r2.i == 0)
+          r1.i = found == r2.i ? 1 : 0;
+        else
+          r1.i = found >= r2.i ? 1 : 0;
+      }
 
       push(r1);
       break;
