@@ -631,6 +631,17 @@ static void test_strings()
        }",
       "foobarbaz" TEXT_1024_BYTES);
 
+  // https://github.com/VirusTotal/yara/issues/1695
+  assert_false_rule(
+      "rule test {\n\
+         strings:\n\
+             $a = \"AXS\"\n\
+             $b = \"ERS\"\n\
+         condition:\n\
+             none of them in (0..10)\n\
+       }",
+      "AXSERS" TEXT_1024_BYTES);
+
   // https://github.com/VirusTotal/yara/issues/1660
   assert_false_rule(
       "rule test {\n\
@@ -1173,7 +1184,6 @@ static void test_hex_strings()
       PE32_FILE);
 
   assert_true_rule_blob(
-
       "rule test { \
         strings: $a = { 6? 01 00 00 60 0? } \
         condition: $a }",
@@ -1299,6 +1309,54 @@ static void test_hex_strings()
         condition: $a }",
       TEXT_1024_BYTES "1234567890");
 
+  assert_true_rule(
+      "rule test { \
+        strings: $a = { 31 32 ~32 34 35 } \
+        condition: $a }",
+      TEXT_1024_BYTES "1234567890");
+
+  assert_false_rule(
+      "rule test { \
+        strings: $a = { 31 32 ~33 34 35 } \
+        condition: $a }",
+      TEXT_1024_BYTES "1234567890");
+
+  assert_true_rule(
+      "rule test { \
+        strings: $a = { ( 31 32 ~32 34 35 | 31 32 ~33 34 35 ) } \
+        condition: $a }",
+      TEXT_1024_BYTES "1234567890");
+
+  assert_true_rule(
+      "rule test { \
+        strings: $a = { 31 32 ~?2 34 35 } \
+        condition: $a }",
+      TEXT_1024_BYTES "1234567890");
+
+  assert_false_rule(
+      "rule test { \
+        strings: $a = { 31 32 ~?3 34 35 } \
+        condition: $a }",
+      TEXT_1024_BYTES "1234567890");
+
+  assert_true_rule(
+      "rule test { \
+        strings: $a = { 31 32 ~4? 34 35 } \
+        condition: $a }",
+      TEXT_1024_BYTES "1234567890");
+
+  assert_false_rule(
+      "rule test { \
+        strings: $a = { 31 32 ~3? 34 35 } \
+        condition: $a }",
+      TEXT_1024_BYTES "1234567890");
+
+  assert_true_rule(
+      "rule test { \
+        strings: $a = { ( 31 32 ~3? 34 35 | 31 32 ~?2 34 35 ) } \
+        condition: $a }",
+      TEXT_1024_BYTES "1234567890");
+
   assert_false_rule(
       "rule test { \
         strings: $a = { 35 36 [-] 31 32 } \
@@ -1409,6 +1467,24 @@ static void test_hex_strings()
   assert_error(
       "rule test { \
         strings: $a = { 01 02 (03 | 04 [-]) } \
+        condition: $a ",
+      ERROR_INVALID_HEX_STRING);
+
+  assert_error(
+      "rule test { \
+        strings: $a = { 01 02 ~ } \
+        condition: $a ",
+      ERROR_INVALID_HEX_STRING);
+
+  assert_error(
+      "rule test { \
+        strings: $a = { 01 ~0 11 } \
+        condition: $a ",
+      ERROR_INVALID_HEX_STRING);
+
+  assert_error(
+      "rule test { \
+        strings: $a = { 01 ~?? 11 } \
         condition: $a ",
       ERROR_INVALID_HEX_STRING);
 
@@ -1564,6 +1640,10 @@ static void test_rule_of()
   assert_match_count(
       "rule a { condition: true } rule b { condition: 1 of (a) }", NULL, 2);
 
+  // https://github.com/VirusTotal/yara/issues/1695
+  assert_match_count(
+      "rule a { condition: false } rule b { condition: none of (a) }", NULL, 1);
+
   assert_match_count(
       "rule a1 { condition: true } "
       "rule a2 { condition: true } "
@@ -1615,6 +1695,12 @@ static void test_of()
       "condition: none of them }",
       TEXT_1024_BYTES "AXSERS");
 
+  // https://github.com/VirusTotal/yara/issues/1695
+  assert_false_rule(
+      "rule test { strings: $a = \"dummy1\" $b = \"dummy2\" $c = \"ssi\" "
+      "condition: none of them }",
+      TEXT_1024_BYTES "mississippi");
+
   assert_true_rule(
       "rule test { strings: $a = \"ssi\" $b = \"mis\" private $c = \"oops\" "
       "condition: 1 of them }",
@@ -1626,14 +1712,21 @@ static void test_of()
       TEXT_1024_BYTES "mississippi");
 
   assert_true_rule(
-      "rule test { strings: $a1 = \"dummy1\" $b1 = \"dummy1\" $b2 = \"ssi\""
+      "rule test { strings: $a1 = \"dummy1\" $b1 = \"dummy1\" $b2 = \"ssi\" "
       "condition: any of ($a*, $b*) }",
       TEXT_1024_BYTES "mississippi");
 
   assert_true_rule(
-      "rule test { strings: $a1 = \"dummy1\" $b1 = \"dummy1\" $b2 = \"ssi\""
+      "rule test { strings: $a1 = \"dummy1\" $b1 = \"dummy1\" $b2 = \"ssi\" "
       "condition: none of ($a*, $b*) }",
       TEXT_1024_BYTES "AXSERS");
+
+  // https://github.com/VirusTotal/yara/issues/1695
+  assert_false_rule(
+      "rule test { strings: $a1 = \"dummy1\" $b1 = \"dummy2\" $b2 = \"ssi\" "
+      "condition: none of ($a*, $b*) }",
+      TEXT_1024_BYTES "mississippi");
+
 
   assert_true_rule_blob(
       "rule test { \
@@ -2212,6 +2305,11 @@ void test_re()
   assert_true_regexp("a[\\-b]", "ab", "ab");
   assert_true_regexp("a]", "a]", "a]");
   assert_true_regexp("a[]]b", "a]b", "a]b");
+  assert_true_regexp("[a-z]-b", "c-b-c", "c-b");  // Issue #1690
+  assert_true_regexp("a[]-]b", "a]b", "a]b");
+  assert_true_regexp("a[]-]b", "a-b", "a-b");
+  assert_true_regexp("[\\.-z]*", "...abc", "...abc");
+  assert_true_regexp("[\\.-]*", "...abc", "...");
   assert_true_regexp("a[\\]]b", "a]b", "a]b");
   assert_true_regexp("a[^bc]d", "aed", "aed");
   assert_false_regexp("a[^bc]d", "abd");

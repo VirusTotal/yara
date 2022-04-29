@@ -138,6 +138,12 @@ test_dotnet_SOURCES = tests/test-dotnet.c tests/util.c
 test_dotnet_LDADD = libyara/.libs/libyara.a
 endif
 
+if MAGIC_MODULE
+check_PROGRAMS+=test-magic
+test_magic_SOURCES = tests/test-magic.c tests/util.c
+test_magic_LDADD = libyara/.libs/libyara.a
+endif
+
 if PB_TESTS_MODULE
 check_PROGRAMS+=test-pb
 test_pb_SOURCES = tests/test-pb.c tests/util.c

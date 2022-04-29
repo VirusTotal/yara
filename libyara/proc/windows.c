@@ -185,7 +185,12 @@ YR_API YR_MEMORY_BLOCK* yr_process_get_first_memory_block(
   context->current_block.base = (size_t)
                                     proc_info->si.lpMinimumApplicationAddress;
 
-  return yr_process_get_next_memory_block(iterator);
+  YR_MEMORY_BLOCK* result = yr_process_get_next_memory_block(iterator);
+
+  if (result == NULL)
+    iterator->last_error = ERROR_COULD_NOT_READ_PROCESS_MEMORY;
+
+  return result;
 }
 
 #endif
