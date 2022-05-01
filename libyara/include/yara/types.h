@@ -977,6 +977,13 @@ struct YR_INT_ENUM_ITERATOR
   int64_t items[1];
 };
 
+struct YR_STRING_SET_ITERATOR
+{
+  int64_t count;
+  int64_t index;
+  YR_STRING* strings[1];
+};
+
 struct YR_ITERATOR
 {
   YR_ITERATOR_NEXT_FUNC next;
@@ -987,6 +994,7 @@ struct YR_ITERATOR
     struct YR_DICT_ITERATOR dict_it;
     struct YR_INT_RANGE_ITERATOR int_range_it;
     struct YR_INT_ENUM_ITERATOR int_enum_it;
+    struct YR_STRING_SET_ITERATOR string_set_it;
   };
 };
 

@@ -1,6 +1,6 @@
-#line 1 "re_lexer.c"
+#line 2 "re_lexer.c"
 
-#line 3 "re_lexer.c"
+#line 4 "re_lexer.c"
 
 #define  YY_INT_ALIGNED short int
 
@@ -791,10 +791,10 @@ int read_escaped_char(
     yyscan_t yyscanner,
     uint8_t* escaped_char);
 
-#line 794 "re_lexer.c"
+#line 795 "re_lexer.c"
 #define YY_NO_UNISTD_H 1
 
-#line 797 "re_lexer.c"
+#line 798 "re_lexer.c"
 
 #define INITIAL 0
 #define char_class 1
@@ -1070,7 +1070,7 @@ YY_DECL
 #line 111 "re_lexer.l"
 
 
-#line 1073 "re_lexer.c"
+#line 1074 "re_lexer.c"
 
 	while ( /*CONSTCOND*/1 )		/* loops until end-of-file is reached */
 		{
@@ -1577,7 +1577,7 @@ YY_RULE_SETUP
 #line 488 "re_lexer.l"
 ECHO;
 	YY_BREAK
-#line 1580 "re_lexer.c"
+#line 1581 "re_lexer.c"
 
 	case YY_END_OF_BUFFER:
 		{
