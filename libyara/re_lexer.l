@@ -308,11 +308,28 @@ hex_digit     [0-9a-fA-F]
 
 
 
-<char_class>(\\x{hex_digit}{2}|\\.|[^\\])\-[^]] {
+<char_class>(\\x{hex_digit}{2}|\\.|[^]\\])-[^]] {
 
-  // A range inside a character class.
+  // A range inside a character class. The regexp is...
+  //
+  //   ( \x{hex_digit}{2}    Hex digit (i.e: \x01) ...
+  //   | \.                  ...or any escaped character (i.e. \\, \-) ...
+  //   | [^]\]               ...or any character except ] and \ ...
+  //   )
+  //   -                     ... followed by -
+  //   [^]]                  ... followed by any character except ]
+  //
+  // Some examples:
+  //
   //  [abc0-9]
-  //      ^- matching here
+  //      ^-^ matching range 0-9
+  //
+  //  [a-za-]
+  //   ^-^- matching range a-z
+  //
+  //  [\.-a]
+  //   ^--^- matching range \.-a
+  //
 
   uint16_t c;
   uint8_t start = yytext[0];
@@ -356,54 +373,42 @@ hex_digit     [0-9a-fA-F]
 
 <char_class>\\w {
 
-  int i;
-
-  for (i = 0; i < 32; i++)
+  for (int i = 0; i < 32; i++)
     LEX_ENV->re_class.bitmap[i] |= word_chars[i];
 }
 
 
 <char_class>\\W {
 
-  int i;
-
-  for (i = 0; i < 32; i++)
+  for (int i = 0; i < 32; i++)
     LEX_ENV->re_class.bitmap[i] |= ~word_chars[i];
 }
 
 
 <char_class>\\s {
 
-  int i;
-
-  for (i = 0; i < 32; i++)
+  for (int i = 0; i < 32; i++)
     LEX_ENV->re_class.bitmap[i] |= space_chars[i];
 }
 
 
 <char_class>\\S {
 
-  int i;
-
-  for (i = 0; i < 32; i++)
+  for (int i = 0; i < 32; i++)
     LEX_ENV->re_class.bitmap[i] |= ~space_chars[i];
 }
 
 
 <char_class>\\d {
 
-  char c;
-
-  for (c = '0'; c <= '9'; c++)
+  for (char c = '0'; c <= '9'; c++)
     LEX_ENV->re_class.bitmap[c / 8] |= 1 << c % 8;
 }
 
 
 <char_class>\\D {
 
-  int i;
-
-  for (i = 0; i < 32; i++)
+  for (int i = 0; i < 32; i++)
   {
     // digits 0-7 are in the sixth byte of the vector, let that byte alone
     if (i == 6)
