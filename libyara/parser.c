@@ -177,7 +177,8 @@ int yr_parser_emit_with_arg_reloc(
 
 int yr_parser_emit_pushes_for_strings(
     yyscan_t yyscanner,
-    const char* identifier)
+    const char* identifier,
+    int* count)
 {
   YR_COMPILER* compiler = yyget_extra(yyscanner);
 
@@ -218,6 +219,11 @@ int yr_parser_emit_pushes_for_strings(
         matching++;
       }
     }
+  }
+
+  if (count != NULL)
+  {
+    *count = matching;
   }
 
   if (matching == 0)
