@@ -1727,7 +1727,6 @@ static void test_of()
       "condition: none of ($a*, $b*) }",
       TEXT_1024_BYTES "mississippi");
 
-
   assert_true_rule_blob(
       "rule test { \
          strings: \
@@ -2884,6 +2883,19 @@ static void test_modules()
         condition: \
           for any item in tests.empty_struct_array[0].struct_array: ( \
             item.unused == \"foo\" \
+          ) \
+      }",
+      NULL);
+
+  assert_true_rule(
+      "import \"tests\" \
+      rule test { \
+        condition: \
+          for any item1 in tests.struct_array: ( \
+            item1.i == 1 and \
+            for any item2 in tests.struct_array: ( \
+              item2.i == item1.i \
+            ) \
           ) \
       }",
       NULL);

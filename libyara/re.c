@@ -896,7 +896,7 @@ static int _yr_re_emit(
     split_offset_addr = (int16_t*) yr_arena_ref_to_ptr(
         emit_context->arena, &split_offset_ref);
 
-    *split_offset_addr = (int16_t) jmp_offset;
+    memcpy(split_offset_addr, &jmp_offset, sizeof(int16_t));
     break;
 
   case RE_NODE_ALT:
@@ -940,7 +940,7 @@ static int _yr_re_emit(
     split_offset_addr = (int16_t*) yr_arena_ref_to_ptr(
         emit_context->arena, &split_offset_ref);
 
-    *split_offset_addr = (int16_t) jmp_offset;
+    memcpy(split_offset_addr, &jmp_offset, sizeof(int16_t));
 
     FAIL_ON_ERROR(
         _yr_re_emit(emit_context, re_node->children_tail, flags, NULL));
@@ -954,7 +954,7 @@ static int _yr_re_emit(
     jmp_offset_addr = (int16_t*) yr_arena_ref_to_ptr(
         emit_context->arena, &jmp_offset_ref);
 
-    *jmp_offset_addr = (int16_t) jmp_offset;
+    memcpy(jmp_offset_addr, &jmp_offset, sizeof(int16_t));
     break;
 
   case RE_NODE_RANGE_ANY:
@@ -1132,7 +1132,8 @@ static int _yr_re_emit(
       split_offset_addr = (int16_t*) yr_arena_ref_to_ptr(
           emit_context->arena, &split_offset_ref);
 
-      *split_offset_addr = (int16_t) (bookmark_2 - bookmark_1);
+      bookmark_2 -= bookmark_1;
+      memcpy(split_offset_addr, &bookmark_2, sizeof(int16_t));
     }
 
     break;
@@ -1437,6 +1438,7 @@ static int _yr_re_fiber_sync(
 
   while (fiber != last)
   {
+    int16_t jmp_len;
     uint8_t opcode = *fiber->ip;
 
     switch (opcode)
@@ -1479,12 +1481,13 @@ static int _yr_re_fiber_sync(
         // Branch A continues at the next instruction
         branch_a->ip += (sizeof(RE_SPLIT_ID_TYPE) + 3);
 
-        // Branch B adds the offset encoded in the opcode to its instruction
-        // pointer.
-        branch_b->ip += *(int16_t*)(
-              branch_b->ip
-              + 1  // opcode size
-              + sizeof(RE_SPLIT_ID_TYPE));
+        // Branch B adds the offset indicated by the split instruction.
+        memcpy(
+            &jmp_len,
+            branch_b->ip + 1 + sizeof(RE_SPLIT_ID_TYPE),
+            sizeof(jmp_len));
+
+        branch_b->ip += jmp_len;
 
 #ifdef YR_PARANOID_MODE
         // In normal conditions this should never happen. But with compiled
@@ -1611,7 +1614,8 @@ static int _yr_re_fiber_sync(
       break;
 
     case RE_OPCODE_JUMP:
-      fiber->ip += *(int16_t*) (fiber->ip + 1);
+      memcpy(&jmp_len, fiber->ip + 1, sizeof(jmp_len));
+      fiber->ip += jmp_len;
       break;
 
     default:
@@ -1673,6 +1677,7 @@ int yr_re_exec(
   const uint8_t* input;
   const uint8_t* ip;
 
+  uint16_t opcode_args;
   uint8_t mask;
   uint8_t value;
   uint8_t character_size;
@@ -1797,14 +1802,14 @@ int yr_re_exec(
         action = match ? ACTION_NONE : ACTION_KILL;
         fiber->ip += 2;
         break;
-      
+
       case RE_OPCODE_NOT_LITERAL:
         prolog;
-        
+
         // We don't need to take into account the case-insensitive
         // case because this opcode is only used with hex strings,
         // which can't be case-insensitive.
-  
+
         match = (*input != *(ip + 1));
         action = match ? ACTION_NONE : ACTION_KILL;
         fiber->ip += 2;
@@ -1812,8 +1817,9 @@ int yr_re_exec(
 
       case RE_OPCODE_MASKED_LITERAL:
         prolog;
-        value = *(int16_t*) (ip + 1) & 0xFF;
-        mask = *(int16_t*) (ip + 1) >> 8;
+        memcpy(&opcode_args, ip + 1, sizeof(int16_t));
+        mask = opcode_args >> 8;
+        value = opcode_args & 0xFF;
 
         // We don't need to take into account the case-insensitive
         // case because this opcode is only used with hex strings,
@@ -1826,8 +1832,9 @@ int yr_re_exec(
 
       case RE_OPCODE_MASKED_NOT_LITERAL:
         prolog;
-        value = *(int16_t*) (ip + 1) & 0xFF;
-        mask = *(int16_t*) (ip + 1) >> 8;
+        memcpy(&opcode_args, ip + 1, sizeof(int16_t));
+        mask = opcode_args >> 8;
+        value = opcode_args & 0xFF;
 
         // We don't need to take into account the case-insensitive
         // case because this opcode is only used with hex strings,
@@ -2187,6 +2194,8 @@ int yr_re_fast_exec(
       bytes_matched = flags & RE_FLAGS_BACKWARDS
                           ? (int) (input_data - current->input - 1)
                           : (int) (current->input - input_data);
+
+      uint16_t opcode_args;
       uint8_t mask;
       uint8_t value;
 
@@ -2212,7 +2221,7 @@ int yr_re_fast_exec(
           current->input += input_incr;
         }
         break;
-      
+
       case RE_OPCODE_NOT_LITERAL:
         if (bytes_matched >= max_bytes_matched)
           break;
@@ -2228,8 +2237,9 @@ int yr_re_fast_exec(
         if (bytes_matched >= max_bytes_matched)
           break;
 
-        value = *(int16_t*) (ip + 1) & 0xFF;
-        mask = *(int16_t*) (ip + 1) >> 8;
+        memcpy(&opcode_args, ip + 1, sizeof(int16_t));
+        mask = opcode_args >> 8;
+        value = opcode_args & 0xFF;
 
         if ((*current->input & mask) == value)
         {
@@ -2237,13 +2247,14 @@ int yr_re_fast_exec(
           current->input += input_incr;
         }
         break;
-      
+
       case RE_OPCODE_MASKED_NOT_LITERAL:
         if (bytes_matched >= max_bytes_matched)
           break;
 
-        value = *(int16_t*) (ip + 1) & 0xFF;
-        mask = *(int16_t*) (ip + 1) >> 8;
+        memcpy(&opcode_args, ip + 1, sizeof(int16_t));
+        mask = opcode_args >> 8;
+        value = opcode_args & 0xFF;
 
         if ((*current->input & mask) != value)
         {
