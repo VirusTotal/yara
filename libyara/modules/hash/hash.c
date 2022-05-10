@@ -288,10 +288,9 @@ define_function(data_md5)
   {
     YR_DEBUG_FPRINTF(
         2, stderr, "} // %s() = YR_UNDEFINED // block == NULL\n", __FUNCTION__);
+
     return_string(YR_UNDEFINED);
   }
-
-  yr_md5_init(&md5_context);
 
   if (offset < 0 || length < 0 || offset < block->base)
   {
@@ -300,6 +299,7 @@ define_function(data_md5)
         stderr,
         "} // %s() = YR_UNDEFINED // bad offset / length\n",
         __FUNCTION__);
+
     return_string(YR_UNDEFINED);
   }
 
@@ -313,8 +313,11 @@ define_function(data_md5)
         "} // %s() = %s (cached)\n",
         __FUNCTION__,
         cached_ascii_digest);
+
     return_string(cached_ascii_digest);
   }
+
+  yr_md5_init(&md5_context);
 
   foreach_memory_block(iterator, block)
   {
@@ -351,12 +354,17 @@ define_function(data_md5)
           stderr,
           "} // %s() = YR_UNDEFINED // past_first_block\n",
           __FUNCTION__);
+
+      yr_md5_final(digest, &md5_context);
+
       return_string(YR_UNDEFINED);
     }
 
     if (block->base + block->size > offset + length)
       break;
   }
+
+  yr_md5_final(digest, &md5_context);
 
   if (!past_first_block)
   {
@@ -365,10 +373,9 @@ define_function(data_md5)
         stderr,
         "} // %s() = YR_UNDEFINED // !past_first_block\n",
         __FUNCTION__);
+
     return_string(YR_UNDEFINED);
   }
-
-  yr_md5_final(digest, &md5_context);
 
   digest_to_ascii(digest, digest_ascii, YR_MD5_LEN);
 
@@ -411,10 +418,9 @@ define_function(data_sha1)
   {
     YR_DEBUG_FPRINTF(
         2, stderr, "} // %s() = YR_UNDEFINED // block == NULL\n", __FUNCTION__);
+
     return_string(YR_UNDEFINED);
   }
-
-  yr_sha1_init(&sha_context);
 
   if (offset < 0 || length < 0 || offset < block->base)
   {
@@ -423,6 +429,7 @@ define_function(data_sha1)
         stderr,
         "} // %s() = YR_UNDEFINED // bad offset / length\n",
         __FUNCTION__);
+
     return_string(YR_UNDEFINED);
   }
 
@@ -437,8 +444,11 @@ define_function(data_sha1)
         "} // %s() = %s (cached)\n",
         __FUNCTION__,
         cached_ascii_digest);
+
     return_string(cached_ascii_digest);
   }
+
+  yr_sha1_init(&sha_context);
 
   foreach_memory_block(iterator, block)
   {
@@ -474,12 +484,16 @@ define_function(data_sha1)
           stderr,
           "} // %s() = YR_UNDEFINED // past_first_block\n",
           __FUNCTION__);
+
+      yr_sha1_final(digest, &sha_context);
       return_string(YR_UNDEFINED);
     }
 
     if (block->base + block->size > offset + length)
       break;
   }
+
+  yr_sha1_final(digest, &sha_context);
 
   if (!past_first_block)
   {
@@ -488,10 +502,9 @@ define_function(data_sha1)
         stderr,
         "} // %s() = YR_UNDEFINED // !past_first_block\n",
         __FUNCTION__);
+
     return_string(YR_UNDEFINED);
   }
-
-  yr_sha1_final(digest, &sha_context);
 
   digest_to_ascii(digest, digest_ascii, YR_SHA1_LEN);
 
@@ -534,10 +547,9 @@ define_function(data_sha256)
   {
     YR_DEBUG_FPRINTF(
         2, stderr, "} // %s() = YR_UNDEFINED // block == NULL\n", __FUNCTION__);
+
     return_string(YR_UNDEFINED);
   }
-
-  yr_sha256_init(&sha256_context);
 
   if (offset < 0 || length < 0 || offset < block->base)
   {
@@ -546,6 +558,7 @@ define_function(data_sha256)
         stderr,
         "} // %s() = YR_UNDEFINED // bad offset / length\n",
         __FUNCTION__);
+
     return_string(YR_UNDEFINED);
   }
 
@@ -560,8 +573,11 @@ define_function(data_sha256)
         "} // %s() = %s (cached)\n",
         __FUNCTION__,
         cached_ascii_digest);
+
     return_string(cached_ascii_digest);
   }
+
+  yr_sha256_init(&sha256_context);
 
   foreach_memory_block(iterator, block)
   {
@@ -596,12 +612,16 @@ define_function(data_sha256)
           stderr,
           "} // %s() = YR_UNDEFINED // past_first_block\n",
           __FUNCTION__);
+
+      yr_sha256_final(digest, &sha256_context);
       return_string(YR_UNDEFINED);
     }
 
     if (block->base + block->size > offset + length)
       break;
   }
+
+  yr_sha256_final(digest, &sha256_context);
 
   if (!past_first_block)
   {
@@ -610,10 +630,9 @@ define_function(data_sha256)
         stderr,
         "} // %s() = YR_UNDEFINED // !past_first_block\n",
         __FUNCTION__);
+
     return_string(YR_UNDEFINED);
   }
-
-  yr_sha256_final(digest, &sha256_context);
 
   digest_to_ascii(digest, digest_ascii, YR_SHA256_LEN);
 
