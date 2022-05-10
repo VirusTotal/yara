@@ -1104,15 +1104,15 @@ identifier
 
     | identifier '(' arguments ')'
       {
-        YR_ARENA_REF ref;
+        YR_ARENA_REF ref = YR_ARENA_NULL_REF;
         int result = ERROR_SUCCESS;
-        YR_OBJECT_FUNCTION* function;
 
         if ($1.type == EXPRESSION_TYPE_OBJECT &&
             $1.value.object->type == OBJECT_TYPE_FUNCTION)
         {
-          result = yr_parser_check_types(
-              compiler, object_as_function($1.value.object), $3);
+          YR_OBJECT_FUNCTION* function = object_as_function($1.value.object);
+
+          result = yr_parser_check_types(compiler, function, $3);
 
           if (result == ERROR_SUCCESS)
             result = _yr_compiler_store_string(
@@ -1125,8 +1125,6 @@ identifier
                 yr_arena_ref_to_ptr(compiler->arena, &ref),
                 NULL,
                 NULL);
-
-          function = object_as_function($1.value.object);
 
           $$.type = EXPRESSION_TYPE_OBJECT;
           $$.value.object = function->return_obj;
