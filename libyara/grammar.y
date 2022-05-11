@@ -170,7 +170,12 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 %lex-param {yyscan_t yyscanner}
 %lex-param {YR_COMPILER* compiler}
 
-%define parse.error detailed
+// The parser produces more detailed syntax errors. Accepted values are
+// "simple", "verbose", "detailed" and "custom". Introduced in Bison 3.0
+// with support for "simple" and "verbose". Values "custom" and "detailed"
+// were introduced in Bison 3.6. See:
+// https://www.gnu.org/software/bison/manual/html_node/_0025define-Summary.html
+%define parse.error verbose
 
 // Token that marks the end of the original file.
 %token _END_OF_FILE_  0                                "end of file"
