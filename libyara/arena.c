@@ -434,8 +434,8 @@ int yr_arena_ptr_to_ref(YR_ARENA* arena, const void* address, YR_ARENA_REF* ref)
         (uint8_t*) address < arena->buffers[i].data + arena->buffers[i].used)
     {
       ref->buffer_id = i;
-      ref->offset = (yr_arena_off_t)(
-          (uint8_t*) address - arena->buffers[i].data);
+      ref->offset =
+          (yr_arena_off_t) ((uint8_t*) address - arena->buffers[i].data);
 
       return 1;
     }
@@ -493,7 +493,7 @@ int yr_arena_write_data(
   YR_ARENA_REF r;
 
   // Allocate space in the buffer.
-  FAIL_ON_ERROR(yr_arena_allocate_memory(arena, buffer_id, size, &r));
+  FAIL_ON_ERROR(_yr_arena_allocate_memory(arena, 0, buffer_id, size, &r));
 
   // Copy the data into the allocated space.
   memcpy(arena->buffers[buffer_id].data + r.offset, data, size);

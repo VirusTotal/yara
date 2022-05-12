@@ -1094,7 +1094,7 @@ int yr_parser_reduce_rule_declaration_phase_2(
                            compiler->arena, YR_CODE_SECTION) -
                        fixup->ref.offset + 1;
 
-  *jmp_offset_addr = jmp_offset;
+  memcpy(jmp_offset_addr, &jmp_offset, sizeof(jmp_offset));
 
   // Remove fixup from the stack.
   compiler->fixup_stack_head = fixup->next;

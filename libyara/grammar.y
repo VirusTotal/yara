@@ -1665,7 +1665,7 @@ expression
         jmp_offset = pop_ref.offset - fixup->ref.offset + 1;
 
         // Fix the jump's offset.
-        *jmp_offset_addr = jmp_offset;
+        memcpy(jmp_offset_addr, &jmp_offset, sizeof(jmp_offset));
 
         yr_free(fixup);
 
@@ -1791,7 +1791,7 @@ expression
             yr_arena_get_current_offset(compiler->arena, YR_CODE_SECTION) -
             fixup->ref.offset + 1;
 
-        *jmp_offset_addr = jmp_offset;
+        memcpy(jmp_offset_addr, &jmp_offset, sizeof(jmp_offset));
 
         // Remove fixup from the stack.
         compiler->fixup_stack_head = fixup->next;
@@ -1835,7 +1835,7 @@ expression
         int32_t* jmp_offset_addr = (int32_t*) yr_arena_ref_to_ptr(
             compiler->arena, &fixup->ref);
 
-        *jmp_offset_addr = jmp_offset;
+        memcpy(jmp_offset_addr, &jmp_offset, sizeof(jmp_offset));
 
         // Remove fixup from the stack.
         compiler->fixup_stack_head = fixup->next;

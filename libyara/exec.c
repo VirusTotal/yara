@@ -157,15 +157,21 @@ function_read(int32_t, big_endian);
 
 static const uint8_t* jmp_if(int condition, const uint8_t* ip)
 {
-  size_t off;
+  int32_t off = 0;
 
   if (condition)
   {
-    // The condition is true, the instruction pointer is incremented in the
-    // amount specified by the jump's offset. The offset is relative to the
-    // jump opcode, but now the instruction pointer is pointing past the opcode
-    // that's why we decrement the offset by 1.
-    off = *(int32_t*) (ip) -1;
+    // The condition is true, the instruction pointer (ip) is incremented in
+    // the amount specified by the jump's offset, which is a int32_t following
+    // the jump opcode. The ip is currently past the opcode and pointing to
+    // the offset.
+
+    // Copy the offset from the instruction stream to a local variable.
+    memcpy(&off, ip, sizeof(int32_t));
+
+    // The offset is relative to the jump opcode, but now the ip is one byte
+    // past the opcode, so we need to decrement it by one.
+    off -= 1;
   }
   else
   {
@@ -341,7 +347,8 @@ static int iter_string_set_next(YR_ITERATOR* self, YR_VALUE_STACK* stack)
 
   // Push the false value that indicates that the iterator is not exhausted.
   stack->items[stack->sp++].i = 0;
-  stack->items[stack->sp++].s = self->string_set_it.strings[self->string_set_it.index];
+  stack->items[stack->sp++].s =
+      self->string_set_it.strings[self->string_set_it.index];
   self->string_set_it.index++;
 
   return ERROR_SUCCESS;
@@ -545,12 +552,16 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
 
     case OP_ITER_START_STRING_SET:
       YR_DEBUG_FPRINTF(
-          2, stderr, "- case OP_ITER_START_STRING_SET: // %s()\n", __FUNCTION__);
+          2,
+          stderr,
+          "- case OP_ITER_START_STRING_SET: // %s()\n",
+          __FUNCTION__);
 
       pop(r1);
 
       r3.p = yr_notebook_alloc(
-          it_notebook, sizeof(YR_ITERATOR) + sizeof(YR_STRING*) * (size_t) r1.i);
+          it_notebook,
+          sizeof(YR_ITERATOR) + sizeof(YR_STRING*) * (size_t) r1.i);
 
       if (r3.p == NULL)
       {
@@ -1521,7 +1532,8 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
 
         if (is_undef(r2))
           r1.i = found >= count ? 1 : 0;
-        else {
+        else
+        {
           // https://github.com/VirusTotal/yara/issues/1695
           if (r2.i == 0)
             r1.i = found == r2.i ? 1 : 0;
@@ -1588,7 +1600,8 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
       pop(r1);
       if (is_undef(r1))
         r1.i = found >= count ? 1 : 0;
-      else {
+      else
+      {
         // https://github.com/VirusTotal/yara/issues/1695
         if (r2.i == 0)
           r1.i = found == r2.i ? 1 : 0;
