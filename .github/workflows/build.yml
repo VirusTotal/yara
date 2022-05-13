@@ -8,8 +8,8 @@ jobs:
     strategy:
       matrix:
         config:
-        - "--enable-cuckoo --enable-magic --enable-pb-tests --enable-address-sanitizer"
-        - "--enable-profiling --enable-cuckoo --enable-magic --enable-pb-tests --enable-address-sanitizer"
+        - "--enable-cuckoo --enable-magic --enable-pb-tests --enable-address-sanitizer --enable-undefined-behaviour-sanitizer"
+        - "--enable-profiling --enable-cuckoo --enable-magic --enable-pb-tests --enable-address-sanitizer --enable-undefined-behaviour-sanitizer"
     steps:
       - uses: actions/checkout@v2
       - name: Install dependencies
