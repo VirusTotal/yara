@@ -167,34 +167,39 @@ static int _yr_arena_allocate_memory(
       memset(new_data + b->used, 0, new_size - b->used);
 #endif
 
-    YR_RELOC* reloc = arena->reloc_list_head;
-
-    while (reloc != NULL)
+    // Fix pointers in the relocation list if the old buffer was not empty
+    // and it was actually moved by yr_realloc.
+    if (b->data != NULL && b->data != new_data)
     {
-      // If the reloc entry is for the same buffer that is being relocated,
-      // the base pointer that we use to access the buffer must be new_data
-      // as arena->buffers[reloc->buffer_id].data (which is the same than
-      // b->data) can't be accessed anymore after the call to yr_realloc.
-      uint8_t* base = buffer_id == reloc->buffer_id
-                          ? new_data
-                          : arena->buffers[reloc->buffer_id].data;
+      YR_RELOC* reloc = arena->reloc_list_head;
 
-      // reloc_address holds the address inside the buffer where the pointer
-      // to be relocated resides.
-      void** reloc_address = (void**) (base + reloc->offset);
-
-      // reloc_target is the value of the relocatable pointer.
-      void* reloc_target = *reloc_address;
-
-      if ((uint8_t*) reloc_target >= b->data &&
-          (uint8_t*) reloc_target < b->data + b->used)
+      while (reloc != NULL)
       {
-        // reloc_target points to some data inside the buffer being moved, so
-        // the pointer needs to be adjusted.
-        *reloc_address = (uint8_t*) reloc_target - b->data + new_data;
-      }
+        // If the reloc entry is for the same buffer that is being relocated,
+        // the base pointer that we use to access the buffer must be new_data
+        // as arena->buffers[reloc->buffer_id].data (which is the same than
+        // b->data) can't be accessed anymore after the call to yr_realloc.
+        uint8_t* base = buffer_id == reloc->buffer_id
+                            ? new_data
+                            : arena->buffers[reloc->buffer_id].data;
 
-      reloc = reloc->next;
+        // reloc_address holds the address inside the buffer where the pointer
+        // to be relocated resides.
+        void** reloc_address = (void**) (base + reloc->offset);
+
+        // reloc_target is the value of the relocatable pointer.
+        void* reloc_target = *reloc_address;
+
+        if ((uint8_t*) reloc_target >= b->data &&
+            (uint8_t*) reloc_target < b->data + b->used)
+        {
+          // reloc_target points to some data inside the buffer being moved, so
+          // the pointer needs to be adjusted.
+          *reloc_address = (uint8_t*) reloc_target - b->data + new_data;
+        }
+
+        reloc = reloc->next;
+      }
     }
 
     b->size = new_size;
@@ -411,6 +416,9 @@ void* yr_arena_get_ptr(
   assert(buffer_id < arena->num_buffers);
   assert(offset <= arena->buffers[buffer_id].used);
 
+  if (arena->buffers[buffer_id].data == NULL)
+    return NULL;
+
   return arena->buffers[buffer_id].data + offset;
 }
 
@@ -430,6 +438,12 @@ int yr_arena_ptr_to_ref(YR_ARENA* arena, const void* address, YR_ARENA_REF* ref)
 
   for (uint32_t i = 0; i < arena->num_buffers; ++i)
   {
+    // If the buffer is completetly empty, skip it.
+    if (arena->buffers[i].data == NULL)
+      continue;
+
+    // If the address falls within the limits of the buffer, then we found
+    // the buffer that contains the data and return a reference to it.
     if ((uint8_t*) address >= arena->buffers[i].data &&
         (uint8_t*) address < arena->buffers[i].data + arena->buffers[i].used)
     {
@@ -576,27 +590,30 @@ int yr_arena_load_stream(YR_STREAM* stream, YR_ARENA** arena)
     }
   }
 
-  YR_ARENA_REF ref;
+  YR_ARENA_REF reloc_ref;
 
-  while (yr_stream_read(&ref, sizeof(ref), 1, stream) == 1)
+  while (yr_stream_read(&reloc_ref, sizeof(reloc_ref), 1, stream) == 1)
   {
-    YR_ARENA_BUFFER* b = &new_arena->buffers[ref.buffer_id];
+    YR_ARENA_BUFFER* b = &new_arena->buffers[reloc_ref.buffer_id];
 
-    if (ref.buffer_id >= new_arena->num_buffers ||
-        ref.offset > b->used - sizeof(void*))
+    if (reloc_ref.buffer_id >= new_arena->num_buffers ||
+        reloc_ref.offset > b->used - sizeof(void*))
     {
       yr_arena_release(new_arena);
       return ERROR_CORRUPT_FILE;
     }
 
-    void** reloc_ptr = (void**) (b->data + ref.offset);
+    YR_ARENA_REF ref;
 
-    // Let's convert the reference into a pointer.
-    *reloc_ptr = yr_arena_ref_to_ptr(new_arena, (YR_ARENA_REF*) reloc_ptr);
+    memcpy(&ref, b->data + reloc_ref.offset, sizeof(ref));
+
+    void* reloc_ptr = yr_arena_ref_to_ptr(new_arena, &ref);
+
+    memcpy(b->data + reloc_ref.offset, &reloc_ptr, sizeof(reloc_ptr));
 
     FAIL_ON_ERROR_WITH_CLEANUP(
         yr_arena_make_ptr_relocatable(
-            new_arena, ref.buffer_id, ref.offset, EOL),
+            new_arena, reloc_ref.buffer_id, reloc_ref.offset, EOL),
         yr_arena_release(new_arena))
   }
 
@@ -647,25 +664,32 @@ int yr_arena_save_stream(YR_ARENA* arena, YR_STREAM* stream)
 
   while (reloc != NULL)
   {
-    // reloc_ptr is a pointer to the relocatable pointer, while *reloc_ptr
-    // is the relocatable pointer itself.
-    void** reloc_ptr =
-        (void**) (arena->buffers[reloc->buffer_id].data + reloc->offset);
+    // reloc_ptr is the pointer that will be replaced by the reference.
+    void* reloc_ptr;
+
+    // Move the pointer from the buffer to reloc_ptr.
+    memcpy(
+        &reloc_ptr,
+        arena->buffers[reloc->buffer_id].data + reloc->offset,
+        sizeof(reloc_ptr));
 
     YR_ARENA_REF ref;
 
 #if !defined(NDEBUG)
-    int found = yr_arena_ptr_to_ref(arena, *reloc_ptr, &ref);
+    int found = yr_arena_ptr_to_ref(arena, reloc_ptr, &ref);
     // yr_arena_ptr_to_ref returns 0 if the relocatable pointer is pointing
     // outside the arena, this should not happen.
     assert(found);
 #else
-    yr_arena_ptr_to_ref(arena, *reloc_ptr, &ref);
+    yr_arena_ptr_to_ref(arena, reloc_ptr, &ref);
 #endif
 
     // Replace the relocatable pointer with a reference that holds information
     // about the buffer and offset where the relocatable pointer is pointing to.
-    memcpy(reloc_ptr, &ref, sizeof(ref));
+    memcpy(
+        arena->buffers[reloc->buffer_id].data + reloc->offset,
+        &ref,
+        sizeof(ref));
 
     reloc = reloc->next;
   }
@@ -691,17 +715,27 @@ int yr_arena_save_stream(YR_ARENA* arena, YR_STREAM* stream)
         .offset = reloc->offset,
     };
 
+    // Write the relocation entry, which consists in a reference to the place
+    // where the pointer that needs to be relocated is stored.
     if (yr_stream_write(&ref, sizeof(ref), 1, stream) != 1)
       return ERROR_WRITING_FILE;
 
-    void** reloc_ptr =
-        (void**) (arena->buffers[reloc->buffer_id].data + reloc->offset);
+    // Move the reference that is going to be replaced by the corresponding
+    // pointer to the ref variable. Notice that ref is being reused for a
+    // different reference here.
+    memcpy(
+        &ref,
+        arena->buffers[reloc->buffer_id].data + reloc->offset,
+        sizeof(ref));
 
-    // reloc_ptr is now pointing to a YR_ARENA_REF.
-    YR_ARENA_REF* ref_ptr = (YR_ARENA_REF*) reloc_ptr;
+    // Convert the reference to its corresponding pointer.
+    void* reloc_ptr = yr_arena_ref_to_ptr(arena, &ref);
 
-    // Let's convert the reference into a pointer again.
-    *reloc_ptr = yr_arena_ref_to_ptr(arena, ref_ptr);
+    // Copy the pointer back to where the reference was stored.
+    memcpy(
+        arena->buffers[reloc->buffer_id].data + reloc->offset,
+        &reloc_ptr,
+        sizeof(reloc_ptr));
 
     reloc = reloc->next;
   }

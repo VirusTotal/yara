@@ -164,6 +164,7 @@ yarainclude_HEADERS = \
 	include/yara/strutils.h \
 	include/yara/threading.h \
 	include/yara/types.h \
+	include/yara/unaligned.h \
 	include/yara/utils.h
 
 noinst_HEADERS = \
