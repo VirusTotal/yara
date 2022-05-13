@@ -11,7 +11,7 @@ AM_CFLAGS+=-O0 -g -ftest-coverage -fprofile-arcs
 else
 
 if DEBUG
-AM_CFLAGS+=-g
+AM_CFLAGS+=-g -fno-omit-frame-pointer
 endif
 
 if OPTIMIZATION
