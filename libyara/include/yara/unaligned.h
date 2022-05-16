@@ -32,25 +32,30 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <yara/integers.h>
 
-typedef struct __attribute__((packed))
+#pragma pack(push)
+#pragma pack(1)
+
+typedef struct
 {
   uint16_t val;
 } uint16_una_t;
 
-typedef struct __attribute__((packed))
+typedef struct
 {
   uint32_t val;
 } uint32_una_t;
 
-typedef struct __attribute__((packed))
+typedef struct
 {
   uint64_t val;
 } uint64_una_t;
 
-typedef struct __attribute__((packed))
+typedef struct
 {
   char *val;
 } charp_una_t;
+
+#pragma pack(pop)
 
 static inline uint16_t yr_unaligned_u16(const void *ptr)
 {

@@ -60,6 +60,13 @@ order to avoid confusion with operating system threads.
 
 typedef uint8_t RE_SPLIT_ID_TYPE;
 
+// RE_REPEAT_ARGS and RE_REPEAT_ANY_ARGS are structures that are embedded in
+// the regexp's instruction stream. As such, they are not always aligned to
+// 8-byte boundaries, so they need to be "packed" structures in order to prevent
+// issues due to unaligned memory accesses.
+#pragma pack(push)
+#pragma pack(1)
+
 typedef struct _RE_REPEAT_ARGS
 {
   uint16_t min;
@@ -74,6 +81,8 @@ typedef struct _RE_REPEAT_ANY_ARGS
   uint16_t max;
 
 } RE_REPEAT_ANY_ARGS;
+
+#pragma pack(pop)
 
 typedef struct _RE_EMIT_CONTEXT
 {
