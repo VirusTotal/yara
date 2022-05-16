@@ -477,6 +477,38 @@ static void test_syntax()
   // Test case for issue #1295
   assert_error("rule test rule test", ERROR_DUPLICATED_IDENTIFIER);
 
+  assert_error(
+      "rule test { strings: $a = \"a\" condition: -1 of them }",
+      ERROR_INVALID_VALUE);
+
+  assert_error(
+      "rule test { strings: $a = \"a\" condition: 0 + -1 of them }",
+      ERROR_INVALID_VALUE);
+
+  assert_error(
+      "rule test { strings: $a = \"a\" condition: for -1 of them: ($) }",
+      ERROR_INVALID_VALUE);
+
+  assert_error(
+      "rule test { strings: $a = \"a\" condition: for 0 + -1 of them: ($) }",
+      ERROR_INVALID_VALUE);
+
+  assert_error(
+      "rule test { strings: $a = \"a\" condition: \"foo\" of them }",
+      ERROR_INVALID_VALUE);
+
+  assert_error(
+      "rule test { strings: $a = \"a\" condition: for \"foo\" of them: ($) }",
+      ERROR_INVALID_VALUE);
+
+  assert_error(
+      "rule test { strings: $a = \"a\" condition: /foo/ of them }",
+      ERROR_INVALID_VALUE);
+
+  assert_error(
+      "rule test { strings: $a = \"a\" condition: for /foo/ of them: ($) }",
+      ERROR_INVALID_VALUE);
+
   YR_DEBUG_FPRINTF(1, stderr, "} // %s()\n", __FUNCTION__);
 }
 
@@ -487,6 +519,48 @@ static void test_anonymous_strings()
   assert_true_rule(
       "rule test { strings: $ = \"a\" $ = \"b\" condition: all of them }",
       "ab");
+
+  YR_DEBUG_FPRINTF(1, stderr, "} // %s()\n", __FUNCTION__);
+}
+
+static void test_warnings() {
+  YR_DEBUG_FPRINTF(1, stderr, "+ %s() {\n", __FUNCTION__);
+
+  assert_warning("rule test { \
+    strings: \
+      $a = \"AXSERS\" \
+    condition: \
+      0 of them \
+    }");
+
+  assert_warning("rule test { \
+    strings: \
+      $a = \"AXSERS\" \
+    condition:  \
+      for 0 of ($a*): ($) \
+    }");
+
+  assert_no_warnings("rule test { \
+    strings: \
+      $a = \"AXSERS\" \
+    condition: \
+      none of them \
+    }");
+
+  assert_no_warnings("rule test { \
+    strings: \
+      $a = \"AXSERS\" \
+    condition:  \
+      for none of ($a*): ($) \
+    }");
+
+  assert_warning("rule test { \
+    strings: \
+      $a = \"AXSERS\" \
+    condition:  \
+      1 + -1 of them \
+    }");
+
 
   YR_DEBUG_FPRINTF(1, stderr, "} // %s()\n", __FUNCTION__);
 }
@@ -3537,6 +3611,7 @@ static void test_pass(int pass)
   test_global_rules();
   test_tags();
   test_meta();
+  test_warnings();
 
 #if !defined(USE_NO_PROC) && !defined(_WIN32) && !defined(__CYGWIN__)
   test_process_scan();

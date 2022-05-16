@@ -2279,6 +2279,40 @@ rule_enumeration_item
 for_expression
     : primary_expression
       {
+        if ($1.type == EXPRESSION_TYPE_INTEGER) {
+          if ($1.value.integer == 0) {
+            yywarning(yyscanner,
+                "Consider using \"none\" keyword, it is less ambiguous. Please "
+                "see https://yara.readthedocs.io/en/stable/writingrules.html#sets-of-strings-1 for an explanation.");
+          }
+
+          if ($1.value.integer < 0) {
+            yr_compiler_set_error_extra_info_fmt(compiler,
+                "%lld", $1.value.integer);
+            fail_with_error(ERROR_INVALID_VALUE);
+          }
+        }
+
+        if ($1.type == EXPRESSION_TYPE_STRING) {
+          SIZED_STRING* ss = yr_arena_ref_to_ptr(compiler->arena,
+              &$1.value.sized_string_ref);
+          // If the expression is an external string variable we need to get
+          // it some other way.
+          if (ss != NULL) {
+            yr_compiler_set_error_extra_info_fmt(compiler, "%s", ss->c_string);
+          } else {
+            yr_compiler_set_error_extra_info(compiler,
+                "string in for_expression is invalid");
+          }
+          fail_with_error(ERROR_INVALID_VALUE);
+        }
+
+        if ($1.type == EXPRESSION_TYPE_REGEXP) {
+          yr_compiler_set_error_extra_info(compiler,
+              "regexp in for_expression is invalid");
+          fail_with_error(ERROR_INVALID_VALUE);
+        }
+
         $$ = FOR_EXPRESSION_ANY;
       }
     | _ALL_
@@ -2468,7 +2502,7 @@ primary_expression
           {
             case OBJECT_TYPE_INTEGER:
               $$.type = EXPRESSION_TYPE_INTEGER;
-              $$.value.integer = YR_UNDEFINED;
+              $$.value.integer = $1.value.object->value.i;
               break;
             case OBJECT_TYPE_FLOAT:
               $$.type = EXPRESSION_TYPE_FLOAT;
