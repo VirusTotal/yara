@@ -1200,6 +1200,18 @@ The keywords ``any``, ``all`` and ``none`` can be used as well.
     1 of ($*)         // same that "any of them"
     none of ($b*)     // zero of the set of strings that start with "$b"
 
+.. warning:: Due to the way YARA works internally, using "0 of them" is an
+    ambiguous part of the language which should be avoided in favor of "none
+    of them". To understand this, consider the meaning of "2 of them", which
+    is true if 2 or more of the strings match. Historically, "0 of them"
+    followed this principle and would evaluate to true if at least one of the
+    strings matched. This ambiguity is resolved in YARA 4.3.0 by making "0 of
+    them" evaluate to true if exactly 0 of the strings match. To improve on
+    the situation and make the intent clear, it is encouraged to use "none" in
+    place of 0. By not using an integer it is easier to reason about the meaning
+    of "none of them" without the historical understanding of "at least 0"
+    clouding the issue.
+
 
 Starting with YARA 4.2.0 it is possible to express a set of strings in an
 integer range, like this:

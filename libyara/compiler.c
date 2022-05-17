@@ -1041,6 +1041,13 @@ YR_API char* yr_compiler_get_error_message(
         "rule identifier \"%s\" matches previously used wildcard rule set",
         compiler->last_error_extra_info);
     break;
+  case ERROR_INVALID_VALUE:
+    snprintf(
+        buffer,
+        buffer_size,
+        "invalid value in condition: \"%s\"",
+        compiler->last_error_extra_info);
+    break;
   }
 
   return buffer;

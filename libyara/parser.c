@@ -237,7 +237,10 @@ int yr_parser_emit_pushes_for_strings(
 
 // Emit OP_PUSH_RULE instructions for all rules whose identifier has given
 // prefix.
-int yr_parser_emit_pushes_for_rules(yyscan_t yyscanner, const char* prefix)
+int yr_parser_emit_pushes_for_rules(
+    yyscan_t yyscanner,
+    const char* prefix,
+    int* count)
 {
   YR_COMPILER* compiler = yyget_extra(yyscanner);
 
@@ -282,6 +285,11 @@ int yr_parser_emit_pushes_for_rules(yyscan_t yyscanner, const char* prefix)
     }
 
     rule++;
+  }
+
+  if (count != NULL)
+  {
+    *count = matching;
   }
 
   if (matching == 0)
