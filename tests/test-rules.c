@@ -3296,7 +3296,7 @@ void test_process_scan()
     exit(EXIT_FAILURE);
   }
 
-  spawn("/bin/sh", "-c", "VAR='Hello, world!'; sleep 600; true");
+  spawn("/bin/sh", "-c", "VAR='Hello, world!'; sleep 600& PID=\$!; trap \"kill \$PID\" EXIT; wait; true");
 
   counters.rules_matching = 0;
   counters.rules_not_matching = 0;
