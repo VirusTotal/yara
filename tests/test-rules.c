@@ -536,7 +536,7 @@ static void test_warnings() {
   assert_warning("rule test { \
     strings: \
       $a = \"AXSERS\" \
-    condition:  \
+    condition: \
       for 0 of ($a*): ($) \
     }");
 
@@ -550,17 +550,62 @@ static void test_warnings() {
   assert_no_warnings("rule test { \
     strings: \
       $a = \"AXSERS\" \
-    condition:  \
+    condition: \
       for none of ($a*): ($) \
     }");
 
   assert_warning("rule test { \
     strings: \
       $a = \"AXSERS\" \
-    condition:  \
+    condition: \
       1 + -1 of them \
     }");
 
+  assert_warning("rule test { \
+    strings: \
+      $a = \"AXSERS\" \
+    condition: \
+      2 of them \
+    }");
+
+  assert_warning("rule test { \
+    strings: \
+      $a = \"AXSERS\" \
+    condition: \
+      2 of ($a) \
+    }");
+
+  assert_warning("rule test { \
+    strings: \
+      $a = \"AXSERS\" \
+    condition: \
+      2 of ($a*) \
+    }");
+
+  assert_warning("rule test { \
+    strings: \
+      $a = \"AXSERS\" \
+    condition: \
+      2 of ($a*) in (0..10) \
+    }");
+
+  assert_warning("rule a { \
+    condition: \
+      true \
+    } \
+    rule b { \
+      condition: \
+        2 of (a) \
+    }");
+
+  assert_warning("rule a { \
+    condition: \
+      true \
+    } \
+    rule b { \
+      condition: \
+        2 of (a*) \
+    }");
 
   YR_DEBUG_FPRINTF(1, stderr, "} // %s()\n", __FUNCTION__);
 }
@@ -2118,6 +2163,24 @@ void test_for()
         ) \
       }",
       NULL);
+
+  // Lower bound must be less than upper bound, if it can be determined statically.
+  assert_error(
+      "import \"tests\" \
+      rule test { \
+        condition: \
+          for any i in (10..1): (i) \
+      }",
+      ERROR_INVALID_VALUE);
+
+  // If one of the bounds can not be determined statically it isn't an error.
+  assert_true_rule(
+    "rule test { \
+      strings: \
+        $a = \"AXSERS\" \
+      condition: \
+        true or any of them in (0..filesize-100) \
+    }", TEXT_1024_BYTES);
 
   YR_DEBUG_FPRINTF(1, stderr, "} // %s()\n", __FUNCTION__);
 }
