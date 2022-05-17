@@ -4415,7 +4415,7 @@ yyreduce:
 #line 2316 "grammar.y"
       {
         yywarning(yyscanner,
-            "Using deprecated \"entrypoint\" keyword. Use the \"entry_point\" "
+            "using deprecated \"entrypoint\" keyword. Use the \"entry_point\" "
             "function from PE module instead.");
 
         fail_if_error(yr_parser_emit(

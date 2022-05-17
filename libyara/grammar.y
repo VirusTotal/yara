@@ -2315,7 +2315,7 @@ primary_expression
     | _ENTRYPOINT_
       {
         yywarning(yyscanner,
-            "Using deprecated \"entrypoint\" keyword. Use the \"entry_point\" "
+            "using deprecated \"entrypoint\" keyword. Use the \"entry_point\" "
             "function from PE module instead.");
 
         fail_if_error(yr_parser_emit(
