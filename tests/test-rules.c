@@ -523,7 +523,8 @@ static void test_anonymous_strings()
   YR_DEBUG_FPRINTF(1, stderr, "} // %s()\n", __FUNCTION__);
 }
 
-static void test_warnings() {
+static void test_warnings()
+{
   YR_DEBUG_FPRINTF(1, stderr, "+ %s() {\n", __FUNCTION__);
 
   assert_warning("rule test { \
@@ -1846,7 +1847,6 @@ static void test_of()
       "condition: none of ($a*, $b*) }",
       TEXT_1024_BYTES "mississippi");
 
-
   assert_true_rule_blob(
       "rule test { \
          strings: \
@@ -2164,7 +2164,8 @@ void test_for()
       }",
       NULL);
 
-  // Lower bound must be less than upper bound, if it can be determined statically.
+  // Lower bound must be less than upper bound, if it can be determined
+  // statically.
   assert_error(
       "import \"tests\" \
       rule test { \
@@ -2175,12 +2176,13 @@ void test_for()
 
   // If one of the bounds can not be determined statically it isn't an error.
   assert_true_rule(
-    "rule test { \
+      "rule test { \
       strings: \
         $a = \"AXSERS\" \
       condition: \
         true or any of them in (0..filesize-100) \
-    }", TEXT_1024_BYTES);
+    }",
+      TEXT_1024_BYTES);
 
   YR_DEBUG_FPRINTF(1, stderr, "} // %s()\n", __FUNCTION__);
 }
@@ -3296,7 +3298,7 @@ void test_process_scan()
     exit(EXIT_FAILURE);
   }
 
-  spawn("/bin/sh", "-c", "VAR='Hello, world!'; sleep 600& PID=\$!; trap \"kill \$PID\" EXIT; wait; true");
+  spawn("/bin/sh", "-c", "VAR='Hello, world!'; sleep 10; true");
 
   counters.rules_matching = 0;
   counters.rules_not_matching = 0;
