@@ -427,7 +427,7 @@ Reference
 
     :param str filepath: Path to the file to be scanned.
     :param int pid: Process id to be scanned.
-    :param str data: Data to be scanned.
+    :param str/bytes data: Data to be scanned.
     :param dict externals: Dictionary with external variables. Keys are variable
       names and values are variable values.
     :param function callback: Callback function invoked for each rule.
