@@ -286,19 +286,24 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 %type <integer> integer_set
 %type <integer> integer_enumeration
-%type <integer> for_expression
 %type <integer> rule_modifier
 %type <integer> rule_modifiers
 %type <integer> string_enumeration
 %type <integer> string_enumeration_item
 %type <integer> string_set
 %type <integer> for_iteration
+%type <integer> rule_enumeration
+%type <integer> rule_enumeration_item
+%type <integer> rule_set
 
 %type <expression> primary_expression
 %type <expression> boolean_expression
 %type <expression> expression
 %type <expression> identifier
 %type <expression> regexp
+%type <expression> for_expression
+%type <expression> for_quantifier
+
 
 %type <c_string> arguments
 %type <c_string> arguments_list
@@ -1687,12 +1692,22 @@ expression
       }
     | for_expression _OF_ string_set
       {
+        if ($1.type == EXPRESSION_TYPE_INTEGER && $1.value.integer > $3)
+        {
+          yywarning(yyscanner,
+            "expression always false - requesting %lld of %lld.", $1.value.integer, $3);
+        }
         yr_parser_emit_with_arg(yyscanner, OP_OF, OF_STRING_SET, NULL, NULL);
 
         $$.type = EXPRESSION_TYPE_BOOLEAN;
       }
     | for_expression _OF_ rule_set
       {
+        if ($1.type == EXPRESSION_TYPE_INTEGER && $1.value.integer > $3)
+        {
+          yywarning(yyscanner,
+            "expression always false - requesting %lld of %lld.", $1.value.integer, $3);
+        }
         yr_parser_emit_with_arg(yyscanner, OP_OF, OF_RULE_SET, NULL, NULL);
 
         $$.type = EXPRESSION_TYPE_BOOLEAN;
@@ -1737,6 +1752,12 @@ expression
       }
     | for_expression _OF_ string_set _IN_ range
       {
+        if ($1.type == EXPRESSION_TYPE_INTEGER && $1.value.integer > $3)
+        {
+          yywarning(yyscanner,
+            "expression always false - requesting %lld of %lld.", $1.value.integer, $3);
+        }
+
         yr_parser_emit(yyscanner, OP_OF_FOUND_IN, NULL);
 
         $$.type = EXPRESSION_TYPE_BOOLEAN;
@@ -2106,6 +2127,18 @@ range
           result = ERROR_WRONG_TYPE;
         }
 
+        // If we can statically determine lower and upper bounds, ensure
+        // lower < upper. Check for upper bound here because some things (like
+        // string count) are EXPRESSION_TYPE_INTEGER.
+        if ($2.value.integer != YR_UNDEFINED &&
+            $4.value.integer != YR_UNDEFINED &&
+            $2.value.integer > $4.value.integer)
+        {
+          yr_compiler_set_error_extra_info(
+              compiler, "range lower bound must be greater than upper bound");
+          result = ERROR_INVALID_VALUE;
+        }
+
         fail_if_error(result);
       }
     ;
@@ -2214,12 +2247,15 @@ rule_set
         yr_parser_emit_push_const(yyscanner, YR_UNDEFINED);
       }
       rule_enumeration ')'
+      {
+        $$ = $3;
+      }
     ;
 
 
 rule_enumeration
-    : rule_enumeration_item
-    | rule_enumeration ',' rule_enumeration_item
+    : rule_enumeration_item { $$ = $1; }
+    | rule_enumeration ',' rule_enumeration_item { $$ = $1 + $3; }
     ;
 
 
@@ -2254,9 +2290,12 @@ rule_enumeration_item
         yr_free($1);
 
         fail_if_error(result);
+
+        $$ = 1;
       }
     | _IDENTIFIER_ '*'
       {
+        int count = 0;
         YR_NAMESPACE* ns = (YR_NAMESPACE*) yr_arena_get_ptr(
             compiler->arena,
             YR_NAMESPACES_TABLE,
@@ -2268,10 +2307,12 @@ rule_enumeration_item
             ns->name,
             1);
 
-        int result = yr_parser_emit_pushes_for_rules(yyscanner, $1);
+        int result = yr_parser_emit_pushes_for_rules(yyscanner, $1, &count);
         yr_free($1);
 
         fail_if_error(result);
+
+        $$ = count;
       }
     ;
 
@@ -2279,22 +2320,73 @@ rule_enumeration_item
 for_expression
     : primary_expression
       {
-        $$ = FOR_EXPRESSION_ANY;
+        if ($1.type == EXPRESSION_TYPE_INTEGER)
+        {
+          if ($1.value.integer == 0)
+          {
+            yywarning(yyscanner,
+                "consider using \"none\" keyword, it is less ambiguous.");
+          }
+
+          if ($1.value.integer < 0)
+          {
+            yr_compiler_set_error_extra_info_fmt(compiler,
+                "%lld", $1.value.integer);
+            fail_with_error(ERROR_INVALID_VALUE);
+          }
+        }
+
+        if ($1.type == EXPRESSION_TYPE_STRING)
+        {
+          SIZED_STRING* ss = yr_arena_ref_to_ptr(compiler->arena,
+              &$1.value.sized_string_ref);
+          // If the expression is an external string variable we need to get
+          // it some other way.
+          if (ss != NULL)
+          {
+            yr_compiler_set_error_extra_info_fmt(compiler, "%s", ss->c_string);
+          }
+          else
+          {
+            yr_compiler_set_error_extra_info(compiler,
+                "string in for_expression is invalid");
+          }
+          fail_with_error(ERROR_INVALID_VALUE);
+        }
+
+        if ($1.type == EXPRESSION_TYPE_REGEXP)
+        {
+          yr_compiler_set_error_extra_info(compiler,
+              "regexp in for_expression is invalid");
+          fail_with_error(ERROR_INVALID_VALUE);
+        }
+
+        $$.value.integer = $1.value.integer;
       }
-    | _ALL_
+    | for_quantifier
+      {
+        $$.value.integer = $1.value.integer;
+      }
+    ;
+
+for_quantifier
+    : _ALL_
       {
         yr_parser_emit_push_const(yyscanner, YR_UNDEFINED);
-        $$ = FOR_EXPRESSION_ALL;
-      }
+        $$.type = EXPRESSION_TYPE_QUANTIFIER;
+        $$.value.integer = FOR_EXPRESSION_ALL;
+     }
     | _ANY_
       {
         yr_parser_emit_push_const(yyscanner, 1);
-        $$ = FOR_EXPRESSION_ANY;
+        $$.type = EXPRESSION_TYPE_QUANTIFIER;
+        $$.value.integer = FOR_EXPRESSION_ANY;
       }
     | _NONE_
       {
         yr_parser_emit_push_const(yyscanner, 0);
-        $$ = FOR_EXPRESSION_NONE;
+        $$.type = EXPRESSION_TYPE_QUANTIFIER;
+        $$.value.integer = FOR_EXPRESSION_NONE;
       }
     ;
 
@@ -2315,7 +2407,7 @@ primary_expression
     | _ENTRYPOINT_
       {
         yywarning(yyscanner,
-            "Using deprecated \"entrypoint\" keyword. Use the \"entry_point\" "
+            "using deprecated \"entrypoint\" keyword. Use the \"entry_point\" "
             "function from PE module instead.");
 
         fail_if_error(yr_parser_emit(
@@ -2468,7 +2560,7 @@ primary_expression
           {
             case OBJECT_TYPE_INTEGER:
               $$.type = EXPRESSION_TYPE_INTEGER;
-              $$.value.integer = YR_UNDEFINED;
+              $$.value.integer = $1.value.object->value.i;
               break;
             case OBJECT_TYPE_FLOAT:
               $$.type = EXPRESSION_TYPE_FLOAT;
