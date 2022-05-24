@@ -31,7 +31,7 @@ int main(int argc, char** argv)
   assert_true_rule_blob(
       "import \"magic\" rule test { condition: \
       magic.type() contains \"Mach-O\" and \
-      magic.mime_type() == \"application/x-mach-binary\" and \
+      (magic.mime_type() == \"application/x-mach-binary\" or magic.mime_type() == \"application/octet-stream\") and \
       magic.type() contains \"Mach-O\"}",
       MACHO_X86_FILE);
 
