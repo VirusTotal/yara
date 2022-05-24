@@ -23,7 +23,7 @@ int main(int argc, char** argv)
 
   assert_true_rule_blob(
       "import \"magic\" rule test { condition: \
-      magic.type() contains \"PE32\" and \
+      magic.type() contains \"MS-DOS executable\" and \
       magic.mime_type() == \"application/x-dosexec\" }",
       PE32_FILE);
 
