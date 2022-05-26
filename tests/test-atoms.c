@@ -167,6 +167,12 @@ void test_heuristic_quality()
       .bytes = {0x61, 0x62, 0x63, 0x64},
       .mask = {0xFF, 0xFF, 0xFF, 0xFF}};
 
+  // ABCD
+  YR_ATOM a41424344 = {
+      .length = 4,
+      .bytes = {0x41, 0x42, 0x43, 0x44},
+      .mask = {0xFF, 0xFF, 0xFF, 0xFF}};
+
   // abc.
   YR_ATOM a6162632E = {
       .length = 4,
@@ -195,6 +201,7 @@ void test_heuristic_quality()
   int qCCCCCCCC = yr_atoms_heuristic_quality(&c, &aCCCCCCCC);
   int qFFFFFFFF = yr_atoms_heuristic_quality(&c, &aFFFFFFFF);
   int q61626364 = yr_atoms_heuristic_quality(&c, &a61626364);
+  int q41424344 = yr_atoms_heuristic_quality(&c, &a41424344);
   int q6162632E = yr_atoms_heuristic_quality(&c, &a6162632E);
 
   a010203.mask[1] = 0x00;
@@ -239,6 +246,7 @@ void test_heuristic_quality()
   assert_true_expr(q01020102 > q010203);
   assert_true_expr(q01020304 > q61626364);
   assert_true_expr(q010203 < q61626364);
+  assert_true_expr(q61626364 == q41424344);
   assert_true_expr(q6162632E > q61626364);
 
   // Byte sequences like 90 90 90 90 and CC CC CC CC are using as function
