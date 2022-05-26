@@ -161,8 +161,8 @@ int yr_atoms_heuristic_quality(YR_ATOMS_CONFIG* config, YR_ATOM* atom)
         // than the rest. We want to favor atoms that contain bytes outside
         // those ranges because they generate less additional atoms during
         // calls to _yr_atoms_case_combinations.
-        if (yr_lowercase[atom->bytes[i]] >= 'a' &&
-            yr_lowercase[atom->bytes[i]] <= 'z')
+        if ((yr_lowercase[atom->bytes[i]] >= 'a' && yr_lowercase[atom->bytes[i]] <= 'z') ||
+        (yr_lowercase[atom->bytes[i]] >= 'A' && yr_lowercase[atom->bytes[i]] <= 'Z'))
           quality += 18;
         else
           quality += 20;
