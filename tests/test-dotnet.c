@@ -84,6 +84,44 @@ int main(int argc, char** argv)
       "tests/data/"
       "0ca09bde7602769120fadc4f7a4147347a7a97271370583586c9e587fd396171");
 
+  assert_true_rule_file(
+      "import \"dotnet\" \
+      rule test { \
+        condition: \
+          dotnet.is_dotnet and \
+          dotnet.entry_point == 0 and \
+          dotnet.flags & ( \
+            dotnet.COMIMAGE_FLAGS_ILONLY & \
+            dotnet.COMIMAGE_FLAGS_STRONGNAMESIGNED) == \
+            dotnet.COMIMAGE_FLAGS_ILONLY & \
+            dotnet.COMIMAGE_FLAGS_STRONGNAMESIGNED \
+      }",
+      "tests/data/"
+      "0ca09bde7602769120fadc4f7a4147347a7a97271370583586c9e587fd396171");
+
+  assert_true_rule_file(
+      "import \"dotnet\" \
+      rule test { \
+        condition: \
+          dotnet.is_dotnet and \
+          for any typeref in dotnet.typerefs : ( \
+            typeref.namespace == \"System.Reflection\" and \
+            typeref.name == \"AssemblyTitleAttribute\") \
+      }",
+      "tests/data/"
+      "0ca09bde7602769120fadc4f7a4147347a7a97271370583586c9e587fd396171");
+
+  assert_true_rule_file(
+      "import \"dotnet\" \
+      rule test { \
+        condition: \
+          dotnet.is_dotnet and \
+          dotnet.number_of_memberrefs == 6 and \
+          dotnet.memberrefs[1].name == \".ctor\" \
+      }",
+      "tests/data/"
+      "0ca09bde7602769120fadc4f7a4147347a7a97271370583586c9e587fd396171");
+
   yr_finalize();
 
   YR_DEBUG_FPRINTF(
