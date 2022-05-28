@@ -599,6 +599,22 @@ int main(int argc, char** argv)
   assert_true_rule_file(
       "import \"pe\" \
       \
+      rule import_delayed_import_details \
+      {\
+          condition:\
+            for any import_detail in pe.delayed_import_details : (\
+                import_detail.number_of_functions == 2 and\
+                import_detail.library_name == \"USER32.dll\" and\
+                for any function in import_detail.functions : (\
+                    function.name == \"MessageBoxA\"\
+                )\
+            )\
+      }",
+      "tests/data/pe_imports");
+
+  assert_true_rule_file(
+      "import \"pe\" \
+      \
       rule zero_length_version_info_value \
       {\
           condition:\
