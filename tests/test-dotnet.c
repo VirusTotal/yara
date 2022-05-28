@@ -84,6 +84,15 @@ int main(int argc, char** argv)
       "tests/data/"
       "0ca09bde7602769120fadc4f7a4147347a7a97271370583586c9e587fd396171");
 
+  assert_false_rule(
+      "import \"dotnet\" \
+      rule test { \
+        condition: \
+          dotnet.version == \"v4.0.30319\" \
+      }",
+      "tests/data/"
+      "bad_dotnet_pe");
+
   yr_finalize();
 
   YR_DEBUG_FPRINTF(
