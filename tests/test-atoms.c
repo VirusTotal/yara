@@ -195,7 +195,6 @@ void test_heuristic_quality()
   int qCCCCCCCC = yr_atoms_heuristic_quality(&c, &aCCCCCCCC);
   int qFFFFFFFF = yr_atoms_heuristic_quality(&c, &aFFFFFFFF);
   int q61626364 = yr_atoms_heuristic_quality(&c, &a61626364);
-  int q41424344 = yr_atoms_heuristic_quality(&c, &a41424344);
   int q6162632E = yr_atoms_heuristic_quality(&c, &a6162632E);
 
   a010203.mask[1] = 0x00;
