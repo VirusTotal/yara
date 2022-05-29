@@ -48,7 +48,7 @@ stamp-h1
 /m4
 !/m4/acx_pthread.m4
 
-# Project specific files 
+# Project specific files
 /yara
 /yarac
 /libyara/modules/.dirstamp
