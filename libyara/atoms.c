@@ -112,7 +112,7 @@ int yr_atoms_heuristic_quality(YR_ATOMS_CONFIG* config, YR_ATOM* atom)
 
   assert(atom->length <= YR_MAX_ATOM_LENGTH);
 
-  yr_bitmask_clear_all(seen_bytes);
+  yr_bitmask_clear_all(seen_bytes, sizeof(seen_bytes));
 
   // Each byte in the atom contributes a certain amount of points to the
   // quality. Bytes [a-zA-Z] contribute 18 points each, common bytes like
@@ -854,14 +854,14 @@ struct STACK_ITEM
   YR_ATOM_TREE_NODE* new_appending_node;
 };
 
-#define make_atom_from_re_nodes(atom, nodes_length, nodes)   \
-  {                                                          \
-    atom.length = nodes_length;                              \
-    for (i = 0; i < atom.length; i++)                        \
-    {                                                        \
-      atom.bytes[i] = (uint8_t) (recent_re_nodes)[i]->value; \
-      atom.mask[i] = (uint8_t) (recent_re_nodes)[i]->mask;   \
-    }                                                        \
+#define make_atom_from_re_nodes(atom, nodes_length, nodes)  \
+  {                                                         \
+    atom.length = nodes_length;                             \
+    for (i = 0; i < atom.length; i++)                       \
+    {                                                       \
+      atom.bytes[i] = (uint8_t)(recent_re_nodes)[i]->value; \
+      atom.mask[i] = (uint8_t)(recent_re_nodes)[i]->mask;   \
+    }                                                       \
   }
 
 ////////////////////////////////////////////////////////////////////////////////
