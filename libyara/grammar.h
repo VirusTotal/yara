@@ -1,4 +1,4 @@
-/* A Bison parser, made by GNU Bison 3.8.  */
+/* A Bison parser, made by GNU Bison 3.8.2.  */
 
 /* Bison interface for Yacc-like parsers in C
 
@@ -118,6 +118,72 @@ extern int yara_yydebug;
   };
   typedef enum yytokentype yytoken_kind_t;
 #endif
+/* Token kinds.  */
+#define YYEMPTY -2
+#define _END_OF_FILE_ 0
+#define YYerror 256
+#define YYUNDEF 257
+#define _END_OF_INCLUDED_FILE_ 258
+#define _DOT_DOT_ 259
+#define _RULE_ 260
+#define _PRIVATE_ 261
+#define _GLOBAL_ 262
+#define _META_ 263
+#define _STRINGS_ 264
+#define _CONDITION_ 265
+#define _IDENTIFIER_ 266
+#define _STRING_IDENTIFIER_ 267
+#define _STRING_COUNT_ 268
+#define _STRING_OFFSET_ 269
+#define _STRING_LENGTH_ 270
+#define _STRING_IDENTIFIER_WITH_WILDCARD_ 271
+#define _NUMBER_ 272
+#define _DOUBLE_ 273
+#define _INTEGER_FUNCTION_ 274
+#define _TEXT_STRING_ 275
+#define _HEX_STRING_ 276
+#define _REGEXP_ 277
+#define _ASCII_ 278
+#define _WIDE_ 279
+#define _XOR_ 280
+#define _BASE64_ 281
+#define _BASE64_WIDE_ 282
+#define _NOCASE_ 283
+#define _FULLWORD_ 284
+#define _AT_ 285
+#define _FILESIZE_ 286
+#define _ENTRYPOINT_ 287
+#define _ALL_ 288
+#define _ANY_ 289
+#define _NONE_ 290
+#define _IN_ 291
+#define _OF_ 292
+#define _FOR_ 293
+#define _THEM_ 294
+#define _MATCHES_ 295
+#define _CONTAINS_ 296
+#define _STARTSWITH_ 297
+#define _ENDSWITH_ 298
+#define _ICONTAINS_ 299
+#define _ISTARTSWITH_ 300
+#define _IENDSWITH_ 301
+#define _IEQUALS_ 302
+#define _IMPORT_ 303
+#define _TRUE_ 304
+#define _FALSE_ 305
+#define _OR_ 306
+#define _AND_ 307
+#define _NOT_ 308
+#define _DEFINED_ 309
+#define _EQ_ 310
+#define _NEQ_ 311
+#define _LT_ 312
+#define _LE_ 313
+#define _GT_ 314
+#define _GE_ 315
+#define _SHIFT_LEFT_ 316
+#define _SHIFT_RIGHT_ 317
+#define UNARY_MINUS 318
 
 /* Value type.  */
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
@@ -137,7 +203,7 @@ union YYSTYPE
   YR_ARENA_REF meta;
   YR_ARENA_REF string;
 
-#line 141 "grammar.h"
+#line 207 "grammar.h"
 
 };
 typedef union YYSTYPE YYSTYPE;
