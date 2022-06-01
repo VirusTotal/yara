@@ -177,7 +177,8 @@ int yr_parser_emit_with_arg_reloc(
 
 int yr_parser_emit_pushes_for_strings(
     yyscan_t yyscanner,
-    const char* identifier)
+    const char* identifier,
+    int* count)
 {
   YR_COMPILER* compiler = yyget_extra(yyscanner);
 
@@ -220,6 +221,11 @@ int yr_parser_emit_pushes_for_strings(
     }
   }
 
+  if (count != NULL)
+  {
+    *count = matching;
+  }
+
   if (matching == 0)
   {
     yr_compiler_set_error_extra_info(
@@ -231,7 +237,10 @@ int yr_parser_emit_pushes_for_strings(
 
 // Emit OP_PUSH_RULE instructions for all rules whose identifier has given
 // prefix.
-int yr_parser_emit_pushes_for_rules(yyscan_t yyscanner, const char* prefix)
+int yr_parser_emit_pushes_for_rules(
+    yyscan_t yyscanner,
+    const char* prefix,
+    int* count)
 {
   YR_COMPILER* compiler = yyget_extra(yyscanner);
 
@@ -276,6 +285,11 @@ int yr_parser_emit_pushes_for_rules(yyscan_t yyscanner, const char* prefix)
     }
 
     rule++;
+  }
+
+  if (count != NULL)
+  {
+    *count = matching;
   }
 
   if (matching == 0)

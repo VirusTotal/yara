@@ -109,24 +109,42 @@ int yr_atoms_heuristic_quality(YR_ATOMS_CONFIG* config, YR_ATOM* atom)
 
   int quality = 0;
   int unique_bytes = 0;
-  int i;
 
   assert(atom->length <= YR_MAX_ATOM_LENGTH);
 
   yr_bitmask_clear_all(seen_bytes);
 
-  for (i = 0; i < atom->length; i++)
+  // Each byte in the atom contributes a certain amount of points to the
+  // quality. Bytes [a-zA-Z] contribute 18 points each, common bytes like
+  // 0x00, 0x20 and 0xFF contribute only 12 points, and the rest of the
+  // bytes contribute 20 points. The ?? mask substracts 10 points, and masks
+  // X? and ?X contribute 4 points. An additional boost consisting in 2x the
+  // number of unique bytes in the atom is added to the quality. This are
+  // some examples of the quality of atoms:
+  //
+  //   01 02 03 04   quality = 20 + 20 + 20 + 20 + 8 = 88
+  //   01 ?? 03 04   quality = 20 - 10 + 20 + 20 + 6 = 56
+  //   01 0? 03      quality = 20 +  4 + 20      + 4 = 48
+  //   01 02         quality = 20 + 20           + 4 = 44
+  //   01 ?? ?3 04   quality = 20 - 10 +  2 + 20 + 4 = 36
+  //   61 62         quality = 18 + 18           + 4 = 40
+  //   61 61         quality = 18 + 18           + 2 = 38  <- warning threshold
+  //   00 01         quality = 12 + 20           + 4 = 36
+  //   01 ?? 02      quality = 20 - 10 + 20      + 4 = 34
+  //   01            quality = 20                + 1 = 21
+
+  for (int i = 0; i < atom->length; i++)
   {
     switch (atom->mask[i])
     {
     case 0x00:
-      quality -= 6;
+      quality -= 10;
       break;
     case 0x0F:
-      quality += 1;
+      quality += 4;
       break;
     case 0xF0:
-      quality += 1;
+      quality += 4;
       break;
     case 0xFF:
       switch (atom->bytes[i])
@@ -136,7 +154,7 @@ int yr_atoms_heuristic_quality(YR_ATOMS_CONFIG* config, YR_ATOM* atom)
       case 0xCC:
       case 0xFF:
         // Common bytes contribute less to the quality than the rest.
-        quality += 15;
+        quality += 12;
         break;
       default:
         // Bytes in the a-z and A-Z ranges have a slightly lower quality
@@ -145,10 +163,11 @@ int yr_atoms_heuristic_quality(YR_ATOMS_CONFIG* config, YR_ATOM* atom)
         // calls to _yr_atoms_case_combinations.
         if (yr_lowercase[atom->bytes[i]] >= 'a' &&
             yr_lowercase[atom->bytes[i]] <= 'z')
-          quality += 19;
+          quality += 18;
         else
           quality += 20;
-      };
+      }
+
       if (!yr_bitmask_is_set(seen_bytes, atom->bytes[i]))
       {
         yr_bitmask_set(seen_bytes, atom->bytes[i]);
@@ -167,8 +186,19 @@ int yr_atoms_heuristic_quality(YR_ATOMS_CONFIG* config, YR_ATOM* atom)
   {
     quality -= 10 * atom->length;
   }
+  // In general atoms with more unique bytes have a better quality, so let's
+  // boost the quality in the amount of unique bytes.
+  else
+  {
+    quality += 2 * unique_bytes;
+  }
 
-  return YR_MAX_ATOM_QUALITY - 20 * YR_MAX_ATOM_LENGTH + quality;
+  // The final quality is not zero-based, we start at YR_MAX_ATOM_QUALITY
+  // for the best possible atom and substract from there. The best possible
+  // quality is 21 * YR_MAX_ATOM_LENGTH (20 points per byte + 2 additional point
+  // per unique byte, with a maximum of 2*YR_MAX_ATOM_LENGTH unique bytes).
+
+  return YR_MAX_ATOM_QUALITY - 22 * YR_MAX_ATOM_LENGTH + quality;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -411,7 +441,6 @@ static YR_ATOM_LIST_ITEM* _yr_atoms_list_concat(
   item->next = list2;
   return list1;
 }
-
 
 ////////////////////////////////////////////////////////////////////////////////
 // If the atom starts or ends with an unknown byte (mask == 0x00), trim
@@ -721,7 +750,6 @@ static int _yr_atoms_case_insensitive(
   return ERROR_SUCCESS;
 }
 
-
 ////////////////////////////////////////////////////////////////////////////////
 // For a given list of atoms returns another list after a single byte xor
 // has been applied to it.
@@ -767,7 +795,6 @@ static int _yr_atoms_xor(
   }
   return ERROR_SUCCESS;
 }
-
 
 ////////////////////////////////////////////////////////////////////////////////
 // For a given list of atoms returns another list with the corresponding
@@ -821,24 +848,21 @@ static int _yr_atoms_wide(
   return ERROR_SUCCESS;
 }
 
-
 struct STACK_ITEM
 {
   RE_NODE* re_node;
   YR_ATOM_TREE_NODE* new_appending_node;
 };
 
-
-#define make_atom_from_re_nodes(atom, nodes_length, nodes)  \
-  {                                                         \
-    atom.length = nodes_length;                             \
-    for (i = 0; i < atom.length; i++)                       \
-    {                                                       \
-      atom.bytes[i] = (uint8_t)(recent_re_nodes)[i]->value; \
-      atom.mask[i] = (uint8_t)(recent_re_nodes)[i]->mask;   \
-    }                                                       \
+#define make_atom_from_re_nodes(atom, nodes_length, nodes)   \
+  {                                                          \
+    atom.length = nodes_length;                              \
+    for (i = 0; i < atom.length; i++)                        \
+    {                                                        \
+      atom.bytes[i] = (uint8_t) (recent_re_nodes)[i]->value; \
+      atom.mask[i] = (uint8_t) (recent_re_nodes)[i]->mask;   \
+    }                                                        \
   }
-
 
 ////////////////////////////////////////////////////////////////////////////////
 // Extract atoms from a regular expression. This is a helper function used by
@@ -889,7 +913,7 @@ static int _yr_atoms_extract_from_re(
 
   // This first item pushed in the stack is the last one to be poped out, the
   // sole purpose of this item is forcing that any pending leaf is appended to
-  // current_appending_node during the last iteration of the loop.
+  // appending_node during the last iteration of the loop.
   si.re_node = NULL;
   si.new_appending_node = appending_node;
 
@@ -943,6 +967,7 @@ static int _yr_atoms_extract_from_re(
       }
 
       current_appending_node = si.new_appending_node;
+      best_quality = -1;
     }
 
     if (si.re_node != NULL)
@@ -1117,6 +1142,8 @@ static int _yr_atoms_extract_from_re(
       case RE_NODE_ANCHOR_END:
       case RE_NODE_WORD_BOUNDARY:
       case RE_NODE_NON_WORD_BOUNDARY:
+      case RE_NODE_NOT_LITERAL:
+      case RE_NODE_MASKED_NOT_LITERAL:
 
         si.new_appending_node = current_appending_node;
         si.re_node = NULL;
@@ -1137,7 +1164,6 @@ static int _yr_atoms_extract_from_re(
   return ERROR_SUCCESS;
 }
 
-
 ////////////////////////////////////////////////////////////////////////////////
 // Makes an exact copy of an YR_ATOM_LIST_ITEM.
 //
@@ -1153,7 +1179,6 @@ static YR_ATOM_LIST_ITEM* _yr_atoms_clone_list_item(YR_ATOM_LIST_ITEM* item)
 
   return clone;
 }
-
 
 ////////////////////////////////////////////////////////////////////////////////
 // Given list of atoms that may contain wildcards, replace those wildcarded
@@ -1241,7 +1266,6 @@ static int _yr_atoms_expand_wildcards(YR_ATOM_LIST_ITEM* atoms)
 
   return ERROR_SUCCESS;
 }
-
 
 ////////////////////////////////////////////////////////////////////////////////
 // Extract atoms from a regular expression. This function receives the abstract

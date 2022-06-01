@@ -286,22 +286,28 @@ YR_API int yr_compiler_create(YR_COMPILER** compiler)
 
 YR_API void yr_compiler_destroy(YR_COMPILER* compiler)
 {
-  yr_arena_release(compiler->arena);
+  if (compiler->arena != NULL)
+    yr_arena_release(compiler->arena);
 
   if (compiler->automaton != NULL)
     yr_ac_automaton_destroy(compiler->automaton);
 
-  yr_hash_table_destroy(compiler->rules_table, NULL);
+  if (compiler->rules_table != NULL)
+    yr_hash_table_destroy(compiler->rules_table, NULL);
 
-  yr_hash_table_destroy(compiler->strings_table, NULL);
+  if (compiler->strings_table != NULL)
+    yr_hash_table_destroy(compiler->strings_table, NULL);
 
-  yr_hash_table_destroy(compiler->wildcard_identifiers_table, NULL);
+  if (compiler->wildcard_identifiers_table != NULL)
+    yr_hash_table_destroy(compiler->wildcard_identifiers_table, NULL);
 
-  yr_hash_table_destroy(compiler->sz_table, NULL);
+  if (compiler->sz_table != NULL)
+    yr_hash_table_destroy(compiler->sz_table, NULL);
 
-  yr_hash_table_destroy(
-      compiler->objects_table,
-      (YR_HASH_TABLE_FREE_VALUE_FUNC) yr_object_destroy);
+  if (compiler->objects_table != NULL)
+    yr_hash_table_destroy(
+        compiler->objects_table,
+        (YR_HASH_TABLE_FREE_VALUE_FUNC) yr_object_destroy);
 
   if (compiler->atoms_config.free_quality_table)
     yr_free(compiler->atoms_config.quality_table);
@@ -1033,6 +1039,13 @@ YR_API char* yr_compiler_get_error_message(
         buffer,
         buffer_size,
         "rule identifier \"%s\" matches previously used wildcard rule set",
+        compiler->last_error_extra_info);
+    break;
+  case ERROR_INVALID_VALUE:
+    snprintf(
+        buffer,
+        buffer_size,
+        "invalid value in condition: \"%s\"",
         compiler->last_error_extra_info);
     break;
   }

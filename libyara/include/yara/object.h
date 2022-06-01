@@ -31,18 +31,22 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define YR_OBJECT_H
 
 #ifdef _MSC_VER
-#include <float.h>
-#ifndef isnan
-#define isnan _isnan
+  #include <float.h>
+  #ifndef yr_isnan
+  #define yr_isnan _isnan
+  #endif
+#else
+  #ifndef yr_isnan
+  #define yr_isnan isnan
+  #endif
 #endif
 
 #ifndef INFINITY
-#define INFINITY (DBL_MAX + DBL_MAX)
+  #define INFINITY (DBL_MAX + DBL_MAX)
 #endif
 
 #ifndef NAN
-#define NAN (INFINITY - INFINITY)
-#endif
+  #define NAN (INFINITY - INFINITY)
 #endif
 
 #include <yara/sizedstr.h>

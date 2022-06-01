@@ -1166,7 +1166,7 @@ Reference
     *Examples:  pe.imports(pe.IMPORT_DELAYED, "kernel32.dll"), pe.imports("kernel32.dll") == 10*
 
 .. c:function:: imports(import_flag, dll_name, ordinal)
-   
+
     .. versionadded:: 4.2.0
 
     Function returning true if the PE imports *ordinal* from *dll_name*,
@@ -1293,13 +1293,13 @@ Reference
 
     *Example: pe.section_index(pe.entry_point)*
 
-.. c:function:: is_pe()
+.. c:type:: is_pe
 
     .. versionadded:: 3.8.0
 
     Return true if the file is a PE.
 
-    *Example: pe.is_pe()*
+    *Example: pe.is_pe*
 
 .. c:function:: is_dll()
 

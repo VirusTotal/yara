@@ -157,14 +157,14 @@ static bool negate = false;
 static bool print_count_only = false;
 static bool fail_on_warnings = false;
 static bool rules_are_compiled = false;
-static int total_count = 0;
-static int limit = 0;
-static int timeout = 1000000;
-static int stack_size = DEFAULT_STACK_SIZE;
-static int skip_larger = 0;
-static int threads = YR_MAX_THREADS;
-static int max_strings_per_rule = DEFAULT_MAX_STRINGS_PER_RULE;
-static int max_process_memory_chunk = DEFAULT_MAX_PROCESS_MEMORY_CHUNK;
+static long total_count = 0;
+static long limit = 0;
+static long timeout = 1000000;
+static long stack_size = DEFAULT_STACK_SIZE;
+static long threads = YR_MAX_THREADS;
+static long max_strings_per_rule = DEFAULT_MAX_STRINGS_PER_RULE;
+static long max_process_memory_chunk = DEFAULT_MAX_PROCESS_MEMORY_CHUNK;
+static long long skip_larger = 0;
 
 #define USAGE_STRING \
   "Usage: yara [OPTION]... [NAMESPACE:]RULES_FILE... FILE | DIR | PID"
@@ -215,7 +215,7 @@ args_option_t options[] = {
         _T("print only rules named IDENTIFIER"),
         _T("IDENTIFIER")),
 
-    OPT_INTEGER(
+    OPT_LONG(
         0,
         _T("max-process-memory-chunk"),
         &max_process_memory_chunk,
@@ -223,14 +223,14 @@ args_option_t options[] = {
         _T(" (default=1073741824)"),
         _T("NUMBER")),
 
-    OPT_INTEGER(
+    OPT_LONG(
         'l',
         _T("max-rules"),
         &limit,
         _T("abort scanning after matching a NUMBER of rules"),
         _T("NUMBER")),
 
-    OPT_INTEGER(
+    OPT_LONG(
         0,
         _T("max-strings-per-rule"),
         &max_strings_per_rule,
@@ -310,14 +310,14 @@ args_option_t options[] = {
         &scan_list_search,
         _T("scan files listed in FILE, one per line")),
 
-    OPT_INTEGER(
+    OPT_LONG_LONG(
         'z',
         _T("skip-larger"),
         &skip_larger,
         _T("skip files larger than the given size when scanning a directory"),
         _T("NUMBER")),
 
-    OPT_INTEGER(
+    OPT_LONG(
         'k',
         _T("stack-size"),
         &stack_size,
@@ -332,14 +332,14 @@ args_option_t options[] = {
         _T("print only rules tagged as TAG"),
         _T("TAG")),
 
-    OPT_INTEGER(
+    OPT_LONG(
         'p',
         _T("threads"),
         &threads,
         _T("use the specified NUMBER of threads to scan a directory"),
         _T("NUMBER")),
 
-    OPT_INTEGER(
+    OPT_LONG(
         'a',
         _T("timeout"),
         &timeout,
@@ -478,7 +478,25 @@ static int scan_dir(const char_t* dir, SCAN_OPTIONS* scan_opts)
 
       if (!(FindFileData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
       {
-        result = file_queue_put(path, scan_opts->deadline);
+        LARGE_INTEGER file_size;
+
+        file_size.HighPart = FindFileData.nFileSizeHigh;
+        file_size.LowPart = FindFileData.nFileSizeLow;
+
+        if (skip_larger > file_size.QuadPart || skip_larger <= 0)
+        {
+          result = file_queue_put(path, scan_opts->deadline);
+        }
+        else
+        {
+          _ftprintf(
+              stderr,
+              _T("skipping %s (%" PRIu64
+                 " bytes) because it's larger than %lld bytes.\n"),
+              path,
+              file_size.QuadPart,
+              skip_larger);
+        }
       }
       else if (
           scan_opts->recursive_search &&
@@ -670,7 +688,7 @@ static int scan_dir(const char* dir, SCAN_OPTIONS* scan_opts)
           {
             fprintf(
                 stderr,
-                "skipping %s (%" PRId64 " bytes) because it's larger than %d"
+                "skipping %s (%" PRId64 " bytes) because it's larger than %lld"
                 " bytes.\n",
                 full_path,
                 st.st_size,
@@ -1199,7 +1217,7 @@ static int callback(
     return CALLBACK_CONTINUE;
 
   case CALLBACK_MSG_CONSOLE_LOG:
-    printf("%s\n", (char*) message_data);
+    _tprintf(_T("%" PF_S "\n"), (char*) message_data);
     return CALLBACK_CONTINUE;
   }
 
@@ -1393,10 +1411,10 @@ int _tmain(int argc, const char_t** argv)
     exit_with_code(EXIT_FAILURE);
   }
 
-  yr_set_configuration_uint32(YR_CONFIG_STACK_SIZE, stack_size);
+  yr_set_configuration_uint32(YR_CONFIG_STACK_SIZE, (uint32_t) stack_size);
 
   yr_set_configuration_uint32(
-      YR_CONFIG_MAX_STRINGS_PER_RULE, max_strings_per_rule);
+      YR_CONFIG_MAX_STRINGS_PER_RULE, (uint32_t) max_strings_per_rule);
 
   yr_set_configuration_uint64(
       YR_CONFIG_MAX_PROCESS_MEMORY_CHUNK, max_process_memory_chunk);
@@ -1598,7 +1616,7 @@ int _tmain(int argc, const char_t** argv)
     if (result == ERROR_COULD_NOT_OPEN_FILE)
     {
       // Is it a PID? To be a PID it must be made up entirely of digits.
-      char* endptr = NULL;
+      char_t* endptr = NULL;
       long pid = _tcstol(argv[argc - 1], &endptr, 10);
 
       if (pid > 0 && argv[argc - 1] != NULL && *endptr == '\x00')

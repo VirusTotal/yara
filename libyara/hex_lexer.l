@@ -108,6 +108,12 @@ hexdigit      [a-fA-F0-9]
   return _MASKED_BYTE_;
 }
 
+\~{hexdigit}{2}  {
+
+  yylval->integer = xtoi(&(yytext[1]));
+  return _NOT_BYTE_;
+}
+
 \?{hexdigit}  {
 
   yytext[0] = '0'; // replace ? by 0
@@ -121,11 +127,32 @@ hexdigit      [a-fA-F0-9]
   return _MASKED_BYTE_;
 }
 
+<INITIAL>\~{hexdigit}\?  {
+
+  yytext[2] = '0'; // replace ? by 0
+  yylval->integer = xtoi(&(yytext[1])) | 0xF000 ;
+  return _MASKED_NOT_BYTE_;
+}
+
+\~\?{hexdigit}  {
+
+  yytext[1] = '0'; // replace ? by 0
+  yylval->integer = xtoi(&(yytext[1])) | 0x0F00 ;
+  return _MASKED_NOT_BYTE_;
+}
+
 {hexdigit} {
 
   yyerror(yyscanner, lex_env, "uneven number of digits in hex string");
   yyterminate();
 }
+
+\~  {
+  
+  yyerror(yyscanner, lex_env, "invalid not operator (~) in hex string");
+  yyterminate();
+}
+
 
 \[ {
 
@@ -262,7 +289,13 @@ int yr_parse_hex_string(
 
   (*re_ast)->flags |= RE_FLAGS_DOT_ALL;
 
-  yylex_init(&yyscanner);
+  if (yylex_init(&yyscanner) != 0)
+  {
+    yr_re_ast_destroy(*re_ast);
+    *re_ast = NULL;
+    return ERROR_INSUFFICIENT_MEMORY;
+  }
+
   yyset_extra(*re_ast, yyscanner);
   yy_scan_string(hex_string, yyscanner);
   yyparse(yyscanner, &lex_env);

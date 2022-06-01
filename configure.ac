@@ -195,6 +195,16 @@ AC_ARG_ENABLE([pb-tests],
 AC_ARG_ENABLE([dotnet],
   [AS_HELP_STRING([--disable-dotnet], [disable dotnet module])],
   [if test x$enableval = xyes; then
+        AC_MSG_WARN([
+*****************************************************************
+  The dotnet module is enabled by default now. No need to specify
+  --enable-dotnet. To disable this module please use
+  --disable-dotnet.
+*****************************************************************
+])
+    build_dotnet_module=true
+    CFLAGS="$CFLAGS -DDOTNET_MODULE"
+  else
     build_dotnet_module=false
   fi],
   [
