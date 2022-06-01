@@ -106,6 +106,12 @@ To install YARA using `Scoop <https://scoop.sh>`_ or `Chocolatey <https://chocol
 ``scoop install yara`` or ``choco install yara``. The integration with both `Scoop` and `Chocolatey` are
 not maintained their respective teams, not by the YARA authors.
 
+To compile Windows binaries from source, you can supply extra commands to the ``configure`` binary. 
+For example, the following command will compile 64-bit versions of the YARA executables::
+    
+    ./configure --host=x86_64-w64-mingw32
+
+Visual Studio projects are also available in ``windows`` directory.
 
 Installing on Mac OS X with Homebrew
 ------------------------------------
