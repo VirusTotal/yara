@@ -17,8 +17,8 @@ uint64_t convertWindowsTimeToUnixTime(uint64_t input)
 
 typedef struct
 {
-  DWORD dwLowDateTime;
-  DWORD dwHighDateTime;
+  uint32_t dwLowDateTime;
+  uint32_t dwHighDateTime;
 } FILE_TIME; // give custom struct name to prevent any Windows clashes
 
 #pragma pack(push, 4)
@@ -55,6 +55,34 @@ typedef struct _link_flags_t
 #define LINK_CLSID_3 0x46000000
 
 begin_declarations
+  declare_integer("HasLinkTargetIDList");
+  declare_integer("HasLinkInfo");
+  declare_integer("HasName");
+  declare_integer("HasRelativePath");
+  declare_integer("HasWorkingDir");
+  declare_integer("HasArguments");
+  declare_integer("HasIconLocation");
+  declare_integer("IsUnicode");
+  declare_integer("ForceNoLinkInfo");
+  declare_integer("HasExpString");
+  declare_integer("RunInSeparateProcess");
+  declare_integer("Unused1");
+  declare_integer("HasDarwinID");
+  declare_integer("RunAsUser");
+  declare_integer("HasExpIcon");
+  declare_integer("NoPidlAlias");
+  declare_integer("Unused2");
+  declare_integer("RunWithShimLayer");
+  declare_integer("ForceNoLinkTrack");
+  declare_integer("EnableTargetMetadata");
+  declare_integer("DisableLinkPathTracking");
+  declare_integer("DisableKnownFolderTracking");
+  declare_integer("DisableKnownFolderAlias");
+  declare_integer("AllowLinkToLink");
+  declare_integer("UnaliasOnSave");
+  declare_integer("PreferEnvironmentPath");
+  declare_integer("KeepLocalIDListForUNCTarget");
+
   declare_integer("is_lnk");
   declare_integer("creation_time");
   declare_integer("access_time");
@@ -66,6 +94,34 @@ begin_declarations
   declare_integer("show_command");
   declare_integer("hotkey");
 end_declarations
+
+#define HasLinkTargetIDList            0x00000001
+#define HasLinkInfo                    0x00000002
+#define HasName                        0x00000004
+#define HasRelativePath                0x00000008
+#define HasWorkingDir                  0x00000010
+#define HasArguments                   0x00000020
+#define HasIconLocation                0x00000040
+#define IsUnicode                      0x00000080
+#define ForceNoLinkInfo                0x00000100
+#define HasExpString                   0x00000200
+#define RunInSeparateProcess           0x00000400
+#define Unused1                        0x00000800
+#define HasDarwinID                    0x00001000
+#define RunAsUser                      0x00002000
+#define HasExpIcon                     0x00004000
+#define NoPidlAlias                    0x00008000
+#define Unused2                        0x00010000
+#define RunWithShimLayer               0x00020000
+#define ForceNoLinkTrack               0x00040000
+#define EnableTargetMetadata           0x00080000
+#define DisableLinkPathTracking        0x00100000
+#define DisableKnownFolderTracking     0x00200000
+#define DisableKnownFolderAlias        0x00400000
+#define AllowLinkToLink                0x00800000
+#define UnaliasOnSave                  0x01000000
+#define PreferEnvironmentPath          0x02000000
+#define KeepLocalIDListForUNCTarget    0x04000000
 
 uint64_t file_time_to_microseconds(FILE_TIME ft)
 {
@@ -105,6 +161,34 @@ int module_load(
   YR_MEMORY_BLOCK* block;
   shell_link_header_t* lnk_header;
   set_integer(0, module_object, "is_lnk");
+  
+  set_integer(HasLinkTargetIDList, module_object, "HasLinkTargetIDList");
+  set_integer(HasLinkInfo, module_object, "HasLinkInfo");
+  set_integer(HasName, module_object, "HasName");
+  set_integer(HasRelativePath, module_object, "HasRelativePath");
+  set_integer(HasWorkingDir, module_object, "HasWorkingDir");
+  set_integer(HasArguments, module_object, "HasArguments");
+  set_integer(HasIconLocation, module_object, "HasIconLocation");
+  set_integer(IsUnicode, module_object, "IsUnicode");
+  set_integer(ForceNoLinkInfo, module_object, "ForceNoLinkInfo");
+  set_integer(HasExpString, module_object, "HasExpString");
+  set_integer(RunInSeparateProcess, module_object, "RunInSeparateProcess");
+  set_integer(Unused1, module_object, "Unused1");
+  set_integer(HasDarwinID, module_object, "HasDarwinID");
+  set_integer(RunAsUser, module_object, "RunAsUser");
+  set_integer(HasExpIcon, module_object, "HasExpIcon");
+  set_integer(NoPidlAlias, module_object, "NoPidlAlias");
+  set_integer(Unused2, module_object, "Unused2");
+  set_integer(RunWithShimLayer, module_object, "RunWithShimLayer");
+  set_integer(ForceNoLinkTrack, module_object, "ForceNoLinkTrack");
+  set_integer(EnableTargetMetadata, module_object, "EnableTargetMetadata");
+  set_integer(DisableLinkPathTracking, module_object, "DisableLinkPathTracking");
+  set_integer(DisableKnownFolderTracking, module_object, "DisableKnownFolderTracking");
+  set_integer(DisableKnownFolderAlias, module_object, "DisableKnownFolderAlias");
+  set_integer(AllowLinkToLink, module_object, "AllowLinkToLink");
+  set_integer(UnaliasOnSave, module_object, "UnaliasOnSave");
+  set_integer(PreferEnvironmentPath, module_object, "PreferEnvironmentPath");
+  set_integer(KeepLocalIDListForUNCTarget, module_object, "KeepLocalIDListForUNCTarget");
 
   const uint8_t* block_data;
 
