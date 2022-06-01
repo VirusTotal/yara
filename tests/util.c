@@ -37,6 +37,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <yara.h>
 #include <yara/globals.h>
 #include <yara/proc.h>
+#include "yara/rules.h"
 
 //
 // Global variables used in test cases.
@@ -586,6 +587,60 @@ static int capture_matches(
   return CALLBACK_CONTINUE;
 }
 
+typedef struct
+{
+  int number;
+  int found;
+  char** expected;
+} check_string_t;
+
+static int new_capture_matches(
+    YR_SCAN_CONTEXT* context,
+    int message,
+    void* message_data,
+    void* user_data)
+{
+  check_string_t* f = (check_string_t*) user_data;
+  if (message == CALLBACK_MSG_RULE_MATCHING)
+  {
+    YR_RULE* rule = (YR_RULE*) message_data;
+    YR_STRING* string;
+
+    yr_rule_strings_foreach(rule, string)
+    {
+      YR_MATCH* match;
+
+      yr_string_matches_foreach(context, string, match)
+      {
+        if (f->found < f->number)
+        {
+          if (strlen(f->expected[f->found]) != match->data_length ||
+              strncmp(
+                  f->expected[f->found],
+                  (char*) (match->data),
+                  match->data_length) != 0)
+          {
+            f->found = 0;
+            return CALLBACK_CONTINUE;
+          }
+        }
+        else
+        {
+          f->found = 0;
+          return CALLBACK_CONTINUE;
+        }
+        f->found++;
+      }
+    }
+    if (f->found != f->number)
+    {
+      f->found = 0;
+      return CALLBACK_CONTINUE;
+    }
+  }
+  return CALLBACK_CONTINUE;
+}
+
 int capture_string(char* rule, char* string, char* expected_string)
 {
   YR_RULES* rules;
@@ -617,6 +672,44 @@ int capture_string(char* rule, char* string, char* expected_string)
 
   yr_rules_destroy(rules);
 
+  return f.found;
+}
+
+int capture_strings(
+    char* rule,
+    char* string,
+    char** expected_strings,
+    int number)
+{
+  YR_RULES* rules;
+
+  if (compile_rule(rule, &rules) != ERROR_SUCCESS)
+  {
+    fprintf(
+        stderr, "failed to compile rule << %s >>: %s\n", rule, compile_error);
+    exit(EXIT_FAILURE);
+  }
+
+  check_string_t f;
+
+  f.found = 0;
+  f.number = number;
+  f.expected = expected_strings;
+
+  if (yr_rules_scan_mem(
+          rules,
+          (uint8_t*) string,
+          strlen(string),
+          0,
+          new_capture_matches,
+          &f,
+          CALLBACK_MSG_RULE_MATCHING) != ERROR_SUCCESS)
+  {
+    fprintf(stderr, "yr_rules_scan_mem: error\n");
+    exit(EXIT_FAILURE);
+  }
+
+  yr_rules_destroy(rules);
   return f.found;
 }
 

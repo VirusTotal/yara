@@ -82,6 +82,8 @@ test_version_SOURCES = tests/test-version.c tests/util.c
 test_version_LDADD = libyara/.libs/libyara.a
 test_api_SOURCES = tests/test-api.c tests/util.c
 test_api_LDADD = libyara/.libs/libyara.a
+test_bitmap_SOURCES = tests/test-bitmap.c tests/util.c
+test_bitmap_LDADD = libyara/.libs/libyara.a
 test_bitmask_SOURCES = tests/test-bitmask.c tests/util.c
 test_bitmask_LDADD = libyara/.libs/libyara.a
 test_math_SOURCES = tests/test-math.c tests/util.c
@@ -105,6 +107,7 @@ check_PROGRAMS = \
   test-pe \
   test-elf \
   test-version \
+  test-bitmap \
   test-bitmask \
   test-math \
   test-stack \

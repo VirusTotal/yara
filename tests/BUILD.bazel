@@ -162,6 +162,17 @@ cc_test(
 )
 
 cc_test(
+    name = "test_bitmap",
+    srcs = ["test-bitmap.c"],
+    copts = COPTS,
+    linkstatic = True,
+    deps = [
+        ":util",
+        "@//:libyara",
+    ],
+)
+
+cc_test(
     name = "test_bitmask",
     srcs = ["test-bitmask.c"],
     copts = COPTS,
