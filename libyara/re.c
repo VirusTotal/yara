@@ -683,9 +683,6 @@ int _yr_emit_split(
   return ERROR_SUCCESS;
 }
 
-#define current_re_code_offset() \
-  yr_arena_get_current_offset(emit_context->arena, YR_RE_CODE_SECTION)
-
 static int _yr_re_emit(
     RE_EMIT_CONTEXT* emit_context,
     RE_NODE* re_node,
@@ -855,10 +852,13 @@ static int _yr_re_emit(
     FAIL_ON_ERROR(_yr_re_emit(
         emit_context, re_node->children_head, flags, &instruction_ref));
 
-    if (instruction_ref.offset - current_re_code_offset() < INT16_MIN)
+    bookmark_1 = yr_arena_get_current_offset(
+        emit_context->arena, YR_RE_CODE_SECTION);
+
+    if (instruction_ref.offset - bookmark_1 < INT16_MIN)
       return ERROR_REGULAR_EXPRESSION_TOO_LARGE;
 
-    jmp_offset = (int16_t) (instruction_ref.offset - current_re_code_offset());
+    jmp_offset = (int16_t) (instruction_ref.offset - bookmark_1);
 
     FAIL_ON_ERROR(_yr_emit_split(
         emit_context,
@@ -886,20 +886,26 @@ static int _yr_re_emit(
     FAIL_ON_ERROR(
         _yr_re_emit(emit_context, re_node->children_head, flags, NULL));
 
-    if (instruction_ref.offset - current_re_code_offset() < INT16_MIN)
+    bookmark_1 = yr_arena_get_current_offset(
+        emit_context->arena, YR_RE_CODE_SECTION);
+
+    if (instruction_ref.offset - bookmark_1 < INT16_MIN)
       return ERROR_REGULAR_EXPRESSION_TOO_LARGE;
 
-    jmp_offset = (int16_t) (instruction_ref.offset - current_re_code_offset());
+    jmp_offset = (int16_t) (instruction_ref.offset - bookmark_1);
 
     // Emit jump with offset set to 0.
 
     FAIL_ON_ERROR(_yr_emit_inst_arg_int16(
         emit_context, RE_OPCODE_JUMP, jmp_offset, NULL, NULL));
 
-    if (current_re_code_offset() - instruction_ref.offset > INT16_MAX)
+    bookmark_1 = yr_arena_get_current_offset(
+        emit_context->arena, YR_RE_CODE_SECTION);
+
+    if (bookmark_1 - instruction_ref.offset > INT16_MAX)
       return ERROR_REGULAR_EXPRESSION_TOO_LARGE;
 
-    jmp_offset = (int16_t) (current_re_code_offset() - instruction_ref.offset);
+    jmp_offset = (int16_t) (bookmark_1 - instruction_ref.offset);
 
     // Update split offset.
     split_offset_addr = (int16_t*) yr_arena_ref_to_ptr(
@@ -940,10 +946,13 @@ static int _yr_re_emit(
         &jmp_instruction_ref,
         &jmp_offset_ref));
 
-    if (current_re_code_offset() - instruction_ref.offset > INT16_MAX)
+    bookmark_1 = yr_arena_get_current_offset(
+        emit_context->arena, YR_RE_CODE_SECTION);
+
+    if (bookmark_1 - instruction_ref.offset > INT16_MAX)
       return ERROR_REGULAR_EXPRESSION_TOO_LARGE;
 
-    jmp_offset = (int16_t) (current_re_code_offset() - instruction_ref.offset);
+    jmp_offset = (int16_t) (bookmark_1 - instruction_ref.offset);
 
     // Update split offset.
     split_offset_addr = (int16_t*) yr_arena_ref_to_ptr(
@@ -954,11 +963,13 @@ static int _yr_re_emit(
     FAIL_ON_ERROR(
         _yr_re_emit(emit_context, re_node->children_tail, flags, NULL));
 
-    if (current_re_code_offset() - jmp_instruction_ref.offset > INT16_MAX)
+    bookmark_1 = yr_arena_get_current_offset(
+        emit_context->arena, YR_RE_CODE_SECTION);
+
+    if (bookmark_1 - jmp_instruction_ref.offset > INT16_MAX)
       return ERROR_REGULAR_EXPRESSION_TOO_LARGE;
 
-    jmp_offset =
-        (int16_t) (current_re_code_offset() - jmp_instruction_ref.offset);
+    jmp_offset = (int16_t) (bookmark_1 - jmp_instruction_ref.offset);
 
     // Update offset for jmp instruction.
     jmp_offset_addr = (int16_t*) yr_arena_ref_to_ptr(
@@ -1065,7 +1076,8 @@ static int _yr_re_emit(
 
       repeat_args.offset = 0;
 
-      bookmark_1 = current_re_code_offset();
+      bookmark_1 = yr_arena_get_current_offset(
+          emit_context->arena, YR_RE_CODE_SECTION);
 
       FAIL_ON_ERROR(_yr_emit_inst_arg_struct(
           emit_context,
@@ -1076,7 +1088,8 @@ static int _yr_re_emit(
           emit_prolog ? NULL : &instruction_ref,
           &repeat_start_args_ref));
 
-      bookmark_2 = current_re_code_offset();
+      bookmark_2 = yr_arena_get_current_offset(
+          emit_context->arena, YR_RE_CODE_SECTION);
 
       FAIL_ON_ERROR(_yr_re_emit(
           emit_context,
@@ -1084,7 +1097,8 @@ static int _yr_re_emit(
           flags | EMIT_DONT_SET_FORWARDS_CODE | EMIT_DONT_SET_BACKWARDS_CODE,
           NULL));
 
-      bookmark_3 = current_re_code_offset();
+      bookmark_3 = yr_arena_get_current_offset(
+          emit_context->arena, YR_RE_CODE_SECTION);
 
       if (bookmark_2 - bookmark_3 < INT32_MIN)
         return ERROR_REGULAR_EXPRESSION_TOO_LARGE;
@@ -1100,7 +1114,8 @@ static int _yr_re_emit(
           NULL,
           NULL));
 
-      bookmark_4 = current_re_code_offset();
+      bookmark_4 = yr_arena_get_current_offset(
+          emit_context->arena, YR_RE_CODE_SECTION);
 
       repeat_start_args_addr = (RE_REPEAT_ARGS*) yr_arena_ref_to_ptr(
           emit_context->arena, &repeat_start_args_ref);
@@ -1113,7 +1128,8 @@ static int _yr_re_emit(
 
     if (emit_split)
     {
-      bookmark_1 = current_re_code_offset();
+      bookmark_1 = yr_arena_get_current_offset(
+          emit_context->arena, YR_RE_CODE_SECTION);
 
       FAIL_ON_ERROR(_yr_emit_split(
           emit_context,
@@ -1134,7 +1150,8 @@ static int _yr_re_emit(
 
     if (emit_split)
     {
-      bookmark_2 = current_re_code_offset();
+      bookmark_2 = yr_arena_get_current_offset(
+          emit_context->arena, YR_RE_CODE_SECTION);
 
       if (bookmark_2 - bookmark_1 > INT16_MAX)
         return ERROR_REGULAR_EXPRESSION_TOO_LARGE;
