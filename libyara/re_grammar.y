@@ -428,6 +428,7 @@ single
         fail_if($$ == NULL, ERROR_INSUFFICIENT_MEMORY);
 
         $$->re_class = $1;
+        $$->mask = 0xCC;
       }
     ;
 %%

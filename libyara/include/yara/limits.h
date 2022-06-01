@@ -76,6 +76,11 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define YR_MIN_ATOM_QUALITY 0
 #endif
 
+// The size of bitmap for atoms
+#ifndef YR_BITMAP_SIZE
+#define YR_BITMAP_SIZE YR_BITMASK_SIZE(256)
+#endif
+
 // If the minimum atom quality for a string or regexp is below this constant,
 // a warning like "<string> is slowing down the scan" is shown. This is used
 // only with heuristic atom quality, when using an atom quality table the user

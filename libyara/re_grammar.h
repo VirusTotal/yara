@@ -1,4 +1,4 @@
-/* A Bison parser, made by GNU Bison 3.8.2.  */
+/* A Bison parser, made by GNU Bison 3.8.  */
 
 /* Bison interface for Yacc-like parsers in C
 
@@ -69,23 +69,6 @@ extern int re_yydebug;
   };
   typedef enum yytokentype yytoken_kind_t;
 #endif
-/* Token kinds.  */
-#define YYEMPTY -2
-#define YYEOF 0
-#define YYerror 256
-#define YYUNDEF 257
-#define _CHAR_ 258
-#define _ANY_ 259
-#define _RANGE_ 260
-#define _CLASS_ 261
-#define _WORD_CHAR_ 262
-#define _NON_WORD_CHAR_ 263
-#define _SPACE_ 264
-#define _NON_SPACE_ 265
-#define _DIGIT_ 266
-#define _NON_DIGIT_ 267
-#define _WORD_BOUNDARY_ 268
-#define _NON_WORD_BOUNDARY_ 269
 
 /* Value type.  */
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
@@ -98,7 +81,7 @@ union YYSTYPE
   RE_NODE* re_node;
   RE_CLASS* re_class;
 
-#line 102 "re_grammar.h"
+#line 85 "re_grammar.h"
 
 };
 typedef union YYSTYPE YYSTYPE;
