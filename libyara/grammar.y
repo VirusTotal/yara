@@ -32,6 +32,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 %{
 
 #include <assert.h>
+#include <inttypes.h>
 #include <stdio.h>
 #include <string.h>
 #include <limits.h>
@@ -1695,7 +1696,7 @@ expression
         if ($1.type == EXPRESSION_TYPE_INTEGER && $1.value.integer > $3)
         {
           yywarning(yyscanner,
-            "expression always false - requesting %lld of %lld.", $1.value.integer, $3);
+            "expression always false - requesting %" PRId64 " of %" PRId64 ".", $1.value.integer, $3);
         }
         yr_parser_emit_with_arg(yyscanner, OP_OF, OF_STRING_SET, NULL, NULL);
 
@@ -1706,7 +1707,7 @@ expression
         if ($1.type == EXPRESSION_TYPE_INTEGER && $1.value.integer > $3)
         {
           yywarning(yyscanner,
-            "expression always false - requesting %lld of %lld.", $1.value.integer, $3);
+            "expression always false - requesting %" PRId64 " of %" PRId64 ".", $1.value.integer, $3);
         }
         yr_parser_emit_with_arg(yyscanner, OP_OF, OF_RULE_SET, NULL, NULL);
 
@@ -1755,7 +1756,7 @@ expression
         if ($1.type == EXPRESSION_TYPE_INTEGER && $1.value.integer > $3)
         {
           yywarning(yyscanner,
-            "expression always false - requesting %lld of %lld.", $1.value.integer, $3);
+            "expression always false - requesting %" PRId64 " of %" PRId64 ".", $1.value.integer, $3);
         }
 
         yr_parser_emit(yyscanner, OP_OF_FOUND_IN, NULL);
@@ -2130,13 +2131,19 @@ range
         // If we can statically determine lower and upper bounds, ensure
         // lower < upper. Check for upper bound here because some things (like
         // string count) are EXPRESSION_TYPE_INTEGER.
-        if ($2.value.integer != YR_UNDEFINED &&
-            $4.value.integer != YR_UNDEFINED &&
-            $2.value.integer > $4.value.integer)
+        if ($2.value.integer != YR_UNDEFINED && $4.value.integer != YR_UNDEFINED)
         {
-          yr_compiler_set_error_extra_info(
-              compiler, "range lower bound must be greater than upper bound");
-          result = ERROR_INVALID_VALUE;
+          if ($2.value.integer > $4.value.integer)
+          {
+            yr_compiler_set_error_extra_info(
+                compiler, "range lower bound must be greater than upper bound");
+            result = ERROR_INVALID_VALUE;
+          } else if ($2.value.integer < 0)
+          {
+            yr_compiler_set_error_extra_info(
+                compiler, "range lower bound can not be negative");
+            result = ERROR_INVALID_VALUE;
+          }
         }
 
         fail_if_error(result);
@@ -2331,7 +2338,7 @@ for_expression
           if ($1.value.integer < 0)
           {
             yr_compiler_set_error_extra_info_fmt(compiler,
-                "%lld", $1.value.integer);
+                "%" PRId64, $1.value.integer);
             fail_with_error(ERROR_INVALID_VALUE);
           }
         }

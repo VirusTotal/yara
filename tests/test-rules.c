@@ -2167,8 +2167,7 @@ void test_for()
   // Lower bound must be less than upper bound, if it can be determined
   // statically.
   assert_error(
-      "import \"tests\" \
-      rule test { \
+      "rule test { \
         condition: \
           for any i in (10..1): (i) \
       }",
@@ -2183,6 +2182,17 @@ void test_for()
         true or any of them in (0..filesize-100) \
     }",
       TEXT_1024_BYTES);
+
+  // Lower bound can not be negative, if it can be determined statically.
+  assert_error(
+      "rule test { \
+        strings: \
+          $a = \"AXSERS\" \
+        condition: \
+          $a in (-1..10) \
+      }",
+      ERROR_INVALID_VALUE);
+
 
   YR_DEBUG_FPRINTF(1, stderr, "} // %s()\n", __FUNCTION__);
 }
