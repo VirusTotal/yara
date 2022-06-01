@@ -692,7 +692,7 @@ static int _yr_re_emit(
     int flags,
     YR_ARENA_REF* code_ref)
 {
-  yr_arena_off_t jmp_offset;
+  int16_t jmp_offset;
 
   yr_arena_off_t bookmark_1 = 0;
   yr_arena_off_t bookmark_2 = 0;
@@ -855,15 +855,15 @@ static int _yr_re_emit(
     FAIL_ON_ERROR(_yr_re_emit(
         emit_context, re_node->children_head, flags, &instruction_ref));
 
-    jmp_offset = instruction_ref.offset - current_re_code_offset();
-
-    if (jmp_offset < INT16_MIN)
+    if (instruction_ref.offset - current_re_code_offset() < INT16_MIN)
       return ERROR_REGULAR_EXPRESSION_TOO_LARGE;
+
+    jmp_offset = (int16_t) (instruction_ref.offset - current_re_code_offset());
 
     FAIL_ON_ERROR(_yr_emit_split(
         emit_context,
         re_node->greedy ? RE_OPCODE_SPLIT_B : RE_OPCODE_SPLIT_A,
-        (int16_t) jmp_offset,
+        jmp_offset,
         NULL,
         NULL));
 
@@ -886,26 +886,26 @@ static int _yr_re_emit(
     FAIL_ON_ERROR(
         _yr_re_emit(emit_context, re_node->children_head, flags, NULL));
 
-    jmp_offset = instruction_ref.offset - current_re_code_offset();
-
-    if (jmp_offset < INT16_MIN)
+    if (instruction_ref.offset - current_re_code_offset() < INT16_MIN)
       return ERROR_REGULAR_EXPRESSION_TOO_LARGE;
+
+    jmp_offset = (int16_t) (instruction_ref.offset - current_re_code_offset());
 
     // Emit jump with offset set to 0.
 
     FAIL_ON_ERROR(_yr_emit_inst_arg_int16(
-        emit_context, RE_OPCODE_JUMP, (int16_t) jmp_offset, NULL, NULL));
+        emit_context, RE_OPCODE_JUMP, jmp_offset, NULL, NULL));
 
-    jmp_offset = current_re_code_offset() - instruction_ref.offset;
-
-    if (jmp_offset > INT16_MAX)
+    if (current_re_code_offset() - instruction_ref.offset > INT16_MAX)
       return ERROR_REGULAR_EXPRESSION_TOO_LARGE;
+
+    jmp_offset = (int16_t) (current_re_code_offset() - instruction_ref.offset);
 
     // Update split offset.
     split_offset_addr = (int16_t*) yr_arena_ref_to_ptr(
         emit_context->arena, &split_offset_ref);
 
-    memcpy(split_offset_addr, &jmp_offset, sizeof(int16_t));
+    memcpy(split_offset_addr, &jmp_offset, sizeof(jmp_offset));
     break;
 
   case RE_NODE_ALT:
@@ -940,30 +940,31 @@ static int _yr_re_emit(
         &jmp_instruction_ref,
         &jmp_offset_ref));
 
-    jmp_offset = current_re_code_offset() - instruction_ref.offset;
-
-    if (jmp_offset > INT16_MAX)
+    if (current_re_code_offset() - instruction_ref.offset > INT16_MAX)
       return ERROR_REGULAR_EXPRESSION_TOO_LARGE;
+
+    jmp_offset = (int16_t) (current_re_code_offset() - instruction_ref.offset);
 
     // Update split offset.
     split_offset_addr = (int16_t*) yr_arena_ref_to_ptr(
         emit_context->arena, &split_offset_ref);
 
-    memcpy(split_offset_addr, &jmp_offset, sizeof(int16_t));
+    memcpy(split_offset_addr, &jmp_offset, sizeof(jmp_offset));
 
     FAIL_ON_ERROR(
         _yr_re_emit(emit_context, re_node->children_tail, flags, NULL));
 
-    jmp_offset = current_re_code_offset() - jmp_instruction_ref.offset;
-
-    if (jmp_offset > INT16_MAX)
+    if (current_re_code_offset() - jmp_instruction_ref.offset > INT16_MAX)
       return ERROR_REGULAR_EXPRESSION_TOO_LARGE;
+
+    jmp_offset =
+        (int16_t) (current_re_code_offset() - jmp_instruction_ref.offset);
 
     // Update offset for jmp instruction.
     jmp_offset_addr = (int16_t*) yr_arena_ref_to_ptr(
         emit_context->arena, &jmp_offset_ref);
 
-    memcpy(jmp_offset_addr, &jmp_offset, sizeof(int16_t));
+    memcpy(jmp_offset_addr, &jmp_offset, sizeof(jmp_offset));
     break;
 
   case RE_NODE_RANGE_ANY:
@@ -1141,8 +1142,9 @@ static int _yr_re_emit(
       split_offset_addr = (int16_t*) yr_arena_ref_to_ptr(
           emit_context->arena, &split_offset_ref);
 
-      bookmark_2 -= bookmark_1;
-      memcpy(split_offset_addr, &bookmark_2, sizeof(int16_t));
+      jmp_offset = (int16_t) (bookmark_2 - bookmark_1);
+
+      memcpy(split_offset_addr, &jmp_offset, sizeof(jmp_offset));
     }
 
     break;
