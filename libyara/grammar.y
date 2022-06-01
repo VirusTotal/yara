@@ -2131,13 +2131,19 @@ range
         // If we can statically determine lower and upper bounds, ensure
         // lower < upper. Check for upper bound here because some things (like
         // string count) are EXPRESSION_TYPE_INTEGER.
-        if ($2.value.integer != YR_UNDEFINED &&
-            $4.value.integer != YR_UNDEFINED &&
-            $2.value.integer > $4.value.integer)
+        if ($2.value.integer != YR_UNDEFINED && $4.value.integer != YR_UNDEFINED)
         {
-          yr_compiler_set_error_extra_info(
-              compiler, "range lower bound must be greater than upper bound");
-          result = ERROR_INVALID_VALUE;
+          if ($2.value.integer > $4.value.integer)
+          {
+            yr_compiler_set_error_extra_info(
+                compiler, "range lower bound must be greater than upper bound");
+            result = ERROR_INVALID_VALUE;
+          } else if ($2.value.integer < 0)
+          {
+            yr_compiler_set_error_extra_info(
+                compiler, "range lower bound can not be negative");
+            result = ERROR_INVALID_VALUE;
+          }
         }
 
         fail_if_error(result);

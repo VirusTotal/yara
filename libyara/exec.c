@@ -1407,7 +1407,7 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
       ensure_defined(r2);
 
 #if YR_PARANOID_EXEC
-      ensure_within_rules_arena(r1.p);
+      ensure_within_rules_arena(r3.p);
 #endif
 
       match = context->matches[r3.s->idx].head;
