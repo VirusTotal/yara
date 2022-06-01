@@ -406,7 +406,7 @@ YR_API YR_MEMORY_BLOCK* yr_process_get_next_memory_block(
       stderr,
       "- %s() {} = %p // .base=0x%" PRIx64 " .size=%" PRIu64 "\n",
       __FUNCTION__,
-      result,
+      context->current_block,
       context->current_block.base,
       context->current_block.size);
 
