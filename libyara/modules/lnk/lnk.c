@@ -1,5 +1,6 @@
 #include <yara/modules.h>
 #include <yara/endian.h>
+#include <yara/mem.h>
 
 #define TICKS_PER_SECOND 10000000
 #define EPOCH_DIFFERENCE 11644473600LL
@@ -34,11 +35,6 @@ typedef struct _shell_link_header_t
   uint32_t reserved2;
   uint32_t reserved3;
 } shell_link_header_t;
-
-typedef struct _link_flags_t
-{
-  int HasLinkTargetIDList;
-} link_flags_t;
 
 #pragma pack(pop)
 
@@ -161,6 +157,264 @@ end_declarations
 #define HOTKEYF_CONTROL     0x02
 #define HOTKEYF_ALT         0x04
 
+char* get_hotkey_char(uint8_t key) {
+
+  char key_str[64];
+  key_str[0] = '\0';
+
+  switch(key) {
+    case 0x30:
+      sprintf(key_str, "0");
+      break;
+      
+    case 0x31:
+      sprintf(key_str, "1");
+      break;
+      
+    case 0x32:
+      sprintf(key_str, "2");
+      break;
+      
+    case 0x33:
+      sprintf(key_str, "3");
+      break;
+      
+    case 0x34:
+      sprintf(key_str, "4");
+      break;
+      
+    case 0x35:
+      sprintf(key_str, "5");
+      break;
+      
+    case 0x36:
+      sprintf(key_str, "6");
+      break;
+      
+    case 0x37:
+      sprintf(key_str, "7");
+      break;
+      
+    case 0x38:
+      sprintf(key_str, "8");
+      break;
+      
+    case 0x39:
+      sprintf(key_str, "9");
+      break;
+      
+    case 0x41:
+      sprintf(key_str, "A");
+      break;
+      
+    case 0x42:
+      sprintf(key_str, "B");
+      break;
+      
+    case 0x43:
+      sprintf(key_str, "C");
+      break;
+      
+    case 0x44:
+      sprintf(key_str, "D");
+      break;
+      
+    case 0x45:
+      sprintf(key_str, "E");
+      break;
+      
+    case 0x46:
+      sprintf(key_str, "F");
+      break;
+      
+    case 0x47:
+      sprintf(key_str, "G");
+      break;
+      
+    case 0x48:
+      sprintf(key_str, "H");
+      break;
+      
+    case 0x49:
+      sprintf(key_str, "I");
+      break;
+      
+    case 0x4A:
+      sprintf(key_str, "J");
+      break;
+      
+    case 0x4B:
+      sprintf(key_str, "K");
+      break;
+      
+    case 0x4C:
+      sprintf(key_str, "L");
+      break;
+      
+    case 0x4D:
+      sprintf(key_str, "M");
+      break;
+      
+    case 0x4E:
+      sprintf(key_str, "N");
+      break;
+      
+    case 0x4F:
+      sprintf(key_str, "O");
+      break;
+      
+    case 0x50:
+      sprintf(key_str, "P");
+      break;
+      
+    case 0x51:
+      sprintf(key_str, "Q");
+      break;
+      
+    case 0x52:
+      sprintf(key_str, "R");
+      break;
+      
+    case 0x53:
+      sprintf(key_str, "S");
+      break;
+      
+    case 0x54:
+      sprintf(key_str, "T");
+      break;
+      
+    case 0x55:
+      sprintf(key_str, "U");
+      break;
+      
+    case 0x56:
+      sprintf(key_str, "V");
+      break;
+      
+    case 0x57:
+      sprintf(key_str, "W");
+      break;
+      
+    case 0x58:
+      sprintf(key_str, "X");
+      break;
+      
+    case 0x59:
+      sprintf(key_str, "Y");
+      break;
+      
+    case 0x5A:
+      sprintf(key_str, "Z");
+      break;
+      
+    case 0x70:
+      sprintf(key_str, "F1");
+      break;
+      
+    case 0x71:
+      sprintf(key_str, "F2");
+      break;
+      
+    case 0x72:
+      sprintf(key_str, "F3");
+      break;
+      
+    case 0x73:
+      sprintf(key_str, "F4");
+      break;
+      
+    case 0x74:
+      sprintf(key_str, "F5");
+      break;
+      
+    case 0x75:
+      sprintf(key_str, "F6");
+      break;
+      
+    case 0x76:
+      sprintf(key_str, "F7");
+      break;
+      
+    case 0x77:
+      sprintf(key_str, "F8");
+      break;
+      
+    case 0x78:
+      sprintf(key_str, "F9");
+      break;
+      
+    case 0x79:
+      sprintf(key_str, "F10");
+      break;
+      
+    case 0x7A:
+      sprintf(key_str, "F11");
+      break;
+      
+    case 0x7B:
+      sprintf(key_str, "F12");
+      break;
+      
+    case 0x7C:
+      sprintf(key_str, "F13");
+      break;
+      
+    case 0x7D:
+      sprintf(key_str, "F14");
+      break;
+      
+    case 0x7E:
+      sprintf(key_str, "F15");
+      break;
+      
+    case 0x7F:
+      sprintf(key_str, "F16");
+      break;
+      
+    case 0x80:
+      sprintf(key_str, "F17");
+      break;
+      
+    case 0x81:
+      sprintf(key_str, "F18");
+      break;
+      
+    case 0x82:
+      sprintf(key_str, "F19");
+      break;
+      
+    case 0x83:
+      sprintf(key_str, "F20");
+      break;
+      
+    case 0x84:
+      sprintf(key_str, "F21");
+      break;
+      
+    case 0x85:
+      sprintf(key_str, "F22");
+      break;
+      
+    case 0x86:
+      sprintf(key_str, "F23");
+      break;
+      
+    case 0x87:
+      sprintf(key_str, "F24");
+      break;
+      
+    case 0x90:
+      sprintf(key_str, "NUM LOCK");
+      break;
+      
+    case 0x91:
+      sprintf(key_str, "SCROLL LOCK");
+      break;
+  }
+
+  return yr_strdup(key_str);
+}
+
 int module_initialize(YR_MODULE* module)
 {
   return ERROR_SUCCESS;
@@ -230,6 +484,7 @@ int module_load(
   set_integer(HOTKEYF_ALT, module_object, "HOTKEYF_ALT");
 
   const uint8_t* block_data;
+  char* hotkey_str;
 
   block = first_memory_block(context);
   block_data = block->fetch_data(block);
@@ -269,257 +524,13 @@ int module_load(
       
       if (lnk_header->hotkey_flags & 0xFF) {
           
-          set_integer(1, module_object, "has_hotkey");
-          
-          switch (lnk_header->hotkey_flags & 0xFF) {
-            case 0x30:
-              set_string("0", module_object, "hotkey");
-              break;
-              
-            case 0x31:
-              set_string("1", module_object, "hotkey");
-              break;
-              
-            case 0x32:
-              set_string("2", module_object, "hotkey");
-              break;
-              
-            case 0x33:
-              set_string("3", module_object, "hotkey");
-              break;
-              
-            case 0x34:
-              set_string("4", module_object, "hotkey");
-              break;
-              
-            case 0x35:
-              set_string("5", module_object, "hotkey");
-              break;
-              
-            case 0x36:
-              set_string("6", module_object, "hotkey");
-              break;
-              
-            case 0x37:
-              set_string("7", module_object, "hotkey");
-              break;
-              
-            case 0x38:
-              set_string("8", module_object, "hotkey");
-              break;
-              
-            case 0x39:
-              set_string("9", module_object, "hotkey");
-              break;
-              
-            case 0x41:
-              set_string("A", module_object, "hotkey");
-              break;
-              
-            case 0x42:
-              set_string("B", module_object, "hotkey");
-              break;
-              
-            case 0x43:
-              set_string("C", module_object, "hotkey");
-              break;
-              
-            case 0x44:
-              set_string("D", module_object, "hotkey");
-              break;
-              
-            case 0x45:
-              set_string("E", module_object, "hotkey");
-              break;
-              
-            case 0x46:
-              set_string("F", module_object, "hotkey");
-              break;
-              
-            case 0x47:
-              set_string("G", module_object, "hotkey");
-              break;
-              
-            case 0x48:
-              set_string("H", module_object, "hotkey");
-              break;
-              
-            case 0x49:
-              set_string("I", module_object, "hotkey");
-              break;
-              
-            case 0x4A:
-              set_string("J", module_object, "hotkey");
-              break;
-              
-            case 0x4B:
-              set_string("K", module_object, "hotkey");
-              break;
-              
-            case 0x4C:
-              set_string("L", module_object, "hotkey");
-              break;
-              
-            case 0x4D:
-              set_string("M", module_object, "hotkey");
-              break;
-              
-            case 0x4E:
-              set_string("N", module_object, "hotkey");
-              break;
-              
-            case 0x4F:
-              set_string("O", module_object, "hotkey");
-              break;
-              
-            case 0x50:
-              set_string("P", module_object, "hotkey");
-              break;
-              
-            case 0x51:
-              set_string("Q", module_object, "hotkey");
-              break;
-              
-            case 0x52:
-              set_string("R", module_object, "hotkey");
-              break;
-              
-            case 0x53:
-              set_string("S", module_object, "hotkey");
-              break;
-              
-            case 0x54:
-              set_string("T", module_object, "hotkey");
-              break;
-              
-            case 0x55:
-              set_string("U", module_object, "hotkey");
-              break;
-              
-            case 0x56:
-              set_string("V", module_object, "hotkey");
-              break;
-              
-            case 0x57:
-              set_string("W", module_object, "hotkey");
-              break;
-              
-            case 0x58:
-              set_string("X", module_object, "hotkey");
-              break;
-              
-            case 0x59:
-              set_string("Y", module_object, "hotkey");
-              break;
-              
-            case 0x5A:
-              set_string("Z", module_object, "hotkey");
-              break;
-              
-            case 0x70:
-              set_string("F1", module_object, "hotkey");
-              break;
-              
-            case 0x71:
-              set_string("F2", module_object, "hotkey");
-              break;
-              
-            case 0x72:
-              set_string("F3", module_object, "hotkey");
-              break;
-              
-            case 0x73:
-              set_string("F4", module_object, "hotkey");
-              break;
-              
-            case 0x74:
-              set_string("F5", module_object, "hotkey");
-              break;
-              
-            case 0x75:
-              set_string("F6", module_object, "hotkey");
-              break;
-              
-            case 0x76:
-              set_string("F7", module_object, "hotkey");
-              break;
-              
-            case 0x77:
-              set_string("F8", module_object, "hotkey");
-              break;
-              
-            case 0x78:
-              set_string("F9", module_object, "hotkey");
-              break;
-              
-            case 0x79:
-              set_string("F10", module_object, "hotkey");
-              break;
-              
-            case 0x7A:
-              set_string("F11", module_object, "hotkey");
-              break;
-              
-            case 0x7B:
-              set_string("F12", module_object, "hotkey");
-              break;
-              
-            case 0x7C:
-              set_string("F13", module_object, "hotkey");
-              break;
-              
-            case 0x7D:
-              set_string("F14", module_object, "hotkey");
-              break;
-              
-            case 0x7E:
-              set_string("F15", module_object, "hotkey");
-              break;
-              
-            case 0x7F:
-              set_string("F16", module_object, "hotkey");
-              break;
-              
-            case 0x80:
-              set_string("F17", module_object, "hotkey");
-              break;
-              
-            case 0x81:
-              set_string("F18", module_object, "hotkey");
-              break;
-              
-            case 0x82:
-              set_string("F19", module_object, "hotkey");
-              break;
-              
-            case 0x83:
-              set_string("F20", module_object, "hotkey");
-              break;
-              
-            case 0x84:
-              set_string("F21", module_object, "hotkey");
-              break;
-              
-            case 0x85:
-              set_string("F22", module_object, "hotkey");
-              break;
-              
-            case 0x86:
-              set_string("F23", module_object, "hotkey");
-              break;
-              
-            case 0x87:
-              set_string("F24", module_object, "hotkey");
-              break;
-              
-            case 0x90:
-              set_string("NUM LOCK", module_object, "hotkey");
-              break;
-              
-            case 0x91:
-              set_string("SCROLL LOCK", module_object, "hotkey");
-              break;
+          hotkey_str = get_hotkey_char(lnk_header->hotkey_flags & 0xFF);
+
+          if (hotkey_str) {
+            set_string(hotkey_str, module_object, "hotkey");
           }
+
+          set_integer(1, module_object, "has_hotkey");   
       }
       
       else {
