@@ -3548,14 +3548,14 @@ begin_declarations
     end_struct_array("functions");
   end_struct_array("import_details");
 
-  begin_struct_array("delay_import_details")
+  begin_struct_array("delayed_import_details")
     declare_string("library_name");
-    declare_integer("number_of_function");
+    declare_integer("number_of_functions");
     begin_struct_array("functions")
       declare_string("name");
       declare_integer("ordinal");
     end_struct_array("functions");
-  end_struct_array("delay_import_details");
+  end_struct_array("delayed_import_details");
 
   declare_integer("resource_timestamp");
 
