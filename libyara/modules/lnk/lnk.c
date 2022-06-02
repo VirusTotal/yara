@@ -38,6 +38,8 @@ typedef struct _shell_link_header_t
 
 #pragma pack(pop)
 
+#define MIN_LNK_SIZE 76
+
 #define HEADER_SIZE 0x0000004C
 #define LINK_CLSID_0 0x00021401
 #define LINK_CLSID_1 0x00000000
@@ -489,7 +491,7 @@ int module_load(
   block = first_memory_block(context);
   block_data = block->fetch_data(block);
 
-  if (block_data != NULL)
+  if (block_data != NULL && block->size >= MIN_LNK_SIZE)
   {
     // Validate LNK header
     lnk_header = (shell_link_header_t*) block_data;
