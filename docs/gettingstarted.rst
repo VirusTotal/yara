@@ -106,10 +106,13 @@ To install YARA using `Scoop <https://scoop.sh>`_ or `Chocolatey <https://chocol
 ``scoop install yara`` or ``choco install yara``. The integration with both `Scoop` and `Chocolatey` are
 not maintained their respective teams, not by the YARA authors.
 
-To compile Windows binaries from source, you can supply extra commands to the ``configure`` binary. 
-For example, the following command will compile 64-bit versions of the YARA executables::
+To compile Windows binaries from source on Linux (or using WSL on Windows), you can supply extra commands to the ``configure`` binary to compile `.exe` files instead. 
+For example, the following commands will compile 64-bit versions of the YARA executables::
     
+	sudo apt-get install gcc-mingw-w64
+	./bootstrap.sh
     ./configure --host=x86_64-w64-mingw32
+	make
 
 Visual Studio projects are also available in ``windows`` directory.
 
