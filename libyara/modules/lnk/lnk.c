@@ -491,6 +491,7 @@ int module_load(
 
   if (block_data != NULL)
   {
+    // Validate LNK header
     lnk_header = (shell_link_header_t*) block_data;
     if (lnk_header->header_size == HEADER_SIZE &&
       lnk_header->clsid[0] == LINK_CLSID_0 &&
@@ -500,6 +501,7 @@ int module_load(
     {
       set_integer(1, module_object, "is_lnk");
 
+      // Convert timestamps from Windows TIMESTAMP to Unix timestamp
       set_integer(
         convertWindowsTimeToUnixTime(lnk_header->creation_time),
         module_object,
@@ -522,6 +524,7 @@ int module_load(
       set_integer(lnk_header->show_command, module_object, "show_command");
       set_integer(lnk_header->hotkey_flags, module_object, "hotkey_flags");
       
+      // Hotkey handling code
       if (lnk_header->hotkey_flags & 0xFF) {
           
           hotkey_str = get_hotkey_char(lnk_header->hotkey_flags & 0xFF);
