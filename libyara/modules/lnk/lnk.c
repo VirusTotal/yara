@@ -28,14 +28,14 @@ typedef struct _shell_link_header_t
   uint32_t header_size;
   uint32_t clsid[4];
   uint32_t link_flags;
-  uint32_t file_attributes;
+  uint32_t file_attributes_flags;
   FILE_TIME creation_time;
   FILE_TIME access_time;
   FILE_TIME write_time;
   uint32_t file_size;
   uint32_t icon_index;
   uint32_t show_command;
-  uint16_t hotkey;
+  uint16_t hotkey_flags;
   uint16_t reserved1;
   uint32_t reserved2;
   uint32_t reserved3;
@@ -98,6 +98,10 @@ begin_declarations
   declare_integer("FILE_ATTRIBUTE_OFFLINE");
   declare_integer("FILE_ATTRIBUTE_NOT_CONTENT_INDEXED");
   declare_integer("FILE_ATTRIBUTE_ENCRYPTED");
+  
+  declare_integer("HOTKEYF_SHIFT");
+  declare_integer("HOTKEYF_CONTROL");
+  declare_integer("HOTKEYF_ALT");
 
   declare_integer("is_lnk");
   declare_integer("creation_time");
@@ -105,10 +109,13 @@ begin_declarations
   declare_integer("write_time");
   declare_integer("file_size");
   declare_integer("link_flags");
-  declare_integer("file_attributes");
+  declare_integer("file_attributes_flags");
   declare_integer("icon_index");
   declare_integer("show_command");
-  declare_integer("hotkey");
+  declare_integer("hotkey_flags");
+  
+  declare_string("hotkey");
+  declare_integer("hotkey_modifier_flags");
 end_declarations
 
 #define HasLinkTargetIDList            0x00000001
@@ -154,6 +161,10 @@ end_declarations
 #define FILE_ATTRIBUTE_OFFLINE                0x00001000
 #define FILE_ATTRIBUTE_NOT_CONTENT_INDEXED    0x00002000
 #define FILE_ATTRIBUTE_ENCRYPTED              0x00004000
+
+#define HOTKEYF_SHIFT       0x01
+#define HOTKEYF_CONTROL     0x02
+#define HOTKEYF_ALT         0x04
 
 uint64_t file_time_to_microseconds(FILE_TIME ft)
 {
@@ -237,6 +248,10 @@ int module_load(
   set_integer(FILE_ATTRIBUTE_OFFLINE, module_object, "FILE_ATTRIBUTE_OFFLINE");
   set_integer(FILE_ATTRIBUTE_NOT_CONTENT_INDEXED, module_object, "FILE_ATTRIBUTE_NOT_CONTENT_INDEXED");
   set_integer(FILE_ATTRIBUTE_ENCRYPTED, module_object, "FILE_ATTRIBUTE_ENCRYPTED");
+  
+  set_integer(HOTKEYF_SHIFT, module_object, "HOTKEYF_SHIFT");
+  set_integer(HOTKEYF_CONTROL, module_object, "HOTKEYF_CONTROL");
+  set_integer(HOTKEYF_ALT, module_object, "HOTKEYF_ALT");
 
   const uint8_t* block_data;
 
@@ -271,10 +286,27 @@ int module_load(
 
       set_integer(lnk_header->file_size, module_object, "file_size");
       set_integer(lnk_header->link_flags, module_object, "link_flags");
-      set_integer(lnk_header->file_attributes, module_object, "file_attributes");
+      set_integer(lnk_header->file_attributes_flags, module_object, "file_attributes_flags");
       set_integer(lnk_header->icon_index, module_object, "icon_index");
       set_integer(lnk_header->show_command, module_object, "show_command");
-      set_integer(lnk_header->hotkey, module_object, "hotkey");
+      set_integer(lnk_header->hotkey_flags, module_object, "hotkey_flags");
+	  
+	  if (lnk_header->hotkey_flags & 0xFF) {
+		  //if ((lnk_header->hotkey_flags & 0xFF) == 0x41) {
+			//  set_string("A", module_object, "hotkey");
+		  //}
+		  switch (lnk_header->hotkey_flags & 0xFF) {
+			  case 0x41:
+			    set_string("A", module_object, "hotkey");
+				break;
+				
+			case 0x42:
+			    set_string("B", module_object, "hotkey");
+				break;
+		  }
+	  }
+	  
+	  set_integer((lnk_header->hotkey_flags >> 8), module_object, "hotkey_modifier_flags");
     }
   }
 
