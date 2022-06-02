@@ -48,6 +48,7 @@ order to avoid confusion with operating system threads.
 #include <yara/re.h>
 #include <yara/re_lexer.h>
 #include <yara/threading.h>
+#include <yara/unaligned.h>
 #include <yara/utils.h>
 
 #define EMIT_BACKWARDS               0x01
@@ -1510,10 +1511,7 @@ static int _yr_re_fiber_sync(
         branch_a->ip += (sizeof(RE_SPLIT_ID_TYPE) + 3);
 
         // Branch B adds the offset indicated by the split instruction.
-        memcpy(
-            &jmp_len,
-            branch_b->ip + 1 + sizeof(RE_SPLIT_ID_TYPE),
-            sizeof(jmp_len));
+        jmp_len = yr_unaligned_i16(branch_b->ip + 1 + sizeof(RE_SPLIT_ID_TYPE));
 
         branch_b->ip += jmp_len;
 
@@ -1642,7 +1640,7 @@ static int _yr_re_fiber_sync(
       break;
 
     case RE_OPCODE_JUMP:
-      memcpy(&jmp_len, fiber->ip + 1, sizeof(jmp_len));
+      jmp_len = yr_unaligned_i16(fiber->ip + 1);
       fiber->ip += jmp_len;
       break;
 
@@ -1845,7 +1843,7 @@ int yr_re_exec(
 
       case RE_OPCODE_MASKED_LITERAL:
         prolog;
-        memcpy(&opcode_args, ip + 1, sizeof(int16_t));
+        opcode_args = yr_unaligned_u16(ip + 1);
         mask = opcode_args >> 8;
         value = opcode_args & 0xFF;
 
@@ -1860,7 +1858,7 @@ int yr_re_exec(
 
       case RE_OPCODE_MASKED_NOT_LITERAL:
         prolog;
-        memcpy(&opcode_args, ip + 1, sizeof(int16_t));
+        opcode_args = yr_unaligned_u16(ip + 1);
         mask = opcode_args >> 8;
         value = opcode_args & 0xFF;
 
@@ -2265,7 +2263,7 @@ int yr_re_fast_exec(
         if (bytes_matched >= max_bytes_matched)
           break;
 
-        memcpy(&opcode_args, ip + 1, sizeof(int16_t));
+        opcode_args = yr_unaligned_u16(ip + 1);
         mask = opcode_args >> 8;
         value = opcode_args & 0xFF;
 
@@ -2280,7 +2278,7 @@ int yr_re_fast_exec(
         if (bytes_matched >= max_bytes_matched)
           break;
 
-        memcpy(&opcode_args, ip + 1, sizeof(int16_t));
+        opcode_args = yr_unaligned_u16(ip + 1);
         mask = opcode_args >> 8;
         value = opcode_args & 0xFF;
 

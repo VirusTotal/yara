@@ -52,6 +52,21 @@ typedef struct
 
 typedef struct
 {
+  int16_t val;
+} int16_una_t;
+
+typedef struct
+{
+  int32_t val;
+} int32_una_t;
+
+typedef struct
+{
+  int64_t val;
+} int64_una_t;
+
+typedef struct
+{
   char *val;
 } charp_una_t;
 
@@ -72,6 +87,24 @@ static inline uint32_t yr_unaligned_u32(const void *ptr)
 static inline uint64_t yr_unaligned_u64(const void *ptr)
 {
   const uint64_una_t *tmp = (const uint64_una_t *) ptr;
+  return tmp->val;
+}
+
+static inline uint16_t yr_unaligned_i16(const void *ptr)
+{
+  const int16_una_t *tmp = (const int16_una_t *) ptr;
+  return tmp->val;
+}
+
+static inline uint32_t yr_unaligned_i32(const void *ptr)
+{
+  const int32_una_t *tmp = (const int32_una_t *) ptr;
+  return tmp->val;
+}
+
+static inline uint64_t yr_unaligned_i64(const void *ptr)
+{
+  const int64_una_t *tmp = (const int64_una_t *) ptr;
   return tmp->val;
 }
 
