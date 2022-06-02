@@ -82,6 +82,22 @@ begin_declarations
   declare_integer("UnaliasOnSave");
   declare_integer("PreferEnvironmentPath");
   declare_integer("KeepLocalIDListForUNCTarget");
+  
+  declare_integer("FILE_ATTRIBUTE_READONLY");
+  declare_integer("FILE_ATTRIBUTE_HIDDEN");
+  declare_integer("FILE_ATTRIBUTE_SYSTEM");
+  declare_integer("Reserved1");
+  declare_integer("FILE_ATTRIBUTE_DIRECTORY");
+  declare_integer("FILE_ATTRIBUTE_ARCHIVE");
+  declare_integer("Reserved2");
+  declare_integer("FILE_ATTRIBUTE_NORMAL");
+  declare_integer("FILE_ATTRIBUTE_TEMPORARY");
+  declare_integer("FILE_ATTRIBUTE_SPARSE_FILE");
+  declare_integer("FILE_ATTRIBUTE_REPARSE_POINT");
+  declare_integer("FILE_ATTRIBUTE_COMPRESSED");
+  declare_integer("FILE_ATTRIBUTE_OFFLINE");
+  declare_integer("FILE_ATTRIBUTE_NOT_CONTENT_INDEXED");
+  declare_integer("FILE_ATTRIBUTE_ENCRYPTED");
 
   declare_integer("is_lnk");
   declare_integer("creation_time");
@@ -122,6 +138,22 @@ end_declarations
 #define UnaliasOnSave                  0x01000000
 #define PreferEnvironmentPath          0x02000000
 #define KeepLocalIDListForUNCTarget    0x04000000
+
+#define FILE_ATTRIBUTE_READONLY               0x00000001
+#define FILE_ATTRIBUTE_HIDDEN                 0x00000002
+#define FILE_ATTRIBUTE_SYSTEM                 0x00000004
+#define Reserved1                             0x00000008
+#define FILE_ATTRIBUTE_DIRECTORY              0x00000010
+#define FILE_ATTRIBUTE_ARCHIVE                0x00000020
+#define Reserved2                             0x00000040
+#define FILE_ATTRIBUTE_NORMAL                 0x00000080
+#define FILE_ATTRIBUTE_TEMPORARY              0x00000100
+#define FILE_ATTRIBUTE_SPARSE_FILE            0x00000200
+#define FILE_ATTRIBUTE_REPARSE_POINT          0x00000400
+#define FILE_ATTRIBUTE_COMPRESSED             0x00000800
+#define FILE_ATTRIBUTE_OFFLINE                0x00001000
+#define FILE_ATTRIBUTE_NOT_CONTENT_INDEXED    0x00002000
+#define FILE_ATTRIBUTE_ENCRYPTED              0x00004000
 
 uint64_t file_time_to_microseconds(FILE_TIME ft)
 {
@@ -189,6 +221,22 @@ int module_load(
   set_integer(UnaliasOnSave, module_object, "UnaliasOnSave");
   set_integer(PreferEnvironmentPath, module_object, "PreferEnvironmentPath");
   set_integer(KeepLocalIDListForUNCTarget, module_object, "KeepLocalIDListForUNCTarget");
+  
+  set_integer(FILE_ATTRIBUTE_READONLY, module_object, "FILE_ATTRIBUTE_READONLY");
+  set_integer(FILE_ATTRIBUTE_HIDDEN, module_object, "FILE_ATTRIBUTE_HIDDEN");
+  set_integer(FILE_ATTRIBUTE_SYSTEM, module_object, "FILE_ATTRIBUTE_SYSTEM");
+  set_integer(Reserved1, module_object, "Reserved1");
+  set_integer(FILE_ATTRIBUTE_DIRECTORY, module_object, "FILE_ATTRIBUTE_DIRECTORY");
+  set_integer(FILE_ATTRIBUTE_ARCHIVE, module_object, "FILE_ATTRIBUTE_ARCHIVE");
+  set_integer(Reserved2, module_object, "Reserved2");
+  set_integer(FILE_ATTRIBUTE_NORMAL, module_object, "FILE_ATTRIBUTE_NORMAL");
+  set_integer(FILE_ATTRIBUTE_TEMPORARY, module_object, "FILE_ATTRIBUTE_TEMPORARY");
+  set_integer(FILE_ATTRIBUTE_SPARSE_FILE, module_object, "FILE_ATTRIBUTE_SPARSE_FILE");
+  set_integer(FILE_ATTRIBUTE_REPARSE_POINT, module_object, "FILE_ATTRIBUTE_REPARSE_POINT");
+  set_integer(FILE_ATTRIBUTE_COMPRESSED, module_object, "FILE_ATTRIBUTE_COMPRESSED");
+  set_integer(FILE_ATTRIBUTE_OFFLINE, module_object, "FILE_ATTRIBUTE_OFFLINE");
+  set_integer(FILE_ATTRIBUTE_NOT_CONTENT_INDEXED, module_object, "FILE_ATTRIBUTE_NOT_CONTENT_INDEXED");
+  set_integer(FILE_ATTRIBUTE_ENCRYPTED, module_object, "FILE_ATTRIBUTE_ENCRYPTED");
 
   const uint8_t* block_data;
 
