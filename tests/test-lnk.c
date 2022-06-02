@@ -23,6 +23,14 @@ int main(int argc, char** argv)
           lnk.is_lnk \
       }",
       "tests/data/standard-lnk");
+
+  assert_true_rule_file(
+      "import \"lnk\" \
+      rule creation_time { \
+        condition: \
+          lnk.creation_time == 1221247637 \
+      }",
+      "tests/data/standard-lnk");
 	  
   assert_true_rule_file(
       "import \"lnk\" \

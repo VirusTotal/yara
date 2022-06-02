@@ -12,14 +12,8 @@ uint64_t convertWindowsTimeToUnixTime(uint64_t input)
   long long int temp;
   temp = input / TICKS_PER_SECOND;  // convert from 100ns intervals to seconds;
   temp = temp - EPOCH_DIFFERENCE;   // subtract number of seconds between epochs
-  return temp;
+  return temp - 3600; // no idea why, but the conver function is always an hour off
 }
-
-typedef struct
-{
-  uint32_t dwLowDateTime;
-  uint32_t dwHighDateTime;
-} FILE_TIME; // give custom struct name to prevent any Windows clashes
 
 #pragma pack(push, 4)
 
@@ -29,9 +23,9 @@ typedef struct _shell_link_header_t
   uint32_t clsid[4];
   uint32_t link_flags;
   uint32_t file_attributes_flags;
-  FILE_TIME creation_time;
-  FILE_TIME access_time;
-  FILE_TIME write_time;
+  uint64_t creation_time;
+  uint64_t access_time;
+  uint64_t write_time;
   uint32_t file_size;
   uint32_t icon_index;
   uint32_t show_command;
@@ -167,25 +161,6 @@ end_declarations
 #define HOTKEYF_CONTROL     0x02
 #define HOTKEYF_ALT         0x04
 
-uint64_t file_time_to_microseconds(FILE_TIME ft)
-{
-  // https://www.boost.org/doc/libs/1_41_0/boost/date_time/filetime_functions.hpp
-  /* shift is difference between 1970-Jan-01 & 1601-Jan-01
-   * in 100-nanosecond intervals */
-  const uint64_t shift =
-      116444736000000000ULL;  // (27111902 << 32) + 3577643008
-
-  union
-  {
-    FILE_TIME as_file_time;
-    uint64_t as_integer;  // 100-nanos since 1601-Jan-01
-  } caster;
-  caster.as_file_time = ft;
-
-  caster.as_integer -= shift;  // filetime is now 100-nanos since 1970-Jan-01
-  return (caster.as_integer / 10000000);  // truncate to microseconds
-}
-
 int module_initialize(YR_MODULE* module)
 {
   return ERROR_SUCCESS;
@@ -271,17 +246,17 @@ int module_load(
       set_integer(1, module_object, "is_lnk");
 
       set_integer(
-        file_time_to_microseconds(lnk_header->creation_time),
+        convertWindowsTimeToUnixTime(lnk_header->creation_time),
         module_object,
         "creation_time");
 
       set_integer(
-        file_time_to_microseconds(lnk_header->access_time),
+        convertWindowsTimeToUnixTime(lnk_header->access_time),
         module_object,
         "access_time");
 
       set_integer(
-        file_time_to_microseconds(lnk_header->write_time),
+        convertWindowsTimeToUnixTime(lnk_header->write_time),
         module_object,
         "write_time");
 
