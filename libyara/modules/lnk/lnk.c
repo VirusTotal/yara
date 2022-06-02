@@ -116,6 +116,7 @@ begin_declarations
   
   declare_string("hotkey");
   declare_integer("hotkey_modifier_flags");
+  declare_integer("has_hotkey");
 end_declarations
 
 #define HasLinkTargetIDList            0x00000001
@@ -292,9 +293,9 @@ int module_load(
       set_integer(lnk_header->hotkey_flags, module_object, "hotkey_flags");
 	  
 	  if (lnk_header->hotkey_flags & 0xFF) {
-		  //if ((lnk_header->hotkey_flags & 0xFF) == 0x41) {
-			//  set_string("A", module_object, "hotkey");
-		  //}
+		  
+		  set_integer(1, module_object, "has_hotkey");
+		  
 		  switch (lnk_header->hotkey_flags & 0xFF) {
 			case 0x30:
 			    set_string("0", module_object, "hotkey");
@@ -544,6 +545,10 @@ int module_load(
 			    set_string("SCROLL LOCK", module_object, "hotkey");
 				break;
 		  }
+	  }
+	  
+	  else {
+		set_integer(0, module_object, "has_hotkey");
 	  }
 	  
 	  set_integer((lnk_header->hotkey_flags >> 8), module_object, "hotkey_modifier_flags");

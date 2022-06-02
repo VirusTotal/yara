@@ -68,7 +68,7 @@ int main(int argc, char** argv)
       "import \"lnk\" \
       rule no_hotkey { \
         condition: \
-          not defined lnk.hotkey \
+          not lnk.has_hotkey and not defined lnk.hotkey \
       }",
       "tests/data/standard-lnk");
 
