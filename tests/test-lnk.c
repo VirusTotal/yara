@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
+//#include <unistd.h>
 #include <yara.h>
 
 #include "util.h"
@@ -109,6 +109,62 @@ int main(int argc, char** argv)
       rule item_id_first_element { \
         condition: \
           lnk.item_id_list[3].size == 0x46 and lnk.item_id_list[3].data == \"2\\x00\\x00\\x00\\x00\\x00,9i\\xa3 \\x00a.txt\\x004\\x00\\x07\\x00\\x04\\x00\\xef\\xbe,9i\\xa3,9i\\xa3&\\x00\\x00\\x00-n\\x00\\x00\\x00\\x00\\x96\\x01\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00a\\x00.\\x00t\\x00x\\x00t\\x00\\x00\\x00\\x14\\x00\" \
+      }",
+      "tests/data/standard-lnk");
+
+  assert_true_rule_file(
+      "import \"lnk\" \
+      rule link_info_size { \
+        condition: \
+          lnk.link_info_size == 0x3C \
+      }",
+      "tests/data/standard-lnk");
+
+  assert_true_rule_file(
+      "import \"lnk\" \
+      rule link_info_header_size { \
+        condition: \
+          lnk.link_info_header_size == 0x1C \
+      }",
+      "tests/data/standard-lnk");
+
+  assert_true_rule_file(
+      "import \"lnk\" \
+      rule link_info_flags { \
+        condition: \
+          lnk.link_info_flags == 0x01 \
+      }",
+      "tests/data/standard-lnk");
+
+  assert_true_rule_file(
+      "import \"lnk\" \
+      rule volume_id_offset { \
+        condition: \
+          lnk.volume_id_offset == 0x1C \
+      }",
+      "tests/data/standard-lnk");
+
+  assert_true_rule_file(
+      "import \"lnk\" \
+      rule local_base_path_offset { \
+        condition: \
+          lnk.local_base_path_offset == 0x2D \
+      }",
+      "tests/data/standard-lnk");
+
+  assert_true_rule_file(
+      "import \"lnk\" \
+      rule common_network_relative_link_offset { \
+        condition: \
+          lnk.common_network_relative_link_offset == 0 \
+      }",
+      "tests/data/standard-lnk");
+
+  assert_true_rule_file(
+      "import \"lnk\" \
+      rule common_path_suffix_offset { \
+        condition: \
+          lnk.common_path_suffix_offset == 0x3B \
       }",
       "tests/data/standard-lnk");
 

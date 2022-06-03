@@ -36,6 +36,17 @@ typedef struct _shell_link_header_t
   uint32_t reserved3;
 } shell_link_header_t;
 
+typedef struct _link_info_fixed_header_t
+{
+  uint32_t link_info_size;
+  uint32_t link_info_header_size;
+  uint32_t link_info_flags;
+  uint32_t volume_id_offset;
+  uint32_t local_base_path_offset;
+  uint32_t common_network_relative_link_offset;
+  uint32_t common_path_suffix_offset;
+} link_info_fixed_header_t;
+
 #pragma pack(pop)
 
 #define MIN_LNK_SIZE 76
@@ -45,6 +56,8 @@ typedef struct _shell_link_header_t
 #define LINK_CLSID_1 0x00000000
 #define LINK_CLSID_2 0x000000C0
 #define LINK_CLSID_3 0x46000000
+
+#define LINK_INFO_FIXED_HEADER_LENGTH 28
 
 begin_declarations
   declare_integer("HasLinkTargetIDList");
@@ -117,6 +130,16 @@ begin_declarations
 
   declare_integer("number_of_item_ids");
   declare_integer("item_id_list_size");
+
+  declare_integer("link_info_size");
+  declare_integer("link_info_header_size");
+  declare_integer("link_info_flags");
+  declare_integer("volume_id_offset");
+  declare_integer("local_base_path_offset");
+  declare_integer("common_network_relative_link_offset");
+  declare_integer("common_path_suffix_offset");
+  declare_integer("local_base_path_offset_unicode");
+  declare_integer("common_path_suffix_offset_unicode");
 end_declarations
 
 #define HasLinkTargetIDList            0x00000001
@@ -468,6 +491,23 @@ int parse_link_target_id_list(const uint8_t * link_target_id_list_ptr, YR_OBJECT
   return id_list_size + 2;
 }
 
+int parse_link_info(const uint8_t * link_info_ptr, YR_OBJECT* module_object) {
+  
+  link_info_fixed_header_t* link_info_fixed_header;
+
+  link_info_fixed_header = (link_info_fixed_header_t*) link_info_ptr;
+
+  set_integer(link_info_fixed_header->link_info_size, module_object, "link_info_size");
+  set_integer(link_info_fixed_header->link_info_header_size, module_object, "link_info_header_size");
+  set_integer(link_info_fixed_header->link_info_flags, module_object, "link_info_flags");
+  set_integer(link_info_fixed_header->volume_id_offset, module_object, "volume_id_offset");
+  set_integer(link_info_fixed_header->local_base_path_offset, module_object, "local_base_path_offset");
+  set_integer(link_info_fixed_header->common_network_relative_link_offset, module_object, "common_network_relative_link_offset");
+  set_integer(link_info_fixed_header->common_path_suffix_offset, module_object, "common_path_suffix_offset");
+
+  return 0;
+}
+
 int module_initialize(YR_MODULE* module)
 {
   return ERROR_SUCCESS;
@@ -539,6 +579,7 @@ int module_load(
   const uint8_t* block_data;
   char* hotkey_str;
   const uint8_t* current_location;
+  unsigned int id_list_size;
 
   block = first_memory_block(context);
   block_data = block->fetch_data(block);
@@ -602,8 +643,13 @@ int module_load(
       // Optional parsing of LinkTargetIDList
       if (lnk_header->link_flags & HasLinkTargetIDList) {
         
-        parse_link_target_id_list(current_location, module_object);
-        //printf("%x %x %x %x\n", block_data[0], block_data[1], block_data[2], block_data[3]);
+        id_list_size = parse_link_target_id_list(current_location, module_object);
+
+        current_location += id_list_size;
+      }
+
+      if (lnk_header->link_flags & HasLinkInfo) {
+        parse_link_info(current_location, module_object);
       }
     }
   }
