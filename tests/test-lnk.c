@@ -200,6 +200,14 @@ int main(int argc, char** argv)
       }",
       "tests/data/standard-lnk");
 
+  assert_true_rule_file(
+      "import \"lnk\" \
+      rule volume_id_data { \
+        condition: \
+          lnk.volume_id_data == \"\\x00\" \
+      }",
+      "tests/data/standard-lnk");
+
   yr_finalize();
 
   YR_DEBUG_FPRINTF(

@@ -99,6 +99,8 @@ begin_declarations
   declare_integer("drive_type");
   declare_integer("drive_serial_number");
   declare_integer("volume_label_offset");
+  declare_integer("volume_label_offset_unicode");
+  declare_string("volume_id_data");
 end_declarations
 
 int parse_link_target_id_list(const uint8_t * link_target_id_list_ptr, YR_OBJECT* module_object) {
@@ -154,6 +156,9 @@ int parse_link_info(const uint8_t * link_info_ptr, YR_OBJECT* module_object) {
   uint32_t local_base_path_offset_unicode;
   uint32_t common_network_relative_link_offset;
   volume_id_t volume_id;
+  uint32_t volume_label_offset_unicode;
+  unsigned int size_of_data;
+  char volume_id_data[256];
 
   link_info_fixed_header = (link_info_fixed_header_t*) link_info_ptr;
 
@@ -189,6 +194,31 @@ int parse_link_info(const uint8_t * link_info_ptr, YR_OBJECT* module_object) {
     set_integer(volume_id.drive_type, module_object, "drive_type");
     set_integer(volume_id.drive_serial_number, module_object, "drive_serial_number");
     set_integer(volume_id.volume_label_offset, module_object, "volume_label_offset");
+
+    // To work out the size of the data, we need to subtract the size of
+    // the whole structure from the VolumeIDSize.
+    // However, this structure size is variable based on if the
+    // unicode offset is present.
+    size_of_data = volume_id.volume_id_size - volume_id.volume_label_offset;
+
+    link_info_ptr += sizeof(volume_id.volume_id_size) + \
+                     sizeof(volume_id.drive_type) + \
+                     sizeof(volume_id.drive_serial_number) + \
+                     sizeof(volume_id.volume_label_offset);
+
+    if (volume_id.volume_label_offset == 0x14) {
+      memcpy(&volume_label_offset_unicode, link_info_ptr, sizeof(volume_label_offset_unicode));
+      set_integer(volume_label_offset_unicode, module_object, "volume_label_offset_unicode");
+      link_info_ptr += sizeof(volume_label_offset_unicode);
+
+      // Compensate for extra entry in the structure
+      size_of_data = volume_id.volume_id_size - volume_label_offset_unicode;
+    }
+
+    memcpy(volume_id_data, link_info_ptr, size_of_data);
+    set_sized_string(volume_id_data, size_of_data, module_object, "volume_id_data");
+
+    link_info_ptr += size_of_data;
   }
 
   return 0;
