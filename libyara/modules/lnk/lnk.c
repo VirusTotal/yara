@@ -109,6 +109,14 @@ begin_declarations
   declare_string("hotkey");
   declare_integer("hotkey_modifier_flags");
   declare_integer("has_hotkey");
+
+  begin_struct_array("item_id_list");
+    declare_integer("size");
+    declare_string("data");
+  end_struct_array("item_id_list");
+
+  declare_integer("number_of_item_ids");
+  declare_integer("item_id_list_size");
 end_declarations
 
 #define HasLinkTargetIDList            0x00000001
@@ -417,6 +425,49 @@ char* get_hotkey_char(uint8_t key) {
   return yr_strdup(key_str);
 }
 
+int parse_link_target_id_list(const uint8_t * link_target_id_list_ptr, YR_OBJECT* module_object) {
+  uint16_t id_list_size;
+  uint8_t * id_list;
+  unsigned int num_item_ids = 0;
+  uint16_t item_id_size;
+  char * item_id_data;
+
+  // First, get the IDListSize
+  memcpy(&id_list_size, link_target_id_list_ptr, sizeof(id_list_size));
+
+  set_integer(id_list_size, module_object, "item_id_list_size");
+
+  // Using this size, allocate space for the IDList
+  // (probably don't need to make a whole copy of this)
+  id_list = (uint8_t*)yr_malloc(id_list_size);
+  memcpy(id_list, link_target_id_list_ptr + sizeof(id_list_size), id_list_size);
+
+  // Get the first ItemIDSize
+  memcpy(&item_id_size, id_list, sizeof(item_id_size));
+
+  while (item_id_size != 0) {
+    // Subtract 2 to not include it
+    set_integer(item_id_size - 2, module_object, "item_id_list[%i].size", num_item_ids);
+
+    item_id_data = (char *)yr_malloc(item_id_size);
+    memcpy(item_id_data, id_list + sizeof(item_id_size), item_id_size);
+
+    set_sized_string(item_id_data, item_id_size-sizeof(item_id_size), module_object, "item_id_list[%i].data", num_item_ids);
+
+    yr_free(item_id_data);
+
+    num_item_ids += 1;
+    id_list += item_id_size;
+
+    memcpy(&item_id_size, id_list, sizeof(item_id_size));
+  }
+
+  set_integer(num_item_ids, module_object, "number_of_item_ids");
+
+  // Return the size of the whole section to compute where the next one starts
+  return id_list_size + 2;
+}
+
 int module_initialize(YR_MODULE* module)
 {
   return ERROR_SUCCESS;
@@ -487,6 +538,7 @@ int module_load(
 
   const uint8_t* block_data;
   char* hotkey_str;
+  const uint8_t* current_location;
 
   block = first_memory_block(context);
   block_data = block->fetch_data(block);
@@ -543,6 +595,16 @@ int module_load(
       }
       
       set_integer((lnk_header->hotkey_flags >> 8), module_object, "hotkey_modifier_flags");
+
+      // Set pointer of current location to be after the LNK fixed header
+      current_location = block_data + MIN_LNK_SIZE;
+
+      // Optional parsing of LinkTargetIDList
+      if (lnk_header->link_flags & HasLinkTargetIDList) {
+        
+        parse_link_target_id_list(current_location, module_object);
+        //printf("%x %x %x %x\n", block_data[0], block_data[1], block_data[2], block_data[3]);
+      }
     }
   }
 
