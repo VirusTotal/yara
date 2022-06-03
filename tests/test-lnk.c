@@ -168,6 +168,38 @@ int main(int argc, char** argv)
       }",
       "tests/data/standard-lnk");
 
+  assert_true_rule_file(
+      "import \"lnk\" \
+      rule volume_id_size { \
+        condition: \
+          lnk.volume_id_size == 17 \
+      }",
+      "tests/data/standard-lnk");
+
+  assert_true_rule_file(
+      "import \"lnk\" \
+      rule drive_type { \
+        condition: \
+          lnk.drive_type & lnk.DRIVE_FIXED \
+      }",
+      "tests/data/standard-lnk");
+
+  assert_true_rule_file(
+      "import \"lnk\" \
+      rule drive_serial_number { \
+        condition: \
+          lnk.drive_serial_number == 0x307A8A81 \
+      }",
+      "tests/data/standard-lnk");
+
+  assert_true_rule_file(
+      "import \"lnk\" \
+      rule volume_label_offset { \
+        condition: \
+          lnk.volume_label_offset == 0x10 \
+      }",
+      "tests/data/standard-lnk");
+
   yr_finalize();
 
   YR_DEBUG_FPRINTF(

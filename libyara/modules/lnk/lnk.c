@@ -55,6 +55,14 @@ begin_declarations
   declare_integer("HOTKEYF_CONTROL");
   declare_integer("HOTKEYF_ALT");
 
+  declare_integer("DRIVE_UNKNOWN");
+  declare_integer("DRIVE_NO_ROOT_DIR");
+  declare_integer("DRIVE_REMOVABLE");
+  declare_integer("DRIVE_FIXED");
+  declare_integer("DRIVE_REMOTE");
+  declare_integer("DRIVE_CDROM");
+  declare_integer("DRIVE_RAMDISK");
+
   declare_integer("is_lnk");
   declare_integer("creation_time");
   declare_integer("access_time");
@@ -95,7 +103,8 @@ end_declarations
 
 int parse_link_target_id_list(const uint8_t * link_target_id_list_ptr, YR_OBJECT* module_object) {
   uint16_t id_list_size;
-  uint8_t * id_list;
+  uint8_t* id_list;
+  uint8_t* id_list_copy;
   unsigned int num_item_ids = 0;
   uint16_t item_id_size;
   char * item_id_data;
@@ -108,6 +117,7 @@ int parse_link_target_id_list(const uint8_t * link_target_id_list_ptr, YR_OBJECT
   // Using this size, allocate space for the IDList
   // (probably don't need to make a whole copy of this)
   id_list = (uint8_t*)yr_malloc(id_list_size);
+  id_list_copy = id_list;
   memcpy(id_list, link_target_id_list_ptr + sizeof(id_list_size), id_list_size);
 
   // Get the first ItemIDSize
@@ -132,7 +142,7 @@ int parse_link_target_id_list(const uint8_t * link_target_id_list_ptr, YR_OBJECT
 
   set_integer(num_item_ids, module_object, "number_of_item_ids");
 
-  yr_free(id_list_size);
+  yr_free(id_list_copy);
 
   // Return the size of the whole section to compute where the next one starts
   return id_list_size + 2;
@@ -251,6 +261,14 @@ int module_load(
   set_integer(HOTKEYF_SHIFT, module_object, "HOTKEYF_SHIFT");
   set_integer(HOTKEYF_CONTROL, module_object, "HOTKEYF_CONTROL");
   set_integer(HOTKEYF_ALT, module_object, "HOTKEYF_ALT");
+
+  set_integer(DRIVE_UNKNOWN, module_object, "DRIVE_UNKNOWN");
+  set_integer(DRIVE_NO_ROOT_DIR, module_object, "DRIVE_NO_ROOT_DIR");
+  set_integer(DRIVE_REMOVABLE, module_object, "DRIVE_REMOVABLE");
+  set_integer(DRIVE_FIXED, module_object, "DRIVE_FIXED");
+  set_integer(DRIVE_REMOTE, module_object, "DRIVE_REMOTE");
+  set_integer(DRIVE_CDROM, module_object, "DRIVE_CDROM");
+  set_integer(DRIVE_RAMDISK, module_object, "DRIVE_RAMDISK");
 
   const uint8_t* block_data;
   char* hotkey_str;

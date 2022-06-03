@@ -108,4 +108,12 @@ typedef struct _volume_id_t
 #define VolumeIDAndLocalBasePath               0x01
 #define CommonNetworkRelativeLinkAndPathSuffix 0x02
 
+#define DRIVE_UNKNOWN       0x00
+#define DRIVE_NO_ROOT_DIR   0x01
+#define DRIVE_REMOVABLE     0x02
+#define DRIVE_FIXED         0x03
+#define DRIVE_REMOTE        0x04
+#define DRIVE_CDROM         0x05
+#define DRIVE_RAMDISK       0x06
+
 #endif
