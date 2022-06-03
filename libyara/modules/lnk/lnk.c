@@ -132,6 +132,8 @@ int parse_link_target_id_list(const uint8_t * link_target_id_list_ptr, YR_OBJECT
 
   set_integer(num_item_ids, module_object, "number_of_item_ids");
 
+  yr_free(id_list_size);
+
   // Return the size of the whole section to compute where the next one starts
   return id_list_size + 2;
 }
