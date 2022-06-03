@@ -37,6 +37,14 @@ typedef struct _link_info_fixed_header_t
   uint32_t common_path_suffix_offset;
 } link_info_fixed_header_t;
 
+typedef struct _volume_id_t
+{
+  uint32_t volume_id_size;
+  uint32_t drive_type;
+  uint32_t drive_serial_number;
+  uint32_t volume_label_offset;
+} volume_id_t;
+
 #pragma pack(pop)
 
 #define MIN_LNK_SIZE 76
@@ -96,5 +104,8 @@ typedef struct _link_info_fixed_header_t
 #define HOTKEYF_SHIFT       0x01
 #define HOTKEYF_CONTROL     0x02
 #define HOTKEYF_ALT         0x04
+
+#define VolumeIDAndLocalBasePath               0x01
+#define CommonNetworkRelativeLinkAndPathSuffix 0x02
 
 #endif

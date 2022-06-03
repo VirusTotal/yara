@@ -87,6 +87,10 @@ begin_declarations
   declare_integer("common_path_suffix_offset");
   declare_integer("local_base_path_offset_unicode");
   declare_integer("common_path_suffix_offset_unicode");
+  declare_integer("volume_id_size");
+  declare_integer("drive_type");
+  declare_integer("drive_serial_number");
+  declare_integer("volume_label_offset");
 end_declarations
 
 int parse_link_target_id_list(const uint8_t * link_target_id_list_ptr, YR_OBJECT* module_object) {
@@ -135,6 +139,9 @@ int parse_link_target_id_list(const uint8_t * link_target_id_list_ptr, YR_OBJECT
 int parse_link_info(const uint8_t * link_info_ptr, YR_OBJECT* module_object) {
   
   link_info_fixed_header_t* link_info_fixed_header;
+  uint32_t local_base_path_offset_unicode;
+  uint32_t common_network_relative_link_offset;
+  volume_id_t volume_id;
 
   link_info_fixed_header = (link_info_fixed_header_t*) link_info_ptr;
 
@@ -145,6 +152,32 @@ int parse_link_info(const uint8_t * link_info_ptr, YR_OBJECT* module_object) {
   set_integer(link_info_fixed_header->local_base_path_offset, module_object, "local_base_path_offset");
   set_integer(link_info_fixed_header->common_network_relative_link_offset, module_object, "common_network_relative_link_offset");
   set_integer(link_info_fixed_header->common_path_suffix_offset, module_object, "common_path_suffix_offset");
+
+  link_info_ptr += LINK_INFO_FIXED_HEADER_LENGTH;
+
+  //printf("%x\n", link_info_ptr[0]);
+
+  if (link_info_fixed_header->link_info_flags & VolumeIDAndLocalBasePath &&
+      link_info_fixed_header->link_info_header_size >= 0x24) {
+    memcpy(&local_base_path_offset_unicode, link_info_ptr, sizeof(local_base_path_offset_unicode));
+    set_integer(local_base_path_offset_unicode, module_object, "local_base_path_offset_unicode");
+    link_info_ptr += sizeof(local_base_path_offset_unicode);
+  }
+
+  if (link_info_fixed_header->link_info_flags & CommonNetworkRelativeLinkAndPathSuffix) {
+    memcpy(&common_network_relative_link_offset, link_info_ptr, sizeof(common_network_relative_link_offset));
+    set_integer(common_network_relative_link_offset, module_object, "common_network_relative_link_offset");
+    link_info_ptr += sizeof(common_network_relative_link_offset);
+  }
+
+  if (link_info_fixed_header->volume_id_offset) {
+    memcpy(&volume_id, (volume_id_t*)link_info_ptr, sizeof(volume_id_t));
+
+    set_integer(volume_id.volume_id_size, module_object, "volume_id_size");
+    set_integer(volume_id.drive_type, module_object, "drive_type");
+    set_integer(volume_id.drive_serial_number, module_object, "drive_serial_number");
+    set_integer(volume_id.volume_label_offset, module_object, "volume_label_offset");
+  }
 
   return 0;
 }
