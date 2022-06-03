@@ -49,6 +49,7 @@ MODULES += modules/pe/pe_utils.c
 MODULES += modules/console/console.c
 
 MODULES += modules/lnk/lnk.c
+MODULES += modules/lnk/lnk_utils.c
 
 if CUCKOO_MODULE
 MODULES += modules/cuckoo/cuckoo.c
@@ -176,6 +177,8 @@ noinst_HEADERS = \
 	include/yara/pe.h \
 	include/yara/pe_utils.h \
 	include/yara/re_lexer.h \
+	include/yara/lnk.h \
+	include/yara/lnk_utils.h \
 	modules/module_list
 
 dist_noinst_DATA = pb/yara.proto
