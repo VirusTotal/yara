@@ -3,6 +3,7 @@
 #include <yara/mem.h>
 #include <yara/lnk.h>
 #include <yara/lnk_utils.h>
+#include <wchar.h>
 
 #define MODULE_NAME lnk
 
@@ -103,6 +104,8 @@ begin_declarations
   declare_string("volume_id_data");
   declare_string("local_base_path");
   declare_string("common_path_suffix");
+  declare_string("local_base_path_unicode");
+  declare_string("common_path_suffix_unicode");
 end_declarations
 
 int parse_link_target_id_list(const uint8_t * link_target_id_list_ptr, YR_OBJECT* module_object, size_t block_data_size_remaining) {
@@ -169,16 +172,21 @@ int parse_common_network_relative_link(const uint8_t * common_network_relative_l
 int parse_link_info(const uint8_t * link_info_ptr, YR_OBJECT* module_object) {
   
   link_info_fixed_header_t* link_info_fixed_header;
-  uint32_t local_base_path_offset_unicode;
+  uint32_t local_base_path_offset_unicode=0;
+  uint32_t common_path_suffix_offset_unicode=0;
   uint32_t common_network_relative_link_offset;
   volume_id_t volume_id;
   uint32_t volume_label_offset_unicode;
   unsigned int size_of_data;
   char volume_id_data[256];
   char local_base_path[256];
-  char  common_path_suffix[256];
+  char common_path_suffix[256];
+  wchar_t local_base_path_unicode[256];
+  wchar_t common_path_suffix_unicode[256];
   unsigned int local_base_path_len;
   unsigned int common_path_suffix_len;
+  unsigned int local_base_path_unicode_len;
+  unsigned int common_path_suffix_unicode_len;
 
   link_info_fixed_header = (link_info_fixed_header_t*) link_info_ptr;
 
@@ -197,6 +205,12 @@ int parse_link_info(const uint8_t * link_info_ptr, YR_OBJECT* module_object) {
     memcpy(&local_base_path_offset_unicode, link_info_ptr, sizeof(local_base_path_offset_unicode));
     set_integer(local_base_path_offset_unicode, module_object, "local_base_path_offset_unicode");
     link_info_ptr += sizeof(local_base_path_offset_unicode);
+  }
+
+  if (link_info_fixed_header->link_info_header_size >= 0x24) {
+    memcpy(&common_path_suffix_offset_unicode, link_info_ptr, sizeof(common_path_suffix_offset_unicode));
+    set_integer(common_path_suffix_offset_unicode, module_object, "common_path_suffix_offset_unicode");
+    link_info_ptr += sizeof(common_path_suffix_offset_unicode);
   }
 
   if (link_info_fixed_header->link_info_flags & CommonNetworkRelativeLinkAndPathSuffix) {
@@ -270,6 +284,37 @@ int parse_link_info(const uint8_t * link_info_ptr, YR_OBJECT* module_object) {
   
         // Add 1 to deal with null terminator
         link_info_ptr += common_path_suffix_len + 1;
+      }
+    }
+
+    // TODO: These unicode functions will need some careful testing
+    if (local_base_path_offset_unicode) {
+
+      local_base_path_unicode_len = wcslen((const wchar_t *)link_info_ptr);
+      memcpy(&local_base_path_unicode, link_info_ptr, local_base_path_unicode_len*2);
+
+      set_sized_string((char*)local_base_path_unicode, local_base_path_unicode_len, module_object, "local_base_path_unicode");
+
+      // Add 1 to deal with null terminator
+      link_info_ptr += (local_base_path_unicode_len * 2) + 1;
+    }
+
+    if (common_path_suffix_offset_unicode) {
+
+      // Have to deal with this possibly being an empty string
+      if (memcmp(link_info_ptr, "\x00", 1) == 0) {
+        set_sized_string("\x00", 1, module_object, "common_path_suffix_unicode");
+        link_info_ptr += 1;
+      }
+
+      else {
+        common_path_suffix_unicode_len = wcslen((const wchar_t *)link_info_ptr);
+        memcpy(&common_path_suffix_unicode, link_info_ptr, common_path_suffix_unicode_len);
+  
+        set_sized_string((char*)common_path_suffix_unicode, common_path_suffix_unicode_len, module_object, "common_path_suffix_unicode");
+  
+        // Add 1 to deal with null terminator
+        link_info_ptr += (common_path_suffix_unicode_len * 2) + 1;
       }
     }
 
