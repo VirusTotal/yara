@@ -112,8 +112,10 @@ typedef struct _tracker_data_block_t
   uint32_t length;
   uint32_t version;
   char machine_id[16];
-  uint8_t droid[32];
-  uint8_t droid_birth[32];
+  uint8_t droid_volume_identifier[16];
+  uint8_t droid_file_identifier[16];
+  uint8_t droid_birth_volume_identifier[16];
+  uint8_t droid_birth_file_identifier[16];
 } tracker_data_block_t;
 
 #pragma pack(pop)

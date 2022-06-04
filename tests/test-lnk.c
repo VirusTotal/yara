@@ -248,6 +248,38 @@ int main(int argc, char** argv)
       }",
       "tests/data/standard-lnk");
 
+  assert_true_rule_file(
+      "import \"lnk\" \
+      rule droid_volume_identifier { \
+        condition: \
+          lnk.droid_volume_identifier == \"\\x40\\x78\\xC7\\x94\\x47\\xFA\\xC7\\x46\\xB3\\x56\\x5C\\x2D\\xC6\\xB6\\xD1\\x15\" \
+      }",
+      "tests/data/standard-lnk");
+
+  assert_true_rule_file(
+      "import \"lnk\" \
+      rule droid_file_identifier { \
+        condition: \
+          lnk.droid_file_identifier == \"\\xEC\\x46\\xCD\\x7B\\x22\\x7F\\xDD\\x11\\x94\\x99\\x00\\x13\\x72\\x16\\x87\\x4A\" \
+      }",
+      "tests/data/standard-lnk");
+
+  assert_true_rule_file(
+      "import \"lnk\" \
+      rule droid_birth_volume_identifier { \
+        condition: \
+          lnk.droid_birth_volume_identifier == \"\\x40\\x78\\xC7\\x94\\x47\\xFA\\xC7\\x46\\xB3\\x56\\x5C\\x2D\\xC6\\xB6\\xD1\\x15\" \
+      }",
+      "tests/data/standard-lnk");
+
+  assert_true_rule_file(
+      "import \"lnk\" \
+      rule droid_birth_file_identifier { \
+        condition: \
+          lnk.droid_birth_file_identifier == \"\\xEC\\x46\\xCD\\x7B\\x22\\x7F\\xDD\\x11\\x94\\x99\\x00\\x13\\x72\\x16\\x87\\x4A\" \
+      }",
+      "tests/data/standard-lnk");
+
   yr_finalize();
 
   YR_DEBUG_FPRINTF(

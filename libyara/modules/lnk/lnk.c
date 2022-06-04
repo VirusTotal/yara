@@ -114,8 +114,10 @@ begin_declarations
   declare_string("icon_location");
 
   declare_string("machine_id");
-  declare_string("droid");
-  declare_string("droid_birth");
+  declare_string("droid_volume_identifier");
+  declare_string("droid_file_identifier");
+  declare_string("droid_birth_volume_identifier");
+  declare_string("droid_birth_file_identifier");
 end_declarations
 
 unsigned int parse_link_target_id_list(const uint8_t * link_target_id_list_ptr, YR_OBJECT* module_object, size_t block_data_size_remaining) {
@@ -379,8 +381,10 @@ void parse_tracker_data_block(const uint8_t * extra_block_ptr, YR_OBJECT* module
   memcpy(&tracker_data_block, (tracker_data_block_t*)extra_block_ptr, sizeof(tracker_data_block_t));
 
   set_string(tracker_data_block.machine_id, module_object, "machine_id");
-  set_sized_string((char *)tracker_data_block.droid, sizeof(tracker_data_block.droid), module_object, "droid");
-  set_sized_string((char *)tracker_data_block.droid_birth, sizeof(tracker_data_block.droid_birth), module_object, "droid_birth");
+  set_sized_string((char *)tracker_data_block.droid_volume_identifier, sizeof(tracker_data_block.droid_volume_identifier), module_object, "droid_volume_identifier");
+  set_sized_string((char *)tracker_data_block.droid_file_identifier, sizeof(tracker_data_block.droid_file_identifier), module_object, "droid_file_identifier");
+  set_sized_string((char *)tracker_data_block.droid_birth_volume_identifier, sizeof(tracker_data_block.droid_birth_volume_identifier), module_object, "droid_birth_volume_identifier");
+  set_sized_string((char *)tracker_data_block.droid_birth_file_identifier, sizeof(tracker_data_block.droid_birth_file_identifier), module_object, "droid_birth_file_identifier");
 }
 
 unsigned int parse_extra_block(const uint8_t * extra_block_ptr, YR_OBJECT* module_object, uint32_t extra_data_block_size, uint32_t extra_data_block_signature) {
