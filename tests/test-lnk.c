@@ -224,6 +224,22 @@ int main(int argc, char** argv)
       }",
       "tests/data/standard-lnk");
 
+  assert_true_rule_file(
+      "import \"lnk\" \
+      rule relative_path { \
+        condition: \
+          lnk.relative_path == \".\\x00\\\\\\x00a\\x00.\\x00t\\x00x\\x00t\\x00\" \
+      }",
+      "tests/data/standard-lnk");
+
+  assert_true_rule_file(
+      "import \"lnk\" \
+      rule working_dir { \
+        condition: \
+          lnk.working_dir == \"C\\x00:\\x00\\\\\\x00t\\x00e\\x00s\\x00t\\x00\" \
+      }",
+      "tests/data/standard-lnk");
+
   yr_finalize();
 
   YR_DEBUG_FPRINTF(
