@@ -104,48 +104,57 @@ begin_declarations
   declare_string("local_base_path");
 end_declarations
 
-int parse_link_target_id_list(const uint8_t * link_target_id_list_ptr, YR_OBJECT* module_object) {
+int parse_link_target_id_list(const uint8_t * link_target_id_list_ptr, YR_OBJECT* module_object, size_t block_data_size_remaining) {
   uint16_t id_list_size;
-  uint8_t* id_list;
-  uint8_t* id_list_copy;
+  const uint8_t* id_list_ptr;
   unsigned int num_item_ids = 0;
   uint16_t item_id_size;
-  char * item_id_data;
+  const uint8_t* item_id_data_ptr;
 
   // First, get the IDListSize
+  if (block_data_size_remaining < sizeof(id_list_size)) {
+    return 0;
+  }
   memcpy(&id_list_size, link_target_id_list_ptr, sizeof(id_list_size));
+  block_data_size_remaining -= sizeof(id_list_size);
 
   set_integer(id_list_size, module_object, "item_id_list_size");
 
-  // Using this size, allocate space for the IDList
-  // (probably don't need to make a whole copy of this)
-  id_list = (uint8_t*)yr_malloc(id_list_size);
-  id_list_copy = id_list;
-  memcpy(id_list, link_target_id_list_ptr + sizeof(id_list_size), id_list_size);
+  // Get pointer to start of IDList
+  id_list_ptr = link_target_id_list_ptr + sizeof(id_list_size);
 
   // Get the first ItemIDSize
-  memcpy(&item_id_size, id_list, sizeof(item_id_size));
+  if (block_data_size_remaining < sizeof(item_id_size)) {
+    return 0;
+  }
+  memcpy(&item_id_size, id_list_ptr, sizeof(item_id_size));
+  block_data_size_remaining -= sizeof(item_id_size);
 
   while (item_id_size != 0) {
     // Subtract 2 to not include it
     set_integer(item_id_size - 2, module_object, "item_id_list[%i].size", num_item_ids);
 
-    item_id_data = (char *)yr_malloc(item_id_size);
-    memcpy(item_id_data, id_list + sizeof(item_id_size), item_id_size);
+    // Get pointer to the ItemID Data
+    item_id_data_ptr = id_list_ptr + sizeof(item_id_size);
 
-    set_sized_string(item_id_data, item_id_size-sizeof(item_id_size), module_object, "item_id_list[%i].data", num_item_ids);
-
-    yr_free(item_id_data);
+    if (block_data_size_remaining < item_id_size-sizeof(item_id_size)) {
+      return 0;
+    }
+    set_sized_string((const char *)item_id_data_ptr, item_id_size-sizeof(item_id_size), module_object, "item_id_list[%i].data", num_item_ids);
+    block_data_size_remaining -= item_id_size-sizeof(item_id_size);
 
     num_item_ids += 1;
-    id_list += item_id_size;
+    id_list_ptr += item_id_size;
 
-    memcpy(&item_id_size, id_list, sizeof(item_id_size));
+    // Get the next ItemIDSize (or 0x0000 if we've reached TerminalID)
+    if (block_data_size_remaining < sizeof(item_id_size)) {
+      return 0;
+    }
+    memcpy(&item_id_size, id_list_ptr, sizeof(item_id_size));
+    block_data_size_remaining -= sizeof(item_id_size);
   }
 
   set_integer(num_item_ids, module_object, "number_of_item_ids");
-
-  yr_free(id_list_copy);
 
   // Return the size of the whole section to compute where the next one starts
   return id_list_size + 2;
@@ -316,6 +325,7 @@ int module_load(
   set_integer(DRIVE_RAMDISK, module_object, "DRIVE_RAMDISK");
 
   const uint8_t* block_data;
+  size_t block_data_size_remaining;
   char* hotkey_str;
   const uint8_t* current_location;
   unsigned int id_list_size;
@@ -323,7 +333,13 @@ int module_load(
   block = first_memory_block(context);
   block_data = block->fetch_data(block);
 
-  if (block_data != NULL && block->size >= MIN_LNK_SIZE)
+  // Keep track the amount of space in the current block we have left
+  // to prevent any issues when dereferencing pointers
+  block_data_size_remaining = block->size;
+
+  // Don't try to parse a file unless it is the minimum size an LNK can be
+  // based on fixed length headers it has (described in shell_link_header_t)
+  if (block_data != NULL && block_data_size_remaining >= MIN_LNK_SIZE)
   {
     // Validate LNK header
     lnk_header = (shell_link_header_t*) block_data;
@@ -378,17 +394,25 @@ int module_load(
 
       // Set pointer of current location to be after the LNK fixed header
       current_location = block_data + MIN_LNK_SIZE;
+      block_data_size_remaining -= MIN_LNK_SIZE;
 
       // Optional parsing of LinkTargetIDList
       if (lnk_header->link_flags & HasLinkTargetIDList) {
-        
-        id_list_size = parse_link_target_id_list(current_location, module_object);
+
+        id_list_size = parse_link_target_id_list(current_location, module_object, block_data_size_remaining);
+
+        if (id_list_size == 0) {
+          return ERROR_SUCCESS;
+        }
 
         current_location += id_list_size;
+        block_data_size_remaining -= id_list_size;
       }
 
       if (lnk_header->link_flags & HasLinkInfo) {
         parse_link_info(current_location, module_object);
+
+        //printf("%ld\n", block_data_size_remaining);
       }
     }
   }
