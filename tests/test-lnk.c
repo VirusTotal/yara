@@ -216,6 +216,14 @@ int main(int argc, char** argv)
       }",
       "tests/data/standard-lnk");
 
+  assert_true_rule_file(
+      "import \"lnk\" \
+      rule common_path_suffix { \
+        condition: \
+          lnk.common_path_suffix == \"\\x00\" \
+      }",
+      "tests/data/standard-lnk");
+
   yr_finalize();
 
   YR_DEBUG_FPRINTF(

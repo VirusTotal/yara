@@ -102,6 +102,7 @@ begin_declarations
   declare_integer("volume_label_offset_unicode");
   declare_string("volume_id_data");
   declare_string("local_base_path");
+  declare_string("common_path_suffix");
 end_declarations
 
 int parse_link_target_id_list(const uint8_t * link_target_id_list_ptr, YR_OBJECT* module_object, size_t block_data_size_remaining) {
@@ -160,6 +161,11 @@ int parse_link_target_id_list(const uint8_t * link_target_id_list_ptr, YR_OBJECT
   return id_list_size + 2;
 }
 
+int parse_common_network_relative_link(const uint8_t * common_network_relative_link_prt, YR_OBJECT* module_object) {
+  // TODO: Implement this function
+  return 0;
+}
+
 int parse_link_info(const uint8_t * link_info_ptr, YR_OBJECT* module_object) {
   
   link_info_fixed_header_t* link_info_fixed_header;
@@ -170,7 +176,9 @@ int parse_link_info(const uint8_t * link_info_ptr, YR_OBJECT* module_object) {
   unsigned int size_of_data;
   char volume_id_data[256];
   char local_base_path[256];
+  char  common_path_suffix[256];
   unsigned int local_base_path_len;
+  unsigned int common_path_suffix_len;
 
   link_info_fixed_header = (link_info_fixed_header_t*) link_info_ptr;
 
@@ -206,9 +214,8 @@ int parse_link_info(const uint8_t * link_info_ptr, YR_OBJECT* module_object) {
     set_integer(volume_id.volume_label_offset, module_object, "volume_label_offset");
 
     // To work out the size of the data, we need to subtract the size of
-    // the whole structure from the VolumeIDSize.
-    // However, this structure size is variable based on if the
-    // unicode offset is present.
+    // the whole structure from the VolumeIDSize. However, this structure 
+    // size is variable based on if the unicode offset is present.
     size_of_data = volume_id.volume_id_size - volume_id.volume_label_offset;
 
     link_info_ptr += sizeof(volume_id.volume_id_size) + \
@@ -236,10 +243,34 @@ int parse_link_info(const uint8_t * link_info_ptr, YR_OBJECT* module_object) {
       local_base_path_len = strlen((const char *)link_info_ptr);
       memcpy(&local_base_path, link_info_ptr, local_base_path_len);
 
-      set_string(local_base_path, module_object, "local_base_path");
+      set_sized_string(local_base_path, local_base_path_len, module_object, "local_base_path");
 
       // Add 1 to deal with null terminator
       link_info_ptr += local_base_path_len + 1;
+    }
+
+    if (link_info_fixed_header->common_network_relative_link_offset) {
+      parse_common_network_relative_link(link_info_ptr, module_object);
+    }
+
+    // Handle LocalBasePath
+    if (link_info_fixed_header->common_path_suffix_offset) {
+
+      // Have to deal with this possibly being an empty string
+      if (memcmp(link_info_ptr, "\x00", 1) == 0) {
+        set_sized_string("\x00", 1, module_object, "common_path_suffix");
+        link_info_ptr += 1;
+      }
+
+      else {
+        common_path_suffix_len = strlen((const char *)link_info_ptr);
+        memcpy(&common_path_suffix, link_info_ptr, common_path_suffix_len);
+  
+        set_sized_string(common_path_suffix, common_path_suffix_len, module_object, "common_path_suffix");
+  
+        // Add 1 to deal with null terminator
+        link_info_ptr += common_path_suffix_len + 1;
+      }
     }
 
     //printf("%x %x %x %x\n", link_info_ptr[0], link_info_ptr[1], link_info_ptr[2], link_info_ptr[3]);
