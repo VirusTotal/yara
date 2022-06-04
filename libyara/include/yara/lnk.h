@@ -45,6 +45,68 @@ typedef struct _volume_id_t
   uint32_t volume_label_offset;
 } volume_id_t;
 
+typedef struct _console_data_block_t
+{
+  uint16_t fill_attributes;
+  uint16_t popup_fill_attributes;
+  uint16_t screen_buffer_size_x;
+  uint16_t screen_buffer_size_y;
+  uint16_t window_size_x;
+  uint16_t window_size_y;
+  uint16_t window_origin_x;
+  uint16_t window_origin_y;
+  uint32_t unused_1;
+  uint32_t unused_2;
+  uint32_t font_size;
+  uint32_t font_family;
+  uint32_t font_weight;
+  wchar_t face_name[32];
+  uint32_t cursor_size;
+  uint32_t full_screen;
+  uint32_t quick_edit;
+  uint32_t insert_mode;
+  uint32_t auto_position;
+  uint32_t history_buffer_size;
+  uint32_t number_of_history_buffers;
+  uint32_t history_no_dup;
+  uint32_t color_table[16];
+} console_data_block_t;
+
+typedef struct _console_fed_data_block_t
+{
+  uint32_t code_page;
+} console_fed_data_block_t;
+
+typedef struct _darwin_data_block_t
+{
+  char darwin_data_ansi[260];
+  wchar_t darwin_data_unicode[260];
+} darwin_data_block_t;
+
+typedef struct _environment_variable_data_block_t
+{
+  char target_ansi[260];
+  wchar_t target_unicode[260];
+} environment_variable_data_block_t;
+
+typedef struct _icon_environment_data_block_t
+{
+  char target_ansi[260];
+  wchar_t target_unicode[260];
+} icon_environment_data_block_t;
+
+typedef struct _known_folder_data_block_t
+{
+  uint8_t known_folder_id[16];
+  uint32_t offset;
+} known_folder_data_block_t;
+
+typedef struct _special_folder_data_block_t
+{
+  uint32_t special_folder_id;
+  uint32_t offset;
+} special_folder_data_block_t;
+
 typedef struct _tracker_data_block_t
 {
   uint32_t length;

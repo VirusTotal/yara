@@ -384,6 +384,9 @@ void parse_tracker_data_block(const uint8_t * extra_block_ptr, YR_OBJECT* module
 }
 
 unsigned int parse_extra_block(const uint8_t * extra_block_ptr, YR_OBJECT* module_object, uint32_t extra_data_block_size, uint32_t extra_data_block_signature) {
+  // Ignore PropertyStore for now
+  // Docs: https://winprotocoldoc.blob.core.windows.net/productionwindowsarchives/MS-PROPSTORE/%5bMS-PROPSTORE%5d.pdf
+  
   if (extra_data_block_size == TrackerDataBlockSize && extra_data_block_signature == TrackerDataBlockSignature) {
     parse_tracker_data_block(extra_block_ptr, module_object);
     return 1;
