@@ -112,6 +112,10 @@ begin_declarations
   declare_string("working_dir");
   declare_string("command_line_arguments");
   declare_string("icon_location");
+
+  declare_string("machine_id");
+  declare_string("droid");
+  declare_string("droid_birth");
 end_declarations
 
 unsigned int parse_link_target_id_list(const uint8_t * link_target_id_list_ptr, YR_OBJECT* module_object, size_t block_data_size_remaining) {
@@ -369,6 +373,27 @@ unsigned int parse_string_data(const uint8_t * string_data_ptr, YR_OBJECT* modul
   return (count_characters * 2) + sizeof(count_characters);
 }
 
+void parse_tracker_data_block(const uint8_t * extra_block_ptr, YR_OBJECT* module_object) {
+  tracker_data_block_t tracker_data_block;
+
+  memcpy(&tracker_data_block, (tracker_data_block_t*)extra_block_ptr, sizeof(tracker_data_block_t));
+
+  set_string(tracker_data_block.machine_id, module_object, "machine_id");
+  set_sized_string((char *)tracker_data_block.droid, sizeof(tracker_data_block.droid), module_object, "droid");
+  set_sized_string((char *)tracker_data_block.droid_birth, sizeof(tracker_data_block.droid_birth), module_object, "droid_birth");
+}
+
+unsigned int parse_extra_block(const uint8_t * extra_block_ptr, YR_OBJECT* module_object, uint32_t extra_data_block_size, uint32_t extra_data_block_signature) {
+  if (extra_data_block_size == TrackerDataBlockSize && extra_data_block_signature == TrackerDataBlockSignature) {
+    parse_tracker_data_block(extra_block_ptr, module_object);
+    return 1;
+  }
+
+  else {
+    return 0;
+  }
+}
+
 int module_initialize(YR_MODULE* module)
 {
   return ERROR_SUCCESS;
@@ -452,6 +477,8 @@ int module_load(
   unsigned int id_list_size;
   unsigned int link_info_size;
   unsigned int string_data_size;
+  uint32_t extra_data_block_size;
+  uint32_t extra_data_block_signature;
 
   block = first_memory_block(context);
   block_data = block->fetch_data(block);
@@ -601,6 +628,29 @@ int module_load(
 
         current_location += string_data_size;
         block_data_size_remaining -= string_data_size;
+      }
+
+      // Parse ExtraData
+      memcpy(&extra_data_block_size, current_location, sizeof(extra_data_block_size));
+      current_location += sizeof(extra_data_block_size);
+
+      // The TerminalBlock must be less than 0x04, so iterate until we find it (or run out of space)
+      while (extra_data_block_size >= 0x04) {
+        memcpy(&extra_data_block_signature, current_location, sizeof(extra_data_block_signature));
+        current_location += sizeof(extra_data_block_signature);
+
+        if (!parse_extra_block(current_location, 
+             module_object, 
+             extra_data_block_size, 
+             extra_data_block_signature)
+        ) {
+          break;
+        }
+
+        current_location += extra_data_block_size;
+
+        memcpy(&extra_data_block_size, current_location, sizeof(extra_data_block_size));
+        current_location += sizeof(extra_data_block_size);
       }
     }
   }

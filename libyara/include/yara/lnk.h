@@ -45,6 +45,15 @@ typedef struct _volume_id_t
   uint32_t volume_label_offset;
 } volume_id_t;
 
+typedef struct _tracker_data_block_t
+{
+  uint32_t length;
+  uint32_t version;
+  char machine_id[16];
+  uint8_t droid[32];
+  uint8_t droid_birth[32];
+} tracker_data_block_t;
+
 #pragma pack(pop)
 
 #define MIN_LNK_SIZE 76
@@ -115,5 +124,29 @@ typedef struct _volume_id_t
 #define DRIVE_REMOTE        0x04
 #define DRIVE_CDROM         0x05
 #define DRIVE_RAMDISK       0x06
+
+#define ConsoleDataBlockSize                     0x000000CC
+#define ConsoleFEDataBlockSize                   0x0000000C
+#define DarwinDataBlockSize                      0x00000314
+#define EnvironmentVariableDataBlockSize         0x00000314
+#define IconEnvironmentDataBlockSize             0x00000314
+#define KnownFolderDataBlockSize                 0x0000001C
+#define PropertyStoreDataBlockMinSize            0x0000000C
+#define ShimDataBlockMinSize                     0x00000088
+#define SpecialFolderDataBlockSize               0x00000010
+#define TrackerDataBlockSize                     0x00000060
+#define VistaAndAboveIDListDataBlockMinSize      0x0000000A
+
+#define ConsoleDataBlockSignature                0xA0000002
+#define ConsoleFEDataBlockSignature              0xA0000004
+#define DarwinDataBlockSignature                 0xA0000006
+#define EnvironmentVariableDataBlockSignature    0xA0000001
+#define IconEnvironmentDataBlockSignature        0xA0000007
+#define KnownFolderDataBlockSignature            0xA000000B
+#define PropertyStoreDataBlockSignature          0xA0000009
+#define ShimDataBlockSignature                   0xA0000008
+#define SpecialFolderDataBlockSignature          0xA0000005
+#define TrackerDataBlockSignature                0xA0000003
+#define VistaAndAboveIDListDataBlockSignature    0xA000000C
 
 #endif
