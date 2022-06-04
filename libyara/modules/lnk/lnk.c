@@ -101,6 +101,7 @@ begin_declarations
   declare_integer("volume_label_offset");
   declare_integer("volume_label_offset_unicode");
   declare_string("volume_id_data");
+  declare_string("local_base_path");
 end_declarations
 
 int parse_link_target_id_list(const uint8_t * link_target_id_list_ptr, YR_OBJECT* module_object) {
@@ -159,6 +160,8 @@ int parse_link_info(const uint8_t * link_info_ptr, YR_OBJECT* module_object) {
   uint32_t volume_label_offset_unicode;
   unsigned int size_of_data;
   char volume_id_data[256];
+  char local_base_path[256];
+  unsigned int local_base_path_len;
 
   link_info_fixed_header = (link_info_fixed_header_t*) link_info_ptr;
 
@@ -171,8 +174,6 @@ int parse_link_info(const uint8_t * link_info_ptr, YR_OBJECT* module_object) {
   set_integer(link_info_fixed_header->common_path_suffix_offset, module_object, "common_path_suffix_offset");
 
   link_info_ptr += LINK_INFO_FIXED_HEADER_LENGTH;
-
-  //printf("%x\n", link_info_ptr[0]);
 
   if (link_info_fixed_header->link_info_flags & VolumeIDAndLocalBasePath &&
       link_info_fixed_header->link_info_header_size >= 0x24) {
@@ -219,6 +220,20 @@ int parse_link_info(const uint8_t * link_info_ptr, YR_OBJECT* module_object) {
     set_sized_string(volume_id_data, size_of_data, module_object, "volume_id_data");
 
     link_info_ptr += size_of_data;
+
+    // Handle LocalBasePath
+    if (link_info_fixed_header->local_base_path_offset) {
+
+      local_base_path_len = strlen((const char *)link_info_ptr);
+      memcpy(&local_base_path, link_info_ptr, local_base_path_len);
+
+      set_string(local_base_path, module_object, "local_base_path");
+
+      // Add 1 to deal with null terminator
+      link_info_ptr += local_base_path_len + 1;
+    }
+
+    //printf("%x %x %x %x\n", link_info_ptr[0], link_info_ptr[1], link_info_ptr[2], link_info_ptr[3]);
   }
 
   return 0;

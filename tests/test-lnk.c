@@ -208,6 +208,14 @@ int main(int argc, char** argv)
       }",
       "tests/data/standard-lnk");
 
+  assert_true_rule_file(
+      "import \"lnk\" \
+      rule local_base_path { \
+        condition: \
+          lnk.local_base_path == \"C:\\\\test\\\\a.txt\" \
+      }",
+      "tests/data/standard-lnk");
+
   yr_finalize();
 
   YR_DEBUG_FPRINTF(
