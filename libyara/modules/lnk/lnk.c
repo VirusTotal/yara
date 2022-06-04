@@ -108,7 +108,7 @@ begin_declarations
   declare_string("common_path_suffix_unicode");
 end_declarations
 
-int parse_link_target_id_list(const uint8_t * link_target_id_list_ptr, YR_OBJECT* module_object, size_t block_data_size_remaining) {
+unsigned int parse_link_target_id_list(const uint8_t * link_target_id_list_ptr, YR_OBJECT* module_object, size_t block_data_size_remaining) {
   uint16_t id_list_size;
   const uint8_t* id_list_ptr;
   unsigned int num_item_ids = 0;
@@ -164,12 +164,12 @@ int parse_link_target_id_list(const uint8_t * link_target_id_list_ptr, YR_OBJECT
   return id_list_size + 2;
 }
 
-int parse_common_network_relative_link(const uint8_t * common_network_relative_link_prt, YR_OBJECT* module_object) {
+unsigned int parse_common_network_relative_link(const uint8_t * common_network_relative_link_prt, YR_OBJECT* module_object) {
   // TODO: Implement this function
   return 0;
 }
 
-int parse_link_info(const uint8_t * link_info_ptr, YR_OBJECT* module_object) {
+unsigned int parse_link_info(const uint8_t * link_info_ptr, YR_OBJECT* module_object) {
   
   link_info_fixed_header_t* link_info_fixed_header;
   uint32_t local_base_path_offset_unicode=0;
@@ -317,11 +317,9 @@ int parse_link_info(const uint8_t * link_info_ptr, YR_OBJECT* module_object) {
         link_info_ptr += (common_path_suffix_unicode_len * 2) + 1;
       }
     }
-
-    //printf("%x %x %x %x\n", link_info_ptr[0], link_info_ptr[1], link_info_ptr[2], link_info_ptr[3]);
   }
 
-  return 0;
+  return (int)link_info_fixed_header->link_info_size;
 }
 
 int module_initialize(YR_MODULE* module)
@@ -405,6 +403,7 @@ int module_load(
   char* hotkey_str;
   const uint8_t* current_location;
   unsigned int id_list_size;
+  unsigned int link_info_size;
 
   block = first_memory_block(context);
   block_data = block->fetch_data(block);
@@ -486,9 +485,14 @@ int module_load(
       }
 
       if (lnk_header->link_flags & HasLinkInfo) {
-        parse_link_info(current_location, module_object);
+        link_info_size = parse_link_info(current_location, module_object);
 
-        //printf("%ld\n", block_data_size_remaining);
+        if (id_list_size == 0) {
+          return ERROR_SUCCESS;
+        }
+
+        current_location += link_info_size;
+        block_data_size_remaining -= link_info_size;
       }
     }
   }
