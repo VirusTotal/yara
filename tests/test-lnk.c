@@ -116,7 +116,7 @@ int main(int argc, char** argv)
       "import \"lnk\" \
       rule link_info_size { \
         condition: \
-          lnk.link_info_size == 0x3C \
+          lnk.link_info.size == 0x3C \
       }",
       "tests/data/standard-lnk");
 
@@ -124,7 +124,7 @@ int main(int argc, char** argv)
       "import \"lnk\" \
       rule link_info_header_size { \
         condition: \
-          lnk.link_info_header_size == 0x1C \
+          lnk.link_info.header_size == 0x1C \
       }",
       "tests/data/standard-lnk");
 
@@ -132,7 +132,7 @@ int main(int argc, char** argv)
       "import \"lnk\" \
       rule link_info_flags { \
         condition: \
-          lnk.link_info_flags == 0x01 \
+          lnk.link_info.flags == 0x01 \
       }",
       "tests/data/standard-lnk");
 
@@ -140,7 +140,7 @@ int main(int argc, char** argv)
       "import \"lnk\" \
       rule volume_id_offset { \
         condition: \
-          lnk.volume_id_offset == 0x1C \
+          lnk.link_info.volume_id_offset == 0x1C \
       }",
       "tests/data/standard-lnk");
 
@@ -148,7 +148,7 @@ int main(int argc, char** argv)
       "import \"lnk\" \
       rule local_base_path_offset { \
         condition: \
-          lnk.local_base_path_offset == 0x2D \
+          lnk.link_info.local_base_path_offset == 0x2D \
       }",
       "tests/data/standard-lnk");
 
@@ -156,7 +156,7 @@ int main(int argc, char** argv)
       "import \"lnk\" \
       rule common_network_relative_link_offset { \
         condition: \
-          lnk.common_network_relative_link_offset == 0 \
+          lnk.link_info.common_network_relative_link_offset == 0 \
       }",
       "tests/data/standard-lnk");
 
@@ -164,7 +164,7 @@ int main(int argc, char** argv)
       "import \"lnk\" \
       rule common_path_suffix_offset { \
         condition: \
-          lnk.common_path_suffix_offset == 0x3B \
+          lnk.link_info.common_path_suffix_offset == 0x3B \
       }",
       "tests/data/standard-lnk");
 
@@ -172,7 +172,7 @@ int main(int argc, char** argv)
       "import \"lnk\" \
       rule volume_id_size { \
         condition: \
-          lnk.volume_id_size == 17 \
+          lnk.link_info.volume_id.size == 17 \
       }",
       "tests/data/standard-lnk");
 
@@ -180,7 +180,7 @@ int main(int argc, char** argv)
       "import \"lnk\" \
       rule drive_type { \
         condition: \
-          lnk.drive_type & lnk.DRIVE_FIXED \
+          lnk.link_info.volume_id.drive_type & lnk.DRIVE_FIXED \
       }",
       "tests/data/standard-lnk");
 
@@ -188,7 +188,7 @@ int main(int argc, char** argv)
       "import \"lnk\" \
       rule drive_serial_number { \
         condition: \
-          lnk.drive_serial_number == 0x307A8A81 \
+          lnk.link_info.volume_id.drive_serial_number == 0x307A8A81 \
       }",
       "tests/data/standard-lnk");
 
@@ -196,7 +196,7 @@ int main(int argc, char** argv)
       "import \"lnk\" \
       rule volume_label_offset { \
         condition: \
-          lnk.volume_label_offset == 0x10 \
+          lnk.link_info.volume_id.volume_label_offset == 0x10 \
       }",
       "tests/data/standard-lnk");
 
@@ -204,7 +204,7 @@ int main(int argc, char** argv)
       "import \"lnk\" \
       rule volume_id_data { \
         condition: \
-          lnk.volume_id_data == \"\\x00\" \
+          lnk.link_info.volume_id.data == \"\\x00\" \
       }",
       "tests/data/standard-lnk");
 
@@ -212,7 +212,7 @@ int main(int argc, char** argv)
       "import \"lnk\" \
       rule local_base_path { \
         condition: \
-          lnk.local_base_path == \"C:\\\\test\\\\a.txt\" \
+          lnk.link_info.local_base_path == \"C:\\\\test\\\\a.txt\" \
       }",
       "tests/data/standard-lnk");
 
@@ -220,7 +220,7 @@ int main(int argc, char** argv)
       "import \"lnk\" \
       rule common_path_suffix { \
         condition: \
-          lnk.common_path_suffix == \"\\x00\" \
+          lnk.link_info.common_path_suffix == \"\\x00\" \
       }",
       "tests/data/standard-lnk");
 
@@ -284,7 +284,7 @@ int main(int argc, char** argv)
       "import \"lnk\" \
       rule net_name { \
         condition: \
-          lnk.net_name == \"\\\\\\\\localhost\\\\c$\\\\Users\\\\yarac\\\\Documents\\\\testing\" \
+          lnk.link_info.common_network_relative_link.net_name == \"\\\\\\\\localhost\\\\c$\\\\Users\\\\yarac\\\\Documents\\\\testing\" \
       }",
       "tests/data/network-lnk");
 
@@ -292,7 +292,7 @@ int main(int argc, char** argv)
       "import \"lnk\" \
       rule device_name { \
         condition: \
-          lnk.device_name == \"Z:\" \
+          lnk.link_info.common_network_relative_link.device_name == \"Z:\" \
       }",
       "tests/data/network-lnk");
 

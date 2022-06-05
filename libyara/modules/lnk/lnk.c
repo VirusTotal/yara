@@ -132,36 +132,46 @@ begin_declarations
   declare_integer("number_of_item_ids");
   declare_integer("item_id_list_size");
 
-  declare_integer("link_info_size");
-  declare_integer("link_info_header_size");
-  declare_integer("link_info_flags");
-  declare_integer("volume_id_offset");
-  declare_integer("local_base_path_offset");
-  declare_integer("common_network_relative_link_offset");
-  declare_integer("common_path_suffix_offset");
-  declare_integer("local_base_path_offset_unicode");
-  declare_integer("common_path_suffix_offset_unicode");
-  declare_integer("volume_id_size");
-  declare_integer("drive_type");
-  declare_integer("drive_serial_number");
-  declare_integer("volume_label_offset");
-  declare_integer("volume_label_offset_unicode");
-  declare_string("volume_id_data");
-  declare_string("local_base_path");
-  declare_string("common_path_suffix");
-  declare_string("local_base_path_unicode");
-  declare_string("common_path_suffix_unicode");
-  declare_integer("common_network_relative_link_size");
-  declare_integer("common_network_relative_link_flags");
-  declare_integer("net_name_offset");
-  declare_integer("device_name_offset");
-  declare_integer("network_provider_type");
-  declare_integer("net_name_offset_unicode");
-  declare_integer("device_name_offset_unicode");
-  declare_string("net_name");
-  declare_string("device_name");
-  declare_string("net_name_unicode");
-  declare_string("device_name_unicode");
+  begin_struct("link_info");
+    declare_integer("size");
+    declare_integer("header_size");
+    declare_integer("flags");
+    declare_integer("volume_id_offset");
+    declare_integer("local_base_path_offset");
+    declare_integer("common_network_relative_link_offset");
+    declare_integer("common_path_suffix_offset");
+    declare_integer("local_base_path_offset_unicode");
+    declare_integer("common_path_suffix_offset_unicode");
+
+    begin_struct("volume_id");
+      declare_integer("size");
+      declare_integer("drive_type");
+      declare_integer("drive_serial_number");
+      declare_integer("volume_label_offset");
+      declare_integer("volume_label_offset_unicode");
+      declare_string("data");
+    end_struct("volume_id");
+
+    declare_string("local_base_path");
+
+    begin_struct("common_network_relative_link");
+      declare_integer("common_network_relative_link_size");
+      declare_integer("common_network_relative_link_flags");
+      declare_integer("net_name_offset");
+      declare_integer("device_name_offset");
+      declare_integer("network_provider_type");
+      declare_integer("net_name_offset_unicode");
+      declare_integer("device_name_offset_unicode");
+      declare_string("net_name");
+      declare_string("device_name");
+      declare_string("net_name_unicode");
+      declare_string("device_name_unicode");
+    end_struct("common_network_relative_link");
+
+    declare_string("common_path_suffix");
+    declare_string("local_base_path_unicode");
+    declare_string("common_path_suffix_unicode");
+  end_struct("link_info");
 
   declare_string("name_string");
   declare_string("relative_path");
@@ -286,11 +296,11 @@ unsigned int parse_common_network_relative_link(const uint8_t * common_network_r
 
   memcpy(&common_network_relative_link, (common_network_relative_link_t*)common_network_relative_link_ptr, sizeof(common_network_relative_link_t));
   
-  set_integer(common_network_relative_link.common_network_relative_link_size, module_object, "common_network_relative_link_size");
-  set_integer(common_network_relative_link.common_network_relative_link_flags, module_object, "common_network_relative_link_flags");
-  set_integer(common_network_relative_link.net_name_offset, module_object, "net_name_offset");
-  set_integer(common_network_relative_link.device_name_offset, module_object, "device_name_offset");
-  set_integer(common_network_relative_link.network_provider_type, module_object, "network_provider_type");
+  set_integer(common_network_relative_link.common_network_relative_link_size, module_object, "link_info.common_network_relative_link.size");
+  set_integer(common_network_relative_link.common_network_relative_link_flags, module_object, "link_info.common_network_relative_link.flags");
+  set_integer(common_network_relative_link.net_name_offset, module_object, "link_info.common_network_relative_link.net_name_offset");
+  set_integer(common_network_relative_link.device_name_offset, module_object, "link_info.common_network_relative_link.device_name_offset");
+  set_integer(common_network_relative_link.network_provider_type, module_object, "link_info.common_network_relative_link.network_provider_type");
 
   common_network_relative_link_ptr += sizeof(common_network_relative_link_t);
   block_data_size_remaining -= sizeof(common_network_relative_link_t);
@@ -302,7 +312,7 @@ unsigned int parse_common_network_relative_link(const uint8_t * common_network_r
     }
 
     memcpy(&net_name_offset_unicode, common_network_relative_link_ptr, sizeof(net_name_offset_unicode));
-    set_integer(net_name_offset_unicode, module_object, "net_name_offset_unicode");
+    set_integer(net_name_offset_unicode, module_object, "link_info.common_network_relative_link.net_name_offset_unicode");
     common_network_relative_link_ptr += sizeof(net_name_offset_unicode);
     block_data_size_remaining -= sizeof(net_name_offset_unicode);
 
@@ -311,7 +321,7 @@ unsigned int parse_common_network_relative_link(const uint8_t * common_network_r
     }
 
     memcpy(&device_name_offset_unicode, common_network_relative_link_ptr, sizeof(device_name_offset_unicode));
-    set_integer(device_name_offset_unicode, module_object, "device_name_offset_unicode");
+    set_integer(device_name_offset_unicode, module_object, "link_info.common_network_relative_link.device_name_offset_unicode");
     common_network_relative_link_ptr += sizeof(device_name_offset_unicode);
     block_data_size_remaining -= sizeof(device_name_offset_unicode);
 
@@ -324,7 +334,7 @@ unsigned int parse_common_network_relative_link(const uint8_t * common_network_r
 
     memcpy(&net_name_unicode, common_network_relative_link_ptr, net_name_unicode_len*2);
 
-    set_sized_string((char*)net_name_unicode, net_name_unicode_len, module_object, "net_name_unicode");
+    set_sized_string((char*)net_name_unicode, net_name_unicode_len, module_object, "link_info.common_network_relative_link.net_name_unicode");
 
     // Add 1 to deal with null terminator
     common_network_relative_link_ptr += (net_name_unicode_len * 2) + 1;
@@ -338,7 +348,7 @@ unsigned int parse_common_network_relative_link(const uint8_t * common_network_r
     
     memcpy(&device_name_unicode, common_network_relative_link_ptr, device_name_unicode_len*2);
 
-    set_sized_string((char*)device_name_unicode, device_name_unicode_len, module_object, "device_name_unicode");
+    set_sized_string((char*)device_name_unicode, device_name_unicode_len, module_object, "link_info.common_network_relative_link.device_name_unicode");
 
     // Add 1 to deal with null terminator
     common_network_relative_link_ptr += (device_name_unicode_len * 2) + 1;
@@ -355,7 +365,7 @@ unsigned int parse_common_network_relative_link(const uint8_t * common_network_r
 
     memcpy(&net_name, common_network_relative_link_ptr, net_name_len);
 
-    set_sized_string(net_name, net_name_len, module_object, "net_name");
+    set_sized_string(net_name, net_name_len, module_object, "link_info.common_network_relative_link.net_name");
 
     // Add 1 to deal with null terminator
     common_network_relative_link_ptr += net_name_len + 1;
@@ -369,7 +379,7 @@ unsigned int parse_common_network_relative_link(const uint8_t * common_network_r
     
     memcpy(&device_name, common_network_relative_link_ptr, device_name_len);
 
-    set_sized_string(device_name, device_name_len, module_object, "device_name");
+    set_sized_string(device_name, device_name_len, module_object, "link_info.common_network_relative_link.device_name");
 
     // Add 1 to deal with null terminator
     common_network_relative_link_ptr += device_name_len + 1;
@@ -403,13 +413,13 @@ unsigned int parse_link_info(const uint8_t * link_info_ptr, YR_OBJECT* module_ob
   }
   link_info_fixed_header = (link_info_fixed_header_t*) link_info_ptr;
 
-  set_integer(link_info_fixed_header->link_info_size, module_object, "link_info_size");
-  set_integer(link_info_fixed_header->link_info_header_size, module_object, "link_info_header_size");
-  set_integer(link_info_fixed_header->link_info_flags, module_object, "link_info_flags");
-  set_integer(link_info_fixed_header->volume_id_offset, module_object, "volume_id_offset");
-  set_integer(link_info_fixed_header->local_base_path_offset, module_object, "local_base_path_offset");
-  set_integer(link_info_fixed_header->common_network_relative_link_offset, module_object, "common_network_relative_link_offset");
-  set_integer(link_info_fixed_header->common_path_suffix_offset, module_object, "common_path_suffix_offset");
+  set_integer(link_info_fixed_header->link_info_size, module_object, "link_info.size");
+  set_integer(link_info_fixed_header->link_info_header_size, module_object, "link_info.header_size");
+  set_integer(link_info_fixed_header->link_info_flags, module_object, "link_info.flags");
+  set_integer(link_info_fixed_header->volume_id_offset, module_object, "link_info.volume_id_offset");
+  set_integer(link_info_fixed_header->local_base_path_offset, module_object, "link_info.local_base_path_offset");
+  set_integer(link_info_fixed_header->common_network_relative_link_offset, module_object, "link_info.common_network_relative_link_offset");
+  set_integer(link_info_fixed_header->common_path_suffix_offset, module_object, "link_info.common_path_suffix_offset");
 
   link_info_ptr += sizeof(link_info_fixed_header_t);
   block_data_size_remaining -= sizeof(link_info_fixed_header_t);
@@ -422,7 +432,7 @@ unsigned int parse_link_info(const uint8_t * link_info_ptr, YR_OBJECT* module_ob
     }
 
     memcpy(&local_base_path_offset_unicode, link_info_ptr, sizeof(local_base_path_offset_unicode));
-    set_integer(local_base_path_offset_unicode, module_object, "local_base_path_offset_unicode");
+    set_integer(local_base_path_offset_unicode, module_object, "link_info.local_base_path_offset_unicode");
     link_info_ptr += sizeof(local_base_path_offset_unicode);
     block_data_size_remaining -= sizeof(local_base_path_offset_unicode);
   }
@@ -434,7 +444,7 @@ unsigned int parse_link_info(const uint8_t * link_info_ptr, YR_OBJECT* module_ob
     }
 
     memcpy(&common_path_suffix_offset_unicode, link_info_ptr, sizeof(common_path_suffix_offset_unicode));
-    set_integer(common_path_suffix_offset_unicode, module_object, "common_path_suffix_offset_unicode");
+    set_integer(common_path_suffix_offset_unicode, module_object, "link_info.common_path_suffix_offset_unicode");
     link_info_ptr += sizeof(common_path_suffix_offset_unicode);
     block_data_size_remaining -= sizeof(common_path_suffix_offset_unicode);
   }
@@ -447,10 +457,10 @@ unsigned int parse_link_info(const uint8_t * link_info_ptr, YR_OBJECT* module_ob
 
     memcpy(&volume_id, (volume_id_t*)link_info_ptr, sizeof(volume_id_t));
 
-    set_integer(volume_id.volume_id_size, module_object, "volume_id_size");
-    set_integer(volume_id.drive_type, module_object, "drive_type");
-    set_integer(volume_id.drive_serial_number, module_object, "drive_serial_number");
-    set_integer(volume_id.volume_label_offset, module_object, "volume_label_offset");
+    set_integer(volume_id.volume_id_size, module_object, "link_info.volume_id.size");
+    set_integer(volume_id.drive_type, module_object, "link_info.volume_id.drive_type");
+    set_integer(volume_id.drive_serial_number, module_object, "link_info.volume_id.drive_serial_number");
+    set_integer(volume_id.volume_label_offset, module_object, "link_info.volume_id.volume_label_offset");
 
     // To work out the size of the data, we need to subtract the size of
     // the whole structure from the VolumeIDSize. However, this structure 
@@ -467,7 +477,7 @@ unsigned int parse_link_info(const uint8_t * link_info_ptr, YR_OBJECT* module_ob
       }
 
       memcpy(&volume_label_offset_unicode, link_info_ptr, sizeof(volume_label_offset_unicode));
-      set_integer(volume_label_offset_unicode, module_object, "volume_label_offset_unicode");
+      set_integer(volume_label_offset_unicode, module_object, "link_info.volume_id.volume_label_offset_unicode");
       link_info_ptr += sizeof(volume_label_offset_unicode);
       block_data_size_remaining -= sizeof(volume_label_offset_unicode);
 
@@ -480,7 +490,7 @@ unsigned int parse_link_info(const uint8_t * link_info_ptr, YR_OBJECT* module_ob
     }
 
     memcpy(volume_id_data, link_info_ptr, size_of_data);
-    set_sized_string(volume_id_data, size_of_data, module_object, "volume_id_data");
+    set_sized_string(volume_id_data, size_of_data, module_object, "link_info.volume_id.data");
 
     link_info_ptr += size_of_data;
     block_data_size_remaining -= size_of_data;
@@ -496,7 +506,7 @@ unsigned int parse_link_info(const uint8_t * link_info_ptr, YR_OBJECT* module_ob
     }
 
     memcpy(&local_base_path, link_info_ptr, local_base_path_len);
-    set_sized_string(local_base_path, local_base_path_len, module_object, "local_base_path");
+    set_sized_string(local_base_path, local_base_path_len, module_object, "link_info.local_base_path");
 
     // Add 1 to deal with null terminator
     link_info_ptr += local_base_path_len + 1;
@@ -519,7 +529,7 @@ unsigned int parse_link_info(const uint8_t * link_info_ptr, YR_OBJECT* module_ob
 
     // Have to deal with this possibly being an empty string
     if (memcmp(link_info_ptr, "\x00", 1) == 0) {
-      set_sized_string("\x00", 1, module_object, "common_path_suffix");
+      set_sized_string("\x00", 1, module_object, "link_info.common_path_suffix");
       link_info_ptr += 1;
       block_data_size_remaining -= 1;
     }
@@ -533,7 +543,7 @@ unsigned int parse_link_info(const uint8_t * link_info_ptr, YR_OBJECT* module_ob
 
       memcpy(&common_path_suffix, link_info_ptr, common_path_suffix_len);
 
-      set_sized_string(common_path_suffix, common_path_suffix_len, module_object, "common_path_suffix");
+      set_sized_string(common_path_suffix, common_path_suffix_len, module_object, "link_info.common_path_suffix");
 
       // Add 1 to deal with null terminator
       link_info_ptr += common_path_suffix_len + 1;
@@ -552,7 +562,7 @@ unsigned int parse_link_info(const uint8_t * link_info_ptr, YR_OBJECT* module_ob
     
     memcpy(&local_base_path_unicode, link_info_ptr, local_base_path_unicode_len*2);
 
-    set_sized_string((char*)local_base_path_unicode, local_base_path_unicode_len, module_object, "local_base_path_unicode");
+    set_sized_string((char*)local_base_path_unicode, local_base_path_unicode_len, module_object, "link_info.local_base_path_unicode");
 
     // Add 1 to deal with null terminator
     link_info_ptr += (local_base_path_unicode_len * 2) + 1;
@@ -567,7 +577,7 @@ unsigned int parse_link_info(const uint8_t * link_info_ptr, YR_OBJECT* module_ob
 
     // Have to deal with this possibly being an empty string
     if (memcmp(link_info_ptr, "\x00", 1) == 0) {
-      set_sized_string("\x00", 1, module_object, "common_path_suffix_unicode");
+      set_sized_string("\x00", 1, module_object, "link_info.common_path_suffix_unicode");
       link_info_ptr += 1;
       block_data_size_remaining -= 1;
     }
@@ -581,7 +591,7 @@ unsigned int parse_link_info(const uint8_t * link_info_ptr, YR_OBJECT* module_ob
 
       memcpy(&common_path_suffix_unicode, link_info_ptr, common_path_suffix_unicode_len*2);
   
-      set_sized_string((char*)common_path_suffix_unicode, common_path_suffix_unicode_len, module_object, "common_path_suffix_unicode");
+      set_sized_string((char*)common_path_suffix_unicode, common_path_suffix_unicode_len, module_object, "link_info.common_path_suffix_unicode");
   
       // Add 1 to deal with null terminator
       link_info_ptr += (common_path_suffix_unicode_len * 2) + 1;
