@@ -22,7 +22,7 @@ int main(int argc, char** argv)
         condition: \
           lnk.is_lnk \
       }",
-      "tests/data/standard-lnk");
+      "tests/data/lnk-standard");
 
   assert_true_rule_file(
       "import \"lnk\" \
@@ -30,7 +30,7 @@ int main(int argc, char** argv)
         condition: \
           lnk.creation_time == 1221247637 \
       }",
-      "tests/data/standard-lnk");
+      "tests/data/lnk-standard");
 	  
   assert_true_rule_file(
       "import \"lnk\" \
@@ -38,7 +38,7 @@ int main(int argc, char** argv)
         condition: \
           lnk.link_flags & lnk.HasLinkTargetIDList \
       }",
-      "tests/data/standard-lnk");
+      "tests/data/lnk-standard");
 	  
   assert_true_rule_file(
       "import \"lnk\" \
@@ -46,7 +46,7 @@ int main(int argc, char** argv)
         condition: \
           lnk.link_flags & lnk.HasLinkInfo \
       }",
-      "tests/data/standard-lnk");
+      "tests/data/lnk-standard");
 	  
   assert_false_rule_file(
       "import \"lnk\" \
@@ -54,7 +54,7 @@ int main(int argc, char** argv)
         condition: \
           lnk.link_flags & lnk.HasName \
       }",
-      "tests/data/standard-lnk");
+      "tests/data/lnk-standard");
 	  
   assert_true_rule_file(
       "import \"lnk\" \
@@ -62,7 +62,7 @@ int main(int argc, char** argv)
         condition: \
           lnk.file_attributes_flags & lnk.FILE_ATTRIBUTE_ARCHIVE \
       }",
-      "tests/data/standard-lnk");
+      "tests/data/lnk-standard");
 	  
   assert_false_rule_file(
       "import \"lnk\" \
@@ -70,7 +70,7 @@ int main(int argc, char** argv)
         condition: \
           lnk.file_attributes_flags & lnk.FILE_ATTRIBUTE_READONLY \
       }",
-      "tests/data/standard-lnk");
+      "tests/data/lnk-standard");
 	  
   assert_true_rule_file(
       "import \"lnk\" \
@@ -78,7 +78,7 @@ int main(int argc, char** argv)
         condition: \
           not lnk.has_hotkey and not defined lnk.hotkey \
       }",
-      "tests/data/standard-lnk");
+      "tests/data/lnk-standard");
 
   assert_true_rule_file(
       "import \"lnk\" \
@@ -86,7 +86,7 @@ int main(int argc, char** argv)
         condition: \
           lnk.item_id_list_size == 0xBD \
       }",
-      "tests/data/standard-lnk");
+      "tests/data/lnk-standard");
 
   assert_true_rule_file(
       "import \"lnk\" \
@@ -94,7 +94,7 @@ int main(int argc, char** argv)
         condition: \
           lnk.number_of_item_ids == 4 \
       }",
-      "tests/data/standard-lnk");
+      "tests/data/lnk-standard");
 
   assert_true_rule_file(
       "import \"lnk\" \
@@ -102,7 +102,7 @@ int main(int argc, char** argv)
         condition: \
           lnk.item_id_list[0].size == 0x12 and lnk.item_id_list[0].data == \"\\x1fP\\xe0O\\xd0 \\xea:i\\x10\\xa2\\xd8\\x08\\x00+00\\x9d\" \
       }",
-      "tests/data/standard-lnk");
+      "tests/data/lnk-standard");
 
   assert_true_rule_file(
       "import \"lnk\" \
@@ -110,7 +110,7 @@ int main(int argc, char** argv)
         condition: \
           lnk.item_id_list[3].size == 0x46 and lnk.item_id_list[3].data == \"2\\x00\\x00\\x00\\x00\\x00,9i\\xa3 \\x00a.txt\\x004\\x00\\x07\\x00\\x04\\x00\\xef\\xbe,9i\\xa3,9i\\xa3&\\x00\\x00\\x00-n\\x00\\x00\\x00\\x00\\x96\\x01\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00a\\x00.\\x00t\\x00x\\x00t\\x00\\x00\\x00\\x14\\x00\" \
       }",
-      "tests/data/standard-lnk");
+      "tests/data/lnk-standard");
 
   assert_true_rule_file(
       "import \"lnk\" \
@@ -118,7 +118,7 @@ int main(int argc, char** argv)
         condition: \
           lnk.link_info.size == 0x3C \
       }",
-      "tests/data/standard-lnk");
+      "tests/data/lnk-standard");
 
   assert_true_rule_file(
       "import \"lnk\" \
@@ -126,7 +126,7 @@ int main(int argc, char** argv)
         condition: \
           lnk.link_info.header_size == 0x1C \
       }",
-      "tests/data/standard-lnk");
+      "tests/data/lnk-standard");
 
   assert_true_rule_file(
       "import \"lnk\" \
@@ -134,7 +134,7 @@ int main(int argc, char** argv)
         condition: \
           lnk.link_info.flags == 0x01 \
       }",
-      "tests/data/standard-lnk");
+      "tests/data/lnk-standard");
 
   assert_true_rule_file(
       "import \"lnk\" \
@@ -142,7 +142,7 @@ int main(int argc, char** argv)
         condition: \
           lnk.link_info.volume_id_offset == 0x1C \
       }",
-      "tests/data/standard-lnk");
+      "tests/data/lnk-standard");
 
   assert_true_rule_file(
       "import \"lnk\" \
@@ -150,7 +150,7 @@ int main(int argc, char** argv)
         condition: \
           lnk.link_info.local_base_path_offset == 0x2D \
       }",
-      "tests/data/standard-lnk");
+      "tests/data/lnk-standard");
 
   assert_true_rule_file(
       "import \"lnk\" \
@@ -158,7 +158,7 @@ int main(int argc, char** argv)
         condition: \
           lnk.link_info.common_network_relative_link_offset == 0 \
       }",
-      "tests/data/standard-lnk");
+      "tests/data/lnk-standard");
 
   assert_true_rule_file(
       "import \"lnk\" \
@@ -166,7 +166,7 @@ int main(int argc, char** argv)
         condition: \
           lnk.link_info.common_path_suffix_offset == 0x3B \
       }",
-      "tests/data/standard-lnk");
+      "tests/data/lnk-standard");
 
   assert_true_rule_file(
       "import \"lnk\" \
@@ -174,7 +174,7 @@ int main(int argc, char** argv)
         condition: \
           lnk.link_info.volume_id.size == 17 \
       }",
-      "tests/data/standard-lnk");
+      "tests/data/lnk-standard");
 
   assert_true_rule_file(
       "import \"lnk\" \
@@ -182,7 +182,7 @@ int main(int argc, char** argv)
         condition: \
           lnk.link_info.volume_id.drive_type & lnk.DRIVE_FIXED \
       }",
-      "tests/data/standard-lnk");
+      "tests/data/lnk-standard");
 
   assert_true_rule_file(
       "import \"lnk\" \
@@ -190,7 +190,7 @@ int main(int argc, char** argv)
         condition: \
           lnk.link_info.volume_id.drive_serial_number == 0x307A8A81 \
       }",
-      "tests/data/standard-lnk");
+      "tests/data/lnk-standard");
 
   assert_true_rule_file(
       "import \"lnk\" \
@@ -198,7 +198,7 @@ int main(int argc, char** argv)
         condition: \
           lnk.link_info.volume_id.volume_label_offset == 0x10 \
       }",
-      "tests/data/standard-lnk");
+      "tests/data/lnk-standard");
 
   assert_true_rule_file(
       "import \"lnk\" \
@@ -206,7 +206,7 @@ int main(int argc, char** argv)
         condition: \
           lnk.link_info.volume_id.data == \"\\x00\" \
       }",
-      "tests/data/standard-lnk");
+      "tests/data/lnk-standard");
 
   assert_true_rule_file(
       "import \"lnk\" \
@@ -214,7 +214,7 @@ int main(int argc, char** argv)
         condition: \
           lnk.link_info.local_base_path == \"C:\\\\test\\\\a.txt\" \
       }",
-      "tests/data/standard-lnk");
+      "tests/data/lnk-standard");
 
   assert_true_rule_file(
       "import \"lnk\" \
@@ -222,7 +222,7 @@ int main(int argc, char** argv)
         condition: \
           lnk.link_info.common_path_suffix == \"\\x00\" \
       }",
-      "tests/data/standard-lnk");
+      "tests/data/lnk-standard");
 
   assert_true_rule_file(
       "import \"lnk\" \
@@ -230,7 +230,7 @@ int main(int argc, char** argv)
         condition: \
           lnk.relative_path == \".\\x00\\\\\\x00a\\x00.\\x00t\\x00x\\x00t\\x00\" \
       }",
-      "tests/data/standard-lnk");
+      "tests/data/lnk-standard");
 
   assert_true_rule_file(
       "import \"lnk\" \
@@ -238,7 +238,7 @@ int main(int argc, char** argv)
         condition: \
           lnk.working_dir == \"C\\x00:\\x00\\\\\\x00t\\x00e\\x00s\\x00t\\x00\" \
       }",
-      "tests/data/standard-lnk");
+      "tests/data/lnk-standard");
 
   assert_true_rule_file(
       "import \"lnk\" \
@@ -246,7 +246,7 @@ int main(int argc, char** argv)
         condition: \
           lnk.tracker_data.machine_id == \"chris-xps\" \
       }",
-      "tests/data/standard-lnk");
+      "tests/data/lnk-standard");
 
   assert_true_rule_file(
       "import \"lnk\" \
@@ -254,7 +254,7 @@ int main(int argc, char** argv)
         condition: \
           lnk.tracker_data.droid_volume_identifier == \"\\x40\\x78\\xC7\\x94\\x47\\xFA\\xC7\\x46\\xB3\\x56\\x5C\\x2D\\xC6\\xB6\\xD1\\x15\" \
       }",
-      "tests/data/standard-lnk");
+      "tests/data/lnk-standard");
 
   assert_true_rule_file(
       "import \"lnk\" \
@@ -262,7 +262,7 @@ int main(int argc, char** argv)
         condition: \
           lnk.tracker_data.droid_file_identifier == \"\\xEC\\x46\\xCD\\x7B\\x22\\x7F\\xDD\\x11\\x94\\x99\\x00\\x13\\x72\\x16\\x87\\x4A\" \
       }",
-      "tests/data/standard-lnk");
+      "tests/data/lnk-standard");
 
   assert_true_rule_file(
       "import \"lnk\" \
@@ -270,7 +270,7 @@ int main(int argc, char** argv)
         condition: \
           lnk.tracker_data.droid_birth_volume_identifier == \"\\x40\\x78\\xC7\\x94\\x47\\xFA\\xC7\\x46\\xB3\\x56\\x5C\\x2D\\xC6\\xB6\\xD1\\x15\" \
       }",
-      "tests/data/standard-lnk");
+      "tests/data/lnk-standard");
 
   assert_true_rule_file(
       "import \"lnk\" \
@@ -278,7 +278,7 @@ int main(int argc, char** argv)
         condition: \
           lnk.tracker_data.droid_birth_file_identifier == \"\\xEC\\x46\\xCD\\x7B\\x22\\x7F\\xDD\\x11\\x94\\x99\\x00\\x13\\x72\\x16\\x87\\x4A\" \
       }",
-      "tests/data/standard-lnk");
+      "tests/data/lnk-standard");
 
   assert_true_rule_file(
       "import \"lnk\" \
@@ -286,7 +286,7 @@ int main(int argc, char** argv)
         condition: \
           lnk.link_info.common_network_relative_link.net_name == \"\\\\\\\\localhost\\\\c$\\\\Users\\\\yarac\\\\Documents\\\\testing\" \
       }",
-      "tests/data/network-lnk");
+      "tests/data/lnk-network");
 
   assert_true_rule_file(
       "import \"lnk\" \
@@ -294,7 +294,7 @@ int main(int argc, char** argv)
         condition: \
           lnk.link_info.common_network_relative_link.device_name == \"Z:\" \
       }",
-      "tests/data/network-lnk");
+      "tests/data/lnk-network");
 
   yr_finalize();
 
