@@ -169,6 +169,30 @@ begin_declarations
   declare_string("command_line_arguments");
   declare_string("icon_location");
 
+  begin_struct("console_data");
+    declare_integer("fill_attributes");
+    declare_integer("popup_fill_attributes");
+    declare_integer("screen_buffer_size_x");
+    declare_integer("screen_buffer_size_y");
+    declare_integer("window_size_x");
+    declare_integer("window_size_y");
+    declare_integer("window_origin_x");
+    declare_integer("window_origin_y");
+    declare_integer("font_size");
+    declare_integer("font_family");
+    declare_integer("font_weight");
+    declare_string("face_name");
+    declare_integer("cursor_size");
+    declare_integer("full_screen");
+    declare_integer("quick_edit");
+    declare_integer("insert_mode");
+    declare_integer("auto_position");
+    declare_integer("history_buffer_size");
+    declare_integer("number_of_history_buffers");
+    declare_integer("history_no_dup");
+    declare_integer_array("color_table");
+  end_struct("console_data");
+
   declare_string("machine_id");
   declare_string("droid_volume_identifier");
   declare_string("droid_file_identifier");
@@ -610,6 +634,44 @@ unsigned int parse_string_data(const uint8_t * string_data_ptr, YR_OBJECT* modul
   return (count_characters * 2) + sizeof(count_characters);
 }
 
+unsigned int parse_console_data_block(const uint8_t * extra_block_ptr, YR_OBJECT* module_object, int block_data_size_remaining) {
+  console_data_block_t console_data_block;
+  int i;
+
+  if (block_data_size_remaining < sizeof(console_data_block_t)) {
+    return 0;
+  }
+
+  memcpy(&console_data_block, (console_data_block_t*)extra_block_ptr, sizeof(console_data_block_t));
+
+  set_integer(console_data_block.fill_attributes, module_object, "console_data.fill_attributes");
+  set_integer(console_data_block.popup_fill_attributes, module_object, "console_data.popup_fill_attributes");
+  set_integer(console_data_block.screen_buffer_size_x, module_object, "console_data.screen_buffer_size_x");
+  set_integer(console_data_block.screen_buffer_size_y, module_object, "console_data.screen_buffer_size_y");
+  set_integer(console_data_block.window_size_x, module_object, "console_data.window_size_x");
+  set_integer(console_data_block.window_size_y, module_object, "console_data.window_size_y");
+  set_integer(console_data_block.window_origin_x, module_object, "console_data.window_origin_x");
+  set_integer(console_data_block.window_origin_y, module_object, "console_data.window_origin_y");
+  set_integer(console_data_block.font_size, module_object, "console_data.font_size");
+  set_integer(console_data_block.font_family, module_object, "console_data.font_family");
+  set_integer(console_data_block.font_weight, module_object, "console_data.font_weight");
+  set_sized_string((char *)console_data_block.face_name, sizeof(console_data_block.face_name), module_object, "console_data.face_name");
+  set_integer(console_data_block.cursor_size, module_object, "console_data.cursor_size");
+  set_integer(console_data_block.full_screen, module_object, "console_data.full_screen");
+  set_integer(console_data_block.quick_edit, module_object, "console_data.quick_edit");
+  set_integer(console_data_block.insert_mode, module_object, "console_data.insert_mode");
+  set_integer(console_data_block.auto_position, module_object, "console_data.auto_position");
+  set_integer(console_data_block.history_buffer_size, module_object, "console_data.history_buffer_size");
+  set_integer(console_data_block.number_of_history_buffers, module_object, "console_data.number_of_history_buffers");
+  set_integer(console_data_block.history_no_dup, module_object, "console_data.history_no_dup");
+
+  for (i=0; i<16; i++) {
+    set_integer(console_data_block.color_table[i], module_object, "console_data.color_table[%i]", i);
+  }
+
+  return 1;
+}
+
 unsigned int parse_tracker_data_block(const uint8_t * extra_block_ptr, YR_OBJECT* module_object, int block_data_size_remaining) {
   tracker_data_block_t tracker_data_block;
 
@@ -634,11 +696,10 @@ unsigned int parse_extra_block(const uint8_t * extra_block_ptr, YR_OBJECT* modul
 
   switch(extra_data_block_signature) {
     case ConsoleDataBlockSignature:
-      //if (extra_data_block_size == ConsoleDataBlockSize && 
-      //    parse_tracker_data_block(extra_block_ptr, module_object, block_data_size_remaining)) {
-      //      return 1;
-      //    }
-      return 1;
+      if (extra_data_block_size == ConsoleDataBlockSize && 
+          parse_console_data_block(extra_block_ptr, module_object, block_data_size_remaining)) {
+            return 1;
+          }
       break;
 
     case ConsoleFEDataBlockSignature:
