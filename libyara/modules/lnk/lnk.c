@@ -610,8 +610,12 @@ unsigned int parse_string_data(const uint8_t * string_data_ptr, YR_OBJECT* modul
   return (count_characters * 2) + sizeof(count_characters);
 }
 
-void parse_tracker_data_block(const uint8_t * extra_block_ptr, YR_OBJECT* module_object) {
+unsigned int parse_tracker_data_block(const uint8_t * extra_block_ptr, YR_OBJECT* module_object, int block_data_size_remaining) {
   tracker_data_block_t tracker_data_block;
+
+  if (block_data_size_remaining < sizeof(tracker_data_block_t)) {
+    return 0;
+  }
 
   memcpy(&tracker_data_block, (tracker_data_block_t*)extra_block_ptr, sizeof(tracker_data_block_t));
 
@@ -620,20 +624,27 @@ void parse_tracker_data_block(const uint8_t * extra_block_ptr, YR_OBJECT* module
   set_sized_string((char *)tracker_data_block.droid_file_identifier, sizeof(tracker_data_block.droid_file_identifier), module_object, "droid_file_identifier");
   set_sized_string((char *)tracker_data_block.droid_birth_volume_identifier, sizeof(tracker_data_block.droid_birth_volume_identifier), module_object, "droid_birth_volume_identifier");
   set_sized_string((char *)tracker_data_block.droid_birth_file_identifier, sizeof(tracker_data_block.droid_birth_file_identifier), module_object, "droid_birth_file_identifier");
+
+  return 1;
 }
 
-unsigned int parse_extra_block(const uint8_t * extra_block_ptr, YR_OBJECT* module_object, uint32_t extra_data_block_size, uint32_t extra_data_block_signature) {
+unsigned int parse_extra_block(const uint8_t * extra_block_ptr, YR_OBJECT* module_object, int block_data_size_remaining, uint32_t extra_data_block_size, uint32_t extra_data_block_signature) {
   // Ignore PropertyStore for now
   // Docs: https://winprotocoldoc.blob.core.windows.net/productionwindowsarchives/MS-PROPSTORE/%5bMS-PROPSTORE%5d.pdf
   
-  if (extra_data_block_size == TrackerDataBlockSize && extra_data_block_signature == TrackerDataBlockSignature) {
-    parse_tracker_data_block(extra_block_ptr, module_object);
-    return 1;
+  switch(extra_data_block_signature) {
+    case TrackerDataBlockSignature:
+      if (extra_data_block_size == TrackerDataBlockSize && 
+          parse_tracker_data_block(extra_block_ptr, module_object, block_data_size_remaining)) {
+            return 1;
+          }
+      break;
+
+    default:
+      return 0;
   }
 
-  else {
-    return 0;
-  }
+  return 0;
 }
 
 int module_initialize(YR_MODULE* module)
@@ -941,6 +952,7 @@ int module_load(
 
         if (!parse_extra_block(current_location, 
              module_object, 
+             block_data_size_remaining,
              extra_data_block_size, 
              extra_data_block_signature)
         ) {
