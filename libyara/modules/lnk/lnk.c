@@ -131,7 +131,7 @@ begin_declarations
   declare_string("droid_birth_file_identifier");
 end_declarations
 
-unsigned int parse_link_target_id_list(const uint8_t * link_target_id_list_ptr, YR_OBJECT* module_object, size_t block_data_size_remaining) {
+unsigned int parse_link_target_id_list(const uint8_t * link_target_id_list_ptr, YR_OBJECT* module_object, int block_data_size_remaining) {
   uint16_t id_list_size;
   const uint8_t* id_list_ptr;
   unsigned int num_item_ids = 0;
@@ -187,7 +187,7 @@ unsigned int parse_link_target_id_list(const uint8_t * link_target_id_list_ptr, 
   return id_list_size + 2;
 }
 
-unsigned int parse_common_network_relative_link(const uint8_t * common_network_relative_link_ptr, YR_OBJECT* module_object, size_t block_data_size_remaining) {
+unsigned int parse_common_network_relative_link(const uint8_t * common_network_relative_link_ptr, YR_OBJECT* module_object, int block_data_size_remaining) {
   common_network_relative_link_t common_network_relative_link;
   uint32_t net_name_offset_unicode=0;
   uint32_t device_name_offset_unicode=0;
@@ -299,7 +299,7 @@ unsigned int parse_common_network_relative_link(const uint8_t * common_network_r
   return common_network_relative_link.common_network_relative_link_size;
 }
 
-unsigned int parse_link_info(const uint8_t * link_info_ptr, YR_OBJECT* module_object, size_t block_data_size_remaining) {
+unsigned int parse_link_info(const uint8_t * link_info_ptr, YR_OBJECT* module_object, int block_data_size_remaining) {
   
   link_info_fixed_header_t* link_info_fixed_header;
   uint32_t local_base_path_offset_unicode=0;
@@ -512,7 +512,7 @@ unsigned int parse_link_info(const uint8_t * link_info_ptr, YR_OBJECT* module_ob
   return (int)link_info_fixed_header->link_info_size;
 }
 
-unsigned int parse_string_data(const uint8_t * string_data_ptr, YR_OBJECT* module_object, const char* name) {
+unsigned int parse_string_data(const uint8_t * string_data_ptr, YR_OBJECT* module_object, int block_data_size_remaining, const char* name) {
   uint16_t count_characters;
 
   // For the sake of this module we will assume the StringData is unicode. Technically,
@@ -521,8 +521,17 @@ unsigned int parse_string_data(const uint8_t * string_data_ptr, YR_OBJECT* modul
   // Frustratingly, the CountCharacters value doesn't return the absolute size of the
   // data, but rather that number of characters, so we'd have to "guess" either way.
 
+  if (block_data_size_remaining < sizeof(count_characters)) {
+    return 0;
+  }
+
   memcpy(&count_characters, string_data_ptr, sizeof(count_characters));
   string_data_ptr += sizeof(count_characters);
+  block_data_size_remaining -= sizeof(count_characters);
+
+  if (block_data_size_remaining < count_characters * 2) {
+    return 0;
+  }
 
   // Do these extra comparisons due to "format not a string literal and no format arguments" 
   // error on compilation
@@ -656,7 +665,7 @@ int module_load(
   set_integer(DRIVE_RAMDISK, module_object, "DRIVE_RAMDISK");
 
   const uint8_t* block_data;
-  size_t block_data_size_remaining;
+  int block_data_size_remaining;
   char* hotkey_str;
   const uint8_t* current_location;
   unsigned int id_list_size;
@@ -670,8 +679,7 @@ int module_load(
 
   // Keep track the amount of space in the current block we have left
   // to prevent any issues when dereferencing pointers
-  // TODO: Make this an int value so it can have a negative value
-  block_data_size_remaining = block->size;
+  block_data_size_remaining = (int)block->size;
 
   // Don't try to parse a file unless it is the minimum size an LNK can be
   // based on fixed length headers it has (described in shell_link_header_t)
@@ -758,7 +766,7 @@ int module_load(
 
       // NAME_STRING
       if (lnk_header->link_flags & HasName) {
-        string_data_size = parse_string_data(current_location, module_object, "name_string");
+        string_data_size = parse_string_data(current_location, module_object, block_data_size_remaining, "name_string");
 
         if (string_data_size == 0) {
           return ERROR_SUCCESS;
@@ -770,7 +778,7 @@ int module_load(
 
       // RELATIVE_PATH
       if (lnk_header->link_flags & HasRelativePath) {
-        string_data_size = parse_string_data(current_location, module_object, "relative_path");
+        string_data_size = parse_string_data(current_location, module_object, block_data_size_remaining, "relative_path");
 
         if (string_data_size == 0) {
           return ERROR_SUCCESS;
@@ -782,7 +790,7 @@ int module_load(
 
       // WORKING_DIR
       if (lnk_header->link_flags & HasWorkingDir) {
-        string_data_size = parse_string_data(current_location, module_object, "working_dir");
+        string_data_size = parse_string_data(current_location, module_object, block_data_size_remaining, "working_dir");
 
         if (string_data_size == 0) {
           return ERROR_SUCCESS;
@@ -794,7 +802,7 @@ int module_load(
 
       // COMMAND_LINK_ARGUMENTS
       if (lnk_header->link_flags & HasArguments) {
-        string_data_size = parse_string_data(current_location, module_object, "command_line_arguments");
+        string_data_size = parse_string_data(current_location, module_object, block_data_size_remaining, "command_line_arguments");
 
         if (string_data_size == 0) {
           return ERROR_SUCCESS;
@@ -806,7 +814,7 @@ int module_load(
 
       // ICON_LOCATION
       if (lnk_header->link_flags & HasIconLocation) {
-        string_data_size = parse_string_data(current_location, module_object, "icon_location");
+        string_data_size = parse_string_data(current_location, module_object, block_data_size_remaining, "icon_location");
 
         if (string_data_size == 0) {
           return ERROR_SUCCESS;
