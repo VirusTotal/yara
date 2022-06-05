@@ -631,13 +631,93 @@ unsigned int parse_tracker_data_block(const uint8_t * extra_block_ptr, YR_OBJECT
 unsigned int parse_extra_block(const uint8_t * extra_block_ptr, YR_OBJECT* module_object, int block_data_size_remaining, uint32_t extra_data_block_size, uint32_t extra_data_block_signature) {
   // Ignore PropertyStore for now
   // Docs: https://winprotocoldoc.blob.core.windows.net/productionwindowsarchives/MS-PROPSTORE/%5bMS-PROPSTORE%5d.pdf
-  
+
   switch(extra_data_block_signature) {
+    case ConsoleDataBlockSignature:
+      //if (extra_data_block_size == ConsoleDataBlockSize && 
+      //    parse_tracker_data_block(extra_block_ptr, module_object, block_data_size_remaining)) {
+      //      return 1;
+      //    }
+      return 1;
+      break;
+
+    case ConsoleFEDataBlockSignature:
+      //if (extra_data_block_size == ConsoleFEDataBlockSize && 
+      //    parse_tracker_data_block(extra_block_ptr, module_object, block_data_size_remaining)) {
+      //      return 1;
+      //    }
+      return 1;
+      break;
+
+    case DarwinDataBlockSignature:
+      //if (extra_data_block_size == DarwinDataBlockSize && 
+      //    parse_tracker_data_block(extra_block_ptr, module_object, block_data_size_remaining)) {
+      //      return 1;
+      //    }
+      return 1;
+      break;
+
+    case EnvironmentVariableDataBlockSignature:
+      //if (extra_data_block_size == EnvironmentVariableDataBlockSize && 
+      //    parse_tracker_data_block(extra_block_ptr, module_object, block_data_size_remaining)) {
+      //      return 1;
+      //    }
+      return 1;
+      break;
+
+    case IconEnvironmentDataBlockSignature:
+      //if (extra_data_block_size == IconEnvironmentDataBlockSize && 
+      //    parse_tracker_data_block(extra_block_ptr, module_object, block_data_size_remaining)) {
+      //      return 1;
+      //    }
+      return 1;
+      break;
+
+    case KnownFolderDataBlockSignature:
+      //if (extra_data_block_size == KnownFolderDataBlockSize && 
+      //    parse_tracker_data_block(extra_block_ptr, module_object, block_data_size_remaining)) {
+      //      return 1;
+      //    }
+      return 1;
+      break;
+
+    case PropertyStoreDataBlockSignature:
+      //if (extra_data_block_size >= PropertyStoreDataBlockMinSize && 
+      //    parse_tracker_data_block(extra_block_ptr, module_object, block_data_size_remaining)) {
+      //      return 1;
+      //    }
+      return 1;
+      break;
+
+    case ShimDataBlockSignature:
+      //if (extra_data_block_size >= ShimDataBlockMinSize && 
+      //    parse_tracker_data_block(extra_block_ptr, module_object, block_data_size_remaining)) {
+      //      return 1;
+      //    }
+      return 1;
+      break;
+
+    case SpecialFolderDataBlockSignature:
+      //if (extra_data_block_size == SpecialFolderDataBlockSize && 
+      //    parse_tracker_data_block(extra_block_ptr, module_object, block_data_size_remaining)) {
+      //      return 1;
+      //    }
+      return 1;
+      break;
+
     case TrackerDataBlockSignature:
       if (extra_data_block_size == TrackerDataBlockSize && 
           parse_tracker_data_block(extra_block_ptr, module_object, block_data_size_remaining)) {
             return 1;
           }
+      break;
+
+    case VistaAndAboveIDListDataBlockSignature:
+      //if (extra_data_block_size >= VistaAndAboveIDListDataBlockMinSize && 
+      //    parse_tracker_data_block(extra_block_ptr, module_object, block_data_size_remaining)) {
+      //      return 1;
+      //    }
+      return 1;
       break;
 
     default:
@@ -959,8 +1039,8 @@ int module_load(
           break;
         }
 
-        current_location += extra_data_block_size;
-        // Don't take away the block size + signature, as those have already been dealt with
+        // Don't add/take away the block size + signature, as those have already been dealt with
+        current_location += extra_data_block_size - sizeof(extra_data_block_size) - sizeof(extra_data_block_signature);
         block_data_size_remaining -= extra_data_block_size - sizeof(extra_data_block_size) - sizeof(extra_data_block_signature);
 
         if (block_data_size_remaining < sizeof(extra_data_block_size)) {
