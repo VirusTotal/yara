@@ -280,6 +280,22 @@ int main(int argc, char** argv)
       }",
       "tests/data/standard-lnk");
 
+  assert_true_rule_file(
+      "import \"lnk\" \
+      rule net_name { \
+        condition: \
+          lnk.net_name == \"\\\\\\\\localhost\\\\c$\\\\Users\\\\yarac\\\\Documents\\\\testing\" \
+      }",
+      "tests/data/network-lnk");
+
+  assert_true_rule_file(
+      "import \"lnk\" \
+      rule device_name { \
+        condition: \
+          lnk.device_name == \"Z:\" \
+      }",
+      "tests/data/network-lnk");
+
   yr_finalize();
 
   YR_DEBUG_FPRINTF(

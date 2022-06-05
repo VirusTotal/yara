@@ -106,6 +106,17 @@ begin_declarations
   declare_string("common_path_suffix");
   declare_string("local_base_path_unicode");
   declare_string("common_path_suffix_unicode");
+  declare_integer("common_network_relative_link_size");
+  declare_integer("common_network_relative_link_flags");
+  declare_integer("net_name_offset");
+  declare_integer("device_name_offset");
+  declare_integer("network_provider_type");
+  declare_integer("net_name_offset_unicode");
+  declare_integer("device_name_offset_unicode");
+  declare_string("net_name");
+  declare_string("device_name");
+  declare_string("net_name_unicode");
+  declare_string("device_name_unicode");
 
   declare_string("name_string");
   declare_string("relative_path");
@@ -176,9 +187,76 @@ unsigned int parse_link_target_id_list(const uint8_t * link_target_id_list_ptr, 
   return id_list_size + 2;
 }
 
-unsigned int parse_common_network_relative_link(const uint8_t * common_network_relative_link_prt, YR_OBJECT* module_object) {
-  // TODO: Implement this function
-  return 0;
+unsigned int parse_common_network_relative_link(const uint8_t * common_network_relative_link_ptr, YR_OBJECT* module_object) {
+  common_network_relative_link_t common_network_relative_link;
+  uint32_t net_name_offset_unicode=0;
+  uint32_t device_name_offset_unicode=0;
+  char net_name[260];
+  char device_name[260];
+  wchar_t net_name_unicode[260];
+  wchar_t device_name_unicode[260];
+  unsigned int net_name_len;
+  unsigned int device_name_len;
+  unsigned int net_name_unicode_len;
+  unsigned int device_name_unicode_len;
+  
+  memcpy(&common_network_relative_link, (common_network_relative_link_t*)common_network_relative_link_ptr, sizeof(common_network_relative_link_t));
+  
+  set_integer(common_network_relative_link.common_network_relative_link_size, module_object, "common_network_relative_link_size");
+  set_integer(common_network_relative_link.common_network_relative_link_flags, module_object, "common_network_relative_link_flags");
+  set_integer(common_network_relative_link.net_name_offset, module_object, "net_name_offset");
+  set_integer(common_network_relative_link.device_name_offset, module_object, "device_name_offset");
+  set_integer(common_network_relative_link.network_provider_type, module_object, "network_provider_type");
+
+  common_network_relative_link_ptr += sizeof(common_network_relative_link_t);
+
+  if (common_network_relative_link.net_name_offset > 0x14) {
+    memcpy(&net_name_offset_unicode, common_network_relative_link_ptr, sizeof(net_name_offset_unicode));
+    set_integer(net_name_offset_unicode, module_object, "net_name_offset_unicode");
+    common_network_relative_link_ptr += sizeof(net_name_offset_unicode);
+
+    memcpy(&device_name_offset_unicode, common_network_relative_link_ptr, sizeof(device_name_offset_unicode));
+    set_integer(device_name_offset_unicode, module_object, "device_name_offset_unicode");
+    common_network_relative_link_ptr += sizeof(device_name_offset_unicode);
+
+    // Parse unicode strings
+    net_name_unicode_len = wcslen((const wchar_t *)common_network_relative_link_ptr);
+    memcpy(&net_name_unicode, common_network_relative_link_ptr, net_name_unicode_len*2);
+
+    set_sized_string((char*)net_name_unicode, net_name_unicode_len, module_object, "net_name_unicode");
+
+    // Add 1 to deal with null terminator
+    common_network_relative_link_ptr += (net_name_unicode_len * 2) + 1;
+
+    device_name_unicode_len = wcslen((const wchar_t *)common_network_relative_link_ptr);
+    memcpy(&device_name_unicode, common_network_relative_link_ptr, device_name_unicode_len*2);
+
+    set_sized_string((char*)device_name_unicode, device_name_unicode_len, module_object, "device_name_unicode");
+
+    // Add 1 to deal with null terminator
+    common_network_relative_link_ptr += (device_name_unicode_len * 2) + 1;
+  }
+
+  // Otherwise parse ASCII strings
+  else {
+    net_name_len = strlen((const char *)common_network_relative_link_ptr);
+    memcpy(&net_name, common_network_relative_link_ptr, net_name_len);
+
+    set_sized_string(net_name, net_name_len, module_object, "net_name");
+
+    // Add 1 to deal with null terminator
+    common_network_relative_link_ptr += net_name_len + 1;
+
+    device_name_len = strlen((const char *)common_network_relative_link_ptr);
+    memcpy(&device_name, common_network_relative_link_ptr, device_name_len);
+
+    set_sized_string(device_name, device_name_len, module_object, "device_name");
+
+    // Add 1 to deal with null terminator
+    common_network_relative_link_ptr += device_name_len + 1;
+  }
+
+  return common_network_relative_link.common_network_relative_link_size;
 }
 
 unsigned int parse_link_info(const uint8_t * link_info_ptr, YR_OBJECT* module_object) {
