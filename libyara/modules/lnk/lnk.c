@@ -642,7 +642,7 @@ unsigned int parse_string_data(const uint8_t * string_data_ptr, YR_OBJECT* modul
   return (count_characters * 2) + sizeof(count_characters);
 }
 
-unsigned int parse_console_data_block(const uint8_t * extra_block_ptr, YR_OBJECT* module_object, int block_data_size_remaining) {
+unsigned int parse_console_data_block(const uint8_t * extra_block_ptr, YR_OBJECT* module_object, int block_data_size_remaining, uint32_t extra_data_block_size, uint32_t extra_data_block_signature) {
   console_data_block_t console_data_block;
   int i;
 
@@ -652,6 +652,8 @@ unsigned int parse_console_data_block(const uint8_t * extra_block_ptr, YR_OBJECT
 
   memcpy(&console_data_block, (console_data_block_t*)extra_block_ptr, sizeof(console_data_block_t));
 
+  set_integer(extra_data_block_size, module_object, "console_data.extra_data_block_size");
+  set_integer(extra_data_block_signature, module_object, "console_data.extra_data_block_signature");
   set_integer(console_data_block.fill_attributes, module_object, "console_data.fill_attributes");
   set_integer(console_data_block.popup_fill_attributes, module_object, "console_data.popup_fill_attributes");
   set_integer(console_data_block.screen_buffer_size_x, module_object, "console_data.screen_buffer_size_x");
@@ -680,7 +682,7 @@ unsigned int parse_console_data_block(const uint8_t * extra_block_ptr, YR_OBJECT
   return 1;
 }
 
-unsigned int parse_console_fed_data_block(const uint8_t * extra_block_ptr, YR_OBJECT* module_object, int block_data_size_remaining) {
+unsigned int parse_console_fed_data_block(const uint8_t * extra_block_ptr, YR_OBJECT* module_object, int block_data_size_remaining, uint32_t extra_data_block_size, uint32_t extra_data_block_signature) {
   console_fed_data_block_t console_fed_data;
 
   if (block_data_size_remaining < sizeof(console_fed_data_block_t)) {
@@ -689,6 +691,8 @@ unsigned int parse_console_fed_data_block(const uint8_t * extra_block_ptr, YR_OB
 
   memcpy(&console_fed_data, (console_fed_data_block_t*)extra_block_ptr, sizeof(console_fed_data_block_t));
 
+  set_integer(extra_data_block_size, module_object, "console_fed_data.extra_data_block_size");
+  set_integer(extra_data_block_signature, module_object, "console_fed_data.extra_data_block_signature");
   set_integer(console_fed_data.code_page, module_object, "console_fed_data.code_page");
 
   return 1;
@@ -721,16 +725,24 @@ unsigned int parse_extra_block(const uint8_t * extra_block_ptr, YR_OBJECT* modul
   switch(extra_data_block_signature) {
     case ConsoleDataBlockSignature:
       if (extra_data_block_size == ConsoleDataBlockSize && 
-          parse_console_data_block(extra_block_ptr, module_object, block_data_size_remaining)) {
+          parse_console_data_block(extra_block_ptr, 
+                                   module_object, 
+                                   block_data_size_remaining,
+                                   extra_data_block_size,
+                                   extra_data_block_signature)) {
             return 1;
           }
       break;
 
     case ConsoleFEDataBlockSignature:
-      //if (extra_data_block_size == ConsoleFEDataBlockSize && 
-      //    parse_tracker_data_block(extra_block_ptr, module_object, block_data_size_remaining)) {
-      //      return 1;
-      //    }
+      if (extra_data_block_size == ConsoleFEDataBlockSize && 
+          parse_console_fed_data_block(extra_block_ptr, 
+                                       module_object, 
+                                       block_data_size_remaining,
+                                       extra_data_block_size,
+                                       extra_data_block_signature)) {
+            return 1;
+          }
       return 1;
       break;
 
