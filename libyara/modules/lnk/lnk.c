@@ -262,72 +262,72 @@ unsigned int parse_link_info(const uint8_t * link_info_ptr, YR_OBJECT* module_ob
     set_sized_string(volume_id_data, size_of_data, module_object, "volume_id_data");
 
     link_info_ptr += size_of_data;
+  }
 
-    // Handle LocalBasePath
-    if (link_info_fixed_header->local_base_path_offset) {
+  // Handle LocalBasePath
+  if (link_info_fixed_header->local_base_path_offset) {
 
-      local_base_path_len = strlen((const char *)link_info_ptr);
-      memcpy(&local_base_path, link_info_ptr, local_base_path_len);
+    local_base_path_len = strlen((const char *)link_info_ptr);
+    memcpy(&local_base_path, link_info_ptr, local_base_path_len);
 
-      set_sized_string(local_base_path, local_base_path_len, module_object, "local_base_path");
+    set_sized_string(local_base_path, local_base_path_len, module_object, "local_base_path");
+
+    // Add 1 to deal with null terminator
+    link_info_ptr += local_base_path_len + 1;
+  }
+
+  if (link_info_fixed_header->common_network_relative_link_offset) {
+    parse_common_network_relative_link(link_info_ptr, module_object);
+  }
+
+  // Handle LocalBasePath
+  if (link_info_fixed_header->common_path_suffix_offset) {
+
+    // Have to deal with this possibly being an empty string
+    if (memcmp(link_info_ptr, "\x00", 1) == 0) {
+      set_sized_string("\x00", 1, module_object, "common_path_suffix");
+      link_info_ptr += 1;
+    }
+
+    else {
+      common_path_suffix_len = strlen((const char *)link_info_ptr);
+      memcpy(&common_path_suffix, link_info_ptr, common_path_suffix_len);
+
+      set_sized_string(common_path_suffix, common_path_suffix_len, module_object, "common_path_suffix");
 
       // Add 1 to deal with null terminator
-      link_info_ptr += local_base_path_len + 1;
+      link_info_ptr += common_path_suffix_len + 1;
+    }
+  }
+
+  // TODO: These unicode functions will need some careful testing
+  if (local_base_path_offset_unicode) {
+
+    local_base_path_unicode_len = wcslen((const wchar_t *)link_info_ptr);
+    memcpy(&local_base_path_unicode, link_info_ptr, local_base_path_unicode_len*2);
+
+    set_sized_string((char*)local_base_path_unicode, local_base_path_unicode_len, module_object, "local_base_path_unicode");
+
+    // Add 1 to deal with null terminator
+    link_info_ptr += (local_base_path_unicode_len * 2) + 1;
+  }
+
+  if (common_path_suffix_offset_unicode) {
+
+    // Have to deal with this possibly being an empty string
+    if (memcmp(link_info_ptr, "\x00", 1) == 0) {
+      set_sized_string("\x00", 1, module_object, "common_path_suffix_unicode");
+      link_info_ptr += 1;
     }
 
-    if (link_info_fixed_header->common_network_relative_link_offset) {
-      parse_common_network_relative_link(link_info_ptr, module_object);
-    }
-
-    // Handle LocalBasePath
-    if (link_info_fixed_header->common_path_suffix_offset) {
-
-      // Have to deal with this possibly being an empty string
-      if (memcmp(link_info_ptr, "\x00", 1) == 0) {
-        set_sized_string("\x00", 1, module_object, "common_path_suffix");
-        link_info_ptr += 1;
-      }
-
-      else {
-        common_path_suffix_len = strlen((const char *)link_info_ptr);
-        memcpy(&common_path_suffix, link_info_ptr, common_path_suffix_len);
+    else {
+      common_path_suffix_unicode_len = wcslen((const wchar_t *)link_info_ptr);
+      memcpy(&common_path_suffix_unicode, link_info_ptr, common_path_suffix_unicode_len);
   
-        set_sized_string(common_path_suffix, common_path_suffix_len, module_object, "common_path_suffix");
+      set_sized_string((char*)common_path_suffix_unicode, common_path_suffix_unicode_len, module_object, "common_path_suffix_unicode");
   
-        // Add 1 to deal with null terminator
-        link_info_ptr += common_path_suffix_len + 1;
-      }
-    }
-
-    // TODO: These unicode functions will need some careful testing
-    if (local_base_path_offset_unicode) {
-
-      local_base_path_unicode_len = wcslen((const wchar_t *)link_info_ptr);
-      memcpy(&local_base_path_unicode, link_info_ptr, local_base_path_unicode_len*2);
-
-      set_sized_string((char*)local_base_path_unicode, local_base_path_unicode_len, module_object, "local_base_path_unicode");
-
       // Add 1 to deal with null terminator
-      link_info_ptr += (local_base_path_unicode_len * 2) + 1;
-    }
-
-    if (common_path_suffix_offset_unicode) {
-
-      // Have to deal with this possibly being an empty string
-      if (memcmp(link_info_ptr, "\x00", 1) == 0) {
-        set_sized_string("\x00", 1, module_object, "common_path_suffix_unicode");
-        link_info_ptr += 1;
-      }
-
-      else {
-        common_path_suffix_unicode_len = wcslen((const wchar_t *)link_info_ptr);
-        memcpy(&common_path_suffix_unicode, link_info_ptr, common_path_suffix_unicode_len);
-  
-        set_sized_string((char*)common_path_suffix_unicode, common_path_suffix_unicode_len, module_object, "common_path_suffix_unicode");
-  
-        // Add 1 to deal with null terminator
-        link_info_ptr += (common_path_suffix_unicode_len * 2) + 1;
-      }
+      link_info_ptr += (common_path_suffix_unicode_len * 2) + 1;
     }
   }
 
