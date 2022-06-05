@@ -277,6 +277,63 @@ unsigned int parse_link_target_id_list(const uint8_t * link_target_id_list_ptr, 
   return id_list_size + 2;
 }
 
+unsigned int parse_volume_id(const uint8_t * volume_id_ptr, YR_OBJECT* module_object, int block_data_size_remaining) {
+  volume_id_t volume_id;
+  unsigned int size_of_data;
+  uint32_t volume_label_offset_unicode;
+  char volume_id_data[256];
+  unsigned int total_data_read=0;
+  
+  if (block_data_size_remaining < sizeof(volume_id_t)) {
+    return 0;
+  }
+
+  memcpy(&volume_id, (volume_id_t*)volume_id_ptr, sizeof(volume_id_t));
+
+  set_integer(volume_id.volume_id_size, module_object, "link_info.volume_id.size");
+  set_integer(volume_id.drive_type, module_object, "link_info.volume_id.drive_type");
+  set_integer(volume_id.drive_serial_number, module_object, "link_info.volume_id.drive_serial_number");
+  set_integer(volume_id.volume_label_offset, module_object, "link_info.volume_id.volume_label_offset");
+
+  // To work out the size of the data, we need to subtract the size of
+  // the whole structure from the VolumeIDSize. However, this structure 
+  // size is variable based on if the unicode offset is present.
+  size_of_data = volume_id.volume_id_size - volume_id.volume_label_offset;
+
+  volume_id_ptr += sizeof(volume_id_t);
+  block_data_size_remaining -= sizeof(volume_id_t);
+  total_data_read += sizeof(volume_id_t);
+
+  if (volume_id.volume_label_offset == 0x14) {
+
+    if (block_data_size_remaining < sizeof(volume_label_offset_unicode)) {
+      return 0;
+    }
+
+    memcpy(&volume_label_offset_unicode, volume_id_ptr, sizeof(volume_label_offset_unicode));
+    set_integer(volume_label_offset_unicode, module_object, "link_info.volume_id.volume_label_offset_unicode");
+    volume_id_ptr += sizeof(volume_label_offset_unicode);
+    block_data_size_remaining -= sizeof(volume_label_offset_unicode);
+    total_data_read += sizeof(volume_label_offset_unicode);
+
+    // Compensate for extra entry in the structure
+    size_of_data = volume_id.volume_id_size - volume_label_offset_unicode;
+  }
+
+  if (block_data_size_remaining < size_of_data) {
+    return 0;
+  }
+
+  memcpy(volume_id_data, volume_id_ptr, size_of_data);
+  set_sized_string(volume_id_data, size_of_data, module_object, "link_info.volume_id.data");
+
+  volume_id_ptr += size_of_data;
+  block_data_size_remaining -= size_of_data;
+  total_data_read += size_of_data;
+
+  return total_data_read;
+}
+
 unsigned int parse_common_network_relative_link(const uint8_t * common_network_relative_link_ptr, YR_OBJECT* module_object, int block_data_size_remaining) {
   common_network_relative_link_t common_network_relative_link;
   uint32_t net_name_offset_unicode=0;
@@ -394,10 +451,6 @@ unsigned int parse_link_info(const uint8_t * link_info_ptr, YR_OBJECT* module_ob
   link_info_fixed_header_t* link_info_fixed_header;
   uint32_t local_base_path_offset_unicode=0;
   uint32_t common_path_suffix_offset_unicode=0;
-  volume_id_t volume_id;
-  uint32_t volume_label_offset_unicode;
-  unsigned int size_of_data;
-  char volume_id_data[256];
   char local_base_path[256];
   char common_path_suffix[256];
   wchar_t local_base_path_unicode[256];
@@ -406,6 +459,7 @@ unsigned int parse_link_info(const uint8_t * link_info_ptr, YR_OBJECT* module_ob
   unsigned int common_path_suffix_len;
   unsigned int local_base_path_unicode_len;
   unsigned int common_path_suffix_unicode_len;
+  unsigned int volume_id_size;
   unsigned int common_network_relative_link_size;
 
   if (block_data_size_remaining < sizeof(link_info_fixed_header_t)) {
@@ -451,49 +505,10 @@ unsigned int parse_link_info(const uint8_t * link_info_ptr, YR_OBJECT* module_ob
 
   if (link_info_fixed_header->volume_id_offset) {
 
-    if (block_data_size_remaining < sizeof(volume_id_t)) {
-      return 0;
-    }
+    volume_id_size = parse_volume_id(link_info_ptr, module_object, block_data_size_remaining);
 
-    memcpy(&volume_id, (volume_id_t*)link_info_ptr, sizeof(volume_id_t));
-
-    set_integer(volume_id.volume_id_size, module_object, "link_info.volume_id.size");
-    set_integer(volume_id.drive_type, module_object, "link_info.volume_id.drive_type");
-    set_integer(volume_id.drive_serial_number, module_object, "link_info.volume_id.drive_serial_number");
-    set_integer(volume_id.volume_label_offset, module_object, "link_info.volume_id.volume_label_offset");
-
-    // To work out the size of the data, we need to subtract the size of
-    // the whole structure from the VolumeIDSize. However, this structure 
-    // size is variable based on if the unicode offset is present.
-    size_of_data = volume_id.volume_id_size - volume_id.volume_label_offset;
-
-    link_info_ptr += sizeof(volume_id_t);
-    block_data_size_remaining -= sizeof(volume_id_t);
-
-    if (volume_id.volume_label_offset == 0x14) {
-
-      if (block_data_size_remaining < sizeof(volume_label_offset_unicode)) {
-        return 0;
-      }
-
-      memcpy(&volume_label_offset_unicode, link_info_ptr, sizeof(volume_label_offset_unicode));
-      set_integer(volume_label_offset_unicode, module_object, "link_info.volume_id.volume_label_offset_unicode");
-      link_info_ptr += sizeof(volume_label_offset_unicode);
-      block_data_size_remaining -= sizeof(volume_label_offset_unicode);
-
-      // Compensate for extra entry in the structure
-      size_of_data = volume_id.volume_id_size - volume_label_offset_unicode;
-    }
-
-    if (block_data_size_remaining < size_of_data) {
-      return 0;
-    }
-
-    memcpy(volume_id_data, link_info_ptr, size_of_data);
-    set_sized_string(volume_id_data, size_of_data, module_object, "link_info.volume_id.data");
-
-    link_info_ptr += size_of_data;
-    block_data_size_remaining -= size_of_data;
+    link_info_ptr += volume_id_size;
+    block_data_size_remaining -= volume_id_size;
   }
 
   // Handle LocalBasePath
