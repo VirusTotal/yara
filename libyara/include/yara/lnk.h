@@ -137,8 +137,6 @@ typedef struct _tracker_data_block_t
 #define LINK_CLSID_2 0x000000C0
 #define LINK_CLSID_3 0x46000000
 
-#define LINK_INFO_FIXED_HEADER_LENGTH 28
-
 #define HasLinkTargetIDList            0x00000001
 #define HasLinkInfo                    0x00000002
 #define HasName                        0x00000004
