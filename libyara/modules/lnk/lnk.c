@@ -675,7 +675,7 @@ int module_load(
 
   // Don't try to parse a file unless it is the minimum size an LNK can be
   // based on fixed length headers it has (described in shell_link_header_t)
-  if (block_data != NULL && block_data_size_remaining >= MIN_LNK_SIZE)
+  if (block_data != NULL && block_data_size_remaining >= sizeof(shell_link_header_t))
   {
     // Validate LNK header
     lnk_header = (shell_link_header_t*) block_data;
@@ -729,8 +729,8 @@ int module_load(
       set_integer((lnk_header->hotkey_flags >> 8), module_object, "hotkey_modifier_flags");
 
       // Set pointer of current location to be after the LNK fixed header
-      current_location = block_data + MIN_LNK_SIZE;
-      block_data_size_remaining -= MIN_LNK_SIZE;
+      current_location = block_data + sizeof(shell_link_header_t);
+      block_data_size_remaining -= sizeof(shell_link_header_t);
 
       // Optional parsing of LinkTargetIDList
       if (lnk_header->link_flags & HasLinkTargetIDList) {

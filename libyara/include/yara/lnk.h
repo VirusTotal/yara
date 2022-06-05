@@ -129,8 +129,6 @@ typedef struct _tracker_data_block_t
 
 #pragma pack(pop)
 
-#define MIN_LNK_SIZE 76
-
 #define HEADER_SIZE 0x0000004C
 #define LINK_CLSID_0 0x00021401
 #define LINK_CLSID_1 0x00000000
