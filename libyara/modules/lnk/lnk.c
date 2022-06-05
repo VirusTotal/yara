@@ -174,6 +174,9 @@ begin_declarations
   declare_string("droid_file_identifier");
   declare_string("droid_birth_volume_identifier");
   declare_string("droid_birth_file_identifier");
+
+  declare_integer("has_overlay");
+  declare_integer("overlay_offset");
 end_declarations
 
 unsigned int parse_link_target_id_list(const uint8_t * link_target_id_list_ptr, YR_OBJECT* module_object, int block_data_size_remaining) {
@@ -960,6 +963,15 @@ int module_load(
 
   // Finally, take away size of the TerminalBlock
   block_data_size_remaining -= 4;
+
+  if (block_data_size_remaining > 0) {
+    set_integer(1, module_object, "has_overlay");
+    set_integer(block->size - block_data_size_remaining, module_object, "overlay_offset");
+  }
+
+  else {
+    set_integer(0, module_object, "has_overlay");
+  }
 
   return ERROR_SUCCESS;
 }
