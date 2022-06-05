@@ -186,7 +186,6 @@ unsigned int parse_link_info(const uint8_t * link_info_ptr, YR_OBJECT* module_ob
   link_info_fixed_header_t* link_info_fixed_header;
   uint32_t local_base_path_offset_unicode=0;
   uint32_t common_path_suffix_offset_unicode=0;
-  uint32_t common_network_relative_link_offset;
   volume_id_t volume_id;
   uint32_t volume_label_offset_unicode;
   unsigned int size_of_data;
@@ -199,6 +198,7 @@ unsigned int parse_link_info(const uint8_t * link_info_ptr, YR_OBJECT* module_ob
   unsigned int common_path_suffix_len;
   unsigned int local_base_path_unicode_len;
   unsigned int common_path_suffix_unicode_len;
+  unsigned int common_network_relative_link_size;
 
   link_info_fixed_header = (link_info_fixed_header_t*) link_info_ptr;
 
@@ -223,12 +223,6 @@ unsigned int parse_link_info(const uint8_t * link_info_ptr, YR_OBJECT* module_ob
     memcpy(&common_path_suffix_offset_unicode, link_info_ptr, sizeof(common_path_suffix_offset_unicode));
     set_integer(common_path_suffix_offset_unicode, module_object, "common_path_suffix_offset_unicode");
     link_info_ptr += sizeof(common_path_suffix_offset_unicode);
-  }
-
-  if (link_info_fixed_header->link_info_flags & CommonNetworkRelativeLinkAndPathSuffix) {
-    memcpy(&common_network_relative_link_offset, link_info_ptr, sizeof(common_network_relative_link_offset));
-    set_integer(common_network_relative_link_offset, module_object, "common_network_relative_link_offset");
-    link_info_ptr += sizeof(common_network_relative_link_offset);
   }
 
   if (link_info_fixed_header->volume_id_offset) {
@@ -277,7 +271,9 @@ unsigned int parse_link_info(const uint8_t * link_info_ptr, YR_OBJECT* module_ob
   }
 
   if (link_info_fixed_header->common_network_relative_link_offset) {
-    parse_common_network_relative_link(link_info_ptr, module_object);
+    common_network_relative_link_size = parse_common_network_relative_link(link_info_ptr, module_object);
+
+    link_info_ptr += common_network_relative_link_size;
   }
 
   // Handle LocalBasePath

@@ -45,6 +45,15 @@ typedef struct _volume_id_t
   uint32_t volume_label_offset;
 } volume_id_t;
 
+typedef struct _common_network_relative_link_t
+{
+  uint32_t common_network_relative_link_size;
+  uint32_t common_network_relative_link_flags;
+  uint32_t net_name_offset;
+  uint32_t device_name_offset;
+  uint32_t network_provider_type;
+} common_network_relative_link_t;
+
 typedef struct _console_data_block_t
 {
   uint16_t fill_attributes;
