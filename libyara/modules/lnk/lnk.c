@@ -193,6 +193,10 @@ begin_declarations
     declare_integer_array("color_table");
   end_struct("console_data");
 
+  begin_struct("console_fed_data");
+    declare_integer("code_page");
+  end_struct("console_fed_data");
+
   declare_string("machine_id");
   declare_string("droid_volume_identifier");
   declare_string("droid_file_identifier");
@@ -668,6 +672,20 @@ unsigned int parse_console_data_block(const uint8_t * extra_block_ptr, YR_OBJECT
   for (i=0; i<16; i++) {
     set_integer(console_data_block.color_table[i], module_object, "console_data.color_table[%i]", i);
   }
+
+  return 1;
+}
+
+unsigned int parse_console_fed_data_block(const uint8_t * extra_block_ptr, YR_OBJECT* module_object, int block_data_size_remaining) {
+  console_fed_data_block_t console_fed_data;
+
+  if (block_data_size_remaining < sizeof(console_fed_data_block_t)) {
+    return 0;
+  }
+
+  memcpy(&console_fed_data, (console_fed_data_block_t*)extra_block_ptr, sizeof(console_fed_data_block_t));
+
+  set_integer(console_fed_data.code_page, module_object, "console_fed_data.code_page");
 
   return 1;
 }
