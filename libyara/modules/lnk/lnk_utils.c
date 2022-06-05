@@ -10,11 +10,11 @@
 
 uint64_t convertWindowsTimeToUnixTime(uint64_t input)
 {
-    // https://stackoverflow.com/questions/6161776/convert-windows-filetime-to-second-in-unix-linux
+  // https://stackoverflow.com/questions/6161776/convert-windows-filetime-to-second-in-unix-linux
   long long int temp;
   temp = input / TICKS_PER_SECOND;  // convert from 100ns intervals to seconds;
   temp = temp - EPOCH_DIFFERENCE;   // subtract number of seconds between epochs
-  return temp - 3600; // no idea why, but the conver function is always an hour off
+  return temp - 3600; // no idea why, but the convert function is always an hour off
 }
 
 char* get_hotkey_char(uint8_t key) {
