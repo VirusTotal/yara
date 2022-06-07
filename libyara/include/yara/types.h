@@ -397,11 +397,21 @@ struct RE_AST
 #pragma warning(disable : 4200)
 #endif
 
+
+// The RE structure is embedded in the YARA's VM instruction flow, which
+// means that its alignment is not guaranteed. For this reason the it must
+// be a "packed" structure, in order to prevent alignment issues in platforms
+// with strict alignment constraints.
+#pragma pack(push)
+#pragma pack(1)
+
 struct RE
 {
   uint32_t flags;
   uint8_t code[0];
 };
+
+#pragma pack(pop)
 
 #ifdef _MSC_VER
 #pragma warning(pop)

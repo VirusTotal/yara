@@ -129,7 +129,8 @@ int yr_notebook_destroy(YR_NOTEBOOK* notebook)
 
 ////////////////////////////////////////////////////////////////////////////////
 // Allocates a memory buffer from a notebook. The memory is freed when the
-// notebook is destroyed, allocated buffers can't be freed individually.
+// notebook is destroyed, allocated buffers can't be freed individually. The
+// returned buffer is guaranteed to be aligned to an 8-byte boundary.
 //
 // Args:
 //   notebook: Pointer to the notebook.
@@ -140,12 +141,11 @@ int yr_notebook_destroy(YR_NOTEBOOK* notebook)
 //
 void* yr_notebook_alloc(YR_NOTEBOOK* notebook, size_t size)
 {
-  // In ARM make sure the buffer's size is rounded up to a multiple of 4,
-  // which also implies that the returned pointers are aligned to 4 bytes.
-
-#if defined(__arm__)
-  size = (size + 3) & ~0x3;
-#endif
+  // Round up the size to a multiple of 8, which also implies that the returned
+  // pointers are aligned to 8 bytes. The 8-byte alignment is required by some
+  // platforms (e.g. ARM and Sparc) that have strict alignment requirements when
+  // deferrencing pointers to types larger than a byte.
+  size = (size + 7) & ~0x7;
 
   // The requested memory size can't be larger than a notebook's page.
   assert(size <= notebook->page_size);

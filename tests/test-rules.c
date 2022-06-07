@@ -3037,6 +3037,19 @@ static void test_modules()
       }",
       NULL);
 
+  assert_true_rule(
+      "import \"tests\" \
+      rule test { \
+        condition: \
+          for any item1 in tests.struct_array: ( \
+            item1.i == 1 and \
+            for any item2 in tests.struct_array: ( \
+              item2.i == item1.i \
+            ) \
+          ) \
+      }",
+      NULL);
+
   assert_error("import \"\\x00\"", ERROR_INVALID_MODULE_NAME);
 
   assert_error("import \"\"", ERROR_INVALID_MODULE_NAME);
