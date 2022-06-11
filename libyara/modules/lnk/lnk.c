@@ -250,6 +250,13 @@ begin_declarations
     declare_string("layer_name");
   end_struct("shim_data");
 
+  begin_struct("special_folder_data");
+    declare_integer("block_size");
+    declare_integer("block_signature");
+    declare_integer("special_folder_id");
+    declare_integer("offset");
+  end_struct("special_folder_data");
+
   begin_struct("tracker_data");
     declare_integer("block_size");
     declare_integer("block_signature");
@@ -872,6 +879,23 @@ unsigned int parse_shim_data_block(const uint8_t * extra_block_ptr, YR_OBJECT* m
   return 1;
 }
 
+unsigned int parse_special_folder_data_block(const uint8_t * extra_block_ptr, YR_OBJECT* module_object, int block_data_size_remaining, uint32_t extra_data_block_size, uint32_t extra_data_block_signature) {
+  special_folder_data_block_t special_folder_data;
+
+  if (block_data_size_remaining < sizeof(special_folder_data_block_t)) {
+    return 0;
+  }
+
+  memcpy(&special_folder_data, (special_folder_data_block_t*)extra_block_ptr, sizeof(special_folder_data_block_t));
+
+  set_integer(extra_data_block_size, module_object, "special_folder_data.block_size");
+  set_integer(extra_data_block_signature, module_object, "special_folder_data.block_signature");
+  set_integer(special_folder_data.special_folder_id, module_object, "special_folder_data.special_folder_id");
+  set_integer(special_folder_data.offset, module_object, "special_folder_data.offset");
+
+  return 1;
+}
+
 unsigned int parse_tracker_data_block(const uint8_t * extra_block_ptr, YR_OBJECT* module_object, int block_data_size_remaining, uint32_t extra_data_block_size, uint32_t extra_data_block_signature) {
   tracker_data_block_t tracker_data_block;
 
@@ -986,11 +1010,14 @@ unsigned int parse_extra_block(const uint8_t * extra_block_ptr, YR_OBJECT* modul
       break;
 
     case SpecialFolderDataBlockSignature:
-      //if (extra_data_block_size == SpecialFolderDataBlockSize && 
-      //    parse_tracker_data_block(extra_block_ptr, module_object, block_data_size_remaining)) {
-      //      return 1;
-      //    }
-      return 1;
+      if (extra_data_block_size == SpecialFolderDataBlockSize && 
+          parse_special_folder_data_block(extra_block_ptr, 
+                                          module_object, 
+                                          block_data_size_remaining,
+                                          extra_data_block_size,
+                                          extra_data_block_signature)) {
+            return 1;
+          }
       break;
 
     case TrackerDataBlockSignature:
