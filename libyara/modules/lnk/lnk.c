@@ -239,6 +239,11 @@ begin_declarations
     declare_integer_array("known_folder_id");
   end_struct("known_folder_data");
 
+  begin_struct("property_store_data");
+    declare_integer("block_size");
+    declare_integer("block_signature");
+  end_struct("property_store_data");
+
   begin_struct("tracker_data");
     declare_integer("block_size");
     declare_integer("block_signature");
@@ -837,6 +842,14 @@ unsigned int parse_known_folder_data_block(const uint8_t * extra_block_ptr, YR_O
   return 1;
 }
 
+unsigned int parse_property_store_data_block(const uint8_t * extra_block_ptr, YR_OBJECT* module_object, int block_data_size_remaining, uint32_t extra_data_block_size, uint32_t extra_data_block_signature) {
+
+  set_integer(extra_data_block_size, module_object, "property_store_data.block_size");
+  set_integer(extra_data_block_signature, module_object, "property_store_data.block_signature");
+
+  return 1;
+}
+
 unsigned int parse_tracker_data_block(const uint8_t * extra_block_ptr, YR_OBJECT* module_object, int block_data_size_remaining, uint32_t extra_data_block_size, uint32_t extra_data_block_signature) {
   tracker_data_block_t tracker_data_block;
 
@@ -929,11 +942,14 @@ unsigned int parse_extra_block(const uint8_t * extra_block_ptr, YR_OBJECT* modul
       break;
 
     case PropertyStoreDataBlockSignature:
-      //if (extra_data_block_size >= PropertyStoreDataBlockMinSize && 
-      //    parse_tracker_data_block(extra_block_ptr, module_object, block_data_size_remaining)) {
-      //      return 1;
-      //    }
-      return 1;
+      if (extra_data_block_size >= PropertyStoreDataBlockMinSize && 
+          parse_property_store_data_block(extra_block_ptr, 
+                                          module_object, 
+                                          block_data_size_remaining,
+                                          extra_data_block_size,
+                                          extra_data_block_signature)) {
+            return 1;
+          }
       break;
 
     case ShimDataBlockSignature:
