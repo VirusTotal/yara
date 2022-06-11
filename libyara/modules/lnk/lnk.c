@@ -273,15 +273,49 @@ begin_declarations
   declare_integer("is_malformed");
 end_declarations
 
-//unsigned int parse_id_list(const uint8_t * link_target_id_list_ptr, YR_OBJECT* module_object, int block_data_size_remaining) {
-//  ;
-//}
+unsigned int parse_id_list(const uint8_t * id_list_ptr, YR_OBJECT* module_object, int block_data_size_remaining) {
+  uint16_t item_id_size;
+  unsigned int num_item_ids = 0;
+  const uint8_t* item_id_data_ptr;
+  
+  // Get the first ItemIDSize
+  if (block_data_size_remaining < sizeof(item_id_size)) {
+    return 0;
+  }
+  memcpy(&item_id_size, id_list_ptr, sizeof(item_id_size));
+  block_data_size_remaining -= sizeof(item_id_size);
+
+  while (item_id_size != 0) {
+    // Subtract 2 to not include it
+    set_integer(item_id_size - 2, module_object, "item_id_list[%i].size", num_item_ids);
+
+    // Get pointer to the ItemID Data
+    item_id_data_ptr = id_list_ptr + sizeof(item_id_size);
+
+    if (block_data_size_remaining < item_id_size-sizeof(item_id_size)) {
+      return 0;
+    }
+    set_sized_string((const char *)item_id_data_ptr, item_id_size-sizeof(item_id_size), module_object, "item_id_list[%i].data", num_item_ids);
+    block_data_size_remaining -= item_id_size-sizeof(item_id_size);
+
+    num_item_ids += 1;
+    id_list_ptr += item_id_size;
+
+    // Get the next ItemIDSize (or 0x0000 if we've reached TerminalID)
+    if (block_data_size_remaining < sizeof(item_id_size)) {
+      return 0;
+    }
+    memcpy(&item_id_size, id_list_ptr, sizeof(item_id_size));
+    block_data_size_remaining -= sizeof(item_id_size);
+  }
+
+  set_integer(num_item_ids, module_object, "number_of_item_ids");
+
+  return 1;
+}
 
 unsigned int parse_link_target_id_list(const uint8_t * link_target_id_list_ptr, YR_OBJECT* module_object, int block_data_size_remaining) {
   uint16_t id_list_size;
-  unsigned int num_item_ids = 0;
-  uint16_t item_id_size;
-  const uint8_t* item_id_data_ptr;
 
   // First, get the IDListSize
   if (block_data_size_remaining < sizeof(id_list_size)) {
@@ -295,38 +329,9 @@ unsigned int parse_link_target_id_list(const uint8_t * link_target_id_list_ptr, 
   // Get pointer to start of IDList
   link_target_id_list_ptr += sizeof(id_list_size);
 
-  // Get the first ItemIDSize
-  if (block_data_size_remaining < sizeof(item_id_size)) {
+  if (!parse_id_list(link_target_id_list_ptr, module_object, block_data_size_remaining)) {
     return 0;
   }
-  memcpy(&item_id_size, link_target_id_list_ptr, sizeof(item_id_size));
-  block_data_size_remaining -= sizeof(item_id_size);
-
-  while (item_id_size != 0) {
-    // Subtract 2 to not include it
-    set_integer(item_id_size - 2, module_object, "item_id_list[%i].size", num_item_ids);
-
-    // Get pointer to the ItemID Data
-    item_id_data_ptr = link_target_id_list_ptr + sizeof(item_id_size);
-
-    if (block_data_size_remaining < item_id_size-sizeof(item_id_size)) {
-      return 0;
-    }
-    set_sized_string((const char *)item_id_data_ptr, item_id_size-sizeof(item_id_size), module_object, "item_id_list[%i].data", num_item_ids);
-    block_data_size_remaining -= item_id_size-sizeof(item_id_size);
-
-    num_item_ids += 1;
-    link_target_id_list_ptr += item_id_size;
-
-    // Get the next ItemIDSize (or 0x0000 if we've reached TerminalID)
-    if (block_data_size_remaining < sizeof(item_id_size)) {
-      return 0;
-    }
-    memcpy(&item_id_size, link_target_id_list_ptr, sizeof(item_id_size));
-    block_data_size_remaining -= sizeof(item_id_size);
-  }
-
-  set_integer(num_item_ids, module_object, "number_of_item_ids");
 
   // Return the size of the whole section to compute where the next one starts
   return id_list_size + 2;
