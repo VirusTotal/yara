@@ -225,12 +225,19 @@ begin_declarations
     declare_integer("target_unicode");
   end_struct("environment_variable_data");
 
-begin_struct("icon_environment_data");
+  begin_struct("icon_environment_data");
     declare_integer("block_size");
     declare_integer("block_signature");
     declare_integer("target_ansi");
     declare_integer("target_unicode");
   end_struct("icon_environment_data");
+
+  begin_struct("known_folder_data");
+    declare_integer("block_size");
+    declare_integer("block_signature");
+    declare_integer("offset");
+    declare_integer_array("known_folder_id");
+  end_struct("known_folder_data");
 
   begin_struct("tracker_data");
     declare_integer("block_size");
@@ -809,6 +816,27 @@ unsigned int parse_icon_environment_data_block(const uint8_t * extra_block_ptr, 
   return 1;
 }
 
+unsigned int parse_known_folder_data_block(const uint8_t * extra_block_ptr, YR_OBJECT* module_object, int block_data_size_remaining, uint32_t extra_data_block_size, uint32_t extra_data_block_signature) {
+  known_folder_data_block_t known_folder_data;
+  int i;
+
+  if (block_data_size_remaining < sizeof(known_folder_data_block_t)) {
+    return 0;
+  }
+
+  memcpy(&known_folder_data, (known_folder_data_block_t*)extra_block_ptr, sizeof(known_folder_data_block_t));
+
+  set_integer(extra_data_block_size, module_object, "known_folder_data.block_size");
+  set_integer(extra_data_block_signature, module_object, "known_folder_data.block_signature");
+  set_integer(known_folder_data.offset, module_object, "known_folder_data.offset");
+
+  for (i=0; i<16; i++) {
+    set_integer(known_folder_data.known_folder_id[i], module_object, "known_folder_data.known_folder_id[%i]", i);
+  }
+
+  return 1;
+}
+
 unsigned int parse_tracker_data_block(const uint8_t * extra_block_ptr, YR_OBJECT* module_object, int block_data_size_remaining, uint32_t extra_data_block_size, uint32_t extra_data_block_signature) {
   tracker_data_block_t tracker_data_block;
 
@@ -890,11 +918,14 @@ unsigned int parse_extra_block(const uint8_t * extra_block_ptr, YR_OBJECT* modul
       break;
 
     case KnownFolderDataBlockSignature:
-      //if (extra_data_block_size == KnownFolderDataBlockSize && 
-      //    parse_tracker_data_block(extra_block_ptr, module_object, block_data_size_remaining)) {
-      //      return 1;
-      //    }
-      return 1;
+      if (extra_data_block_size == KnownFolderDataBlockSize && 
+          parse_known_folder_data_block(extra_block_ptr, 
+                                        module_object, 
+                                        block_data_size_remaining,
+                                        extra_data_block_size,
+                                        extra_data_block_signature)) {
+            return 1;
+          }
       break;
 
     case PropertyStoreDataBlockSignature:
