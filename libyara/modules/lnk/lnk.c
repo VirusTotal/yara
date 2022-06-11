@@ -244,6 +244,12 @@ begin_declarations
     declare_integer("block_signature");
   end_struct("property_store_data");
 
+  begin_struct("shim_data");
+    declare_integer("block_size");
+    declare_integer("block_signature");
+    declare_string("layer_name");
+  end_struct("shim_data");
+
   begin_struct("tracker_data");
     declare_integer("block_size");
     declare_integer("block_signature");
@@ -850,6 +856,22 @@ unsigned int parse_property_store_data_block(const uint8_t * extra_block_ptr, YR
   return 1;
 }
 
+unsigned int parse_shim_data_block(const uint8_t * extra_block_ptr, YR_OBJECT* module_object, int block_data_size_remaining, uint32_t extra_data_block_size, uint32_t extra_data_block_signature) {
+  wchar_t * layer_name;
+  
+  if (block_data_size_remaining < extra_data_block_size - sizeof(extra_data_block_size) - sizeof(extra_data_block_signature)) {
+    return 0;
+  }
+
+  layer_name = (wchar_t*) extra_block_ptr;
+
+  set_integer(extra_data_block_size, module_object, "shim_data.block_size");
+  set_integer(extra_data_block_signature, module_object, "shim_data.block_signature");
+  set_sized_string((char *)layer_name, extra_data_block_size - sizeof(extra_data_block_size) - sizeof(extra_data_block_signature), module_object, "shim_data.layer_name");
+
+  return 1;
+}
+
 unsigned int parse_tracker_data_block(const uint8_t * extra_block_ptr, YR_OBJECT* module_object, int block_data_size_remaining, uint32_t extra_data_block_size, uint32_t extra_data_block_signature) {
   tracker_data_block_t tracker_data_block;
 
@@ -953,11 +975,14 @@ unsigned int parse_extra_block(const uint8_t * extra_block_ptr, YR_OBJECT* modul
       break;
 
     case ShimDataBlockSignature:
-      //if (extra_data_block_size >= ShimDataBlockMinSize && 
-      //    parse_tracker_data_block(extra_block_ptr, module_object, block_data_size_remaining)) {
-      //      return 1;
-      //    }
-      return 1;
+      if (extra_data_block_size >= ShimDataBlockMinSize && 
+          parse_shim_data_block(extra_block_ptr, 
+                                module_object, 
+                                block_data_size_remaining,
+                                extra_data_block_size,
+                                extra_data_block_signature)) {
+            return 1;
+          }
       break;
 
     case SpecialFolderDataBlockSignature:
