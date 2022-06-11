@@ -267,13 +267,24 @@ begin_declarations
     declare_string("droid_birth_file_identifier");
   end_struct("tracker_data");
 
+  begin_struct("vista_and_above_id_list_data");
+    declare_integer("block_size");
+    declare_integer("block_signature");
+    declare_integer("number_of_item_ids");
+
+    begin_struct_array("item_id_list");
+      declare_integer("size");
+      declare_string("data");
+    end_struct_array("item_id_list");
+  end_struct("vista_and_above_id_list_data");
+
   declare_integer("has_overlay");
   declare_integer("overlay_offset");
 
   declare_integer("is_malformed");
 end_declarations
 
-unsigned int parse_id_list(const uint8_t * id_list_ptr, YR_OBJECT* module_object, int block_data_size_remaining) {
+unsigned int parse_id_list(const uint8_t * id_list_ptr, YR_OBJECT* module_object, int block_data_size_remaining, bool extra_data) {
   uint16_t item_id_size;
   unsigned int num_item_ids = 0;
   const uint8_t* item_id_data_ptr;
@@ -287,15 +298,26 @@ unsigned int parse_id_list(const uint8_t * id_list_ptr, YR_OBJECT* module_object
 
   while (item_id_size != 0) {
     // Subtract 2 to not include it
-    set_integer(item_id_size - 2, module_object, "item_id_list[%i].size", num_item_ids);
-
+    if (extra_data) {
+      set_integer(item_id_size - 2, module_object, "vista_and_above_id_list_data.item_id_list[%i].size", num_item_ids);
+    }
+    else {
+      set_integer(item_id_size - 2, module_object, "item_id_list[%i].size", num_item_ids);
+    }
+    
     // Get pointer to the ItemID Data
     item_id_data_ptr = id_list_ptr + sizeof(item_id_size);
 
     if (block_data_size_remaining < item_id_size-sizeof(item_id_size)) {
       return 0;
     }
-    set_sized_string((const char *)item_id_data_ptr, item_id_size-sizeof(item_id_size), module_object, "item_id_list[%i].data", num_item_ids);
+
+    if (extra_data) {
+      set_sized_string((const char *)item_id_data_ptr, item_id_size-sizeof(item_id_size), module_object, "vista_and_above_id_list_data.item_id_list[%i].data", num_item_ids);
+    }
+    else {
+      set_sized_string((const char *)item_id_data_ptr, item_id_size-sizeof(item_id_size), module_object, "item_id_list[%i].data", num_item_ids);
+    }
     block_data_size_remaining -= item_id_size-sizeof(item_id_size);
 
     num_item_ids += 1;
@@ -309,7 +331,12 @@ unsigned int parse_id_list(const uint8_t * id_list_ptr, YR_OBJECT* module_object
     block_data_size_remaining -= sizeof(item_id_size);
   }
 
-  set_integer(num_item_ids, module_object, "number_of_item_ids");
+  if (extra_data) {
+    set_integer(num_item_ids, module_object, "vista_and_above_id_list_data.number_of_item_ids");
+  }
+  else {
+    set_integer(num_item_ids, module_object, "number_of_item_ids");
+  }
 
   return 1;
 }
@@ -329,7 +356,7 @@ unsigned int parse_link_target_id_list(const uint8_t * link_target_id_list_ptr, 
   // Get pointer to start of IDList
   link_target_id_list_ptr += sizeof(id_list_size);
 
-  if (!parse_id_list(link_target_id_list_ptr, module_object, block_data_size_remaining)) {
+  if (!parse_id_list(link_target_id_list_ptr, module_object, block_data_size_remaining, false)) {
     return 0;
   }
 
@@ -924,6 +951,21 @@ unsigned int parse_tracker_data_block(const uint8_t * extra_block_ptr, YR_OBJECT
   return 1;
 }
 
+unsigned int parse_vista_and_above_id_list_data_block(const uint8_t * extra_block_ptr, YR_OBJECT* module_object, int block_data_size_remaining, uint32_t extra_data_block_size, uint32_t extra_data_block_signature) {
+  
+  if (block_data_size_remaining < extra_data_block_size - sizeof(extra_data_block_size) - sizeof(extra_data_block_signature)) {
+    return 0;
+  }
+
+  set_integer(extra_data_block_size, module_object, "vista_and_above_id_list_data.block_size");
+  set_integer(extra_data_block_signature, module_object, "vista_and_above_id_list_data.block_signature");
+  if (!parse_id_list(extra_block_ptr, module_object, block_data_size_remaining, true)) {
+    return 0;
+  }
+
+  return 1;
+}
+
 unsigned int parse_extra_block(const uint8_t * extra_block_ptr, YR_OBJECT* module_object, int block_data_size_remaining, uint32_t extra_data_block_size, uint32_t extra_data_block_signature) {
   // Ignore PropertyStore for now
   // Docs: https://winprotocoldoc.blob.core.windows.net/productionwindowsarchives/MS-PROPSTORE/%5bMS-PROPSTORE%5d.pdf
@@ -1040,11 +1082,14 @@ unsigned int parse_extra_block(const uint8_t * extra_block_ptr, YR_OBJECT* modul
       break;
 
     case VistaAndAboveIDListDataBlockSignature:
-      //if (extra_data_block_size >= VistaAndAboveIDListDataBlockMinSize && 
-      //    parse_tracker_data_block(extra_block_ptr, module_object, block_data_size_remaining)) {
-      //      return 1;
-      //    }
-      return 1;
+      if (extra_data_block_size >= VistaAndAboveIDListDataBlockMinSize && 
+          parse_vista_and_above_id_list_data_block(extra_block_ptr, 
+                                                   module_object, 
+                                                   block_data_size_remaining,
+                                                   extra_data_block_size,
+                                                   extra_data_block_signature)) {
+            return 1;
+          }
       break;
 
     default:
