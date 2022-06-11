@@ -230,6 +230,8 @@ begin_declarations
 
   declare_integer("has_overlay");
   declare_integer("overlay_offset");
+
+  declare_integer("is_malformed");
 end_declarations
 
 unsigned int parse_link_target_id_list(const uint8_t * link_target_id_list_ptr, YR_OBJECT* module_object, int block_data_size_remaining) {
@@ -518,6 +520,10 @@ unsigned int parse_link_info(const uint8_t * link_info_ptr, YR_OBJECT* module_ob
 
     volume_id_size = parse_volume_id(link_info_ptr, module_object, block_data_size_remaining);
 
+    if (volume_id_size == 0) {
+      return 0;
+    }
+
     link_info_ptr += volume_id_size;
     block_data_size_remaining -= volume_id_size;
   }
@@ -541,6 +547,10 @@ unsigned int parse_link_info(const uint8_t * link_info_ptr, YR_OBJECT* module_ob
 
   if (link_info_fixed_header->common_network_relative_link_offset) {
     common_network_relative_link_size = parse_common_network_relative_link(link_info_ptr, module_object, block_data_size_remaining);
+
+    if (common_network_relative_link_size == 0) {
+      return 0;
+    }
 
     link_info_ptr += common_network_relative_link_size;
     block_data_size_remaining -= common_network_relative_link_size;
@@ -1087,7 +1097,10 @@ int module_load(
 
         id_list_size = parse_link_target_id_list(current_location, module_object, block_data_size_remaining);
 
+        printf("%d\n", id_list_size);
+
         if (id_list_size == 0) {
+          set_integer(1, module_object, "is_malformed");
           return ERROR_SUCCESS;
         }
 
@@ -1099,6 +1112,7 @@ int module_load(
         link_info_size = parse_link_info(current_location, module_object, block_data_size_remaining);
 
         if (link_info_size == 0) {
+          set_integer(1, module_object, "is_malformed");
           return ERROR_SUCCESS;
         }
 
@@ -1111,6 +1125,7 @@ int module_load(
         string_data_size = parse_string_data(current_location, module_object, block_data_size_remaining, "name_string");
 
         if (string_data_size == 0) {
+          set_integer(1, module_object, "is_malformed");
           return ERROR_SUCCESS;
         }
 
@@ -1123,6 +1138,7 @@ int module_load(
         string_data_size = parse_string_data(current_location, module_object, block_data_size_remaining, "relative_path");
 
         if (string_data_size == 0) {
+          set_integer(1, module_object, "is_malformed");
           return ERROR_SUCCESS;
         }
 
@@ -1135,6 +1151,7 @@ int module_load(
         string_data_size = parse_string_data(current_location, module_object, block_data_size_remaining, "working_dir");
 
         if (string_data_size == 0) {
+          set_integer(1, module_object, "is_malformed");
           return ERROR_SUCCESS;
         }
 
@@ -1147,6 +1164,7 @@ int module_load(
         string_data_size = parse_string_data(current_location, module_object, block_data_size_remaining, "command_line_arguments");
 
         if (string_data_size == 0) {
+          set_integer(1, module_object, "is_malformed");
           return ERROR_SUCCESS;
         }
 
@@ -1159,6 +1177,7 @@ int module_load(
         string_data_size = parse_string_data(current_location, module_object, block_data_size_remaining, "icon_location");
 
         if (string_data_size == 0) {
+          set_integer(1, module_object, "is_malformed");
           return ERROR_SUCCESS;
         }
 
@@ -1168,6 +1187,7 @@ int module_load(
 
       // Parse ExtraData
       if (block_data_size_remaining < sizeof(extra_data_block_size)) {
+        set_integer(1, module_object, "is_malformed");
         return ERROR_SUCCESS;
       }
 
@@ -1181,6 +1201,7 @@ int module_load(
         block_data_size_remaining -= sizeof(extra_data_block_size);
 
         if (block_data_size_remaining < sizeof(extra_data_block_signature)) {
+          set_integer(1, module_object, "is_malformed");
           return ERROR_SUCCESS;
         }
 
@@ -1202,6 +1223,7 @@ int module_load(
         block_data_size_remaining -= extra_data_block_size - sizeof(extra_data_block_size) - sizeof(extra_data_block_signature);
 
         if (block_data_size_remaining < sizeof(extra_data_block_size)) {
+          set_integer(1, module_object, "is_malformed");
           return ERROR_SUCCESS;
         }
 
@@ -1222,6 +1244,9 @@ int module_load(
   else {
     set_integer(0, module_object, "has_overlay");
   }
+
+  // If all parsing successful, say that the LNK isn't malformed
+  set_integer(0, module_object, "is_malformed");
 
   return ERROR_SUCCESS;
 }

@@ -312,6 +312,15 @@ int main(int argc, char** argv)
       }",
       "tests/data/lnk-network");
 
+  // VolumeID has been set from 0x11 to an impossibly large value 0xFFFFFFFF
+  assert_true_rule_file(
+      "import \"lnk\" \
+      rule malformed_lnk { \
+        condition: \
+          lnk.is_malformed \
+      }",
+      "tests/data/lnk-malformed");
+
   yr_finalize();
 
   YR_DEBUG_FPRINTF(
