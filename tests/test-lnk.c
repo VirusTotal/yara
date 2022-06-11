@@ -321,6 +321,14 @@ int main(int argc, char** argv)
       }",
       "tests/data/lnk-malformed");
 
+  assert_true_rule_file(
+      "import \"lnk\" \
+      rule overlay_lnk { \
+        condition: \
+          lnk.has_overlay and lnk.overlay_offset == 0x1CB \
+      }",
+      "tests/data/lnk-overlay");
+
   yr_finalize();
 
   YR_DEBUG_FPRINTF(
