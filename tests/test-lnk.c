@@ -242,6 +242,22 @@ int main(int argc, char** argv)
 
   assert_true_rule_file(
       "import \"lnk\" \
+      rule tracker_data_block_size { \
+        condition: \
+          lnk.tracker_data.block_size == 0x60 \
+      }",
+      "tests/data/lnk-standard");
+
+  assert_true_rule_file(
+      "import \"lnk\" \
+      rule tracker_data_block_signature { \
+        condition: \
+          lnk.tracker_data.block_signature == 0xA0000003 \
+      }",
+      "tests/data/lnk-standard");
+
+  assert_true_rule_file(
+      "import \"lnk\" \
       rule machine_id { \
         condition: \
           lnk.tracker_data.machine_id == \"chris-xps\" \

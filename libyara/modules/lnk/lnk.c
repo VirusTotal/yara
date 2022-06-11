@@ -180,6 +180,8 @@ begin_declarations
   declare_string("icon_location");
 
   begin_struct("console_data");
+    declare_integer("block_size");
+    declare_integer("block_signature");
     declare_integer("fill_attributes");
     declare_integer("popup_fill_attributes");
     declare_integer("screen_buffer_size_x");
@@ -204,12 +206,21 @@ begin_declarations
   end_struct("console_data");
 
   begin_struct("console_fed_data");
+    declare_integer("block_size");
+    declare_integer("block_signature");
     declare_integer("code_page");
   end_struct("console_fed_data");
 
+  begin_struct("darwin_data");
+    declare_integer("block_size");
+    declare_integer("block_signature");
+    declare_integer("darwin_data_ansi");
+    declare_integer("darwin_data_unicode");
+  end_struct("darwin_data");
+
   begin_struct("tracker_data");
-    declare_integer("extra_data_block_size");
-    declare_integer("extra_data_block_signature");
+    declare_integer("block_size");
+    declare_integer("block_signature");
     declare_string("machine_id");
     declare_string("droid_volume_identifier");
     declare_string("droid_file_identifier");
@@ -677,8 +688,8 @@ unsigned int parse_console_data_block(const uint8_t * extra_block_ptr, YR_OBJECT
 
   memcpy(&console_data_block, (console_data_block_t*)extra_block_ptr, sizeof(console_data_block_t));
 
-  set_integer(extra_data_block_size, module_object, "console_data.extra_data_block_size");
-  set_integer(extra_data_block_signature, module_object, "console_data.extra_data_block_signature");
+  set_integer(extra_data_block_size, module_object, "console_data.block_size");
+  set_integer(extra_data_block_signature, module_object, "console_data.block_signature");
   set_integer(console_data_block.fill_attributes, module_object, "console_data.fill_attributes");
   set_integer(console_data_block.popup_fill_attributes, module_object, "console_data.popup_fill_attributes");
   set_integer(console_data_block.screen_buffer_size_x, module_object, "console_data.screen_buffer_size_x");
@@ -716,9 +727,26 @@ unsigned int parse_console_fed_data_block(const uint8_t * extra_block_ptr, YR_OB
 
   memcpy(&console_fed_data, (console_fed_data_block_t*)extra_block_ptr, sizeof(console_fed_data_block_t));
 
-  set_integer(extra_data_block_size, module_object, "console_fed_data.extra_data_block_size");
-  set_integer(extra_data_block_signature, module_object, "console_fed_data.extra_data_block_signature");
+  set_integer(extra_data_block_size, module_object, "console_fed_data.block_size");
+  set_integer(extra_data_block_signature, module_object, "console_fed_data.block_signature");
   set_integer(console_fed_data.code_page, module_object, "console_fed_data.code_page");
+
+  return 1;
+}
+
+unsigned int parse_darwin_data_block(const uint8_t * extra_block_ptr, YR_OBJECT* module_object, int block_data_size_remaining, uint32_t extra_data_block_size, uint32_t extra_data_block_signature) {
+  darwin_data_block_t darwin_data;
+
+  if (block_data_size_remaining < sizeof(darwin_data_block_t)) {
+    return 0;
+  }
+
+  memcpy(&darwin_data, (darwin_data_block_t*)extra_block_ptr, sizeof(darwin_data_block_t));
+
+  set_integer(extra_data_block_size, module_object, "darwin_data.block_size");
+  set_integer(extra_data_block_signature, module_object, "darwin_data.block_signature");
+  set_string(darwin_data.darwin_data_ansi, module_object, "darwin_data.darwin_data_ansi");
+  set_sized_string((char *)darwin_data.darwin_data_unicode, wcslen(darwin_data.darwin_data_unicode)*2, module_object, "darwin_data.darwin_data_unicode");
 
   return 1;
 }
@@ -732,8 +760,8 @@ unsigned int parse_tracker_data_block(const uint8_t * extra_block_ptr, YR_OBJECT
 
   memcpy(&tracker_data_block, (tracker_data_block_t*)extra_block_ptr, sizeof(tracker_data_block_t));
 
-  set_integer(extra_data_block_size, module_object, "tracker_data.extra_data_block_size");
-  set_integer(extra_data_block_signature, module_object, "tracker_data.extra_data_block_signature");
+  set_integer(extra_data_block_size, module_object, "tracker_data.block_size");
+  set_integer(extra_data_block_signature, module_object, "tracker_data.block_signature");
   set_string(tracker_data_block.machine_id, module_object, "tracker_data.machine_id");
   set_sized_string((char *)tracker_data_block.droid_volume_identifier, sizeof(tracker_data_block.droid_volume_identifier), module_object, "tracker_data.droid_volume_identifier");
   set_sized_string((char *)tracker_data_block.droid_file_identifier, sizeof(tracker_data_block.droid_file_identifier), module_object, "tracker_data.droid_file_identifier");
@@ -772,10 +800,14 @@ unsigned int parse_extra_block(const uint8_t * extra_block_ptr, YR_OBJECT* modul
       break;
 
     case DarwinDataBlockSignature:
-      //if (extra_data_block_size == DarwinDataBlockSize && 
-      //    parse_tracker_data_block(extra_block_ptr, module_object, block_data_size_remaining)) {
-      //      return 1;
-      //    }
+      if (extra_data_block_size == DarwinDataBlockSize && 
+          parse_darwin_data_block(extra_block_ptr, 
+                                  module_object, 
+                                  block_data_size_remaining,
+                                  extra_data_block_size,
+                                  extra_data_block_signature)) {
+            return 1;
+          }
       return 1;
       break;
 
