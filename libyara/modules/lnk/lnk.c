@@ -225,6 +225,13 @@ begin_declarations
     declare_integer("target_unicode");
   end_struct("environment_variable_data");
 
+begin_struct("icon_environment_data");
+    declare_integer("block_size");
+    declare_integer("block_signature");
+    declare_integer("target_ansi");
+    declare_integer("target_unicode");
+  end_struct("icon_environment_data");
+
   begin_struct("tracker_data");
     declare_integer("block_size");
     declare_integer("block_signature");
@@ -785,6 +792,23 @@ unsigned int parse_environment_variable_data_block(const uint8_t * extra_block_p
   return 1;
 }
 
+unsigned int parse_icon_environment_data_block(const uint8_t * extra_block_ptr, YR_OBJECT* module_object, int block_data_size_remaining, uint32_t extra_data_block_size, uint32_t extra_data_block_signature) {
+  icon_environment_data_block_t icon_environment_data;
+
+  if (block_data_size_remaining < sizeof(icon_environment_data_block_t)) {
+    return 0;
+  }
+
+  memcpy(&icon_environment_data, (icon_environment_data_block_t*)extra_block_ptr, sizeof(icon_environment_data_block_t));
+
+  set_integer(extra_data_block_size, module_object, "icon_environment_data.block_size");
+  set_integer(extra_data_block_signature, module_object, "icon_environment_data.block_signature");
+  set_string(icon_environment_data.target_ansi, module_object, "icon_environment_data.target_ansi");
+  set_sized_string((char *)icon_environment_data.target_unicode, wcslen(icon_environment_data.target_unicode)*2, module_object, "icon_environment_data.target_unicode");
+
+  return 1;
+}
+
 unsigned int parse_tracker_data_block(const uint8_t * extra_block_ptr, YR_OBJECT* module_object, int block_data_size_remaining, uint32_t extra_data_block_size, uint32_t extra_data_block_signature) {
   tracker_data_block_t tracker_data_block;
 
@@ -855,11 +879,14 @@ unsigned int parse_extra_block(const uint8_t * extra_block_ptr, YR_OBJECT* modul
       break;
 
     case IconEnvironmentDataBlockSignature:
-      //if (extra_data_block_size == IconEnvironmentDataBlockSize && 
-      //    parse_tracker_data_block(extra_block_ptr, module_object, block_data_size_remaining)) {
-      //      return 1;
-      //    }
-      return 1;
+      if (extra_data_block_size == IconEnvironmentDataBlockSize && 
+          parse_icon_environment_data_block(extra_block_ptr, 
+                                         module_object, 
+                                         block_data_size_remaining,
+                                         extra_data_block_size,
+                                         extra_data_block_signature)) {
+            return 1;
+          }
       break;
 
     case KnownFolderDataBlockSignature:
