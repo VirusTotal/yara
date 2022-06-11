@@ -218,6 +218,13 @@ begin_declarations
     declare_integer("darwin_data_unicode");
   end_struct("darwin_data");
 
+  begin_struct("environment_variable_data");
+    declare_integer("block_size");
+    declare_integer("block_signature");
+    declare_integer("target_ansi");
+    declare_integer("target_unicode");
+  end_struct("environment_variable_data");
+
   begin_struct("tracker_data");
     declare_integer("block_size");
     declare_integer("block_signature");
@@ -761,6 +768,23 @@ unsigned int parse_darwin_data_block(const uint8_t * extra_block_ptr, YR_OBJECT*
   return 1;
 }
 
+unsigned int parse_environment_variable_data_block(const uint8_t * extra_block_ptr, YR_OBJECT* module_object, int block_data_size_remaining, uint32_t extra_data_block_size, uint32_t extra_data_block_signature) {
+  environment_variable_data_block_t environment_variable_data;
+
+  if (block_data_size_remaining < sizeof(environment_variable_data_block_t)) {
+    return 0;
+  }
+
+  memcpy(&environment_variable_data, (environment_variable_data_block_t*)extra_block_ptr, sizeof(environment_variable_data_block_t));
+
+  set_integer(extra_data_block_size, module_object, "environment_variable_data.block_size");
+  set_integer(extra_data_block_signature, module_object, "environment_variable_data.block_signature");
+  set_string(environment_variable_data.target_ansi, module_object, "environment_variable_data.target_ansi");
+  set_sized_string((char *)environment_variable_data.target_unicode, wcslen(environment_variable_data.target_unicode)*2, module_object, "environment_variable_data.target_unicode");
+
+  return 1;
+}
+
 unsigned int parse_tracker_data_block(const uint8_t * extra_block_ptr, YR_OBJECT* module_object, int block_data_size_remaining, uint32_t extra_data_block_size, uint32_t extra_data_block_signature) {
   tracker_data_block_t tracker_data_block;
 
@@ -806,7 +830,6 @@ unsigned int parse_extra_block(const uint8_t * extra_block_ptr, YR_OBJECT* modul
                                        extra_data_block_signature)) {
             return 1;
           }
-      return 1;
       break;
 
     case DarwinDataBlockSignature:
@@ -818,15 +841,17 @@ unsigned int parse_extra_block(const uint8_t * extra_block_ptr, YR_OBJECT* modul
                                   extra_data_block_signature)) {
             return 1;
           }
-      return 1;
       break;
 
     case EnvironmentVariableDataBlockSignature:
-      //if (extra_data_block_size == EnvironmentVariableDataBlockSize && 
-      //    parse_tracker_data_block(extra_block_ptr, module_object, block_data_size_remaining)) {
-      //      return 1;
-      //    }
-      return 1;
+      if (extra_data_block_size == EnvironmentVariableDataBlockSize && 
+          parse_environment_variable_data_block(extra_block_ptr, 
+                                                module_object, 
+                                                block_data_size_remaining,
+                                                extra_data_block_size,
+                                                extra_data_block_signature)) {
+            return 1;
+          }
       break;
 
     case IconEnvironmentDataBlockSignature:
