@@ -129,15 +129,14 @@ CertificateArray* parse_signer_chain(X509* signCert, STACK_OF(X509) * certs)
 
     int certCount = sk_X509_num(chain);
 
-    CertificateArray* result = (CertificateArray*)malloc(sizeof(*result));
+    CertificateArray* result = (CertificateArray*)calloc(1, sizeof(*result));
     if (!result)
         goto error;
 
-    result->certs = (Certificate**)malloc(sizeof(Certificate*) * certCount);
+    result->certs = (Certificate**)calloc(certCount, sizeof(Certificate*));
     if (!result->certs)
         goto error;
 
-    result->count = 0;
     /* Convert each certificate to internal representation */
     for (int i = 0; i < certCount; ++i) {
         Certificate* cert = certificate_new(sk_X509_value(chain, i));
@@ -153,12 +152,12 @@ CertificateArray* parse_signer_chain(X509* signCert, STACK_OF(X509) * certs)
     return result;
 
 error: /* In case of error, return nothing */
-    free(result);
     if (result) {
         for (size_t i = 0; i < result->count; ++i) {
             certificate_free(result->certs[i]);
         }
         free(result->certs);
+        free(result);
     }
     X509_STORE_free(store);
     X509_STORE_CTX_free(storeCtx);

@@ -174,7 +174,7 @@ void initialize_authenticode_parser();
  * @param pe_len
  * @return AuthenticodeArray*
  */
-AuthenticodeArray* parse_authenticode(const uint8_t* pe_data, long pe_len);
+AuthenticodeArray* parse_authenticode(const uint8_t* pe_data, uint64_t pe_len);
 
 /**
  * @brief Constructs AuthenticodeArray from binary data containing Authenticode

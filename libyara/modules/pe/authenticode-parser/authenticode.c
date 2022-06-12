@@ -302,8 +302,8 @@ AuthenticodeArray* authenticode_new(const uint8_t* data, long len)
 
     Authenticode* auth = (Authenticode*)calloc(1, sizeof(*auth));
     if (!auth) {
-        free(result);
         free(result->signatures);
+        free(result);
         return NULL;
     }
 
@@ -523,9 +523,9 @@ error:
     return 1;
 }
 
-AuthenticodeArray* parse_authenticode(const uint8_t* pe_data, long pe_len)
+AuthenticodeArray* parse_authenticode(const uint8_t* pe_data, uint64_t pe_len)
 {
-    const int dos_hdr_size = 0x40;
+    const uint64_t dos_hdr_size = 0x40;
     if (pe_len < dos_hdr_size)
         return NULL;
 
