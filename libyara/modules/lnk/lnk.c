@@ -124,13 +124,15 @@ begin_declarations
   declare_integer("hotkey_modifier_flags");
   declare_integer("has_hotkey");
 
-  begin_struct_array("item_id_list");
-    declare_integer("size");
-    declare_string("data");
-  end_struct_array("item_id_list");
+  begin_struct("link_target_id_list");
+    begin_struct_array("item_id_list");
+      declare_integer("size");
+      declare_string("data");
+    end_struct_array("item_id_list");
 
-  declare_integer("number_of_item_ids");
-  declare_integer("item_id_list_size");
+    declare_integer("number_of_item_ids");
+    declare_integer("item_id_list_size");
+  end_struct("link_target_id_list");
 
   begin_struct("link_info");
     declare_integer("size");
@@ -302,7 +304,7 @@ unsigned int parse_id_list(const uint8_t * id_list_ptr, YR_OBJECT* module_object
       set_integer(item_id_size - 2, module_object, "vista_and_above_id_list_data.item_id_list[%i].size", num_item_ids);
     }
     else {
-      set_integer(item_id_size - 2, module_object, "item_id_list[%i].size", num_item_ids);
+      set_integer(item_id_size - 2, module_object, "link_target_id_list.item_id_list[%i].size", num_item_ids);
     }
     
     // Get pointer to the ItemID Data
@@ -316,7 +318,7 @@ unsigned int parse_id_list(const uint8_t * id_list_ptr, YR_OBJECT* module_object
       set_sized_string((const char *)item_id_data_ptr, item_id_size-sizeof(item_id_size), module_object, "vista_and_above_id_list_data.item_id_list[%i].data", num_item_ids);
     }
     else {
-      set_sized_string((const char *)item_id_data_ptr, item_id_size-sizeof(item_id_size), module_object, "item_id_list[%i].data", num_item_ids);
+      set_sized_string((const char *)item_id_data_ptr, item_id_size-sizeof(item_id_size), module_object, "link_target_id_list.item_id_list[%i].data", num_item_ids);
     }
     block_data_size_remaining -= item_id_size-sizeof(item_id_size);
 
@@ -335,7 +337,7 @@ unsigned int parse_id_list(const uint8_t * id_list_ptr, YR_OBJECT* module_object
     set_integer(num_item_ids, module_object, "vista_and_above_id_list_data.number_of_item_ids");
   }
   else {
-    set_integer(num_item_ids, module_object, "number_of_item_ids");
+    set_integer(num_item_ids, module_object, "link_target_id_list.number_of_item_ids");
   }
 
   return 1;
@@ -351,7 +353,7 @@ unsigned int parse_link_target_id_list(const uint8_t * link_target_id_list_ptr, 
   memcpy(&id_list_size, link_target_id_list_ptr, sizeof(id_list_size));
   block_data_size_remaining -= sizeof(id_list_size);
 
-  set_integer(id_list_size, module_object, "item_id_list_size");
+  set_integer(id_list_size, module_object, "link_target_id_list.item_id_list_size");
 
   // Get pointer to start of IDList
   link_target_id_list_ptr += sizeof(id_list_size);

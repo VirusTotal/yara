@@ -84,7 +84,7 @@ int main(int argc, char** argv)
       "import \"lnk\" \
       rule item_id_list_size { \
         condition: \
-          lnk.item_id_list_size == 0xBD \
+          lnk.link_target_id_list.item_id_list_size == 0xBD \
       }",
       "tests/data/lnk-standard");
 
@@ -92,7 +92,7 @@ int main(int argc, char** argv)
       "import \"lnk\" \
       rule number_of_item_ids { \
         condition: \
-          lnk.number_of_item_ids == 4 \
+          lnk.link_target_id_list.number_of_item_ids == 4 \
       }",
       "tests/data/lnk-standard");
 
@@ -100,7 +100,7 @@ int main(int argc, char** argv)
       "import \"lnk\" \
       rule item_id_first_element { \
         condition: \
-          lnk.item_id_list[0].size == 0x12 and lnk.item_id_list[0].data == \"\\x1fP\\xe0O\\xd0 \\xea:i\\x10\\xa2\\xd8\\x08\\x00+00\\x9d\" \
+          lnk.link_target_id_list.item_id_list[0].size == 0x12 and lnk.link_target_id_list.item_id_list[0].data == \"\\x1fP\\xe0O\\xd0 \\xea:i\\x10\\xa2\\xd8\\x08\\x00+00\\x9d\" \
       }",
       "tests/data/lnk-standard");
 
@@ -108,7 +108,7 @@ int main(int argc, char** argv)
       "import \"lnk\" \
       rule item_id_first_element { \
         condition: \
-          lnk.item_id_list[3].size == 0x46 and lnk.item_id_list[3].data == \"2\\x00\\x00\\x00\\x00\\x00,9i\\xa3 \\x00a.txt\\x004\\x00\\x07\\x00\\x04\\x00\\xef\\xbe,9i\\xa3,9i\\xa3&\\x00\\x00\\x00-n\\x00\\x00\\x00\\x00\\x96\\x01\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00a\\x00.\\x00t\\x00x\\x00t\\x00\\x00\\x00\\x14\\x00\" \
+          lnk.link_target_id_list.item_id_list[3].size == 0x46 and lnk.link_target_id_list.item_id_list[3].data == \"2\\x00\\x00\\x00\\x00\\x00,9i\\xa3 \\x00a.txt\\x004\\x00\\x07\\x00\\x04\\x00\\xef\\xbe,9i\\xa3,9i\\xa3&\\x00\\x00\\x00-n\\x00\\x00\\x00\\x00\\x96\\x01\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00a\\x00.\\x00t\\x00x\\x00t\\x00\\x00\\x00\\x14\\x00\" \
       }",
       "tests/data/lnk-standard");
 
