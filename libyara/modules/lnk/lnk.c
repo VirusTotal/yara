@@ -1301,8 +1301,6 @@ int module_load(
 
         id_list_size = parse_link_target_id_list(current_location, module_object, block_data_size_remaining);
 
-        printf("%d\n", id_list_size);
-
         if (id_list_size == 0) {
           set_integer(1, module_object, "is_malformed");
           return ERROR_SUCCESS;
