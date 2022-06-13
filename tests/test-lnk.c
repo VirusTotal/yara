@@ -361,6 +361,30 @@ int main(int argc, char** argv)
       }",
       "tests/data/lnk-extradata-1");
 
+  assert_true_rule_file(
+      "import \"lnk\" \
+      rule icon_environment_data_target_ansi { \
+        condition: \
+          lnk.icon_environment_data.target_ansi == \"%ProgramFiles%\\\\PeaZip\\\\res\\\\icons\\\\peazip_new.icl\" \
+      }",
+      "tests/data/lnk-extradata-2");
+
+  assert_true_rule_file(
+      "import \"lnk\" \
+      rule known_folder_offset { \
+        condition: \
+          lnk.known_folder_data.offset == 177 \
+      }",
+      "tests/data/lnk-extradata-2");
+
+  assert_true_rule_file(
+      "import \"lnk\" \
+      rule known_folder_id { \
+        condition: \
+          lnk.known_folder_data.known_folder_id[15] == 142 \
+      }",
+      "tests/data/lnk-extradata-2");
+
   yr_finalize();
 
   YR_DEBUG_FPRINTF(
