@@ -101,7 +101,7 @@ typedef struct _environment_variable_data_block_t
 typedef struct _icon_environment_data_block_t
 {
   char target_ansi[260];
-  wchar_t target_unicode[260];
+  uint16_t target_unicode[260];
 } icon_environment_data_block_t;
 
 typedef struct _known_folder_data_block_t

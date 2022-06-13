@@ -892,7 +892,7 @@ unsigned int parse_icon_environment_data_block(const uint8_t * extra_block_ptr, 
   set_integer(extra_data_block_size, module_object, "icon_environment_data.block_size");
   set_integer(extra_data_block_signature, module_object, "icon_environment_data.block_signature");
   set_string(icon_environment_data.target_ansi, module_object, "icon_environment_data.target_ansi");
-  set_sized_string((char *)icon_environment_data.target_unicode, wcslen(icon_environment_data.target_unicode)*2, module_object, "icon_environment_data.target_unicode");
+  set_sized_string((char *)icon_environment_data.target_unicode, wcslen((wchar_t*)icon_environment_data.target_unicode)*2, module_object, "icon_environment_data.target_unicode");
 
   return 1;
 }
