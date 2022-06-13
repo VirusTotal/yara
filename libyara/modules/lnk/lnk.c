@@ -1419,42 +1419,7 @@ int module_load(
       }
 
       // Parse ExtraData
-      if (block_data_size_remaining < sizeof(extra_data_block_size)) {
-        set_integer(1, module_object, "is_malformed");
-        return ERROR_SUCCESS;
-      }
-
-      memcpy(&extra_data_block_size, current_location, sizeof(extra_data_block_size));
-      current_location += sizeof(extra_data_block_size);
-
-      // The TerminalBlock must be less than 0x04, so iterate until we find it (or run out of space)
-      while (extra_data_block_size >= 0x04) {
-
-        // Only do this in the loop so we don't overshoot the end of the block
-        block_data_size_remaining -= sizeof(extra_data_block_size);
-
-        if (block_data_size_remaining < sizeof(extra_data_block_signature)) {
-          set_integer(1, module_object, "is_malformed");
-          return ERROR_SUCCESS;
-        }
-
-        memcpy(&extra_data_block_signature, current_location, sizeof(extra_data_block_signature));
-        current_location += sizeof(extra_data_block_signature);
-        block_data_size_remaining -= sizeof(extra_data_block_signature);
-
-        if (!parse_extra_block(current_location, 
-             module_object, 
-             block_data_size_remaining,
-             extra_data_block_size, 
-             extra_data_block_signature)
-        ) {
-          break;
-        }
-
-        // Don't add/take away the block size + signature, as those have already been dealt with
-        current_location += extra_data_block_size - sizeof(extra_data_block_size) - sizeof(extra_data_block_signature);
-        block_data_size_remaining -= extra_data_block_size - sizeof(extra_data_block_size) - sizeof(extra_data_block_signature);
-
+      if (block_data_size_remaining > 0) {
         if (block_data_size_remaining < sizeof(extra_data_block_size)) {
           set_integer(1, module_object, "is_malformed");
           return ERROR_SUCCESS;
@@ -1462,12 +1427,51 @@ int module_load(
 
         memcpy(&extra_data_block_size, current_location, sizeof(extra_data_block_size));
         current_location += sizeof(extra_data_block_size);
+
+        // The TerminalBlock must be less than 0x04, so iterate until we find it (or run out of space)
+        while (extra_data_block_size >= 0x04) {
+
+          // Only do this in the loop so we don't overshoot the end of the block
+          block_data_size_remaining -= sizeof(extra_data_block_size);
+
+          if (block_data_size_remaining < sizeof(extra_data_block_signature)) {
+            set_integer(1, module_object, "is_malformed");
+            return ERROR_SUCCESS;
+          }
+
+          memcpy(&extra_data_block_signature, current_location, sizeof(extra_data_block_signature));
+          current_location += sizeof(extra_data_block_signature);
+          block_data_size_remaining -= sizeof(extra_data_block_signature);
+
+          if (!parse_extra_block(current_location, 
+               module_object, 
+               block_data_size_remaining,
+               extra_data_block_size, 
+               extra_data_block_signature)
+          ) {
+            break;
+          }
+
+          // Don't add/take away the block size + signature, as those have already been dealt with
+          current_location += extra_data_block_size - sizeof(extra_data_block_size) - sizeof(extra_data_block_signature);
+          block_data_size_remaining -= extra_data_block_size - sizeof(extra_data_block_size) - sizeof(extra_data_block_signature);
+
+          if (block_data_size_remaining < sizeof(extra_data_block_size)) {
+            set_integer(1, module_object, "is_malformed");
+            return ERROR_SUCCESS;
+          }
+
+          memcpy(&extra_data_block_size, current_location, sizeof(extra_data_block_size));
+          current_location += sizeof(extra_data_block_size);
+        }
+        
+        // Finally, take away size of the TerminalBlock
+        block_data_size_remaining -= 4;
       }
     }
   }
 
-  // Finally, take away size of the TerminalBlock
-  block_data_size_remaining -= 4;
+  
 
   if (block_data_size_remaining > 0) {
     set_integer(1, module_object, "has_overlay");
