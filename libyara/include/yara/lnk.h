@@ -69,7 +69,7 @@ typedef struct _console_data_block_t
   uint32_t font_size;
   uint32_t font_family;
   uint32_t font_weight;
-  wchar_t face_name[32];
+  uint16_t face_name[32];
   uint32_t cursor_size;
   uint32_t full_screen;
   uint32_t quick_edit;
@@ -89,7 +89,7 @@ typedef struct _console_fed_data_block_t
 typedef struct _darwin_data_block_t
 {
   char darwin_data_ansi[260];
-  wchar_t darwin_data_unicode[260];
+  uint16_t darwin_data_unicode[260];
 } darwin_data_block_t;
 
 typedef struct _environment_variable_data_block_t

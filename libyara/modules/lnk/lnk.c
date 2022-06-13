@@ -813,7 +813,7 @@ unsigned int parse_console_data_block(const uint8_t * extra_block_ptr, YR_OBJECT
   set_integer(console_data_block.font_size, module_object, "console_data.font_size");
   set_integer(console_data_block.font_family, module_object, "console_data.font_family");
   set_integer(console_data_block.font_weight, module_object, "console_data.font_weight");
-  set_sized_string((char *)console_data_block.face_name, sizeof(console_data_block.face_name), module_object, "console_data.face_name");
+  set_sized_string((char *)console_data_block.face_name, wcslen((wchar_t*)console_data_block.face_name), module_object, "console_data.face_name");
   set_integer(console_data_block.cursor_size, module_object, "console_data.cursor_size");
   set_integer(console_data_block.full_screen, module_object, "console_data.full_screen");
   set_integer(console_data_block.quick_edit, module_object, "console_data.quick_edit");
@@ -858,7 +858,7 @@ unsigned int parse_darwin_data_block(const uint8_t * extra_block_ptr, YR_OBJECT*
   set_integer(extra_data_block_size, module_object, "darwin_data.block_size");
   set_integer(extra_data_block_signature, module_object, "darwin_data.block_signature");
   set_string(darwin_data.darwin_data_ansi, module_object, "darwin_data.darwin_data_ansi");
-  set_sized_string((char *)darwin_data.darwin_data_unicode, wcslen(darwin_data.darwin_data_unicode)*2, module_object, "darwin_data.darwin_data_unicode");
+  set_sized_string((char *)darwin_data.darwin_data_unicode, wcslen((wchar_t*)darwin_data.darwin_data_unicode)*2, module_object, "darwin_data.darwin_data_unicode");
 
   return 1;
 }
