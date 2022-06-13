@@ -875,7 +875,7 @@ unsigned int parse_environment_variable_data_block(const uint8_t * extra_block_p
   set_integer(extra_data_block_size, module_object, "environment_variable_data.block_size");
   set_integer(extra_data_block_signature, module_object, "environment_variable_data.block_signature");
   set_string(environment_variable_data.target_ansi, module_object, "environment_variable_data.target_ansi");
-  set_sized_string((char *)environment_variable_data.target_unicode, wcslen(environment_variable_data.target_unicode)*2, module_object, "environment_variable_data.target_unicode");
+  set_sized_string((char *)environment_variable_data.target_unicode, wcslen((wchar_t*)environment_variable_data.target_unicode)*2, module_object, "environment_variable_data.target_unicode");
 
   return 1;
 }
