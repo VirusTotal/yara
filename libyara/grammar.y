@@ -2136,7 +2136,7 @@ range
           if ($2.value.integer > $4.value.integer)
           {
             yr_compiler_set_error_extra_info(
-                compiler, "range lower bound must be greater than upper bound");
+                compiler, "range lower bound must be less than upper bound");
             result = ERROR_INVALID_VALUE;
           } else if ($2.value.integer < 0)
           {

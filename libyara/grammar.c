@@ -4192,7 +4192,7 @@ yyreduce:
           if ((yyvsp[-3].expression).value.integer > (yyvsp[-1].expression).value.integer)
           {
             yr_compiler_set_error_extra_info(
-                compiler, "range lower bound must be greater than upper bound");
+                compiler, "range lower bound must be less than upper bound");
             result = ERROR_INVALID_VALUE;
           } else if ((yyvsp[-3].expression).value.integer < 0)
           {
