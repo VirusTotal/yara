@@ -732,14 +732,14 @@ unsigned int parse_link_info(const uint8_t * link_info_ptr, YR_OBJECT* module_ob
   return (int)link_info_fixed_header->link_info_size;
 }
 
-unsigned int parse_string_data(const uint8_t * string_data_ptr, YR_OBJECT* module_object, int block_data_size_remaining, const char* name) {
+unsigned int parse_string_data(const uint8_t * string_data_ptr, YR_OBJECT* module_object, int block_data_size_remaining, const char* name, bool is_unicode) {
   uint16_t count_characters;
+  unsigned int string_size;
 
-  // For the sake of this module we will assume the StringData is unicode. Technically,
-  // it can be whatever the default code page is for the system the LNK was generated
-  // on; but that would be much more complicated to parse at the time.
-  // Frustratingly, the CountCharacters value doesn't return the absolute size of the
-  // data, but rather that number of characters, so we'd have to "guess" either way.
+  // CountCharacters only returns the number of characters in the string, but not information
+  // on whether the string is unicode vs. another type of string. The IsUnicode flag will tell
+  // us if the StringData values are unicode, and if it is not set, we'll assume it is ascii
+  // (although it can be whatever is the default codepage from where the LNK is generated)
 
   if (block_data_size_remaining < sizeof(count_characters)) {
     return 0;
@@ -749,37 +749,45 @@ unsigned int parse_string_data(const uint8_t * string_data_ptr, YR_OBJECT* modul
   string_data_ptr += sizeof(count_characters);
   block_data_size_remaining -= sizeof(count_characters);
 
-  if (block_data_size_remaining < count_characters * 2) {
-    return 0;
+  if (is_unicode) {
+    if (block_data_size_remaining < count_characters * 2) {
+      return 0;
+    }
+
+    string_size = count_characters * 2;
+  }
+
+  else {
+    string_size = count_characters;
   }
 
   // Do these extra comparisons due to "format not a string literal and no format arguments" 
   // error on compilation
   if (strcmp(name, "name_string") == 0){
-    set_sized_string((char *)string_data_ptr, count_characters * 2, module_object, "name_string");
+    set_sized_string((char *)string_data_ptr, string_size, module_object, "name_string");
   }
 
   else if (strcmp(name, "relative_path") == 0){
-    set_sized_string((char *)string_data_ptr, count_characters * 2, module_object, "relative_path");
+    set_sized_string((char *)string_data_ptr, string_size, module_object, "relative_path");
   }
 
   else if (strcmp(name, "working_dir") == 0){
-    set_sized_string((char *)string_data_ptr, count_characters * 2, module_object, "working_dir");
+    set_sized_string((char *)string_data_ptr, string_size, module_object, "working_dir");
   }
 
   else if (strcmp(name, "command_line_arguments") == 0){
-    set_sized_string((char *)string_data_ptr, count_characters * 2, module_object, "command_line_arguments");
+    set_sized_string((char *)string_data_ptr, string_size, module_object, "command_line_arguments");
   }
 
   else if (strcmp(name, "icon_location") == 0){
-    set_sized_string((char *)string_data_ptr, count_characters * 2, module_object, "icon_location");
+    set_sized_string((char *)string_data_ptr, string_size, module_object, "icon_location");
   }
 
   else {
     return 0;
   }
 
-  return (count_characters * 2) + sizeof(count_characters);
+  return string_size + sizeof(count_characters);
 }
 
 unsigned int parse_console_data_block(const uint8_t * extra_block_ptr, YR_OBJECT* module_object, int block_data_size_remaining, uint32_t extra_data_block_size, uint32_t extra_data_block_signature) {
@@ -1347,7 +1355,7 @@ int module_load(
 
       // NAME_STRING
       if (lnk_header->link_flags & HasName) {
-        string_data_size = parse_string_data(current_location, module_object, block_data_size_remaining, "name_string");
+        string_data_size = parse_string_data(current_location, module_object, block_data_size_remaining, "name_string", lnk_header->link_flags & IsUnicode);
 
         if (string_data_size == 0) {
           set_integer(1, module_object, "is_malformed");
@@ -1360,7 +1368,7 @@ int module_load(
 
       // RELATIVE_PATH
       if (lnk_header->link_flags & HasRelativePath) {
-        string_data_size = parse_string_data(current_location, module_object, block_data_size_remaining, "relative_path");
+        string_data_size = parse_string_data(current_location, module_object, block_data_size_remaining, "relative_path", lnk_header->link_flags & IsUnicode);
 
         if (string_data_size == 0) {
           set_integer(1, module_object, "is_malformed");
@@ -1373,7 +1381,7 @@ int module_load(
 
       // WORKING_DIR
       if (lnk_header->link_flags & HasWorkingDir) {
-        string_data_size = parse_string_data(current_location, module_object, block_data_size_remaining, "working_dir");
+        string_data_size = parse_string_data(current_location, module_object, block_data_size_remaining, "working_dir", lnk_header->link_flags & IsUnicode);
 
         if (string_data_size == 0) {
           set_integer(1, module_object, "is_malformed");
@@ -1386,7 +1394,7 @@ int module_load(
 
       // COMMAND_LINK_ARGUMENTS
       if (lnk_header->link_flags & HasArguments) {
-        string_data_size = parse_string_data(current_location, module_object, block_data_size_remaining, "command_line_arguments");
+        string_data_size = parse_string_data(current_location, module_object, block_data_size_remaining, "command_line_arguments", lnk_header->link_flags & IsUnicode);
 
         if (string_data_size == 0) {
           set_integer(1, module_object, "is_malformed");
@@ -1399,7 +1407,7 @@ int module_load(
 
       // ICON_LOCATION
       if (lnk_header->link_flags & HasIconLocation) {
-        string_data_size = parse_string_data(current_location, module_object, block_data_size_remaining, "icon_location");
+        string_data_size = parse_string_data(current_location, module_object, block_data_size_remaining, "icon_location", lnk_header->link_flags & IsUnicode);
 
         if (string_data_size == 0) {
           set_integer(1, module_object, "is_malformed");
