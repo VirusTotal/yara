@@ -219,22 +219,22 @@ begin_declarations
   begin_struct("darwin_data");
     declare_integer("block_size");
     declare_integer("block_signature");
-    declare_integer("darwin_data_ansi");
-    declare_integer("darwin_data_unicode");
+    declare_string("darwin_data_ansi");
+    declare_string("darwin_data_unicode");
   end_struct("darwin_data");
 
   begin_struct("environment_variable_data");
     declare_integer("block_size");
     declare_integer("block_signature");
-    declare_integer("target_ansi");
-    declare_integer("target_unicode");
+    declare_string("target_ansi");
+    declare_string("target_unicode");
   end_struct("environment_variable_data");
 
   begin_struct("icon_environment_data");
     declare_integer("block_size");
     declare_integer("block_signature");
-    declare_integer("target_ansi");
-    declare_integer("target_unicode");
+    declare_string("target_ansi");
+    declare_string("target_unicode");
   end_struct("icon_environment_data");
 
   begin_struct("known_folder_data");
