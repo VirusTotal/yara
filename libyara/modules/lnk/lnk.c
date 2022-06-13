@@ -1468,22 +1468,20 @@ int module_load(
         // Finally, take away size of the TerminalBlock
         block_data_size_remaining -= 4;
       }
-    }
+
+      if (block_data_size_remaining > 0) {
+        set_integer(1, module_object, "has_overlay");
+        set_integer(block->size - block_data_size_remaining, module_object, "overlay_offset");
+      }
+
+      else {
+        set_integer(0, module_object, "has_overlay");
+      }
+
+      // If all parsing successful, say that the LNK isn't malformed
+      set_integer(0, module_object, "is_malformed");
+    }    
   }
-
-  
-
-  if (block_data_size_remaining > 0) {
-    set_integer(1, module_object, "has_overlay");
-    set_integer(block->size - block_data_size_remaining, module_object, "overlay_offset");
-  }
-
-  else {
-    set_integer(0, module_object, "has_overlay");
-  }
-
-  // If all parsing successful, say that the LNK isn't malformed
-  set_integer(0, module_object, "is_malformed");
 
   return ERROR_SUCCESS;
 }
