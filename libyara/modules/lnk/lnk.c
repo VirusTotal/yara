@@ -581,17 +581,48 @@ unsigned int parse_link_info(const uint8_t * link_info_ptr, YR_OBJECT* module_ob
   //   if LinkInfoHeaderSize > 0x24:
   //     LocalBasePathOffsetUnicode is 0
 
-  if (link_info_fixed_header->link_info_flags & VolumeIDAndLocalBasePath &&
-      link_info_fixed_header->link_info_header_size >= 0x24) {
+  if (link_info_fixed_header->link_info_flags & VolumeIDAndLocalBasePath) {
 
-    if (block_data_size_remaining < sizeof(local_base_path_offset_unicode)) {
-      return 0;
+    if (link_info_fixed_header->link_info_header_size >= 0x24) {
+
+      if (block_data_size_remaining < sizeof(local_base_path_offset_unicode)) {
+        return 0;
+      }
+
+      memcpy(&local_base_path_offset_unicode, link_info_ptr, sizeof(local_base_path_offset_unicode));
+      set_integer(local_base_path_offset_unicode, module_object, "link_info.local_base_path_offset_unicode");
+      link_info_ptr += sizeof(local_base_path_offset_unicode);
+      block_data_size_remaining -= sizeof(local_base_path_offset_unicode);
     }
 
-    memcpy(&local_base_path_offset_unicode, link_info_ptr, sizeof(local_base_path_offset_unicode));
-    set_integer(local_base_path_offset_unicode, module_object, "link_info.local_base_path_offset_unicode");
-    link_info_ptr += sizeof(local_base_path_offset_unicode);
-    block_data_size_remaining -= sizeof(local_base_path_offset_unicode);
+    if (link_info_fixed_header->volume_id_offset) {
+
+      volume_id_size = parse_volume_id(link_info_ptr, module_object, block_data_size_remaining);
+
+      if (volume_id_size == 0) {
+        return 0;
+      }
+
+      link_info_ptr += volume_id_size;
+      block_data_size_remaining -= volume_id_size;
+    }
+
+    // Handle LocalBasePath
+    if (link_info_fixed_header->local_base_path_offset) {
+
+      local_base_path_len = strlen((const char *)link_info_ptr);
+
+      if (block_data_size_remaining < local_base_path_len) {
+        return 0;
+      }
+
+      memcpy(&local_base_path, link_info_ptr, local_base_path_len);
+      set_sized_string(local_base_path, local_base_path_len, module_object, "link_info.local_base_path");
+
+      // Add 1 to deal with null terminator
+      link_info_ptr += local_base_path_len + 1;
+      block_data_size_remaining -= local_base_path_len + 1;
+    }
   }
 
   if (link_info_fixed_header->link_info_header_size >= 0x24) {
@@ -606,47 +637,20 @@ unsigned int parse_link_info(const uint8_t * link_info_ptr, YR_OBJECT* module_ob
     block_data_size_remaining -= sizeof(common_path_suffix_offset_unicode);
   }
 
-  if (link_info_fixed_header->volume_id_offset) {
+  if (link_info_fixed_header->link_info_flags & CommonNetworkRelativeLinkAndPathSuffix) {
+    if (link_info_fixed_header->common_network_relative_link_offset) {
+      common_network_relative_link_size = parse_common_network_relative_link(link_info_ptr, module_object, block_data_size_remaining);
 
-    volume_id_size = parse_volume_id(link_info_ptr, module_object, block_data_size_remaining);
+      if (common_network_relative_link_size == 0) {
+        return 0;
+      }
 
-    if (volume_id_size == 0) {
-      return 0;
+      link_info_ptr += common_network_relative_link_size;
+      block_data_size_remaining -= common_network_relative_link_size;
     }
-
-    link_info_ptr += volume_id_size;
-    block_data_size_remaining -= volume_id_size;
   }
 
-  // Handle LocalBasePath
-  if (link_info_fixed_header->local_base_path_offset) {
-
-    local_base_path_len = strlen((const char *)link_info_ptr);
-
-    if (block_data_size_remaining < local_base_path_len) {
-      return 0;
-    }
-
-    memcpy(&local_base_path, link_info_ptr, local_base_path_len);
-    set_sized_string(local_base_path, local_base_path_len, module_object, "link_info.local_base_path");
-
-    // Add 1 to deal with null terminator
-    link_info_ptr += local_base_path_len + 1;
-    block_data_size_remaining -= local_base_path_len + 1;
-  }
-
-  if (link_info_fixed_header->common_network_relative_link_offset) {
-    common_network_relative_link_size = parse_common_network_relative_link(link_info_ptr, module_object, block_data_size_remaining);
-
-    if (common_network_relative_link_size == 0) {
-      return 0;
-    }
-
-    link_info_ptr += common_network_relative_link_size;
-    block_data_size_remaining -= common_network_relative_link_size;
-  }
-
-  // Handle LocalBasePath
+  // Handle CommonPathSuffix
   if (link_info_fixed_header->common_path_suffix_offset) {
 
     if (block_data_size_remaining < 1) {
