@@ -329,6 +329,38 @@ int main(int argc, char** argv)
       }",
       "tests/data/lnk-overlay");
 
+  assert_true_rule_file(
+      "import \"lnk\" \
+      rule number_of_history_buffers { \
+        condition: \
+          lnk.console_data.number_of_history_buffers == 4 \
+      }",
+      "tests/data/lnk-extradata-1");
+
+  assert_true_rule_file(
+      "import \"lnk\" \
+      rule color_table { \
+        condition: \
+          lnk.console_data.color_table[15] == 0x00ffffff \
+      }",
+      "tests/data/lnk-extradata-1");
+
+  assert_true_rule_file(
+      "import \"lnk\" \
+      rule environment_variable_data_ansi { \
+        condition: \
+          lnk.environment_variable_data.target_ansi == \"%SystemRoot%\\\\sysWOW64\\\\WindowsPowerShell\\\\v1.0\\\\powershell.exe\" \
+      }",
+      "tests/data/lnk-extradata-1");
+
+  assert_true_rule_file(
+      "import \"lnk\" \
+      rule special_folder_data { \
+        condition: \
+          lnk.special_folder_data.special_folder_id == 36 and lnk.special_folder_data.offset == 105 \
+      }",
+      "tests/data/lnk-extradata-1");
+
   yr_finalize();
 
   YR_DEBUG_FPRINTF(
