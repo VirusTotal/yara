@@ -56,6 +56,9 @@ begin_declarations
   declare_integer("HOTKEYF_CONTROL");
   declare_integer("HOTKEYF_ALT");
 
+  declare_integer("VolumeIDAndLocalBasePath");
+  declare_integer("CommonNetworkRelativeLinkAndPathSuffix");
+
   declare_integer("DRIVE_UNKNOWN");
   declare_integer("DRIVE_NO_ROOT_DIR");
   declare_integer("DRIVE_REMOVABLE");
@@ -566,6 +569,17 @@ unsigned int parse_link_info(const uint8_t * link_info_ptr, YR_OBJECT* module_ob
 
   link_info_ptr += sizeof(link_info_fixed_header_t);
   block_data_size_remaining -= sizeof(link_info_fixed_header_t);
+
+  // if VolumeIDAndLocalBasePath flag:
+  //   VolumeID and LocalBasePath present
+  //   VolumeIDOffset and LocalBasePathOffset specify offsets
+  //   if LinkInfoHeaderSize > 0x24:
+  //     LocalBasePathUnicode present (specified by offset value)
+  // else
+  //   VolumeID, LocalBasePath, and LocalBasePathUnicode fields are not present
+  //   VolumeIDOffset and LocalBasePathOffset are 0
+  //   if LinkInfoHeaderSize > 0x24:
+  //     LocalBasePathOffsetUnicode is 0
 
   if (link_info_fixed_header->link_info_flags & VolumeIDAndLocalBasePath &&
       link_info_fixed_header->link_info_header_size >= 0x24) {
@@ -1168,6 +1182,9 @@ int module_load(
   set_integer(HOTKEYF_SHIFT, module_object, "HOTKEYF_SHIFT");
   set_integer(HOTKEYF_CONTROL, module_object, "HOTKEYF_CONTROL");
   set_integer(HOTKEYF_ALT, module_object, "HOTKEYF_ALT");
+
+  set_integer(VolumeIDAndLocalBasePath, module_object, "VolumeIDAndLocalBasePath");
+  set_integer(CommonNetworkRelativeLinkAndPathSuffix, module_object, "CommonNetworkRelativeLinkAndPathSuffix");
 
   set_integer(DRIVE_UNKNOWN, module_object, "DRIVE_UNKNOWN");
   set_integer(DRIVE_NO_ROOT_DIR, module_object, "DRIVE_NO_ROOT_DIR");
