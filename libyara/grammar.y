@@ -2327,7 +2327,7 @@ rule_enumeration_item
 for_expression
     : primary_expression
       {
-        if ($1.type == EXPRESSION_TYPE_INTEGER)
+        if ($1.type == EXPRESSION_TYPE_INTEGER && !IS_UNDEFINED($1.value.integer))
         {
           if ($1.value.integer == 0)
           {
@@ -2339,6 +2339,7 @@ for_expression
           {
             yr_compiler_set_error_extra_info_fmt(compiler,
                 "%" PRId64, $1.value.integer);
+
             fail_with_error(ERROR_INVALID_VALUE);
           }
         }
@@ -2358,6 +2359,7 @@ for_expression
             yr_compiler_set_error_extra_info(compiler,
                 "string in for_expression is invalid");
           }
+
           fail_with_error(ERROR_INVALID_VALUE);
         }
 
@@ -2365,6 +2367,7 @@ for_expression
         {
           yr_compiler_set_error_extra_info(compiler,
               "regexp in for_expression is invalid");
+
           fail_with_error(ERROR_INVALID_VALUE);
         }
 

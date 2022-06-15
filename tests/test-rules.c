@@ -2193,6 +2193,15 @@ void test_for()
       }",
       ERROR_INVALID_VALUE);
 
+  // Test case for https://github.com/VirusTotal/yara/issues/1729
+  assert_true_rule(
+      "rule test { \
+        strings: \
+          $a = \"abcde\" \
+        condition: \
+          for any n in (1..10) : ( n of ($a*) ) \
+      }",
+      "abcde");
 
   YR_DEBUG_FPRINTF(1, stderr, "} // %s()\n", __FUNCTION__);
 }
