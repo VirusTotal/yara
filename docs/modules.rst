@@ -21,6 +21,7 @@ modules in the :ref:`writing-modules` section.
    Dotnet <modules/dotnet>
    Time <modules/time>
    Console <modules/console>
+   LNK <modules/lnk>
 
 
 
