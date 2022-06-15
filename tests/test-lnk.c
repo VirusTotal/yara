@@ -28,7 +28,7 @@ int main(int argc, char** argv)
       "import \"lnk\" \
       rule creation_time { \
         condition: \
-          lnk.creation_time == 1221247637 \
+          lnk.creation_time == 1221251237 \
       }",
       "tests/data/lnk-standard");
 	  
