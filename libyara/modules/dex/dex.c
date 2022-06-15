@@ -842,7 +842,7 @@ uint32_t load_encoded_method(
 #endif
 
     if (struct_fits_in_dex(
-            dex, dex->data + encoded_method.code_off, sizeof(code_item_t)))
+            dex, dex->data + encoded_method.code_off, code_item_t))
     {
       code_item_t* code_item =
           (code_item_t*) (dex->data + encoded_method.code_off);
@@ -954,7 +954,7 @@ void dex_parse(DEX* dex, uint64_t base_address)
 
     if (!fits_in_dex(
             dex,
-            dex->data + yr_le32toh(string_id_item->string_data_offset),
+            dex->data + yr_le32toh(string_id_item->string_data_offset) + 1,
             value))
       continue;
 
@@ -967,8 +967,8 @@ void dex_parse(DEX* dex, uint64_t base_address)
     set_integer(value, dex->object, "string_ids[%i].size", i);
 
     set_sized_string(
-        (const char*) ((
-            dex->data + yr_le32toh(string_id_item->string_data_offset) + 1)),
+        (const char*) (
+            dex->data + yr_le32toh(string_id_item->string_data_offset) + 1),
         value,
         dex->object,
         "string_ids[%i].value",
@@ -1123,6 +1123,9 @@ void dex_parse(DEX* dex, uint64_t base_address)
     {
       map_item_t* map_item =
           (map_item_t*) (dex->data + yr_le32toh(dex_header->map_offset) + sizeof(uint32_t) + i * sizeof(map_item_t));
+
+      if (!struct_fits_in_dex(dex, map_item, map_item_t))
+        return;
 
       set_integer(
           yr_le16toh(map_item->type),
