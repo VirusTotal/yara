@@ -306,6 +306,22 @@ int main(int argc, char** argv)
 
   assert_true_rule_file(
       "import \"lnk\" \
+      rule common_network_relative_link_flags { \
+        condition: \
+          lnk.link_info.common_network_relative_link.flags & lnk.ValidNetType \
+      }",
+      "tests/data/lnk-network");
+
+  //assert_true_rule_file(
+  //    "import \"lnk\" \
+  //    rule network_provider_type { \
+  //      condition: \
+  //        lnk.link_info.common_network_relative_link.network_provider_type == lnk.WNNC_NET_DECORB \
+  //    }",
+  //    "tests/data/lnk-network");
+
+  assert_true_rule_file(
+      "import \"lnk\" \
       rule net_name { \
         condition: \
           lnk.link_info.common_network_relative_link.net_name == \"\\\\\\\\localhost\\\\c$\\\\Users\\\\yarac\\\\Documents\\\\testing\" \
