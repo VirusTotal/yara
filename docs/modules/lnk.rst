@@ -389,3 +389,101 @@ An optional string that stores the command-line arguments that are specified whe
 An optional string that specifies the location of the icon to be used when displaying a shell link item in an icon view.
 
 *Example: icon_location == "C\\x00:\\x00\\\\x00P\\x00r\\x00o\\x00g\\x00r\\x00a\\x00m\\x00 \\x00F\\x00i\\x00l\\x00e\\x00s\\x00\\\\x00P\\x00e\\x00a\\x00Z\\x00i\\x00p\\x00\\\\x00r\\x00e\\x00s\\x00\\\\x00i\\x00c\\x00o\\x00n\\x00s\\x00\\\\x00p\\x00e\\x00a\\x00z\\x00i\\x00p\\x00_\\x00n\\x00e\\x00w\\x00.\\x00i\\x00c\\x00l\\x00"*
+
+.. c:type:: console_data
+The ConsoleDataBlock structure specifies the display settings to use when a link target specifies an application that is run in a console window.
+
+    .. c:member:: block_size
+    The block size of this structure.
+    
+    .. c:member:: block_signature
+    The signature of the block, which will be equal to lnk.ConsoleDataBlockSignature.
+    
+    .. c:member:: fill_attributes
+    An unsigned integer that specifies the fill attributes that control the foreground and background text colors in the console window. The following bit definitions can be combined to specify 16 different values each for the foreground and background color:
+    
+        .. c:member:: FOREGROUND_BLUE
+        .. c:member:: FOREGROUND_GREEN
+        .. c:member:: FOREGROUND_RED
+        .. c:member:: FOREGROUND_INTENSITY
+        .. c:member:: BACKGROUND_BLUE
+        .. c:member:: BACKGROUND_GREEN
+        .. c:member:: BACKGROUND_RED
+        .. c:member:: BACKGROUND_INTENSITY
+        
+    *Example: lnk.console_data.fill_attributes & lnk.FOREGROUND_BLUE*
+    
+    .. c:member:: popup_fill_attributes
+    An unsigned integer that specifies the fill attributes that control the foreground and background text color in the console window popup. The values are the same as for the FillAttributes field.
+    
+    .. c:member:: screen_buffer_size_x
+    A signed integer that specifies the horizontal size (X axis), in characters, of the console window buffer.
+    
+    .. c:member:: screen_buffer_size_y
+    A signed integer that specifies the vertical size (Y axis), in characters, of the console window buffer.
+    
+    .. c:member:: window_size_x
+    A signed integer that specifies the horizontal size (X axis), in characters, of the console window.
+    
+    .. c:member:: window_size_y
+    A signed integer that specifies the vertical size (Y axis), in characters, of the console window.
+    
+    .. c:member:: window_origin_x
+    A signed integer that specifies the horizontal coordinate (X axis), in pixels, of the console window origin.
+    
+    .. c:member:: window_origin_y
+    A signed integer that specifies the vertical coordinate (Y axis), in pixels, of the console window origin.
+    
+    .. c:member:: font_size
+    An unsigned integer that specifies the size, in pixels, of the font used in the console window. The two most significant bytes contain the font height and the two least significant bytes contain the font width. For vector fonts, the width is set to zero.
+    
+    .. c:member:: font_family
+    An unsigned integer that specifies the family of the font used in the console window. This value must be comprised of a font family and a font pitch. The values for the font family are as follows:
+    
+        .. c:member:: FF_DONTCARE
+        .. c:member:: FF_ROMAN
+        .. c:member:: FF_SWISS
+        .. c:member:: FF_MODERN
+        .. c:member:: FF_SCRIPT
+        .. c:member:: FF_DECORATIVE
+        
+    A bitwise OR of one or more of the following font-pitch bits is added to the font family from the previous values:
+    
+        .. c:member:: TMPF_NONE
+        .. c:member:: TMPF_FIXED_PITCH
+        .. c:member:: TMPF_VECTOR
+        .. c:member:: TMPF_TRUETYPE
+        .. c:member:: TMPF_DEVICE
+    
+    .. c:member:: font_weight
+    An unsigned integer that specifies the stroke weight of the font used in the console window.
+    
+    .. c:member:: face_name
+    A 32-character Unicode string that specifies the face name of the font used in the console window.
+    
+    .. c:member:: cursor_size
+    An unsigned integer that specifies the size of the cursor, in pixels, used in the console window.
+    
+    .. c:member:: full_screen
+    An unsigned integer that specifies whether to open the console window in full-screen mode.
+    
+    .. c:member:: quick_edit
+    An unsigned integer that specifies whether to open the console window in QuickEdit mode.
+    
+    .. c:member:: insert_mode
+    An unsigned integer that specifies insert mode in the console window.
+    
+    .. c:member:: auto_position
+    An unsigned integer that specifies auto-position mode of the console window.
+    
+    .. c:member:: history_buffer_size
+    An unsigned integer that specifies the size, in characters, of the buffer that is used to store a history of user input into the console window
+    
+    .. c:member:: number_of_history_buffers
+    An unsigned integer that specifies the number of history buffers to use.
+    
+    .. c:member:: history_no_dup
+    An unsigned integer that specifies whether to remove duplicates in the history buffer.
+    
+    .. c:member:: color_table
+    A table of 16 32-bit, unsigned integers specifying the RGB colors that are used for text in the console window. The values of the fill attribute fields FillAttributes and PopupFillAttributes are used as indexes into this table to specify the final foreground and background color for a character.
