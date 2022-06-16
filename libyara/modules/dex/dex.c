@@ -418,7 +418,7 @@ static int64_t dex_get_integer(
     const char* pattern,
     int64_t index)
 {
-  if (index == YR_UNDEFINED || index < 0)
+  if (index < 0)
     return YR_UNDEFINED;
 
   // Impose a reasonably large limit to table indexes.
@@ -434,7 +434,7 @@ static SIZED_STRING* dex_get_string(
     const char* pattern,
     int64_t index)
 {
-  if (index == YR_UNDEFINED || index < 0)
+  if (index < 0)
     return NULL;
 
   // Impose a reasonably large limit to table indexes.
