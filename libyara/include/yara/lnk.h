@@ -243,6 +243,28 @@ typedef struct _tracker_data_block_t
 #define WNNC_NET_MS_NFS           0x00420000
 #define WNNC_NET_GOOGLE           0x00430000
 
+#define FOREGROUND_BLUE       0x0001
+#define FOREGROUND_GREEN      0x0002
+#define FOREGROUND_RED        0x0004
+#define FOREGROUND_INTENSITY  0x0008
+#define BACKGROUND_BLUE       0x0010
+#define BACKGROUND_GREEN      0x0020
+#define BACKGROUND_RED        0x0040
+#define BACKGROUND_INTENSITY  0x0080
+
+#define FF_DONTCARE   0x0000
+#define FF_ROMAN      0x0010
+#define FF_SWISS      0x0020
+#define FF_MODERN     0x0030
+#define FF_SCRIPT     0x0040
+#define FF_DECORATIVE 0x0050
+
+#define TMPF_NONE        0x0000
+#define TMPF_FIXED_PITCH 0x0001
+#define TMPF_VECTOR      0x0002
+#define TMPF_TRUETYPE    0x0004
+#define TMPF_DEVICE      0x0008
+
 #define ConsoleDataBlockSize                     0x000000CC
 #define ConsoleFEDataBlockSize                   0x0000000C
 #define DarwinDataBlockSize                      0x00000314

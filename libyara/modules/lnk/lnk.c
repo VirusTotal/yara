@@ -116,6 +116,28 @@ begin_declarations
   declare_integer("WNNC_NET_MS_NFS");
   declare_integer("WNNC_NET_GOOGLE");
 
+  declare_integer("FOREGROUND_BLUE");
+  declare_integer("FOREGROUND_GREEN");
+  declare_integer("FOREGROUND_RED");
+  declare_integer("FOREGROUND_INTENSITY");
+  declare_integer("BACKGROUND_BLUE");
+  declare_integer("BACKGROUND_GREEN");
+  declare_integer("BACKGROUND_RED");
+  declare_integer("BACKGROUND_INTENSITY");
+
+  declare_integer("FF_DONTCARE");
+  declare_integer("FF_ROMAN");
+  declare_integer("FF_SWISS");
+  declare_integer("FF_MODERN");
+  declare_integer("FF_SCRIPT");
+  declare_integer("FF_DECORATIVE");
+
+  declare_integer("TMPF_NONE");
+  declare_integer("TMPF_FIXED_PITCH");
+  declare_integer("TMPF_VECTOR");
+  declare_integer("TMPF_TRUETYPE");
+  declare_integer("TMPF_DEVICE");
+
   declare_integer("is_lnk");
   declare_integer("creation_time");
   declare_integer("access_time");
@@ -1258,6 +1280,28 @@ int module_load(
   set_integer(WNNC_NET_MFILES, module_object, "WNNC_NET_MFILES");
   set_integer(WNNC_NET_MS_NFS, module_object, "WNNC_NET_MS_NFS");
   set_integer(WNNC_NET_GOOGLE, module_object, "WNNC_NET_GOOGLE");
+
+  set_integer(FOREGROUND_BLUE, module_object, "FOREGROUND_BLUE");
+  set_integer(FOREGROUND_GREEN, module_object, "FOREGROUND_GREEN");
+  set_integer(FOREGROUND_RED, module_object, "FOREGROUND_RED");
+  set_integer(FOREGROUND_INTENSITY, module_object, "FOREGROUND_INTENSITY");
+  set_integer(BACKGROUND_BLUE, module_object, "BACKGROUND_BLUE");
+  set_integer(BACKGROUND_GREEN, module_object, "BACKGROUND_GREEN");
+  set_integer(BACKGROUND_RED, module_object, "BACKGROUND_RED");
+  set_integer(BACKGROUND_INTENSITY, module_object, "BACKGROUND_INTENSITY");
+
+  set_integer(FF_DONTCARE, module_object, "FF_DONTCARE");
+  set_integer(FF_ROMAN, module_object, "FF_ROMAN");
+  set_integer(FF_SWISS, module_object, "FF_SWISS");
+  set_integer(FF_MODERN, module_object, "FF_MODERN");
+  set_integer(FF_SCRIPT, module_object, "FF_SCRIPT");
+  set_integer(FF_DECORATIVE, module_object, "FF_DECORATIVE");
+
+  set_integer(TMPF_NONE, module_object, "TMPF_NONE");
+  set_integer(TMPF_FIXED_PITCH, module_object, "TMPF_FIXED_PITCH");
+  set_integer(TMPF_VECTOR, module_object, "TMPF_VECTOR");
+  set_integer(TMPF_TRUETYPE, module_object, "TMPF_TRUETYPE");
+  set_integer(TMPF_DEVICE, module_object, "TMPF_DEVICE");
 
   const uint8_t* block_data;
   int block_data_size_remaining;
