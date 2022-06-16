@@ -71,6 +71,14 @@ int main(int argc, char** argv)
           lnk.file_attributes_flags & lnk.FILE_ATTRIBUTE_READONLY \
       }",
       "tests/data/lnk-standard");
+
+  assert_true_rule_file(
+      "import \"lnk\" \
+      rule show_command { \
+        condition: \
+          lnk.show_command == lnk.SW_SHOWNORMAL \
+      }",
+      "tests/data/lnk-standard");
 	  
   assert_true_rule_file(
       "import \"lnk\" \

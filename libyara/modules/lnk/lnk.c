@@ -51,6 +51,10 @@ begin_declarations
   declare_integer("FILE_ATTRIBUTE_OFFLINE");
   declare_integer("FILE_ATTRIBUTE_NOT_CONTENT_INDEXED");
   declare_integer("FILE_ATTRIBUTE_ENCRYPTED");
+
+  declare_integer("SW_SHOWNORMAL");
+  declare_integer("SW_SHOWMAXIMIZED");
+  declare_integer("SW_SHOWMINNOACTIVE");
   
   declare_integer("HOTKEYF_SHIFT");
   declare_integer("HOTKEYF_CONTROL");
@@ -1190,7 +1194,11 @@ int module_load(
   set_integer(FILE_ATTRIBUTE_OFFLINE, module_object, "FILE_ATTRIBUTE_OFFLINE");
   set_integer(FILE_ATTRIBUTE_NOT_CONTENT_INDEXED, module_object, "FILE_ATTRIBUTE_NOT_CONTENT_INDEXED");
   set_integer(FILE_ATTRIBUTE_ENCRYPTED, module_object, "FILE_ATTRIBUTE_ENCRYPTED");
-  
+
+  set_integer(SW_SHOWNORMAL, module_object, "SW_SHOWNORMAL");
+  set_integer(SW_SHOWMAXIMIZED, module_object, "SW_SHOWMAXIMIZED");
+  set_integer(SW_SHOWMINNOACTIVE, module_object, "SW_SHOWMINNOACTIVE");
+
   set_integer(HOTKEYF_SHIFT, module_object, "HOTKEYF_SHIFT");
   set_integer(HOTKEYF_CONTROL, module_object, "HOTKEYF_CONTROL");
   set_integer(HOTKEYF_ALT, module_object, "HOTKEYF_ALT");

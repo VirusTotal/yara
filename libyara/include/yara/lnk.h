@@ -179,6 +179,10 @@ typedef struct _tracker_data_block_t
 #define FILE_ATTRIBUTE_NOT_CONTENT_INDEXED    0x00002000
 #define FILE_ATTRIBUTE_ENCRYPTED              0x00004000
 
+#define SW_SHOWNORMAL       0x00000001
+#define SW_SHOWMAXIMIZED    0x00000003
+#define SW_SHOWMINNOACTIVE  0x00000007
+
 #define HOTKEYF_SHIFT       0x01
 #define HOTKEYF_CONTROL     0x02
 #define HOTKEYF_ALT         0x04
