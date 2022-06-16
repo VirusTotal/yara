@@ -164,8 +164,8 @@ begin_declarations
     declare_string("local_base_path");
 
     begin_struct("common_network_relative_link");
-      declare_integer("common_network_relative_link_size");
-      declare_integer("common_network_relative_link_flags");
+      declare_integer("size");
+      declare_integer("flags");
       declare_integer("net_name_offset");
       declare_integer("device_name_offset");
       declare_integer("network_provider_type");
