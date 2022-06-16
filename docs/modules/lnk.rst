@@ -175,7 +175,7 @@ Reference
         .. c:member:: data
         The shell data source-defined data that specifies an item.
         
-        *Example: lnk.link_target_id_list.item_id_list[0].data == "\x1fP\xe0O\xd0 \xea:i\x10\xa2\xd8\x08\x00+00\x9d"*
+        *Example: lnk.link_target_id_list.item_id_list[0].data == "\\x1fP\\xe0O\\xd0 \\xea:i\\x10\\xa2\\xd8\\x08\\x00+00\\x9d"*
         
         .. c:member:: size
         The size of the ItemID.
@@ -258,7 +258,7 @@ Reference
         .. c:member:: data
         A buffer of data that contains the volume label of the drive as a string defined by the system default code page or Unicode characters, as specified by preceding fields.
         
-        *Example: lnk.link_info.volume_id.data == "\x00"*
+        *Example: lnk.link_info.volume_id.data == "\\x00"*
 
     .. c:member:: local_base_path
     An optional, NULL–terminated string, defined by the system default code page, which is used to construct the full path to the link item or link target by appending the string in the CommonPathSuffix field.
@@ -357,10 +357,35 @@ Reference
     .. c:member:: common_path_suffix
     A NULL–terminated string, defined by the system default code page, which is used to construct the full path to the link item or link target by being appended to the string in the LocalBasePath field.
     
-    *Example: lnk.link_info.common_path_suffix == "\x00"*
+    *Example: lnk.link_info.common_path_suffix == "\\x00"*
     
     .. c:member:: local_base_path_unicode
     An optional, NULL–terminated, Unicode string that is used to construct the full path to the link item or link target by appending the string in the CommonPathSuffixUnicode field. 
     
     .. c:member:: common_path_suffix_unicode
-    An optional, NULL–terminated, Unicode string that is used to construct the full path to the link item or link target by being appended to the string in the LocalBasePathUnicode field. 
+    An optional, NULL–terminated, Unicode string that is used to construct the full path to the link item or link target by being appended to the string in the LocalBasePathUnicode field.
+
+.. c:type:: name_string
+An optional string that specifies a description of the shortcut that is displayed to end users to identify the purpose of the shell link. 
+
+*Example: lnk.name_string == "P\\x00e\\x00a\\x00Z\\x00i\\x00p\\x00 \\x00a\\x00r\\x00c\\x00h\\x00i\\x00v\\x00e\\x00r\\x00,\\x00 \\x00a\\x00d\\x00d\\x00 \\x00t\\x00o\\x00 \\x00e\\x00n\\x00c\\x00r\\x00y\\x00p\\x00t\\x00e\\x00d\\x00 \\x00.\\x00p\\x00e\\x00a\\x00 \\x00a\\x00r\\x00c\\x00h\\x00i\\x00v\\x00e\\x00"*
+
+.. c:type:: relative_path
+An optional string that specifies the location of the link target relative to the file that contains the shell link.
+
+*Example: lnk.relative_path == ".\\x00\\\\\\x00a\\x00.\\x00t\\x00x\\x00t\\x00"*
+
+.. c:type:: working_dir
+An optional string that specifies the file system path of the working directory to be used when activating the link target.
+
+*Example: lnk.working_dir == "C\\x00:\\x00\\\\\\x00t\\x00e\\x00s\\x00t\\x00"*
+
+.. c:type:: command_line_arguments
+An optional string that stores the command-line arguments that are specified when activating the link target
+
+*Example: lnk.command_line_arguments == "-\\x00a\\x00d\\x00d\\x002\\x00c\\x00r\\x00y\\x00p\\x00t\\x00"*
+
+.. c:type:: icon_location
+An optional string that specifies the location of the icon to be used when displaying a shell link item in an icon view.
+
+*Example: icon_location == "C\\x00:\\x00\\\\x00P\\x00r\\x00o\\x00g\\x00r\\x00a\\x00m\\x00 \\x00F\\x00i\\x00l\\x00e\\x00s\\x00\\\\x00P\\x00e\\x00a\\x00Z\\x00i\\x00p\\x00\\\\x00r\\x00e\\x00s\\x00\\\\x00i\\x00c\\x00o\\x00n\\x00s\\x00\\\\x00p\\x00e\\x00a\\x00z\\x00i\\x00p\\x00_\\x00n\\x00e\\x00w\\x00.\\x00i\\x00c\\x00l\\x00"*
