@@ -140,7 +140,7 @@ int main(int argc, char** argv)
       "import \"lnk\" \
       rule link_info_flags { \
         condition: \
-          lnk.link_info.flags == 0x01 \
+          lnk.link_info.flags & lnk.VolumeIDAndLocalBasePath \
       }",
       "tests/data/lnk-standard");
 
