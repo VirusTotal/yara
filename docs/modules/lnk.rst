@@ -394,7 +394,7 @@ An optional string that specifies the location of the icon to be used when displ
 The ConsoleDataBlock structure specifies the display settings to use when a link target specifies an application that is run in a console window.
 
     .. c:member:: block_size
-    The block size of this structure.
+    The block size of this structure, which will be equal to lnk.ConsoleDataBlockSize.
     
     .. c:member:: block_signature
     The signature of the block, which will be equal to lnk.ConsoleDataBlockSignature.
@@ -487,3 +487,183 @@ The ConsoleDataBlock structure specifies the display settings to use when a link
     
     .. c:member:: color_table
     A table of 16 32-bit, unsigned integers specifying the RGB colors that are used for text in the console window. The values of the fill attribute fields FillAttributes and PopupFillAttributes are used as indexes into this table to specify the final foreground and background color for a character.
+    
+.. c:type:: console_fed_data
+The ConsoleFEDataBlock structure specifies the code page to use for displaying text when a link target specifies an application that is run in a console window.
+
+    .. c:member:: block_size
+    The block size of this structure, which will be equal to lnk.ConsoleFEDataBlockSize.
+    
+    .. c:member:: block_signature
+    The signature of the block, which will be equal to lnk.ConsoleFEDataBlockSignature.
+    
+    .. c:member:: code_page
+    An unsigned integer that specifies a code page language code identifier.
+    
+.. c:type:: darwin_data
+The DarwinDataBlock structure specifies an application identifier that can be used instead of a link target IDList to install an application when a shell link is activated.
+
+    .. c:member:: block_size
+    The block size of this structure, which will be equal to lnk.DarwinDataBlockSize.
+    
+    .. c:member:: block_signature
+    The signature of the block, which will be equal to lnk.DarwinDataBlockSignature.
+    
+    .. c:member:: darwin_data_ansi
+    A NULL–terminated string, defined by the system default code page, which specifies an application identifier. 
+    
+    .. c:member:: darwin_data_unicode
+    An optional, NULL–terminated, Unicode string that specifies an application identifier.
+    
+.. c:type:: environment_variable_data
+The EnvironmentVariableDataBlock structure specifies a path to environment variable information when the link target refers to a location that has a corresponding environment variable.
+
+    .. c:member:: block_size
+    The block size of this structure, which will be equal to lnk.EnvironmentVariableDataBlockSize.
+    
+    .. c:member:: block_signature
+    The signature of the block, which will be equal to lnk.EnvironmentVariableDataBlockSignature.
+    
+    .. c:member:: target_ansi
+    A NULL-terminated string, defined by the system default code page, which specifies a path to environment variable information
+    
+    *Example: lnk.environment_variable_data.target_ansi == "%SystemRoot%\\sysWOW64\\WindowsPowerShell\\v1.0\\powershell.exe"*
+    
+    .. c:member:: target_unicode
+    An optional, NULL-terminated, Unicode string that specifies a path to environment variable information.
+    
+.. c:type:: icon_environment_data
+The IconEnvironmentDataBlock structure specifies the path to an icon. The path is encoded using environment variables, which makes it possible to find the icon across machines where the locations vary but are expressed using environment variables.
+
+    .. c:member:: block_size
+    The block size of this structure, which will be equal to lnk.IconEnvironmentDataBlockSize.
+    
+    .. c:member:: block_signature
+    The signature of the block, which will be equal to lnk.IconEnvironmentDataBlockSignature.
+    
+    .. c:member:: target_ansi
+    A NULL-terminated string, defined by the system default code page, which specifies a path that is constructed with environment variables
+    
+    *Example: lnk.icon_environment_data.target_ansi == "%ProgramFiles%\\PeaZip\\res\\icons\\peazip_new.icl"*
+    
+    .. c:member:: target_unicode
+    An optional, NULL-terminated, Unicode string that specifies a path that is constructed with environment variables.
+    
+.. c:type:: known_folder_data
+The KnownFolderDataBlock structure specifies the location of a known folder. This data can be used when a link target is a known folder to keep track of the folder so that the link target IDList can be translated when the link is loaded.
+
+    .. c:member:: block_size
+    The block size of this structure, which will be equal to lnk.KnownFolderDataBlockSize.
+    
+    .. c:member:: block_signature
+    The signature of the block, which will be equal to lnk.KnownFolderDataBlockSignature.
+    
+    .. c:member:: offset
+    An unsigned integer that specifies the location of the ItemID of the first child segment of the IDList specified by KnownFolderID. This value is the offset, in bytes, into the link target IDList.
+    
+    *Example: lnk.known_folder_data.offset == 177*
+    
+    .. c:member:: known_folder_id
+    A value in GUID packet representation that specifies the folder GUID ID.
+    
+    *Example: lnk.known_folder_data.known_folder_id[15] == 142*
+    
+.. c:type:: property_store_data
+A PropertyStoreDataBlock structure specifies a set of properties that can be used by applications to store extra data in the shell link. (TODO: implement the rest of this structure)
+
+    .. c:member:: block_size
+    The block size of this structure, which will be greater than or equal to lnk.PropertyStoreDataBlockMinSize.
+    
+    .. c:member:: block_signature
+    The signature of the block, which will be equal to lnk.PropertyStoreDataBlockSignature.
+    
+.. c:type:: shim_data
+The ShimDataBlock structure specifies the name of a shim that can be applied when activating a link target.
+
+    .. c:member:: block_size
+    The block size of this structure, which will be greater than or equal to lnk.ShimDataBlockMinSize.
+    
+    .. c:member:: block_signature
+    The signature of the block, which will be equal to lnk.ShimDataBlockSignature.
+    
+    .. c:member:: layer_name
+     A Unicode string that specifies the name of a shim layer to apply to a link target when it is being activated.
+    
+.. c:type:: special_folder_data
+The SpecialFolderDataBlock structure specifies the location of a special folder. This data can be used when a link target is a special folder to keep track of the folder, so that the link target IDList can be translated when the link is loaded.
+
+    .. c:member:: block_size
+    The block size of this structure, which will be equal to lnk.SpecialFolderDataBlockSize.
+    
+    .. c:member:: block_signature
+    The signature of the block, which will be equal to lnk.SpecialFolderDataBlockSignature.
+    
+    .. c:member:: offset
+    An unsigned integer that specifies the location of the ItemID of the first child segment of the IDList specified by SpecialFolderID. This value is the offset, in bytes, into the link target IDList.
+    
+    .. c:member:: special_folder_id
+    An unsigned integer that specifies the folder integer ID.
+    
+.. c:type:: tracker_data
+The TrackerDataBlock structure specifies data that can be used to resolve a link target if it is not found in its original location when the link is resolved. This data is passed to the Link Tracking service to find the link target.
+
+    .. c:member:: block_size
+    The block size of this structure, which will be equal to lnk.TrackerDataBlockSize.
+    
+    .. c:member:: block_signature
+    The signature of the block, which will be equal to lnk.TrackerDataBlockSignature.
+    
+    .. c:member:: machine_id
+    A NULL–terminated character string, as defined by the system default code page, which specifies the NetBIOS name of the machine where the link target was last known to reside.
+    
+    *Example: lnk.tracker_data.machine_id == "chris-xps"*
+    
+    .. c:member:: droid_volume_identifier
+    A parsed Droid volume identifier GUID.
+    
+    *Example: lnk.tracker_data.droid_volume_identifier == "\\x40\\x78\\xC7\\x94\\x47\\xFA\\xC7\\x46\\xB3\\x56\\x5C\\x2D\\xC6\\xB6\\xD1\\x15"*
+    
+    .. c:member:: droid_file_identifier
+    A parsed Droid file identifier GUID.
+    
+    .. c:member:: droid_birth_volume_identifier
+    A parsed DroidBirth volume identifier GUID.
+    
+    .. c:member:: droid_birth_file_identifier
+    A parsed DroidBirth file identifier GUID.
+    
+.. c:type:: vista_and_above_id_list_data
+The VistaAndAboveIDListDataBlock structure specifies an alternate IDList that can be used instead of the LinkTargetIDList structure on platforms that support it.
+
+    .. c:member:: block_size
+    The block size of this structure, which will be greater than or equal to lnk.VistaAndAboveIDListDataBlockMinSize.
+    
+    .. c:member:: block_signature
+    The signature of the block, which will be equal to lnk.VistaAndAboveIDListDataBlockSignature.
+    
+    .. c:member:: number_of_item_ids
+    The number of ItemID entries in the list.
+    
+    .. c:type:: item_id_list
+    A zero-based array of ItemIDs structures. The data stored in a given ItemID is defined by the source that corresponds to the location in the target namespace of the preceding ItemIDs. This data uniquely identifies the items in that part of the namespace. Each ItemID has the following members:
+    
+        .. c:member:: data
+        The shell data source-defined data that specifies an item.
+        
+        .. c:member:: size
+        The size of the ItemID.
+        
+.. c:type:: has_overlay
+A boolean value that is true if the LNK has extra data appended to it.
+
+*Example: lnk.has_overlay*
+
+.. c:type:: overlay_offset
+An unsigned integer representing the offset into the LNK file of where the overlay starts (only set if the has_overlay flag is true).
+
+*Example: lnk.overlay_offset == 0x1CB*
+
+.. c:type:: is_malformed
+A boolean value that is true if the LNK failed to be parsed due to it having malformed data.
+
+*Example: lnk.is_malformed*
