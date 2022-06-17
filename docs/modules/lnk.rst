@@ -5,7 +5,7 @@
 LNK module
 ##########
 
-The PE module allows you to create more fine-grained rules for LNK files by
+The LNK module allows you to create more fine-grained rules for LNK files by
 using attributes and features of the LNK file format. This module exposes most of
 the fields present in an LNK file. Let's see some examples:
 
