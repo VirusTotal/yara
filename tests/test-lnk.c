@@ -312,6 +312,7 @@ int main(int argc, char** argv)
       }",
       "tests/data/lnk-network");
 
+  // Unsure why this isn't true, might be a weird edge case
   //assert_true_rule_file(
   //    "import \"lnk\" \
   //    rule network_provider_type { \

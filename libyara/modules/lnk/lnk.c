@@ -949,6 +949,8 @@ unsigned int parse_property_store_data_block(const uint8_t * extra_block_ptr, YR
   set_integer(extra_data_block_size, module_object, "property_store_data.block_size");
   set_integer(extra_data_block_signature, module_object, "property_store_data.block_signature");
 
+  // Needs further implementation
+
   return 1;
 }
 
