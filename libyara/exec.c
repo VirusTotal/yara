@@ -45,6 +45,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <yara/sizedstr.h>
 #include <yara/stopwatch.h>
 #include <yara/strutils.h>
+#include <yara/unaligned.h>
 #include <yara/utils.h>
 
 #define MEM_SIZE YR_MAX_LOOP_NESTING*(YR_MAX_LOOP_VARS + YR_INTERNAL_LOOP_VARS)
@@ -157,15 +158,21 @@ function_read(int32_t, big_endian);
 
 static const uint8_t* jmp_if(int condition, const uint8_t* ip)
 {
-  size_t off;
+  int32_t off = 0;
 
   if (condition)
   {
-    // The condition is true, the instruction pointer is incremented in the
-    // amount specified by the jump's offset. The offset is relative to the
-    // jump opcode, but now the instruction pointer is pointing past the opcode
-    // that's why we decrement the offset by 1.
-    off = *(int32_t*) (ip) -1;
+    // The condition is true, the instruction pointer (ip) is incremented in
+    // the amount specified by the jump's offset, which is a int32_t following
+    // the jump opcode. The ip is currently past the opcode and pointing to
+    // the offset.
+
+    // Copy the offset from the instruction stream to a local variable.
+    off = yr_unaligned_u32(ip);
+
+    // The offset is relative to the jump opcode, but now the ip is one byte
+    // past the opcode, so we need to decrement it by one.
+    off -= 1;
   }
   else
   {
@@ -341,7 +348,8 @@ static int iter_string_set_next(YR_ITERATOR* self, YR_VALUE_STACK* stack)
 
   // Push the false value that indicates that the iterator is not exhausted.
   stack->items[stack->sp++].i = 0;
-  stack->items[stack->sp++].s = self->string_set_it.strings[self->string_set_it.index];
+  stack->items[stack->sp++].s =
+      self->string_set_it.strings[self->string_set_it.index];
   self->string_set_it.index++;
 
   return ERROR_SUCCESS;
@@ -545,12 +553,16 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
 
     case OP_ITER_START_STRING_SET:
       YR_DEBUG_FPRINTF(
-          2, stderr, "- case OP_ITER_START_STRING_SET: // %s()\n", __FUNCTION__);
+          2,
+          stderr,
+          "- case OP_ITER_START_STRING_SET: // %s()\n",
+          __FUNCTION__);
 
       pop(r1);
 
       r3.p = yr_notebook_alloc(
-          it_notebook, sizeof(YR_ITERATOR) + sizeof(YR_STRING*) * (size_t) r1.i);
+          it_notebook,
+          sizeof(YR_ITERATOR) + sizeof(YR_STRING*) * (size_t) r1.i);
 
       if (r3.p == NULL)
       {
@@ -660,7 +672,7 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
 
     case OP_PUSH:
       YR_DEBUG_FPRINTF(2, stderr, "- case OP_PUSH: // %s()\n", __FUNCTION__);
-      memcpy(&r1.i, ip, sizeof(uint64_t));
+      r1.i = yr_unaligned_u64(ip);
       ip += sizeof(uint64_t);
       push(r1);
       break;
@@ -678,7 +690,7 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
       break;
 
     case OP_PUSH_16:
-      r1.i = *(uint16_t*) (ip);
+      r1.i = yr_unaligned_u16(ip);
       YR_DEBUG_FPRINTF(
           2,
           stderr,
@@ -690,7 +702,7 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
       break;
 
     case OP_PUSH_32:
-      r1.i = *(uint32_t*) (ip);
+      r1.i = yr_unaligned_u32(ip);
       YR_DEBUG_FPRINTF(
           2,
           stderr,
@@ -714,7 +726,7 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
 
     case OP_CLEAR_M:
       YR_DEBUG_FPRINTF(2, stderr, "- case OP_CLEAR_M: // %s()\n", __FUNCTION__);
-      memcpy(&r1.i, ip, sizeof(uint64_t));
+      r1.i = yr_unaligned_u64(ip);
       ip += sizeof(uint64_t);
 #if YR_PARANOID_EXEC
       ensure_within_mem(r1.i);
@@ -724,7 +736,7 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
 
     case OP_ADD_M:
       YR_DEBUG_FPRINTF(2, stderr, "- case OP_ADD_M: // %s()\n", __FUNCTION__);
-      memcpy(&r1.i, ip, sizeof(uint64_t));
+      r1.i = yr_unaligned_u64(ip);
       ip += sizeof(uint64_t);
 #if YR_PARANOID_EXEC
       ensure_within_mem(r1.i);
@@ -736,7 +748,7 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
 
     case OP_INCR_M:
       YR_DEBUG_FPRINTF(2, stderr, "- case OP_INCR_M: // %s()\n", __FUNCTION__);
-      memcpy(&r1.i, ip, sizeof(uint64_t));
+      r1.i = yr_unaligned_u64(ip);
       ip += sizeof(uint64_t);
 #if YR_PARANOID_EXEC
       ensure_within_mem(r1.i);
@@ -746,7 +758,7 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
 
     case OP_PUSH_M:
       YR_DEBUG_FPRINTF(2, stderr, "- case OP_PUSH_M: // %s()\n", __FUNCTION__);
-      memcpy(&r1.i, ip, sizeof(uint64_t));
+      r1.i = yr_unaligned_u64(ip);
       ip += sizeof(uint64_t);
 #if YR_PARANOID_EXEC
       ensure_within_mem(r1.i);
@@ -757,7 +769,7 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
 
     case OP_POP_M:
       YR_DEBUG_FPRINTF(2, stderr, "- case OP_POP_M: // %s()\n", __FUNCTION__);
-      memcpy(&r1.i, ip, sizeof(uint64_t));
+      r1.i = yr_unaligned_u64(ip);
       ip += sizeof(uint64_t);
 #if YR_PARANOID_EXEC
       ensure_within_mem(r1.i);
@@ -768,7 +780,7 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
 
     case OP_SET_M:
       YR_DEBUG_FPRINTF(2, stderr, "- case OP_SET_M: // %s()\n", __FUNCTION__);
-      memcpy(&r1.i, ip, sizeof(uint64_t));
+      r1.i = yr_unaligned_u64(ip);
       ip += sizeof(uint64_t);
 #if YR_PARANOID_EXEC
       ensure_within_mem(r1.i);
@@ -782,7 +794,7 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
     case OP_SWAPUNDEF:
       YR_DEBUG_FPRINTF(
           2, stderr, "- case OP_SWAPUNDEF: // %s()\n", __FUNCTION__);
-      memcpy(&r1.i, ip, sizeof(uint64_t));
+      r1.i = yr_unaligned_u64(ip);
       ip += sizeof(uint64_t);
 #if YR_PARANOID_EXEC
       ensure_within_mem(r1.i);
@@ -1022,7 +1034,7 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
     case OP_PUSH_RULE:
       YR_DEBUG_FPRINTF(
           2, stderr, "- case OP_PUSH_RULE: // %s()\n", __FUNCTION__);
-      memcpy(&r1.i, ip, sizeof(uint64_t));
+      r1.i = yr_unaligned_u64(ip);
       ip += sizeof(uint64_t);
 
       rule = &context->rules->rules_table[r1.i];
@@ -1045,10 +1057,12 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
     case OP_INIT_RULE:
       YR_DEBUG_FPRINTF(
           2, stderr, "- case OP_INIT_RULE: // %s()\n", __FUNCTION__);
+
       // After the opcode there's an int32_t corresponding to the jump's
       // offset and an uint32_t corresponding to the rule's index.
-      current_rule_idx = *(uint32_t*) (ip + sizeof(int32_t));
+      current_rule_idx = yr_unaligned_u32(ip + sizeof(int32_t));
 
+      // The curent rule index can't be larger than the number of rules.
       assert(current_rule_idx < context->rules->num_rules);
 
       current_rule = &context->rules->rules_table[current_rule_idx];
@@ -1068,7 +1082,7 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
           2, stderr, "- case OP_MATCH_RULE: // %s()\n", __FUNCTION__);
       pop(r1);
 
-      memcpy(&r2.i, ip, sizeof(uint64_t));
+      r2.i = yr_unaligned_u64(ip);
       ip += sizeof(uint64_t);
 
       rule = &context->rules->rules_table[r2.i];
@@ -1094,7 +1108,8 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
     case OP_OBJ_LOAD:
       YR_DEBUG_FPRINTF(
           2, stderr, "- case OP_OBJ_LOAD: // %s()\n", __FUNCTION__);
-      identifier = *(char**) (ip);
+
+      identifier = yr_unaligned_char_ptr(ip);
       ip += sizeof(uint64_t);
 
 #if YR_PARANOID_EXEC
@@ -1111,7 +1126,8 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
     case OP_OBJ_FIELD:
       YR_DEBUG_FPRINTF(
           2, stderr, "- case OP_OBJ_FIELD: // %s()\n", __FUNCTION__);
-      identifier = *(char**) (ip);
+
+      identifier = yr_unaligned_char_ptr(ip);
       ip += sizeof(uint64_t);
 
 #if YR_PARANOID_EXEC
@@ -1218,7 +1234,8 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
 
     case OP_CALL:
       YR_DEBUG_FPRINTF(2, stderr, "- case OP_CALL: // %s()\n", __FUNCTION__);
-      args_fmt = *(char**) (ip);
+
+      args_fmt = yr_unaligned_char_ptr(ip);
       ip += sizeof(uint64_t);
 
       int i = (int) strlen(args_fmt);
@@ -1488,7 +1505,7 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
 
     case OP_OF:
     case OP_OF_PERCENT:
-      memcpy(&r2.i, ip, sizeof(uint64_t));
+      r2.i = yr_unaligned_u64(ip);
       ip += sizeof(uint64_t);
       assert(r2.i == OF_STRING_SET || r2.i == OF_RULE_SET);
       found = 0;
@@ -1521,7 +1538,8 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
 
         if (is_undef(r2))
           r1.i = found >= count ? 1 : 0;
-        else {
+        else
+        {
           // https://github.com/VirusTotal/yara/issues/1695
           if (r2.i == 0)
             r1.i = found == r2.i ? 1 : 0;
@@ -1588,7 +1606,8 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
       pop(r1);
       if (is_undef(r1))
         r1.i = found >= count ? 1 : 0;
-      else {
+      else
+      {
         // https://github.com/VirusTotal/yara/issues/1695
         if (r2.i == 0)
           r1.i = found == r2.i ? 1 : 0;
@@ -1706,7 +1725,7 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
 
     case OP_IMPORT:
       YR_DEBUG_FPRINTF(2, stderr, "- case OP_IMPORT: // %s()\n", __FUNCTION__);
-      memcpy(&r1.i, ip, sizeof(uint64_t));
+      r1.i = yr_unaligned_u64(ip);
       ip += sizeof(uint64_t);
 
 #if YR_PARANOID_EXEC
@@ -1756,7 +1775,7 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
     case OP_INT_TO_DBL:
       YR_DEBUG_FPRINTF(
           2, stderr, "- case OP_INT_TO_DBL: // %s()\n", __FUNCTION__);
-      memcpy(&r1.i, ip, sizeof(uint64_t));
+      r1.i = yr_unaligned_u64(ip);
       ip += sizeof(uint64_t);
 
 #if YR_PARANOID_EXEC

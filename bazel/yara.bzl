@@ -159,6 +159,7 @@ def yara_library(
             "libyara/include/yara/strutils.h",
             "libyara/include/yara/threading.h",
             "libyara/include/yara/types.h",
+            "libyara/include/yara/unaligned.h",
             "libyara/include/yara/utils.h",
             "libyara/lexer.c",
             "libyara/libyara.c",

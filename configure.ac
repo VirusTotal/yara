@@ -114,6 +114,13 @@ AC_ARG_ENABLE([address-sanitizer],
     address_sanitizer=true
   fi])
 
+AC_ARG_ENABLE([undefined-behaviour-sanitizer],
+  [AS_HELP_STRING([--enable-undefined-behaviour-sanitizer], [compiles with -fsanitize=undefined])],
+  [if test x$enableval = xyes; then
+    undefined_behaviour_sanitizer=true
+  fi])
+
+
 AC_ARG_ENABLE([profiling],
   [AS_HELP_STRING([--enable-profiling], [enable rules profiling support])],
   [if test x$enableval = xyes; then
@@ -340,6 +347,7 @@ AM_CONDITIONAL([POSIX], [test x$posix = xtrue])
 AM_CONDITIONAL([PROFILING_ENABLED], [test x$profiling_enabled = xtrue])
 AM_CONDITIONAL([OPTIMIZATION], [test x$optimization = xtrue])
 AM_CONDITIONAL([ADDRESS_SANITIZER], [test x$address_sanitizer = xtrue])
+AM_CONDITIONAL([UB_SANITIZER], [test x$undefined_behaviour_sanitizer = xtrue])
 AM_CONDITIONAL([CUCKOO_MODULE], [test x$build_cuckoo_module = xtrue])
 AM_CONDITIONAL([MAGIC_MODULE], [test x$build_magic_module = xtrue])
 AM_CONDITIONAL([HASH_MODULE], [test x$build_hash_module = xtrue])

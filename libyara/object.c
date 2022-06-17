@@ -57,6 +57,7 @@ int yr_object_create(
   size_t object_size = 0;
 
   assert(parent != NULL || object != NULL);
+  assert(identifier != NULL);
 
   switch (type)
   {

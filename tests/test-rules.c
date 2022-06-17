@@ -2193,6 +2193,15 @@ void test_for()
       }",
       ERROR_INVALID_VALUE);
 
+  // Test case for https://github.com/VirusTotal/yara/issues/1729
+  assert_true_rule(
+      "rule test { \
+        strings: \
+          $a = \"abcde\" \
+        condition: \
+          for any n in (1..10) : ( n of ($a*) ) \
+      }",
+      "abcde");
 
   YR_DEBUG_FPRINTF(1, stderr, "} // %s()\n", __FUNCTION__);
 }
@@ -3033,6 +3042,19 @@ static void test_modules()
         condition: \
           for any item in tests.empty_struct_array[0].struct_array: ( \
             item.unused == \"foo\" \
+          ) \
+      }",
+      NULL);
+
+  assert_true_rule(
+      "import \"tests\" \
+      rule test { \
+        condition: \
+          for any item1 in tests.struct_array: ( \
+            item1.i == 1 and \
+            for any item2 in tests.struct_array: ( \
+              item2.i == item1.i \
+            ) \
           ) \
       }",
       NULL);
