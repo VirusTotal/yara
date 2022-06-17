@@ -1669,7 +1669,7 @@ expression
         jmp_offset = pop_ref.offset - fixup->ref.offset + 1;
 
         // Fix the jump's offset.
-        *jmp_offset_addr = jmp_offset;
+        memcpy(jmp_offset_addr, &jmp_offset, sizeof(jmp_offset));
 
         yr_free(fixup);
 
@@ -1811,7 +1811,7 @@ expression
             yr_arena_get_current_offset(compiler->arena, YR_CODE_SECTION) -
             fixup->ref.offset + 1;
 
-        *jmp_offset_addr = jmp_offset;
+        memcpy(jmp_offset_addr, &jmp_offset, sizeof(jmp_offset));
 
         // Remove fixup from the stack.
         compiler->fixup_stack_head = fixup->next;
@@ -1855,7 +1855,7 @@ expression
         int32_t* jmp_offset_addr = (int32_t*) yr_arena_ref_to_ptr(
             compiler->arena, &fixup->ref);
 
-        *jmp_offset_addr = jmp_offset;
+        memcpy(jmp_offset_addr, &jmp_offset, sizeof(jmp_offset));
 
         // Remove fixup from the stack.
         compiler->fixup_stack_head = fixup->next;
@@ -2136,7 +2136,7 @@ range
           if ($2.value.integer > $4.value.integer)
           {
             yr_compiler_set_error_extra_info(
-                compiler, "range lower bound must be greater than upper bound");
+                compiler, "range lower bound must be less than upper bound");
             result = ERROR_INVALID_VALUE;
           } else if ($2.value.integer < 0)
           {
@@ -2327,7 +2327,7 @@ rule_enumeration_item
 for_expression
     : primary_expression
       {
-        if ($1.type == EXPRESSION_TYPE_INTEGER)
+        if ($1.type == EXPRESSION_TYPE_INTEGER && !IS_UNDEFINED($1.value.integer))
         {
           if ($1.value.integer == 0)
           {
@@ -2339,6 +2339,7 @@ for_expression
           {
             yr_compiler_set_error_extra_info_fmt(compiler,
                 "%" PRId64, $1.value.integer);
+
             fail_with_error(ERROR_INVALID_VALUE);
           }
         }
@@ -2358,6 +2359,7 @@ for_expression
             yr_compiler_set_error_extra_info(compiler,
                 "string in for_expression is invalid");
           }
+
           fail_with_error(ERROR_INVALID_VALUE);
         }
 
@@ -2365,6 +2367,7 @@ for_expression
         {
           yr_compiler_set_error_extra_info(compiler,
               "regexp in for_expression is invalid");
+
           fail_with_error(ERROR_INVALID_VALUE);
         }
 

@@ -77,6 +77,20 @@ int main(int argc, char **argv)
   YR_DEBUG_INITIALIZE();
   YR_DEBUG_FPRINTF(1, stderr, "+ %s() { // in %s\n", __FUNCTION__, argv[0]);
 
+  CHECK_SIZE(YR_SUMMARY, 12);
+  CHECK_OFFSET(YR_SUMMARY, 0, num_rules);
+  CHECK_OFFSET(YR_SUMMARY, 4, num_strings);
+  CHECK_OFFSET(YR_SUMMARY, 8, num_namespaces);
+
+  CHECK_SIZE(SIZED_STRING, 9);
+  CHECK_OFFSET(SIZED_STRING, 4, flags);
+  CHECK_OFFSET(SIZED_STRING, 8, c_string);
+
+  // The size of the following structures must be a multiple of 8 because they
+  // are stored in arenas as an array. Each individual structure in the array
+  // must be 8-byte aligned, so that it's safe to access its members in
+  // platforms that have strict alignment requirements like ARM and Sparc.
+
   CHECK_SIZE(YR_NAMESPACE, 16);
   CHECK_OFFSET(YR_NAMESPACE, 0, name);
   CHECK_OFFSET(YR_NAMESPACE, 8, idx);
@@ -107,11 +121,6 @@ int main(int argc, char **argv)
   CHECK_OFFSET(YR_RULE, 32, strings);
   CHECK_OFFSET(YR_RULE, 40, ns);
 
-  CHECK_SIZE(YR_SUMMARY, 12);
-  CHECK_OFFSET(YR_SUMMARY, 0, num_rules);
-  CHECK_OFFSET(YR_SUMMARY, 4, num_strings);
-  CHECK_OFFSET(YR_SUMMARY, 8, num_namespaces);
-
   CHECK_SIZE(YR_EXTERNAL_VARIABLE, 24);
   CHECK_OFFSET(YR_EXTERNAL_VARIABLE, 8, value.i);
   CHECK_OFFSET(YR_EXTERNAL_VARIABLE, 8, value.f);
@@ -124,10 +133,6 @@ int main(int argc, char **argv)
   CHECK_OFFSET(YR_AC_MATCH, 16, backward_code);
   CHECK_OFFSET(YR_AC_MATCH, 24, next);
   CHECK_OFFSET(YR_AC_MATCH, 32, backtrack);
-
-  CHECK_SIZE(SIZED_STRING, 9);
-  CHECK_OFFSET(SIZED_STRING, 4, flags);
-  CHECK_OFFSET(SIZED_STRING, 8, c_string);
 
   YR_DEBUG_FPRINTF(
       1, stderr, "} = %d // %s() in %s\n", result, __FUNCTION__, argv[0]);

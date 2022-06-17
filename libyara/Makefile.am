@@ -122,6 +122,10 @@ if ADDRESS_SANITIZER
 AM_CFLAGS+=-fsanitize=address
 endif
 
+if UB_SANITIZER
+AM_CFLAGS+=-fsanitize=undefined -fno-sanitize-recover=undefined
+endif
+
 if GCC
 AM_CFLAGS+=-fvisibility=hidden
 endif
@@ -163,6 +167,7 @@ yarainclude_HEADERS = \
 	include/yara/strutils.h \
 	include/yara/threading.h \
 	include/yara/types.h \
+	include/yara/unaligned.h \
 	include/yara/utils.h
 
 noinst_HEADERS = \
