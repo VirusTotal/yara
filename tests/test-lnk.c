@@ -312,15 +312,6 @@ int main(int argc, char** argv)
       }",
       "tests/data/lnk-network");
 
-  // Unsure why this isn't true, might be a weird edge case
-  //assert_true_rule_file(
-  //    "import \"lnk\" \
-  //    rule network_provider_type { \
-  //      condition: \
-  //        lnk.link_info.common_network_relative_link.network_provider_type == lnk.WNNC_NET_DECORB \
-  //    }",
-  //    "tests/data/lnk-network");
-
   assert_true_rule_file(
       "import \"lnk\" \
       rule net_name { \
