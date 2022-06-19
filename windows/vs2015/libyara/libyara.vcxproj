@@ -244,6 +244,8 @@
     <ClCompile Include="..\..\..\libyara\modules\dotnet\dotnet.c" />
     <ClCompile Include="..\..\..\libyara\modules\elf\elf.c" />
     <ClCompile Include="..\..\..\libyara\modules\hash\hash.c" />
+    <ClCompile Include="..\..\..\libyara\modules\lnk\lnk.c" />
+    <ClCompile Include="..\..\..\libyara\modules\lnk\lnk_utils.c" />
     <ClCompile Include="..\..\..\libyara\modules\math\math.c" />
     <ClCompile Include="..\..\..\libyara\modules\macho\macho.c" />
     <ClCompile Include="..\..\..\libyara\modules\pe\pe.c" />
