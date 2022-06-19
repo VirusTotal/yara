@@ -146,12 +146,12 @@ typedef struct _tracker_data_block_t
 #define ForceNoLinkInfo             0x00000100
 #define HasExpString                0x00000200
 #define RunInSeparateProcess        0x00000400
-#define Unused1                     0x00000800
+#define LNKUnused1                     0x00000800
 #define HasDarwinID                 0x00001000
 #define RunAsUser                   0x00002000
 #define HasExpIcon                  0x00004000
 #define NoPidlAlias                 0x00008000
-#define Unused2                     0x00010000
+#define LNKUnused2                     0x00010000
 #define RunWithShimLayer            0x00020000
 #define ForceNoLinkTrack            0x00040000
 #define EnableTargetMetadata        0x00080000
@@ -166,10 +166,10 @@ typedef struct _tracker_data_block_t
 #define FILE_ATTRIBUTE_READONLY            0x00000001
 #define FILE_ATTRIBUTE_HIDDEN              0x00000002
 #define FILE_ATTRIBUTE_SYSTEM              0x00000004
-#define Reserved1                          0x00000008
+#define LNKReserved1                          0x00000008
 #define FILE_ATTRIBUTE_DIRECTORY           0x00000010
 #define FILE_ATTRIBUTE_ARCHIVE             0x00000020
-#define Reserved2                          0x00000040
+#define LNKReserved2                          0x00000040
 #define FILE_ATTRIBUTE_NORMAL              0x00000080
 #define FILE_ATTRIBUTE_TEMPORARY           0x00000100
 #define FILE_ATTRIBUTE_SPARSE_FILE         0x00000200

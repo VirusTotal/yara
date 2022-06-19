@@ -19,12 +19,12 @@ begin_declarations
   declare_integer("ForceNoLinkInfo");
   declare_integer("HasExpString");
   declare_integer("RunInSeparateProcess");
-  declare_integer("Unused1");
+  declare_integer("LNKUnused1");
   declare_integer("HasDarwinID");
   declare_integer("RunAsUser");
   declare_integer("HasExpIcon");
   declare_integer("NoPidlAlias");
-  declare_integer("Unused2");
+  declare_integer("LNKUnused2");
   declare_integer("RunWithShimLayer");
   declare_integer("ForceNoLinkTrack");
   declare_integer("EnableTargetMetadata");
@@ -39,10 +39,10 @@ begin_declarations
   declare_integer("FILE_ATTRIBUTE_READONLY");
   declare_integer("FILE_ATTRIBUTE_HIDDEN");
   declare_integer("FILE_ATTRIBUTE_SYSTEM");
-  declare_integer("Reserved1");
+  declare_integer("LNKReserved1");
   declare_integer("FILE_ATTRIBUTE_DIRECTORY");
   declare_integer("FILE_ATTRIBUTE_ARCHIVE");
-  declare_integer("Reserved2");
+  declare_integer("LNKReserved2");
   declare_integer("FILE_ATTRIBUTE_NORMAL");
   declare_integer("FILE_ATTRIBUTE_TEMPORARY");
   declare_integer("FILE_ATTRIBUTE_SPARSE_FILE");
@@ -1779,12 +1779,12 @@ int module_load(
   set_integer(ForceNoLinkInfo, module_object, "ForceNoLinkInfo");
   set_integer(HasExpString, module_object, "HasExpString");
   set_integer(RunInSeparateProcess, module_object, "RunInSeparateProcess");
-  set_integer(Unused1, module_object, "Unused1");
+  set_integer(LNKUnused1, module_object, "LNKUnused1");
   set_integer(HasDarwinID, module_object, "HasDarwinID");
   set_integer(RunAsUser, module_object, "RunAsUser");
   set_integer(HasExpIcon, module_object, "HasExpIcon");
   set_integer(NoPidlAlias, module_object, "NoPidlAlias");
-  set_integer(Unused2, module_object, "Unused2");
+  set_integer(LNKUnused2, module_object, "LNKUnused2");
   set_integer(RunWithShimLayer, module_object, "RunWithShimLayer");
   set_integer(ForceNoLinkTrack, module_object, "ForceNoLinkTrack");
   set_integer(EnableTargetMetadata, module_object, "EnableTargetMetadata");
@@ -1806,11 +1806,11 @@ int module_load(
       FILE_ATTRIBUTE_READONLY, module_object, "FILE_ATTRIBUTE_READONLY");
   set_integer(FILE_ATTRIBUTE_HIDDEN, module_object, "FILE_ATTRIBUTE_HIDDEN");
   set_integer(FILE_ATTRIBUTE_SYSTEM, module_object, "FILE_ATTRIBUTE_SYSTEM");
-  set_integer(Reserved1, module_object, "Reserved1");
+  set_integer(LNKReserved1, module_object, "LNKReserved1");
   set_integer(
       FILE_ATTRIBUTE_DIRECTORY, module_object, "FILE_ATTRIBUTE_DIRECTORY");
   set_integer(FILE_ATTRIBUTE_ARCHIVE, module_object, "FILE_ATTRIBUTE_ARCHIVE");
-  set_integer(Reserved2, module_object, "Reserved2");
+  set_integer(LNKReserved2, module_object, "LNKReserved2");
   set_integer(FILE_ATTRIBUTE_NORMAL, module_object, "FILE_ATTRIBUTE_NORMAL");
   set_integer(
       FILE_ATTRIBUTE_TEMPORARY, module_object, "FILE_ATTRIBUTE_TEMPORARY");

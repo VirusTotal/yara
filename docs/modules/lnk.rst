@@ -82,12 +82,12 @@ Reference
     .. c:member:: ForceNoLinkInfo
     .. c:member:: HasExpString
     .. c:member:: RunInSeparateProcess
-    .. c:member:: Unused1
+    .. c:member:: LNKUnused1
     .. c:member:: HasDarwinID
     .. c:member:: RunAsUser
     .. c:member:: HasExpIcon
     .. c:member:: NoPidlAlias
-    .. c:member:: Unused2
+    .. c:member:: LNKUnused2
     .. c:member:: RunWithShimLayer
     .. c:member:: ForceNoLinkTrack
     .. c:member:: EnableTargetMetadata
@@ -107,10 +107,10 @@ Reference
     .. c:member:: FILE_ATTRIBUTE_READONLY
     .. c:member:: FILE_ATTRIBUTE_HIDDEN
     .. c:member:: FILE_ATTRIBUTE_SYSTEM
-    .. c:member:: Reserved1
+    .. c:member:: LNKReserved1
     .. c:member:: FILE_ATTRIBUTE_DIRECTORY
     .. c:member:: FILE_ATTRIBUTE_ARCHIVE
-    .. c:member:: Reserved2
+    .. c:member:: LNKReserved2
     .. c:member:: FILE_ATTRIBUTE_NORMAL
     .. c:member:: FILE_ATTRIBUTE_TEMPORARY
     .. c:member:: FILE_ATTRIBUTE_SPARSE_FILE
