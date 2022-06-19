@@ -6,7 +6,8 @@
 #define TICKS_PER_SECOND 10000000
 #define EPOCH_DIFFERENCE 11644473600LL
 
-#pragma pack(push, 4)
+#pragma pack(push)
+#pragma pack(1)
 
 typedef struct _shell_link_header_t
 {
