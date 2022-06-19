@@ -829,7 +829,8 @@ unsigned int parse_link_info(
       block_data_size_remaining -= volume_id_size;
     }
 
-    else {
+    else
+    {
       set_integer(0, module_object, "link_info.has_volume_id");
     }
 
@@ -1569,7 +1570,7 @@ unsigned int parse_extra_block(
   case ConsoleDataBlockSignature:
 
     set_integer(1, module_object, "has_console_data");
-    
+
     if (extra_data_block_size == ConsoleDataBlockSize &&
         parse_console_data_block(
             extra_block_ptr,
@@ -1599,9 +1600,9 @@ unsigned int parse_extra_block(
     break;
 
   case DarwinDataBlockSignature:
-  
+
     set_integer(1, module_object, "has_darwin_data");
-    
+
     if (extra_data_block_size == DarwinDataBlockSize &&
         parse_darwin_data_block(
             extra_block_ptr,
