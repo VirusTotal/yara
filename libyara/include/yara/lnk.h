@@ -81,10 +81,10 @@ typedef struct _console_data_block_t
   uint32_t color_table[16];
 } console_data_block_t;
 
-typedef struct _console_fed_data_block_t
+typedef struct _console_fe_data_block_t
 {
   uint32_t code_page;
-} console_fed_data_block_t;
+} console_fe_data_block_t;
 
 typedef struct _darwin_data_block_t
 {

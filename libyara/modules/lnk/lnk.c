@@ -174,6 +174,8 @@ begin_declarations
     declare_integer("local_base_path_offset_unicode");
     declare_integer("common_path_suffix_offset_unicode");
 
+    declare_integer("has_volume_id");
+
     begin_struct("volume_id");
       declare_integer("size");
       declare_integer("drive_type");
@@ -184,6 +186,8 @@ begin_declarations
     end_struct("volume_id");
 
     declare_string("local_base_path");
+
+    declare_integer("has_common_network_relative_link");
 
     begin_struct("common_network_relative_link");
       declare_integer("size");
@@ -209,6 +213,8 @@ begin_declarations
   declare_string("working_dir");
   declare_string("command_line_arguments");
   declare_string("icon_location");
+
+  declare_integer("has_console_data");
 
   begin_struct("console_data");
     declare_integer("block_size");
@@ -236,11 +242,15 @@ begin_declarations
     declare_integer_array("color_table");
   end_struct("console_data");
 
-  begin_struct("console_fed_data");
+  declare_integer("has_console_fe_data");
+
+  begin_struct("console_fe_data");
     declare_integer("block_size");
     declare_integer("block_signature");
     declare_integer("code_page");
-  end_struct("console_fed_data");
+  end_struct("console_fe_data");
+
+  declare_integer("has_darwin_data");
 
   begin_struct("darwin_data");
     declare_integer("block_size");
@@ -249,12 +259,16 @@ begin_declarations
     declare_string("darwin_data_unicode");
   end_struct("darwin_data");
 
+  declare_integer("has_environment_variable_data");
+
   begin_struct("environment_variable_data");
     declare_integer("block_size");
     declare_integer("block_signature");
     declare_string("target_ansi");
     declare_string("target_unicode");
   end_struct("environment_variable_data");
+
+  declare_integer("has_icon_environment_data");
 
   begin_struct("icon_environment_data");
     declare_integer("block_size");
@@ -263,6 +277,8 @@ begin_declarations
     declare_string("target_unicode");
   end_struct("icon_environment_data");
 
+  declare_integer("has_known_folder_data");
+
   begin_struct("known_folder_data");
     declare_integer("block_size");
     declare_integer("block_signature");
@@ -270,10 +286,14 @@ begin_declarations
     declare_integer_array("known_folder_id");
   end_struct("known_folder_data");
 
+  declare_integer("has_property_store_data");
+
   begin_struct("property_store_data");
     declare_integer("block_size");
     declare_integer("block_signature");
   end_struct("property_store_data");
+
+  declare_integer("has_shim_data");
 
   begin_struct("shim_data");
     declare_integer("block_size");
@@ -281,12 +301,16 @@ begin_declarations
     declare_string("layer_name");
   end_struct("shim_data");
 
+  declare_integer("has_special_folder_data");
+
   begin_struct("special_folder_data");
     declare_integer("block_size");
     declare_integer("block_signature");
     declare_integer("special_folder_id");
     declare_integer("offset");
   end_struct("special_folder_data");
+
+  declare_integer("has_tracker_data");
 
   begin_struct("tracker_data");
     declare_integer("block_size");
@@ -297,6 +321,8 @@ begin_declarations
     declare_string("droid_birth_volume_identifier");
     declare_string("droid_birth_file_identifier");
   end_struct("tracker_data");
+
+  declare_integer("has_vista_and_above_id_list_data");
 
   begin_struct("vista_and_above_id_list_data");
     declare_integer("block_size");
@@ -789,6 +815,8 @@ unsigned int parse_link_info(
 
     if (link_info_fixed_header->volume_id_offset)
     {
+      set_integer(1, module_object, "link_info.has_volume_id");
+
       volume_id_size = parse_volume_id(
           link_info_ptr, module_object, block_data_size_remaining);
 
@@ -799,6 +827,10 @@ unsigned int parse_link_info(
 
       link_info_ptr += volume_id_size;
       block_data_size_remaining -= volume_id_size;
+    }
+
+    else {
+      set_integer(0, module_object, "link_info.has_volume_id");
     }
 
     // Handle LocalBasePath
@@ -1170,33 +1202,33 @@ unsigned int parse_console_data_block(
   return 1;
 }
 
-unsigned int parse_console_fed_data_block(
+unsigned int parse_console_fe_data_block(
     const uint8_t* extra_block_ptr,
     YR_OBJECT* module_object,
     int block_data_size_remaining,
     uint32_t extra_data_block_size,
     uint32_t extra_data_block_signature)
 {
-  console_fed_data_block_t console_fed_data;
+  console_fe_data_block_t console_fe_data;
 
-  if (block_data_size_remaining < sizeof(console_fed_data_block_t))
+  if (block_data_size_remaining < sizeof(console_fe_data_block_t))
   {
     return 0;
   }
 
   memcpy(
-      &console_fed_data,
-      (console_fed_data_block_t*) extra_block_ptr,
-      sizeof(console_fed_data_block_t));
+      &console_fe_data,
+      (console_fe_data_block_t*) extra_block_ptr,
+      sizeof(console_fe_data_block_t));
 
   set_integer(
-      extra_data_block_size, module_object, "console_fed_data.block_size");
+      extra_data_block_size, module_object, "console_fe_data.block_size");
   set_integer(
       extra_data_block_signature,
       module_object,
-      "console_fed_data.block_signature");
+      "console_fe_data.block_signature");
   set_integer(
-      console_fed_data.code_page, module_object, "console_fed_data.code_page");
+      console_fe_data.code_page, module_object, "console_fe_data.code_page");
 
   return 1;
 }
@@ -1535,6 +1567,9 @@ unsigned int parse_extra_block(
   switch (extra_data_block_signature)
   {
   case ConsoleDataBlockSignature:
+
+    set_integer(1, module_object, "has_console_data");
+    
     if (extra_data_block_size == ConsoleDataBlockSize &&
         parse_console_data_block(
             extra_block_ptr,
@@ -1548,8 +1583,11 @@ unsigned int parse_extra_block(
     break;
 
   case ConsoleFEDataBlockSignature:
+
+    set_integer(1, module_object, "has_console_fe_data");
+
     if (extra_data_block_size == ConsoleFEDataBlockSize &&
-        parse_console_fed_data_block(
+        parse_console_fe_data_block(
             extra_block_ptr,
             module_object,
             block_data_size_remaining,
@@ -1561,6 +1599,9 @@ unsigned int parse_extra_block(
     break;
 
   case DarwinDataBlockSignature:
+  
+    set_integer(1, module_object, "has_darwin_data");
+    
     if (extra_data_block_size == DarwinDataBlockSize &&
         parse_darwin_data_block(
             extra_block_ptr,
@@ -1574,6 +1615,9 @@ unsigned int parse_extra_block(
     break;
 
   case EnvironmentVariableDataBlockSignature:
+
+    set_integer(1, module_object, "has_environment_variable_data");
+
     if (extra_data_block_size == EnvironmentVariableDataBlockSize &&
         parse_environment_variable_data_block(
             extra_block_ptr,
@@ -1587,6 +1631,9 @@ unsigned int parse_extra_block(
     break;
 
   case IconEnvironmentDataBlockSignature:
+
+    set_integer(1, module_object, "has_icon_environment_data");
+
     if (extra_data_block_size == IconEnvironmentDataBlockSize &&
         parse_icon_environment_data_block(
             extra_block_ptr,
@@ -1600,6 +1647,9 @@ unsigned int parse_extra_block(
     break;
 
   case KnownFolderDataBlockSignature:
+
+    set_integer(1, module_object, "has_known_folder_data");
+
     if (extra_data_block_size == KnownFolderDataBlockSize &&
         parse_known_folder_data_block(
             extra_block_ptr,
@@ -1613,6 +1663,9 @@ unsigned int parse_extra_block(
     break;
 
   case PropertyStoreDataBlockSignature:
+
+    set_integer(1, module_object, "has_property_store_data");
+
     if (extra_data_block_size >= PropertyStoreDataBlockMinSize &&
         parse_property_store_data_block(
             extra_block_ptr,
@@ -1626,6 +1679,9 @@ unsigned int parse_extra_block(
     break;
 
   case ShimDataBlockSignature:
+
+    set_integer(1, module_object, "has_shim_data");
+
     if (extra_data_block_size >= ShimDataBlockMinSize &&
         parse_shim_data_block(
             extra_block_ptr,
@@ -1639,6 +1695,9 @@ unsigned int parse_extra_block(
     break;
 
   case SpecialFolderDataBlockSignature:
+
+    set_integer(1, module_object, "has_special_folder_data");
+
     if (extra_data_block_size == SpecialFolderDataBlockSize &&
         parse_special_folder_data_block(
             extra_block_ptr,
@@ -1652,6 +1711,9 @@ unsigned int parse_extra_block(
     break;
 
   case TrackerDataBlockSignature:
+
+    set_integer(1, module_object, "has_tracker_data");
+
     if (extra_data_block_size == TrackerDataBlockSize &&
         parse_tracker_data_block(
             extra_block_ptr,
@@ -1665,6 +1727,9 @@ unsigned int parse_extra_block(
     break;
 
   case VistaAndAboveIDListDataBlockSignature:
+
+    set_integer(1, module_object, "has_vista_and_above_id_list_data");
+
     if (extra_data_block_size >= VistaAndAboveIDListDataBlockMinSize &&
         parse_vista_and_above_id_list_data_block(
             extra_block_ptr,
@@ -2071,6 +2136,18 @@ int module_load(
         current_location += string_data_size;
         block_data_size_remaining -= string_data_size;
       }
+
+      set_integer(0, module_object, "has_console_data");
+      set_integer(0, module_object, "has_console_fe_data");
+      set_integer(0, module_object, "has_darwin_data");
+      set_integer(0, module_object, "has_environment_variable_data");
+      set_integer(0, module_object, "has_icon_environment_data");
+      set_integer(0, module_object, "has_known_folder_data");
+      set_integer(0, module_object, "has_property_store_data");
+      set_integer(0, module_object, "has_shim_data");
+      set_integer(0, module_object, "has_special_folder_data");
+      set_integer(0, module_object, "has_tracker_data");
+      set_integer(0, module_object, "has_vista_and_above_id_list_data");
 
       // Parse ExtraData
       if (block_data_size_remaining > 0)

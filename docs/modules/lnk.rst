@@ -225,6 +225,11 @@ Reference
     .. c:member:: common_path_suffix_offset_unicode
     An optional unsigned integer that specifies the location of the CommonPathSuffixUnicode field.
     
+    .. c:type:: has_volume_id
+    Boolean flag which is set if a VolumeID structure is present.
+
+    *Example: lnk.link_info.has_volume_id*
+    
     .. c:type:: volume_id
     An optional VolumeID structure (section 2.3.1) that specifies information about the volume that the link target was on when the link was created.
 
@@ -390,6 +395,11 @@ An optional string that specifies the location of the icon to be used when displ
 
 *Example: icon_location == "C\\x00:\\x00\\\\x00P\\x00r\\x00o\\x00g\\x00r\\x00a\\x00m\\x00 \\x00F\\x00i\\x00l\\x00e\\x00s\\x00\\\\x00P\\x00e\\x00a\\x00Z\\x00i\\x00p\\x00\\\\x00r\\x00e\\x00s\\x00\\\\x00i\\x00c\\x00o\\x00n\\x00s\\x00\\\\x00p\\x00e\\x00a\\x00z\\x00i\\x00p\\x00_\\x00n\\x00e\\x00w\\x00.\\x00i\\x00c\\x00l\\x00"*
 
+.. c:type:: has_console_data
+Boolean flag which is set if a ConsoleDataBlock structure is present.
+
+*Example: lnk.has_console_data*
+
 .. c:type:: console_data
 The ConsoleDataBlock structure specifies the display settings to use when a link target specifies an application that is run in a console window.
 
@@ -488,7 +498,12 @@ The ConsoleDataBlock structure specifies the display settings to use when a link
     .. c:member:: color_table
     A table of 16 32-bit, unsigned integers specifying the RGB colors that are used for text in the console window. The values of the fill attribute fields FillAttributes and PopupFillAttributes are used as indexes into this table to specify the final foreground and background color for a character.
     
-.. c:type:: console_fed_data
+.. c:type:: has_console_fe_data
+Boolean flag which is set if a ConsoleFEDataBlock structure is present.
+
+*Example: lnk.has_console_fe_data*
+    
+.. c:type:: console_fe_data
 The ConsoleFEDataBlock structure specifies the code page to use for displaying text when a link target specifies an application that is run in a console window.
 
     .. c:member:: block_size
@@ -499,6 +514,11 @@ The ConsoleFEDataBlock structure specifies the code page to use for displaying t
     
     .. c:member:: code_page
     An unsigned integer that specifies a code page language code identifier.
+
+.. c:type:: has_darwin_data
+Boolean flag which is set if a DarwinDataBlock structure is present.
+
+*Example: lnk.has_darwin_data*
     
 .. c:type:: darwin_data
 The DarwinDataBlock structure specifies an application identifier that can be used instead of a link target IDList to install an application when a shell link is activated.
@@ -514,6 +534,11 @@ The DarwinDataBlock structure specifies an application identifier that can be us
     
     .. c:member:: darwin_data_unicode
     An optional, NULL–terminated, Unicode string that specifies an application identifier.
+
+.. c:type:: has_environment_variable_data
+Boolean flag which is set if a EnvironmentVariableDataBlock structure is present.
+
+*Example: lnk.has_environment_variable_data*
     
 .. c:type:: environment_variable_data
 The EnvironmentVariableDataBlock structure specifies a path to environment variable information when the link target refers to a location that has a corresponding environment variable.
@@ -531,6 +556,11 @@ The EnvironmentVariableDataBlock structure specifies a path to environment varia
     
     .. c:member:: target_unicode
     An optional, NULL-terminated, Unicode string that specifies a path to environment variable information.
+
+.. c:type:: has_icon_environment_data
+Boolean flag which is set if a IconEnvironmentDataBlock structure is present.
+
+*Example: lnk.has_icon_environment_data*
     
 .. c:type:: icon_environment_data
 The IconEnvironmentDataBlock structure specifies the path to an icon. The path is encoded using environment variables, which makes it possible to find the icon across machines where the locations vary but are expressed using environment variables.
@@ -548,6 +578,11 @@ The IconEnvironmentDataBlock structure specifies the path to an icon. The path i
     
     .. c:member:: target_unicode
     An optional, NULL-terminated, Unicode string that specifies a path that is constructed with environment variables.
+
+.. c:type:: has_known_folder_data
+Boolean flag which is set if a KnownFolderDataBlock structure is present.
+
+*Example: lnk.has_known_folder_data*
     
 .. c:type:: known_folder_data
 The KnownFolderDataBlock structure specifies the location of a known folder. This data can be used when a link target is a known folder to keep track of the folder so that the link target IDList can be translated when the link is loaded.
@@ -567,6 +602,11 @@ The KnownFolderDataBlock structure specifies the location of a known folder. Thi
     A value in GUID packet representation that specifies the folder GUID ID.
     
     *Example: lnk.known_folder_data.known_folder_id[15] == 142*
+
+.. c:type:: has_property_store_data
+Boolean flag which is set if a PropertyStoreDataBlock structure is present.
+
+*Example: lnk.has_property_store_data*
     
 .. c:type:: property_store_data
 A PropertyStoreDataBlock structure specifies a set of properties that can be used by applications to store extra data in the shell link. (TODO: implement the rest of this structure)
@@ -576,6 +616,11 @@ A PropertyStoreDataBlock structure specifies a set of properties that can be use
     
     .. c:member:: block_signature
     The signature of the block, which will be equal to lnk.PropertyStoreDataBlockSignature.
+
+.. c:type:: has_shim_data
+Boolean flag which is set if a ShimDataBlock structure is present.
+
+*Example: lnk.has_shim_data*
     
 .. c:type:: shim_data
 The ShimDataBlock structure specifies the name of a shim that can be applied when activating a link target.
@@ -588,6 +633,11 @@ The ShimDataBlock structure specifies the name of a shim that can be applied whe
     
     .. c:member:: layer_name
      A Unicode string that specifies the name of a shim layer to apply to a link target when it is being activated.
+
+.. c:type:: has_special_folder_data
+Boolean flag which is set if a SpecialFolderDataBlock structure is present.
+
+*Example: lnk.has_special_folder_data*
     
 .. c:type:: special_folder_data
 The SpecialFolderDataBlock structure specifies the location of a special folder. This data can be used when a link target is a special folder to keep track of the folder, so that the link target IDList can be translated when the link is loaded.
@@ -603,6 +653,11 @@ The SpecialFolderDataBlock structure specifies the location of a special folder.
     
     .. c:member:: special_folder_id
     An unsigned integer that specifies the folder integer ID.
+
+.. c:type:: has_tracker_data
+Boolean flag which is set if a TrackerDataBlock structure is present.
+
+*Example: lnk.has_tracker_data*
     
 .. c:type:: tracker_data
 The TrackerDataBlock structure specifies data that can be used to resolve a link target if it is not found in its original location when the link is resolved. This data is passed to the Link Tracking service to find the link target.
@@ -631,6 +686,11 @@ The TrackerDataBlock structure specifies data that can be used to resolve a link
     
     .. c:member:: droid_birth_file_identifier
     A parsed DroidBirth file identifier GUID.
+
+.. c:type:: has_vista_and_above_id_list_data
+Boolean flag which is set if a VistaAndAboveIDListDataBlock structure is present.
+
+*Example: lnk.has_vista_and_above_id_list_data*
     
 .. c:type:: vista_and_above_id_list_data
 The VistaAndAboveIDListDataBlock structure specifies an alternate IDList that can be used instead of the LinkTargetIDList structure on platforms that support it.

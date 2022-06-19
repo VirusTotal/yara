@@ -154,6 +154,14 @@ int main(int argc, char** argv)
 
   assert_true_rule_file(
       "import \"lnk\" \
+      rule has_volume_id { \
+        condition: \
+          lnk.link_info.has_volume_id \
+      }",
+      "tests/data/lnk-standard");
+
+  assert_true_rule_file(
+      "import \"lnk\" \
       rule local_base_path_offset { \
         condition: \
           lnk.link_info.local_base_path_offset == 0x2D \
@@ -245,6 +253,14 @@ int main(int argc, char** argv)
       rule working_dir { \
         condition: \
           lnk.working_dir == \"C\\x00:\\x00\\\\\\x00t\\x00e\\x00s\\x00t\\x00\" \
+      }",
+      "tests/data/lnk-standard");
+
+  assert_true_rule_file(
+      "import \"lnk\" \
+      rule has_tracker_data { \
+        condition: \
+          lnk.has_tracker_data \
       }",
       "tests/data/lnk-standard");
 
@@ -347,6 +363,14 @@ int main(int argc, char** argv)
 
   assert_true_rule_file(
       "import \"lnk\" \
+      rule has_console_data { \
+        condition: \
+          lnk.has_console_data \
+      }",
+      "tests/data/lnk-extradata-1");
+
+  assert_true_rule_file(
+      "import \"lnk\" \
       rule number_of_history_buffers { \
         condition: \
           lnk.console_data.number_of_history_buffers == 4 \
@@ -363,9 +387,25 @@ int main(int argc, char** argv)
 
   assert_true_rule_file(
       "import \"lnk\" \
+      rule has_environment_variable_data { \
+        condition: \
+          lnk.has_environment_variable_data \
+      }",
+      "tests/data/lnk-extradata-1");
+
+  assert_true_rule_file(
+      "import \"lnk\" \
       rule environment_variable_data_ansi { \
         condition: \
           lnk.environment_variable_data.target_ansi == \"%SystemRoot%\\\\sysWOW64\\\\WindowsPowerShell\\\\v1.0\\\\powershell.exe\" \
+      }",
+      "tests/data/lnk-extradata-1");
+
+  assert_true_rule_file(
+      "import \"lnk\" \
+      rule has_special_folder_data { \
+        condition: \
+          lnk.has_special_folder_data \
       }",
       "tests/data/lnk-extradata-1");
 
@@ -382,6 +422,22 @@ int main(int argc, char** argv)
       rule icon_environment_data_target_ansi { \
         condition: \
           lnk.icon_environment_data.target_ansi == \"%ProgramFiles%\\\\PeaZip\\\\res\\\\icons\\\\peazip_new.icl\" \
+      }",
+      "tests/data/lnk-extradata-2");
+
+  assert_true_rule_file(
+      "import \"lnk\" \
+      rule has_icon_environment_data { \
+        condition: \
+          lnk.has_icon_environment_data \
+      }",
+      "tests/data/lnk-extradata-2");
+
+  assert_true_rule_file(
+      "import \"lnk\" \
+      rule has_known_folder_data { \
+        condition: \
+          lnk.has_known_folder_data \
       }",
       "tests/data/lnk-extradata-2");
 
