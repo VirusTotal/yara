@@ -1402,7 +1402,8 @@ unsigned int parse_property_store_data_block(
       module_object,
       "property_store_data.block_signature");
 
-  // Needs further implementation
+  // TODO: implement parsing the rest of the structure
+  // https://winprotocoldoc.blob.core.windows.net/productionwindowsarchives/MS-PROPSTORE/%5bMS-PROPSTORE%5d.pdf
 
   return 1;
 }
@@ -1561,9 +1562,6 @@ unsigned int parse_extra_block(
     uint32_t extra_data_block_size,
     uint32_t extra_data_block_signature)
 {
-  // Ignore PropertyStore for now
-  // Docs:
-  // https://winprotocoldoc.blob.core.windows.net/productionwindowsarchives/MS-PROPSTORE/%5bMS-PROPSTORE%5d.pdf
 
   switch (extra_data_block_signature)
   {
