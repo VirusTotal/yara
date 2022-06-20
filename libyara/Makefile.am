@@ -77,6 +77,14 @@ MODULES += modules/pb_tests/pb_tests.c
 MODULES += modules/pb_tests/pb_tests.pb-c.c
 endif
 
+if AUTHENTICODE_MODULE
+MODULES += modules/pe/authenticode-parser/authenticode.c
+MODULES += modules/pe/authenticode-parser/certificate.c
+MODULES += modules/pe/authenticode-parser/helper.c
+MODULES += modules/pe/authenticode-parser/countersignature.c
+MODULES += modules/pe/authenticode-parser/structs.c
+endif
+
 #
 # Add your modules here:
 #

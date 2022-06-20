@@ -332,6 +332,7 @@ AS_IF([test "x$have_crypto" = "xno"],
       ])
   ],
   [
+    build_authenticode_module=true # Authenticode relies on openssl
     build_hash_module=true
     CFLAGS="$CFLAGS -DHASH_MODULE"
     PC_REQUIRES_PRIVATE="$PC_REQUIRES_PRIVATE libcrypto"
@@ -351,6 +352,7 @@ AM_CONDITIONAL([UB_SANITIZER], [test x$undefined_behaviour_sanitizer = xtrue])
 AM_CONDITIONAL([CUCKOO_MODULE], [test x$build_cuckoo_module = xtrue])
 AM_CONDITIONAL([MAGIC_MODULE], [test x$build_magic_module = xtrue])
 AM_CONDITIONAL([HASH_MODULE], [test x$build_hash_module = xtrue])
+AM_CONDITIONAL([AUTHENTICODE_MODULE], [test x$build_authenticode_module = xtrue])
 AM_CONDITIONAL([DOTNET_MODULE], [test x$build_dotnet_module = xtrue])
 AM_CONDITIONAL([MACHO_MODULE], [test x$build_macho_module = xtrue])
 AM_CONDITIONAL([PB_TESTS_MODULE], [test x$build_pb_tests_module = xtrue])
