@@ -127,6 +127,10 @@ if ADDRESS_SANITIZER
 AM_CFLAGS+=-fsanitize=address
 endif
 
+if UB_SANITIZER
+AM_CFLAGS+=-fsanitize=undefined -fno-sanitize-recover=undefined
+endif
+
 if GCC
 AM_CFLAGS+=-fvisibility=hidden
 endif
@@ -161,6 +165,7 @@ yarainclude_HEADERS = \
 	include/yara/rules.h \
 	include/yara/scan.h \
 	include/yara/scanner.h \
+	include/yara/simple_str.h \
 	include/yara/sizedstr.h \
 	include/yara/stack.h \
 	include/yara/stopwatch.h \
@@ -168,6 +173,7 @@ yarainclude_HEADERS = \
 	include/yara/strutils.h \
 	include/yara/threading.h \
 	include/yara/types.h \
+	include/yara/unaligned.h \
 	include/yara/utils.h
 
 noinst_HEADERS = \
@@ -229,11 +235,15 @@ libyara_la_SOURCES = \
 	rules.c \
 	scan.c \
 	scanner.c \
+	simple_str.c \
 	sizedstr.c \
 	stack.c \
 	stopwatch.c \
 	strutils.c \
 	stream.c \
+	tlshc/tlsh.c \
+	tlshc/tlsh_impl.c \
+	tlshc/tlsh_util.c \
 	threading.c
 
 

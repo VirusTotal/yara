@@ -177,7 +177,8 @@ int yr_parser_emit_with_arg_reloc(
 
 int yr_parser_emit_pushes_for_strings(
     yyscan_t yyscanner,
-    const char* identifier)
+    const char* identifier,
+    int* count)
 {
   YR_COMPILER* compiler = yyget_extra(yyscanner);
 
@@ -220,6 +221,11 @@ int yr_parser_emit_pushes_for_strings(
     }
   }
 
+  if (count != NULL)
+  {
+    *count = matching;
+  }
+
   if (matching == 0)
   {
     yr_compiler_set_error_extra_info(
@@ -231,7 +237,10 @@ int yr_parser_emit_pushes_for_strings(
 
 // Emit OP_PUSH_RULE instructions for all rules whose identifier has given
 // prefix.
-int yr_parser_emit_pushes_for_rules(yyscan_t yyscanner, const char* prefix)
+int yr_parser_emit_pushes_for_rules(
+    yyscan_t yyscanner,
+    const char* prefix,
+    int* count)
 {
   YR_COMPILER* compiler = yyget_extra(yyscanner);
 
@@ -278,6 +287,11 @@ int yr_parser_emit_pushes_for_rules(yyscan_t yyscanner, const char* prefix)
     rule++;
   }
 
+  if (count != NULL)
+  {
+    *count = matching;
+  }
+
   if (matching == 0)
   {
     yr_compiler_set_error_extra_info(compiler, prefix);
@@ -289,39 +303,42 @@ int yr_parser_emit_pushes_for_rules(yyscan_t yyscanner, const char* prefix)
 
 int yr_parser_emit_push_const(yyscan_t yyscanner, uint64_t argument)
 {
-  uint64_t u = (uint64_t) argument;
-  uint8_t buf[9];
-  int bufsz = 1;
-  if (u == YR_UNDEFINED)
+  uint8_t opcode[9];
+  int opcode_len = 1;
+
+  if (argument == YR_UNDEFINED)
   {
-    buf[0] = OP_PUSH_U;
+    opcode[0] = OP_PUSH_U;
   }
-  else if (u <= 0xff)
+  else if (argument <= 0xff)
   {
-    buf[0] = OP_PUSH_8;
-    bufsz += sizeof(uint8_t);
-    buf[1] = (uint8_t) argument;
+    opcode[0] = OP_PUSH_8;
+    opcode[1] = (uint8_t) argument;
+    opcode_len += sizeof(uint8_t);
   }
-  else if (u <= 0xffff)
+  else if (argument <= 0xffff)
   {
-    buf[0] = OP_PUSH_16;
-    bufsz += sizeof(uint16_t);
-    *((uint16_t*) (buf + 1)) = (uint16_t) argument;
+    opcode[0] = OP_PUSH_16;
+    uint16_t u = (uint16_t) argument;
+    memcpy(opcode + 1, &u, sizeof(uint16_t));
+    opcode_len += sizeof(uint16_t);
   }
-  else if (u <= 0xffffffff)
+  else if (argument <= 0xffffffff)
   {
-    buf[0] = OP_PUSH_32;
-    bufsz += sizeof(uint32_t);
-    *((uint32_t*) (buf + 1)) = (uint32_t) argument;
+    opcode[0] = OP_PUSH_32;
+    uint32_t u = (uint32_t) argument;
+    memcpy(opcode + 1, &u, sizeof(uint32_t));
+    opcode_len += sizeof(uint32_t);
   }
   else
   {
-    buf[0] = OP_PUSH;
-    bufsz += sizeof(uint64_t);
-    *((uint64_t*) (buf + 1)) = (uint64_t) argument;
+    opcode[0] = OP_PUSH;
+    memcpy(opcode + 1, &argument, sizeof(uint64_t));
+    opcode_len += sizeof(uint64_t);
   }
+
   return yr_arena_write_data(
-      yyget_extra(yyscanner)->arena, YR_CODE_SECTION, buf, bufsz, NULL);
+      yyget_extra(yyscanner)->arena, YR_CODE_SECTION, opcode, opcode_len, NULL);
 }
 
 int yr_parser_check_types(
@@ -1088,7 +1105,7 @@ int yr_parser_reduce_rule_declaration_phase_2(
                            compiler->arena, YR_CODE_SECTION) -
                        fixup->ref.offset + 1;
 
-  *jmp_offset_addr = jmp_offset;
+  memcpy(jmp_offset_addr, &jmp_offset, sizeof(jmp_offset));
 
   // Remove fixup from the stack.
   compiler->fixup_stack_head = fixup->next;

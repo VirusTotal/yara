@@ -477,6 +477,38 @@ static void test_syntax()
   // Test case for issue #1295
   assert_error("rule test rule test", ERROR_DUPLICATED_IDENTIFIER);
 
+  assert_error(
+      "rule test { strings: $a = \"a\" condition: -1 of them }",
+      ERROR_INVALID_VALUE);
+
+  assert_error(
+      "rule test { strings: $a = \"a\" condition: 0 + -1 of them }",
+      ERROR_INVALID_VALUE);
+
+  assert_error(
+      "rule test { strings: $a = \"a\" condition: for -1 of them: ($) }",
+      ERROR_INVALID_VALUE);
+
+  assert_error(
+      "rule test { strings: $a = \"a\" condition: for 0 + -1 of them: ($) }",
+      ERROR_INVALID_VALUE);
+
+  assert_error(
+      "rule test { strings: $a = \"a\" condition: \"foo\" of them }",
+      ERROR_INVALID_VALUE);
+
+  assert_error(
+      "rule test { strings: $a = \"a\" condition: for \"foo\" of them: ($) }",
+      ERROR_INVALID_VALUE);
+
+  assert_error(
+      "rule test { strings: $a = \"a\" condition: /foo/ of them }",
+      ERROR_INVALID_VALUE);
+
+  assert_error(
+      "rule test { strings: $a = \"a\" condition: for /foo/ of them: ($) }",
+      ERROR_INVALID_VALUE);
+
   YR_DEBUG_FPRINTF(1, stderr, "} // %s()\n", __FUNCTION__);
 }
 
@@ -487,6 +519,94 @@ static void test_anonymous_strings()
   assert_true_rule(
       "rule test { strings: $ = \"a\" $ = \"b\" condition: all of them }",
       "ab");
+
+  YR_DEBUG_FPRINTF(1, stderr, "} // %s()\n", __FUNCTION__);
+}
+
+static void test_warnings()
+{
+  YR_DEBUG_FPRINTF(1, stderr, "+ %s() {\n", __FUNCTION__);
+
+  assert_warning("rule test { \
+    strings: \
+      $a = \"AXSERS\" \
+    condition: \
+      0 of them \
+    }");
+
+  assert_warning("rule test { \
+    strings: \
+      $a = \"AXSERS\" \
+    condition: \
+      for 0 of ($a*): ($) \
+    }");
+
+  assert_no_warnings("rule test { \
+    strings: \
+      $a = \"AXSERS\" \
+    condition: \
+      none of them \
+    }");
+
+  assert_no_warnings("rule test { \
+    strings: \
+      $a = \"AXSERS\" \
+    condition: \
+      for none of ($a*): ($) \
+    }");
+
+  assert_warning("rule test { \
+    strings: \
+      $a = \"AXSERS\" \
+    condition: \
+      1 + -1 of them \
+    }");
+
+  assert_warning("rule test { \
+    strings: \
+      $a = \"AXSERS\" \
+    condition: \
+      2 of them \
+    }");
+
+  assert_warning("rule test { \
+    strings: \
+      $a = \"AXSERS\" \
+    condition: \
+      2 of ($a) \
+    }");
+
+  assert_warning("rule test { \
+    strings: \
+      $a = \"AXSERS\" \
+    condition: \
+      2 of ($a*) \
+    }");
+
+  assert_warning("rule test { \
+    strings: \
+      $a = \"AXSERS\" \
+    condition: \
+      2 of ($a*) in (0..10) \
+    }");
+
+  assert_warning("rule a { \
+    condition: \
+      true \
+    } \
+    rule b { \
+      condition: \
+        2 of (a) \
+    }");
+
+  assert_warning("rule a { \
+    condition: \
+      true \
+    } \
+    rule b { \
+      condition: \
+        2 of (a*) \
+    }");
 
   YR_DEBUG_FPRINTF(1, stderr, "} // %s()\n", __FUNCTION__);
 }
@@ -1727,7 +1847,6 @@ static void test_of()
       "condition: none of ($a*, $b*) }",
       TEXT_1024_BYTES "mississippi");
 
-
   assert_true_rule_blob(
       "rule test { \
          strings: \
@@ -2044,6 +2163,45 @@ void test_for()
         ) \
       }",
       NULL);
+
+  // Lower bound must be less than upper bound, if it can be determined
+  // statically.
+  assert_error(
+      "rule test { \
+        condition: \
+          for any i in (10..1): (i) \
+      }",
+      ERROR_INVALID_VALUE);
+
+  // If one of the bounds can not be determined statically it isn't an error.
+  assert_true_rule(
+      "rule test { \
+      strings: \
+        $a = \"AXSERS\" \
+      condition: \
+        true or any of them in (0..filesize-100) \
+    }",
+      TEXT_1024_BYTES);
+
+  // Lower bound can not be negative, if it can be determined statically.
+  assert_error(
+      "rule test { \
+        strings: \
+          $a = \"AXSERS\" \
+        condition: \
+          $a in (-1..10) \
+      }",
+      ERROR_INVALID_VALUE);
+
+  // Test case for https://github.com/VirusTotal/yara/issues/1729
+  assert_true_rule(
+      "rule test { \
+        strings: \
+          $a = \"abcde\" \
+        condition: \
+          for any n in (1..10) : ( n of ($a*) ) \
+      }",
+      "abcde");
 
   YR_DEBUG_FPRINTF(1, stderr, "} // %s()\n", __FUNCTION__);
 }
@@ -2888,6 +3046,19 @@ static void test_modules()
       }",
       NULL);
 
+  assert_true_rule(
+      "import \"tests\" \
+      rule test { \
+        condition: \
+          for any item1 in tests.struct_array: ( \
+            item1.i == 1 and \
+            for any item2 in tests.struct_array: ( \
+              item2.i == item1.i \
+            ) \
+          ) \
+      }",
+      NULL);
+
   assert_error("import \"\\x00\"", ERROR_INVALID_MODULE_NAME);
 
   assert_error("import \"\"", ERROR_INVALID_MODULE_NAME);
@@ -3159,7 +3330,7 @@ void test_process_scan()
     exit(EXIT_FAILURE);
   }
 
-  spawn("/bin/sh", "-c", "VAR='Hello, world!'; sleep 600; true");
+  spawn("/bin/sh", "-c", "VAR='Hello, world!'; sleep 10; true");
 
   counters.rules_matching = 0;
   counters.rules_not_matching = 0;
@@ -3537,6 +3708,7 @@ static void test_pass(int pass)
   test_global_rules();
   test_tags();
   test_meta();
+  test_warnings();
 
 #if !defined(USE_NO_PROC) && !defined(_WIN32) && !defined(__CYGWIN__)
   test_process_scan();
