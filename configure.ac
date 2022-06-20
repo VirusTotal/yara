@@ -367,6 +367,9 @@ AS_IF(
   [test x$proc_interface != xnone],[AC_DEFINE([HAVE_SCAN_PROC_IMPL],[1])],
   [test x$proc_interface = xnone],[AC_DEFINE([HAVE_SCAN_PROC_IMPL],[0])])
 
+# Configure TLSH function
+CFLAGS="$CFLAGS -DBUCKETS_128=1 -DCHECKSUM_1B=1"
+
 AC_SUBST([PC_REQUIRES_PRIVATE])
 AC_SUBST([PC_LIBS_PRIVATE])
 

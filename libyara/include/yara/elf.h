@@ -152,6 +152,11 @@ typedef uint64_t elf64_xword_t;
 #define ELF_STT_COMMON  5  // Symbol is a common data object
 #define ELF_STT_TLS     6  // Symbol is thread-local data object
 
+#define ELF_STV_DEFAULT   0  // Visibility by binding
+#define ELF_STV_INTERNAL  1  // Reserved
+#define ELF_STV_HIDDEN    2  // Not visible to other components
+#define ELF_STV_PROTECTED 3  // Visible in other but cannot be preempted.
+
 #define ELF_STB_LOCAL  0  // Local symbol
 #define ELF_STB_GLOBAL 1  // Global symbol
 #define ELF_STB_WEAK   2  // Weak symbol
@@ -161,6 +166,10 @@ typedef uint64_t elf64_xword_t;
 #define ELF_PF_R 0x4  // Segment is readable
 
 #define ELF_PN_XNUM 0xffff
+
+#define ELF_SHN_UNDEF  0       // Missing, undefined section index
+#define ELF_SHN_ABS    0xFFF1  // Absolute references, not affected by relocs
+#define ELF_SHN_COMMON 0xFFF2  // Symbols relative to this are common
 
 #pragma pack(push, 1)
 
