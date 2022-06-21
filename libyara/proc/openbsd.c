@@ -150,8 +150,6 @@ YR_API YR_MEMORY_BLOCK* yr_process_get_next_memory_block(
   int mib[] = {CTL_KERN, KERN_PROC_VMMAP, proc_info->pid};
   size_t len = sizeof(struct kinfo_vmentry);
 
-  iterator->last_error = ERROR_SUCCESS;
-
   uint64_t current_begin = context->current_block.base +
                            context->current_block.size;
 
@@ -159,6 +157,8 @@ YR_API YR_MEMORY_BLOCK* yr_process_get_next_memory_block(
 
   yr_get_configuration_uint64(
       YR_CONFIG_MAX_PROCESS_MEMORY_CHUNK, &max_process_memory_chunk);
+
+  iterator->last_error = ERROR_SUCCESS;
 
   if (proc_info->old_end <= current_begin)
   {
@@ -192,7 +192,12 @@ YR_API YR_MEMORY_BLOCK* yr_process_get_first_memory_block(
 
   proc_info->vm_entry.kve_start = 0;
 
-  return yr_process_get_next_memory_block(iterator);
+  YR_MEMORY_BLOCK* result = yr_process_get_next_memory_block(iterator);
+
+  if (result == NULL)
+    iterator->last_error = ERROR_COULD_NOT_READ_PROCESS_MEMORY;
+
+  return result;
 }
 
 #endif

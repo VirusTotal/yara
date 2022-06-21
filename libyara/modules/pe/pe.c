@@ -33,20 +33,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "../crypto.h"
 #if defined(HAVE_LIBCRYPTO)
-#include <openssl/asn1.h>
-#include <openssl/bio.h>
-#include <openssl/pkcs7.h>
-#include <openssl/safestack.h>
-#include <openssl/x509.h>
-
-#if OPENSSL_VERSION_NUMBER < 0x10100000L
-#define X509_get_signature_nid(o) OBJ_obj2nid((o)->sig_alg->algorithm)
-#endif
-
-#if OPENSSL_VERSION_NUMBER < 0x10100000L
-#define X509_get0_notBefore X509_get_notBefore
-#define X509_get0_notAfter  X509_get_notAfter
-#endif
+#include <authenticode-parser/authenticode.h>
+#include <openssl/evp.h>
 #endif
 
 #include <yara/dotnet.h>
@@ -1611,206 +1599,231 @@ static void pe_parse_exports(PE* pe)
 // but you won't have signature-related features in the PE module.
 #if defined(HAVE_LIBCRYPTO) && !defined(BORINGSSL)
 
-//
-// Parse a PKCS7 blob, looking for certs and nested PKCS7 blobs.
-//
+#define write_certificate(cert, pe, fmt, ...)                                  \
+  do                                                                           \
+  {                                                                            \
+    char thumbprint_ascii[YR_SHA1_LEN * 2 + 1];                                \
+    for (int j = 0; j < cert->sha1.len; ++j)                                   \
+      sprintf(thumbprint_ascii + (j * 2), "%02x", cert->sha1.data[j]);         \
+                                                                               \
+    set_string(                                                                \
+        (char*) thumbprint_ascii, pe->object, fmt ".thumbprint", __VA_ARGS__); \
+                                                                               \
+    set_string(cert->issuer, pe->object, fmt ".issuer", __VA_ARGS__);          \
+    set_string(cert->subject, pe->object, fmt ".subject", __VA_ARGS__);        \
+    /* Versions are zero based, so add one.  */                                \
+    set_integer(cert->version + 1, pe->object, fmt ".version", __VA_ARGS__);   \
+    set_string(cert->sig_alg, pe->object, fmt ".algorithm", __VA_ARGS__);      \
+    set_string(                                                                \
+        cert->sig_alg_oid, pe->object, fmt ".algorithm_oid", __VA_ARGS__);     \
+    set_string(cert->serial, pe->object, fmt ".serial", __VA_ARGS__);          \
+    set_integer(cert->not_before, pe->object, fmt ".not_before", __VA_ARGS__); \
+    set_integer(cert->not_after, pe->object, fmt ".not_after", __VA_ARGS__);   \
+  } while (0)
 
-void _parse_pkcs7(PE* pe, PKCS7* pkcs7, int* counter)
+void _process_authenticode(
+    PE* pe,
+    AuthenticodeArray* auth_array,
+    int* sig_count)
 {
-  int i, j;
-  time_t date_time;
-  int sig_nid;
-  char buffer[256];
-  int bytes;
-  int idx;
-  const EVP_MD* sha1_digest = EVP_sha1();
-  const unsigned char* p;
-  unsigned char thumbprint[YR_SHA1_LEN];
-  char thumbprint_ascii[YR_SHA1_LEN * 2 + 1];
-
-  PKCS7_SIGNER_INFO* signer_info = NULL;
-  PKCS7* nested_pkcs7 = NULL;
-  ASN1_INTEGER* serial = NULL;
-  ASN1_TYPE* nested = NULL;
-  ASN1_STRING* value = NULL;
-  X509* cert = NULL;
-  STACK_OF(X509)* certs = NULL;
-  X509_ATTRIBUTE* xa = NULL;
-  STACK_OF(X509_ATTRIBUTE)* attrs = NULL;
-
-  if (*counter >= MAX_PE_CERTS)
+  if (!auth_array || !auth_array->count)
     return;
 
-  certs = PKCS7_get0_signers(pkcs7, NULL, 0);
+  /* If any signature will be valid -> file is correctly signed */
+  bool signature_valid = false;
 
-  if (!certs)
-    return;
-
-  for (i = 0; i < sk_X509_num(certs) && *counter < MAX_PE_CERTS; i++)
+  for (size_t i = 0; i < auth_array->count; ++i)
   {
-    cert = sk_X509_value(certs, i);
+    const Authenticode* authenticode = auth_array->signatures[i];
 
-    X509_digest(cert, sha1_digest, thumbprint, NULL);
-
-    for (j = 0; j < YR_SHA1_LEN; j++)
-      sprintf(thumbprint_ascii + (j * 2), "%02x", thumbprint[j]);
-
-    set_string(
-        (char*) thumbprint_ascii,
-        pe->object,
-        "signatures[%i].thumbprint",
-        *counter);
-
-    X509_NAME_oneline(X509_get_issuer_name(cert), buffer, sizeof(buffer));
-
-    set_string(buffer, pe->object, "signatures[%i].issuer", *counter);
-
-    X509_NAME_oneline(X509_get_subject_name(cert), buffer, sizeof(buffer));
-
-    set_string(buffer, pe->object, "signatures[%i].subject", *counter);
+    signature_valid = authenticode->verify_flags == AUTHENTICODE_VFY_VALID
+                          ? true
+                          : false;
 
     set_integer(
-        X509_get_version(cert) + 1,  // Versions are zero based, so add one.
-        pe->object,
-        "signatures[%i].version",
-        *counter);
+        signature_valid, pe->object, "signatures[%i].verified", *sig_count);
 
-    sig_nid = X509_get_signature_nid(cert);
     set_string(
-        OBJ_nid2ln(sig_nid), pe->object, "signatures[%i].algorithm", *counter);
-    OBJ_obj2txt(buffer, sizeof(buffer), OBJ_nid2obj(sig_nid), 1);
-    set_string(buffer, pe->object, "signatures[%i].algorithm_oid", *counter);
+        authenticode->digest_alg,
+        pe->object,
+        "signatures[%i].digest_alg",
+        *sig_count);
 
-    serial = X509_get_serialNumber(cert);
-
-    if (serial)
+    if (authenticode->digest.data)
     {
-      // ASN1_INTEGER can be negative (serial->type & V_ASN1_NEG_INTEGER),
-      // in which case the serial number will be stored in 2's complement.
-      //
-      // Handle negative serial numbers, which are technically not allowed
-      // by RFC5280, but do exist. An example binary which has a negative
-      // serial number is: 4bfe05f182aa273e113db6ed7dae4bb8.
-      //
-      // Negative serial numbers are handled by calling i2d_ASN1_INTEGER()
-      // with a NULL second parameter. This will return the size of the
-      // buffer necessary to store the proper serial number.
-      //
-      // Do this even for positive serial numbers because it makes the code
-      // cleaner and easier to read.
+      char* digest_ascii = yr_malloc(authenticode->digest.len * 2 + 1);
+      for (int j = 0; j < authenticode->digest.len; ++j)
+        sprintf(digest_ascii + (j * 2), "%02x", authenticode->digest.data[j]);
 
-      bytes = i2d_ASN1_INTEGER(serial, NULL);
+      set_string(digest_ascii, pe->object, "signatures[%i].digest", *sig_count);
+      yr_free(digest_ascii);
+    }
 
-      // According to X.509 specification the maximum length for the
-      // serial number is 20 octets. Add two bytes to account for
-      // DER type and length information.
+    if (authenticode->file_digest.data)
+    {
+      char* digest_ascii = yr_malloc(authenticode->file_digest.len * 2 + 1);
+      for (int j = 0; j < authenticode->file_digest.len; ++j)
+        sprintf(
+            digest_ascii + (j * 2), "%02x", authenticode->file_digest.data[j]);
 
-      if (bytes > 2 && bytes <= 22)
+      set_string(
+          digest_ascii, pe->object, "signatures[%i].file_digest", *sig_count);
+      yr_free(digest_ascii);
+    }
+
+    if (authenticode->certs)
+    {
+      set_integer(
+          authenticode->certs->count,
+          pe->object,
+          "signatures[%i].number_of_certificates",
+          *sig_count);
+
+      for (int k = 0; k < authenticode->certs->count; ++k)
       {
-        // Now that we know the size of the serial number allocate enough
-        // space to hold it, and use i2d_ASN1_INTEGER() one last time to
-        // hold it in the allocated buffer.
+        write_certificate(
+            authenticode->certs->certs[k],
+            pe,
+            "signatures[%i].certificates[%i]",
+            *sig_count,
+            k);
+      }
+    }
 
-        unsigned char* serial_der = (unsigned char*) yr_malloc(bytes);
+    const Signer* signer = authenticode->signer;
+    if (signer)
+    {
+      /* For compatibility with previous YARA rules, write information
+       * about signing certificate in the same way */
+      if (signer->chain && signer->chain->count >= 1)
+      {
+        const Certificate* sign_cert = signer->chain->certs[0];
+        write_certificate(sign_cert, pe, "signatures[%i]", *sig_count);
+      }
 
-        if (serial_der != NULL)
+      set_string(
+          signer->program_name,
+          pe->object,
+          "signatures[%i].signer_info.program_name",
+          *sig_count);
+      set_string(
+          signer->digest_alg,
+          pe->object,
+          "signatures[%i].signer_info.digest_alg",
+          *sig_count);
+
+      if (signer->digest.data)
+      {
+        char* digest_ascii = yr_malloc(signer->digest.len * 2 + 1);
+        for (int j = 0; j < signer->digest.len; ++j)
+          sprintf(digest_ascii + (j * 2), "%02x", signer->digest.data[j]);
+
+        set_string(
+            digest_ascii,
+            pe->object,
+            "signatures[%i].signer_info.digest",
+            *sig_count);
+        yr_free(digest_ascii);
+      }
+
+      if (signer->chain)
+      {
+        set_integer(
+            signer->chain->count,
+            pe->object,
+            "signatures[%i].signer_info.length_of_chain",
+            *sig_count);
+
+        for (int k = 0; k < signer->chain->count; ++k)
         {
-          unsigned char* serial_bytes;
-          char* serial_ascii;
+          write_certificate(
+              signer->chain->certs[k],
+              pe,
+              "signatures[%i].signer_info.chain[%i]",
+              *sig_count,
+              k);
+        }
+      }
+    }
+    if (authenticode->countersigs)
+    {
+      set_integer(
+          authenticode->countersigs->count,
+          pe->object,
+          "signatures[%i].number_of_countersignatures",
+          *sig_count);
 
-          bytes = i2d_ASN1_INTEGER(serial, &serial_der);
+      for (int j = 0; j < authenticode->countersigs->count; ++j)
+      {
+        const Countersignature* counter =
+            authenticode->countersigs->counters[j];
 
-          // i2d_ASN1_INTEGER() moves the pointer as it writes into
-          // serial_bytes. Move it back.
+        set_integer(
+            counter->verify_flags == COUNTERSIGNATURE_VFY_VALID,
+            pe->object,
+            "signatures[%i].countersignatures[%i].verified",
+            *sig_count,
+            j);
+        set_string(
+            counter->digest_alg,
+            pe->object,
+            "signatures[%i].countersignatures[%i].digest_alg",
+            *sig_count,
+            j);
+        set_integer(
+            counter->sign_time,
+            pe->object,
+            "signatures[%i].countersignatures[%i].sign_time",
+            *sig_count,
+            j);
 
-          serial_der -= bytes;
+        if (counter->digest.data)
+        {
+          char* digest_ascii = yr_malloc(counter->digest.len * 2 + 1);
+          for (int j = 0; j < counter->digest.len; ++j)
+            sprintf(digest_ascii + (j * 2), "%02x", counter->digest.data[j]);
 
-          // Skip over DER type, length information
-          serial_bytes = serial_der + 2;
-          bytes -= 2;
+          set_string(
+              digest_ascii,
+              pe->object,
+              "signatures[%i].countersignatures[%i].digest",
+              *sig_count,
+              j);
+          yr_free(digest_ascii);
+        }
 
-          // Also allocate space to hold the "common" string format:
-          // 00:01:02:03:04...
-          //
-          // For each byte in the serial to convert to hexlified format we
-          // need three bytes, two for the byte itself and one for colon.
-          // The last one doesn't have the colon, but the extra byte is used
-          // for the NULL terminator.
+        if (counter->chain)
+        {
+          set_integer(
+              counter->chain->count,
+              pe->object,
+              "signatures[%i].countersignatures[%i].length_of_chain",
+              *sig_count,
+              j);
 
-          serial_ascii = (char*) yr_malloc(bytes * 3);
-
-          if (serial_ascii)
+          for (int k = 0; k < counter->chain->count; ++k)
           {
-            for (j = 0; j < bytes; j++)
-            {
-              // Don't put the colon on the last one.
-              if (j < bytes - 1)
-                snprintf(serial_ascii + 3 * j, 4, "%02x:", serial_bytes[j]);
-              else
-                snprintf(serial_ascii + 3 * j, 3, "%02x", serial_bytes[j]);
-            }
-
-            set_string(
-                serial_ascii, pe->object, "signatures[%i].serial", *counter);
-
-            yr_free(serial_ascii);
+            write_certificate(
+                counter->chain->certs[k],
+                pe,
+                "signatures[%i].countersignatures[%i].chain[%i]",
+                *sig_count,
+                j,
+                k);
           }
-
-          yr_free(serial_der);
         }
       }
     }
 
-    date_time = ASN1_get_time_t(X509_get0_notBefore(cert));
-    set_integer(date_time, pe->object, "signatures[%i].not_before", *counter);
-
-    date_time = ASN1_get_time_t(X509_get0_notAfter(cert));
-    set_integer(date_time, pe->object, "signatures[%i].not_after", *counter);
-
-    (*counter)++;
+    (*sig_count)++;
   }
 
-  // See if there is a nested signature, which is apparently an authenticode
-  // specific feature. See https://github.com/VirusTotal/yara/issues/515.
-  signer_info = sk_PKCS7_SIGNER_INFO_value(pkcs7->d.sign->signer_info, 0);
-
-  if (signer_info != NULL)
-  {
-    attrs = PKCS7_get_attributes(signer_info);
-
-    idx = X509at_get_attr_by_NID(
-        attrs, OBJ_txt2nid(SPC_NESTED_SIGNATURE_OBJID), -1);
-
-    xa = X509at_get_attr(attrs, idx);
-
-    for (j = 0; j < MAX_PE_CERTS; j++)
-    {
-      nested = X509_ATTRIBUTE_get0_type(xa, j);
-      if (nested == NULL)
-        break;
-      value = nested->value.sequence;
-      p = value->data;
-      nested_pkcs7 = d2i_PKCS7(NULL, &p, value->length);
-      if (nested_pkcs7 != NULL)
-      {
-        _parse_pkcs7(pe, nested_pkcs7, counter);
-        PKCS7_free(nested_pkcs7);
-      }
-    }
-  }
-
-  sk_X509_free(certs);
+  set_integer(signature_valid, pe->object, "is_signed");
 }
 
 static void pe_parse_certificates(PE* pe)
 {
   int counter = 0;
-
-  const uint8_t* eod;
-  const unsigned char* cert_p;
-  uintptr_t end;
-
-  PWIN_CERTIFICATE win_cert;
 
   PIMAGE_DATA_DIRECTORY directory = pe_get_directory_entry(
       pe, IMAGE_DIRECTORY_ENTRY_SECURITY);
@@ -1831,72 +1844,9 @@ static void pe_parse_certificates(PE* pe)
     return;
   }
 
-  // Store the end of directory, making comparisons easier.
-  eod = pe->data + yr_le32toh(directory->VirtualAddress) +
-        yr_le32toh(directory->Size);
-
-  win_cert =
-      (PWIN_CERTIFICATE) (pe->data + yr_le32toh(directory->VirtualAddress));
-
-  //
-  // Walk the directory, pulling out certificates.
-  //
-  // Make sure WIN_CERTIFICATE fits within the directory.
-  // Make sure the Length specified fits within directory too.
-  //
-  // The docs say that the length is only for the Certificate, but the next
-  // paragraph contradicts that. All the binaries I've seen have the Length
-  // being the entire structure (Certificate included).
-  //
-
-  while (struct_fits_in_pe(pe, win_cert, WIN_CERTIFICATE) &&
-         yr_le32toh(win_cert->Length) > sizeof(WIN_CERTIFICATE) &&
-         fits_in_pe(pe, win_cert, yr_le32toh(win_cert->Length)) &&
-         (uint8_t*) win_cert + sizeof(WIN_CERTIFICATE) < eod &&
-         (uint8_t*) win_cert + yr_le32toh(win_cert->Length) <= eod)
-  {
-    PKCS7* pkcs7;
-
-    // Some sanity checks
-
-    if (yr_le32toh(win_cert->Length) == 0 ||
-        (yr_le16toh(win_cert->Revision) != WIN_CERT_REVISION_1_0 &&
-         yr_le16toh(win_cert->Revision) != WIN_CERT_REVISION_2_0))
-    {
-      break;
-    }
-
-    // Don't support legacy revision for now.
-    // Make sure type is PKCS#7 too.
-
-    if (yr_le16toh(win_cert->Revision) != WIN_CERT_REVISION_2_0 ||
-        yr_le16toh(win_cert->CertificateType) != WIN_CERT_TYPE_PKCS_SIGNED_DATA)
-    {
-      end = (uintptr_t) ((uint8_t*) win_cert) + yr_le32toh(win_cert->Length);
-
-      // Next certificate is aligned to the next 8-bytes boundary.
-      win_cert = (PWIN_CERTIFICATE) ((end + 7) & -8);
-      continue;
-    }
-
-    cert_p = win_cert->Certificate;
-    end = (uintptr_t) ((uint8_t*) win_cert) + yr_le32toh(win_cert->Length);
-
-    while ((uintptr_t) cert_p < end && counter < MAX_PE_CERTS)
-    {
-      pkcs7 = d2i_PKCS7(NULL, &cert_p, (uint32_t) (end - (uintptr_t) cert_p));
-
-      if (pkcs7 == NULL)
-        break;
-
-      _parse_pkcs7(pe, pkcs7, &counter);
-      PKCS7_free(pkcs7);
-      pkcs7 = NULL;
-    }
-
-    // Next certificate is aligned to the next 8-bytes boundary.
-    win_cert = (PWIN_CERTIFICATE) ((end + 7) & -8);
-  }
+  AuthenticodeArray* auth_array = parse_authenticode(pe->data, pe->data_size);
+  _process_authenticode(pe, auth_array, &counter);
+  authenticode_array_free(auth_array);
 
   set_integer(counter, pe->object, "number_of_signatures");
 }
@@ -3548,14 +3498,14 @@ begin_declarations
     end_struct_array("functions");
   end_struct_array("import_details");
 
-  begin_struct_array("delay_import_details")
+  begin_struct_array("delayed_import_details")
     declare_string("library_name");
-    declare_integer("number_of_function");
+    declare_integer("number_of_functions");
     begin_struct_array("functions")
       declare_string("name");
       declare_integer("ordinal");
     end_struct_array("functions");
-  end_struct_array("delay_import_details");
+  end_struct_array("delayed_import_details");
 
   declare_integer("resource_timestamp");
 
@@ -3590,9 +3540,68 @@ begin_declarations
     declare_string("serial");
     declare_integer("not_before");
     declare_integer("not_after");
+
+    declare_integer("verified");
+    declare_string("digest_alg");
+    declare_string("digest");
+    declare_string("file_digest");
+    declare_integer("number_of_certificates");
+    begin_struct_array("certificates");
+      declare_string("thumbprint");
+      declare_string("issuer");
+      declare_string("subject");
+      declare_integer("version");
+      declare_string("algorithm");
+      declare_string("algorithm_oid");
+      declare_string("serial");
+      declare_integer("not_before");
+      declare_integer("not_after");
+    end_struct_array("certificates");
+
+    begin_struct("signer_info");
+      declare_string("program_name");
+      declare_string("digest");
+      declare_string("digest_alg");
+      declare_integer("length_of_chain");
+      begin_struct_array("chain");
+        declare_string("thumbprint");
+        declare_string("issuer");
+        declare_string("subject");
+        declare_integer("version");
+        declare_string("algorithm");
+        declare_string("algorithm_oid");
+        declare_string("serial");
+        declare_integer("not_before");
+        declare_integer("not_after");
+      end_struct_array("chain");
+    end_struct("signer_info");
+
+    declare_integer("number_of_countersignatures");
+    begin_struct_array("countersignatures");
+      declare_integer("verified");
+      declare_integer("sign_time");
+      declare_string("digest_alg");
+      declare_string("digest");
+      declare_integer("length_of_chain");
+      begin_struct_array("chain");
+        declare_string("thumbprint");
+        declare_string("issuer");
+        declare_string("subject");
+        declare_integer("version");
+        declare_string("algorithm");
+        declare_string("algorithm_oid");
+        declare_string("serial");
+        declare_integer("not_before");
+        declare_integer("not_after");
+      end_struct_array("chain");
+    end_struct_array("countersignatures")
+
     declare_function("valid_on", "i", "i", valid_on);
+
   end_struct_array("signatures")
 
+  // If any of the signatures correctly signs the binary
+  declare_integer("is_signed");
   declare_integer("number_of_signatures");
 #endif
 
@@ -3602,9 +3611,9 @@ end_declarations
 int module_initialize(YR_MODULE* module)
 {
 #if defined(HAVE_LIBCRYPTO)
-  // Not checking return value here because if it fails we will not parse the
-  // nested signature silently.
-  OBJ_create(SPC_NESTED_SIGNATURE_OBJID, NULL, NULL);
+  // Initialize OpenSSL global objects for the auth library before any
+  // multithreaded environment as it is not thread-safe
+  initialize_authenticode_parser();
 #endif
   return ERROR_SUCCESS;
 }

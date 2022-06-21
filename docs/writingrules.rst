@@ -146,8 +146,8 @@ shown below.
 Hexadecimal strings
 -------------------
 
-Hexadecimal strings allow three special constructions that make them more
-flexible: wild-cards, jumps, and alternatives. Wild-cards are just placeholders
+Hexadecimal strings allow four special constructions that make them more
+flexible: wild-cards, not operators, jumps, and alternatives. Wild-cards are just placeholders
 that you can put into the string indicating that some bytes are unknown and they
 should match anything. The placeholder character is the question mark (?). Here
 you have an example of a hexadecimal string with wild-cards:
@@ -166,7 +166,27 @@ you have an example of a hexadecimal string with wild-cards:
 As shown in the example the wild-cards are nibble-wise, which means that you can
 define just one nibble of the byte and leave the other unknown.
 
-Wild-cards are useful when defining strings whose content can vary but you know
+In some cases you may wish to specify that a byte is not a specific value. For
+that you can use the not operator with a byte value:
+
+.. code-block:: yara
+
+    rule NotExample
+    {
+        strings:
+            $hex_string = { F4 23 ~00 62 B4 }
+            $hex_string2 = { F4 23 ~?0 62 B4 }
+        condition:
+            $hex_string and $hex_string2
+    }
+
+In the example above we have a byte prefixed with a tilde (~), which is the not operator.
+This defines that the byte in that location can take any value except the value specified.
+In this case the first string will only match if the byte is not 00. The not operator can
+also be used with nibble-wise wild-cards, so the second string will only match if the
+second nibble is not zero.
+
+Wild-cards and not operators are useful when defining strings whose content can vary but you know
 the length of the variable chunks, however, this is not always the case. In some
 circumstances you may need to define strings with chunks of variable content and
 length. In those situations you can use jumps instead of wild-cards:
@@ -1179,6 +1199,18 @@ The keywords ``any``, ``all`` and ``none`` can be used as well.
     any of ($a,$b,$c) // any of $a, $b or $c
     1 of ($*)         // same that "any of them"
     none of ($b*)     // zero of the set of strings that start with "$b"
+
+.. warning:: Due to the way YARA works internally, using "0 of them" is an
+    ambiguous part of the language which should be avoided in favor of "none
+    of them". To understand this, consider the meaning of "2 of them", which
+    is true if 2 or more of the strings match. Historically, "0 of them"
+    followed this principle and would evaluate to true if at least one of the
+    strings matched. This ambiguity is resolved in YARA 4.3.0 by making "0 of
+    them" evaluate to true if exactly 0 of the strings match. To improve on
+    the situation and make the intent clear, it is encouraged to use "none" in
+    place of 0. By not using an integer it is easier to reason about the meaning
+    of "none of them" without the historical understanding of "at least 0"
+    clouding the issue.
 
 
 Starting with YARA 4.2.0 it is possible to express a set of strings in an

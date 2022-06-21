@@ -3241,6 +3241,7 @@ static bool dotnet_is_dotnet(PE* pe)
 
   int64_t metadata_root = pe_rva_to_offset(
       pe, yr_le32toh(cli_header->MetaData.VirtualAddress));
+  offset = metadata_root;
 
   if (!struct_fits_in_pe(pe, pe->data + metadata_root, NET_METADATA))
     return false;
@@ -3254,7 +3255,7 @@ static bool dotnet_is_dotnet(PE* pe)
   // Also make sure it fits in pe.
   uint32_t md_len = yr_le32toh(metadata->Length);
   if (md_len == 0 || md_len > 255 || md_len % 4 != 0 ||
-      !fits_in_pe(pe, pe->data + offset, md_len))
+      !fits_in_pe(pe, pe->data + offset + sizeof(NET_METADATA), md_len))
   {
     return false;
   }
@@ -3271,7 +3272,7 @@ static bool dotnet_is_dotnet(PE* pe)
     int64_t entry_offset = pe_rva_to_offset(
         pe, yr_le32toh(pe->header->OptionalHeader.AddressOfEntryPoint));
 
-    if (offset < 0 || !fits_in_pe(pe, pe->data + entry_offset, 2))
+    if (entry_offset < 0 || !fits_in_pe(pe, pe->data + entry_offset, 2))
       return false;
 
     const uint8_t* entry_data = pe->data + entry_offset;
@@ -3325,7 +3326,7 @@ void dotnet_parse_com(PE* pe)
   md_len = yr_le32toh(metadata->Length);
 
   if (md_len == 0 || md_len > 255 || md_len % 4 != 0 ||
-      !fits_in_pe(pe, pe->data + offset, md_len))
+      !fits_in_pe(pe, pe->data + offset + sizeof(NET_METADATA), md_len))
   {
     return;
   }

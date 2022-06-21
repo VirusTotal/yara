@@ -333,6 +333,9 @@ int yr_rules_from_arena(YR_ARENA* arena, YR_RULES** rules)
   YR_SUMMARY* summary = (YR_SUMMARY*) yr_arena_get_ptr(
       arena, YR_SUMMARY_SECTION, 0);
 
+  if (summary == NULL)
+    return ERROR_CORRUPT_FILE;
+
   // Now YR_RULES relies on this arena, let's increment the arena's
   // reference count so that if the original owner of the arena calls
   // yr_arena_destroy the arena is not destroyed.

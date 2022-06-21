@@ -11,7 +11,7 @@ AM_CFLAGS+=-O0 -g -ftest-coverage -fprofile-arcs
 else
 
 if DEBUG
-AM_CFLAGS+=-g
+AM_CFLAGS+=-g -fno-omit-frame-pointer
 endif
 
 if OPTIMIZATION
@@ -24,6 +24,10 @@ endif
 
 if ADDRESS_SANITIZER
 AM_CFLAGS+=-fsanitize=address
+endif
+
+if UB_SANITIZER
+AM_CFLAGS+=-fsanitize=undefined -fno-sanitize-recover=undefined
 endif
 
 # Build the library in the hand subdirectory first.
@@ -136,6 +140,12 @@ if DOTNET_MODULE
 check_PROGRAMS+=test-dotnet
 test_dotnet_SOURCES = tests/test-dotnet.c tests/util.c
 test_dotnet_LDADD = libyara/.libs/libyara.a
+endif
+
+if MAGIC_MODULE
+check_PROGRAMS+=test-magic
+test_magic_SOURCES = tests/test-magic.c tests/util.c
+test_magic_LDADD = libyara/.libs/libyara.a
 endif
 
 if PB_TESTS_MODULE

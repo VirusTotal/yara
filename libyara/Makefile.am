@@ -77,6 +77,14 @@ MODULES += modules/pb_tests/pb_tests.c
 MODULES += modules/pb_tests/pb_tests.pb-c.c
 endif
 
+if AUTHENTICODE_MODULE
+MODULES += modules/pe/authenticode-parser/authenticode.c
+MODULES += modules/pe/authenticode-parser/certificate.c
+MODULES += modules/pe/authenticode-parser/helper.c
+MODULES += modules/pe/authenticode-parser/countersignature.c
+MODULES += modules/pe/authenticode-parser/structs.c
+endif
+
 #
 # Add your modules here:
 #
@@ -117,6 +125,10 @@ endif
 
 if ADDRESS_SANITIZER
 AM_CFLAGS+=-fsanitize=address
+endif
+
+if UB_SANITIZER
+AM_CFLAGS+=-fsanitize=undefined -fno-sanitize-recover=undefined
 endif
 
 if GCC
@@ -161,6 +173,7 @@ yarainclude_HEADERS = \
 	include/yara/strutils.h \
 	include/yara/threading.h \
 	include/yara/types.h \
+	include/yara/unaligned.h \
 	include/yara/utils.h
 
 noinst_HEADERS = \
@@ -228,6 +241,9 @@ libyara_la_SOURCES = \
 	stopwatch.c \
 	strutils.c \
 	stream.c \
+	tlshc/tlsh.c \
+	tlshc/tlsh_impl.c \
+	tlshc/tlsh_util.c \
 	threading.c
 
 
