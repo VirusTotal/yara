@@ -27,6 +27,7 @@ limitations under the License.
 #include <yara/pe_utils.h>
 #include <yara/simple_str.h>
 #include <yara/strutils.h>
+#include <yara/unaligned.h>
 
 #define MODULE_NAME dotnet
 
@@ -54,14 +55,14 @@ static uint32_t max_rows(int count, ...)
 
 static uint32_t read_u32(const uint8_t** data)
 {
-  uint32_t result = yr_le32toh(*(uint32_t*) *data);
+  uint32_t result = yr_le32toh(yr_unaligned_u32(*data));
   *data += sizeof(uint32_t);
   return result;
 }
 
 static uint16_t read_u16(const uint8_t** data)
 {
-  uint16_t result = yr_le16toh(*(uint16_t*) *data);
+  uint16_t result = yr_le16toh(yr_unaligned_u16(*data));
   *data += sizeof(uint16_t);
   return result;
 }
@@ -3066,7 +3067,7 @@ void dotnet_parse_tilde(PE* pe, PCLI_HEADER cli_header, PSTREAMS streams)
 {
   PTILDE_HEADER tilde_header;
   int64_t resource_base;
-	int64_t metadata_root = streams->metadata_root;
+  int64_t metadata_root = streams->metadata_root;
   uint32_t* row_offset = NULL;
 
   int bit_check;
@@ -3213,12 +3214,7 @@ void dotnet_parse_tilde(PE* pe, PCLI_HEADER cli_header, PSTREAMS streams)
       pe, yr_le32toh(cli_header->Resources.VirtualAddress));
 
   dotnet_parse_tilde_2(
-      pe,
-      tilde_header,
-      resource_base,
-      rows,
-      index_sizes,
-      streams);
+      pe, tilde_header, resource_base, rows, index_sizes, streams);
 }
 
 static bool dotnet_is_dotnet(PE* pe)
