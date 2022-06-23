@@ -761,11 +761,15 @@ typedef struct _IMAGE_SYMBOL_EX
 #define DECREF(x) ((((x) >> N_TSHIFT) & ~N_BTMASK) | ((x) &N_BTMASK))
 #endif
 
+#pragma pack(pop)
+
 #endif  // _WIN32 || defined(__CYGWIN__)
 
 #define CVINFO_PDB70_CVSIGNATURE 0x53445352  // "RSDS"
 #define CVINFO_PDB20_CVSIGNATURE 0x3031424e  // "NB10"
 #define CODEVIEW_SIGNATURE_MTOC  0x434f544d  // "MTOC"
+
+#pragma pack(push, 1)
 
 typedef struct _CV_HEADER
 {
@@ -850,6 +854,7 @@ typedef struct _WIN_CERTIFICATE
 #define IMAGE_DEBUG_TYPE_ILTCG           14
 #define IMAGE_DEBUG_TYPE_MPX             15
 #define IMAGE_DEBUG_TYPE_REPRO           16
+
 typedef struct _RICH_VERSION_INFO
 {
   DWORD id_version;  // tool id and version (use RICH_VERSION_ID and
