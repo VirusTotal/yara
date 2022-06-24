@@ -484,35 +484,17 @@ static int _yr_parser_write_string(
     literal_string = yr_re_ast_extract_literal(re_ast);
 
     if (literal_string != NULL)
-    {
-      modifier.flags |= STRING_FLAGS_LITERAL;
       free_literal = true;
-    }
-    else
-    {
-      // Non-literal strings can't be marked as fixed offset because once we
-      // find a string atom in the scanned data we don't know the offset where
-      // the string should start, as the non-literal strings can contain
-      // variable-length portions.
-
-      modifier.flags &= ~STRING_FLAGS_FIXED_OFFSET;
-    }
   }
   else
   {
     literal_string = str;
-    modifier.flags |= STRING_FLAGS_LITERAL;
   }
 
-  string->flags = modifier.flags;
-  string->rule_idx = compiler->current_rule_idx;
-  string->idx = compiler->current_string_idx;
-  string->fixed_offset = YR_UNDEFINED;
-  string->chained_to = NULL;
-  string->string = NULL;
-
-  if (modifier.flags & STRING_FLAGS_LITERAL)
+  if (literal_string != NULL)
   {
+    modifier.flags |= STRING_FLAGS_LITERAL;
+
     result = _yr_compiler_store_data(
         compiler,
         literal_string->c_string,
@@ -535,6 +517,12 @@ static int _yr_parser_write_string(
   }
   else
   {
+    // Non-literal strings can't be marked as fixed offset because once we
+    // find a string atom in the scanned data we don't know the offset where
+    // the string should start, as the non-literal strings can contain
+    // variable-length portions.
+    modifier.flags &= ~STRING_FLAGS_FIXED_OFFSET;
+
     // Emit forwards code
     result = yr_re_ast_emit_code(re_ast, compiler->arena, false);
 
@@ -550,6 +538,11 @@ static int _yr_parser_write_string(
           &atom_list,
           min_atom_quality);
   }
+
+  string->flags = modifier.flags;
+  string->rule_idx = compiler->current_rule_idx;
+  string->idx = compiler->current_string_idx;
+  string->fixed_offset = YR_UNDEFINED;
 
   if (result == ERROR_SUCCESS)
   {
@@ -780,11 +773,11 @@ int yr_parser_reduce_string_declaration(
     if (re_ast->flags & RE_FLAGS_GREEDY)
       modifier.flags |= STRING_FLAGS_GREEDY_REGEXP;
 
-    // Regular expressions in the strings section can't mix greedy and ungreedy
-    // quantifiers like .* and .*?. That's because these regular expressions can
-    // be matched forwards and/or backwards depending on the atom found, and we
-    // need the regexp to be all-greedy or all-ungreedy to be able to properly
-    // calculate the length of the match.
+    // Regular expressions in the strings section can't mix greedy and
+    // ungreedy quantifiers like .* and .*?. That's because these regular
+    // expressions can be matched forwards and/or backwards depending on the
+    // atom found, and we need the regexp to be all-greedy or all-ungreedy to
+    // be able to properly calculate the length of the match.
 
     if ((re_ast->flags & RE_FLAGS_GREEDY) &&
         (re_ast->flags & RE_FLAGS_UNGREEDY))
@@ -849,14 +842,15 @@ int yr_parser_reduce_string_declaration(
 
       if (YR_ARENA_IS_NULL_REF(*string_ref))
       {
-        // This is the first string in the chain, the string reference returned
-        // by this function must point to this string.
+        // This is the first string in the chain, the string reference
+        // returned by this function must point to this string.
         *string_ref = ref;
       }
       else
       {
-        // This is not the first string in the chain, set the appropriate flags
-        // and fill the chained_to, chain_gap_min and chain_gap_max fields.
+        // This is not the first string in the chain, set the appropriate
+        // flags and fill the chained_to, chain_gap_min and chain_gap_max
+        // fields.
         YR_STRING* prev_string = (YR_STRING*) yr_arena_get_ptr(
             compiler->arena,
             YR_STRINGS_TABLE,
@@ -873,14 +867,14 @@ int yr_parser_reduce_string_declaration(
         // head of the string chain can have a fixed offset.
         new_string->flags &= ~STRING_FLAGS_FIXED_OFFSET;
 
-        // There is a previous string, but that string wasn't marked as part of
-        // a chain because we can't do that until knowing there will be another
-        // string, let's flag it now the we know.
+        // There is a previous string, but that string wasn't marked as part
+        // of a chain because we can't do that until knowing there will be
+        // another string, let's flag it now the we know.
         prev_string->flags |= STRING_FLAGS_CHAIN_PART;
 
         // There is a previous string, so this string is part of a chain, but
-        // there will be no more strings because there are no more AST to split,
-        // which means that this is the chain's tail.
+        // there will be no more strings because there are no more AST to
+        // split, which means that this is the chain's tail.
         if (remainder_re_ast == NULL)
           new_string->flags |= STRING_FLAGS_CHAIN_PART |
                                STRING_FLAGS_CHAIN_TAIL;
@@ -1010,12 +1004,12 @@ int yr_parser_reduce_rule_declaration_phase_1(
   compiler->current_rule_idx = compiler->next_rule_idx;
   compiler->next_rule_idx++;
 
-  // The OP_INIT_RULE instruction behaves like a jump. When the rule is disabled
-  // it skips over the rule's code and go straight to the next rule's code. The
-  // jmp_offset_ref variable points to the jump's offset. The offset is set to 0
-  // as we don't know the jump target yet. When we finish generating the rule's
-  // code in yr_parser_reduce_rule_declaration_phase_2 the jump offset is set to
-  // its final value.
+  // The OP_INIT_RULE instruction behaves like a jump. When the rule is
+  // disabled it skips over the rule's code and go straight to the next rule's
+  // code. The jmp_offset_ref variable points to the jump's offset. The offset
+  // is set to 0 as we don't know the jump target yet. When we finish
+  // generating the rule's code in yr_parser_reduce_rule_declaration_phase_2
+  // the jump offset is set to its final value.
 
   FAIL_ON_ERROR(yr_parser_emit_with_arg_int32(
       yyscanner, OP_INIT_RULE, 0, NULL, &jmp_offset_ref));
