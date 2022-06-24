@@ -80,6 +80,7 @@ define_function(telfhash)
 
   int symbol_count = 0;
   char** clean_names = yr_malloc(list->count * sizeof(*clean_names));
+
   if (!clean_names)
     return_string(YR_UNDEFINED);
 
@@ -122,6 +123,7 @@ define_function(telfhash)
       continue;
 
     clean_names[symbol_count] = yr_malloc(strlen(name) + 1);
+
     if (!clean_names[symbol_count])
       goto cleanup;
 
@@ -152,6 +154,7 @@ define_function(telfhash)
   }
 
   Tlsh* tlsh = tlsh_new();
+
   if (!tlsh)
     goto cleanup;
 
@@ -173,6 +176,7 @@ cleanup:
   for (int i = 0; i < symbol_count; ++i) yr_free(clean_names[i]);
   yr_free(clean_names);
   sstr_free(sstr);
+  tlsh_free(tlsh);
 
   return_string(YR_UNDEFINED);
 }
@@ -818,7 +822,6 @@ PARSE_ELF_HEADER(64, le);
 PARSE_ELF_HEADER(32, be);
 PARSE_ELF_HEADER(64, be);
 
-
 begin_declarations
   declare_integer("ET_NONE");
   declare_integer("ET_REL");
@@ -985,18 +988,15 @@ begin_declarations
 
 end_declarations
 
-
 int module_initialize(YR_MODULE* module)
 {
   return ERROR_SUCCESS;
 }
 
-
 int module_finalize(YR_MODULE* module)
 {
   return ERROR_SUCCESS;
 }
-
 
 int module_load(
     YR_SCAN_CONTEXT* context,
