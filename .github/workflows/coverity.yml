@@ -9,6 +9,21 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
+    - name: Install dependencies
+      run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            autoconf \
+            automake \
+            gcc-multilib \
+            libtool \
+            libjansson-dev \
+            libmagic-dev \
+            libssl-dev
+    - name: Prepare for building
+      run: |
+          ./bootstrap.sh
+          ./configure
     - uses: vapier/coverity-scan-action@v1
       with:
         email: ${{ secrets.COVERITY_SCAN_EMAIL }}
