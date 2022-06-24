@@ -26,5 +26,6 @@ jobs:
           ./configure
     - uses: vapier/coverity-scan-action@v1
       with:
+        project: 'plusvic/yara'
         email: ${{ secrets.COVERITY_SCAN_EMAIL }}
         token: ${{ secrets.COVERITY_SCAN_TOKEN }}
