@@ -822,7 +822,9 @@ Reference
 
 .. c:type:: is_signed
 
-    True if any of the PE signatures is valid.
+    True if any of the PE signatures is verified. Verified here means, that the signature is formally correct: digests match,
+    signer public key correctly verifies the encrypted digest, etc. But this doesn't mean that the signer (and thus the signature)
+    can be trusted as there are no trust anchors involved in the verification.
 
 .. c:type:: signatures
 
@@ -904,7 +906,8 @@ Reference
 
    .. c:member:: verified
 
-        Boolean, true if signature was sucessfully verified.
+        Boolean, true if signature was sucessfully verified. More details about what the `verified` means is mentioned
+        under the attribute `pe.is_signed`.
 
     .. c:member:: digest_alg
 
@@ -981,7 +984,8 @@ Reference
 
         .. c:member:: verified
 
-            Boolean, true if countersignature was sucessfully verified.
+            Boolean, true if countersignature was sucessfully verified. More details about what the `verified` means is mentioned
+            under the attribute `pe.is_signed`.
 
         .. c:member:: sign_time
 
