@@ -35,11 +35,14 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 static bool sstr_vappendf(SIMPLE_STR* ss, const char* fmt, va_list va)
 {
-  va_list va2;
   // Create copy because list will get consumed when getting the final length
+  va_list va2;
   va_copy(va2, va);
 
-  int size = vsnprintf(NULL, 0, fmt, va);
+  int size = vsnprintf(NULL, 0, fmt, va2);
+
+  va_end(va2);
+
   if (size < 0)
     return false;
 
@@ -47,6 +50,7 @@ static bool sstr_vappendf(SIMPLE_STR* ss, const char* fmt, va_list va)
   {
     uint32_t new_size = (ss->len + size) * 2 + 64;
     char* tmp = yr_realloc(ss->str, new_size);
+
     if (!tmp)
       return false;
 
@@ -54,9 +58,8 @@ static bool sstr_vappendf(SIMPLE_STR* ss, const char* fmt, va_list va)
     ss->cap = new_size;
   }
 
-  ss->len += vsnprintf(ss->str + ss->len, ss->cap, fmt, va2);
+  ss->len += vsnprintf(ss->str + ss->len, ss->cap, fmt, va);
 
-  va_end(va2);
   return true;
 }
 
