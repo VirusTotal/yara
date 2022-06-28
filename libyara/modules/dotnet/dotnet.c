@@ -97,7 +97,7 @@ const uint8_t* get_table_offset(const TABLE_INFO* tbl, uint32_t index)
 // if size > 0 then it's valid and readable blob
 BLOB_PARSE_RESULT dotnet_parse_blob_entry(PE* pe, const uint8_t* offset)
 {
-  BLOB_PARSE_RESULT result;
+  BLOB_PARSE_RESULT result = {.size = 0, .length = 0};
 
   // Blob size is encoded in the first 1, 2 or 4 bytes of the blob.
   //
@@ -114,10 +114,7 @@ BLOB_PARSE_RESULT dotnet_parse_blob_entry(PE* pe, const uint8_t* offset)
   // Make sure we have at least one byte.
 
   if (!fits_in_pe(pe, offset, 1))
-  {
-    result.size = 0;
     return result;
-  }
 
   if ((*offset & 0x80) == 0x00)
   {
@@ -128,10 +125,7 @@ BLOB_PARSE_RESULT dotnet_parse_blob_entry(PE* pe, const uint8_t* offset)
   {
     // Make sure we have one more byte.
     if (!fits_in_pe(pe, offset, 2))
-    {
-      result.size = 0;
       return result;
-    }
 
     // Shift remaining 6 bits left by 8 and OR in the remaining byte.
     result.length = ((*offset & 0x3F) << 8) | *(offset + 1);
@@ -141,10 +135,7 @@ BLOB_PARSE_RESULT dotnet_parse_blob_entry(PE* pe, const uint8_t* offset)
   {
     // Make sure we have 3 more bytes.
     if (!fits_in_pe(pe, offset, 4))
-    {
-      result.size = 0;
       return result;
-    }
 
     result.length = ((*offset & 0x1F) << 24) | (*(offset + 1) << 16) |
                     (*(offset + 2) << 8) | *(offset + 3);
@@ -153,7 +144,6 @@ BLOB_PARSE_RESULT dotnet_parse_blob_entry(PE* pe, const uint8_t* offset)
   else
   {
     // Return a 0 size as an error.
-    result.size = 0;
     return result;
   }
 
