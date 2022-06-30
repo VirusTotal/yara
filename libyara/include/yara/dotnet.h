@@ -212,7 +212,8 @@ typedef struct _TILDE_HEADER
 #define MAX_METHOD_COUNT    20000
 #define MAX_STRING_LENGTH   10000
 // Sanity check for loops in type parser
-#define MAX_TYPE_DEPTH 0x10
+#define MAX_TYPE_DEPTH      0x10
+#define MAX_NAMESPACE_DEPTH 0x0a
 
 //
 // Module table
