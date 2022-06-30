@@ -434,8 +434,8 @@ int yr_arena_ptr_to_ref(YR_ARENA* arena, const void* address, YR_ARENA_REF* ref)
         (uint8_t*) address < arena->buffers[i].data + arena->buffers[i].used)
     {
       ref->buffer_id = i;
-      ref->offset = (yr_arena_off_t)(
-          (uint8_t*) address - arena->buffers[i].data);
+      ref->offset =
+          (yr_arena_off_t) ((uint8_t*) address - arena->buffers[i].data);
 
       return 1;
     }
@@ -583,7 +583,7 @@ int yr_arena_load_stream(YR_STREAM* stream, YR_ARENA** arena)
     YR_ARENA_BUFFER* b = &new_arena->buffers[ref.buffer_id];
 
     if (ref.buffer_id >= new_arena->num_buffers ||
-        ref.offset > b->used - sizeof(void*))
+        ref.offset > b->used - sizeof(void*) || b->data == NULL)
     {
       yr_arena_release(new_arena);
       return ERROR_CORRUPT_FILE;
