@@ -1004,7 +1004,7 @@ Functions
   Return a pointer to the ``YR_RULE`` which triggered a scanning error. In the
   case where the rule is unable to be determined, NULL is returned.
 
-.. c:function:: YR_RULE* yr_scanner_last_error_string(YR_SCANNER* scanner)
+.. c:function:: YR_STRING* yr_scanner_last_error_string(YR_SCANNER* scanner)
 
   .. versionadded:: 3.8.0
 
