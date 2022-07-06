@@ -147,6 +147,7 @@ static bool show_tags = false;
 static bool show_stats = false;
 static bool show_strings = false;
 static bool show_string_length = false;
+static bool show_xor_key = false;
 static bool show_meta = false;
 static bool show_namespace = false;
 static bool show_version = false;
@@ -295,6 +296,12 @@ args_option_t options[] = {
         _T("print-string-length"),
         &show_string_length,
         _T("print length of matched strings")),
+
+    OPT_BOOLEAN(
+        'X',
+        _T("print-xor-key"),
+        &show_xor_key,
+        _T("print xor key of matched strings")),
 
     OPT_BOOLEAN('g', _T("print-tags"), &show_tags, _T("print tags")),
 
@@ -1081,7 +1088,7 @@ static int handle_message(
 
     // Show matched strings.
 
-    if (show_strings || show_string_length)
+    if (show_strings || show_string_length || show_xor_key)
     {
       YR_STRING* string;
 
@@ -1102,6 +1109,9 @@ static int handle_message(
                 _T("0x%" PRIx64 ":%" PF_S),
                 match->base + match->offset,
                 string->identifier);
+
+          if (show_xor_key && STRING_IS_XOR(string))
+            _tprintf(_T(":0x%02x"), match->xor_key);
 
           if (show_strings)
           {
