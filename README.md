@@ -127,6 +127,7 @@ awesome list of [YARA-related stuff](https://github.com/InQuest/awesome-yara).
 * [Thug](https://github.com/buffer/thug)
 * [TouchWeb](https://www.touchweb.fr)
 * [Trend Micro](https://www.trendmicro.com)
+* [Uptycs Inc](https://www.uptycs.com/)
 * [VirusTotal Intelligence](https://www.virustotal.com/intelligence/)
 * [VMRay](https://www.vmray.com/)
 * [Volexity](https://www.volexity.com/products-overview/volcano/)
