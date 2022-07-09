@@ -704,6 +704,22 @@ int main(int argc, char** argv)
   assert_true_rule_file(
       "import \"pe\" \
       \
+      rule import_details \
+      {\
+          condition:\
+            pe.number_of_imports == 2 and\
+            pe.import_details[0].library_name == \"KERNEL32.dll\" and\
+            pe.import_details[0].number_of_functions == 21 and\
+            pe.import_details[0].functions[20].name == \"VirtualQuery\" and\
+            pe.import_details[1].library_name == \"msvcrt.dll\" and\
+            pe.import_details[1].number_of_functions == 27 and\
+            pe.import_details[1].functions[26].name == \"vfprintf\"\
+      }",
+      "tests/data/tiny");
+
+  assert_true_rule_file(
+      "import \"pe\" \
+      \
       rule zero_length_version_info_value \
       {\
           condition:\
