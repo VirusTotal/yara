@@ -521,7 +521,7 @@ static uint32_t read_blob_unsigned(const uint8_t** data, uint32_t* len)
   // bits 13 through 0)
   if ((first_byte & 0xC0) == 0x80)
   {
-    uint32_t result = yr_be16toh(*(uint16_t*) *data);
+    uint32_t result = yr_be16toh(yr_unaligned_u16(*data));
     *data += sizeof(uint16_t);
     *len -= sizeof(uint16_t);
     // value is in lower 14 bits
@@ -535,7 +535,7 @@ static uint32_t read_blob_unsigned(const uint8_t** data, uint32_t* len)
   // bit 29 clear (value held in bits 28 through 0)
   if ((first_byte & 0xE0) == 0xC0)
   {
-    uint32_t result = yr_be32toh(*(uint32_t*) *data);
+    uint32_t result = yr_be32toh(yr_unaligned_u32(*data));
     *data += sizeof(uint32_t);
     *len -= sizeof(uint32_t);
     // Uses last 29 bits for the result
@@ -579,7 +579,7 @@ static int32_t read_blob_signed(const uint8_t** data, uint32_t* len)
   // in bits 13 through 0, giving 0x8001 (-2^13) to 0xBFFE (2^13-1).
   if ((first_byte & 0xC0) == 0x80)
   {
-    uint16_t tmp1 = yr_be16toh(*(uint16_t*) *data);
+    uint16_t tmp1 = yr_be16toh(yr_unaligned_u16(*data));
     // shift and leave top 2 bits clear
     uint16_t tmp2 = (tmp1 >> 1) & 0x3FFF;
     // sign extension in case of negative number
@@ -592,12 +592,15 @@ static int32_t read_blob_signed(const uint8_t** data, uint32_t* len)
     return (int32_t) tmp2;
   }
 
+  if (*len < 4)
+    return 0;
+
   // Encode as a four-byte integer: bit 31 set, 30 set, bit 29 clear,
   // rotated value in bits 28 through 0, giving 0xC0000001 (-2^28) to
   // 0xDFFFFFFE (2^28-1).
   if ((first_byte & 0xE0) == 0xC0)
   {
-    uint32_t tmp1 = yr_be32toh(*(uint32_t*) *data);
+    uint32_t tmp1 = yr_be32toh(yr_unaligned_u32(*data));
     // shift and leave top 3 bits clear
     uint32_t tmp2 = (tmp1 >> 1) & 0x1FFFFFFF;
     // sign extension in case of negative number
@@ -622,7 +625,10 @@ static char* parse_signature_type(
     GENERIC_PARAMETERS* method_gen_params,
     uint32_t depth);
 
-static char* parse_enclosing_types(const CLASS_CONTEXT* ctx, uint32_t type_idx);
+static char* parse_enclosing_types(
+    const CLASS_CONTEXT* ctx,
+    uint32_t nested_idx,
+    uint32_t depth);
 
 static char* get_type_def_or_ref_fullname(
     const CLASS_CONTEXT* ctx,
@@ -658,7 +664,7 @@ static char* get_type_def_or_ref_fullname(
       // Type might be nested, try to find correct namespace
       if (is_nested(def_row.Flags))
       {
-        char* nested_namespace = parse_enclosing_types(ctx, index);
+        char* nested_namespace = parse_enclosing_types(ctx, index, 1);
         char* tmp = create_full_name(namespace, nested_namespace);
         result = create_full_name(name, tmp);
         yr_free(nested_namespace);
@@ -1463,8 +1469,12 @@ static void parse_methods(
 // Walks NestedClass table, returns enclosing type fullname or NULL
 static char* parse_enclosing_types(
     const CLASS_CONTEXT* ctx,
-    uint32_t nested_idx)
+    uint32_t nested_idx,
+    uint32_t depth)
 {
+  if (depth > MAX_NAMESPACE_DEPTH)
+    return NULL;
+
   const uint8_t* str_heap = ctx->str_heap;
   uint32_t str_size = ctx->str_size;
 
@@ -1505,7 +1515,7 @@ static char* parse_enclosing_types(
           nested_row.EnclosingClass != nested_row.NestedClass)
       {
         char* nested_namespace = parse_enclosing_types(
-            ctx, nested_row.EnclosingClass);
+            ctx, nested_row.EnclosingClass, depth + 1);
 
         char* tmp = create_full_name(namespace, nested_namespace);
         char* fullname = create_full_name(name, tmp);
@@ -1569,7 +1579,7 @@ static void parse_user_types(const CLASS_CONTEXT* ctx)
     // Type might be nested, if so -> find correct namespace
     if (is_nested(row.Flags))
     {
-      char* nested_namespace = parse_enclosing_types(ctx, idx + 1);
+      char* nested_namespace = parse_enclosing_types(ctx, idx + 1, 1);
       namespace = create_full_name(namespace, nested_namespace);
       set_string(namespace, out_obj, "classes[%i].namespace", out_idx);
       fullname = create_full_name(name, namespace);
