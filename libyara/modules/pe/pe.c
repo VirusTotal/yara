@@ -991,10 +991,10 @@ void pe_set_imports(
     const char* fun_ordinal)
 {
   int dll_cnt = 0;
-  int fun_cnt = 0;
 
   for (; dll != NULL; dll = dll->next, dll_cnt++)
   {
+    int fun_cnt = 0;
     for (IMPORT_FUNCTION* func = dll->functions; func != NULL;
          func = func->next, fun_cnt++)
     {
