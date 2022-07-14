@@ -1110,8 +1110,8 @@ static int handle_message(
                 match->base + match->offset,
                 string->identifier);
 
-          if (show_xor_key && STRING_IS_XOR(string))
-            _tprintf(_T(":0x%02x"), match->xor_key);
+          if (show_xor_key)
+            _tprintf(_T(":xor(0x%02x)"), match->xor_key);
 
           if (show_strings)
           {
