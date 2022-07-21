@@ -77,9 +77,10 @@ define_function(telfhash)
       "malloc_trim"};
 
   SIMPLE_STR* sstr = NULL;
+  Tlsh* tlsh = NULL;
 
   int symbol_count = 0;
-  char** clean_names = yr_malloc(list->count * sizeof(*clean_names));
+  char** clean_names = yr_calloc(list->count, sizeof(*clean_names));
 
   if (!clean_names)
     return_string(YR_UNDEFINED);
@@ -153,8 +154,7 @@ define_function(telfhash)
       goto cleanup;
   }
 
-  Tlsh* tlsh = tlsh_new();
-
+  tlsh = tlsh_new();
   if (!tlsh)
     goto cleanup;
 
