@@ -496,6 +496,9 @@ struct YR_MATCH
 
   // True if this is match for a private string.
   bool is_private;
+
+  // Set to the xor key if this is an xor string.
+  uint8_t xor_key;
 };
 
 struct YR_AC_STATE
