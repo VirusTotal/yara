@@ -6,8 +6,8 @@ YARA_CONFIG_OPTS = [
     "-DHAVE_STDBOOL_H=1",
     # "-DHAVE__MKGMTIME=1",
     "-DHAVE_TIMEGM=1",
-    "-DBUCKETS_128=1", # Defining TLSH function
-    "-DCHECKSUM_1B=1", # Defining TLSH function
+    "-DBUCKETS_128=1",  # Defining TLSH function
+    "-DCHECKSUM_1B=1",  # Defining TLSH function
 ]
 
 YARA_COPTS = YARA_CONFIG_OPTS + [
@@ -63,6 +63,7 @@ module_list = rule(
 def yara_library(
         name,
         defines = [],
+        includes = [],
         modules = [],
         modules_srcs = [],
         deps = [],
@@ -217,7 +218,7 @@ def yara_library(
             "libyara/include/yara/rules.h",
         ],
         copts = copts,
-        includes = [
+        includes = includes + [
             "libyara/modules",
             "libyara/include",
             "libyara",
