@@ -61,6 +61,7 @@ module_list = rule(
 def yara_library(
         name,
         defines = [],
+        includes = [],
         modules = [],
         modules_srcs = [],
         deps = [],
@@ -195,7 +196,7 @@ def yara_library(
             "libyara/include/yara/rules.h",
         ],
         copts = copts,
-        includes = [
+        includes = includes + [
             "libyara/modules",
             "libyara/include",
             "libyara",
