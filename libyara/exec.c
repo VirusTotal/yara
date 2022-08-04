@@ -1605,7 +1605,7 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
           }
 
           // If current match is past range end, we can stop as matches
-          // are sortred by offset in increasing order, so all remaining
+          // are sorted by offset in increasing order, so all remaining
           // matches are part the range end too.
           if (match->base + match->offset > r1.i)
             break;
