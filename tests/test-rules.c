@@ -762,6 +762,17 @@ static void test_strings()
        }",
       "AXSERS" TEXT_1024_BYTES);
 
+  // https://github.com/VirusTotal/yara/issues/1757
+  assert_false_rule(
+      "rule test {\n\
+         strings:\n\
+             $a = \"foo\"\n\
+             $b = \"foo\"\n\
+         condition:\n\
+             none of them in (0..1)\n\
+       }",
+      "foo");
+
   // https://github.com/VirusTotal/yara/issues/1660
   assert_false_rule(
       "rule test {\n\
