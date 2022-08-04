@@ -1388,10 +1388,24 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
       {
         YR_DEBUG_FPRINTF(2, stderr, "- case OP_OF: // %s()\n", __FUNCTION__);
 
+        // Quantifier is "all"
         if (is_undef(r2))
+        {
           r1.i = found >= count ? 1 : 0;
+        }
+        // Quantifier is 0 or none. This is a special case in which we want
+        // exactly 0 strings matching. More information at:
+        // https://github.com/VirusTotal/yara/issues/1695
+        else if (r2.i == 0)
+        {
+          r1.i = found == 0 ? 1 : 0;
+        }
+        // In all other cases the number of strings matching should be at
+        // least the amount specified by the quantifier.
         else
+        {
           r1.i = found >= r2.i ? 1 : 0;
+        }
       }
       else  // OP_OF_PERCENT
       {
@@ -1416,8 +1430,10 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
 
       found = 0;
       count = 0;
-      pop(r2);
-      pop(r1);
+
+      pop(r2);  // Offset range end
+      pop(r1);  // Offset range start
+
       ensure_defined(r1);
       ensure_defined(r2);
 
@@ -1432,6 +1448,7 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
 
         while (match != NULL)
         {
+          // String match within range start and range end?
           if (match->base + match->offset >= r1.i &&
               match->base + match->offset <= r2.i)
           {
@@ -1439,6 +1456,9 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
             break;
           }
 
+          // If current match is past range end, we can stop as matches
+          // are sortred by offset in increasing order, so all remaining
+          // matches are part the range end too.
           if (match->base + match->offset > r1.i)
             break;
 
@@ -1449,11 +1469,26 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
         pop(r3);
       }
 
-      pop(r1);
-      if (is_undef(r1))
+      pop(r2);  // Quantifier X in expressions like "X of string_set in range"
+
+      // Quantifier is "all".
+      if (is_undef(r2))
+      {
         r1.i = found >= count ? 1 : 0;
+      }
+      // Quantifier is 0 or none. This is a special case in which we want
+      // exactly 0 strings matching. More information at:
+      // https://github.com/VirusTotal/yara/issues/1695
+      else if (r2.i == 0)
+      {
+        r1.i = found == 0 ? 1 : 0;
+      }
+      // In all other cases the number of strings matching should be at least
+      // the amount specified by the quantifier.
       else
-        r1.i = found >= r1.i ? 1 : 0;
+      {
+        r1.i = found >= r2.i ? 1 : 0;
+      }
 
       push(r1);
       break;
