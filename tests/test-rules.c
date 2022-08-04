@@ -3636,6 +3636,19 @@ void test_defined()
           defined \"foo\" contains \"f\" \
       }",
       NULL);
+
+  // Test FOUND_IN and FOUND_AT propagates undefined values
+  assert_true_rule(
+      "import \"pe\" \
+      rule t { \
+        strings: \
+            $a = \"abc\" \
+        condition: \
+          not defined ($a in (0..pe.number_of_resources)) and \
+          not defined ($a in (pe.number_of_resources..5)) and \
+          not defined ($a at pe.number_of_resources) \
+      }",
+      NULL);
 }
 
 static void test_pass(int pass)
