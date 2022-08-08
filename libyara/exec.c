@@ -364,6 +364,24 @@ _stop_iter:
   return ERROR_SUCCESS;
 }
 
+// Global table that contains the "next" function for different types of
+// iterators. The reason for using this table is to avoid storing pointers
+// in the YARA's VM stack. Instead of the pointers we store an index within
+// this table.
+static YR_ITERATOR_NEXT_FUNC iter_next_func_table[] = {
+    iter_array_next,
+    iter_dict_next,
+    iter_int_range_next,
+    iter_int_enum_next,
+    iter_string_set_next,
+};
+
+#define ITER_NEXT_ARRAY      0
+#define ITER_NEXT_DICT       1
+#define ITER_NEXT_INT_RANGE  2
+#define ITER_NEXT_INT_ENUM   3
+#define ITER_NEXT_STRING_SET 4
+
 int yr_execute_code(YR_SCAN_CONTEXT* context)
 {
   YR_DEBUG_FPRINTF(2, stderr, "+ %s() {\n", __FUNCTION__);
@@ -466,7 +484,7 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
         pop(r1);
         r2.it->array_it.array = r1.o;
         r2.it->array_it.index = 0;
-        r2.it->next = iter_array_next;
+        r2.it->next_func_idx = ITER_NEXT_ARRAY;
         push(r2);
       }
 
@@ -487,7 +505,7 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
         pop(r1);
         r2.it->dict_it.dict = r1.o;
         r2.it->dict_it.index = 0;
-        r2.it->next = iter_dict_next;
+        r2.it->next_func_idx = ITER_NEXT_DICT;
         push(r2);
       }
 
@@ -511,7 +529,7 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
         pop(r1);
         r3.it->int_range_it.next = r1.i;
         r3.it->int_range_it.last = r2.i;
-        r3.it->next = iter_int_range_next;
+        r3.it->next_func_idx = ITER_NEXT_INT_RANGE;
         push(r3);
       }
 
@@ -537,7 +555,7 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
       {
         r3.it->int_enum_it.count = r1.i;
         r3.it->int_enum_it.next = 0;
-        r3.it->next = iter_int_enum_next;
+        r3.it->next_func_idx = ITER_NEXT_INT_ENUM;
 
         for (int64_t i = r1.i; i > 0; i--)
         {
@@ -572,7 +590,7 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
       {
         r3.it->string_set_it.count = r1.i;
         r3.it->string_set_it.index = 0;
-        r3.it->next = iter_string_set_next;
+        r3.it->next_func_idx = ITER_NEXT_STRING_SET;
 
         for (int64_t i = r1.i; i > 0; i--)
         {
@@ -594,11 +612,22 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
       // Loads the iterator in r1, but leaves the iterator in the stack.
       pop(r1);
       push(r1);
-      // The iterator's next function is responsible for pushing the next
-      // item in the stack, and a boolean indicating if there are more items
-      // to retrieve. The boolean will be at the top of the stack after
-      // calling "next".
-      result = r1.it->next(r1.it, &stack);
+
+      if (r1.it->next_func_idx <
+          sizeof(iter_next_func_table) / sizeof(YR_ITERATOR_NEXT_FUNC))
+      {
+        // The iterator's next function is responsible for pushing the next
+        // item in the stack, and a boolean indicating if there are more items
+        // to retrieve. The boolean will be at the top of the stack after
+        // calling "next".
+        result = iter_next_func_table[r1.it->next_func_idx](r1.it, &stack);
+      }
+      else
+      {
+        // next_func_idx is outside the valid range, this should not happend.
+        result = ERROR_INTERNAL_FATAL_ERROR;
+      }
+
       stop = (result != ERROR_SUCCESS);
       break;
 
