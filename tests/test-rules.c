@@ -1756,16 +1756,6 @@ static void test_of()
     }",
       TEXT_1024_BYTES);
 
-  // Lower bound can not be negative, if it can be determined statically.
-  assert_error(
-      "rule test { \
-        strings: \
-          $a = \"AXSERS\" \
-        condition: \
-          $a in (-1..10) \
-      }",
-      ERROR_INVALID_VALUE);
-
   // Make sure that an undefined range boundary returns an undefined value,
   // which translates to false.
   assert_false_rule(
@@ -2005,15 +1995,6 @@ void test_for()
         ) \
       }",
       NULL);
-
-  // Lower bound must be less than upper bound, if it can be determined
-  // statically.
-  assert_error(
-      "rule test { \
-        condition: \
-          for any i in (10..1): (i) \
-      }",
-      ERROR_INVALID_VALUE);
 
   // Test case for https://github.com/VirusTotal/yara/issues/1729
   assert_true_rule(
