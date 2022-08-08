@@ -1433,11 +1433,20 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
 
       pop(r2);  // Offset range end
       pop(r1);  // Offset range start
+      pop(r3);  // First string
 
-      ensure_defined(r1);
-      ensure_defined(r2);
-
-      pop(r3);
+      // If any of the range boundaries are undefined the result is also
+      // undefined, be we need to unwind the stack first.
+      if (is_undef(r1) || is_undef(r2))
+      {
+        // Remove all the strings.
+        while (!is_undef(r3)) pop(r3);
+        // Remove the quantifier at the bottom of the stack.
+        pop(r3);
+        r1.i = YR_UNDEFINED;
+        push(r1);
+        break;
+      }
 
       while (!is_undef(r3))
       {
