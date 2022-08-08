@@ -1947,6 +1947,38 @@ static void test_of()
        }",
       "mississippi");
 
+  // If one of the bounds can not be determined statically it isn't an error.
+  assert_true_rule(
+      "rule test { \
+      strings: \
+        $a = \"AXSERS\" \
+      condition: \
+        true or any of them in (0..filesize-100) \
+    }",
+      TEXT_1024_BYTES);
+
+  // Lower bound can not be negative, if it can be determined statically.
+  assert_error(
+      "rule test { \
+        strings: \
+          $a = \"AXSERS\" \
+        condition: \
+          $a in (-1..10) \
+      }",
+      ERROR_INVALID_VALUE);
+
+  // Make sure that an undefined range boundary returns an undefined value,
+  // which translates to false.
+  assert_false_rule(
+      "import \"tests\" \
+        rule test { \
+		      strings: \
+			      $a = \"missi\" \
+		      condition: \
+			      any of them in (0..tests.undefined.i) \
+	    }",
+      "mississippi");
+
   YR_DEBUG_FPRINTF(1, stderr, "} // %s()\n", __FUNCTION__);
 }
 
@@ -2181,26 +2213,6 @@ void test_for()
       "rule test { \
         condition: \
           for any i in (10..1): (i) \
-      }",
-      ERROR_INVALID_VALUE);
-
-  // If one of the bounds can not be determined statically it isn't an error.
-  assert_true_rule(
-      "rule test { \
-      strings: \
-        $a = \"AXSERS\" \
-      condition: \
-        true or any of them in (0..filesize-100) \
-    }",
-      TEXT_1024_BYTES);
-
-  // Lower bound can not be negative, if it can be determined statically.
-  assert_error(
-      "rule test { \
-        strings: \
-          $a = \"AXSERS\" \
-        condition: \
-          $a in (-1..10) \
       }",
       ERROR_INVALID_VALUE);
 
