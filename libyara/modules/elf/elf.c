@@ -51,7 +51,7 @@ static int sort_strcmp(const void* a, const void* b)
 
 define_function(telfhash)
 {
-  YR_OBJECT* obj = module();
+  YR_OBJECT* obj = yr_module();
   ELF* elf = (ELF*) obj->data;
   if (elf == NULL)
     return_string(YR_UNDEFINED);
@@ -186,7 +186,7 @@ cleanup:
 
 define_function(import_md5)
 {
-  YR_OBJECT* obj = module();
+  YR_OBJECT* obj = yr_module();
   ELF* elf = (ELF*) obj->data;
   if (elf == NULL)
     return_string(YR_UNDEFINED);
@@ -474,20 +474,20 @@ static const char* str_table_entry(
     elf##bits##_section_header_t* section;                                                \
     elf##bits##_program_header_t* segment;                                                \
                                                                                           \
-    set_integer(yr_##bo##16toh(elf->type), elf_obj, "type");                              \
-    set_integer(yr_##bo##16toh(elf->machine), elf_obj, "machine");                        \
-    set_integer(yr_##bo##bits##toh(elf->sh_offset), elf_obj, "sh_offset");                \
-    set_integer(yr_##bo##16toh(elf->sh_entry_size), elf_obj, "sh_entry_size");            \
-    set_integer(                                                                          \
+    yr_set_integer(yr_##bo##16toh(elf->type), elf_obj, "type");                              \
+    yr_set_integer(yr_##bo##16toh(elf->machine), elf_obj, "machine");                        \
+    yr_set_integer(yr_##bo##bits##toh(elf->sh_offset), elf_obj, "sh_offset");                \
+    yr_set_integer(yr_##bo##16toh(elf->sh_entry_size), elf_obj, "sh_entry_size");            \
+    yr_set_integer(                                                                          \
         yr_##bo##16toh(elf->sh_entry_count), elf_obj, "number_of_sections");              \
-    set_integer(yr_##bo##bits##toh(elf->ph_offset), elf_obj, "ph_offset");                \
-    set_integer(yr_##bo##16toh(elf->ph_entry_size), elf_obj, "ph_entry_size");            \
-    set_integer(                                                                          \
+    yr_set_integer(yr_##bo##bits##toh(elf->ph_offset), elf_obj, "ph_offset");                \
+    yr_set_integer(yr_##bo##16toh(elf->ph_entry_size), elf_obj, "ph_entry_size");            \
+    yr_set_integer(                                                                          \
         yr_##bo##16toh(elf->ph_entry_count), elf_obj, "number_of_segments");              \
                                                                                           \
     if (yr_##bo##bits##toh(elf->entry) != 0)                                              \
     {                                                                                     \
-      set_integer(                                                                        \
+      yr_set_integer(                                                                        \
           flags& SCAN_FLAGS_PROCESS_MEMORY                                                \
               ? base_address + yr_##bo##bits##toh(elf->entry)                             \
               : elf_rva_to_offset_##bits##_##bo(                                          \
@@ -520,24 +520,24 @@ static const char* str_table_entry(
                                                                                           \
       for (i = 0; i < yr_##bo##16toh(elf->sh_entry_count); i++, section++)                \
       {                                                                                   \
-        set_integer(                                                                      \
+        yr_set_integer(                                                                      \
             yr_##bo##32toh(section->type), elf_obj, "sections[%i].type", i);              \
-        set_integer(                                                                      \
+        yr_set_integer(                                                                      \
             yr_##bo##bits##toh(section->flags),                                           \
             elf_obj,                                                                      \
             "sections[%i].flags",                                                         \
             i);                                                                           \
-        set_integer(                                                                      \
+        yr_set_integer(                                                                      \
             yr_##bo##bits##toh(section->addr),                                            \
             elf_obj,                                                                      \
             "sections[%i].address",                                                       \
             i);                                                                           \
-        set_integer(                                                                      \
+        yr_set_integer(                                                                      \
             yr_##bo##bits##toh(section->size),                                            \
             elf_obj,                                                                      \
             "sections[%i].size",                                                          \
             i);                                                                           \
-        set_integer(                                                                      \
+        yr_set_integer(                                                                      \
             yr_##bo##bits##toh(section->offset),                                          \
             elf_obj,                                                                      \
             "sections[%i].offset",                                                        \
@@ -549,7 +549,7 @@ static const char* str_table_entry(
               str_table, elf_raw + elf_size, yr_##bo##32toh(section->name));              \
                                                                                           \
           if (section_name)                                                               \
-            set_string(section_name, elf_obj, "sections[%i].name", i);                    \
+            yr_set_string(section_name, elf_obj, "sections[%i].name", i);                    \
         }                                                                                 \
                                                                                           \
         if (yr_##bo##32toh(section->type) == ELF_SHT_SYMTAB &&                            \
@@ -619,7 +619,7 @@ static const char* str_table_entry(
                                                                                           \
           if (sym_name)                                                                   \
           {                                                                               \
-            set_string(sym_name, elf_obj, "symtab[%i].name", j);                          \
+            yr_set_string(sym_name, elf_obj, "symtab[%i].name", j);                          \
             (*symbol)->name = (char*) yr_malloc(strlen(sym_name) + 1);                    \
             if ((*symbol)->name == NULL)                                                  \
               return ERROR_INSUFFICIENT_MEMORY;                                           \
@@ -629,24 +629,24 @@ static const char* str_table_entry(
                                                                                           \
           int bind = sym->info >> 4;                                                      \
           (*symbol)->bind = bind;                                                         \
-          set_integer(bind, elf_obj, "symtab[%i].bind", j);                               \
+          yr_set_integer(bind, elf_obj, "symtab[%i].bind", j);                               \
                                                                                           \
           int type = sym->info & 0xf;                                                     \
           (*symbol)->type = type;                                                         \
-          set_integer(type, elf_obj, "symtab[%i].type", j);                               \
+          yr_set_integer(type, elf_obj, "symtab[%i].type", j);                               \
                                                                                           \
           int shndx = yr_##bo##16toh(sym->shndx);                                         \
           (*symbol)->shndx = shndx;                                                       \
-          set_integer(shndx, elf_obj, "symtab[%i].shndx", j);                             \
+          yr_set_integer(shndx, elf_obj, "symtab[%i].shndx", j);                             \
                                                                                           \
           int value = yr_##bo##bits##toh(sym->value);                                     \
           (*symbol)->value = value;                                                       \
-          set_integer(                                                                    \
+          yr_set_integer(                                                                    \
               yr_##bo##bits##toh(sym->value), elf_obj, "symtab[%i].value", j);            \
                                                                                           \
           int size = yr_##bo##bits##toh(sym->size);                                       \
           (*symbol)->size = size;                                                         \
-          set_integer(                                                                    \
+          yr_set_integer(                                                                    \
               yr_##bo##bits##toh(sym->size), elf_obj, "symtab[%i].size", j);              \
                                                                                           \
           int other = yr_##bo##bits##toh(sym->other);                                     \
@@ -656,7 +656,7 @@ static const char* str_table_entry(
         }                                                                                 \
                                                                                           \
         elf_data->symtab->count = j;                                                      \
-        set_integer(j, elf_obj, "symtab_entries");                                        \
+        yr_set_integer(j, elf_obj, "symtab_entries");                                        \
       }                                                                                   \
                                                                                           \
       if (is_valid_ptr(                                                                   \
@@ -691,7 +691,7 @@ static const char* str_table_entry(
                                                                                           \
           if (dynsym_name)                                                                \
           {                                                                               \
-            set_string(dynsym_name, elf_obj, "dynsym[%i].name", m);                       \
+            yr_set_string(dynsym_name, elf_obj, "dynsym[%i].name", m);                       \
             (*symbol)->name = (char*) yr_malloc(strlen(dynsym_name) + 1);                 \
             if ((*symbol)->name == NULL)                                                  \
               return ERROR_INSUFFICIENT_MEMORY;                                           \
@@ -701,20 +701,20 @@ static const char* str_table_entry(
                                                                                           \
           int bind = dynsym->info >> 4;                                                   \
           (*symbol)->bind = bind;                                                         \
-          set_integer(dynsym->info >> 4, elf_obj, "dynsym[%i].bind", m);                  \
+          yr_set_integer(dynsym->info >> 4, elf_obj, "dynsym[%i].bind", m);                  \
                                                                                           \
           int type = dynsym->info & 0xf;                                                  \
           (*symbol)->type = type;                                                         \
-          set_integer(dynsym->info & 0xf, elf_obj, "dynsym[%i].type", m);                 \
+          yr_set_integer(dynsym->info & 0xf, elf_obj, "dynsym[%i].type", m);                 \
                                                                                           \
           int shndx = yr_##bo##16toh(dynsym->shndx);                                      \
           (*symbol)->shndx = shndx;                                                       \
-          set_integer(                                                                    \
+          yr_set_integer(                                                                    \
               yr_##bo##16toh(dynsym->shndx), elf_obj, "dynsym[%i].shndx", m);             \
                                                                                           \
           int value = yr_##bo##bits##toh(dynsym->value);                                  \
           (*symbol)->value = value;                                                       \
-          set_integer(                                                                    \
+          yr_set_integer(                                                                    \
               yr_##bo##bits##toh(dynsym->value),                                          \
               elf_obj,                                                                    \
               "dynsym[%i].value",                                                         \
@@ -722,7 +722,7 @@ static const char* str_table_entry(
                                                                                           \
           int size = yr_##bo##bits##toh(dynsym->size);                                    \
           (*symbol)->size = size;                                                         \
-          set_integer(                                                                    \
+          yr_set_integer(                                                                    \
               yr_##bo##bits##toh(dynsym->size),                                           \
               elf_obj,                                                                    \
               "dynsym[%i].size",                                                          \
@@ -735,7 +735,7 @@ static const char* str_table_entry(
         }                                                                                 \
                                                                                           \
         elf_data->dynsym->count = m;                                                      \
-        set_integer(m, elf_obj, "dynsym_entries");                                        \
+        yr_set_integer(m, elf_obj, "dynsym_entries");                                        \
       }                                                                                   \
     }                                                                                     \
                                                                                           \
@@ -752,36 +752,36 @@ static const char* str_table_entry(
                                                                                           \
       for (i = 0; i < yr_##bo##16toh(elf->ph_entry_count); i++, segment++)                \
       {                                                                                   \
-        set_integer(                                                                      \
+        yr_set_integer(                                                                      \
             yr_##bo##32toh(segment->type), elf_obj, "segments[%i].type", i);              \
-        set_integer(                                                                      \
+        yr_set_integer(                                                                      \
             yr_##bo##32toh(segment->flags), elf_obj, "segments[%i].flags", i);            \
-        set_integer(                                                                      \
+        yr_set_integer(                                                                      \
             yr_##bo##bits##toh(segment->offset),                                          \
             elf_obj,                                                                      \
             "segments[%i].offset",                                                        \
             i);                                                                           \
-        set_integer(                                                                      \
+        yr_set_integer(                                                                      \
             yr_##bo##bits##toh(segment->virt_addr),                                       \
             elf_obj,                                                                      \
             "segments[%i].virtual_address",                                               \
             i);                                                                           \
-        set_integer(                                                                      \
+        yr_set_integer(                                                                      \
             yr_##bo##bits##toh(segment->phys_addr),                                       \
             elf_obj,                                                                      \
             "segments[%i].physical_address",                                              \
             i);                                                                           \
-        set_integer(                                                                      \
+        yr_set_integer(                                                                      \
             yr_##bo##bits##toh(segment->file_size),                                       \
             elf_obj,                                                                      \
             "segments[%i].file_size",                                                     \
             i);                                                                           \
-        set_integer(                                                                      \
+        yr_set_integer(                                                                      \
             yr_##bo##bits##toh(segment->mem_size),                                        \
             elf_obj,                                                                      \
             "segments[%i].memory_size",                                                   \
             i);                                                                           \
-        set_integer(                                                                      \
+        yr_set_integer(                                                                      \
             yr_##bo##bits##toh(segment->alignment),                                       \
             elf_obj,                                                                      \
             "segments[%i].alignment",                                                     \
@@ -794,9 +794,9 @@ static const char* str_table_entry(
                                                                                           \
           for (j = 0; IS_VALID_PTR(elf, elf_size, dyn); dyn++, j++)                       \
           {                                                                               \
-            set_integer(                                                                  \
+            yr_set_integer(                                                                  \
                 yr_##bo##bits##toh(dyn->tag), elf_obj, "dynamic[%i].type", j);            \
-            set_integer(                                                                  \
+            yr_set_integer(                                                                  \
                 yr_##bo##bits##toh(dyn->val), elf_obj, "dynamic[%i].val", j);             \
                                                                                           \
             if (dyn->tag == ELF_DT_NULL)                                                  \
@@ -805,7 +805,7 @@ static const char* str_table_entry(
               break;                                                                      \
             }                                                                             \
           }                                                                               \
-          set_integer(j, elf_obj, "dynamic_section_entries");                             \
+          yr_set_integer(j, elf_obj, "dynamic_section_entries");                             \
         }                                                                                 \
       }                                                                                   \
     }                                                                                     \
@@ -1010,103 +1010,103 @@ int module_load(
   elf32_header_t* elf_header32;
   elf64_header_t* elf_header64;
 
-  set_integer(ELF_ET_NONE, module_object, "ET_NONE");
-  set_integer(ELF_ET_REL, module_object, "ET_REL");
-  set_integer(ELF_ET_EXEC, module_object, "ET_EXEC");
-  set_integer(ELF_ET_DYN, module_object, "ET_DYN");
-  set_integer(ELF_ET_CORE, module_object, "ET_CORE");
+  yr_set_integer(ELF_ET_NONE, module_object, "ET_NONE");
+  yr_set_integer(ELF_ET_REL, module_object, "ET_REL");
+  yr_set_integer(ELF_ET_EXEC, module_object, "ET_EXEC");
+  yr_set_integer(ELF_ET_DYN, module_object, "ET_DYN");
+  yr_set_integer(ELF_ET_CORE, module_object, "ET_CORE");
 
-  set_integer(ELF_EM_NONE, module_object, "EM_NONE");
-  set_integer(ELF_EM_M32, module_object, "EM_M32");
-  set_integer(ELF_EM_SPARC, module_object, "EM_SPARC");
-  set_integer(ELF_EM_386, module_object, "EM_386");
-  set_integer(ELF_EM_68K, module_object, "EM_68K");
-  set_integer(ELF_EM_88K, module_object, "EM_88K");
-  set_integer(ELF_EM_860, module_object, "EM_860");
-  set_integer(ELF_EM_MIPS, module_object, "EM_MIPS");
-  set_integer(ELF_EM_MIPS_RS3_LE, module_object, "EM_MIPS_RS3_LE");
-  set_integer(ELF_EM_PPC, module_object, "EM_PPC");
-  set_integer(ELF_EM_PPC64, module_object, "EM_PPC64");
-  set_integer(ELF_EM_ARM, module_object, "EM_ARM");
-  set_integer(ELF_EM_X86_64, module_object, "EM_X86_64");
-  set_integer(ELF_EM_AARCH64, module_object, "EM_AARCH64");
+  yr_set_integer(ELF_EM_NONE, module_object, "EM_NONE");
+  yr_set_integer(ELF_EM_M32, module_object, "EM_M32");
+  yr_set_integer(ELF_EM_SPARC, module_object, "EM_SPARC");
+  yr_set_integer(ELF_EM_386, module_object, "EM_386");
+  yr_set_integer(ELF_EM_68K, module_object, "EM_68K");
+  yr_set_integer(ELF_EM_88K, module_object, "EM_88K");
+  yr_set_integer(ELF_EM_860, module_object, "EM_860");
+  yr_set_integer(ELF_EM_MIPS, module_object, "EM_MIPS");
+  yr_set_integer(ELF_EM_MIPS_RS3_LE, module_object, "EM_MIPS_RS3_LE");
+  yr_set_integer(ELF_EM_PPC, module_object, "EM_PPC");
+  yr_set_integer(ELF_EM_PPC64, module_object, "EM_PPC64");
+  yr_set_integer(ELF_EM_ARM, module_object, "EM_ARM");
+  yr_set_integer(ELF_EM_X86_64, module_object, "EM_X86_64");
+  yr_set_integer(ELF_EM_AARCH64, module_object, "EM_AARCH64");
 
-  set_integer(ELF_SHT_NULL, module_object, "SHT_NULL");
-  set_integer(ELF_SHT_PROGBITS, module_object, "SHT_PROGBITS");
-  set_integer(ELF_SHT_SYMTAB, module_object, "SHT_SYMTAB");
-  set_integer(ELF_SHT_STRTAB, module_object, "SHT_STRTAB");
-  set_integer(ELF_SHT_RELA, module_object, "SHT_RELA");
-  set_integer(ELF_SHT_HASH, module_object, "SHT_HASH");
-  set_integer(ELF_SHT_DYNAMIC, module_object, "SHT_DYNAMIC");
-  set_integer(ELF_SHT_NOTE, module_object, "SHT_NOTE");
-  set_integer(ELF_SHT_NOBITS, module_object, "SHT_NOBITS");
-  set_integer(ELF_SHT_REL, module_object, "SHT_REL");
-  set_integer(ELF_SHT_SHLIB, module_object, "SHT_SHLIB");
-  set_integer(ELF_SHT_DYNSYM, module_object, "SHT_DYNSYM");
+  yr_set_integer(ELF_SHT_NULL, module_object, "SHT_NULL");
+  yr_set_integer(ELF_SHT_PROGBITS, module_object, "SHT_PROGBITS");
+  yr_set_integer(ELF_SHT_SYMTAB, module_object, "SHT_SYMTAB");
+  yr_set_integer(ELF_SHT_STRTAB, module_object, "SHT_STRTAB");
+  yr_set_integer(ELF_SHT_RELA, module_object, "SHT_RELA");
+  yr_set_integer(ELF_SHT_HASH, module_object, "SHT_HASH");
+  yr_set_integer(ELF_SHT_DYNAMIC, module_object, "SHT_DYNAMIC");
+  yr_set_integer(ELF_SHT_NOTE, module_object, "SHT_NOTE");
+  yr_set_integer(ELF_SHT_NOBITS, module_object, "SHT_NOBITS");
+  yr_set_integer(ELF_SHT_REL, module_object, "SHT_REL");
+  yr_set_integer(ELF_SHT_SHLIB, module_object, "SHT_SHLIB");
+  yr_set_integer(ELF_SHT_DYNSYM, module_object, "SHT_DYNSYM");
 
-  set_integer(ELF_SHF_WRITE, module_object, "SHF_WRITE");
-  set_integer(ELF_SHF_ALLOC, module_object, "SHF_ALLOC");
-  set_integer(ELF_SHF_EXECINSTR, module_object, "SHF_EXECINSTR");
+  yr_set_integer(ELF_SHF_WRITE, module_object, "SHF_WRITE");
+  yr_set_integer(ELF_SHF_ALLOC, module_object, "SHF_ALLOC");
+  yr_set_integer(ELF_SHF_EXECINSTR, module_object, "SHF_EXECINSTR");
 
-  set_integer(ELF_PT_NULL, module_object, "PT_NULL");
-  set_integer(ELF_PT_LOAD, module_object, "PT_LOAD");
-  set_integer(ELF_PT_DYNAMIC, module_object, "PT_DYNAMIC");
-  set_integer(ELF_PT_INTERP, module_object, "PT_INTERP");
-  set_integer(ELF_PT_NOTE, module_object, "PT_NOTE");
-  set_integer(ELF_PT_SHLIB, module_object, "PT_SHLIB");
-  set_integer(ELF_PT_PHDR, module_object, "PT_PHDR");
-  set_integer(ELF_PT_TLS, module_object, "PT_TLS");
-  set_integer(ELF_PT_GNU_EH_FRAME, module_object, "PT_GNU_EH_FRAME");
-  set_integer(ELF_PT_GNU_STACK, module_object, "PT_GNU_STACK");
+  yr_set_integer(ELF_PT_NULL, module_object, "PT_NULL");
+  yr_set_integer(ELF_PT_LOAD, module_object, "PT_LOAD");
+  yr_set_integer(ELF_PT_DYNAMIC, module_object, "PT_DYNAMIC");
+  yr_set_integer(ELF_PT_INTERP, module_object, "PT_INTERP");
+  yr_set_integer(ELF_PT_NOTE, module_object, "PT_NOTE");
+  yr_set_integer(ELF_PT_SHLIB, module_object, "PT_SHLIB");
+  yr_set_integer(ELF_PT_PHDR, module_object, "PT_PHDR");
+  yr_set_integer(ELF_PT_TLS, module_object, "PT_TLS");
+  yr_set_integer(ELF_PT_GNU_EH_FRAME, module_object, "PT_GNU_EH_FRAME");
+  yr_set_integer(ELF_PT_GNU_STACK, module_object, "PT_GNU_STACK");
 
-  set_integer(ELF_DT_NULL, module_object, "DT_NULL");
-  set_integer(ELF_DT_NEEDED, module_object, "DT_NEEDED");
-  set_integer(ELF_DT_PLTRELSZ, module_object, "DT_PLTRELSZ");
-  set_integer(ELF_DT_PLTGOT, module_object, "DT_PLTGOT");
-  set_integer(ELF_DT_HASH, module_object, "DT_HASH");
-  set_integer(ELF_DT_STRTAB, module_object, "DT_STRTAB");
-  set_integer(ELF_DT_SYMTAB, module_object, "DT_SYMTAB");
-  set_integer(ELF_DT_RELA, module_object, "DT_RELA");
-  set_integer(ELF_DT_RELASZ, module_object, "DT_RELASZ");
-  set_integer(ELF_DT_RELAENT, module_object, "DT_RELAENT");
-  set_integer(ELF_DT_STRSZ, module_object, "DT_STRSZ");
-  set_integer(ELF_DT_SYMENT, module_object, "DT_SYMENT");
-  set_integer(ELF_DT_INIT, module_object, "DT_INIT");
-  set_integer(ELF_DT_FINI, module_object, "DT_FINI");
-  set_integer(ELF_DT_SONAME, module_object, "DT_SONAME");
-  set_integer(ELF_DT_RPATH, module_object, "DT_RPATH");
-  set_integer(ELF_DT_SYMBOLIC, module_object, "DT_SYMBOLIC");
-  set_integer(ELF_DT_REL, module_object, "DT_REL");
-  set_integer(ELF_DT_RELSZ, module_object, "DT_RELSZ");
-  set_integer(ELF_DT_RELENT, module_object, "DT_RELENT");
-  set_integer(ELF_DT_PLTREL, module_object, "DT_PLTREL");
-  set_integer(ELF_DT_DEBUG, module_object, "DT_DEBUG");
-  set_integer(ELF_DT_TEXTREL, module_object, "DT_TEXTREL");
-  set_integer(ELF_DT_JMPREL, module_object, "DT_JMPREL");
-  set_integer(ELF_DT_BIND_NOW, module_object, "DT_BIND_NOW");
-  set_integer(ELF_DT_INIT_ARRAY, module_object, "DT_INIT_ARRAY");
-  set_integer(ELF_DT_FINI_ARRAY, module_object, "DT_FINI_ARRAY");
-  set_integer(ELF_DT_INIT_ARRAYSZ, module_object, "DT_INIT_ARRAYSZ");
-  set_integer(ELF_DT_FINI_ARRAYSZ, module_object, "DT_FINI_ARRAYSZ");
-  set_integer(ELF_DT_RUNPATH, module_object, "DT_RUNPATH");
-  set_integer(ELF_DT_FLAGS, module_object, "DT_FLAGS");
-  set_integer(ELF_DT_ENCODING, module_object, "DT_ENCODING");
+  yr_set_integer(ELF_DT_NULL, module_object, "DT_NULL");
+  yr_set_integer(ELF_DT_NEEDED, module_object, "DT_NEEDED");
+  yr_set_integer(ELF_DT_PLTRELSZ, module_object, "DT_PLTRELSZ");
+  yr_set_integer(ELF_DT_PLTGOT, module_object, "DT_PLTGOT");
+  yr_set_integer(ELF_DT_HASH, module_object, "DT_HASH");
+  yr_set_integer(ELF_DT_STRTAB, module_object, "DT_STRTAB");
+  yr_set_integer(ELF_DT_SYMTAB, module_object, "DT_SYMTAB");
+  yr_set_integer(ELF_DT_RELA, module_object, "DT_RELA");
+  yr_set_integer(ELF_DT_RELASZ, module_object, "DT_RELASZ");
+  yr_set_integer(ELF_DT_RELAENT, module_object, "DT_RELAENT");
+  yr_set_integer(ELF_DT_STRSZ, module_object, "DT_STRSZ");
+  yr_set_integer(ELF_DT_SYMENT, module_object, "DT_SYMENT");
+  yr_set_integer(ELF_DT_INIT, module_object, "DT_INIT");
+  yr_set_integer(ELF_DT_FINI, module_object, "DT_FINI");
+  yr_set_integer(ELF_DT_SONAME, module_object, "DT_SONAME");
+  yr_set_integer(ELF_DT_RPATH, module_object, "DT_RPATH");
+  yr_set_integer(ELF_DT_SYMBOLIC, module_object, "DT_SYMBOLIC");
+  yr_set_integer(ELF_DT_REL, module_object, "DT_REL");
+  yr_set_integer(ELF_DT_RELSZ, module_object, "DT_RELSZ");
+  yr_set_integer(ELF_DT_RELENT, module_object, "DT_RELENT");
+  yr_set_integer(ELF_DT_PLTREL, module_object, "DT_PLTREL");
+  yr_set_integer(ELF_DT_DEBUG, module_object, "DT_DEBUG");
+  yr_set_integer(ELF_DT_TEXTREL, module_object, "DT_TEXTREL");
+  yr_set_integer(ELF_DT_JMPREL, module_object, "DT_JMPREL");
+  yr_set_integer(ELF_DT_BIND_NOW, module_object, "DT_BIND_NOW");
+  yr_set_integer(ELF_DT_INIT_ARRAY, module_object, "DT_INIT_ARRAY");
+  yr_set_integer(ELF_DT_FINI_ARRAY, module_object, "DT_FINI_ARRAY");
+  yr_set_integer(ELF_DT_INIT_ARRAYSZ, module_object, "DT_INIT_ARRAYSZ");
+  yr_set_integer(ELF_DT_FINI_ARRAYSZ, module_object, "DT_FINI_ARRAYSZ");
+  yr_set_integer(ELF_DT_RUNPATH, module_object, "DT_RUNPATH");
+  yr_set_integer(ELF_DT_FLAGS, module_object, "DT_FLAGS");
+  yr_set_integer(ELF_DT_ENCODING, module_object, "DT_ENCODING");
 
-  set_integer(ELF_STT_NOTYPE, module_object, "STT_NOTYPE");
-  set_integer(ELF_STT_OBJECT, module_object, "STT_OBJECT");
-  set_integer(ELF_STT_FUNC, module_object, "STT_FUNC");
-  set_integer(ELF_STT_SECTION, module_object, "STT_SECTION");
-  set_integer(ELF_STT_FILE, module_object, "STT_FILE");
-  set_integer(ELF_STT_COMMON, module_object, "STT_COMMON");
-  set_integer(ELF_STT_TLS, module_object, "STT_TLS");
+  yr_set_integer(ELF_STT_NOTYPE, module_object, "STT_NOTYPE");
+  yr_set_integer(ELF_STT_OBJECT, module_object, "STT_OBJECT");
+  yr_set_integer(ELF_STT_FUNC, module_object, "STT_FUNC");
+  yr_set_integer(ELF_STT_SECTION, module_object, "STT_SECTION");
+  yr_set_integer(ELF_STT_FILE, module_object, "STT_FILE");
+  yr_set_integer(ELF_STT_COMMON, module_object, "STT_COMMON");
+  yr_set_integer(ELF_STT_TLS, module_object, "STT_TLS");
 
-  set_integer(ELF_STB_LOCAL, module_object, "STB_LOCAL");
-  set_integer(ELF_STB_GLOBAL, module_object, "STB_GLOBAL");
-  set_integer(ELF_STB_WEAK, module_object, "STB_WEAK");
+  yr_set_integer(ELF_STB_LOCAL, module_object, "STB_LOCAL");
+  yr_set_integer(ELF_STB_GLOBAL, module_object, "STB_GLOBAL");
+  yr_set_integer(ELF_STB_WEAK, module_object, "STB_WEAK");
 
-  set_integer(ELF_PF_X, module_object, "PF_X");
-  set_integer(ELF_PF_W, module_object, "PF_W");
-  set_integer(ELF_PF_R, module_object, "PF_R");
+  yr_set_integer(ELF_PF_X, module_object, "PF_X");
+  yr_set_integer(ELF_PF_W, module_object, "PF_W");
+  yr_set_integer(ELF_PF_R, module_object, "PF_R");
 
   uint64_t parse_result = ERROR_SUCCESS;
 

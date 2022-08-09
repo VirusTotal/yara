@@ -87,7 +87,7 @@ static int get_cache(MAGIC_CACHE** cache)
 
 define_function(magic_mime_type)
 {
-  YR_SCAN_CONTEXT* context = scan_context();
+  YR_SCAN_CONTEXT* context = yr_scan_context();
   YR_MEMORY_BLOCK* block;
   MAGIC_CACHE* cache;
 
@@ -122,7 +122,7 @@ define_function(magic_type)
 {
   MAGIC_CACHE* cache;
   YR_MEMORY_BLOCK* block;
-  YR_SCAN_CONTEXT* context = scan_context();
+  YR_SCAN_CONTEXT* context = yr_scan_context();
 
   const uint8_t* block_data;
 
