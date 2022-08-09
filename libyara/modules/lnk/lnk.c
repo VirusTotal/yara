@@ -477,7 +477,7 @@ unsigned int parse_volume_id(
   volume_id_t volume_id;
   unsigned int size_of_data;
   uint32_t volume_label_offset_unicode;
-  char volume_id_data[256];
+  char* volume_id_data=NULL;
   unsigned int total_data_read = 0;
 
   if (block_data_size_remaining < sizeof(volume_id_t))
@@ -537,6 +537,12 @@ unsigned int parse_volume_id(
     return 0;
   }
 
+  if (size_of_data > 256) {
+    return 0;
+  }
+
+  volume_id_data = yr_malloc(size_of_data);
+
   memcpy(volume_id_data, volume_id_ptr, size_of_data);
   set_sized_string(
       volume_id_data, size_of_data, module_object, "link_info.volume_id.data");
@@ -544,6 +550,10 @@ unsigned int parse_volume_id(
   volume_id_ptr += size_of_data;
   block_data_size_remaining -= size_of_data;
   total_data_read += size_of_data;
+
+  if (volume_id_data) {
+    yr_free(volume_id_data);
+  }
 
   return total_data_read;
 }
