@@ -344,7 +344,7 @@ end_declarations
 unsigned int parse_id_list(
     const uint8_t* id_list_ptr,
     YR_OBJECT* module_object,
-    int block_data_size_remaining,
+    unsigned int block_data_size_remaining,
     bool extra_data)
 {
   uint16_t item_id_size;
@@ -438,7 +438,7 @@ unsigned int parse_id_list(
 unsigned int parse_link_target_id_list(
     const uint8_t* link_target_id_list_ptr,
     YR_OBJECT* module_object,
-    int block_data_size_remaining)
+    unsigned int block_data_size_remaining)
 {
   uint16_t id_list_size;
 
@@ -472,7 +472,7 @@ unsigned int parse_link_target_id_list(
 unsigned int parse_volume_id(
     const uint8_t* volume_id_ptr,
     YR_OBJECT* module_object,
-    int block_data_size_remaining)
+    unsigned int block_data_size_remaining)
 {
   volume_id_t volume_id;
   unsigned int size_of_data;
@@ -551,7 +551,7 @@ unsigned int parse_volume_id(
 unsigned int parse_common_network_relative_link(
     const uint8_t* common_network_relative_link_ptr,
     YR_OBJECT* module_object,
-    int block_data_size_remaining)
+    unsigned int block_data_size_remaining)
 {
   common_network_relative_link_t common_network_relative_link;
   uint32_t net_name_offset_unicode = 0;
@@ -729,7 +729,7 @@ unsigned int parse_common_network_relative_link(
 unsigned int parse_link_info(
     const uint8_t* link_info_ptr,
     YR_OBJECT* module_object,
-    int block_data_size_remaining)
+    unsigned int block_data_size_remaining)
 {
   link_info_fixed_header_t* link_info_fixed_header;
   uint32_t local_base_path_offset_unicode = 0;
@@ -1008,7 +1008,7 @@ unsigned int parse_link_info(
 unsigned int parse_string_data(
     const uint8_t* string_data_ptr,
     YR_OBJECT* module_object,
-    int block_data_size_remaining,
+    unsigned int block_data_size_remaining,
     const char* name,
     bool is_unicode)
 {
@@ -1091,7 +1091,7 @@ unsigned int parse_string_data(
 unsigned int parse_console_data_block(
     const uint8_t* extra_block_ptr,
     YR_OBJECT* module_object,
-    int block_data_size_remaining,
+    unsigned int block_data_size_remaining,
     uint32_t extra_data_block_size,
     uint32_t extra_data_block_signature)
 {
@@ -1206,7 +1206,7 @@ unsigned int parse_console_data_block(
 unsigned int parse_console_fe_data_block(
     const uint8_t* extra_block_ptr,
     YR_OBJECT* module_object,
-    int block_data_size_remaining,
+    unsigned int block_data_size_remaining,
     uint32_t extra_data_block_size,
     uint32_t extra_data_block_signature)
 {
@@ -1237,7 +1237,7 @@ unsigned int parse_console_fe_data_block(
 unsigned int parse_darwin_data_block(
     const uint8_t* extra_block_ptr,
     YR_OBJECT* module_object,
-    int block_data_size_remaining,
+    unsigned int block_data_size_remaining,
     uint32_t extra_data_block_size,
     uint32_t extra_data_block_signature)
 {
@@ -1272,7 +1272,7 @@ unsigned int parse_darwin_data_block(
 unsigned int parse_environment_variable_data_block(
     const uint8_t* extra_block_ptr,
     YR_OBJECT* module_object,
-    int block_data_size_remaining,
+    unsigned int block_data_size_remaining,
     uint32_t extra_data_block_size,
     uint32_t extra_data_block_signature)
 {
@@ -1312,7 +1312,7 @@ unsigned int parse_environment_variable_data_block(
 unsigned int parse_icon_environment_data_block(
     const uint8_t* extra_block_ptr,
     YR_OBJECT* module_object,
-    int block_data_size_remaining,
+    unsigned int block_data_size_remaining,
     uint32_t extra_data_block_size,
     uint32_t extra_data_block_signature)
 {
@@ -1350,7 +1350,7 @@ unsigned int parse_icon_environment_data_block(
 unsigned int parse_known_folder_data_block(
     const uint8_t* extra_block_ptr,
     YR_OBJECT* module_object,
-    int block_data_size_remaining,
+    unsigned int block_data_size_remaining,
     uint32_t extra_data_block_size,
     uint32_t extra_data_block_signature)
 {
@@ -1391,7 +1391,7 @@ unsigned int parse_known_folder_data_block(
 unsigned int parse_property_store_data_block(
     const uint8_t* extra_block_ptr,
     YR_OBJECT* module_object,
-    int block_data_size_remaining,
+    unsigned int block_data_size_remaining,
     uint32_t extra_data_block_size,
     uint32_t extra_data_block_signature)
 {
@@ -1411,7 +1411,7 @@ unsigned int parse_property_store_data_block(
 unsigned int parse_shim_data_block(
     const uint8_t* extra_block_ptr,
     YR_OBJECT* module_object,
-    int block_data_size_remaining,
+    unsigned int block_data_size_remaining,
     uint32_t extra_data_block_size,
     uint32_t extra_data_block_signature)
 {
@@ -1442,7 +1442,7 @@ unsigned int parse_shim_data_block(
 unsigned int parse_special_folder_data_block(
     const uint8_t* extra_block_ptr,
     YR_OBJECT* module_object,
-    int block_data_size_remaining,
+    unsigned int block_data_size_remaining,
     uint32_t extra_data_block_size,
     uint32_t extra_data_block_signature)
 {
@@ -1477,7 +1477,7 @@ unsigned int parse_special_folder_data_block(
 unsigned int parse_tracker_data_block(
     const uint8_t* extra_block_ptr,
     YR_OBJECT* module_object,
-    int block_data_size_remaining,
+    unsigned int block_data_size_remaining,
     uint32_t extra_data_block_size,
     uint32_t extra_data_block_signature)
 {
@@ -1527,7 +1527,7 @@ unsigned int parse_tracker_data_block(
 unsigned int parse_vista_and_above_id_list_data_block(
     const uint8_t* extra_block_ptr,
     YR_OBJECT* module_object,
-    int block_data_size_remaining,
+    unsigned int block_data_size_remaining,
     uint32_t extra_data_block_size,
     uint32_t extra_data_block_signature)
 {
@@ -1558,7 +1558,7 @@ unsigned int parse_vista_and_above_id_list_data_block(
 unsigned int parse_extra_block(
     const uint8_t* extra_block_ptr,
     YR_OBJECT* module_object,
-    int block_data_size_remaining,
+    unsigned int block_data_size_remaining,
     uint32_t extra_data_block_size,
     uint32_t extra_data_block_signature)
 {
@@ -1921,7 +1921,7 @@ int module_load(
   set_integer(TMPF_DEVICE, module_object, "TMPF_DEVICE");
 
   const uint8_t* block_data;
-  int block_data_size_remaining;
+  unsigned int block_data_size_remaining;
   char* hotkey_str;
   const uint8_t* current_location;
   unsigned int id_list_size;
