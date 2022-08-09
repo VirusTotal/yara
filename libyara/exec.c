@@ -1365,12 +1365,7 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
       pop(r2);
       pop(r1);
 
-      if (is_undef(r1))
-      {
-        r1.i = 0;
-        push(r1);
-        break;
-      }
+      ensure_defined(r1);
 
 #if YR_PARANOID_EXEC
       ensure_within_rules_arena(r2.p);
