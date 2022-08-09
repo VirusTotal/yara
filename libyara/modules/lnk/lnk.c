@@ -568,8 +568,8 @@ unsigned int parse_common_network_relative_link(
   uint32_t device_name_offset_unicode = 0;
   char* net_name=NULL;
   char* device_name=NULL;
-  wchar_t net_name_unicode[260];
-  wchar_t device_name_unicode[260];
+  wchar_t* net_name_unicode=NULL;
+  wchar_t* device_name_unicode=NULL;
   unsigned int net_name_len;
   unsigned int device_name_len;
   unsigned int net_name_unicode_len;
@@ -652,8 +652,14 @@ unsigned int parse_common_network_relative_link(
       return 0;
     }
 
+    if (net_name_unicode_len > 260) {
+      return 0;
+    }
+
+    net_name_unicode = yr_malloc(net_name_unicode_len * 2);
+
     memcpy(
-        &net_name_unicode,
+        net_name_unicode,
         common_network_relative_link_ptr,
         net_name_unicode_len * 2);
 
@@ -675,8 +681,14 @@ unsigned int parse_common_network_relative_link(
       return 0;
     }
 
+    if (device_name_unicode_len > 260) {
+      return 0;
+    }
+
+    device_name_unicode = yr_malloc(device_name_unicode_len * 2);
+
     memcpy(
-        &device_name_unicode,
+        device_name_unicode,
         common_network_relative_link_ptr,
         device_name_unicode_len * 2);
 
@@ -753,6 +765,14 @@ unsigned int parse_common_network_relative_link(
     yr_free(device_name);
   }
 
+  if (net_name_unicode) {
+    yr_free(net_name_unicode);
+  }
+
+  if (device_name_unicode) {
+    yr_free(device_name_unicode);
+  }
+
   return common_network_relative_link.common_network_relative_link_size;
 }
 
@@ -766,8 +786,8 @@ unsigned int parse_link_info(
   uint32_t common_path_suffix_offset_unicode = 0;
   char* local_base_path=NULL;
   char* common_path_suffix=NULL;
-  wchar_t local_base_path_unicode[256];
-  wchar_t common_path_suffix_unicode[256];
+  wchar_t* local_base_path_unicode=NULL;
+  wchar_t* common_path_suffix_unicode=NULL;
   unsigned int local_base_path_len;
   unsigned int common_path_suffix_len;
   unsigned int local_base_path_unicode_len;
@@ -986,8 +1006,14 @@ unsigned int parse_link_info(
       return 0;
     }
 
+    if (local_base_path_unicode_len > 256) {
+      return 0;
+    }
+
+    local_base_path_unicode = yr_malloc(local_base_path_unicode_len * 2);
+
     memcpy(
-        &local_base_path_unicode,
+        local_base_path_unicode,
         link_info_ptr,
         local_base_path_unicode_len * 2);
 
@@ -1027,8 +1053,14 @@ unsigned int parse_link_info(
         return 0;
       }
 
+      if (common_path_suffix_unicode_len > 256) {
+        return 0;
+      }
+
+      common_path_suffix_unicode = yr_malloc(common_path_suffix_unicode_len * 2);
+
       memcpy(
-          &common_path_suffix_unicode,
+          common_path_suffix_unicode,
           link_info_ptr,
           common_path_suffix_unicode_len * 2);
 
@@ -1050,6 +1082,14 @@ unsigned int parse_link_info(
 
   if (common_path_suffix){
     yr_free(common_path_suffix);
+  }
+
+  if (local_base_path_unicode) {
+    yr_free(local_base_path_unicode);
+  }
+
+  if (common_path_suffix_unicode) {
+    yr_free(common_path_suffix_unicode);
   }
 
   return (int) link_info_fixed_header->link_info_size;
