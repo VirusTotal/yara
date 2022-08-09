@@ -734,8 +734,8 @@ unsigned int parse_link_info(
   link_info_fixed_header_t* link_info_fixed_header;
   uint32_t local_base_path_offset_unicode = 0;
   uint32_t common_path_suffix_offset_unicode = 0;
-  char local_base_path[256];
-  char common_path_suffix[256];
+  char* local_base_path=NULL;
+  char* common_path_suffix=NULL;
   wchar_t local_base_path_unicode[256];
   wchar_t common_path_suffix_unicode[256];
   unsigned int local_base_path_len;
@@ -839,12 +839,18 @@ unsigned int parse_link_info(
     {
       local_base_path_len = strlen((const char*) link_info_ptr);
 
+      if (local_base_path_len > 256) {
+        return 0;
+      }
+
       if (block_data_size_remaining < local_base_path_len)
       {
         return 0;
       }
 
-      memcpy(&local_base_path, link_info_ptr, local_base_path_len);
+      local_base_path = (char*)yr_malloc(local_base_path_len);
+
+      memcpy(local_base_path, link_info_ptr, local_base_path_len);
       set_sized_string(
           local_base_path,
           local_base_path_len,
@@ -920,7 +926,13 @@ unsigned int parse_link_info(
         return 0;
       }
 
-      memcpy(&common_path_suffix, link_info_ptr, common_path_suffix_len);
+      if (common_path_suffix_len > 256) {
+        return 0;
+      }
+
+      common_path_suffix = yr_malloc(common_path_suffix_len);
+
+      memcpy(common_path_suffix, link_info_ptr, common_path_suffix_len);
 
       set_sized_string(
           common_path_suffix,
@@ -1000,6 +1012,14 @@ unsigned int parse_link_info(
       link_info_ptr += (common_path_suffix_unicode_len * 2) + 1;
       block_data_size_remaining -= (common_path_suffix_unicode_len * 2) + 1;
     }
+  }
+
+  if (local_base_path){
+    yr_free(local_base_path);
+  }
+
+  if (common_path_suffix){
+    yr_free(common_path_suffix);
   }
 
   return (int) link_info_fixed_header->link_info_size;
