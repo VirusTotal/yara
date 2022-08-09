@@ -997,6 +997,7 @@ unsigned int parse_link_info(
   }
 
   // TODO: These unicode functions will need some careful testing
+  // Need some samples to test against
   if (local_base_path_offset_unicode)
   {
     local_base_path_unicode_len = wcslen((const wchar_t*) link_info_ptr);
