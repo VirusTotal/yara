@@ -566,8 +566,8 @@ unsigned int parse_common_network_relative_link(
   common_network_relative_link_t common_network_relative_link;
   uint32_t net_name_offset_unicode = 0;
   uint32_t device_name_offset_unicode = 0;
-  char net_name[260];
-  char device_name[260];
+  char* net_name=NULL;
+  char* device_name=NULL;
   wchar_t net_name_unicode[260];
   wchar_t device_name_unicode[260];
   unsigned int net_name_len;
@@ -701,7 +701,13 @@ unsigned int parse_common_network_relative_link(
       return 0;
     }
 
-    memcpy(&net_name, common_network_relative_link_ptr, net_name_len);
+    if (net_name_len > 260) {
+      return 0;
+    }
+
+    net_name = yr_malloc(net_name_len);
+
+    memcpy(net_name, common_network_relative_link_ptr, net_name_len);
 
     set_sized_string(
         net_name,
@@ -720,7 +726,13 @@ unsigned int parse_common_network_relative_link(
       return 0;
     }
 
-    memcpy(&device_name, common_network_relative_link_ptr, device_name_len);
+    if (device_name_len > 260) {
+      return 0;
+    }
+
+    device_name = yr_malloc(device_name_len);
+
+    memcpy(device_name, common_network_relative_link_ptr, device_name_len);
 
     set_sized_string(
         device_name,
@@ -731,6 +743,14 @@ unsigned int parse_common_network_relative_link(
     // Add 1 to deal with null terminator
     common_network_relative_link_ptr += device_name_len + 1;
     block_data_size_remaining -= device_name_len + 1;
+  }
+
+  if (net_name) {
+    yr_free(net_name);
+  }
+
+  if (device_name) {
+    yr_free(device_name);
   }
 
   return common_network_relative_link.common_network_relative_link_size;
