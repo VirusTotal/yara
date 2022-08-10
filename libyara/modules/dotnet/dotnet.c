@@ -1095,7 +1095,7 @@ static void parse_type_parents(
   uint32_t base_type_idx = 0;
   if (parent)
   {
-    set_string(
+    yr_set_string(
         parent,
         ctx->pe->object,
         "classes[%i].base_types[%i]",
@@ -1124,7 +1124,7 @@ static void parse_type_parents(
           ctx, row.Interface, class_gen_params, NULL);
       if (inteface)
       {
-        set_string(
+        yr_set_string(
             inteface,
             ctx->pe->object,
             "classes[%i].base_types[%i]",
@@ -1135,7 +1135,7 @@ static void parse_type_parents(
       }
     }
   }
-  set_integer(
+  yr_set_integer(
       base_type_idx,
       ctx->pe->object,
       "classes[%i].number_of_base_types",
@@ -1227,7 +1227,7 @@ static bool parse_method_params(
 
   // If we got all of them correctly, write to output and cleanup
   YR_OBJECT* out_obj = ctx->pe->object;
-  set_integer(
+  yr_set_integer(
       param_count,
       out_obj,
       "classes[%i].methods[%i].number_of_parameters",
@@ -1236,14 +1236,14 @@ static bool parse_method_params(
 
   for (uint32_t i = 0; i < param_count; ++i)
   {
-    set_string(
+    yr_set_string(
         params[i].name,
         out_obj,
         "classes[%i].methods[%i].parameters[%i].name",
         class_idx,
         method_idx,
         i);
-    set_string(
+    yr_set_string(
         params[i].type,
         out_obj,
         "classes[%i].methods[%i].parameters[%i].type",
@@ -1403,31 +1403,31 @@ static void parse_methods(
     uint32_t abstract = (row.Flags & METHOD_ATTR_ABSTRACT) != 0;
 
     YR_OBJECT* out_obj = ctx->pe->object;
-    set_string(
+    yr_set_string(
         name, out_obj, "classes[%i].methods[%i].name", class_idx, out_idx);
-    set_string(
+    yr_set_string(
         visibility,
         out_obj,
         "classes[%i].methods[%i].visibility",
         class_idx,
         out_idx);
-    set_integer(
+    yr_set_integer(
         stat, out_obj, "classes[%i].methods[%i].static", class_idx, out_idx);
-    set_integer(
+    yr_set_integer(
         virtual,
         out_obj,
         "classes[%i].methods[%i].virtual",
         class_idx,
         out_idx);
-    set_integer(
+    yr_set_integer(
         final, out_obj, "classes[%i].methods[%i].final", class_idx, out_idx);
-    set_integer(
+    yr_set_integer(
         abstract,
         out_obj,
         "classes[%i].methods[%i].abstract",
         class_idx,
         out_idx);
-    set_integer(
+    yr_set_integer(
         method_gen_params.len,
         out_obj,
         "classes[%i].methods[%i].number_of_generic_parameters",
@@ -1436,7 +1436,7 @@ static void parse_methods(
 
     for (uint32_t i = 0; i < method_gen_params.len; ++i)
     {
-      set_string(
+      yr_set_string(
           method_gen_params.names[i],
           ctx->pe->object,
           "classes[%i].methods[%i].generic_parameters[%i]",
@@ -1448,7 +1448,7 @@ static void parse_methods(
     // Unset return type for constructors for FileInfo compatibility
     if (strcmp(name, ".ctor") != 0 && strcmp(name, ".cctor") != 0)
     {
-      set_string(
+      yr_set_string(
           return_type,
           out_obj,
           "classes[%i].methods[%i].return_type",
@@ -1462,7 +1462,7 @@ static void parse_methods(
     yr_free(method_gen_params.names);
   }
 
-  set_integer(
+  yr_set_integer(
       out_idx, ctx->pe->object, "classes[%i].number_of_methods", class_idx);
 }
 
@@ -1568,9 +1568,9 @@ static void parse_user_types(const CLASS_CONTEXT* ctx)
       continue;
 
     if (end)
-      set_sized_string(name, end - name, out_obj, "classes[%i].name", out_idx);
+      yr_set_sized_string(name, end - name, out_obj, "classes[%i].name", out_idx);
     else
-      set_string(name, out_obj, "classes[%i].name", out_idx);
+      yr_set_string(name, out_obj, "classes[%i].name", out_idx);
 
     char* fullname = NULL;
     char* namespace = pe_get_dotnet_string(
@@ -1581,14 +1581,14 @@ static void parse_user_types(const CLASS_CONTEXT* ctx)
     {
       char* nested_namespace = parse_enclosing_types(ctx, idx + 1, 1);
       namespace = create_full_name(namespace, nested_namespace);
-      set_string(namespace, out_obj, "classes[%i].namespace", out_idx);
+      yr_set_string(namespace, out_obj, "classes[%i].namespace", out_idx);
       fullname = create_full_name(name, namespace);
       yr_free(nested_namespace);
       yr_free(namespace);
     }
     else
     {
-      set_string(namespace, out_obj, "classes[%i].namespace", out_idx);
+      yr_set_string(namespace, out_obj, "classes[%i].namespace", out_idx);
       fullname = create_full_name(name, namespace);
     }
 
@@ -1596,11 +1596,11 @@ static void parse_user_types(const CLASS_CONTEXT* ctx)
     uint32_t abstract = (row.Flags & TYPE_ATTR_ABSTRACT) != 0;
     uint32_t sealed = (row.Flags & TYPE_ATTR_SEALED) != 0;
 
-    set_string(fullname, out_obj, "classes[%i].fullname", out_idx);
-    set_string(visibility, out_obj, "classes[%i].visibility", out_idx);
-    set_string(type, out_obj, "classes[%i].type", out_idx);
-    set_integer(abstract, out_obj, "classes[%i].abstract", out_idx);
-    set_integer(sealed, out_obj, "classes[%i].sealed", out_idx);
+    yr_set_string(fullname, out_obj, "classes[%i].fullname", out_idx);
+    yr_set_string(visibility, out_obj, "classes[%i].visibility", out_idx);
+    yr_set_string(type, out_obj, "classes[%i].type", out_idx);
+    yr_set_integer(abstract, out_obj, "classes[%i].abstract", out_idx);
+    yr_set_integer(sealed, out_obj, "classes[%i].sealed", out_idx);
 
     yr_free(fullname);
 
@@ -1608,7 +1608,7 @@ static void parse_user_types(const CLASS_CONTEXT* ctx)
     GENERIC_PARAMETERS gen_params = {0};
     parse_generic_params(ctx, false, idx + 1, &gen_params);
 
-    set_integer(
+    yr_set_integer(
         gen_params.len,
         out_obj,
         "classes[%i].number_of_generic_parameters",
@@ -1616,7 +1616,7 @@ static void parse_user_types(const CLASS_CONTEXT* ctx)
 
     for (uint32_t i = 0; i < gen_params.len; ++i)
     {
-      set_string(
+      yr_set_string(
           gen_params.names[i],
           out_obj,
           "classes[%i].generic_parameters[%i]",
@@ -1657,7 +1657,7 @@ static void parse_user_types(const CLASS_CONTEXT* ctx)
     out_idx++;
   }
 
-  set_integer(out_idx, ctx->pe->object, "number_of_classes");
+  yr_set_integer(out_idx, ctx->pe->object, "number_of_classes");
 }
 
 void dotnet_parse_guid(
@@ -1697,14 +1697,14 @@ void dotnet_parse_guid(
 
     guid[(16 * 2) + 4] = '\0';
 
-    set_string(guid, pe->object, "guids[%i]", i);
+    yr_set_string(guid, pe->object, "guids[%i]", i);
 
     i++;
     guid_size -= 16;
     guid_offset += 16;
   }
 
-  set_integer(i, pe->object, "number_of_guids");
+  yr_set_integer(i, pe->object, "number_of_guids");
 }
 
 void dotnet_parse_us(PE* pe, int64_t metadata_root, PSTREAM_HEADER us_header)
@@ -1748,7 +1748,7 @@ void dotnet_parse_us(PE* pe, int64_t metadata_root, PSTREAM_HEADER us_header)
     // stream.
     if (blob_result.length > 0 && fits_in_pe(pe, offset, blob_result.length))
     {
-      set_sized_string(
+      yr_set_sized_string(
           (char*) offset,
           blob_result.length,
           pe->object,
@@ -1760,7 +1760,7 @@ void dotnet_parse_us(PE* pe, int64_t metadata_root, PSTREAM_HEADER us_header)
     }
   }
 
-  set_integer(i, pe->object, "number_of_user_strings");
+  yr_set_integer(i, pe->object, "number_of_user_strings");
 }
 
 STREAMS dotnet_parse_stream_headers(
@@ -1800,16 +1800,16 @@ STREAMS dotnet_parse_stream_headers(
     strncpy(stream_name, stream_header->Name, DOTNET_STREAM_NAME_SIZE);
     stream_name[DOTNET_STREAM_NAME_SIZE] = '\0';
 
-    set_string(stream_name, pe->object, "streams[%i].name", i);
+    yr_set_string(stream_name, pe->object, "streams[%i].name", i);
 
     // Offset is relative to metadata_root.
-    set_integer(
+    yr_set_integer(
         metadata_root + yr_le32toh(stream_header->Offset),
         pe->object,
         "streams[%i].offset",
         i);
 
-    set_integer(
+    yr_set_integer(
         yr_le32toh(stream_header->Size), pe->object, "streams[%i].size", i);
 
     // Store necessary bits to parse these later. Not all tables will be
@@ -1839,7 +1839,7 @@ STREAMS dotnet_parse_stream_headers(
         (PSTREAM_HEADER) ((uint8_t*) stream_header + sizeof(STREAM_HEADER) + strlen(stream_name) + 4 - (strlen(stream_name) % 4));
   }
 
-  set_integer(i, pe->object, "number_of_streams");
+  yr_set_integer(i, pe->object, "number_of_streams");
 
   return headers;
 }
@@ -2002,7 +2002,7 @@ void dotnet_parse_tilde_2(
           DOTNET_STRING_INDEX(module_table->Name));
 
       if (name != NULL)
-        set_string(name, pe->object, "module_name");
+        yr_set_string(name, pe->object, "module_name");
 
       row_size = 2 + index_sizes.string + (index_sizes.guid * 3);
 
@@ -2197,7 +2197,7 @@ void dotnet_parse_tilde_2(
           continue;
         }
 
-        set_sized_string(
+        yr_set_sized_string(
             (char*) blob_offset,
             blob_result.length,
             pe->object,
@@ -2208,7 +2208,7 @@ void dotnet_parse_tilde_2(
         row_ptr += row_size;
       }
 
-      set_integer(counter, pe->object, "number_of_constants");
+      yr_set_integer(counter, pe->object, "number_of_constants");
       table_offset += row_size * num_rows;
       break;
 
@@ -2474,7 +2474,7 @@ void dotnet_parse_tilde_2(
             typelib[str_len] = '\0';
           }
 
-          set_string(typelib, pe->object, "typelib");
+          yr_set_string(typelib, pe->object, "typelib");
 
           row_ptr += row_size;
         }
@@ -2604,14 +2604,14 @@ void dotnet_parse_tilde_2(
 
         if (name != NULL)
         {
-          set_string(name, pe->object, "modulerefs[%i]", counter);
+          yr_set_string(name, pe->object, "modulerefs[%i]", counter);
           counter++;
         }
 
         row_ptr += index_sizes.string;
       }
 
-      set_integer(counter, pe->object, "number_of_modulerefs");
+      yr_set_integer(counter, pe->object, "number_of_modulerefs");
 
       row_size = index_sizes.string;
 
@@ -2665,14 +2665,14 @@ void dotnet_parse_tilde_2(
 
         if (field_offset >= 0)
         {
-          set_integer(field_offset, pe->object, "field_offsets[%i]", counter);
+          yr_set_integer(field_offset, pe->object, "field_offsets[%i]", counter);
           counter++;
         }
 
         row_ptr += row_size;
       }
 
-      set_integer(counter, pe->object, "number_of_field_offsets");
+      yr_set_integer(counter, pe->object, "number_of_field_offsets");
 
       table_offset += row_size * num_rows;
       break;
@@ -2695,19 +2695,19 @@ void dotnet_parse_tilde_2(
       row_ptr = table_offset;
       assembly_table = (PASSEMBLY_TABLE) table_offset;
 
-      set_integer(
+      yr_set_integer(
           yr_le16toh(assembly_table->MajorVersion),
           pe->object,
           "assembly.version.major");
-      set_integer(
+      yr_set_integer(
           yr_le16toh(assembly_table->MinorVersion),
           pe->object,
           "assembly.version.minor");
-      set_integer(
+      yr_set_integer(
           yr_le16toh(assembly_table->BuildNumber),
           pe->object,
           "assembly.version.build_number");
-      set_integer(
+      yr_set_integer(
           yr_le16toh(assembly_table->RevisionNumber),
           pe->object,
           "assembly.version.revision_number");
@@ -2731,7 +2731,7 @@ void dotnet_parse_tilde_2(
                 *(WORD*) (row_ptr + 4 + 2 + 2 + 2 + 2 + 4 + index_sizes.blob)));
 
       if (name != NULL)
-        set_string(name, pe->object, "assembly.name");
+        yr_set_string(name, pe->object, "assembly.name");
 
       // Culture comes after Name.
       if (index_sizes.string == 4)
@@ -2758,7 +2758,7 @@ void dotnet_parse_tilde_2(
       // Sometimes it will be a zero length string. This is technically
       // against the specification but happens from time to time.
       if (name != NULL && strlen(name) > 0)
-        set_string(name, pe->object, "assembly.culture");
+        yr_set_string(name, pe->object, "assembly.culture");
 
       table_offset += row_size * num_rows;
       break;
@@ -2785,22 +2785,22 @@ void dotnet_parse_tilde_2(
 
         assemblyref_table = (PASSEMBLYREF_TABLE) row_ptr;
 
-        set_integer(
+        yr_set_integer(
             yr_le16toh(assemblyref_table->MajorVersion),
             pe->object,
             "assembly_refs[%i].version.major",
             i);
-        set_integer(
+        yr_set_integer(
             yr_le16toh(assemblyref_table->MinorVersion),
             pe->object,
             "assembly_refs[%i].version.minor",
             i);
-        set_integer(
+        yr_set_integer(
             yr_le16toh(assemblyref_table->BuildNumber),
             pe->object,
             "assembly_refs[%i].version.build_number",
             i);
-        set_integer(
+        yr_set_integer(
             yr_le16toh(assemblyref_table->RevisionNumber),
             pe->object,
             "assembly_refs[%i].version.revision_number",
@@ -2829,7 +2829,7 @@ void dotnet_parse_tilde_2(
         // Avoid empty strings.
         if (blob_result.length > 0)
         {
-          set_sized_string(
+          yr_set_sized_string(
               (char*) blob_offset,
               blob_result.length,
               pe->object,
@@ -2856,7 +2856,7 @@ void dotnet_parse_tilde_2(
                   *(WORD*) (row_ptr + 2 + 2 + 2 + 2 + 4 + index_sizes.blob)));
 
         if (name != NULL)
-          set_string(name, pe->object, "assembly_refs[%i].name", i);
+          yr_set_string(name, pe->object, "assembly_refs[%i].name", i);
 
         row_ptr += row_size;
       }
@@ -2865,7 +2865,7 @@ void dotnet_parse_tilde_2(
       tables.assemblyref.RowCount = num_rows;
       tables.assemblyref.RowSize = row_size;
 
-      set_integer(i, pe->object, "number_of_assembly_refs");
+      yr_set_integer(i, pe->object, "number_of_assembly_refs");
       table_offset += row_size * num_rows;
       break;
 
@@ -2957,13 +2957,13 @@ void dotnet_parse_tilde_2(
         }
 
         // Add 4 to skip the size.
-        set_integer(
+        yr_set_integer(
             resource_base + resource_offset + 4,
             pe->object,
             "resources[%i].offset",
             counter);
 
-        set_integer(resource_size, pe->object, "resources[%i].length", counter);
+        yr_set_integer(resource_size, pe->object, "resources[%i].length", counter);
 
         name = pe_get_dotnet_string(
             pe,
@@ -2972,13 +2972,13 @@ void dotnet_parse_tilde_2(
             DOTNET_STRING_INDEX(manifestresource_table->Name));
 
         if (name != NULL)
-          set_string(name, pe->object, "resources[%i].name", counter);
+          yr_set_string(name, pe->object, "resources[%i].name", counter);
 
         row_ptr += row_size;
         counter++;
       }
 
-      set_integer(counter, pe->object, "number_of_resources");
+      yr_set_integer(counter, pe->object, "number_of_resources");
 
       table_offset += row_size * num_rows;
       break;
@@ -3292,11 +3292,11 @@ void dotnet_parse_com(PE* pe)
 
   if (!dotnet_is_dotnet(pe))
   {
-    set_integer(0, pe->object, "is_dotnet");
+    yr_set_integer(0, pe->object, "is_dotnet");
     return;
   }
 
-  set_integer(1, pe->object, "is_dotnet");
+  yr_set_integer(1, pe->object, "is_dotnet");
 
   directory = pe_get_directory_entry(pe, IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR);
   if (directory == NULL)
@@ -3333,7 +3333,7 @@ void dotnet_parse_com(PE* pe)
   end = (char*) memmem((void*) metadata->Version, md_len, "\0", 1);
 
   if (end != NULL)
-    set_sized_string(
+    yr_set_sized_string(
         metadata->Version, (end - metadata->Version), pe->object, "version");
 
   // The metadata structure has some variable length records after the version.

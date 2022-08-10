@@ -40,7 +40,7 @@ define_function(log_string)
   // We are intentionally using sized strings here as we may be needing to
   // output strings with a null character in the middle.
   SIZED_STRING* s = sized_string_argument(1);
-  YR_SCAN_CONTEXT* ctx = scan_context();
+  YR_SCAN_CONTEXT* ctx = yr_scan_context();
   YR_CALLBACK_FUNC callback = ctx->callback;
 
   // Assume the entire string is non-printable, so allocate 4 times the
@@ -78,7 +78,7 @@ define_function(log_string_msg)
   // We are intentionally using sized strings here as we may be needing to
   // output strings with a null character in the middle.
   SIZED_STRING* s = sized_string_argument(2);
-  YR_SCAN_CONTEXT* ctx = scan_context();
+  YR_SCAN_CONTEXT* ctx = yr_scan_context();
   YR_CALLBACK_FUNC callback = ctx->callback;
 
   // Assume the entire string is non-printable, so allocate 4 times the
@@ -117,7 +117,7 @@ define_function(log_integer)
 {
   char* msg = NULL;
   int64_t i = integer_argument(1);
-  YR_SCAN_CONTEXT* ctx = scan_context();
+  YR_SCAN_CONTEXT* ctx = yr_scan_context();
   YR_CALLBACK_FUNC callback = ctx->callback;
 
   yr_asprintf(&msg, "%lli", i);
@@ -138,7 +138,7 @@ define_function(log_integer_msg)
   char* msg = NULL;
   char* s = string_argument(1);
   int64_t i = integer_argument(2);
-  YR_SCAN_CONTEXT* ctx = scan_context();
+  YR_SCAN_CONTEXT* ctx = yr_scan_context();
   YR_CALLBACK_FUNC callback = ctx->callback;
 
   yr_asprintf(&msg, "%s%lli", s, i);
@@ -158,7 +158,7 @@ define_function(log_float)
 {
   char* msg = NULL;
   double f = float_argument(1);
-  YR_SCAN_CONTEXT* ctx = scan_context();
+  YR_SCAN_CONTEXT* ctx = yr_scan_context();
   YR_CALLBACK_FUNC callback = ctx->callback;
 
   yr_asprintf(&msg, "%f", f);
@@ -179,7 +179,7 @@ define_function(log_float_msg)
   char* msg = NULL;
   char* s = string_argument(1);
   double f = float_argument(2);
-  YR_SCAN_CONTEXT* ctx = scan_context();
+  YR_SCAN_CONTEXT* ctx = yr_scan_context();
   YR_CALLBACK_FUNC callback = ctx->callback;
 
   yr_asprintf(&msg, "%s%f", s, f);
@@ -199,7 +199,7 @@ define_function(hex_integer)
 {
   char* msg = NULL;
   int64_t i = integer_argument(1);
-  YR_SCAN_CONTEXT* ctx = scan_context();
+  YR_SCAN_CONTEXT* ctx = yr_scan_context();
   YR_CALLBACK_FUNC callback = ctx->callback;
 
   yr_asprintf(&msg, "0x%llx", i);
@@ -220,7 +220,7 @@ define_function(hex_integer_msg)
   char* msg = NULL;
   char* s = string_argument(1);
   int64_t i = integer_argument(2);
-  YR_SCAN_CONTEXT* ctx = scan_context();
+  YR_SCAN_CONTEXT* ctx = yr_scan_context();
   YR_CALLBACK_FUNC callback = ctx->callback;
 
   yr_asprintf(&msg, "%s0x%llx", s, i);

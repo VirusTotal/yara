@@ -197,7 +197,7 @@ define_function(data_entropy)
   int64_t offset = integer_argument(1);  // offset where to start
   int64_t length = integer_argument(2);  // length of bytes we want entropy on
 
-  YR_SCAN_CONTEXT* context = scan_context();
+  YR_SCAN_CONTEXT* context = yr_scan_context();
 
   size_t i;
 
@@ -250,7 +250,7 @@ define_function(data_deviation)
   size_t total_len = 0;
   size_t i;
 
-  YR_SCAN_CONTEXT* context = scan_context();
+  YR_SCAN_CONTEXT* context = yr_scan_context();
 
   uint32_t* data = get_distribution(offset, length, context);
   if (data == NULL)
@@ -285,7 +285,7 @@ define_function(data_mean)
   int64_t offset = integer_argument(1);
   int64_t length = integer_argument(2);
 
-  YR_SCAN_CONTEXT* context = scan_context();
+  YR_SCAN_CONTEXT* context = yr_scan_context();
 
   size_t total_len = 0;
   size_t i;
@@ -314,7 +314,7 @@ define_function(data_serial_correlation)
   int64_t offset = integer_argument(1);
   int64_t length = integer_argument(2);
 
-  YR_SCAN_CONTEXT* context = scan_context();
+  YR_SCAN_CONTEXT* context = yr_scan_context();
   YR_MEMORY_BLOCK* block = first_memory_block(context);
   YR_MEMORY_BLOCK_ITERATOR* iterator = context->iterator;
 
@@ -435,7 +435,7 @@ define_function(data_monte_carlo_pi)
   int64_t offset = integer_argument(1);
   int64_t length = integer_argument(2);
 
-  YR_SCAN_CONTEXT* context = scan_context();
+  YR_SCAN_CONTEXT* context = yr_scan_context();
   YR_MEMORY_BLOCK* block = first_memory_block(context);
   YR_MEMORY_BLOCK_ITERATOR* iterator = context->iterator;
 
@@ -598,7 +598,7 @@ define_function(count_range)
   int64_t offset = integer_argument(2);
   int64_t length = integer_argument(3);
 
-  YR_SCAN_CONTEXT* context = scan_context();
+  YR_SCAN_CONTEXT* context = yr_scan_context();
 
   uint32_t* distribution = get_distribution(offset, length, context);
   if (distribution == NULL)
@@ -614,7 +614,7 @@ define_function(count_global)
 {
   uint8_t byte = (uint8_t) integer_argument(1);
 
-  YR_SCAN_CONTEXT* context = scan_context();
+  YR_SCAN_CONTEXT* context = yr_scan_context();
 
   uint32_t* distribution = get_distribution_global(context);
   if (distribution == NULL)
@@ -632,7 +632,7 @@ define_function(percentage_range)
   int64_t offset = integer_argument(2);
   int64_t length = integer_argument(3);
 
-  YR_SCAN_CONTEXT* context = scan_context();
+  YR_SCAN_CONTEXT* context = yr_scan_context();
 
   uint32_t* distribution = get_distribution(offset, length, context);
   if (distribution == NULL) {
@@ -652,7 +652,7 @@ define_function(percentage_global)
 {
   uint8_t byte = (uint8_t) integer_argument(1);
 
-  YR_SCAN_CONTEXT* context = scan_context();
+  YR_SCAN_CONTEXT* context = yr_scan_context();
 
   uint32_t* distribution = get_distribution_global(context);
   if (distribution == NULL) {
@@ -673,7 +673,7 @@ define_function(mode_range)
   int64_t offset = integer_argument(1);
   int64_t length = integer_argument(2);
 
-  YR_SCAN_CONTEXT* context = scan_context();
+  YR_SCAN_CONTEXT* context = yr_scan_context();
 
   uint32_t* distribution = get_distribution(offset, length, context);
   if (distribution == NULL) {
@@ -695,7 +695,7 @@ define_function(mode_range)
 
 define_function(mode_global)
 {
-  YR_SCAN_CONTEXT* context = scan_context();
+  YR_SCAN_CONTEXT* context = yr_scan_context();
 
   uint32_t* distribution = get_distribution_global(context);
   if (distribution == NULL) {
@@ -756,7 +756,7 @@ int module_load(
     void* module_data,
     size_t module_data_size)
 {
-  set_float(127.5, module_object, "MEAN_BYTES");
+  yr_set_float(127.5, module_object, "MEAN_BYTES");
   return ERROR_SUCCESS;
 }
 
