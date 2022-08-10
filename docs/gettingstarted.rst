@@ -156,6 +156,13 @@ libraries in this path by default, we must instruct it to do so by adding
     sudo sh -c 'echo "/usr/local/lib" >> /etc/ld.so.conf'
     sudo ldconfig
 
+On newer Ubuntu releases such as 22.04 LTS, the correct loader configuration is
+installed via dependencies to ``/etc/ld.so.conf.d/libc.conf``. In this case, the
+following command alone is sufficient to configure the dynamic linker run-time
+bindings.
+
+    sudo ldconfig
+
 If you're using Windows PowerShell as your command shell, ``yara my_first_rule my_first_rule`` may return this error::
 
     my_first_rule(1): error: non-ascii character

@@ -43,8 +43,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 define_function(network_dns_lookup)
 {
-  YR_SCAN_CONTEXT* context = scan_context();
-  YR_OBJECT* network_obj = parent();
+  YR_SCAN_CONTEXT* context = yr_scan_context();
+  YR_OBJECT* network_obj = yr_parent();
 
   json_t* network_json = (json_t*) network_obj->data;
   json_t* value;
@@ -144,21 +144,21 @@ uint64_t http_request(
 define_function(network_http_request)
 {
   return_integer(http_request(
-      scan_context(), parent(), regexp_argument(1), METHOD_GET | METHOD_POST));
+      yr_scan_context(), yr_parent(), regexp_argument(1), METHOD_GET | METHOD_POST));
 }
 
 
 define_function(network_http_get)
 {
   return_integer(
-      http_request(scan_context(), parent(), regexp_argument(1), METHOD_GET));
+      http_request(yr_scan_context(), yr_parent(), regexp_argument(1), METHOD_GET));
 }
 
 
 define_function(network_http_post)
 {
   return_integer(
-      http_request(scan_context(), parent(), regexp_argument(1), METHOD_POST));
+      http_request(yr_scan_context(), yr_parent(), regexp_argument(1), METHOD_POST));
 }
 
 
@@ -166,8 +166,8 @@ define_function(network_http_post)
 // loops through array and checks value for argument
 define_function(network_host)
 {
-  YR_SCAN_CONTEXT* context = scan_context();
-  YR_OBJECT* network_obj = parent();
+  YR_SCAN_CONTEXT* context = yr_scan_context();
+  YR_OBJECT* network_obj = yr_parent();
 
   json_t* network_json = (json_t*) network_obj->data;
   json_t* value;
@@ -193,8 +193,8 @@ define_function(network_host)
 // checks for dest IP regex and dest port integer match
 define_function(network_tcp)
 {
-  YR_SCAN_CONTEXT* context = scan_context();
-  YR_OBJECT* network_obj = parent();
+  YR_SCAN_CONTEXT* context = yr_scan_context();
+  YR_OBJECT* network_obj = yr_parent();
 
   json_t* network_json = (json_t*) network_obj->data;
   json_t* value;
@@ -230,8 +230,8 @@ define_function(network_tcp)
 // checks for dest IP regex and dest port integer match
 define_function(network_udp)
 {
-  YR_SCAN_CONTEXT* context = scan_context();
-  YR_OBJECT* network_obj = parent();
+  YR_SCAN_CONTEXT* context = yr_scan_context();
+  YR_OBJECT* network_obj = yr_parent();
 
   json_t* network_json = (json_t*) network_obj->data;
   json_t* value;
@@ -267,8 +267,8 @@ define_function(network_udp)
 // checks for regex match on user-agent
 define_function(network_http_user_agent)
 {
-  YR_SCAN_CONTEXT* context = scan_context();
-  YR_OBJECT* network_obj = parent();
+  YR_SCAN_CONTEXT* context = yr_scan_context();
+  YR_OBJECT* network_obj = yr_parent();
 
   json_t* network_json = (json_t*) network_obj->data;
   json_t* http_json = json_object_get(network_json, "http");
@@ -297,8 +297,8 @@ define_function(network_http_user_agent)
 
 define_function(registry_key_access)
 {
-  YR_SCAN_CONTEXT* context = scan_context();
-  YR_OBJECT* registry_obj = parent();
+  YR_SCAN_CONTEXT* context = yr_scan_context();
+  YR_OBJECT* registry_obj = yr_parent();
 
   json_t* keys_json = (json_t*) registry_obj->data;
   json_t* value;
@@ -321,8 +321,8 @@ define_function(registry_key_access)
 
 define_function(filesystem_file_access)
 {
-  YR_SCAN_CONTEXT* context = scan_context();
-  YR_OBJECT* filesystem_obj = parent();
+  YR_SCAN_CONTEXT* context = yr_scan_context();
+  YR_OBJECT* filesystem_obj = yr_parent();
 
   json_t* files_json = (json_t*) filesystem_obj->data;
   json_t* value;
@@ -345,8 +345,8 @@ define_function(filesystem_file_access)
 
 define_function(sync_mutex)
 {
-  YR_SCAN_CONTEXT* context = scan_context();
-  YR_OBJECT* sync_obj = parent();
+  YR_SCAN_CONTEXT* context = yr_scan_context();
+  YR_OBJECT* sync_obj = yr_parent();
 
   json_t* mutexes_json = (json_t*) sync_obj->data;
   json_t* value;
@@ -439,10 +439,10 @@ int module_load(
 
   module_object->data = (void*) json;
 
-  network_obj = get_object(module_object, "network");
-  registry_obj = get_object(module_object, "registry");
-  filesystem_obj = get_object(module_object, "filesystem");
-  sync_obj = get_object(module_object, "sync");
+  network_obj = yr_get_object(module_object, "network");
+  registry_obj = yr_get_object(module_object, "registry");
+  filesystem_obj = yr_get_object(module_object, "filesystem");
+  sync_obj = yr_get_object(module_object, "sync");
 
   network_obj->data = (void*) json_object_get(json, "network");
 

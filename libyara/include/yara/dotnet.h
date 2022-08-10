@@ -3,6 +3,7 @@
 
 #include <yara/pe.h>
 #include <yara/pe_utils.h>
+#include <yara/types.h>
 
 #pragma pack(push, 1)
 
@@ -72,6 +73,10 @@ typedef struct _TILDE_HEADER
   ULONGLONG Sorted;
 } TILDE_HEADER, *PTILDE_HEADER;
 
+// flag in HeapSizes that denotes extra 4 bytes after Rows
+#define HEAP_EXTRA_DATA 0x40
+#define SIG_FLAG_GENERIC 0x10
+
 // These are the bit positions in Valid which will be set if the table
 // exists.
 #define BIT_MODULE                 0x00
@@ -129,15 +134,86 @@ typedef struct _TILDE_HEADER
 //#define BIT_IMPORTSCOPE            0x35
 //#define BIT_STATEMACHINEMETHOD     0x36
 
-//
-// Element types. Note this is not a complete list as we aren't parsing all of
-// them. This only includes the ones we care about.
-// ECMA-335 Section II.23.1.16
-//
-#define ELEMENT_TYPE_STRING 0x0E
-
 // The string length of a typelib attribute is at most 0xFF.
 #define MAX_TYPELIB_SIZE 0xFF
+
+// Flags and Masks for .NET tables
+#define TYPE_ATTR_CLASS_SEMANTIC_MASK 0x20
+#define TYPE_ATTR_CLASS               0x0
+#define TYPE_ATTR_INTERFACE           0x20
+
+#define TYPE_ATTR_VISIBILITY_MASK      0x7
+#define TYPE_ATTR_NOT_PUBLIC           0x0
+#define TYPE_ATTR_PUBLIC               0x1
+#define TYPE_ATTR_NESTED_PUBLIC        0x2
+#define TYPE_ATTR_NESTED_PRIVATE       0x3
+#define TYPE_ATTR_NESTED_FAMILY        0x4
+#define TYPE_ATTR_NESTED_ASSEMBLY      0x5
+#define TYPE_ATTR_NESTED_FAM_AND_ASSEM 0x6
+#define TYPE_ATTR_NESTED_FAM_OR_ASSEM  0x7
+
+#define TYPE_ATTR_ABSTRACT 0x80
+#define TYPE_ATTR_SEALED   0x100
+
+#define METHOD_ATTR_ACCESS_MASK   0x7
+#define METHOD_ATTR_PRIVATE       0x1
+#define METHOD_ATTR_FAM_AND_ASSEM 0x2
+#define METHOD_ATTR_ASSEM         0x3
+#define METHOD_ATTR_FAMILY        0x4
+#define METHOD_ATTR_FAM_OR_ASSEM  0x5
+#define METHOD_ATTR_PUBLIC        0x6
+
+#define METHOD_ATTR_STATIC   0x10
+#define METHOD_ATTR_FINAL    0x20
+#define METHOD_ATTR_VIRTUAL  0x40
+#define METHOD_ATTR_ABSTRACT 0x400
+
+// Element types ECMA-335 Section II.23.1.16
+#define TYPE_END         0x0
+#define TYPE_VOID        0x1
+#define TYPE_BOOL        0x2
+#define TYPE_CHAR        0x3
+#define TYPE_I1          0x4
+#define TYPE_U1          0x5
+#define TYPE_I2          0x6
+#define TYPE_U2          0x7
+#define TYPE_I4          0x8
+#define TYPE_U4          0x9
+#define TYPE_I8          0xa
+#define TYPE_U8          0xb
+#define TYPE_R4          0xc
+#define TYPE_R8          0xd
+#define TYPE_STRING      0xe
+#define TYPE_PTR         0xf
+#define TYPE_BYREF       0x10
+#define TYPE_VALUETYPE   0x11
+#define TYPE_CLASS       0x12
+#define TYPE_VAR         0x13
+#define TYPE_ARRAY       0x14
+#define TYPE_GENERICINST 0x15
+#define TYPE_TYPEDREF    0x16
+#define TYPE_I           0x18
+#define TYPE_U           0x19
+#define TYPE_FNPTR       0x1b
+#define TYPE_OBJECT      0x1c
+#define TYPE_SZARRAY     0x1d
+#define TYPE_MVAR        0x1e
+#define TYPE_CMOD_REQD   0x1f
+#define TYPE_CMOD_OPT    0x20
+#define TYPE_INTERNAL    0x21
+#define TYPE_MODIFIER    0x40
+#define TYPE_SENTINEL    0x41
+#define TYPE_PINNED      0x45
+
+// Sane boundaries for invalid files
+#define MAX_ARRAY_RANK      50
+#define MAX_PARAM_COUNT     2000
+#define MAX_GEN_PARAM_COUNT 1000
+#define MAX_METHOD_COUNT    20000
+#define MAX_STRING_LENGTH   10000
+// Sanity check for loops in type parser
+#define MAX_TYPE_DEPTH      0x10
+#define MAX_NAMESPACE_DEPTH 0x0a
 
 //
 // Module table
@@ -306,9 +382,84 @@ typedef struct _CONSTANT_TABLE
   } Value;
 } CONSTANT_TABLE, *PCONSTANT_TABLE;
 
+// ECMA 335 - II.22.37
+typedef struct _TYPEDEF_ROW
+{
+  uint32_t Flags;
+  uint32_t Name;
+  uint32_t Namespace;
+  uint32_t Extends;
+  uint32_t Field;
+  uint32_t Method;
+} TYPEDEF_ROW, *PTYPEDEF_ROW;
+
+// ECMA 335 - II.22.38
+typedef struct _TYPEREF_ROW
+{
+  uint32_t ResolutionScope;
+  uint32_t Name;
+  uint32_t Namespace;
+} TYPEREF_ROW, *PTYPEREF_ROW;
+
+// ECMA 335 - II.22.39
+typedef struct _TYPESPEC_ROW
+{
+  uint32_t Signature;
+} TYPESPEC_ROW, *PTYPESPEC_ROW;
+
+// ECMA 335 - II.22.23
+typedef struct _INTERFACEIMPL_ROW
+{
+  uint32_t Class;
+  uint32_t Interface;
+} INTERFACEIMPL_ROW, *PINTERFACEIMPL_ROW;
+
+// ECMA 335 II.22.26
+typedef struct _METHODDEF_ROW
+{
+  uint32_t Rva;
+  uint16_t ImplFlags;
+  uint16_t Flags;
+  uint32_t Name;
+  uint32_t Signature;
+  uint32_t ParamList;
+} METHODDEF_ROW, *PMETHODDEF_ROW;
+
+// ECMA 335 II.22.33
+typedef struct _PARAM_ROW
+{
+  uint16_t Flags;
+  uint16_t Sequence;
+  uint32_t Name;
+} PARAM_ROW, *PPARAM_ROW;
+
+// ECMA 335 II.22.20
+typedef struct _GENERICPARAM_ROW
+{
+  uint16_t Number;
+  uint16_t Flags;
+  uint32_t Owner;
+  uint32_t Name;
+} GENERICPARAM_ROW, *PGENERICPARAM_ROW;
+
+// ECMA 335 II.22.32
+typedef struct _NESTEDCLASS_ROW
+{
+  uint32_t NestedClass;
+  uint32_t EnclosingClass;
+} NESTEDCLASS_ROW, *PNESTEDCLASS_ROW;
+
+// For easy passing of gen param collection
+typedef struct _GENERIC_PARAMETERS
+{
+  char **names;
+  uint32_t len;
+} GENERIC_PARAMETERS, *PGENERIC_PARAMETERS;
+
 // Used to return offsets to the various headers.
 typedef struct _STREAMS
 {
+  int64_t metadata_root;  // base from which are stream offsets relative
   PSTREAM_HEADER guid;
   PSTREAM_HEADER tilde;
   PSTREAM_HEADER string;
@@ -321,8 +472,32 @@ typedef struct _STREAMS
 typedef struct _BLOB_PARSE_RESULT
 {
   uint8_t size;  // Number of bytes parsed. This is the new offset.
-  DWORD length;  // Value of the bytes parsed. This is the blob length.
+  uint32_t length;  // Value of the bytes parsed. This is the blob length.
 } BLOB_PARSE_RESULT, *PBLOB_PARSE_RESULT;
+
+typedef struct _TABLE_INFO
+{
+  uint8_t *Offset;
+  uint32_t RowCount;
+  uint32_t RowSize;
+} TABLE_INFO, *PTABLE_INFO;
+
+// Structure that stores table information for parsing
+typedef struct _TABLES
+{
+  TABLE_INFO typedef_;
+  TABLE_INFO typespec;
+  TABLE_INFO typeref;
+  TABLE_INFO methoddef;
+  TABLE_INFO param;
+  TABLE_INFO module;
+  TABLE_INFO moduleref;
+  TABLE_INFO assembly;
+  TABLE_INFO assemblyref;
+  TABLE_INFO intefaceimpl;
+  TABLE_INFO genericparam;
+  TABLE_INFO nestedclass;
+} TABLES, *PTABLES;
 
 // Used to store the number of rows of each table.
 typedef struct _ROWS
@@ -359,16 +534,40 @@ typedef struct _INDEX_SIZES
   uint8_t blob;
   uint8_t field;
   uint8_t methoddef;
+  uint8_t methodspec;
   uint8_t memberref;
   uint8_t param;
   uint8_t event;
   uint8_t typedef_;
+  uint8_t typeref;
+  uint8_t typespec;
+  uint8_t interfaceimpl;
   uint8_t property;
   uint8_t moduleref;
+  uint8_t module;
   uint8_t assemblyrefprocessor;
   uint8_t assemblyref;
+  uint8_t assembly;
   uint8_t genericparam;
 } INDEX_SIZES, *PINDEX_SIZES;
+
+typedef struct _CLASS_CONTEXT
+{
+  PE* pe;
+  TABLES* tables;
+  INDEX_SIZES* index_sizes;
+  const uint8_t* str_heap;
+  uint32_t str_size;
+  const uint8_t* blob_heap;
+  uint32_t blob_size;
+} CLASS_CONTEXT, *PCLASS_CONTEXT;
+
+typedef struct _PARAMETERS
+{
+  char* name;
+  char* type;
+  bool alloc;  // if name is allocated and needs to be free
+} PARAMETERS, *PPARAMETERS;
 
 #pragma pack(pop)
 #endif

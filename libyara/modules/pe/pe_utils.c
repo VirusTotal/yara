@@ -38,10 +38,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <yara/utils.h>
 #include <yara/dotnet.h>
 
-#if HAVE_LIBCRYPTO
-#include <openssl/asn1.h>
-#endif
-
 PIMAGE_NT_HEADERS32 pe_get_header(const uint8_t* data, size_t data_size)
 {
   PIMAGE_DOS_HEADER mz_header;
@@ -252,53 +248,6 @@ time_t timegm(struct tm* tm)
 
 #endif  // HAVE__MKGMTIME
 #endif  // !HAVE_TIMEGM
-
-#if HAVE_LIBCRYPTO
-
-// Taken from http://stackoverflow.com/questions/10975542/asn1-time-conversion
-// and cleaned up. Also uses timegm(3) instead of mktime(3).
-
-time_t ASN1_get_time_t(const ASN1_TIME* time)
-{
-  struct tm t;
-  const char* str = (const char*) time->data;
-  size_t i = 0;
-
-  memset(&t, 0, sizeof(t));
-
-  if (time->type == V_ASN1_UTCTIME) /* two digit year */
-  {
-    t.tm_year = (str[i++] - '0') * 10;
-    t.tm_year += (str[i++] - '0');
-
-    if (t.tm_year < 70)
-      t.tm_year += 100;
-  }
-  else if (time->type == V_ASN1_GENERALIZEDTIME) /* four digit year */
-  {
-    t.tm_year = (str[i++] - '0') * 1000;
-    t.tm_year += (str[i++] - '0') * 100;
-    t.tm_year += (str[i++] - '0') * 10;
-    t.tm_year += (str[i++] - '0');
-    t.tm_year -= 1900;
-  }
-
-  t.tm_mon = (str[i++] - '0') * 10;
-  t.tm_mon += (str[i++] - '0') - 1;  // -1 since January is 0 not 1.
-  t.tm_mday = (str[i++] - '0') * 10;
-  t.tm_mday += (str[i++] - '0');
-  t.tm_hour = (str[i++] - '0') * 10;
-  t.tm_hour += (str[i++] - '0');
-  t.tm_min = (str[i++] - '0') * 10;
-  t.tm_min += (str[i++] - '0');
-  t.tm_sec = (str[i++] - '0') * 10;
-  t.tm_sec += (str[i++] - '0');
-
-  /* Note: we did not adjust the time based on time zone information */
-  return timegm(&t);
-}
-
-#endif
 
 
 // These ordinals are taken from pefile. If a lookup fails attempt to return

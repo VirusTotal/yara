@@ -210,9 +210,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define regexp_argument(n) ((RE*) (__args[n - 1].re))
 
-#define module()       yr_object_get_root((YR_OBJECT*) __function_obj)
-#define parent()       (__function_obj->parent)
-#define scan_context() (__context)
+#define yr_module()       yr_object_get_root((YR_OBJECT*) __function_obj)
+#define yr_parent()       (__function_obj->parent)
+#define yr_scan_context() (__context)
 
 #define foreach_memory_block(iterator, block)            \
   for (block = iterator->first(iterator); block != NULL; \
@@ -221,28 +221,28 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define first_memory_block(context) \
   (context)->iterator->first((context)->iterator)
 
-#define is_undefined(object, ...) \
+#define yr_is_undefined(object, ...) \
   yr_object_has_undefined_value(object, __VA_ARGS__)
 
-#define get_object(object, ...) yr_object_lookup(object, 0, __VA_ARGS__)
+#define yr_get_object(object, ...) yr_object_lookup(object, 0, __VA_ARGS__)
 
-#define get_integer(object, ...) yr_object_get_integer(object, __VA_ARGS__)
+#define yr_get_integer(object, ...) yr_object_get_integer(object, __VA_ARGS__)
 
-#define get_float(object, ...) yr_object_get_float(object, __VA_ARGS__)
+#define yr_get_float(object, ...) yr_object_get_float(object, __VA_ARGS__)
 
-#define get_string(object, ...) yr_object_get_string(object, __VA_ARGS__)
+#define yr_get_string(object, ...) yr_object_get_string(object, __VA_ARGS__)
 
-#define set_integer(value, object, ...) \
+#define yr_set_integer(value, object, ...) \
   yr_object_set_integer(value, object, __VA_ARGS__)
 
-#define set_float(value, object, ...) \
+#define yr_set_float(value, object, ...) \
   yr_object_set_float(value, object, __VA_ARGS__)
 
-#define set_sized_string(value, len, object, ...) \
+#define yr_set_sized_string(value, len, object, ...) \
   yr_object_set_string(value, len, object, __VA_ARGS__)
 
-#define set_string(value, object, ...) \
-  set_sized_string(                    \
+#define yr_set_string(value, object, ...) \
+  yr_set_sized_string(                    \
       value, (value == NULL) ? 0 : strlen(value), object, __VA_ARGS__)
 
 #define return_integer(integer)                                                \

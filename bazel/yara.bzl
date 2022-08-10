@@ -6,6 +6,8 @@ YARA_CONFIG_OPTS = [
     "-DHAVE_STDBOOL_H=1",
     # "-DHAVE__MKGMTIME=1",
     "-DHAVE_TIMEGM=1",
+    "-DBUCKETS_128=1",  # Defining TLSH function
+    "-DCHECKSUM_1B=1",  # Defining TLSH function
 ]
 
 YARA_COPTS = YARA_CONFIG_OPTS + [
@@ -61,6 +63,7 @@ module_list = rule(
 def yara_library(
         name,
         defines = [],
+        includes = [],
         modules = [],
         modules_srcs = [],
         deps = [],
@@ -126,6 +129,7 @@ def yara_library(
             "libyara/include/yara/dex.h",
             "libyara/include/yara/dotnet.h",
             "libyara/include/yara/elf.h",
+            "libyara/include/yara/elf_utils.h",
             "libyara/include/yara/endian.h",
             "libyara/include/yara/error.h",
             "libyara/include/yara/exec.h",
@@ -152,6 +156,7 @@ def yara_library(
             "libyara/include/yara/rules.h",
             "libyara/include/yara/scan.h",
             "libyara/include/yara/scanner.h",
+            "libyara/include/yara/simple_str.h",
             "libyara/include/yara/sizedstr.h",
             "libyara/include/yara/stack.h",
             "libyara/include/yara/stopwatch.h",
@@ -161,6 +166,7 @@ def yara_library(
             "libyara/include/yara/types.h",
             "libyara/include/yara/unaligned.h",
             "libyara/include/yara/utils.h",
+            "libyara/include/tlshc/tlsh.h",
             "libyara/lexer.c",
             "libyara/libyara.c",
             "libyara/mem.c",
@@ -182,12 +188,28 @@ def yara_library(
             "libyara/rules.c",
             "libyara/scan.c",
             "libyara/scanner.c",
+            "libyara/simple_str.c",
             "libyara/sizedstr.c",
             "libyara/stack.c",
             "libyara/stopwatch.c",
             "libyara/stream.c",
             "libyara/strutils.c",
             "libyara/threading.c",
+            "libyara/include/authenticode-parser/authenticode.h",
+            "libyara/modules/pe/authenticode-parser/authenticode.c",
+            "libyara/modules/pe/authenticode-parser/certificate.c",
+            "libyara/modules/pe/authenticode-parser/certificate.h",
+            "libyara/modules/pe/authenticode-parser/countersignature.c",
+            "libyara/modules/pe/authenticode-parser/countersignature.h",
+            "libyara/modules/pe/authenticode-parser/helper.c",
+            "libyara/modules/pe/authenticode-parser/helper.h",
+            "libyara/modules/pe/authenticode-parser/structs.c",
+            "libyara/modules/pe/authenticode-parser/structs.h",
+            "libyara/tlshc/tlsh.c",
+            "libyara/tlshc/tlsh_impl.c",
+            "libyara/tlshc/tlsh_impl.h",
+            "libyara/tlshc/tlsh_util.c",
+            "libyara/tlshc/tlsh_util.h",
         ],
         hdrs = [
             "libyara/include/yara.h",
@@ -196,7 +218,7 @@ def yara_library(
             "libyara/include/yara/rules.h",
         ],
         copts = copts,
-        includes = [
+        includes = includes + [
             "libyara/modules",
             "libyara/include",
             "libyara",

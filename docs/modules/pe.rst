@@ -820,6 +820,12 @@ Reference
 
     Number of authenticode signatures in the PE.
 
+.. c:type:: is_signed
+
+    True if any of the PE signatures is verified. Verified here means, that the signature is formally correct: digests match,
+    signer public key correctly verifies the encrypted digest, etc. But this doesn't mean that the signer (and thus the signature)
+    can be trusted as there are no trust anchors involved in the verification.
+
 .. c:type:: signatures
 
     A zero-based array of signature objects, one for each authenticode
@@ -897,6 +903,119 @@ Reference
         Is equivalent to::
 
             timestamp >= pe.signatures[n].not_before and timestamp <= pe.signatures[n].not_after
+
+   .. c:member:: verified
+
+        Boolean, true if signature was sucessfully verified. More details about what the `verified` means is mentioned
+        under the attribute `pe.is_signed`.
+
+    .. c:member:: digest_alg
+
+        Name of the algorithm used for file digest. Usually "sha1" or "sha256"
+
+    .. c:member:: digest
+
+        Digest of the file signed in the signature.
+
+    .. c:member:: file_digest
+
+        Calculated digest using digest_alg of the analysed file.
+
+    .. c:member:: number_of_certificates
+
+        Number of the certificates stored in the signature, including the ones in countersignatures.
+
+    .. c:type:: certificates
+
+        A zero-based array of certificates stored in the signature, including the ones in countersignatures.
+        The members of the certificates are identical to those already explained before, with the same name.
+
+        .. c:member:: thumbprint
+        .. c:member:: issuer
+        .. c:member:: subject
+        .. c:member:: version
+        .. c:member:: algorithm
+        .. c:member:: serial
+        .. c:member:: not_before
+        .. c:member:: not_after
+    
+    .. c:type:: signer_info
+
+        Information about the signature signer.
+
+        .. c:member:: program_name
+
+            Optional program name stored in the signature.
+
+        .. c:member:: digest
+
+            Signed digest of the signature.
+
+        .. c:member:: digest_alg
+
+            Algorithm used for the digest of the signature. Usually "sha1" or "sha256"
+
+        .. c:member:: length_of_chain
+
+            Number of certificates in the signers chain.
+
+        .. c:type:: chain
+
+        A zero-based array of certificates in the signers chain. The members of the certificates are
+        identical to those already explained before, with the same name.
+
+            .. c:member:: thumbprint
+            .. c:member:: issuer
+            .. c:member:: subject
+            .. c:member:: version
+            .. c:member:: algorithm
+            .. c:member:: serial
+            .. c:member:: not_before
+            .. c:member:: not_after
+
+    .. c:member:: number_of_countersignatures
+
+        Number of the countersignatures of the signature.
+
+    .. c:type:: countersignatures
+
+        A zero-based array of the countersignatures of the signature.
+        Almost always it's just single timestamp one.
+
+        .. c:member:: verified
+
+            Boolean, true if countersignature was sucessfully verified. More details about what the `verified` means is mentioned
+            under the attribute `pe.is_signed`.
+
+        .. c:member:: sign_time
+
+            Integer - unix time of the timestamp signing time.
+
+        .. c:member:: digest
+
+            Signed digest of the countersignature.
+
+        .. c:member:: digest_alg
+
+            Algorithm used for the digest of the countersignature. Usually "sha1" or "sha256"
+
+        .. c:member:: length_of_chain
+
+            Number of certificates in the countersigners chain.
+
+        .. c:type:: chain
+
+        A zero-based array of certificates in the countersigners chain. The members of the certificates are
+        identical to those already explained before, with the same name.
+
+            .. c:member:: thumbprint
+            .. c:member:: issuer
+            .. c:member:: subject
+            .. c:member:: version
+            .. c:member:: algorithm
+            .. c:member:: serial
+            .. c:member:: not_before
+            .. c:member:: not_after
 
 .. c:type:: rich_signature
 

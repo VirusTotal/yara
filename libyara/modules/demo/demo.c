@@ -54,7 +54,7 @@ int module_load(
     void* module_data,
     size_t module_data_size)
 {
-  set_string("Hello World!", module_object, "greeting");
+  yr_set_string("Hello World!", module_object, "greeting");
 
   return ERROR_SUCCESS;
 }

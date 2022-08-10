@@ -364,6 +364,24 @@ _stop_iter:
   return ERROR_SUCCESS;
 }
 
+// Global table that contains the "next" function for different types of
+// iterators. The reason for using this table is to avoid storing pointers
+// in the YARA's VM stack. Instead of the pointers we store an index within
+// this table.
+static YR_ITERATOR_NEXT_FUNC iter_next_func_table[] = {
+    iter_array_next,
+    iter_dict_next,
+    iter_int_range_next,
+    iter_int_enum_next,
+    iter_string_set_next,
+};
+
+#define ITER_NEXT_ARRAY      0
+#define ITER_NEXT_DICT       1
+#define ITER_NEXT_INT_RANGE  2
+#define ITER_NEXT_INT_ENUM   3
+#define ITER_NEXT_STRING_SET 4
+
 int yr_execute_code(YR_SCAN_CONTEXT* context)
 {
   YR_DEBUG_FPRINTF(2, stderr, "+ %s() {\n", __FUNCTION__);
@@ -466,7 +484,7 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
         pop(r1);
         r2.it->array_it.array = r1.o;
         r2.it->array_it.index = 0;
-        r2.it->next = iter_array_next;
+        r2.it->next_func_idx = ITER_NEXT_ARRAY;
         push(r2);
       }
 
@@ -487,7 +505,7 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
         pop(r1);
         r2.it->dict_it.dict = r1.o;
         r2.it->dict_it.index = 0;
-        r2.it->next = iter_dict_next;
+        r2.it->next_func_idx = ITER_NEXT_DICT;
         push(r2);
       }
 
@@ -511,7 +529,7 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
         pop(r1);
         r3.it->int_range_it.next = r1.i;
         r3.it->int_range_it.last = r2.i;
-        r3.it->next = iter_int_range_next;
+        r3.it->next_func_idx = ITER_NEXT_INT_RANGE;
         push(r3);
       }
 
@@ -537,7 +555,7 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
       {
         r3.it->int_enum_it.count = r1.i;
         r3.it->int_enum_it.next = 0;
-        r3.it->next = iter_int_enum_next;
+        r3.it->next_func_idx = ITER_NEXT_INT_ENUM;
 
         for (int64_t i = r1.i; i > 0; i--)
         {
@@ -572,7 +590,7 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
       {
         r3.it->string_set_it.count = r1.i;
         r3.it->string_set_it.index = 0;
-        r3.it->next = iter_string_set_next;
+        r3.it->next_func_idx = ITER_NEXT_STRING_SET;
 
         for (int64_t i = r1.i; i > 0; i--)
         {
@@ -594,11 +612,22 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
       // Loads the iterator in r1, but leaves the iterator in the stack.
       pop(r1);
       push(r1);
-      // The iterator's next function is responsible for pushing the next
-      // item in the stack, and a boolean indicating if there are more items
-      // to retrieve. The boolean will be at the top of the stack after
-      // calling "next".
-      result = r1.it->next(r1.it, &stack);
+
+      if (r1.it->next_func_idx <
+          sizeof(iter_next_func_table) / sizeof(YR_ITERATOR_NEXT_FUNC))
+      {
+        // The iterator's next function is responsible for pushing the next
+        // item in the stack, and a boolean indicating if there are more items
+        // to retrieve. The boolean will be at the top of the stack after
+        // calling "next".
+        result = iter_next_func_table[r1.it->next_func_idx](r1.it, &stack);
+      }
+      else
+      {
+        // next_func_idx is outside the valid range, this should not happend.
+        result = ERROR_INTERNAL_FATAL_ERROR;
+      }
+
       stop = (result != ERROR_SUCCESS);
       break;
 
@@ -1336,12 +1365,7 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
       pop(r2);
       pop(r1);
 
-      if (is_undef(r1))
-      {
-        r1.i = 0;
-        push(r1);
-        break;
-      }
+      ensure_defined(r1);
 
 #if YR_PARANOID_EXEC
       ensure_within_rules_arena(r2.p);
@@ -1536,15 +1560,23 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
       {
         YR_DEBUG_FPRINTF(2, stderr, "- case OP_OF: // %s()\n", __FUNCTION__);
 
+        // Quantifier is "all"
         if (is_undef(r2))
+        {
           r1.i = found >= count ? 1 : 0;
+        }
+        // Quantifier is 0 or none. This is a special case in which we want
+        // exactly 0 strings matching. More information at:
+        // https://github.com/VirusTotal/yara/issues/1695
+        else if (r2.i == 0)
+        {
+          r1.i = found == 0 ? 1 : 0;
+        }
+        // In all other cases the number of strings matching should be at
+        // least the amount specified by the quantifier.
         else
         {
-          // https://github.com/VirusTotal/yara/issues/1695
-          if (r2.i == 0)
-            r1.i = found == r2.i ? 1 : 0;
-          else
-            r1.i = found >= r2.i ? 1 : 0;
+          r1.i = found >= r2.i ? 1 : 0;
         }
       }
       else  // OP_OF_PERCENT
@@ -1570,12 +1602,23 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
 
       found = 0;
       count = 0;
-      pop(r2);
-      pop(r1);
-      ensure_defined(r1);
-      ensure_defined(r2);
 
-      pop(r3);
+      pop(r2);  // Offset range end
+      pop(r1);  // Offset range start
+      pop(r3);  // First string
+
+      // If any of the range boundaries are undefined the result is also
+      // undefined, be we need to unwind the stack first.
+      if (is_undef(r1) || is_undef(r2))
+      {
+        // Remove all the strings.
+        while (!is_undef(r3)) pop(r3);
+        // Remove the quantifier at the bottom of the stack.
+        pop(r3);
+        r1.i = YR_UNDEFINED;
+        push(r1);
+        break;
+      }
 
       while (!is_undef(r3))
       {
@@ -1586,6 +1629,7 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
 
         while (match != NULL)
         {
+          // String match within range start and range end?
           if (match->base + match->offset >= r1.i &&
               match->base + match->offset <= r2.i)
           {
@@ -1593,6 +1637,9 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
             break;
           }
 
+          // If current match is past range end, we can stop as matches
+          // are sorted by offset in increasing order, so all remaining
+          // matches are part the range end too.
           if (match->base + match->offset > r1.i)
             break;
 
@@ -1603,16 +1650,25 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
         pop(r3);
       }
 
-      pop(r1);
-      if (is_undef(r1))
+      pop(r2);  // Quantifier X in expressions like "X of string_set in range"
+
+      // Quantifier is "all".
+      if (is_undef(r2))
+      {
         r1.i = found >= count ? 1 : 0;
+      }
+      // Quantifier is 0 or none. This is a special case in which we want
+      // exactly 0 strings matching. More information at:
+      // https://github.com/VirusTotal/yara/issues/1695
+      else if (r2.i == 0)
+      {
+        r1.i = found == 0 ? 1 : 0;
+      }
+      // In all other cases the number of strings matching should be at least
+      // the amount specified by the quantifier.
       else
       {
-        // https://github.com/VirusTotal/yara/issues/1695
-        if (r2.i == 0)
-          r1.i = found == r2.i ? 1 : 0;
-        else
-          r1.i = found >= r2.i ? 1 : 0;
+        r1.i = found >= r2.i ? 1 : 0;
       }
 
       push(r1);
