@@ -364,7 +364,7 @@ unsigned int parse_id_list(
     // Subtract 2 to not include it
     if (extra_data)
     {
-      set_integer(
+      yr_set_integer(
           item_id_size - 2,
           module_object,
           "vista_and_above_id_list_data.item_id_list[%i].size",
@@ -372,7 +372,7 @@ unsigned int parse_id_list(
     }
     else
     {
-      set_integer(
+      yr_set_integer(
           item_id_size - 2,
           module_object,
           "link_target_id_list.item_id_list[%i].size",
@@ -389,7 +389,7 @@ unsigned int parse_id_list(
 
     if (extra_data)
     {
-      set_sized_string(
+      yr_set_sized_string(
           (const char*) item_id_data_ptr,
           item_id_size - sizeof(item_id_size),
           module_object,
@@ -398,7 +398,7 @@ unsigned int parse_id_list(
     }
     else
     {
-      set_sized_string(
+      yr_set_sized_string(
           (const char*) item_id_data_ptr,
           item_id_size - sizeof(item_id_size),
           module_object,
@@ -421,14 +421,14 @@ unsigned int parse_id_list(
 
   if (extra_data)
   {
-    set_integer(
+    yr_set_integer(
         num_item_ids,
         module_object,
         "vista_and_above_id_list_data.number_of_item_ids");
   }
   else
   {
-    set_integer(
+    yr_set_integer(
         num_item_ids, module_object, "link_target_id_list.number_of_item_ids");
   }
 
@@ -450,7 +450,7 @@ unsigned int parse_link_target_id_list(
   memcpy(&id_list_size, link_target_id_list_ptr, sizeof(id_list_size));
   block_data_size_remaining -= sizeof(id_list_size);
 
-  set_integer(
+  yr_set_integer(
       id_list_size, module_object, "link_target_id_list.item_id_list_size");
 
   // Get pointer to start of IDList
@@ -487,15 +487,15 @@ unsigned int parse_volume_id(
 
   memcpy(&volume_id, (volume_id_t*) volume_id_ptr, sizeof(volume_id_t));
 
-  set_integer(
+  yr_set_integer(
       volume_id.volume_id_size, module_object, "link_info.volume_id.size");
-  set_integer(
+  yr_set_integer(
       volume_id.drive_type, module_object, "link_info.volume_id.drive_type");
-  set_integer(
+  yr_set_integer(
       volume_id.drive_serial_number,
       module_object,
       "link_info.volume_id.drive_serial_number");
-  set_integer(
+  yr_set_integer(
       volume_id.volume_label_offset,
       module_object,
       "link_info.volume_id.volume_label_offset");
@@ -520,7 +520,7 @@ unsigned int parse_volume_id(
         &volume_label_offset_unicode,
         volume_id_ptr,
         sizeof(volume_label_offset_unicode));
-    set_integer(
+    yr_set_integer(
         volume_label_offset_unicode,
         module_object,
         "link_info.volume_id.volume_label_offset_unicode");
@@ -545,7 +545,7 @@ unsigned int parse_volume_id(
   volume_id_data = yr_malloc(size_of_data);
 
   memcpy(volume_id_data, volume_id_ptr, size_of_data);
-  set_sized_string(
+  yr_set_sized_string(
       volume_id_data, size_of_data, module_object, "link_info.volume_id.data");
 
   volume_id_ptr += size_of_data;
@@ -586,23 +586,23 @@ unsigned int parse_common_network_relative_link(
       (common_network_relative_link_t*) common_network_relative_link_ptr,
       sizeof(common_network_relative_link_t));
 
-  set_integer(
+  yr_set_integer(
       common_network_relative_link.common_network_relative_link_size,
       module_object,
       "link_info.common_network_relative_link.size");
-  set_integer(
+  yr_set_integer(
       common_network_relative_link.common_network_relative_link_flags,
       module_object,
       "link_info.common_network_relative_link.flags");
-  set_integer(
+  yr_set_integer(
       common_network_relative_link.net_name_offset,
       module_object,
       "link_info.common_network_relative_link.net_name_offset");
-  set_integer(
+  yr_set_integer(
       common_network_relative_link.device_name_offset,
       module_object,
       "link_info.common_network_relative_link.device_name_offset");
-  set_integer(
+  yr_set_integer(
       common_network_relative_link.network_provider_type,
       module_object,
       "link_info.common_network_relative_link.network_provider_type");
@@ -621,7 +621,7 @@ unsigned int parse_common_network_relative_link(
         &net_name_offset_unicode,
         common_network_relative_link_ptr,
         sizeof(net_name_offset_unicode));
-    set_integer(
+    yr_set_integer(
         net_name_offset_unicode,
         module_object,
         "link_info.common_network_relative_link.net_name_offset_unicode");
@@ -637,7 +637,7 @@ unsigned int parse_common_network_relative_link(
         &device_name_offset_unicode,
         common_network_relative_link_ptr,
         sizeof(device_name_offset_unicode));
-    set_integer(
+    yr_set_integer(
         device_name_offset_unicode,
         module_object,
         "link_info.common_network_relative_link.device_name_offset_unicode");
@@ -664,7 +664,7 @@ unsigned int parse_common_network_relative_link(
         common_network_relative_link_ptr,
         net_name_unicode_len * 2);
 
-    set_sized_string(
+    yr_set_sized_string(
         (char*) net_name_unicode,
         net_name_unicode_len,
         module_object,
@@ -693,7 +693,7 @@ unsigned int parse_common_network_relative_link(
         common_network_relative_link_ptr,
         device_name_unicode_len * 2);
 
-    set_sized_string(
+    yr_set_sized_string(
         (char*) device_name_unicode,
         device_name_unicode_len,
         module_object,
@@ -722,7 +722,7 @@ unsigned int parse_common_network_relative_link(
 
     memcpy(net_name, common_network_relative_link_ptr, net_name_len);
 
-    set_sized_string(
+    yr_set_sized_string(
         net_name,
         net_name_len,
         module_object,
@@ -747,7 +747,7 @@ unsigned int parse_common_network_relative_link(
 
     memcpy(device_name, common_network_relative_link_ptr, device_name_len);
 
-    set_sized_string(
+    yr_set_sized_string(
         device_name,
         device_name_len,
         module_object,
@@ -802,29 +802,29 @@ unsigned int parse_link_info(
   }
   link_info_fixed_header = (link_info_fixed_header_t*) link_info_ptr;
 
-  set_integer(
+  yr_set_integer(
       link_info_fixed_header->link_info_size, module_object, "link_info.size");
-  set_integer(
+  yr_set_integer(
       link_info_fixed_header->link_info_header_size,
       module_object,
       "link_info.header_size");
-  set_integer(
+  yr_set_integer(
       link_info_fixed_header->link_info_flags,
       module_object,
       "link_info.flags");
-  set_integer(
+  yr_set_integer(
       link_info_fixed_header->volume_id_offset,
       module_object,
       "link_info.volume_id_offset");
-  set_integer(
+  yr_set_integer(
       link_info_fixed_header->local_base_path_offset,
       module_object,
       "link_info.local_base_path_offset");
-  set_integer(
+  yr_set_integer(
       link_info_fixed_header->common_network_relative_link_offset,
       module_object,
       "link_info.common_network_relative_link_offset");
-  set_integer(
+  yr_set_integer(
       link_info_fixed_header->common_path_suffix_offset,
       module_object,
       "link_info.common_path_suffix_offset");
@@ -856,7 +856,7 @@ unsigned int parse_link_info(
           &local_base_path_offset_unicode,
           link_info_ptr,
           sizeof(local_base_path_offset_unicode));
-      set_integer(
+      yr_set_integer(
           local_base_path_offset_unicode,
           module_object,
           "link_info.local_base_path_offset_unicode");
@@ -866,7 +866,7 @@ unsigned int parse_link_info(
 
     if (link_info_fixed_header->volume_id_offset)
     {
-      set_integer(1, module_object, "link_info.has_volume_id");
+      yr_set_integer(1, module_object, "link_info.has_volume_id");
 
       volume_id_size = parse_volume_id(
           link_info_ptr, module_object, block_data_size_remaining);
@@ -882,7 +882,7 @@ unsigned int parse_link_info(
 
     else
     {
-      set_integer(0, module_object, "link_info.has_volume_id");
+      yr_set_integer(0, module_object, "link_info.has_volume_id");
     }
 
     // Handle LocalBasePath
@@ -902,7 +902,7 @@ unsigned int parse_link_info(
       local_base_path = (char*)yr_malloc(local_base_path_len);
 
       memcpy(local_base_path, link_info_ptr, local_base_path_len);
-      set_sized_string(
+      yr_set_sized_string(
           local_base_path,
           local_base_path_len,
           module_object,
@@ -925,7 +925,7 @@ unsigned int parse_link_info(
         &common_path_suffix_offset_unicode,
         link_info_ptr,
         sizeof(common_path_suffix_offset_unicode));
-    set_integer(
+    yr_set_integer(
         common_path_suffix_offset_unicode,
         module_object,
         "link_info.common_path_suffix_offset_unicode");
@@ -962,7 +962,7 @@ unsigned int parse_link_info(
     // Have to deal with this possibly being an empty string
     if (memcmp(link_info_ptr, "\x00", 1) == 0)
     {
-      set_sized_string(
+      yr_set_sized_string(
           "\x00", 1, module_object, "link_info.common_path_suffix");
       link_info_ptr += 1;
       block_data_size_remaining -= 1;
@@ -985,7 +985,7 @@ unsigned int parse_link_info(
 
       memcpy(common_path_suffix, link_info_ptr, common_path_suffix_len);
 
-      set_sized_string(
+      yr_set_sized_string(
           common_path_suffix,
           common_path_suffix_len,
           module_object,
@@ -1019,7 +1019,7 @@ unsigned int parse_link_info(
         link_info_ptr,
         local_base_path_unicode_len * 2);
 
-    set_sized_string(
+    yr_set_sized_string(
         (char*) local_base_path_unicode,
         local_base_path_unicode_len,
         module_object,
@@ -1040,7 +1040,7 @@ unsigned int parse_link_info(
     // Have to deal with this possibly being an empty string
     if (memcmp(link_info_ptr, "\x00", 1) == 0)
     {
-      set_sized_string(
+      yr_set_sized_string(
           "\x00", 1, module_object, "link_info.common_path_suffix_unicode");
       link_info_ptr += 1;
       block_data_size_remaining -= 1;
@@ -1066,7 +1066,7 @@ unsigned int parse_link_info(
           link_info_ptr,
           common_path_suffix_unicode_len * 2);
 
-      set_sized_string(
+      yr_set_sized_string(
           (char*) common_path_suffix_unicode,
           common_path_suffix_unicode_len,
           module_object,
@@ -1141,25 +1141,25 @@ unsigned int parse_string_data(
   // format arguments" error on compilation
   if (strcmp(name, "name_string") == 0)
   {
-    set_sized_string(
+    yr_set_sized_string(
         (char*) string_data_ptr, string_size, module_object, "name_string");
   }
 
   else if (strcmp(name, "relative_path") == 0)
   {
-    set_sized_string(
+    yr_set_sized_string(
         (char*) string_data_ptr, string_size, module_object, "relative_path");
   }
 
   else if (strcmp(name, "working_dir") == 0)
   {
-    set_sized_string(
+    yr_set_sized_string(
         (char*) string_data_ptr, string_size, module_object, "working_dir");
   }
 
   else if (strcmp(name, "command_line_arguments") == 0)
   {
-    set_sized_string(
+    yr_set_sized_string(
         (char*) string_data_ptr,
         string_size,
         module_object,
@@ -1168,7 +1168,7 @@ unsigned int parse_string_data(
 
   else if (strcmp(name, "icon_location") == 0)
   {
-    set_sized_string(
+    yr_set_sized_string(
         (char*) string_data_ptr, string_size, module_object, "icon_location");
   }
 
@@ -1200,92 +1200,92 @@ unsigned int parse_console_data_block(
       (console_data_block_t*) extra_block_ptr,
       sizeof(console_data_block_t));
 
-  set_integer(extra_data_block_size, module_object, "console_data.block_size");
-  set_integer(
+  yr_set_integer(extra_data_block_size, module_object, "console_data.block_size");
+  yr_set_integer(
       extra_data_block_signature,
       module_object,
       "console_data.block_signature");
-  set_integer(
+  yr_set_integer(
       console_data_block.fill_attributes,
       module_object,
       "console_data.fill_attributes");
-  set_integer(
+  yr_set_integer(
       console_data_block.popup_fill_attributes,
       module_object,
       "console_data.popup_fill_attributes");
-  set_integer(
+  yr_set_integer(
       console_data_block.screen_buffer_size_x,
       module_object,
       "console_data.screen_buffer_size_x");
-  set_integer(
+  yr_set_integer(
       console_data_block.screen_buffer_size_y,
       module_object,
       "console_data.screen_buffer_size_y");
-  set_integer(
+  yr_set_integer(
       console_data_block.window_size_x,
       module_object,
       "console_data.window_size_x");
-  set_integer(
+  yr_set_integer(
       console_data_block.window_size_y,
       module_object,
       "console_data.window_size_y");
-  set_integer(
+  yr_set_integer(
       console_data_block.window_origin_x,
       module_object,
       "console_data.window_origin_x");
-  set_integer(
+  yr_set_integer(
       console_data_block.window_origin_y,
       module_object,
       "console_data.window_origin_y");
-  set_integer(
+  yr_set_integer(
       console_data_block.font_size, module_object, "console_data.font_size");
-  set_integer(
+  yr_set_integer(
       console_data_block.font_family,
       module_object,
       "console_data.font_family");
-  set_integer(
+  yr_set_integer(
       console_data_block.font_weight,
       module_object,
       "console_data.font_weight");
-  set_sized_string(
+  yr_set_sized_string(
       (char*) console_data_block.face_name,
       wcslen((wchar_t*) console_data_block.face_name),
       module_object,
       "console_data.face_name");
-  set_integer(
+  yr_set_integer(
       console_data_block.cursor_size,
       module_object,
       "console_data.cursor_size");
-  set_integer(
+  yr_set_integer(
       console_data_block.full_screen,
       module_object,
       "console_data.full_screen");
-  set_integer(
+  yr_set_integer(
       console_data_block.quick_edit, module_object, "console_data.quick_edit");
-  set_integer(
+  yr_set_integer(
       console_data_block.insert_mode,
       module_object,
       "console_data.insert_mode");
-  set_integer(
+  yr_set_integer(
       console_data_block.auto_position,
       module_object,
       "console_data.auto_position");
-  set_integer(
+  yr_set_integer(
       console_data_block.history_buffer_size,
       module_object,
       "console_data.history_buffer_size");
-  set_integer(
+  yr_set_integer(
       console_data_block.number_of_history_buffers,
       module_object,
       "console_data.number_of_history_buffers");
-  set_integer(
+  yr_set_integer(
       console_data_block.history_no_dup,
       module_object,
       "console_data.history_no_dup");
 
   for (i = 0; i < 16; i++)
   {
-    set_integer(
+    yr_set_integer(
         console_data_block.color_table[i],
         module_object,
         "console_data.color_table[%i]",
@@ -1314,13 +1314,13 @@ unsigned int parse_console_fe_data_block(
       (console_fe_data_block_t*) extra_block_ptr,
       sizeof(console_fe_data_block_t));
 
-  set_integer(
+  yr_set_integer(
       extra_data_block_size, module_object, "console_fe_data.block_size");
-  set_integer(
+  yr_set_integer(
       extra_data_block_signature,
       module_object,
       "console_fe_data.block_signature");
-  set_integer(
+  yr_set_integer(
       console_fe_data.code_page, module_object, "console_fe_data.code_page");
 
   return 1;
@@ -1345,14 +1345,14 @@ unsigned int parse_darwin_data_block(
       (darwin_data_block_t*) extra_block_ptr,
       sizeof(darwin_data_block_t));
 
-  set_integer(extra_data_block_size, module_object, "darwin_data.block_size");
-  set_integer(
+  yr_set_integer(extra_data_block_size, module_object, "darwin_data.block_size");
+  yr_set_integer(
       extra_data_block_signature, module_object, "darwin_data.block_signature");
-  set_string(
+  yr_set_string(
       darwin_data.darwin_data_ansi,
       module_object,
       "darwin_data.darwin_data_ansi");
-  set_sized_string(
+  yr_set_sized_string(
       (char*) darwin_data.darwin_data_unicode,
       wcslen((wchar_t*) darwin_data.darwin_data_unicode) * 2,
       module_object,
@@ -1380,19 +1380,19 @@ unsigned int parse_environment_variable_data_block(
       (environment_variable_data_block_t*) extra_block_ptr,
       sizeof(environment_variable_data_block_t));
 
-  set_integer(
+  yr_set_integer(
       extra_data_block_size,
       module_object,
       "environment_variable_data.block_size");
-  set_integer(
+  yr_set_integer(
       extra_data_block_signature,
       module_object,
       "environment_variable_data.block_signature");
-  set_string(
+  yr_set_string(
       environment_variable_data.target_ansi,
       module_object,
       "environment_variable_data.target_ansi");
-  set_sized_string(
+  yr_set_sized_string(
       (char*) environment_variable_data.target_unicode,
       wcslen((wchar_t*) environment_variable_data.target_unicode) * 2,
       module_object,
@@ -1420,17 +1420,17 @@ unsigned int parse_icon_environment_data_block(
       (icon_environment_data_block_t*) extra_block_ptr,
       sizeof(icon_environment_data_block_t));
 
-  set_integer(
+  yr_set_integer(
       extra_data_block_size, module_object, "icon_environment_data.block_size");
-  set_integer(
+  yr_set_integer(
       extra_data_block_signature,
       module_object,
       "icon_environment_data.block_signature");
-  set_string(
+  yr_set_string(
       icon_environment_data.target_ansi,
       module_object,
       "icon_environment_data.target_ansi");
-  set_sized_string(
+  yr_set_sized_string(
       (char*) icon_environment_data.target_unicode,
       wcslen((wchar_t*) icon_environment_data.target_unicode) * 2,
       module_object,
@@ -1459,18 +1459,18 @@ unsigned int parse_known_folder_data_block(
       (known_folder_data_block_t*) extra_block_ptr,
       sizeof(known_folder_data_block_t));
 
-  set_integer(
+  yr_set_integer(
       extra_data_block_size, module_object, "known_folder_data.block_size");
-  set_integer(
+  yr_set_integer(
       extra_data_block_signature,
       module_object,
       "known_folder_data.block_signature");
-  set_integer(
+  yr_set_integer(
       known_folder_data.offset, module_object, "known_folder_data.offset");
 
   for (i = 0; i < 16; i++)
   {
-    set_integer(
+    yr_set_integer(
         known_folder_data.known_folder_id[i],
         module_object,
         "known_folder_data.known_folder_id[%i]",
@@ -1487,9 +1487,9 @@ unsigned int parse_property_store_data_block(
     uint32_t extra_data_block_size,
     uint32_t extra_data_block_signature)
 {
-  set_integer(
+  yr_set_integer(
       extra_data_block_size, module_object, "property_store_data.block_size");
-  set_integer(
+  yr_set_integer(
       extra_data_block_signature,
       module_object,
       "property_store_data.block_signature");
@@ -1518,10 +1518,10 @@ unsigned int parse_shim_data_block(
 
   layer_name = (wchar_t*) extra_block_ptr;
 
-  set_integer(extra_data_block_size, module_object, "shim_data.block_size");
-  set_integer(
+  yr_set_integer(extra_data_block_size, module_object, "shim_data.block_size");
+  yr_set_integer(
       extra_data_block_signature, module_object, "shim_data.block_signature");
-  set_sized_string(
+  yr_set_sized_string(
       (char*) layer_name,
       extra_data_block_size - sizeof(extra_data_block_size) -
           sizeof(extra_data_block_signature),
@@ -1550,17 +1550,17 @@ unsigned int parse_special_folder_data_block(
       (special_folder_data_block_t*) extra_block_ptr,
       sizeof(special_folder_data_block_t));
 
-  set_integer(
+  yr_set_integer(
       extra_data_block_size, module_object, "special_folder_data.block_size");
-  set_integer(
+  yr_set_integer(
       extra_data_block_signature,
       module_object,
       "special_folder_data.block_signature");
-  set_integer(
+  yr_set_integer(
       special_folder_data.special_folder_id,
       module_object,
       "special_folder_data.special_folder_id");
-  set_integer(
+  yr_set_integer(
       special_folder_data.offset, module_object, "special_folder_data.offset");
 
   return 1;
@@ -1585,29 +1585,29 @@ unsigned int parse_tracker_data_block(
       (tracker_data_block_t*) extra_block_ptr,
       sizeof(tracker_data_block_t));
 
-  set_integer(extra_data_block_size, module_object, "tracker_data.block_size");
-  set_integer(
+  yr_set_integer(extra_data_block_size, module_object, "tracker_data.block_size");
+  yr_set_integer(
       extra_data_block_signature,
       module_object,
       "tracker_data.block_signature");
-  set_string(
+  yr_set_string(
       tracker_data_block.machine_id, module_object, "tracker_data.machine_id");
-  set_sized_string(
+  yr_set_sized_string(
       (char*) tracker_data_block.droid_volume_identifier,
       sizeof(tracker_data_block.droid_volume_identifier),
       module_object,
       "tracker_data.droid_volume_identifier");
-  set_sized_string(
+  yr_set_sized_string(
       (char*) tracker_data_block.droid_file_identifier,
       sizeof(tracker_data_block.droid_file_identifier),
       module_object,
       "tracker_data.droid_file_identifier");
-  set_sized_string(
+  yr_set_sized_string(
       (char*) tracker_data_block.droid_birth_volume_identifier,
       sizeof(tracker_data_block.droid_birth_volume_identifier),
       module_object,
       "tracker_data.droid_birth_volume_identifier");
-  set_sized_string(
+  yr_set_sized_string(
       (char*) tracker_data_block.droid_birth_file_identifier,
       sizeof(tracker_data_block.droid_birth_file_identifier),
       module_object,
@@ -1630,11 +1630,11 @@ unsigned int parse_vista_and_above_id_list_data_block(
     return 0;
   }
 
-  set_integer(
+  yr_set_integer(
       extra_data_block_size,
       module_object,
       "vista_and_above_id_list_data.block_size");
-  set_integer(
+  yr_set_integer(
       extra_data_block_signature,
       module_object,
       "vista_and_above_id_list_data.block_signature");
@@ -1659,7 +1659,7 @@ unsigned int parse_extra_block(
   {
   case ConsoleDataBlockSignature:
 
-    set_integer(1, module_object, "has_console_data");
+    yr_set_integer(1, module_object, "has_console_data");
 
     if (extra_data_block_size == ConsoleDataBlockSize &&
         parse_console_data_block(
@@ -1675,7 +1675,7 @@ unsigned int parse_extra_block(
 
   case ConsoleFEDataBlockSignature:
 
-    set_integer(1, module_object, "has_console_fe_data");
+    yr_set_integer(1, module_object, "has_console_fe_data");
 
     if (extra_data_block_size == ConsoleFEDataBlockSize &&
         parse_console_fe_data_block(
@@ -1691,7 +1691,7 @@ unsigned int parse_extra_block(
 
   case DarwinDataBlockSignature:
 
-    set_integer(1, module_object, "has_darwin_data");
+    yr_set_integer(1, module_object, "has_darwin_data");
 
     if (extra_data_block_size == DarwinDataBlockSize &&
         parse_darwin_data_block(
@@ -1707,7 +1707,7 @@ unsigned int parse_extra_block(
 
   case EnvironmentVariableDataBlockSignature:
 
-    set_integer(1, module_object, "has_environment_variable_data");
+    yr_set_integer(1, module_object, "has_environment_variable_data");
 
     if (extra_data_block_size == EnvironmentVariableDataBlockSize &&
         parse_environment_variable_data_block(
@@ -1723,7 +1723,7 @@ unsigned int parse_extra_block(
 
   case IconEnvironmentDataBlockSignature:
 
-    set_integer(1, module_object, "has_icon_environment_data");
+    yr_set_integer(1, module_object, "has_icon_environment_data");
 
     if (extra_data_block_size == IconEnvironmentDataBlockSize &&
         parse_icon_environment_data_block(
@@ -1739,7 +1739,7 @@ unsigned int parse_extra_block(
 
   case KnownFolderDataBlockSignature:
 
-    set_integer(1, module_object, "has_known_folder_data");
+    yr_set_integer(1, module_object, "has_known_folder_data");
 
     if (extra_data_block_size == KnownFolderDataBlockSize &&
         parse_known_folder_data_block(
@@ -1755,7 +1755,7 @@ unsigned int parse_extra_block(
 
   case PropertyStoreDataBlockSignature:
 
-    set_integer(1, module_object, "has_property_store_data");
+    yr_set_integer(1, module_object, "has_property_store_data");
 
     if (extra_data_block_size >= PropertyStoreDataBlockMinSize &&
         parse_property_store_data_block(
@@ -1771,7 +1771,7 @@ unsigned int parse_extra_block(
 
   case ShimDataBlockSignature:
 
-    set_integer(1, module_object, "has_shim_data");
+    yr_set_integer(1, module_object, "has_shim_data");
 
     if (extra_data_block_size >= ShimDataBlockMinSize &&
         parse_shim_data_block(
@@ -1787,7 +1787,7 @@ unsigned int parse_extra_block(
 
   case SpecialFolderDataBlockSignature:
 
-    set_integer(1, module_object, "has_special_folder_data");
+    yr_set_integer(1, module_object, "has_special_folder_data");
 
     if (extra_data_block_size == SpecialFolderDataBlockSize &&
         parse_special_folder_data_block(
@@ -1803,7 +1803,7 @@ unsigned int parse_extra_block(
 
   case TrackerDataBlockSignature:
 
-    set_integer(1, module_object, "has_tracker_data");
+    yr_set_integer(1, module_object, "has_tracker_data");
 
     if (extra_data_block_size == TrackerDataBlockSize &&
         parse_tracker_data_block(
@@ -1819,7 +1819,7 @@ unsigned int parse_extra_block(
 
   case VistaAndAboveIDListDataBlockSignature:
 
-    set_integer(1, module_object, "has_vista_and_above_id_list_data");
+    yr_set_integer(1, module_object, "has_vista_and_above_id_list_data");
 
     if (extra_data_block_size >= VistaAndAboveIDListDataBlockMinSize &&
         parse_vista_and_above_id_list_data_block(
@@ -1858,159 +1858,159 @@ int module_load(
 {
   YR_MEMORY_BLOCK* block;
   shell_link_header_t* lnk_header;
-  set_integer(0, module_object, "is_lnk");
+  yr_set_integer(0, module_object, "is_lnk");
 
-  set_integer(HasLinkTargetIDList, module_object, "HasLinkTargetIDList");
-  set_integer(HasLinkInfo, module_object, "HasLinkInfo");
-  set_integer(HasName, module_object, "HasName");
-  set_integer(HasRelativePath, module_object, "HasRelativePath");
-  set_integer(HasWorkingDir, module_object, "HasWorkingDir");
-  set_integer(HasArguments, module_object, "HasArguments");
-  set_integer(HasIconLocation, module_object, "HasIconLocation");
-  set_integer(IsUnicode, module_object, "IsUnicode");
-  set_integer(ForceNoLinkInfo, module_object, "ForceNoLinkInfo");
-  set_integer(HasExpString, module_object, "HasExpString");
-  set_integer(RunInSeparateProcess, module_object, "RunInSeparateProcess");
-  set_integer(LNKUnused1, module_object, "LNKUnused1");
-  set_integer(HasDarwinID, module_object, "HasDarwinID");
-  set_integer(RunAsUser, module_object, "RunAsUser");
-  set_integer(HasExpIcon, module_object, "HasExpIcon");
-  set_integer(NoPidlAlias, module_object, "NoPidlAlias");
-  set_integer(LNKUnused2, module_object, "LNKUnused2");
-  set_integer(RunWithShimLayer, module_object, "RunWithShimLayer");
-  set_integer(ForceNoLinkTrack, module_object, "ForceNoLinkTrack");
-  set_integer(EnableTargetMetadata, module_object, "EnableTargetMetadata");
-  set_integer(
+  yr_set_integer(HasLinkTargetIDList, module_object, "HasLinkTargetIDList");
+  yr_set_integer(HasLinkInfo, module_object, "HasLinkInfo");
+  yr_set_integer(HasName, module_object, "HasName");
+  yr_set_integer(HasRelativePath, module_object, "HasRelativePath");
+  yr_set_integer(HasWorkingDir, module_object, "HasWorkingDir");
+  yr_set_integer(HasArguments, module_object, "HasArguments");
+  yr_set_integer(HasIconLocation, module_object, "HasIconLocation");
+  yr_set_integer(IsUnicode, module_object, "IsUnicode");
+  yr_set_integer(ForceNoLinkInfo, module_object, "ForceNoLinkInfo");
+  yr_set_integer(HasExpString, module_object, "HasExpString");
+  yr_set_integer(RunInSeparateProcess, module_object, "RunInSeparateProcess");
+  yr_set_integer(LNKUnused1, module_object, "LNKUnused1");
+  yr_set_integer(HasDarwinID, module_object, "HasDarwinID");
+  yr_set_integer(RunAsUser, module_object, "RunAsUser");
+  yr_set_integer(HasExpIcon, module_object, "HasExpIcon");
+  yr_set_integer(NoPidlAlias, module_object, "NoPidlAlias");
+  yr_set_integer(LNKUnused2, module_object, "LNKUnused2");
+  yr_set_integer(RunWithShimLayer, module_object, "RunWithShimLayer");
+  yr_set_integer(ForceNoLinkTrack, module_object, "ForceNoLinkTrack");
+  yr_set_integer(EnableTargetMetadata, module_object, "EnableTargetMetadata");
+  yr_set_integer(
       DisableLinkPathTracking, module_object, "DisableLinkPathTracking");
-  set_integer(
+  yr_set_integer(
       DisableKnownFolderTracking, module_object, "DisableKnownFolderTracking");
-  set_integer(
+  yr_set_integer(
       DisableKnownFolderAlias, module_object, "DisableKnownFolderAlias");
-  set_integer(AllowLinkToLink, module_object, "AllowLinkToLink");
-  set_integer(UnaliasOnSave, module_object, "UnaliasOnSave");
-  set_integer(PreferEnvironmentPath, module_object, "PreferEnvironmentPath");
-  set_integer(
+  yr_set_integer(AllowLinkToLink, module_object, "AllowLinkToLink");
+  yr_set_integer(UnaliasOnSave, module_object, "UnaliasOnSave");
+  yr_set_integer(PreferEnvironmentPath, module_object, "PreferEnvironmentPath");
+  yr_set_integer(
       KeepLocalIDListForUNCTarget,
       module_object,
       "KeepLocalIDListForUNCTarget");
 
-  set_integer(
+  yr_set_integer(
       FILE_ATTRIBUTE_READONLY, module_object, "FILE_ATTRIBUTE_READONLY");
-  set_integer(FILE_ATTRIBUTE_HIDDEN, module_object, "FILE_ATTRIBUTE_HIDDEN");
-  set_integer(FILE_ATTRIBUTE_SYSTEM, module_object, "FILE_ATTRIBUTE_SYSTEM");
-  set_integer(LNKReserved1, module_object, "LNKReserved1");
-  set_integer(
+  yr_set_integer(FILE_ATTRIBUTE_HIDDEN, module_object, "FILE_ATTRIBUTE_HIDDEN");
+  yr_set_integer(FILE_ATTRIBUTE_SYSTEM, module_object, "FILE_ATTRIBUTE_SYSTEM");
+  yr_set_integer(LNKReserved1, module_object, "LNKReserved1");
+  yr_set_integer(
       FILE_ATTRIBUTE_DIRECTORY, module_object, "FILE_ATTRIBUTE_DIRECTORY");
-  set_integer(FILE_ATTRIBUTE_ARCHIVE, module_object, "FILE_ATTRIBUTE_ARCHIVE");
-  set_integer(LNKReserved2, module_object, "LNKReserved2");
-  set_integer(FILE_ATTRIBUTE_NORMAL, module_object, "FILE_ATTRIBUTE_NORMAL");
-  set_integer(
+  yr_set_integer(FILE_ATTRIBUTE_ARCHIVE, module_object, "FILE_ATTRIBUTE_ARCHIVE");
+  yr_set_integer(LNKReserved2, module_object, "LNKReserved2");
+  yr_set_integer(FILE_ATTRIBUTE_NORMAL, module_object, "FILE_ATTRIBUTE_NORMAL");
+  yr_set_integer(
       FILE_ATTRIBUTE_TEMPORARY, module_object, "FILE_ATTRIBUTE_TEMPORARY");
-  set_integer(
+  yr_set_integer(
       FILE_ATTRIBUTE_SPARSE_FILE, module_object, "FILE_ATTRIBUTE_SPARSE_FILE");
-  set_integer(
+  yr_set_integer(
       FILE_ATTRIBUTE_REPARSE_POINT,
       module_object,
       "FILE_ATTRIBUTE_REPARSE_POINT");
-  set_integer(
+  yr_set_integer(
       FILE_ATTRIBUTE_COMPRESSED, module_object, "FILE_ATTRIBUTE_COMPRESSED");
-  set_integer(FILE_ATTRIBUTE_OFFLINE, module_object, "FILE_ATTRIBUTE_OFFLINE");
-  set_integer(
+  yr_set_integer(FILE_ATTRIBUTE_OFFLINE, module_object, "FILE_ATTRIBUTE_OFFLINE");
+  yr_set_integer(
       FILE_ATTRIBUTE_NOT_CONTENT_INDEXED,
       module_object,
       "FILE_ATTRIBUTE_NOT_CONTENT_INDEXED");
-  set_integer(
+  yr_set_integer(
       FILE_ATTRIBUTE_ENCRYPTED, module_object, "FILE_ATTRIBUTE_ENCRYPTED");
 
-  set_integer(SW_SHOWNORMAL, module_object, "SW_SHOWNORMAL");
-  set_integer(SW_SHOWMAXIMIZED, module_object, "SW_SHOWMAXIMIZED");
-  set_integer(SW_SHOWMINNOACTIVE, module_object, "SW_SHOWMINNOACTIVE");
+  yr_set_integer(SW_SHOWNORMAL, module_object, "SW_SHOWNORMAL");
+  yr_set_integer(SW_SHOWMAXIMIZED, module_object, "SW_SHOWMAXIMIZED");
+  yr_set_integer(SW_SHOWMINNOACTIVE, module_object, "SW_SHOWMINNOACTIVE");
 
-  set_integer(HOTKEYF_SHIFT, module_object, "HOTKEYF_SHIFT");
-  set_integer(HOTKEYF_CONTROL, module_object, "HOTKEYF_CONTROL");
-  set_integer(HOTKEYF_ALT, module_object, "HOTKEYF_ALT");
+  yr_set_integer(HOTKEYF_SHIFT, module_object, "HOTKEYF_SHIFT");
+  yr_set_integer(HOTKEYF_CONTROL, module_object, "HOTKEYF_CONTROL");
+  yr_set_integer(HOTKEYF_ALT, module_object, "HOTKEYF_ALT");
 
-  set_integer(
+  yr_set_integer(
       VolumeIDAndLocalBasePath, module_object, "VolumeIDAndLocalBasePath");
-  set_integer(
+  yr_set_integer(
       CommonNetworkRelativeLinkAndPathSuffix,
       module_object,
       "CommonNetworkRelativeLinkAndPathSuffix");
 
-  set_integer(DRIVE_UNKNOWN, module_object, "DRIVE_UNKNOWN");
-  set_integer(DRIVE_NO_ROOT_DIR, module_object, "DRIVE_NO_ROOT_DIR");
-  set_integer(DRIVE_REMOVABLE, module_object, "DRIVE_REMOVABLE");
-  set_integer(DRIVE_FIXED, module_object, "DRIVE_FIXED");
-  set_integer(DRIVE_REMOTE, module_object, "DRIVE_REMOTE");
-  set_integer(DRIVE_CDROM, module_object, "DRIVE_CDROM");
-  set_integer(DRIVE_RAMDISK, module_object, "DRIVE_RAMDISK");
+  yr_set_integer(DRIVE_UNKNOWN, module_object, "DRIVE_UNKNOWN");
+  yr_set_integer(DRIVE_NO_ROOT_DIR, module_object, "DRIVE_NO_ROOT_DIR");
+  yr_set_integer(DRIVE_REMOVABLE, module_object, "DRIVE_REMOVABLE");
+  yr_set_integer(DRIVE_FIXED, module_object, "DRIVE_FIXED");
+  yr_set_integer(DRIVE_REMOTE, module_object, "DRIVE_REMOTE");
+  yr_set_integer(DRIVE_CDROM, module_object, "DRIVE_CDROM");
+  yr_set_integer(DRIVE_RAMDISK, module_object, "DRIVE_RAMDISK");
 
-  set_integer(ValidDevice, module_object, "ValidDevice");
-  set_integer(ValidNetType, module_object, "ValidNetType");
+  yr_set_integer(ValidDevice, module_object, "ValidDevice");
+  yr_set_integer(ValidNetType, module_object, "ValidNetType");
 
-  set_integer(WNNC_NET_AVID, module_object, "WNNC_NET_AVID");
-  set_integer(WNNC_NET_DOCUSPACE, module_object, "WNNC_NET_DOCUSPACE");
-  set_integer(WNNC_NET_MANGOSOFT, module_object, "WNNC_NET_MANGOSOFT");
-  set_integer(WNNC_NET_SERNET, module_object, "WNNC_NET_SERNET");
-  set_integer(WNNC_NET_RIVERFRONT1, module_object, "WNNC_NET_RIVERFRONT1");
-  set_integer(WNNC_NET_RIVERFRONT2, module_object, "WNNC_NET_RIVERFRONT2");
-  set_integer(WNNC_NET_DECORB, module_object, "WNNC_NET_DECORB");
-  set_integer(WNNC_NET_PROTSTOR, module_object, "WNNC_NET_PROTSTOR");
-  set_integer(WNNC_NET_FJ_REDIR, module_object, "WNNC_NET_FJ_REDIR");
-  set_integer(WNNC_NET_DISTINCT, module_object, "WNNC_NET_DISTINCT");
-  set_integer(WNNC_NET_TWINS, module_object, "WNNC_NET_TWINS");
-  set_integer(WNNC_NET_RDR2SAMPLE, module_object, "WNNC_NET_RDR2SAMPLE");
-  set_integer(WNNC_NET_CSC, module_object, "WNNC_NET_CSC");
-  set_integer(WNNC_NET_3IN1, module_object, "WNNC_NET_3IN1");
-  set_integer(WNNC_NET_EXTENDNET, module_object, "WNNC_NET_EXTENDNET");
-  set_integer(WNNC_NET_STAC, module_object, "WNNC_NET_STAC");
-  set_integer(WNNC_NET_FOXBAT, module_object, "WNNC_NET_FOXBAT");
-  set_integer(WNNC_NET_YAHOO, module_object, "WNNC_NET_YAHOO");
-  set_integer(WNNC_NET_EXIFS, module_object, "WNNC_NET_EXIFS");
-  set_integer(WNNC_NET_DAV, module_object, "WNNC_NET_DAV");
-  set_integer(WNNC_NET_KNOWARE, module_object, "WNNC_NET_KNOWARE");
-  set_integer(WNNC_NET_OBJECT_DIRE, module_object, "WNNC_NET_OBJECT_DIRE");
-  set_integer(WNNC_NET_MASFAX, module_object, "WNNC_NET_MASFAX");
-  set_integer(WNNC_NET_HOB_NFS, module_object, "WNNC_NET_HOB_NFS");
-  set_integer(WNNC_NET_SHIVA, module_object, "WNNC_NET_SHIVA");
-  set_integer(WNNC_NET_IBMAL, module_object, "WNNC_NET_IBMAL");
-  set_integer(WNNC_NET_LOCK, module_object, "WNNC_NET_LOCK");
-  set_integer(WNNC_NET_TERMSRV, module_object, "WNNC_NET_TERMSRV");
-  set_integer(WNNC_NET_SRT, module_object, "WNNC_NET_SRT");
-  set_integer(WNNC_NET_QUINCY, module_object, "WNNC_NET_QUINCY");
-  set_integer(WNNC_NET_OPENAFS, module_object, "WNNC_NET_OPENAFS");
-  set_integer(WNNC_NET_AVID1, module_object, "WNNC_NET_AVID1");
-  set_integer(WNNC_NET_DFS, module_object, "WNNC_NET_DFS");
-  set_integer(WNNC_NET_KWNP, module_object, "WNNC_NET_KWNP");
-  set_integer(WNNC_NET_ZENWORKS, module_object, "WNNC_NET_ZENWORKS");
-  set_integer(WNNC_NET_DRIVEONWEB, module_object, "WNNC_NET_DRIVEONWEB");
-  set_integer(WNNC_NET_VMWARE, module_object, "WNNC_NET_VMWARE");
-  set_integer(WNNC_NET_RSFX, module_object, "WNNC_NET_RSFX");
-  set_integer(WNNC_NET_MFILES, module_object, "WNNC_NET_MFILES");
-  set_integer(WNNC_NET_MS_NFS, module_object, "WNNC_NET_MS_NFS");
-  set_integer(WNNC_NET_GOOGLE, module_object, "WNNC_NET_GOOGLE");
+  yr_set_integer(WNNC_NET_AVID, module_object, "WNNC_NET_AVID");
+  yr_set_integer(WNNC_NET_DOCUSPACE, module_object, "WNNC_NET_DOCUSPACE");
+  yr_set_integer(WNNC_NET_MANGOSOFT, module_object, "WNNC_NET_MANGOSOFT");
+  yr_set_integer(WNNC_NET_SERNET, module_object, "WNNC_NET_SERNET");
+  yr_set_integer(WNNC_NET_RIVERFRONT1, module_object, "WNNC_NET_RIVERFRONT1");
+  yr_set_integer(WNNC_NET_RIVERFRONT2, module_object, "WNNC_NET_RIVERFRONT2");
+  yr_set_integer(WNNC_NET_DECORB, module_object, "WNNC_NET_DECORB");
+  yr_set_integer(WNNC_NET_PROTSTOR, module_object, "WNNC_NET_PROTSTOR");
+  yr_set_integer(WNNC_NET_FJ_REDIR, module_object, "WNNC_NET_FJ_REDIR");
+  yr_set_integer(WNNC_NET_DISTINCT, module_object, "WNNC_NET_DISTINCT");
+  yr_set_integer(WNNC_NET_TWINS, module_object, "WNNC_NET_TWINS");
+  yr_set_integer(WNNC_NET_RDR2SAMPLE, module_object, "WNNC_NET_RDR2SAMPLE");
+  yr_set_integer(WNNC_NET_CSC, module_object, "WNNC_NET_CSC");
+  yr_set_integer(WNNC_NET_3IN1, module_object, "WNNC_NET_3IN1");
+  yr_set_integer(WNNC_NET_EXTENDNET, module_object, "WNNC_NET_EXTENDNET");
+  yr_set_integer(WNNC_NET_STAC, module_object, "WNNC_NET_STAC");
+  yr_set_integer(WNNC_NET_FOXBAT, module_object, "WNNC_NET_FOXBAT");
+  yr_set_integer(WNNC_NET_YAHOO, module_object, "WNNC_NET_YAHOO");
+  yr_set_integer(WNNC_NET_EXIFS, module_object, "WNNC_NET_EXIFS");
+  yr_set_integer(WNNC_NET_DAV, module_object, "WNNC_NET_DAV");
+  yr_set_integer(WNNC_NET_KNOWARE, module_object, "WNNC_NET_KNOWARE");
+  yr_set_integer(WNNC_NET_OBJECT_DIRE, module_object, "WNNC_NET_OBJECT_DIRE");
+  yr_set_integer(WNNC_NET_MASFAX, module_object, "WNNC_NET_MASFAX");
+  yr_set_integer(WNNC_NET_HOB_NFS, module_object, "WNNC_NET_HOB_NFS");
+  yr_set_integer(WNNC_NET_SHIVA, module_object, "WNNC_NET_SHIVA");
+  yr_set_integer(WNNC_NET_IBMAL, module_object, "WNNC_NET_IBMAL");
+  yr_set_integer(WNNC_NET_LOCK, module_object, "WNNC_NET_LOCK");
+  yr_set_integer(WNNC_NET_TERMSRV, module_object, "WNNC_NET_TERMSRV");
+  yr_set_integer(WNNC_NET_SRT, module_object, "WNNC_NET_SRT");
+  yr_set_integer(WNNC_NET_QUINCY, module_object, "WNNC_NET_QUINCY");
+  yr_set_integer(WNNC_NET_OPENAFS, module_object, "WNNC_NET_OPENAFS");
+  yr_set_integer(WNNC_NET_AVID1, module_object, "WNNC_NET_AVID1");
+  yr_set_integer(WNNC_NET_DFS, module_object, "WNNC_NET_DFS");
+  yr_set_integer(WNNC_NET_KWNP, module_object, "WNNC_NET_KWNP");
+  yr_set_integer(WNNC_NET_ZENWORKS, module_object, "WNNC_NET_ZENWORKS");
+  yr_set_integer(WNNC_NET_DRIVEONWEB, module_object, "WNNC_NET_DRIVEONWEB");
+  yr_set_integer(WNNC_NET_VMWARE, module_object, "WNNC_NET_VMWARE");
+  yr_set_integer(WNNC_NET_RSFX, module_object, "WNNC_NET_RSFX");
+  yr_set_integer(WNNC_NET_MFILES, module_object, "WNNC_NET_MFILES");
+  yr_set_integer(WNNC_NET_MS_NFS, module_object, "WNNC_NET_MS_NFS");
+  yr_set_integer(WNNC_NET_GOOGLE, module_object, "WNNC_NET_GOOGLE");
 
-  set_integer(FOREGROUND_BLUE, module_object, "FOREGROUND_BLUE");
-  set_integer(FOREGROUND_GREEN, module_object, "FOREGROUND_GREEN");
-  set_integer(FOREGROUND_RED, module_object, "FOREGROUND_RED");
-  set_integer(FOREGROUND_INTENSITY, module_object, "FOREGROUND_INTENSITY");
-  set_integer(BACKGROUND_BLUE, module_object, "BACKGROUND_BLUE");
-  set_integer(BACKGROUND_GREEN, module_object, "BACKGROUND_GREEN");
-  set_integer(BACKGROUND_RED, module_object, "BACKGROUND_RED");
-  set_integer(BACKGROUND_INTENSITY, module_object, "BACKGROUND_INTENSITY");
+  yr_set_integer(FOREGROUND_BLUE, module_object, "FOREGROUND_BLUE");
+  yr_set_integer(FOREGROUND_GREEN, module_object, "FOREGROUND_GREEN");
+  yr_set_integer(FOREGROUND_RED, module_object, "FOREGROUND_RED");
+  yr_set_integer(FOREGROUND_INTENSITY, module_object, "FOREGROUND_INTENSITY");
+  yr_set_integer(BACKGROUND_BLUE, module_object, "BACKGROUND_BLUE");
+  yr_set_integer(BACKGROUND_GREEN, module_object, "BACKGROUND_GREEN");
+  yr_set_integer(BACKGROUND_RED, module_object, "BACKGROUND_RED");
+  yr_set_integer(BACKGROUND_INTENSITY, module_object, "BACKGROUND_INTENSITY");
 
-  set_integer(FF_DONTCARE, module_object, "FF_DONTCARE");
-  set_integer(FF_ROMAN, module_object, "FF_ROMAN");
-  set_integer(FF_SWISS, module_object, "FF_SWISS");
-  set_integer(FF_MODERN, module_object, "FF_MODERN");
-  set_integer(FF_SCRIPT, module_object, "FF_SCRIPT");
-  set_integer(FF_DECORATIVE, module_object, "FF_DECORATIVE");
+  yr_set_integer(FF_DONTCARE, module_object, "FF_DONTCARE");
+  yr_set_integer(FF_ROMAN, module_object, "FF_ROMAN");
+  yr_set_integer(FF_SWISS, module_object, "FF_SWISS");
+  yr_set_integer(FF_MODERN, module_object, "FF_MODERN");
+  yr_set_integer(FF_SCRIPT, module_object, "FF_SCRIPT");
+  yr_set_integer(FF_DECORATIVE, module_object, "FF_DECORATIVE");
 
-  set_integer(TMPF_NONE, module_object, "TMPF_NONE");
-  set_integer(TMPF_FIXED_PITCH, module_object, "TMPF_FIXED_PITCH");
-  set_integer(TMPF_VECTOR, module_object, "TMPF_VECTOR");
-  set_integer(TMPF_TRUETYPE, module_object, "TMPF_TRUETYPE");
-  set_integer(TMPF_DEVICE, module_object, "TMPF_DEVICE");
+  yr_set_integer(TMPF_NONE, module_object, "TMPF_NONE");
+  yr_set_integer(TMPF_FIXED_PITCH, module_object, "TMPF_FIXED_PITCH");
+  yr_set_integer(TMPF_VECTOR, module_object, "TMPF_VECTOR");
+  yr_set_integer(TMPF_TRUETYPE, module_object, "TMPF_TRUETYPE");
+  yr_set_integer(TMPF_DEVICE, module_object, "TMPF_DEVICE");
 
   const uint8_t* block_data;
   unsigned int block_data_size_remaining;
@@ -2042,33 +2042,33 @@ int module_load(
         lnk_header->clsid[2] == LINK_CLSID_2 &&
         lnk_header->clsid[3] == LINK_CLSID_3)
     {
-      set_integer(1, module_object, "is_lnk");
+      yr_set_integer(1, module_object, "is_lnk");
 
       // Convert timestamps from Windows TIMESTAMP to Unix timestamp
-      set_integer(
+      yr_set_integer(
           convertWindowsTimeToUnixTime(lnk_header->creation_time),
           module_object,
           "creation_time");
 
-      set_integer(
+      yr_set_integer(
           convertWindowsTimeToUnixTime(lnk_header->access_time),
           module_object,
           "access_time");
 
-      set_integer(
+      yr_set_integer(
           convertWindowsTimeToUnixTime(lnk_header->write_time),
           module_object,
           "write_time");
 
-      set_integer(lnk_header->file_size, module_object, "file_size");
-      set_integer(lnk_header->link_flags, module_object, "link_flags");
-      set_integer(
+      yr_set_integer(lnk_header->file_size, module_object, "file_size");
+      yr_set_integer(lnk_header->link_flags, module_object, "link_flags");
+      yr_set_integer(
           lnk_header->file_attributes_flags,
           module_object,
           "file_attributes_flags");
-      set_integer(lnk_header->icon_index, module_object, "icon_index");
-      set_integer(lnk_header->show_command, module_object, "show_command");
-      set_integer(lnk_header->hotkey_flags, module_object, "hotkey_flags");
+      yr_set_integer(lnk_header->icon_index, module_object, "icon_index");
+      yr_set_integer(lnk_header->show_command, module_object, "show_command");
+      yr_set_integer(lnk_header->hotkey_flags, module_object, "hotkey_flags");
 
       // Hotkey handling code
       if (lnk_header->hotkey_flags & 0xFF)
@@ -2077,18 +2077,18 @@ int module_load(
 
         if (hotkey_str)
         {
-          set_string(hotkey_str, module_object, "hotkey");
+          yr_set_string(hotkey_str, module_object, "hotkey");
         }
 
-        set_integer(1, module_object, "has_hotkey");
+        yr_set_integer(1, module_object, "has_hotkey");
       }
 
       else
       {
-        set_integer(0, module_object, "has_hotkey");
+        yr_set_integer(0, module_object, "has_hotkey");
       }
 
-      set_integer(
+      yr_set_integer(
           (lnk_header->hotkey_flags >> 8),
           module_object,
           "hotkey_modifier_flags");
@@ -2105,7 +2105,7 @@ int module_load(
 
         if (id_list_size == 0)
         {
-          set_integer(1, module_object, "is_malformed");
+          yr_set_integer(1, module_object, "is_malformed");
           return ERROR_SUCCESS;
         }
 
@@ -2120,7 +2120,7 @@ int module_load(
 
         if (link_info_size == 0)
         {
-          set_integer(1, module_object, "is_malformed");
+          yr_set_integer(1, module_object, "is_malformed");
           return ERROR_SUCCESS;
         }
 
@@ -2140,7 +2140,7 @@ int module_load(
 
         if (string_data_size == 0)
         {
-          set_integer(1, module_object, "is_malformed");
+          yr_set_integer(1, module_object, "is_malformed");
           return ERROR_SUCCESS;
         }
 
@@ -2160,7 +2160,7 @@ int module_load(
 
         if (string_data_size == 0)
         {
-          set_integer(1, module_object, "is_malformed");
+          yr_set_integer(1, module_object, "is_malformed");
           return ERROR_SUCCESS;
         }
 
@@ -2180,7 +2180,7 @@ int module_load(
 
         if (string_data_size == 0)
         {
-          set_integer(1, module_object, "is_malformed");
+          yr_set_integer(1, module_object, "is_malformed");
           return ERROR_SUCCESS;
         }
 
@@ -2200,7 +2200,7 @@ int module_load(
 
         if (string_data_size == 0)
         {
-          set_integer(1, module_object, "is_malformed");
+          yr_set_integer(1, module_object, "is_malformed");
           return ERROR_SUCCESS;
         }
 
@@ -2220,7 +2220,7 @@ int module_load(
 
         if (string_data_size == 0)
         {
-          set_integer(1, module_object, "is_malformed");
+          yr_set_integer(1, module_object, "is_malformed");
           return ERROR_SUCCESS;
         }
 
@@ -2228,24 +2228,24 @@ int module_load(
         block_data_size_remaining -= string_data_size;
       }
 
-      set_integer(0, module_object, "has_console_data");
-      set_integer(0, module_object, "has_console_fe_data");
-      set_integer(0, module_object, "has_darwin_data");
-      set_integer(0, module_object, "has_environment_variable_data");
-      set_integer(0, module_object, "has_icon_environment_data");
-      set_integer(0, module_object, "has_known_folder_data");
-      set_integer(0, module_object, "has_property_store_data");
-      set_integer(0, module_object, "has_shim_data");
-      set_integer(0, module_object, "has_special_folder_data");
-      set_integer(0, module_object, "has_tracker_data");
-      set_integer(0, module_object, "has_vista_and_above_id_list_data");
+      yr_set_integer(0, module_object, "has_console_data");
+      yr_set_integer(0, module_object, "has_console_fe_data");
+      yr_set_integer(0, module_object, "has_darwin_data");
+      yr_set_integer(0, module_object, "has_environment_variable_data");
+      yr_set_integer(0, module_object, "has_icon_environment_data");
+      yr_set_integer(0, module_object, "has_known_folder_data");
+      yr_set_integer(0, module_object, "has_property_store_data");
+      yr_set_integer(0, module_object, "has_shim_data");
+      yr_set_integer(0, module_object, "has_special_folder_data");
+      yr_set_integer(0, module_object, "has_tracker_data");
+      yr_set_integer(0, module_object, "has_vista_and_above_id_list_data");
 
       // Parse ExtraData
       if (block_data_size_remaining > 0)
       {
         if (block_data_size_remaining < sizeof(extra_data_block_size))
         {
-          set_integer(1, module_object, "is_malformed");
+          yr_set_integer(1, module_object, "is_malformed");
           return ERROR_SUCCESS;
         }
 
@@ -2264,7 +2264,7 @@ int module_load(
 
           if (block_data_size_remaining < sizeof(extra_data_block_signature))
           {
-            set_integer(1, module_object, "is_malformed");
+            yr_set_integer(1, module_object, "is_malformed");
             return ERROR_SUCCESS;
           }
 
@@ -2296,7 +2296,7 @@ int module_load(
 
           if (block_data_size_remaining < sizeof(extra_data_block_size))
           {
-            set_integer(1, module_object, "is_malformed");
+            yr_set_integer(1, module_object, "is_malformed");
             return ERROR_SUCCESS;
           }
 
@@ -2313,8 +2313,8 @@ int module_load(
 
       if (block_data_size_remaining > 0)
       {
-        set_integer(1, module_object, "has_overlay");
-        set_integer(
+        yr_set_integer(1, module_object, "has_overlay");
+        yr_set_integer(
             block->size - block_data_size_remaining,
             module_object,
             "overlay_offset");
@@ -2322,11 +2322,11 @@ int module_load(
 
       else
       {
-        set_integer(0, module_object, "has_overlay");
+        yr_set_integer(0, module_object, "has_overlay");
       }
 
       // If all parsing successful, say that the LNK isn't malformed
-      set_integer(0, module_object, "is_malformed");
+      yr_set_integer(0, module_object, "is_malformed");
     }
   }
 
