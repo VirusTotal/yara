@@ -257,6 +257,8 @@ void yr_vasprintf(char** strp, const char* fmt, va_list ap)
 
   int len = vsnprintf(NULL, 0, fmt, ap_copy);
 
+  va_end(ap_copy);
+
   if (len < 0)
     return;
 

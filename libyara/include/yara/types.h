@@ -397,7 +397,6 @@ struct RE_AST
 #pragma warning(disable : 4200)
 #endif
 
-
 // The RE structure is embedded in the YARA's VM instruction flow, which
 // means that its alignment is not guaranteed. For this reason the it must
 // be a "packed" structure, in order to prevent alignment issues in platforms
@@ -496,6 +495,9 @@ struct YR_MATCH
 
   // True if this is match for a private string.
   bool is_private;
+
+  // Set to the xor key if this is an xor string.
+  uint8_t xor_key;
 };
 
 struct YR_AC_STATE
@@ -996,7 +998,8 @@ struct YR_STRING_SET_ITERATOR
 
 struct YR_ITERATOR
 {
-  YR_ITERATOR_NEXT_FUNC next;
+  // Index of the next function within the iter_next_func_table global array.
+  int next_func_idx;
 
   union
   {

@@ -77,6 +77,14 @@ MODULES += modules/pb_tests/pb_tests.c
 MODULES += modules/pb_tests/pb_tests.pb-c.c
 endif
 
+if AUTHENTICODE_MODULE
+MODULES += modules/pe/authenticode-parser/authenticode.c
+MODULES += modules/pe/authenticode-parser/certificate.c
+MODULES += modules/pe/authenticode-parser/helper.c
+MODULES += modules/pe/authenticode-parser/countersignature.c
+MODULES += modules/pe/authenticode-parser/structs.c
+endif
+
 #
 # Add your modules here:
 #
@@ -157,6 +165,7 @@ yarainclude_HEADERS = \
 	include/yara/rules.h \
 	include/yara/scan.h \
 	include/yara/scanner.h \
+	include/yara/simple_str.h \
 	include/yara/sizedstr.h \
 	include/yara/stack.h \
 	include/yara/stopwatch.h \
@@ -226,11 +235,15 @@ libyara_la_SOURCES = \
 	rules.c \
 	scan.c \
 	scanner.c \
+	simple_str.c \
 	sizedstr.c \
 	stack.c \
 	stopwatch.c \
 	strutils.c \
 	stream.c \
+	tlshc/tlsh.c \
+	tlshc/tlsh_impl.c \
+	tlshc/tlsh_util.c \
 	threading.c
 
 

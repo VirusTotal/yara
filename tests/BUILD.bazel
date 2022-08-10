@@ -114,6 +114,7 @@ cc_test(
         "data/079a472d22290a94ebb212aa8015cdc8dd28a968c6b4d3b88acdd58ce2d3b885",
         "data/079a472d22290a94ebb212aa8015cdc8dd28a968c6b4d3b88acdd58ce2d3b885.upx",
         "data/3b8b90159fa9b6048cc5410c5d53f116943564e4d05b04a843f9b3d0540d0c1c",
+        "data/ChipTune.efi",
         "data/ca21e1c32065352d352be6cde97f89c141d7737ea92434831f998080783d5386",
         "data/mtxex.dll",
         "data/mtxex_modified_rsrc_rva.dll",
@@ -122,10 +123,9 @@ cc_test(
         "data/tiny",
         "data/tiny-idata-51ff",
         "data/tiny-idata-5200",
+        "data/tiny-macho",
         "data/tiny-overlay",
         "data/weird_rich",
-        "data/ChipTune.efi",
-        "data/tiny-macho"
     ],
     linkstatic = True,
     deps = [
@@ -239,9 +239,10 @@ cc_test(
     srcs = ["test-dotnet.c"],
     copts = COPTS,
     data = [
-        "data/tiny",
         "data/0ca09bde7602769120fadc4f7a4147347a7a97271370583586c9e587fd396171",
+        "data/756684f4017ba7e931a26724ae61606b16b5f8cc84ed38a260a34e50c5016f59",
         "data/bad_dotnet_pe",
+        "data/tiny",
     ],
     linkstatic = True,
     deps = [

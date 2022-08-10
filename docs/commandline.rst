@@ -57,9 +57,9 @@ Available options are:
 
   Print only number of matches.
 
-.. option:: -d <identifier>=<value>
+.. option:: -d <identifier>=<value> --define=identifier=value
 
-  Define external variable.
+  Define external variable. This option can be used multiple times.
 
 .. option:: --fail-on-warnings
 

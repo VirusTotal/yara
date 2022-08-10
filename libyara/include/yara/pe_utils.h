@@ -83,9 +83,4 @@ int64_t pe_rva_to_offset(PE* pe, uint64_t rva);
 
 char* ord_lookup(char* dll, uint16_t ord);
 
-#if HAVE_LIBCRYPTO
-#include <openssl/asn1.h>
-time_t ASN1_get_time_t(const ASN1_TIME* time);
-#endif
-
 #endif

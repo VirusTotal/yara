@@ -266,7 +266,7 @@ define_function(data_md5)
 
   bool past_first_block = false;
 
-  YR_SCAN_CONTEXT* context = scan_context();
+  YR_SCAN_CONTEXT* context = yr_scan_context();
   YR_MEMORY_BLOCK* block = first_memory_block(context);
   YR_MEMORY_BLOCK_ITERATOR* iterator = context->iterator;
 
@@ -303,7 +303,7 @@ define_function(data_md5)
     return_string(YR_UNDEFINED);
   }
 
-  cached_ascii_digest = get_from_cache(module(), "md5", arg_offset, arg_length);
+  cached_ascii_digest = get_from_cache(yr_module(), "md5", arg_offset, arg_length);
 
   if (cached_ascii_digest != NULL)
   {
@@ -380,7 +380,7 @@ define_function(data_md5)
   digest_to_ascii(digest, digest_ascii, YR_MD5_LEN);
 
   FAIL_ON_ERROR(
-      add_to_cache(module(), "md5", arg_offset, arg_length, digest_ascii));
+      add_to_cache(yr_module(), "md5", arg_offset, arg_length, digest_ascii));
 
   YR_DEBUG_FPRINTF(2, stderr, "} // %s() = 0x%s\n", __FUNCTION__, digest_ascii);
   return_string(digest_ascii);
@@ -402,7 +402,7 @@ define_function(data_sha1)
   int64_t offset = arg_offset;
   int64_t length = arg_length;
 
-  YR_SCAN_CONTEXT* context = scan_context();
+  YR_SCAN_CONTEXT* context = yr_scan_context();
   YR_MEMORY_BLOCK* block = first_memory_block(context);
   YR_MEMORY_BLOCK_ITERATOR* iterator = context->iterator;
 
@@ -434,7 +434,7 @@ define_function(data_sha1)
   }
 
   cached_ascii_digest = get_from_cache(
-      module(), "sha1", arg_offset, arg_length);
+      yr_module(), "sha1", arg_offset, arg_length);
 
   if (cached_ascii_digest != NULL)
   {
@@ -509,7 +509,7 @@ define_function(data_sha1)
   digest_to_ascii(digest, digest_ascii, YR_SHA1_LEN);
 
   FAIL_ON_ERROR(
-      add_to_cache(module(), "sha1", arg_offset, arg_length, digest_ascii));
+      add_to_cache(yr_module(), "sha1", arg_offset, arg_length, digest_ascii));
 
   YR_DEBUG_FPRINTF(2, stderr, "} // %s() = 0x%s\n", __FUNCTION__, digest_ascii);
   return_string(digest_ascii);
@@ -531,7 +531,7 @@ define_function(data_sha256)
   int64_t offset = arg_offset;
   int64_t length = arg_length;
 
-  YR_SCAN_CONTEXT* context = scan_context();
+  YR_SCAN_CONTEXT* context = yr_scan_context();
   YR_MEMORY_BLOCK* block = first_memory_block(context);
   YR_MEMORY_BLOCK_ITERATOR* iterator = context->iterator;
 
@@ -563,7 +563,7 @@ define_function(data_sha256)
   }
 
   cached_ascii_digest = get_from_cache(
-      module(), "sha256", arg_offset, arg_length);
+      yr_module(), "sha256", arg_offset, arg_length);
 
   if (cached_ascii_digest != NULL)
   {
@@ -637,7 +637,7 @@ define_function(data_sha256)
   digest_to_ascii(digest, digest_ascii, YR_SHA256_LEN);
 
   FAIL_ON_ERROR(
-      add_to_cache(module(), "sha256", arg_offset, arg_length, digest_ascii));
+      add_to_cache(yr_module(), "sha256", arg_offset, arg_length, digest_ascii));
 
   YR_DEBUG_FPRINTF(2, stderr, "} // %s() = 0x%s\n", __FUNCTION__, digest_ascii);
   return_string(digest_ascii);
@@ -656,7 +656,7 @@ define_function(data_checksum32)
       offset,
       length);
 
-  YR_SCAN_CONTEXT* context = scan_context();
+  YR_SCAN_CONTEXT* context = yr_scan_context();
   YR_MEMORY_BLOCK* block = first_memory_block(context);
   YR_MEMORY_BLOCK_ITERATOR* iterator = context->iterator;
 
@@ -740,7 +740,7 @@ define_function(data_crc32)
   int64_t length = integer_argument(2);  // length of bytes we want hash on
   uint32_t checksum = 0xFFFFFFFF;
 
-  YR_SCAN_CONTEXT* context = scan_context();
+  YR_SCAN_CONTEXT* context = yr_scan_context();
   YR_MEMORY_BLOCK* block = first_memory_block(context);
   YR_MEMORY_BLOCK_ITERATOR* iterator = context->iterator;
 

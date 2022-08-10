@@ -2138,7 +2138,8 @@ range
             yr_compiler_set_error_extra_info(
                 compiler, "range lower bound must be less than upper bound");
             result = ERROR_INVALID_VALUE;
-          } else if ($2.value.integer < 0)
+          }
+          else if ($2.value.integer < 0)
           {
             yr_compiler_set_error_extra_info(
                 compiler, "range lower bound can not be negative");

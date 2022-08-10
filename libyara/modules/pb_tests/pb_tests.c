@@ -96,45 +96,45 @@ int module_load(
   if (pb == NULL)
     return ERROR_INVALID_MODULE_DATA;
 
-  set_integer(0, module_object, "struct.enum.FIRST");
-  set_integer(1, module_object, "struct.enum.SECOND");
+  yr_set_integer(0, module_object, "struct.enum.FIRST");
+  yr_set_integer(1, module_object, "struct.enum.SECOND");
 
   if (pb->has_f_int32)
   {
-    set_integer(pb->f_int32, module_object, "f_int32");
+    yr_set_integer(pb->f_int32, module_object, "f_int32");
   }
 
   if (pb->has_f_int64)
   {
-    set_integer(pb->f_int64, module_object, "f_int64");
+    yr_set_integer(pb->f_int64, module_object, "f_int64");
   }
 
   if (pb->has_f_sint32)
   {
-    set_integer(pb->f_sint32, module_object, "f_sint32");
+    yr_set_integer(pb->f_sint32, module_object, "f_sint32");
   }
 
   if (pb->has_f_sint64)
   {
-    set_integer(pb->f_sint64, module_object, "f_sint64");
+    yr_set_integer(pb->f_sint64, module_object, "f_sint64");
   }
 
   if (pb->has_f_sfixed32)
   {
-    set_integer(pb->f_sfixed32, module_object, "f_sfixed32");
+    yr_set_integer(pb->f_sfixed32, module_object, "f_sfixed32");
   }
 
   if (pb->has_f_sfixed64)
   {
-    set_integer(pb->f_sfixed64, module_object, "f_sfixed64");
+    yr_set_integer(pb->f_sfixed64, module_object, "f_sfixed64");
   }
 
   if (pb->has_f_bool)
   {
-    set_integer(pb->f_bool, module_object, "f_bool");
+    yr_set_integer(pb->f_bool, module_object, "f_bool");
   }
-  set_string(pb->f_string, module_object, "f_string");
-  set_sized_string(
+  yr_set_string(pb->f_string, module_object, "f_string");
+  yr_set_sized_string(
       (const char*) pb->f_bytes.data,
       pb->f_bytes.len,
       module_object,
@@ -144,7 +144,7 @@ int module_load(
   {
     if (pb->f_struct_array[i] != NULL)
     {
-      set_string(
+      yr_set_string(
           pb->f_struct_array[i]->f_string,
           module_object,
           "f_struct_array[%i].f_string",
@@ -152,7 +152,7 @@ int module_load(
 
       if (pb->f_struct_array[i]->has_f_enum)
       {
-        set_integer(
+        yr_set_integer(
             pb->f_struct_array[i]->f_enum,
             module_object,
             "f_struct_array[%i].f_enum",
@@ -163,13 +163,13 @@ int module_load(
       {
         if (pb->f_struct_array[i]->f_nested_struct->has_f_int32)
         {
-          set_integer(
+          yr_set_integer(
               pb->f_struct_array[i]->f_nested_struct->f_int32,
               module_object,
               "f_struct_array[%i].f_nested_struct.f_int32",
               i);
         }
-        set_string(
+        yr_set_string(
             pb->f_struct_array[i]->f_nested_struct->f_string,
             module_object,
             "f_struct_array[%i].f_nested_struct.f_string",
@@ -182,14 +182,14 @@ int module_load(
         {
           if (pb->f_struct_array[i]->f_nested_struct_array[j]->has_f_int32)
           {
-            set_integer(
+            yr_set_integer(
                 pb->f_struct_array[i]->f_nested_struct_array[j]->f_int32,
                 module_object,
                 "f_struct_array[%i].f_nested_struct_array[%i].f_int32",
                 i,
                 j);
           }
-          set_string(
+          yr_set_string(
               pb->f_struct_array[i]->f_nested_struct_array[j]->f_string,
               module_object,
               "f_struct_array[%i].f_nested_struct_array[%i].f_string",
@@ -206,7 +206,7 @@ int module_load(
     {
       if (pb->f_map_int32[i]->has_value)
       {
-        set_integer(
+        yr_set_integer(
             pb->f_map_int32[i]->value,
             module_object,
             "f_map_int32[%s]",
@@ -221,7 +221,7 @@ int module_load(
     {
       if (pb->f_map_bool[i]->has_value)
       {
-        set_integer(
+        yr_set_integer(
             pb->f_map_bool[i]->value,
             module_object,
             "f_map_bool[%s]",
@@ -234,7 +234,7 @@ int module_load(
   {
     if (pb->f_map_string[i] != NULL)
     {
-      set_string(
+      yr_set_string(
           pb->f_map_string[i]->value,
           module_object,
           "f_map_string[%s]",
@@ -248,7 +248,7 @@ int module_load(
     {
       if (pb->f_map_float[i]->has_value)
       {
-        set_float(
+        yr_set_float(
             pb->f_map_float[i]->value,
             module_object,
             "f_map_float[%s]",
@@ -265,7 +265,7 @@ int module_load(
       {
         if (pb->f_map_struct[i]->value->has_f_int32)
         {
-          set_integer(
+          yr_set_integer(
               pb->f_map_struct[i]->value->f_int32,
               module_object,
               "f_map_struct[%s].f_int32",
@@ -274,7 +274,7 @@ int module_load(
 
         if (pb->f_map_struct[i]->value->has_f_int64)
         {
-          set_integer(
+          yr_set_integer(
               pb->f_map_struct[i]->value->f_int64,
               module_object,
               "f_map_struct[%s].f_int64",
@@ -286,7 +286,7 @@ int module_load(
 
   if (pb->f_oneof_case == 20)
   {
-    set_string(pb->f_oneof_string, module_object, "f_oneof_string");
+    yr_set_string(pb->f_oneof_string, module_object, "f_oneof_string");
   }
 
   if (pb->f_oneof_case == 21)
@@ -295,7 +295,7 @@ int module_load(
     {
       if (pb->f_oneof_struct->has_f_int32)
       {
-        set_integer(
+        yr_set_integer(
             pb->f_oneof_struct->f_int32,
             module_object,
             "f_oneof_struct.f_int32");
@@ -303,14 +303,14 @@ int module_load(
 
       if (pb->f_oneof_struct->has_f_int64)
       {
-        set_integer(
+        yr_set_integer(
             pb->f_oneof_struct->f_int64,
             module_object,
             "f_oneof_struct.f_int64");
       }
     }
   }
-  set_string(pb->f_renamed, module_object, "f_yara_name");
+  yr_set_string(pb->f_renamed, module_object, "f_yara_name");
 
 
   test__root_message__free_unpacked(pb, &allocator);
