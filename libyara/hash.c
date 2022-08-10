@@ -255,7 +255,8 @@ YR_API int yr_hash_table_iterate(
     entry = table->buckets[i];
     while (entry != NULL)
     {
-      if (!strcmp(entry->ns, ns))
+      if ((entry->ns == NULL && ns == NULL)
+          || (entry->ns != NULL && ns != NULL && !strcmp(entry->ns, ns)))
       {
         result = iterate_func(
             entry->key, entry->key_length, entry->value, data);
