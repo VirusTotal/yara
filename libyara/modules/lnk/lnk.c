@@ -529,6 +529,7 @@ unsigned int parse_volume_id(
     total_data_read += sizeof(volume_label_offset_unicode);
 
     // Compensate for extra entry in the structure
+    // Todo: Extra checks if this size makes sense?
     size_of_data = volume_id.volume_id_size - volume_label_offset_unicode;
   }
 
