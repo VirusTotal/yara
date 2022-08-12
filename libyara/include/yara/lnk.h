@@ -130,47 +130,48 @@ typedef struct _tracker_data_block_t
 
 #pragma pack(pop)
 
-#define HEADER_SIZE  0x0000004C
+#define HEADER_SIZE 0x0000004C
+
 #define LINK_CLSID_0 0x00021401
 #define LINK_CLSID_1 0x00000000
 #define LINK_CLSID_2 0x000000C0
 #define LINK_CLSID_3 0x46000000
 
-#define HasLinkTargetIDList         0x00000001
-#define HasLinkInfo                 0x00000002
-#define HasName                     0x00000004
-#define HasRelativePath             0x00000008
-#define HasWorkingDir               0x00000010
-#define HasArguments                0x00000020
-#define HasIconLocation             0x00000040
-#define IsUnicode                   0x00000080
-#define ForceNoLinkInfo             0x00000100
-#define HasExpString                0x00000200
-#define RunInSeparateProcess        0x00000400
-#define LNKUnused1                     0x00000800
-#define HasDarwinID                 0x00001000
-#define RunAsUser                   0x00002000
-#define HasExpIcon                  0x00004000
-#define NoPidlAlias                 0x00008000
-#define LNKUnused2                     0x00010000
-#define RunWithShimLayer            0x00020000
-#define ForceNoLinkTrack            0x00040000
-#define EnableTargetMetadata        0x00080000
-#define DisableLinkPathTracking     0x00100000
-#define DisableKnownFolderTracking  0x00200000
-#define DisableKnownFolderAlias     0x00400000
-#define AllowLinkToLink             0x00800000
-#define UnaliasOnSave               0x01000000
-#define PreferEnvironmentPath       0x02000000
-#define KeepLocalIDListForUNCTarget 0x04000000
+#define HAS_LINK_TARGET_ID_LIST           0x00000001
+#define HAS_LINK_INFO                     0x00000002
+#define HAS_NAME                          0x00000004
+#define HAS_RELATIVE_PATH                 0x00000008
+#define HAS_WORKING_DIR                   0x00000010
+#define HAS_ARGUMENTS                     0x00000020
+#define HAS_ICON_LOCATION                 0x00000040
+#define IS_UNICODE                        0x00000080
+#define FORCE_NO_LINK_INFO                0x00000100
+#define HAS_EXP_STRING                    0x00000200
+#define RUN_IN_SEPARATE_PROCESS           0x00000400
+#define UNUSED_1                          0x00000800
+#define HAS_DARWIN_ID                     0x00001000
+#define RUN_AS_USER                       0x00002000
+#define HAS_EXP_ICON                      0x00004000
+#define NO_PIDL_ALIAS                     0x00008000
+#define UNUSED_2                          0x00010000
+#define RUN_WITH_SHIM_LAYER               0x00020000
+#define FORCE_NO_LINK_TRACK               0x00040000
+#define ENABLE_TARGET_METADATA            0x00080000
+#define DISABLE_LINK_PATH_TRACKING        0x00100000
+#define DISABLE_KNOWN_FOLDER_TRACKING     0x00200000
+#define DISABLE_KNOWN_FOLDER_ALIAS        0x00400000
+#define ALLOW_LINK_TO_LINK                0x00800000
+#define UNALIAS_ON_SAVE                   0x01000000
+#define PREFER_ENVIRONMENT_PATH           0x02000000
+#define KEEP_LOCAL_ID_LIST_FOR_UNC_TARGET 0x04000000
 
 #define FILE_ATTRIBUTE_READONLY            0x00000001
 #define FILE_ATTRIBUTE_HIDDEN              0x00000002
 #define FILE_ATTRIBUTE_SYSTEM              0x00000004
-#define LNKReserved1                          0x00000008
+#define RESERVED_1                         0x00000008
 #define FILE_ATTRIBUTE_DIRECTORY           0x00000010
 #define FILE_ATTRIBUTE_ARCHIVE             0x00000020
-#define LNKReserved2                          0x00000040
+#define RESERVED_2                         0x00000040
 #define FILE_ATTRIBUTE_NORMAL              0x00000080
 #define FILE_ATTRIBUTE_TEMPORARY           0x00000100
 #define FILE_ATTRIBUTE_SPARSE_FILE         0x00000200
@@ -188,8 +189,8 @@ typedef struct _tracker_data_block_t
 #define HOTKEYF_CONTROL 0x02
 #define HOTKEYF_ALT     0x04
 
-#define VolumeIDAndLocalBasePath               0x01
-#define CommonNetworkRelativeLinkAndPathSuffix 0x02
+#define VOLUME_ID_AND_LOCAL_BASE_PATH                0x01
+#define COMMON_NETWORK_RELATIVE_LINK_AND_PATH_SUFFIX 0x02
 
 #define DRIVE_UNKNOWN     0x00
 #define DRIVE_NO_ROOT_DIR 0x01
@@ -199,8 +200,8 @@ typedef struct _tracker_data_block_t
 #define DRIVE_CDROM       0x05
 #define DRIVE_RAMDISK     0x06
 
-#define ValidDevice  0x01
-#define ValidNetType 0x02
+#define VALID_DEVICE   0x01
+#define VALID_NET_TYPE 0x02
 
 #define WNNC_NET_AVID        0x001A0000
 #define WNNC_NET_DOCUSPACE   0x001B0000
@@ -266,28 +267,28 @@ typedef struct _tracker_data_block_t
 #define TMPF_TRUETYPE    0x0004
 #define TMPF_DEVICE      0x0008
 
-#define ConsoleDataBlockSize                0x000000CC
-#define ConsoleFEDataBlockSize              0x0000000C
-#define DarwinDataBlockSize                 0x00000314
-#define EnvironmentVariableDataBlockSize    0x00000314
-#define IconEnvironmentDataBlockSize        0x00000314
-#define KnownFolderDataBlockSize            0x0000001C
-#define PropertyStoreDataBlockMinSize       0x0000000C
-#define ShimDataBlockMinSize                0x00000088
-#define SpecialFolderDataBlockSize          0x00000010
-#define TrackerDataBlockSize                0x00000060
-#define VistaAndAboveIDListDataBlockMinSize 0x0000000A
+#define CONSOLE_DATA_BLOCK_SIZE                     0x000000CC
+#define CONSOLE_FE_DATA_BLOCK_SIZE                  0x0000000C
+#define DARWIN_DATA_BLOCK_SIZE                      0x00000314
+#define ENVIRONMENT_VARIABLE_DATA_BLOCK_SIZE        0x00000314
+#define ICON_ENVIRONMENT_DATA_BLOCK_SIZE            0x00000314
+#define KNOWN_FOLDER_DATA_BLOCK_SIZE                0x0000001C
+#define PROPERTY_STORE_DATA_BLOCK_MIN_SIZE          0x0000000C
+#define SHIM_DATA_BLOCK_MIN_SIZE                    0x00000088
+#define SPECIAL_FOLDER_DATA_BLOCK_SIZE              0x00000010
+#define TRACKER_DATA_BLOCK_SIZE                     0x00000060
+#define VISTA_AND_ABOVE_ID_LIST_DATA_BLOCK_MIN_SIZE 0x0000000A
 
-#define ConsoleDataBlockSignature             0xA0000002
-#define ConsoleFEDataBlockSignature           0xA0000004
-#define DarwinDataBlockSignature              0xA0000006
-#define EnvironmentVariableDataBlockSignature 0xA0000001
-#define IconEnvironmentDataBlockSignature     0xA0000007
-#define KnownFolderDataBlockSignature         0xA000000B
-#define PropertyStoreDataBlockSignature       0xA0000009
-#define ShimDataBlockSignature                0xA0000008
-#define SpecialFolderDataBlockSignature       0xA0000005
-#define TrackerDataBlockSignature             0xA0000003
-#define VistaAndAboveIDListDataBlockSignature 0xA000000C
+#define CONSOLE_DATA_BLOCK_SIGNATURE                 0xA0000002
+#define CONSOLE_FE_DATA_BLOCK_SIGNATURE              0xA0000004
+#define DARWIN_DATA_BLOCK_SIGNATURE                  0xA0000006
+#define ENVIRONMENT_VARIABLE_DATA_BLOCK_SIGNATURE    0xA0000001
+#define ICON_ENVIRONMENT_DATA_BLOCK_SIGNATURE        0xA0000007
+#define KNOWN_FOLDER_DATA_BLOCK_SIGNATURE            0xA000000B
+#define PROPERTY_STORE_DATA_BLOCK_SIGNATURE          0xA0000009
+#define SHIM_DATA_BLOCK_SIGNATURE                    0xA0000008
+#define SPECIAL_FOLDER_DATA_BLOCK_SIGNATURE          0xA0000005
+#define TRACKER_DATA_BLOCK_SIGNATURE                 0xA0000003
+#define VISTA_AND_ABOVE_ID_LIST_DATA_BLOCK_SIGNATURE 0xA000000C
 
 #endif

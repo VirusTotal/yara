@@ -36,7 +36,7 @@ int main(int argc, char** argv)
       "import \"lnk\" \
       rule has_link_target_id_list { \
         condition: \
-          lnk.link_flags & lnk.HasLinkTargetIDList \
+          lnk.link_flags & lnk.HAS_LINK_TARGET_ID_LIST \
       }",
       "tests/data/lnk-standard");
 	  
@@ -44,7 +44,7 @@ int main(int argc, char** argv)
       "import \"lnk\" \
       rule has_link_info { \
         condition: \
-          lnk.link_flags & lnk.HasLinkInfo \
+          lnk.link_flags & lnk.HAS_LINK_INFO \
       }",
       "tests/data/lnk-standard");
 	  
@@ -52,7 +52,7 @@ int main(int argc, char** argv)
       "import \"lnk\" \
       rule has_name { \
         condition: \
-          lnk.link_flags & lnk.HasName \
+          lnk.link_flags & lnk.HAS_NAME \
       }",
       "tests/data/lnk-standard");
 	  
@@ -140,7 +140,7 @@ int main(int argc, char** argv)
       "import \"lnk\" \
       rule link_info_flags { \
         condition: \
-          lnk.link_info.flags & lnk.VolumeIDAndLocalBasePath \
+          lnk.link_info.flags & lnk.VOLUME_ID_AND_LOCAL_BASE_PATH \
       }",
       "tests/data/lnk-standard");
 
@@ -324,7 +324,7 @@ int main(int argc, char** argv)
       "import \"lnk\" \
       rule common_network_relative_link_flags { \
         condition: \
-          lnk.link_info.common_network_relative_link.flags & lnk.ValidNetType \
+          lnk.link_info.common_network_relative_link.flags & lnk.VALID_NET_TYPE \
       }",
       "tests/data/lnk-network");
 

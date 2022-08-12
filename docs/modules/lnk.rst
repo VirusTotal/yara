@@ -71,35 +71,35 @@ Reference
 
     The LinkFlags value specifies information about the shell link and the presence of optional portions of the LNK file. Values can be checked by performing a bitwise AND operation with the following constants:
     
-    .. c:member:: HasLinkTargetIDList
-    .. c:member:: HasLinkInfo
-    .. c:member:: HasName
-    .. c:member:: HasRelativePath
-    .. c:member:: HasWorkingDir
-    .. c:member:: HasArguments
-    .. c:member:: HasIconLocation
-    .. c:member:: IsUnicode
-    .. c:member:: ForceNoLinkInfo
-    .. c:member:: HasExpString
-    .. c:member:: RunInSeparateProcess
-    .. c:member:: LNKUnused1
-    .. c:member:: HasDarwinID
-    .. c:member:: RunAsUser
-    .. c:member:: HasExpIcon
-    .. c:member:: NoPidlAlias
-    .. c:member:: LNKUnused2
-    .. c:member:: RunWithShimLayer
-    .. c:member:: ForceNoLinkTrack
-    .. c:member:: EnableTargetMetadata
-    .. c:member:: DisableLinkPathTracking
-    .. c:member:: DisableKnownFolderTracking
-    .. c:member:: DisableKnownFolderAlias
-    .. c:member:: AllowLinkToLink
-    .. c:member:: UnaliasOnSave
-    .. c:member:: PreferEnvironmentPath
-    .. c:member:: KeepLocalIDListForUNCTarget
+    .. c:member:: HAS_LINK_TARGET_ID_LIST
+    .. c:member:: HAS_LINK_INFO
+    .. c:member:: HAS_NAME
+    .. c:member:: HAS_RELATIVE_PATH
+    .. c:member:: HAS_WORKING_DIR
+    .. c:member:: HAS_ARGUMENTS
+    .. c:member:: HAS_ICON_LOCATION
+    .. c:member:: IS_UNICODE
+    .. c:member:: FORCE_NO_LINK_INFO
+    .. c:member:: HAS_EXP_STRING
+    .. c:member:: RUN_IN_SEPARATE_PROCESS
+    .. c:member:: UNUSED_1
+    .. c:member:: HAS_DARWIN_ID
+    .. c:member:: RUN_AS_USER
+    .. c:member:: HAS_EXP_ICON
+    .. c:member:: NO_PIDL_ALIAS
+    .. c:member:: UNUSED_2
+    .. c:member:: RUN_WITH_SHIM_LAYER
+    .. c:member:: FORCE_NO_LINK_TRACK
+    .. c:member:: ENABLE_TARGET_METADATA
+    .. c:member:: DISABLE_LINK_PATH_TRACKING
+    .. c:member:: DISABLE_KNOWN_FOLDER_TRACKING
+    .. c:member:: DISABLE_KNOWN_FOLDER_ALIAS
+    .. c:member:: ALLOW_LINK_TO_LINK
+    .. c:member:: UNALIAS_ON_SAVE
+    .. c:member:: PREFER_ENVIRONMENT_PATH
+    .. c:member:: KEEP_LOCAL_ID_LIST_FOR_UNC_TARGET
     
-    *Example: lnk.link_flags & lnk.HasLinkInfo*
+    *Example: lnk.link_flags & lnk.HAS_LINK_INFO*
     
 .. c:type:: file_attributes_flags
     A file attributes flag that specifies information about the link target. Values can be checked by performing a bitwise AND operation with the following constants:
@@ -107,10 +107,10 @@ Reference
     .. c:member:: FILE_ATTRIBUTE_READONLY
     .. c:member:: FILE_ATTRIBUTE_HIDDEN
     .. c:member:: FILE_ATTRIBUTE_SYSTEM
-    .. c:member:: LNKReserved1
+    .. c:member:: RESERVED_1
     .. c:member:: FILE_ATTRIBUTE_DIRECTORY
     .. c:member:: FILE_ATTRIBUTE_ARCHIVE
-    .. c:member:: LNKReserved2
+    .. c:member:: RESERVED_2
     .. c:member:: FILE_ATTRIBUTE_NORMAL
     .. c:member:: FILE_ATTRIBUTE_TEMPORARY
     .. c:member:: FILE_ATTRIBUTE_SPARSE_FILE
@@ -198,10 +198,10 @@ Reference
     .. c:member:: flags
     Flags that specify whether the VolumeID, LocalBasePath, LocalBasePathUnicode, and CommonNetworkRelativeLink fields are present in this structure. Values can be checked by performing a bitwise AND operation with the following constants:
     
-        .. c:member:: VolumeIDAndLocalBasePath
-        .. c:member:: CommonNetworkRelativeLinkAndPathSuffix
+        .. c:member:: VOLUME_ID_AND_LOCAL_BASE_PATH
+        .. c:member:: COMMON_NETWORK_RELATIVE_LINK_AND_PATH_SUFFIX
     
-    *Example: lnk.link_info.flags & lnk.VolumeIDAndLocalBasePath*
+    *Example: lnk.link_info.flags & lnk.VOLUME_ID_AND_LOCAL_BASE_PATH*
     
     .. c:member:: volume_id_offset
     An unsigned integer that specifies the location of the VolumeID field.
@@ -279,10 +279,10 @@ Reference
         .. c:member:: flags
         Flags that specify the contents of the DeviceNameOffset and NetProviderType fields. Values can be checked by performing a bitwise AND operation with the following constants:
         
-            .. c:member:: ValidDevice
-            .. c:member:: ValidNetType
+            .. c:member:: VALID_DEVICE
+            .. c:member:: VALID_NET_TYPE
             
-        *Example: lnk.common_network_relative_link.flags & lnk.ValidDevice*
+        *Example: lnk.common_network_relative_link.flags & lnk.VALID_DEVICE*
         
         .. c:member:: net_name_offset
         An unsigned integer that specifies the location of the NetName field.
@@ -404,10 +404,10 @@ Boolean flag which is set if a ConsoleDataBlock structure is present.
 The ConsoleDataBlock structure specifies the display settings to use when a link target specifies an application that is run in a console window.
 
     .. c:member:: block_size
-    The block size of this structure, which will be equal to lnk.ConsoleDataBlockSize.
+    The block size of this structure, which will be equal to lnk.CONSOLE_DATA_BLOCK_SIZE.
     
     .. c:member:: block_signature
-    The signature of the block, which will be equal to lnk.ConsoleDataBlockSignature.
+    The signature of the block, which will be equal to lnk.CONSOLE_DATA_BLOCK_SIGNATURE.
     
     .. c:member:: fill_attributes
     An unsigned integer that specifies the fill attributes that control the foreground and background text colors in the console window. The following bit definitions can be combined to specify 16 different values each for the foreground and background color:
@@ -507,10 +507,10 @@ Boolean flag which is set if a ConsoleFEDataBlock structure is present.
 The ConsoleFEDataBlock structure specifies the code page to use for displaying text when a link target specifies an application that is run in a console window.
 
     .. c:member:: block_size
-    The block size of this structure, which will be equal to lnk.ConsoleFEDataBlockSize.
+    The block size of this structure, which will be equal to lnk.CONSOLE_FE_DATA_BLOCK_SIZE.
     
     .. c:member:: block_signature
-    The signature of the block, which will be equal to lnk.ConsoleFEDataBlockSignature.
+    The signature of the block, which will be equal to lnk.CONSOLE_FE_DATA_BLOCK_SIGNATURE.
     
     .. c:member:: code_page
     An unsigned integer that specifies a code page language code identifier.
@@ -524,10 +524,10 @@ Boolean flag which is set if a DarwinDataBlock structure is present.
 The DarwinDataBlock structure specifies an application identifier that can be used instead of a link target IDList to install an application when a shell link is activated.
 
     .. c:member:: block_size
-    The block size of this structure, which will be equal to lnk.DarwinDataBlockSize.
+    The block size of this structure, which will be equal to lnk.DARWIN_DATA_BLOCK_SIZE.
     
     .. c:member:: block_signature
-    The signature of the block, which will be equal to lnk.DarwinDataBlockSignature.
+    The signature of the block, which will be equal to lnk.DARWIN_DATA_BLOCK_SIGNATURE.
     
     .. c:member:: darwin_data_ansi
     A NULL–terminated string, defined by the system default code page, which specifies an application identifier. 
@@ -544,10 +544,10 @@ Boolean flag which is set if a EnvironmentVariableDataBlock structure is present
 The EnvironmentVariableDataBlock structure specifies a path to environment variable information when the link target refers to a location that has a corresponding environment variable.
 
     .. c:member:: block_size
-    The block size of this structure, which will be equal to lnk.EnvironmentVariableDataBlockSize.
+    The block size of this structure, which will be equal to lnk.ENVIRONMENT_VARIABLE_DATA_BLOCK_SIZE.
     
     .. c:member:: block_signature
-    The signature of the block, which will be equal to lnk.EnvironmentVariableDataBlockSignature.
+    The signature of the block, which will be equal to lnk.ENVIRONMENT_VARIABLE_DATA_BLOCK_SIGNATURE.
     
     .. c:member:: target_ansi
     A NULL-terminated string, defined by the system default code page, which specifies a path to environment variable information
@@ -566,10 +566,10 @@ Boolean flag which is set if a IconEnvironmentDataBlock structure is present.
 The IconEnvironmentDataBlock structure specifies the path to an icon. The path is encoded using environment variables, which makes it possible to find the icon across machines where the locations vary but are expressed using environment variables.
 
     .. c:member:: block_size
-    The block size of this structure, which will be equal to lnk.IconEnvironmentDataBlockSize.
+    The block size of this structure, which will be equal to lnk.ICON_ENVIRONMENT_DATA_BLOCK_SIZE.
     
     .. c:member:: block_signature
-    The signature of the block, which will be equal to lnk.IconEnvironmentDataBlockSignature.
+    The signature of the block, which will be equal to lnk.ICON_ENVIRONMENT_DATA_BLOCK_SIGNATURE.
     
     .. c:member:: target_ansi
     A NULL-terminated string, defined by the system default code page, which specifies a path that is constructed with environment variables
@@ -588,10 +588,10 @@ Boolean flag which is set if a KnownFolderDataBlock structure is present.
 The KnownFolderDataBlock structure specifies the location of a known folder. This data can be used when a link target is a known folder to keep track of the folder so that the link target IDList can be translated when the link is loaded.
 
     .. c:member:: block_size
-    The block size of this structure, which will be equal to lnk.KnownFolderDataBlockSize.
+    The block size of this structure, which will be equal to lnk.KNOWN_FOLDER_DATA_BLOCK_SIZE.
     
     .. c:member:: block_signature
-    The signature of the block, which will be equal to lnk.KnownFolderDataBlockSignature.
+    The signature of the block, which will be equal to lnk.KNOWN_FOLDER_DATA_BLOCK_SIGNATURE.
     
     .. c:member:: offset
     An unsigned integer that specifies the location of the ItemID of the first child segment of the IDList specified by KnownFolderID. This value is the offset, in bytes, into the link target IDList.
@@ -612,10 +612,10 @@ Boolean flag which is set if a PropertyStoreDataBlock structure is present.
 A PropertyStoreDataBlock structure specifies a set of properties that can be used by applications to store extra data in the shell link. (TODO: implement the rest of this structure)
 
     .. c:member:: block_size
-    The block size of this structure, which will be greater than or equal to lnk.PropertyStoreDataBlockMinSize.
+    The block size of this structure, which will be greater than or equal to lnk.PROPERTY_STORE_DATA_BLOCK_MIN_SIZE.
     
     .. c:member:: block_signature
-    The signature of the block, which will be equal to lnk.PropertyStoreDataBlockSignature.
+    The signature of the block, which will be equal to lnk.PROPERTY_STORE_DATA_BLOCK_SIGNATURE.
 
 .. c:type:: has_shim_data
 Boolean flag which is set if a ShimDataBlock structure is present.
@@ -626,10 +626,10 @@ Boolean flag which is set if a ShimDataBlock structure is present.
 The ShimDataBlock structure specifies the name of a shim that can be applied when activating a link target.
 
     .. c:member:: block_size
-    The block size of this structure, which will be greater than or equal to lnk.ShimDataBlockMinSize.
+    The block size of this structure, which will be greater than or equal to lnk.SHIM_DATA_BLOCK_MIN_SIZE.
     
     .. c:member:: block_signature
-    The signature of the block, which will be equal to lnk.ShimDataBlockSignature.
+    The signature of the block, which will be equal to lnk.SHIM_DATA_BLOCK_SIGNATURE.
     
     .. c:member:: layer_name
      A Unicode string that specifies the name of a shim layer to apply to a link target when it is being activated.
@@ -643,10 +643,10 @@ Boolean flag which is set if a SpecialFolderDataBlock structure is present.
 The SpecialFolderDataBlock structure specifies the location of a special folder. This data can be used when a link target is a special folder to keep track of the folder, so that the link target IDList can be translated when the link is loaded.
 
     .. c:member:: block_size
-    The block size of this structure, which will be equal to lnk.SpecialFolderDataBlockSize.
+    The block size of this structure, which will be equal to lnk.SPECIAL_FOLDER_DATA_BLOCK_SIZE.
     
     .. c:member:: block_signature
-    The signature of the block, which will be equal to lnk.SpecialFolderDataBlockSignature.
+    The signature of the block, which will be equal to lnk.SPECIAL_FOLDER_DATA_BLOCK_SIGNATURE.
     
     .. c:member:: offset
     An unsigned integer that specifies the location of the ItemID of the first child segment of the IDList specified by SpecialFolderID. This value is the offset, in bytes, into the link target IDList.
@@ -663,10 +663,10 @@ Boolean flag which is set if a TrackerDataBlock structure is present.
 The TrackerDataBlock structure specifies data that can be used to resolve a link target if it is not found in its original location when the link is resolved. This data is passed to the Link Tracking service to find the link target.
 
     .. c:member:: block_size
-    The block size of this structure, which will be equal to lnk.TrackerDataBlockSize.
+    The block size of this structure, which will be equal to lnk.TRACKER_DATA_BLOCK_SIZE.
     
     .. c:member:: block_signature
-    The signature of the block, which will be equal to lnk.TrackerDataBlockSignature.
+    The signature of the block, which will be equal to lnk.TRACKER_DATA_BLOCK_SIGNATURE.
     
     .. c:member:: machine_id
     A NULL–terminated character string, as defined by the system default code page, which specifies the NetBIOS name of the machine where the link target was last known to reside.
@@ -696,10 +696,10 @@ Boolean flag which is set if a VistaAndAboveIDListDataBlock structure is present
 The VistaAndAboveIDListDataBlock structure specifies an alternate IDList that can be used instead of the LinkTargetIDList structure on platforms that support it.
 
     .. c:member:: block_size
-    The block size of this structure, which will be greater than or equal to lnk.VistaAndAboveIDListDataBlockMinSize.
+    The block size of this structure, which will be greater than or equal to lnk.VISTA_AND_ABOVE_ID_LIST_DATA_BLOCK_MIN_SIZE.
     
     .. c:member:: block_signature
-    The signature of the block, which will be equal to lnk.VistaAndAboveIDListDataBlockSignature.
+    The signature of the block, which will be equal to lnk.VISTA_AND_ABOVE_ID_LIST_DATA_BLOCK_SIGNATURE.
     
     .. c:member:: number_of_item_ids
     The number of ItemID entries in the list.

@@ -8,41 +8,41 @@
 #define MODULE_NAME lnk
 
 begin_declarations
-  declare_integer("HasLinkTargetIDList");
-  declare_integer("HasLinkInfo");
-  declare_integer("HasName");
-  declare_integer("HasRelativePath");
-  declare_integer("HasWorkingDir");
-  declare_integer("HasArguments");
-  declare_integer("HasIconLocation");
-  declare_integer("IsUnicode");
-  declare_integer("ForceNoLinkInfo");
-  declare_integer("HasExpString");
-  declare_integer("RunInSeparateProcess");
-  declare_integer("LNKUnused1");
-  declare_integer("HasDarwinID");
-  declare_integer("RunAsUser");
-  declare_integer("HasExpIcon");
-  declare_integer("NoPidlAlias");
-  declare_integer("LNKUnused2");
-  declare_integer("RunWithShimLayer");
-  declare_integer("ForceNoLinkTrack");
-  declare_integer("EnableTargetMetadata");
-  declare_integer("DisableLinkPathTracking");
-  declare_integer("DisableKnownFolderTracking");
-  declare_integer("DisableKnownFolderAlias");
-  declare_integer("AllowLinkToLink");
-  declare_integer("UnaliasOnSave");
-  declare_integer("PreferEnvironmentPath");
-  declare_integer("KeepLocalIDListForUNCTarget");
+  declare_integer("HAS_LINK_TARGET_ID_LIST");
+  declare_integer("HAS_LINK_INFO");
+  declare_integer("HAS_NAME");
+  declare_integer("HAS_RELATIVE_PATH");
+  declare_integer("HAS_WORKING_DIR");
+  declare_integer("HAS_ARGUMENTS");
+  declare_integer("HAS_ICON_LOCATION");
+  declare_integer("IS_UNICODE");
+  declare_integer("FORCE_NO_LINK_INFO");
+  declare_integer("HAS_EXP_STRING");
+  declare_integer("RUN_IN_SEPARATE_PROCESS");
+  declare_integer("UNUSED_1");
+  declare_integer("HAS_DARWIN_ID");
+  declare_integer("RUN_AS_USER");
+  declare_integer("HAS_EXP_ICON");
+  declare_integer("NO_PIDL_ALIAS");
+  declare_integer("UNUSED_2");
+  declare_integer("RUN_WITH_SHIM_LAYER");
+  declare_integer("FORCE_NO_LINK_TRACK");
+  declare_integer("ENABLE_TARGET_METADATA");
+  declare_integer("DISABLE_LINK_PATH_TRACKING");
+  declare_integer("DISABLE_KNOWN_FOLDER_TRACKING");
+  declare_integer("DISABLE_KNOWN_FOLDER_ALIAS");
+  declare_integer("ALLOW_LINK_TO_LINK");
+  declare_integer("UNALIAS_ON_SAVE");
+  declare_integer("PREFER_ENVIRONMENT_PATH");
+  declare_integer("KEEP_LOCAL_ID_LIST_FOR_UNC_TARGET");
 
   declare_integer("FILE_ATTRIBUTE_READONLY");
   declare_integer("FILE_ATTRIBUTE_HIDDEN");
   declare_integer("FILE_ATTRIBUTE_SYSTEM");
-  declare_integer("LNKReserved1");
+  declare_integer("RESERVED_1");
   declare_integer("FILE_ATTRIBUTE_DIRECTORY");
   declare_integer("FILE_ATTRIBUTE_ARCHIVE");
-  declare_integer("LNKReserved2");
+  declare_integer("RESERVED_2");
   declare_integer("FILE_ATTRIBUTE_NORMAL");
   declare_integer("FILE_ATTRIBUTE_TEMPORARY");
   declare_integer("FILE_ATTRIBUTE_SPARSE_FILE");
@@ -60,8 +60,8 @@ begin_declarations
   declare_integer("HOTKEYF_CONTROL");
   declare_integer("HOTKEYF_ALT");
 
-  declare_integer("VolumeIDAndLocalBasePath");
-  declare_integer("CommonNetworkRelativeLinkAndPathSuffix");
+  declare_integer("VOLUME_ID_AND_LOCAL_BASE_PATH");
+  declare_integer("COMMON_NETWORK_RELATIVE_LINK_AND_PATH_SUFFIX");
 
   declare_integer("DRIVE_UNKNOWN");
   declare_integer("DRIVE_NO_ROOT_DIR");
@@ -71,8 +71,8 @@ begin_declarations
   declare_integer("DRIVE_CDROM");
   declare_integer("DRIVE_RAMDISK");
 
-  declare_integer("ValidDevice");
-  declare_integer("ValidNetType");
+  declare_integer("VALID_DEVICE");
+  declare_integer("VALID_NET_TYPE");
 
   declare_integer("WNNC_NET_AVID");
   declare_integer("WNNC_NET_DOCUSPACE");
@@ -832,7 +832,7 @@ uint32_t parse_link_info(
   link_info_ptr += sizeof(link_info_fixed_header_t);
   block_data_size_remaining -= sizeof(link_info_fixed_header_t);
 
-  // if VolumeIDAndLocalBasePath flag:
+  // if VOLUME_ID_AND_LOCAL_BASE_PATH flag:
   //   VolumeID and LocalBasePath present
   //   VolumeIDOffset and LocalBasePathOffset specify offsets
   //   if LinkInfoHeaderSize > 0x24:
@@ -843,7 +843,7 @@ uint32_t parse_link_info(
   //   if LinkInfoHeaderSize > 0x24:
   //     LocalBasePathOffsetUnicode is 0
 
-  if (link_info_fixed_header->link_info_flags & VolumeIDAndLocalBasePath)
+  if (link_info_fixed_header->link_info_flags & VOLUME_ID_AND_LOCAL_BASE_PATH)
   {
     if (link_info_fixed_header->link_info_header_size >= 0x24)
     {
@@ -934,7 +934,7 @@ uint32_t parse_link_info(
   }
 
   if (link_info_fixed_header->link_info_flags &
-      CommonNetworkRelativeLinkAndPathSuffix)
+      COMMON_NETWORK_RELATIVE_LINK_AND_PATH_SUFFIX)
   {
     if (link_info_fixed_header->common_network_relative_link_offset)
     {
@@ -1109,7 +1109,7 @@ uint32_t parse_string_data(
 
   // CountCharacters only returns the number of characters in the string, but
   // not information on whether the string is unicode vs. another type of
-  // string. The IsUnicode flag will tell us if the StringData values are
+  // string. The IS_UNICODE flag will tell us if the StringData values are
   // unicode, and if it is not set, we'll assume it is ascii (although it can be
   // whatever is the default codepage from where the LNK is generated)
 
@@ -1657,11 +1657,11 @@ uint32_t parse_extra_block(
 
   switch (extra_data_block_signature)
   {
-  case ConsoleDataBlockSignature:
+  case CONSOLE_DATA_BLOCK_SIGNATURE:
 
     yr_set_integer(1, module_object, "has_console_data");
 
-    if (extra_data_block_size == ConsoleDataBlockSize &&
+    if (extra_data_block_size == CONSOLE_DATA_BLOCK_SIZE &&
         parse_console_data_block(
             extra_block_ptr,
             module_object,
@@ -1673,11 +1673,11 @@ uint32_t parse_extra_block(
     }
     break;
 
-  case ConsoleFEDataBlockSignature:
+  case CONSOLE_FE_DATA_BLOCK_SIGNATURE:
 
     yr_set_integer(1, module_object, "has_console_fe_data");
 
-    if (extra_data_block_size == ConsoleFEDataBlockSize &&
+    if (extra_data_block_size == CONSOLE_FE_DATA_BLOCK_SIZE &&
         parse_console_fe_data_block(
             extra_block_ptr,
             module_object,
@@ -1689,11 +1689,11 @@ uint32_t parse_extra_block(
     }
     break;
 
-  case DarwinDataBlockSignature:
+  case DARWIN_DATA_BLOCK_SIGNATURE:
 
     yr_set_integer(1, module_object, "has_darwin_data");
 
-    if (extra_data_block_size == DarwinDataBlockSize &&
+    if (extra_data_block_size == DARWIN_DATA_BLOCK_SIZE &&
         parse_darwin_data_block(
             extra_block_ptr,
             module_object,
@@ -1705,11 +1705,11 @@ uint32_t parse_extra_block(
     }
     break;
 
-  case EnvironmentVariableDataBlockSignature:
+  case ENVIRONMENT_VARIABLE_DATA_BLOCK_SIGNATURE:
 
     yr_set_integer(1, module_object, "has_environment_variable_data");
 
-    if (extra_data_block_size == EnvironmentVariableDataBlockSize &&
+    if (extra_data_block_size == ENVIRONMENT_VARIABLE_DATA_BLOCK_SIZE &&
         parse_environment_variable_data_block(
             extra_block_ptr,
             module_object,
@@ -1721,11 +1721,11 @@ uint32_t parse_extra_block(
     }
     break;
 
-  case IconEnvironmentDataBlockSignature:
+  case ICON_ENVIRONMENT_DATA_BLOCK_SIGNATURE:
 
     yr_set_integer(1, module_object, "has_icon_environment_data");
 
-    if (extra_data_block_size == IconEnvironmentDataBlockSize &&
+    if (extra_data_block_size == ICON_ENVIRONMENT_DATA_BLOCK_SIZE &&
         parse_icon_environment_data_block(
             extra_block_ptr,
             module_object,
@@ -1737,11 +1737,11 @@ uint32_t parse_extra_block(
     }
     break;
 
-  case KnownFolderDataBlockSignature:
+  case KNOWN_FOLDER_DATA_BLOCK_SIGNATURE:
 
     yr_set_integer(1, module_object, "has_known_folder_data");
 
-    if (extra_data_block_size == KnownFolderDataBlockSize &&
+    if (extra_data_block_size == KNOWN_FOLDER_DATA_BLOCK_SIZE &&
         parse_known_folder_data_block(
             extra_block_ptr,
             module_object,
@@ -1753,11 +1753,11 @@ uint32_t parse_extra_block(
     }
     break;
 
-  case PropertyStoreDataBlockSignature:
+  case PROPERTY_STORE_DATA_BLOCK_SIGNATURE:
 
     yr_set_integer(1, module_object, "has_property_store_data");
 
-    if (extra_data_block_size >= PropertyStoreDataBlockMinSize &&
+    if (extra_data_block_size >= PROPERTY_STORE_DATA_BLOCK_MIN_SIZE &&
         parse_property_store_data_block(
             extra_block_ptr,
             module_object,
@@ -1769,11 +1769,11 @@ uint32_t parse_extra_block(
     }
     break;
 
-  case ShimDataBlockSignature:
+  case SHIM_DATA_BLOCK_SIGNATURE:
 
     yr_set_integer(1, module_object, "has_shim_data");
 
-    if (extra_data_block_size >= ShimDataBlockMinSize &&
+    if (extra_data_block_size >= SHIM_DATA_BLOCK_MIN_SIZE &&
         parse_shim_data_block(
             extra_block_ptr,
             module_object,
@@ -1785,11 +1785,11 @@ uint32_t parse_extra_block(
     }
     break;
 
-  case SpecialFolderDataBlockSignature:
+  case SPECIAL_FOLDER_DATA_BLOCK_SIGNATURE:
 
     yr_set_integer(1, module_object, "has_special_folder_data");
 
-    if (extra_data_block_size == SpecialFolderDataBlockSize &&
+    if (extra_data_block_size == SPECIAL_FOLDER_DATA_BLOCK_SIZE &&
         parse_special_folder_data_block(
             extra_block_ptr,
             module_object,
@@ -1801,11 +1801,11 @@ uint32_t parse_extra_block(
     }
     break;
 
-  case TrackerDataBlockSignature:
+  case TRACKER_DATA_BLOCK_SIGNATURE:
 
     yr_set_integer(1, module_object, "has_tracker_data");
 
-    if (extra_data_block_size == TrackerDataBlockSize &&
+    if (extra_data_block_size == TRACKER_DATA_BLOCK_SIZE &&
         parse_tracker_data_block(
             extra_block_ptr,
             module_object,
@@ -1817,11 +1817,11 @@ uint32_t parse_extra_block(
     }
     break;
 
-  case VistaAndAboveIDListDataBlockSignature:
+  case VISTA_AND_ABOVE_ID_LIST_DATA_BLOCK_SIGNATURE:
 
     yr_set_integer(1, module_object, "has_vista_and_above_id_list_data");
 
-    if (extra_data_block_size >= VistaAndAboveIDListDataBlockMinSize &&
+    if (extra_data_block_size >= VISTA_AND_ABOVE_ID_LIST_DATA_BLOCK_MIN_SIZE &&
         parse_vista_and_above_id_list_data_block(
             extra_block_ptr,
             module_object,
@@ -1860,49 +1860,49 @@ int module_load(
   shell_link_header_t* lnk_header;
   yr_set_integer(0, module_object, "is_lnk");
 
-  yr_set_integer(HasLinkTargetIDList, module_object, "HasLinkTargetIDList");
-  yr_set_integer(HasLinkInfo, module_object, "HasLinkInfo");
-  yr_set_integer(HasName, module_object, "HasName");
-  yr_set_integer(HasRelativePath, module_object, "HasRelativePath");
-  yr_set_integer(HasWorkingDir, module_object, "HasWorkingDir");
-  yr_set_integer(HasArguments, module_object, "HasArguments");
-  yr_set_integer(HasIconLocation, module_object, "HasIconLocation");
-  yr_set_integer(IsUnicode, module_object, "IsUnicode");
-  yr_set_integer(ForceNoLinkInfo, module_object, "ForceNoLinkInfo");
-  yr_set_integer(HasExpString, module_object, "HasExpString");
-  yr_set_integer(RunInSeparateProcess, module_object, "RunInSeparateProcess");
-  yr_set_integer(LNKUnused1, module_object, "LNKUnused1");
-  yr_set_integer(HasDarwinID, module_object, "HasDarwinID");
-  yr_set_integer(RunAsUser, module_object, "RunAsUser");
-  yr_set_integer(HasExpIcon, module_object, "HasExpIcon");
-  yr_set_integer(NoPidlAlias, module_object, "NoPidlAlias");
-  yr_set_integer(LNKUnused2, module_object, "LNKUnused2");
-  yr_set_integer(RunWithShimLayer, module_object, "RunWithShimLayer");
-  yr_set_integer(ForceNoLinkTrack, module_object, "ForceNoLinkTrack");
-  yr_set_integer(EnableTargetMetadata, module_object, "EnableTargetMetadata");
+  yr_set_integer(HAS_LINK_TARGET_ID_LIST, module_object, "HAS_LINK_TARGET_ID_LIST");
+  yr_set_integer(HAS_LINK_INFO, module_object, "HAS_LINK_INFO");
+  yr_set_integer(HAS_NAME, module_object, "HAS_NAME");
+  yr_set_integer(HAS_RELATIVE_PATH, module_object, "HAS_RELATIVE_PATH");
+  yr_set_integer(HAS_WORKING_DIR, module_object, "HAS_WORKING_DIR");
+  yr_set_integer(HAS_ARGUMENTS, module_object, "HAS_ARGUMENTS");
+  yr_set_integer(HAS_ICON_LOCATION, module_object, "HAS_ICON_LOCATION");
+  yr_set_integer(IS_UNICODE, module_object, "IS_UNICODE");
+  yr_set_integer(FORCE_NO_LINK_INFO, module_object, "FORCE_NO_LINK_INFO");
+  yr_set_integer(HAS_EXP_STRING, module_object, "HAS_EXP_STRING");
+  yr_set_integer(RUN_IN_SEPARATE_PROCESS, module_object, "RUN_IN_SEPARATE_PROCESS");
+  yr_set_integer(UNUSED_1, module_object, "UNUSED_1");
+  yr_set_integer(HAS_DARWIN_ID, module_object, "HAS_DARWIN_ID");
+  yr_set_integer(RUN_AS_USER, module_object, "RUN_AS_USER");
+  yr_set_integer(HAS_EXP_ICON, module_object, "HAS_EXP_ICON");
+  yr_set_integer(NO_PIDL_ALIAS, module_object, "NO_PIDL_ALIAS");
+  yr_set_integer(UNUSED_2, module_object, "UNUSED_2");
+  yr_set_integer(RUN_WITH_SHIM_LAYER, module_object, "RUN_WITH_SHIM_LAYER");
+  yr_set_integer(FORCE_NO_LINK_TRACK, module_object, "FORCE_NO_LINK_TRACK");
+  yr_set_integer(ENABLE_TARGET_METADATA, module_object, "ENABLE_TARGET_METADATA");
   yr_set_integer(
-      DisableLinkPathTracking, module_object, "DisableLinkPathTracking");
+      DISABLE_LINK_PATH_TRACKING, module_object, "DISABLE_LINK_PATH_TRACKING");
   yr_set_integer(
-      DisableKnownFolderTracking, module_object, "DisableKnownFolderTracking");
+      DISABLE_KNOWN_FOLDER_TRACKING, module_object, "DISABLE_KNOWN_FOLDER_TRACKING");
   yr_set_integer(
-      DisableKnownFolderAlias, module_object, "DisableKnownFolderAlias");
-  yr_set_integer(AllowLinkToLink, module_object, "AllowLinkToLink");
-  yr_set_integer(UnaliasOnSave, module_object, "UnaliasOnSave");
-  yr_set_integer(PreferEnvironmentPath, module_object, "PreferEnvironmentPath");
+      DISABLE_KNOWN_FOLDER_ALIAS, module_object, "DISABLE_KNOWN_FOLDER_ALIAS");
+  yr_set_integer(ALLOW_LINK_TO_LINK, module_object, "ALLOW_LINK_TO_LINK");
+  yr_set_integer(UNALIAS_ON_SAVE, module_object, "UNALIAS_ON_SAVE");
+  yr_set_integer(PREFER_ENVIRONMENT_PATH, module_object, "PREFER_ENVIRONMENT_PATH");
   yr_set_integer(
-      KeepLocalIDListForUNCTarget,
+      KEEP_LOCAL_ID_LIST_FOR_UNC_TARGET,
       module_object,
-      "KeepLocalIDListForUNCTarget");
+      "KEEP_LOCAL_ID_LIST_FOR_UNC_TARGET");
 
   yr_set_integer(
       FILE_ATTRIBUTE_READONLY, module_object, "FILE_ATTRIBUTE_READONLY");
   yr_set_integer(FILE_ATTRIBUTE_HIDDEN, module_object, "FILE_ATTRIBUTE_HIDDEN");
   yr_set_integer(FILE_ATTRIBUTE_SYSTEM, module_object, "FILE_ATTRIBUTE_SYSTEM");
-  yr_set_integer(LNKReserved1, module_object, "LNKReserved1");
+  yr_set_integer(RESERVED_1, module_object, "RESERVED_1");
   yr_set_integer(
       FILE_ATTRIBUTE_DIRECTORY, module_object, "FILE_ATTRIBUTE_DIRECTORY");
   yr_set_integer(FILE_ATTRIBUTE_ARCHIVE, module_object, "FILE_ATTRIBUTE_ARCHIVE");
-  yr_set_integer(LNKReserved2, module_object, "LNKReserved2");
+  yr_set_integer(RESERVED_2, module_object, "RESERVED_2");
   yr_set_integer(FILE_ATTRIBUTE_NORMAL, module_object, "FILE_ATTRIBUTE_NORMAL");
   yr_set_integer(
       FILE_ATTRIBUTE_TEMPORARY, module_object, "FILE_ATTRIBUTE_TEMPORARY");
@@ -1931,11 +1931,11 @@ int module_load(
   yr_set_integer(HOTKEYF_ALT, module_object, "HOTKEYF_ALT");
 
   yr_set_integer(
-      VolumeIDAndLocalBasePath, module_object, "VolumeIDAndLocalBasePath");
+      VOLUME_ID_AND_LOCAL_BASE_PATH, module_object, "VOLUME_ID_AND_LOCAL_BASE_PATH");
   yr_set_integer(
-      CommonNetworkRelativeLinkAndPathSuffix,
+      COMMON_NETWORK_RELATIVE_LINK_AND_PATH_SUFFIX,
       module_object,
-      "CommonNetworkRelativeLinkAndPathSuffix");
+      "COMMON_NETWORK_RELATIVE_LINK_AND_PATH_SUFFIX");
 
   yr_set_integer(DRIVE_UNKNOWN, module_object, "DRIVE_UNKNOWN");
   yr_set_integer(DRIVE_NO_ROOT_DIR, module_object, "DRIVE_NO_ROOT_DIR");
@@ -1945,8 +1945,8 @@ int module_load(
   yr_set_integer(DRIVE_CDROM, module_object, "DRIVE_CDROM");
   yr_set_integer(DRIVE_RAMDISK, module_object, "DRIVE_RAMDISK");
 
-  yr_set_integer(ValidDevice, module_object, "ValidDevice");
-  yr_set_integer(ValidNetType, module_object, "ValidNetType");
+  yr_set_integer(VALID_DEVICE, module_object, "VALID_DEVICE");
+  yr_set_integer(VALID_NET_TYPE, module_object, "VALID_NET_TYPE");
 
   yr_set_integer(WNNC_NET_AVID, module_object, "WNNC_NET_AVID");
   yr_set_integer(WNNC_NET_DOCUSPACE, module_object, "WNNC_NET_DOCUSPACE");
@@ -2098,7 +2098,7 @@ int module_load(
       block_data_size_remaining -= sizeof(shell_link_header_t);
 
       // Optional parsing of LinkTargetIDList
-      if (lnk_header->link_flags & HasLinkTargetIDList)
+      if (lnk_header->link_flags & HAS_LINK_TARGET_ID_LIST)
       {
         id_list_size = parse_link_target_id_list(
             current_location, module_object, block_data_size_remaining);
@@ -2113,7 +2113,7 @@ int module_load(
         block_data_size_remaining -= id_list_size;
       }
 
-      if (lnk_header->link_flags & HasLinkInfo)
+      if (lnk_header->link_flags & HAS_LINK_INFO)
       {
         link_info_size = parse_link_info(
             current_location, module_object, block_data_size_remaining);
@@ -2129,14 +2129,14 @@ int module_load(
       }
 
       // NAME_STRING
-      if (lnk_header->link_flags & HasName)
+      if (lnk_header->link_flags & HAS_NAME)
       {
         string_data_size = parse_string_data(
             current_location,
             module_object,
             block_data_size_remaining,
             "name_string",
-            lnk_header->link_flags & IsUnicode);
+            lnk_header->link_flags & IS_UNICODE);
 
         if (string_data_size == 0)
         {
@@ -2149,14 +2149,14 @@ int module_load(
       }
 
       // RELATIVE_PATH
-      if (lnk_header->link_flags & HasRelativePath)
+      if (lnk_header->link_flags & HAS_RELATIVE_PATH)
       {
         string_data_size = parse_string_data(
             current_location,
             module_object,
             block_data_size_remaining,
             "relative_path",
-            lnk_header->link_flags & IsUnicode);
+            lnk_header->link_flags & IS_UNICODE);
 
         if (string_data_size == 0)
         {
@@ -2169,14 +2169,14 @@ int module_load(
       }
 
       // WORKING_DIR
-      if (lnk_header->link_flags & HasWorkingDir)
+      if (lnk_header->link_flags & HAS_WORKING_DIR)
       {
         string_data_size = parse_string_data(
             current_location,
             module_object,
             block_data_size_remaining,
             "working_dir",
-            lnk_header->link_flags & IsUnicode);
+            lnk_header->link_flags & IS_UNICODE);
 
         if (string_data_size == 0)
         {
@@ -2189,14 +2189,14 @@ int module_load(
       }
 
       // COMMAND_LINK_ARGUMENTS
-      if (lnk_header->link_flags & HasArguments)
+      if (lnk_header->link_flags & HAS_ARGUMENTS)
       {
         string_data_size = parse_string_data(
             current_location,
             module_object,
             block_data_size_remaining,
             "command_line_arguments",
-            lnk_header->link_flags & IsUnicode);
+            lnk_header->link_flags & IS_UNICODE);
 
         if (string_data_size == 0)
         {
@@ -2209,14 +2209,14 @@ int module_load(
       }
 
       // ICON_LOCATION
-      if (lnk_header->link_flags & HasIconLocation)
+      if (lnk_header->link_flags & HAS_ICON_LOCATION)
       {
         string_data_size = parse_string_data(
             current_location,
             module_object,
             block_data_size_remaining,
             "icon_location",
-            lnk_header->link_flags & IsUnicode);
+            lnk_header->link_flags & IS_UNICODE);
 
         if (string_data_size == 0)
         {
