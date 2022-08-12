@@ -341,14 +341,14 @@ begin_declarations
   declare_integer("is_malformed");
 end_declarations
 
-unsigned int parse_id_list(
+uint32_t parse_id_list(
     const uint8_t* id_list_ptr,
     YR_OBJECT* module_object,
-    unsigned int block_data_size_remaining,
+    uint32_t block_data_size_remaining,
     bool extra_data)
 {
   uint16_t item_id_size;
-  unsigned int num_item_ids = 0;
+  uint32_t num_item_ids = 0;
   const uint8_t* item_id_data_ptr;
 
   // Get the first ItemIDSize
@@ -435,10 +435,10 @@ unsigned int parse_id_list(
   return 1;
 }
 
-unsigned int parse_link_target_id_list(
+uint32_t parse_link_target_id_list(
     const uint8_t* link_target_id_list_ptr,
     YR_OBJECT* module_object,
-    unsigned int block_data_size_remaining)
+    uint32_t block_data_size_remaining)
 {
   uint16_t id_list_size;
 
@@ -469,16 +469,16 @@ unsigned int parse_link_target_id_list(
   return id_list_size + 2;
 }
 
-unsigned int parse_volume_id(
+uint32_t parse_volume_id(
     const uint8_t* volume_id_ptr,
     YR_OBJECT* module_object,
-    unsigned int block_data_size_remaining)
+    uint32_t block_data_size_remaining)
 {
   volume_id_t volume_id;
-  unsigned int size_of_data;
+  uint32_t size_of_data;
   uint32_t volume_label_offset_unicode;
   char* volume_id_data=NULL;
-  unsigned int total_data_read = 0;
+  uint32_t total_data_read = 0;
 
   if (block_data_size_remaining < sizeof(volume_id_t))
   {
@@ -559,10 +559,10 @@ unsigned int parse_volume_id(
   return total_data_read;
 }
 
-unsigned int parse_common_network_relative_link(
+uint32_t parse_common_network_relative_link(
     const uint8_t* common_network_relative_link_ptr,
     YR_OBJECT* module_object,
-    unsigned int block_data_size_remaining)
+    uint32_t block_data_size_remaining)
 {
   common_network_relative_link_t common_network_relative_link;
   uint32_t net_name_offset_unicode = 0;
@@ -571,10 +571,10 @@ unsigned int parse_common_network_relative_link(
   char* device_name=NULL;
   wchar_t* net_name_unicode=NULL;
   wchar_t* device_name_unicode=NULL;
-  unsigned int net_name_len;
-  unsigned int device_name_len;
-  unsigned int net_name_unicode_len;
-  unsigned int device_name_unicode_len;
+  uint32_t net_name_len;
+  uint32_t device_name_len;
+  uint32_t net_name_unicode_len;
+  uint32_t device_name_unicode_len;
 
   if (block_data_size_remaining < sizeof(common_network_relative_link_t))
   {
@@ -777,10 +777,10 @@ unsigned int parse_common_network_relative_link(
   return common_network_relative_link.common_network_relative_link_size;
 }
 
-unsigned int parse_link_info(
+uint32_t parse_link_info(
     const uint8_t* link_info_ptr,
     YR_OBJECT* module_object,
-    unsigned int block_data_size_remaining)
+    uint32_t block_data_size_remaining)
 {
   link_info_fixed_header_t* link_info_fixed_header;
   uint32_t local_base_path_offset_unicode = 0;
@@ -789,12 +789,12 @@ unsigned int parse_link_info(
   char* common_path_suffix=NULL;
   wchar_t* local_base_path_unicode=NULL;
   wchar_t* common_path_suffix_unicode=NULL;
-  unsigned int local_base_path_len;
-  unsigned int common_path_suffix_len;
-  unsigned int local_base_path_unicode_len;
-  unsigned int common_path_suffix_unicode_len;
-  unsigned int volume_id_size;
-  unsigned int common_network_relative_link_size;
+  uint32_t local_base_path_len;
+  uint32_t common_path_suffix_len;
+  uint32_t local_base_path_unicode_len;
+  uint32_t common_path_suffix_unicode_len;
+  uint32_t volume_id_size;
+  uint32_t common_network_relative_link_size;
 
   if (block_data_size_remaining < sizeof(link_info_fixed_header_t))
   {
@@ -1097,15 +1097,15 @@ unsigned int parse_link_info(
   return (int) link_info_fixed_header->link_info_size;
 }
 
-unsigned int parse_string_data(
+uint32_t parse_string_data(
     const uint8_t* string_data_ptr,
     YR_OBJECT* module_object,
-    unsigned int block_data_size_remaining,
+    uint32_t block_data_size_remaining,
     const char* name,
     bool is_unicode)
 {
   uint16_t count_characters;
-  unsigned int string_size;
+  uint32_t string_size;
 
   // CountCharacters only returns the number of characters in the string, but
   // not information on whether the string is unicode vs. another type of
@@ -1180,10 +1180,10 @@ unsigned int parse_string_data(
   return string_size + sizeof(count_characters);
 }
 
-unsigned int parse_console_data_block(
+uint32_t parse_console_data_block(
     const uint8_t* extra_block_ptr,
     YR_OBJECT* module_object,
-    unsigned int block_data_size_remaining,
+    uint32_t block_data_size_remaining,
     uint32_t extra_data_block_size,
     uint32_t extra_data_block_signature)
 {
@@ -1295,10 +1295,10 @@ unsigned int parse_console_data_block(
   return 1;
 }
 
-unsigned int parse_console_fe_data_block(
+uint32_t parse_console_fe_data_block(
     const uint8_t* extra_block_ptr,
     YR_OBJECT* module_object,
-    unsigned int block_data_size_remaining,
+    uint32_t block_data_size_remaining,
     uint32_t extra_data_block_size,
     uint32_t extra_data_block_signature)
 {
@@ -1326,10 +1326,10 @@ unsigned int parse_console_fe_data_block(
   return 1;
 }
 
-unsigned int parse_darwin_data_block(
+uint32_t parse_darwin_data_block(
     const uint8_t* extra_block_ptr,
     YR_OBJECT* module_object,
-    unsigned int block_data_size_remaining,
+    uint32_t block_data_size_remaining,
     uint32_t extra_data_block_size,
     uint32_t extra_data_block_signature)
 {
@@ -1361,10 +1361,10 @@ unsigned int parse_darwin_data_block(
   return 1;
 }
 
-unsigned int parse_environment_variable_data_block(
+uint32_t parse_environment_variable_data_block(
     const uint8_t* extra_block_ptr,
     YR_OBJECT* module_object,
-    unsigned int block_data_size_remaining,
+    uint32_t block_data_size_remaining,
     uint32_t extra_data_block_size,
     uint32_t extra_data_block_signature)
 {
@@ -1401,10 +1401,10 @@ unsigned int parse_environment_variable_data_block(
   return 1;
 }
 
-unsigned int parse_icon_environment_data_block(
+uint32_t parse_icon_environment_data_block(
     const uint8_t* extra_block_ptr,
     YR_OBJECT* module_object,
-    unsigned int block_data_size_remaining,
+    uint32_t block_data_size_remaining,
     uint32_t extra_data_block_size,
     uint32_t extra_data_block_signature)
 {
@@ -1439,10 +1439,10 @@ unsigned int parse_icon_environment_data_block(
   return 1;
 }
 
-unsigned int parse_known_folder_data_block(
+uint32_t parse_known_folder_data_block(
     const uint8_t* extra_block_ptr,
     YR_OBJECT* module_object,
-    unsigned int block_data_size_remaining,
+    uint32_t block_data_size_remaining,
     uint32_t extra_data_block_size,
     uint32_t extra_data_block_signature)
 {
@@ -1480,10 +1480,10 @@ unsigned int parse_known_folder_data_block(
   return 1;
 }
 
-unsigned int parse_property_store_data_block(
+uint32_t parse_property_store_data_block(
     const uint8_t* extra_block_ptr,
     YR_OBJECT* module_object,
-    unsigned int block_data_size_remaining,
+    uint32_t block_data_size_remaining,
     uint32_t extra_data_block_size,
     uint32_t extra_data_block_signature)
 {
@@ -1500,10 +1500,10 @@ unsigned int parse_property_store_data_block(
   return 1;
 }
 
-unsigned int parse_shim_data_block(
+uint32_t parse_shim_data_block(
     const uint8_t* extra_block_ptr,
     YR_OBJECT* module_object,
-    unsigned int block_data_size_remaining,
+    uint32_t block_data_size_remaining,
     uint32_t extra_data_block_size,
     uint32_t extra_data_block_signature)
 {
@@ -1531,10 +1531,10 @@ unsigned int parse_shim_data_block(
   return 1;
 }
 
-unsigned int parse_special_folder_data_block(
+uint32_t parse_special_folder_data_block(
     const uint8_t* extra_block_ptr,
     YR_OBJECT* module_object,
-    unsigned int block_data_size_remaining,
+    uint32_t block_data_size_remaining,
     uint32_t extra_data_block_size,
     uint32_t extra_data_block_signature)
 {
@@ -1566,10 +1566,10 @@ unsigned int parse_special_folder_data_block(
   return 1;
 }
 
-unsigned int parse_tracker_data_block(
+uint32_t parse_tracker_data_block(
     const uint8_t* extra_block_ptr,
     YR_OBJECT* module_object,
-    unsigned int block_data_size_remaining,
+    uint32_t block_data_size_remaining,
     uint32_t extra_data_block_size,
     uint32_t extra_data_block_signature)
 {
@@ -1616,10 +1616,10 @@ unsigned int parse_tracker_data_block(
   return 1;
 }
 
-unsigned int parse_vista_and_above_id_list_data_block(
+uint32_t parse_vista_and_above_id_list_data_block(
     const uint8_t* extra_block_ptr,
     YR_OBJECT* module_object,
-    unsigned int block_data_size_remaining,
+    uint32_t block_data_size_remaining,
     uint32_t extra_data_block_size,
     uint32_t extra_data_block_signature)
 {
@@ -1647,10 +1647,10 @@ unsigned int parse_vista_and_above_id_list_data_block(
   return 1;
 }
 
-unsigned int parse_extra_block(
+uint32_t parse_extra_block(
     const uint8_t* extra_block_ptr,
     YR_OBJECT* module_object,
-    unsigned int block_data_size_remaining,
+    uint32_t block_data_size_remaining,
     uint32_t extra_data_block_size,
     uint32_t extra_data_block_signature)
 {
@@ -2013,12 +2013,12 @@ int module_load(
   yr_set_integer(TMPF_DEVICE, module_object, "TMPF_DEVICE");
 
   const uint8_t* block_data;
-  unsigned int block_data_size_remaining;
+  uint32_t block_data_size_remaining;
   char* hotkey_str;
   const uint8_t* current_location;
-  unsigned int id_list_size;
-  unsigned int link_info_size;
-  unsigned int string_data_size;
+  uint32_t id_list_size;
+  uint32_t link_info_size;
+  uint32_t string_data_size;
   uint32_t extra_data_block_size;
   uint32_t extra_data_block_signature;
 
