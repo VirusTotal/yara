@@ -27,6 +27,8 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+#include <stdlib.h>
+#include <sys/errno.h>
 #include <math.h>
 #include <yara/mem.h>
 #include <yara/modules.h>
@@ -715,6 +717,53 @@ define_function(mode_global)
   return_integer(most_common);
 }
 
+define_function(inttostring)
+{
+  int64_t i = integer_argument(1);
+  char *str = NULL;
+  asprintf(&str, "%lld", i);
+  return_string(str == NULL ? (char*) YR_UNDEFINED : str);
+}
+
+define_function(inttostring_base)
+{
+  int64_t i = integer_argument(1);
+  int64_t base = integer_argument(2);
+  char *str = NULL;
+  char *fmt;
+  switch (base)
+  {
+  case 10:
+    fmt = "%lld";
+    break;
+  case 8:
+    fmt = "%llo";
+    break;
+  case 16:
+    fmt = "%llx";
+    break;
+  default:
+    return_string(YR_UNDEFINED);
+  }
+  asprintf(&str, fmt, i);
+  return_string(str == NULL ? (char*) YR_UNDEFINED : str);
+}
+
+define_function(stringtoint)
+{
+  char* s = string_argument(1);
+  int64_t result = strtoll(s, NULL, 0);
+  return_integer(result == 0 && errno ? YR_UNDEFINED : result);
+}
+
+define_function(stringtoint_base)
+{
+  char* s = string_argument(1);
+  int64_t base = integer_argument(2);
+  int64_t result = strtoll(s, NULL, base);
+  return_integer(result == 0 && errno ? YR_UNDEFINED : result);
+}
+
 begin_declarations
   declare_float("MEAN_BYTES");
   declare_function("in_range", "fff", "i", in_range);
@@ -738,6 +787,10 @@ begin_declarations
   declare_function("percentage", "i", "f", percentage_global);
   declare_function("mode", "ii", "i", mode_range);
   declare_function("mode", "", "i", mode_global);
+  declare_function("inttostring", "i", "s", inttostring);
+  declare_function("inttostring", "ii", "s", inttostring_base);
+  declare_function("stringtoint", "s", "i", stringtoint);
+  declare_function("stringtoint", "si", "i", stringtoint_base);
 end_declarations
 
 int module_initialize(YR_MODULE* module)

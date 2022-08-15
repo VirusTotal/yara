@@ -223,6 +223,140 @@ int main(int argc, char** argv)
       }",
       "123ABCDEF123456987DE");
 
+  assert_true_rule(
+      "import \"math\" \
+      rule test { \
+        condition: \
+          math.inttostring(1234) == \"1234\" \
+      }",
+      NULL);
+
+  // We use signed integers by default if no base is specified.
+  assert_true_rule(
+      "import \"math\" \
+      rule test { \
+        condition: \
+          math.inttostring(-1) == \"-1\" \
+      }",
+      NULL);
+
+  assert_true_rule(
+      "import \"math\" \
+      rule test { \
+        condition: \
+          math.inttostring(32, 16) == \"20\" \
+      }",
+      NULL);
+
+  assert_true_rule(
+      "import \"math\" \
+      rule test { \
+        condition: \
+          math.inttostring(32, 8) == \"40\" \
+      }",
+      NULL);
+
+  assert_true_rule(
+      "import \"math\" \
+      rule test { \
+        condition: \
+          math.inttostring(32, 10) == \"32\" \
+      }",
+      NULL);
+
+  // Base 10 is always a signed integer, all other bases are unsigned.
+  assert_true_rule(
+      "import \"math\" \
+      rule test { \
+        condition: \
+          math.inttostring(-1, 10) == \"-1\" and \
+          math.inttostring(-1, 16) == \"ffffffffffffffff\" and \
+          math.inttostring(-1, 8) == \"1777777777777777777777\" \
+      }",
+      NULL);
+
+  // Passing a base that is not 10, 8 or 16 will result in UNDEFINED.
+  assert_true_rule(
+      "import \"math\" \
+      rule test { \
+        condition: \
+          not defined(math.inttostring(32, 9)) \
+      }",
+      NULL);
+
+  assert_true_rule(
+      "import \"math\" \
+      rule test { \
+        condition: \
+          math.stringtoint(\"1234\") == 1234 \
+      }",
+      NULL);
+
+  assert_true_rule(
+      "import \"math\" \
+      rule test { \
+        condition: \
+          math.stringtoint(\"-1\") == -1 \
+      }",
+      NULL);
+
+  // Leading spaces and + are allowed.
+  assert_true_rule(
+      "import \"math\" \
+      rule test { \
+        condition: \
+          math.stringtoint(\" +1\") == 1 \
+      }",
+      NULL);
+
+  // Strings can be prefixed with 0x and will be interpreted as hexadecimal.
+  assert_true_rule(
+      "import \"math\" \
+      rule test { \
+        condition: \
+          math.stringtoint(\"0x10\") == 16 \
+      }",
+      NULL);
+
+  // Strings prefixed with 0 will be interpreted as octal.
+  assert_true_rule(
+      "import \"math\" \
+      rule test { \
+        condition: \
+          math.stringtoint(\"010\") == 8 \
+      }",
+      NULL);
+
+  // Strings that are only partially converted are still fine.
+  assert_true_rule(
+      "import \"math\" \
+      rule test { \
+        condition: \
+          math.stringtoint(\"10A20\") == 10 \
+      }",
+      NULL);
+
+  assert_true_rule(
+      "import \"math\" \
+      rule test { \
+        condition: \
+          math.stringtoint(\"10\", 8) == 8 \
+      }",
+      NULL);
+
+  // Base 0 is a special case that tries to interpret the string by prefix, or
+  // default to decimal. We aren't doing anything special to get this, it is
+  // part of strtoll by default.
+  assert_true_rule(
+      "import \"math\" \
+      rule test { \
+        condition: \
+          math.stringtoint(\"010\", 0) == 8 and \
+          math.stringtoint(\"0x10\", 0) == 16 and \
+          math.stringtoint(\"10\", 0) == 10 \
+      }",
+      NULL);
+
   yr_finalize();
 
   YR_DEBUG_FPRINTF(
