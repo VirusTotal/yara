@@ -799,6 +799,7 @@ static IMPORT_FUNCTION* pe_parse_import_descriptor(
   if (IS_64BITS_PE(pe))
   {
     PIMAGE_THUNK_DATA64 thunks64 = (PIMAGE_THUNK_DATA64) (pe->data + offset);
+    uint64_t func_idx = 0;
 
     while (struct_fits_in_pe(pe, thunks64, IMAGE_THUNK_DATA64) &&
            yr_le64toh(thunks64->u1.Ordinal) != 0 &&
@@ -807,6 +808,7 @@ static IMPORT_FUNCTION* pe_parse_import_descriptor(
       char* name = NULL;
       uint16_t ordinal = 0;
       uint8_t has_ordinal = 0;
+      uint64_t rva_address = 0;
 
       if (!(yr_le64toh(thunks64->u1.Ordinal) & IMAGE_ORDINAL_FLAG64))
       {
@@ -835,6 +837,8 @@ static IMPORT_FUNCTION* pe_parse_import_descriptor(
         has_ordinal = 1;
       }
 
+      rva_address =  yr_le64toh(import_descriptor->FirstThunk + (sizeof(uint64_t) * func_idx));
+
       if (name != NULL || has_ordinal == 1)
       {
         IMPORT_FUNCTION* imported_func = (IMPORT_FUNCTION*) yr_calloc(
@@ -849,6 +853,7 @@ static IMPORT_FUNCTION* pe_parse_import_descriptor(
         imported_func->name = name;
         imported_func->ordinal = ordinal;
         imported_func->has_ordinal = has_ordinal;
+        imported_func->rva = rva_address;
         imported_func->next = NULL;
 
         if (head == NULL)
@@ -862,11 +867,13 @@ static IMPORT_FUNCTION* pe_parse_import_descriptor(
 
       (*num_function_imports)++;
       thunks64++;
+      func_idx++;
     }
   }
   else
   {
     PIMAGE_THUNK_DATA32 thunks32 = (PIMAGE_THUNK_DATA32) (pe->data + offset);
+    uint32_t func_idx = 0;
 
     while (struct_fits_in_pe(pe, thunks32, IMAGE_THUNK_DATA32) &&
            yr_le32toh(thunks32->u1.Ordinal) != 0 &&
@@ -875,6 +882,7 @@ static IMPORT_FUNCTION* pe_parse_import_descriptor(
       char* name = NULL;
       uint16_t ordinal = 0;
       uint8_t has_ordinal = 0;
+      uint32_t rva_address = 0;
 
       if (!(yr_le32toh(thunks32->u1.Ordinal) & IMAGE_ORDINAL_FLAG32))
       {
@@ -903,6 +911,8 @@ static IMPORT_FUNCTION* pe_parse_import_descriptor(
         has_ordinal = 1;
       }
 
+      rva_address =  yr_le32toh(import_descriptor->FirstThunk + (sizeof(uint32_t) * func_idx));
+
       if (name != NULL || has_ordinal == 1)
       {
         IMPORT_FUNCTION* imported_func = (IMPORT_FUNCTION*) yr_calloc(
@@ -917,6 +927,7 @@ static IMPORT_FUNCTION* pe_parse_import_descriptor(
         imported_func->name = name;
         imported_func->ordinal = ordinal;
         imported_func->has_ordinal = has_ordinal;
+        imported_func->rva = rva_address;
         imported_func->next = NULL;
 
         if (head == NULL)
@@ -930,6 +941,7 @@ static IMPORT_FUNCTION* pe_parse_import_descriptor(
 
       (*num_function_imports)++;
       thunks32++;
+      func_idx++;
     }
   }
 
@@ -988,7 +1000,8 @@ void pe_set_imports(
     const char* dll_name,
     const char* dll_number_of_functions,
     const char* fun_name,
-    const char* fun_ordinal)
+    const char* fun_ordinal,
+    const char* rva)
 {
   int dll_cnt = 0;
 
@@ -1003,6 +1016,10 @@ void pe_set_imports(
         yr_set_integer(func->ordinal, pe->object, fun_ordinal, dll_cnt, fun_cnt);
       else
         yr_set_integer(YR_UNDEFINED, pe->object, fun_ordinal, dll_cnt, fun_cnt);
+      if (func->rva)
+        yr_set_integer(func->rva, pe->object, rva, dll_cnt, fun_cnt);
+      else
+        yr_set_integer(YR_UNDEFINED, pe->object, rva, dll_cnt, fun_cnt);
     }
     yr_set_string(dll->name, pe->object, dll_name, dll_cnt);
     yr_set_integer(fun_cnt, pe->object, dll_number_of_functions, dll_cnt);
@@ -1104,7 +1121,8 @@ static IMPORTED_DLL* pe_parse_imports(PE* pe)
       "import_details[%i].library_name",
       "import_details[%i].number_of_functions",
       "import_details[%i].functions[%i].name",
-      "import_details[%i].functions[%i].ordinal");
+      "import_details[%i].functions[%i].ordinal",
+      "import_details[%i].functions[%i].rva");
 
   return head;
 }
@@ -1325,6 +1343,7 @@ static void* pe_parse_delayed_imports(PE* pe)
       imported_func->name = NULL;
       imported_func->has_ordinal = 0;
       imported_func->ordinal = 0;
+      imported_func->rva = 0;
       imported_func->next = NULL;
 
       // Check name address. It could be ordinal, VA or RVA
@@ -1349,6 +1368,8 @@ static void* pe_parse_delayed_imports(PE* pe)
         imported_func->ordinal = yr_le64toh(nameAddress) & 0xFFFF;
         imported_func->has_ordinal = 1;
       }
+
+      imported_func->rva =  yr_le64toh(func_rva);
 
       num_function_imports++;
       name_rva += pointer_size;
@@ -1386,7 +1407,8 @@ static void* pe_parse_delayed_imports(PE* pe)
       "delayed_import_details[%i].library_name",
       "delayed_import_details[%i].number_of_functions",
       "delayed_import_details[%i].functions[%i].name",
-      "delayed_import_details[%i].functions[%i].ordinal");
+      "delayed_import_details[%i].functions[%i].ordinal",
+      "delayed_import_details[%i].functions[%i].rva");
 
   return head_dll;
 }
@@ -3495,6 +3517,7 @@ begin_declarations
     begin_struct_array("functions")
       declare_string("name");
       declare_integer("ordinal");
+      declare_integer("rva");
     end_struct_array("functions");
   end_struct_array("import_details");
 
@@ -3504,6 +3527,7 @@ begin_declarations
     begin_struct_array("functions")
       declare_string("name");
       declare_integer("ordinal");
+      declare_integer("rva");
     end_struct_array("functions");
   end_struct_array("delayed_import_details");
 

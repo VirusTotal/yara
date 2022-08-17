@@ -42,6 +42,7 @@ typedef struct _IMPORT_FUNCTION
   char* name;
   uint8_t has_ordinal;
   uint16_t ordinal;
+  uint64_t rva;
 
   struct _IMPORT_FUNCTION* next;
 

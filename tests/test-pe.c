@@ -685,6 +685,125 @@ int main(int argc, char** argv)
       "tests/data/"
       "079a472d22290a94ebb212aa8015cdc8dd28a968c6b4d3b88acdd58ce2d3b885");
 
+ assert_true_rule_file(
+      "import \"pe\" \
+      \
+      rule import_details_rva_32_v1_catch \
+      {\
+          condition:\
+            for any import_detail in pe.import_details: (\
+                import_detail.library_name == \"MSVCR100.dll\" and\
+                for any function in import_detail.functions : (\
+                    function.name == \"_initterm\" and\
+                    function.rva == 0x3084 \
+                )\
+            )\
+      }",
+      "tests/data/"
+      "079a472d22290a94ebb212aa8015cdc8dd28a968c6b4d3b88acdd58ce2d3b885");
+
+  assert_true_rule_file(
+      "import \"pe\" \
+      \
+      rule import_details_rva_32_v2_catch \
+      {\
+          condition:\
+            for any import_detail in pe.import_details: (\
+                import_detail.library_name == \"KERNEL32.dll\" and\
+                for any function in import_detail.functions : (\
+                    function.name == \"QueryPerformanceCounter\" and\
+                    function.rva == 0x3054 \
+                )\
+            )\
+      }",
+      "tests/data/"
+      "079a472d22290a94ebb212aa8015cdc8dd28a968c6b4d3b88acdd58ce2d3b885");
+
+  assert_true_rule_file(
+      "import \"pe\" \
+      \
+      rule import_details_rva_32_v3_catch \
+      {\
+          condition:\
+            for any import_detail in pe.import_details: (\
+                import_detail.library_name == \"KERNEL32.dll\" and\
+                for any function in import_detail.functions : (\
+                    function.name == \"CloseHandle\" and\
+                    function.rva == 0xd10c \
+                )\
+            )\
+      }",
+      "tests/data/"
+      "pe_imports");
+
+  assert_true_rule_file(
+      "import \"pe\" \
+      \
+      rule import_details_rva_64_v1_catch \
+      {\
+          condition:\
+            for any import_detail in pe.import_details: (\
+                import_detail.library_name == \"KERNEL32.dll\" and\
+                for any function in import_detail.functions : (\
+                    function.name == \"LoadLibraryExW\" and\
+                    function.rva == 0x2118 \
+                )\
+            )\
+      }",
+      "tests/data/"
+      "mtxex_modified_rsrc_rva.dll");
+
+  assert_true_rule_file(
+      "import \"pe\" \
+      \
+      rule import_details_rva_64_v2_catch \
+      {\
+          condition:\
+            for any import_detail in pe.import_details: (\
+                import_detail.library_name == \"KERNEL32.dll\" and\
+                for any function in import_detail.functions : (\
+                    function.name == \"GetCurrentProcessId\" and\
+                    function.rva == 0x21a0 \
+                )\
+            )\
+      }",
+      "tests/data/"
+      "mtxex_modified_rsrc_rva.dll");
+
+  assert_true_rule_file(
+      "import \"pe\" \
+      \
+      rule delayed_import_details_rva_32_v1_catch \
+      {\
+          condition:\
+            for any import_detail in pe.delayed_import_details: (\
+                import_detail.library_name == \"USER32.dll\" and\
+                for any function in import_detail.functions : (\
+                    function.name == \"MessageBoxA\" and\
+                    function.rva == 0x13884 \
+                )\
+            )\
+      }",
+      "tests/data/"
+      "pe_imports");
+
+  assert_true_rule_file(
+      "import \"pe\" \
+      \
+      rule delayed_import_details_rva_32_v2_catch \
+      {\
+          condition:\
+            for any import_detail in pe.delayed_import_details: (\
+                import_detail.library_name == \"USER32.dll\" and\
+                for any function in import_detail.functions : (\
+                    function.name == \"MessageBeep\" and\
+                    function.rva == 0x13880 \
+                )\
+            )\
+      }",
+      "tests/data/"
+      "pe_imports");
+
   assert_true_rule_file(
       "import \"pe\" \
       \
