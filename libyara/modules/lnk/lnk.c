@@ -876,6 +876,11 @@ uint32_t parse_link_info(
         return 0;
       }
 
+      if (block_data_size_remaining < volume_id_size)
+      {
+        return 0;
+      }
+
       link_info_ptr += volume_id_size;
       block_data_size_remaining -= volume_id_size;
     }
@@ -942,6 +947,11 @@ uint32_t parse_link_info(
           link_info_ptr, module_object, block_data_size_remaining);
 
       if (common_network_relative_link_size == 0)
+      {
+        return 0;
+      }
+
+      if (block_data_size_remaining < common_network_relative_link_size)
       {
         return 0;
       }
@@ -2109,6 +2119,12 @@ int module_load(
           return ERROR_SUCCESS;
         }
 
+        if (block_data_size_remaining < id_list_size)
+        {
+          yr_set_integer(1, module_object, "is_malformed");
+          return ERROR_SUCCESS;
+        }
+
         current_location += id_list_size;
         block_data_size_remaining -= id_list_size;
       }
@@ -2119,6 +2135,12 @@ int module_load(
             current_location, module_object, block_data_size_remaining);
 
         if (link_info_size == 0)
+        {
+          yr_set_integer(1, module_object, "is_malformed");
+          return ERROR_SUCCESS;
+        }
+
+        if (block_data_size_remaining < link_info_size)
         {
           yr_set_integer(1, module_object, "is_malformed");
           return ERROR_SUCCESS;
@@ -2144,6 +2166,12 @@ int module_load(
           return ERROR_SUCCESS;
         }
 
+        if (block_data_size_remaining < string_data_size)
+        {
+          yr_set_integer(1, module_object, "is_malformed");
+          return ERROR_SUCCESS;
+        }
+
         current_location += string_data_size;
         block_data_size_remaining -= string_data_size;
       }
@@ -2159,6 +2187,12 @@ int module_load(
             lnk_header->link_flags & IS_UNICODE);
 
         if (string_data_size == 0)
+        {
+          yr_set_integer(1, module_object, "is_malformed");
+          return ERROR_SUCCESS;
+        }
+
+        if (block_data_size_remaining < string_data_size)
         {
           yr_set_integer(1, module_object, "is_malformed");
           return ERROR_SUCCESS;
@@ -2184,6 +2218,12 @@ int module_load(
           return ERROR_SUCCESS;
         }
 
+        if (block_data_size_remaining < string_data_size)
+        {
+          yr_set_integer(1, module_object, "is_malformed");
+          return ERROR_SUCCESS;
+        }
+
         current_location += string_data_size;
         block_data_size_remaining -= string_data_size;
       }
@@ -2204,6 +2244,12 @@ int module_load(
           return ERROR_SUCCESS;
         }
 
+        if (block_data_size_remaining < string_data_size)
+        {
+          yr_set_integer(1, module_object, "is_malformed");
+          return ERROR_SUCCESS;
+        }
+
         current_location += string_data_size;
         block_data_size_remaining -= string_data_size;
       }
@@ -2219,6 +2265,12 @@ int module_load(
             lnk_header->link_flags & IS_UNICODE);
 
         if (string_data_size == 0)
+        {
+          yr_set_integer(1, module_object, "is_malformed");
+          return ERROR_SUCCESS;
+        }
+
+        if (block_data_size_remaining < string_data_size)
         {
           yr_set_integer(1, module_object, "is_malformed");
           return ERROR_SUCCESS;
