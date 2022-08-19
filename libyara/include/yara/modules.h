@@ -310,6 +310,8 @@ struct YR_MODULE_IMPORT
   size_t module_data_size;
 };
 
+YR_API int yr_modules_add(YR_MODULE* module);
+
 int yr_modules_initialize(void);
 
 int yr_modules_finalize(void);
