@@ -317,3 +317,5 @@ int module_load(
 
   return ERROR_SUCCESS;
 }
+
+yr_module_define();

@@ -31,24 +31,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <yara/libyara.h>
 #include <yara/modules.h>
 
-#define MODULE(name)                             \
-  int name##__declarations(YR_OBJECT* module);   \
-  int name##__load(                              \
-      YR_SCAN_CONTEXT* context,                  \
-      YR_OBJECT* module,                         \
-      void* module_data,                         \
-      size_t module_data_size);                  \
-  int name##__unload(YR_OBJECT* main_structure); \
-  int name##__initialize(YR_MODULE* module);     \
-  int name##__finalize(YR_MODULE* module);       \
-                                                 \
-  static YR_MODULE name##__module = {            \
-      #name,                                     \
-      name##__declarations,                      \
-      name##__load,                              \
-      name##__unload,                            \
-      name##__initialize,                        \
-      name##__finalize};
+#define MODULE(name) extern YR_MODULE name##__module;
 
 #include <modules/module_list>
 
