@@ -179,7 +179,7 @@ int main(int argc, char** argv)
       "import \"math\" \
       rule test { \
         condition: \
-          math.serial_correlation(\"BCAB\") == -0.5 \
+          math.serial_correlation(\"BCA\") == -0.5 \
       }",
       NULL);
 
@@ -187,7 +187,7 @@ int main(int argc, char** argv)
       "import \"math\" \
       rule test { \
         condition: \
-          math.serial_correlation(1, 4) == -0.5 \
+          math.serial_correlation(1, 3) == -0.5 \
       }",
       "ABCABC");
 
