@@ -48,7 +48,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // the parent is destroyed. You must not call yr_object_destroy on an objected
 // that has a parent, you should destroy the parent instead.
 //
-int yr_object_create(
+YR_API int yr_object_create(
     int8_t type,
     const char* identifier,
     YR_OBJECT* parent,
@@ -180,7 +180,7 @@ void yr_object_set_canary(YR_OBJECT* object, int canary)
   object->canary = canary;
 }
 
-int yr_object_function_create(
+YR_API int yr_object_function_create(
     const char* identifier,
     const char* arguments_fmt,
     const char* return_fmt,
@@ -250,7 +250,7 @@ int yr_object_function_create(
   return ERROR_SUCCESS;
 }
 
-int yr_object_from_external_variable(
+YR_API int yr_object_from_external_variable(
     YR_EXTERNAL_VARIABLE* external,
     YR_OBJECT** object)
 {
@@ -317,7 +317,7 @@ int yr_object_from_external_variable(
 // Destroy an objects, and any other object that is a child of it. For example,
 // destroying a struct will destroy all its members.
 //
-void yr_object_destroy(YR_OBJECT* object)
+YR_API void yr_object_destroy(YR_OBJECT* object)
 {
   YR_STRUCTURE_MEMBER* member;
   YR_STRUCTURE_MEMBER* next_member;
@@ -392,7 +392,7 @@ void yr_object_destroy(YR_OBJECT* object)
   yr_free(object);
 }
 
-YR_OBJECT* yr_object_lookup_field(YR_OBJECT* object, const char* field_name)
+YR_API YR_OBJECT* yr_object_lookup_field(YR_OBJECT* object, const char* field_name)
 {
   YR_STRUCTURE_MEMBER* member;
 
@@ -515,7 +515,7 @@ static YR_OBJECT* _yr_object_lookup(
   return obj;
 }
 
-YR_OBJECT* yr_object_lookup(
+YR_API YR_OBJECT* yr_object_lookup(
     YR_OBJECT* object,
     int flags,
     const char* pattern,
@@ -533,7 +533,7 @@ YR_OBJECT* yr_object_lookup(
   return result;
 }
 
-int yr_object_copy(YR_OBJECT* object, YR_OBJECT** object_copy)
+YR_API int yr_object_copy(YR_OBJECT* object, YR_OBJECT** object_copy)
 {
   YR_OBJECT* copy;
   YR_OBJECT* o;
@@ -630,7 +630,7 @@ int yr_object_copy(YR_OBJECT* object, YR_OBJECT** object_copy)
   return ERROR_SUCCESS;
 }
 
-int yr_object_structure_set_member(YR_OBJECT* object, YR_OBJECT* member)
+YR_API int yr_object_structure_set_member(YR_OBJECT* object, YR_OBJECT* member)
 {
   YR_STRUCTURE_MEMBER* sm;
 
@@ -655,7 +655,7 @@ int yr_object_structure_set_member(YR_OBJECT* object, YR_OBJECT* member)
   return ERROR_SUCCESS;
 }
 
-int yr_object_array_length(YR_OBJECT* object)
+YR_API int yr_object_array_length(YR_OBJECT* object)
 {
   YR_OBJECT_ARRAY* array;
 
@@ -668,7 +668,7 @@ int yr_object_array_length(YR_OBJECT* object)
   return array->items->length;
 }
 
-YR_OBJECT* yr_object_array_get_item(YR_OBJECT* object, int flags, int index)
+YR_API YR_OBJECT* yr_object_array_get_item(YR_OBJECT* object, int flags, int index)
 {
   YR_OBJECT* result = NULL;
   YR_OBJECT_ARRAY* array;
@@ -694,7 +694,7 @@ YR_OBJECT* yr_object_array_get_item(YR_OBJECT* object, int flags, int index)
   return result;
 }
 
-int yr_object_array_set_item(YR_OBJECT* object, YR_OBJECT* item, int index)
+YR_API int yr_object_array_set_item(YR_OBJECT* object, YR_OBJECT* item, int index)
 {
   YR_OBJECT_ARRAY* array;
 
@@ -749,7 +749,7 @@ int yr_object_array_set_item(YR_OBJECT* object, YR_OBJECT* item, int index)
   return ERROR_SUCCESS;
 }
 
-YR_OBJECT* yr_object_dict_get_item(
+YR_API YR_OBJECT* yr_object_dict_get_item(
     YR_OBJECT* object,
     int flags,
     const char* key)
@@ -781,7 +781,7 @@ YR_OBJECT* yr_object_dict_get_item(
   return result;
 }
 
-int yr_object_dict_set_item(YR_OBJECT* object, YR_OBJECT* item, const char* key)
+YR_API int yr_object_dict_set_item(YR_OBJECT* object, YR_OBJECT* item, const char* key)
 {
   YR_OBJECT_DICTIONARY* dict;
 
@@ -836,7 +836,7 @@ int yr_object_dict_set_item(YR_OBJECT* object, YR_OBJECT* item, const char* key)
   return ERROR_SUCCESS;
 }
 
-bool yr_object_has_undefined_value(YR_OBJECT* object, const char* field, ...)
+YR_API bool yr_object_has_undefined_value(YR_OBJECT* object, const char* field, ...)
 {
   YR_OBJECT* field_obj;
 
@@ -866,7 +866,7 @@ bool yr_object_has_undefined_value(YR_OBJECT* object, const char* field, ...)
   return false;
 }
 
-int64_t yr_object_get_integer(YR_OBJECT* object, const char* field, ...)
+YR_API int64_t yr_object_get_integer(YR_OBJECT* object, const char* field, ...)
 {
   YR_OBJECT* integer_obj;
 
@@ -891,7 +891,7 @@ int64_t yr_object_get_integer(YR_OBJECT* object, const char* field, ...)
   return integer_obj->value.i;
 }
 
-double yr_object_get_float(YR_OBJECT* object, const char* field, ...)
+YR_API double yr_object_get_float(YR_OBJECT* object, const char* field, ...)
 {
   YR_OBJECT* double_obj;
 
@@ -916,7 +916,7 @@ double yr_object_get_float(YR_OBJECT* object, const char* field, ...)
   return double_obj->value.d;
 }
 
-SIZED_STRING* yr_object_get_string(YR_OBJECT* object, const char* field, ...)
+YR_API SIZED_STRING* yr_object_get_string(YR_OBJECT* object, const char* field, ...)
 {
   YR_OBJECT* string_obj;
 
@@ -941,7 +941,7 @@ SIZED_STRING* yr_object_get_string(YR_OBJECT* object, const char* field, ...)
   return string_obj->value.ss;
 }
 
-int yr_object_set_integer(
+YR_API int yr_object_set_integer(
     int64_t value,
     YR_OBJECT* object,
     const char* field,
@@ -974,7 +974,7 @@ int yr_object_set_integer(
   return ERROR_SUCCESS;
 }
 
-int yr_object_set_float(double value, YR_OBJECT* object, const char* field, ...)
+YR_API int yr_object_set_float(double value, YR_OBJECT* object, const char* field, ...)
 {
   YR_OBJECT* double_obj;
 
@@ -1003,7 +1003,7 @@ int yr_object_set_float(double value, YR_OBJECT* object, const char* field, ...)
   return ERROR_SUCCESS;
 }
 
-int yr_object_set_string(
+YR_API int yr_object_set_string(
     const char* value,
     size_t len,
     YR_OBJECT* object,
@@ -1057,7 +1057,7 @@ int yr_object_set_string(
   return ERROR_SUCCESS;
 }
 
-YR_OBJECT* yr_object_get_root(YR_OBJECT* object)
+YR_API YR_OBJECT* yr_object_get_root(YR_OBJECT* object)
 {
   YR_OBJECT* o = object;
 

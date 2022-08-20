@@ -55,17 +55,17 @@ int yr_heap_free(void)
     return ERROR_INTERNAL_FATAL_ERROR;
 }
 
-void* yr_calloc(size_t count, size_t size)
+YR_API void* yr_calloc(size_t count, size_t size)
 {
   return (void*) HeapAlloc(hHeap, HEAP_ZERO_MEMORY, count * size);
 }
 
-void* yr_malloc(size_t size)
+YR_API void* yr_malloc(size_t size)
 {
   return (void*) HeapAlloc(hHeap, HEAP_ZERO_MEMORY, size);
 }
 
-void* yr_realloc(void* ptr, size_t size)
+YR_API void* yr_realloc(void* ptr, size_t size)
 {
   if (ptr == NULL)
     return (void*) HeapAlloc(hHeap, HEAP_ZERO_MEMORY, size);
@@ -73,7 +73,7 @@ void* yr_realloc(void* ptr, size_t size)
   return (void*) HeapReAlloc(hHeap, HEAP_ZERO_MEMORY, ptr, size);
 }
 
-char* yr_strdup(const char* str)
+YR_API char* yr_strdup(const char* str)
 {
   size_t len = strlen(str);
   char* dup = (char*) yr_malloc(len + 1);
@@ -87,7 +87,7 @@ char* yr_strdup(const char* str)
   return (char*) dup;
 }
 
-char* yr_strndup(const char* str, size_t n)
+YR_API char* yr_strndup(const char* str, size_t n)
 {
   size_t len = strnlen(str, n);
   char* dup = (char*) yr_malloc(len + 1);
@@ -122,27 +122,27 @@ int yr_heap_free(void)
   return ERROR_SUCCESS;
 }
 
-void* yr_calloc(size_t count, size_t size)
+YR_API void* yr_calloc(size_t count, size_t size)
 {
   return calloc(count, size);
 }
 
-void* yr_malloc(size_t size)
+YR_API void* yr_malloc(size_t size)
 {
   return malloc(size);
 }
 
-void* yr_realloc(void* ptr, size_t size)
+YR_API void* yr_realloc(void* ptr, size_t size)
 {
   return realloc(ptr, size);
 }
 
-char* yr_strdup(const char* str)
+YR_API char* yr_strdup(const char* str)
 {
   return strdup(str);
 }
 
-char* yr_strndup(const char* str, size_t n)
+YR_API char* yr_strndup(const char* str, size_t n)
 {
   return strndup(str, n);
 }

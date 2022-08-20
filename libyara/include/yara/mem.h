@@ -46,15 +46,15 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #else
 
-void* yr_calloc(size_t count, size_t size);
+YR_API void* yr_calloc(size_t count, size_t size);
 
-void* yr_malloc(size_t size);
+YR_API void* yr_malloc(size_t size);
 
-void* yr_realloc(void* ptr, size_t size);
+YR_API void* yr_realloc(void* ptr, size_t size);
 
-char* yr_strdup(const char* str);
+YR_API char* yr_strdup(const char* str);
 
-char* yr_strndup(const char* str, size_t n);
+YR_API char* yr_strndup(const char* str, size_t n);
 
 YR_API void yr_free(void* ptr);
 

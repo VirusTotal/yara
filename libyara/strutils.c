@@ -237,7 +237,7 @@ void* memmem(
 // dependent in some platforms and can consider non-ASCII characters to be
 // alphanumeric.
 //
-int yr_isalnum(const uint8_t* s)
+YR_API int yr_isalnum(const uint8_t* s)
 {
   return (*s >= 0x30 && *s <= 0x39) || (*s >= 0x41 && *s <= 0x5a) ||
          (*s >= 0x61 && *s <= 0x7a);
@@ -249,7 +249,7 @@ int yr_isalnum(const uint8_t* s)
 // allocates memory using yr_malloc, and therefore the caller must free
 // the memory using yr_free.
 //
-void yr_vasprintf(char** strp, const char* fmt, va_list ap)
+YR_API void yr_vasprintf(char** strp, const char* fmt, va_list ap)
 {
   va_list ap_copy;
   va_copy(ap_copy, ap);
@@ -273,7 +273,7 @@ void yr_vasprintf(char** strp, const char* fmt, va_list ap)
 //////////////////////////////////////////////////////////////////////////
 // This our own implementation of asprintf(), see yr_vasprintf() for details.
 //
-void yr_asprintf(char** strp, const char* fmt, ...)
+YR_API void yr_asprintf(char** strp, const char* fmt, ...)
 {
   va_list ap;
   va_start(ap, fmt);

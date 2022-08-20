@@ -35,6 +35,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <stdlib.h>
 #include <string.h>
 #include <yara/integers.h>
+#include <yara/utils.h>
 
 #if defined(_WIN32)
 
@@ -109,8 +110,8 @@ size_t strlcpy_w(char* dst, const char* w_src, size_t n);
 
 #endif
 
-int yr_isalnum(const uint8_t* s);
+YR_API int yr_isalnum(const uint8_t* s);
 
-void yr_vasprintf(char** strp, const char* fmt, va_list ap);
+YR_API void yr_vasprintf(char** strp, const char* fmt, va_list ap);
 
-void yr_asprintf(char** strp, const char* fmt, ...);
+YR_API void yr_asprintf(char** strp, const char* fmt, ...);
