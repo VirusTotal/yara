@@ -30,6 +30,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <yara/globals.h>
 #include <yara/mem.h>
 #include <yara/modules.h>
+#include <yara/strutils.h>
 
 #include "../crypto.h"
 
