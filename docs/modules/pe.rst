@@ -1333,7 +1333,7 @@ Reference
 
         .. c:member:: rva
 
-            .. versionadded:: 4.2.?
+            .. versionadded:: 4.3.0
 
             Relative virtual address (RVA) of imported function. If rva not found then this value is YR_UNDEFINED
 
@@ -1367,7 +1367,7 @@ Reference
 
         .. c:member:: rva
 
-            .. versionadded:: 4.2.?
+            .. versionadded:: 4.3.0
             
             Relative virtual address (RVA) of imported function. If rva not found then this value is YR_UNDEFINED
 
