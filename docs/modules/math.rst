@@ -157,7 +157,7 @@ file and create signatures based on those results.
 .. c:function:: mode(offset, size)
 
     .. versionadded:: 4.2.0
-    
+
     Returns the most common byte, starting at *offset* and looking at the next
     *size* bytes. When scanning a
     running process the *offset* argument should be a virtual address within
@@ -165,3 +165,46 @@ file and create signatures based on those results.
     *offset* and *size* are optional; if left empty, the complete file is searched.
 
     *Example: math.mode(0, filesize) == 0xFF*
+
+.. c:function:: to_string(int)
+
+    .. versionadded:: 4.3.0
+
+    Convert the given integer to a string. Note: integers in YARA are signed.
+
+    *Example: math.to_string(10) == "10"*
+    *Example: math.to_string(-1) == "-1"*
+
+.. c:function:: to_string(int, base)
+
+    .. versionadded:: 4.3.0
+
+    Convert the given integer to a string in the given base. Supported bases are
+    10, 8 and 16. Note: integers in YARA are signed.
+
+    *Example: math.to_string(32, 16) == "20"*
+    *Example: math.to_string(-1, 16) == "ffffffffffffffff"*
+
+.. c:function:: to_int(string)
+
+    .. versionadded:: 4.3.0
+
+    Convert the given string to a signed integer. If the string starts with "0x"
+    it is treated as base 16. If the string starts with "0" it is treated base
+    8. Leading '+' or '-' is also supported.
+
+    *Example: math.to_int("1234") == 1234*
+    *Example: math.to_int("-10") == -10*
+    *Example: math.to_int("-010" == -8*
+
+.. c:function:: to_int(string, base)
+
+    .. versionadded:: 4.3.0
+
+    Convert the given string, interpreted with the given base, to a signed
+    integer. Base must be 0 or between 2 and 32 inclusive. If it is zero then
+    the string will be intrepreted as base 16 if it starts with "0x" or as base
+    8 if it starts with "0". Leading '+' or '-' is also supported.
+
+    *Example: math.to_int("011", 8) == "9"*
+    *Example: math.to_int("-011", 0) == "-9"*

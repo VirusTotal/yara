@@ -227,7 +227,7 @@ int main(int argc, char** argv)
       "import \"math\" \
       rule test { \
         condition: \
-          math.inttostring(1234) == \"1234\" \
+          math.to_string(1234) == \"1234\" \
       }",
       NULL);
 
@@ -236,7 +236,7 @@ int main(int argc, char** argv)
       "import \"math\" \
       rule test { \
         condition: \
-          math.inttostring(-1) == \"-1\" \
+          math.to_string(-1) == \"-1\" \
       }",
       NULL);
 
@@ -244,7 +244,7 @@ int main(int argc, char** argv)
       "import \"math\" \
       rule test { \
         condition: \
-          math.inttostring(32, 16) == \"20\" \
+          math.to_string(32, 16) == \"20\" \
       }",
       NULL);
 
@@ -252,7 +252,7 @@ int main(int argc, char** argv)
       "import \"math\" \
       rule test { \
         condition: \
-          math.inttostring(32, 8) == \"40\" \
+          math.to_string(32, 8) == \"40\" \
       }",
       NULL);
 
@@ -260,7 +260,7 @@ int main(int argc, char** argv)
       "import \"math\" \
       rule test { \
         condition: \
-          math.inttostring(32, 10) == \"32\" \
+          math.to_string(32, 10) == \"32\" \
       }",
       NULL);
 
@@ -269,9 +269,9 @@ int main(int argc, char** argv)
       "import \"math\" \
       rule test { \
         condition: \
-          math.inttostring(-1, 10) == \"-1\" and \
-          math.inttostring(-1, 16) == \"ffffffffffffffff\" and \
-          math.inttostring(-1, 8) == \"1777777777777777777777\" \
+          math.to_string(-1, 10) == \"-1\" and \
+          math.to_string(-1, 16) == \"ffffffffffffffff\" and \
+          math.to_string(-1, 8) == \"1777777777777777777777\" \
       }",
       NULL);
 
@@ -280,7 +280,7 @@ int main(int argc, char** argv)
       "import \"math\" \
       rule test { \
         condition: \
-          not defined(math.inttostring(32, 9)) \
+          not defined(math.to_string(32, 9)) \
       }",
       NULL);
 
@@ -288,7 +288,7 @@ int main(int argc, char** argv)
       "import \"math\" \
       rule test { \
         condition: \
-          math.stringtoint(\"1234\") == 1234 \
+          math.to_int(\"1234\") == 1234 \
       }",
       NULL);
 
@@ -296,7 +296,7 @@ int main(int argc, char** argv)
       "import \"math\" \
       rule test { \
         condition: \
-          math.stringtoint(\"-1\") == -1 \
+          math.to_int(\"-1\") == -1 \
       }",
       NULL);
 
@@ -305,7 +305,7 @@ int main(int argc, char** argv)
       "import \"math\" \
       rule test { \
         condition: \
-          math.stringtoint(\" +1\") == 1 \
+          math.to_int(\" +1\") == 1 \
       }",
       NULL);
 
@@ -314,7 +314,7 @@ int main(int argc, char** argv)
       "import \"math\" \
       rule test { \
         condition: \
-          math.stringtoint(\"0x10\") == 16 \
+          math.to_int(\"0x10\") == 16 \
       }",
       NULL);
 
@@ -323,7 +323,7 @@ int main(int argc, char** argv)
       "import \"math\" \
       rule test { \
         condition: \
-          math.stringtoint(\"010\") == 8 \
+          math.to_int(\"010\") == 8 \
       }",
       NULL);
 
@@ -332,7 +332,7 @@ int main(int argc, char** argv)
       "import \"math\" \
       rule test { \
         condition: \
-          math.stringtoint(\"10A20\") == 10 \
+          math.to_int(\"10A20\") == 10 \
       }",
       NULL);
 
@@ -340,7 +340,7 @@ int main(int argc, char** argv)
       "import \"math\" \
       rule test { \
         condition: \
-          math.stringtoint(\"10\", 8) == 8 \
+          math.to_int(\"10\", 8) == 8 \
       }",
       NULL);
 
@@ -351,9 +351,9 @@ int main(int argc, char** argv)
       "import \"math\" \
       rule test { \
         condition: \
-          math.stringtoint(\"010\", 0) == 8 and \
-          math.stringtoint(\"0x10\", 0) == 16 and \
-          math.stringtoint(\"10\", 0) == 10 \
+          math.to_int(\"010\", 0) == 8 and \
+          math.to_int(\"0x10\", 0) == 16 and \
+          math.to_int(\"10\", 0) == 10 \
       }",
       NULL);
 

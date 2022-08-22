@@ -37,6 +37,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define MODULE_NAME math
 
 #define PI 3.141592653589793
+// This is more than enough space to hold the maximum signed 64bit integer as a
+// string in decimal, hex or octal, including the sign and NULL terminator.
+#define INT64_MAX_STRING 30
 
 // log2 is not defined by math.h in VC++
 
@@ -717,19 +720,19 @@ define_function(mode_global)
   return_integer(most_common);
 }
 
-define_function(inttostring)
+define_function(to_string)
 {
   int64_t i = integer_argument(1);
-  char *str = NULL;
-  asprintf(&str, "%lld", i);
-  return_string(str == NULL ? (char*) YR_UNDEFINED : str);
+  char str[INT64_MAX_STRING];
+  snprintf(str, INT64_MAX_STRING, "%lld", i);
+  return_string(&str);
 }
 
-define_function(inttostring_base)
+define_function(to_string_base)
 {
   int64_t i = integer_argument(1);
   int64_t base = integer_argument(2);
-  char *str = NULL;
+  char str[INT64_MAX_STRING];
   char *fmt;
   switch (base)
   {
@@ -745,18 +748,18 @@ define_function(inttostring_base)
   default:
     return_string(YR_UNDEFINED);
   }
-  asprintf(&str, fmt, i);
-  return_string(str == NULL ? (char*) YR_UNDEFINED : str);
+  snprintf(str, INT64_MAX_STRING, fmt, i);
+  return_string(&str);
 }
 
-define_function(stringtoint)
+define_function(to_int)
 {
   char* s = string_argument(1);
   int64_t result = strtoll(s, NULL, 0);
   return_integer(result == 0 && errno ? YR_UNDEFINED : result);
 }
 
-define_function(stringtoint_base)
+define_function(to_int_base)
 {
   char* s = string_argument(1);
   int64_t base = integer_argument(2);
@@ -787,10 +790,10 @@ begin_declarations
   declare_function("percentage", "i", "f", percentage_global);
   declare_function("mode", "ii", "i", mode_range);
   declare_function("mode", "", "i", mode_global);
-  declare_function("inttostring", "i", "s", inttostring);
-  declare_function("inttostring", "ii", "s", inttostring_base);
-  declare_function("stringtoint", "s", "i", stringtoint);
-  declare_function("stringtoint", "si", "i", stringtoint_base);
+  declare_function("to_string", "i", "s", to_string);
+  declare_function("to_string", "ii", "s", to_string_base);
+  declare_function("to_int", "s", "i", to_int);
+  declare_function("to_int", "si", "i", to_int_base);
 end_declarations
 
 int module_initialize(YR_MODULE* module)
