@@ -2760,14 +2760,6 @@ void test_re()
       "rule test { strings: $a =/abc([^\"\\\\])*\"/ nocase condition: $a }",
       TEXT_1024_BYTES "abc\xE0\x22");
 
-  // Non ascii characters are rejected in regular expressions.
-  assert_error(
-      "rule test { strings: $a = /¤/ condition: $a }",
-      ERROR_INVALID_REGULAR_EXPRESSION);
-  assert_error(
-      "rule test { strings: $a = /[1-£]/ condition: $a }",
-      ERROR_INVALID_REGULAR_EXPRESSION);
-
   YR_DEBUG_FPRINTF(1, stderr, "} // %s()\n", __FUNCTION__);
 }
 
