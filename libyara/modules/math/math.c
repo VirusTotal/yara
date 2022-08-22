@@ -319,6 +319,7 @@ define_function(data_serial_correlation)
   YR_MEMORY_BLOCK_ITERATOR* iterator = context->iterator;
 
   double sccun = 0;
+  double sccfirst = 0;
   double scclast = 0;
   double scct1 = 0;
   double scct2 = 0;
@@ -348,6 +349,9 @@ define_function(data_serial_correlation)
       for (i = 0; i < data_len; i++)
       {
         sccun = (double) *(block_data + data_offset + i);
+        if (i == 0) {
+            sccfirst = sccun;
+        }
         scct1 += scclast * sccun;
         scct2 += sccun;
         scct3 += sccun * sccun;
@@ -373,7 +377,7 @@ define_function(data_serial_correlation)
   if (!past_first_block)
     return_float(YR_UNDEFINED);
 
-  scct1 += scclast * sccun;
+  scct1 += scclast * sccfirst;
   scct2 *= scct2;
 
   scc = total_len * scct3 - scct2;
@@ -408,7 +412,9 @@ define_function(string_serial_correlation)
     scclast = sccun;
   }
 
-  scct1 += scclast * sccun;
+  if (s->length > 0) {
+      scct1 += scclast * (double) s->c_string[0];
+  }
   scct2 *= scct2;
 
   scc = s->length * scct3 - scct2;
