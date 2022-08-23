@@ -28,7 +28,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include <stdlib.h>
-#include <sys/errno.h>
+#include <errno.h>
 #include <math.h>
 #include <yara/mem.h>
 #include <yara/modules.h>
