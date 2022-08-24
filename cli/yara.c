@@ -1191,6 +1191,9 @@ static int callback(
 #if defined(_WIN32)
       // In Windows restore stdout to normal text mode as yr_object_print_data
       // calls printf which is not supported in UTF-8 mode.
+      // Explicitly flush the buffer before the switch in case we already printed
+      // something and it haven't been flushed automatically.
+      fflush(stdout);
       _setmode(_fileno(stdout), _O_TEXT);
 #endif
 
@@ -1199,6 +1202,9 @@ static int callback(
 
 #if defined(_WIN32)
       // Go back to UTF-8 mode.
+      // Explicitly flush the buffer before the switch in case we already printed
+      // something and it haven't been flushed automatically.
+      fflush(stdout);
       _setmode(_fileno(stdout), _O_U8TEXT);
 #endif
 
