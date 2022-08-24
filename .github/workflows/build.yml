@@ -86,5 +86,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-${{ env.cache-name }}-development
       - uses: actions/checkout@v2
-      - name: Build and run tests
-        run: bazel test --test_output=errors @jansson//... //tests/...
+      - name: Build
+        run: bazel build @jansson//... //tests/...
+      - name: Run tests
+        run: bazel test --test_output=errors //tests/...
