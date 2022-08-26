@@ -29,6 +29,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #if defined(USE_WINDOWS_PROC)
 
+#include <stdint.h>
 #include <windows.h>
 #include <yara/error.h>
 #include <yara/libyara.h>

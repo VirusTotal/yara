@@ -47,6 +47,7 @@ order to avoid confusion with operating system threads.
 #include <yara/mem.h>
 #include <yara/re.h>
 #include <yara/re_lexer.h>
+#include <yara/strutils.h>
 #include <yara/threading.h>
 #include <yara/unaligned.h>
 #include <yara/utils.h>
