@@ -138,12 +138,7 @@ static int _yr_ac_queue_is_empty(QUEUE* queue)
 //
 static bool _yr_ac_compare_classes(YR_BITMASK* bitmap1, YR_BITMASK* bitmap2)
 {
-  for (int i = 0; i < YR_BITMAP_SIZE; i++)
-  {
-    if (memcmp(&bitmap1[i], &bitmap2[i], sizeof(bitmap1[i])))
-      return false;
-  }
-  return true;
+  return memcmp(bitmap1, bitmap2, YR_BITMAP_SIZE * sizeof(YR_BITMASK)) == 0;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -473,7 +468,7 @@ static YR_AC_STATE* _yr_ac_create_copied_state(
 static void _yr_ac_copy_path(
     YR_AC_STATE* path,
     YR_AC_STATE* new_path,
-    YR_AC_STATE* input_state,
+    YR_AC_STATE* child_state,
     YR_ARENA* arena)
 {
   YR_AC_STATE* state;
@@ -483,19 +478,19 @@ static void _yr_ac_copy_path(
   // "root" node
   if (path != NULL)
   {
-    if (input_state != NULL)
+    if (child_state != NULL)
     {
       new_state = _yr_ac_next_state_typed(
           current_state,
-          input_state->input,
-          input_state->type,
-          input_state->bitmap);
+          child_state->input,
+          child_state->type,
+          child_state->bitmap);
       if (new_state != NULL)
       {
         if (YR_ARENA_IS_NULL_REF(new_state->matches_ref))
-          new_state->matches_ref = input_state->matches_ref;
+          new_state->matches_ref = child_state->matches_ref;
         else
-          _yr_ac_copy_matches(new_state, input_state, arena);
+          _yr_ac_copy_matches(new_state, child_state, arena);
       }
     }
     else
@@ -513,13 +508,14 @@ static void _yr_ac_copy_path(
 
     if (new_state == NULL)
     {
-      if (input_state != NULL)
+      if (child_state != NULL)
         new_state = _yr_ac_create_copied_state(
-            current_state, input_state, arena);
+            current_state, child_state, arena);
       else
         new_state = _yr_ac_create_copied_state(current_state, path, arena);
     }
 
+    // child_state->first_child = path->first_child;
     state = path->first_child;
 
     while (state != NULL)
@@ -530,8 +526,10 @@ static void _yr_ac_copy_path(
   }
 }
 
-uint8_t num_to_bits[16] = {0, 1, 1, 2, 1, 2, 2, 3, 1, 2, 2, 3, 2, 3, 3, 4};
-uint8_t num_to_pos[16] = {0, 1, 2, 0, 3, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0};
+static uint8_t num_to_bits[16] =
+    {0, 1, 1, 2, 1, 2, 2, 3, 1, 2, 2, 3, 2, 3, 3, 4};
+static uint8_t num_to_pos[16] =
+    {0, 1, 2, 0, 3, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0};
 
 ////////////////////////////////////////////////////////////////////////////////
 //
@@ -575,11 +573,14 @@ static int _yr_ac_return_literal(uint64_t number, uint8_t index)
 }
 
 ////////////////////////////////////////////////////////////////////////////////
+// If the class represented by the bitmap can be reduced to a literal, return
+// that literal, otherwise return -1.
 //
-// If the class becomes literal, it returns a literal found.
-// Otherwise, it returns 0.
+// For example, a class like [a] actually contains a single character, and is
+// equivalent to literal "a", the class [a-z] however can't be represented by a
+// single literal.
 //
-static int _yr_ac_class_is_literal(YR_BITMASK* bitmap)
+static int _yr_ac_class_get_literal(YR_BITMASK* bitmap)
 {
   int bits = 0;
   int counter = 0;
@@ -604,35 +605,29 @@ static int _yr_ac_class_is_literal(YR_BITMASK* bitmap)
     // _yr_ac_return_literal return literal + 1
     return literal - 1;
   }
-  assert(counter != 0);
 
   return non_literal;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 //
-// Detect if two states are in a collision
+// Detect if two states are in a collision for failure function.
+// If they are, start to create their deterministic versions - dfa_state1 and
+// dfa_state2 If we are changing the inputs of the states, we need later also
+// update matches and the children of these states
 //
 static bool _yr_ac_find_conflict_states(
-    YR_AC_STATE* input_state,
+    YR_AC_STATE* child_state,
     YR_AC_STATE* next_state,
     YR_AC_STATE* dfa_state1,
     YR_AC_STATE* dfa_state2)
 {
-  int int_counter = 0;
-  int bitmap2_counter = 0;
-  int literal = 0;
-
-  YR_BITMASK intersetion[YR_BITMAP_SIZE];
-  YR_BITMASK bitmap2[YR_BITMAP_SIZE];
-  yr_bitmask_clear_all(intersetion, sizeof(intersetion));
-  yr_bitmask_clear_all(bitmap2, sizeof(bitmap2));
-
+  // Conflict `[..a..] vs `a` or `.` vs `a`
   if ((next_state->type == YR_ATOM_TYPE_LITERAL) &&
-      (yr_bitmask_is_set(input_state->bitmap, next_state->input)))
+      (yr_bitmask_is_set(child_state->bitmap, next_state->input)))
   {
     // New state with input from next_state
-    memcpy(dfa_state1, input_state, sizeof(YR_AC_STATE));
+    memcpy(dfa_state1, child_state, sizeof(YR_AC_STATE));
     dfa_state1->input = next_state->input;
     dfa_state1->type = next_state->type;
     memcpy(
@@ -640,12 +635,12 @@ static bool _yr_ac_find_conflict_states(
         next_state->bitmap,
         sizeof(YR_BITMASK) * YR_BITMAP_SIZE);
 
-    // Updated input_state (without input from next_state)
-    memcpy(dfa_state2, input_state, sizeof(YR_AC_STATE));
+    // Updated child_state (without input from next_state)
+    memcpy(dfa_state2, child_state, sizeof(YR_AC_STATE));
     yr_bitmask_clear(dfa_state2->bitmap, next_state->input);
     if (dfa_state2->type == YR_ATOM_TYPE_CLASS)
     {
-      literal = _yr_ac_class_is_literal(dfa_state2->bitmap);
+      int literal = _yr_ac_class_get_literal(dfa_state2->bitmap);
       if (literal >= 0)
       {
         dfa_state2->input = literal;
@@ -653,15 +648,19 @@ static bool _yr_ac_find_conflict_states(
       }
     }
     else
+    {
+      // YR_ATOM_TYPE_ANY -> YR_ATOM_TYPE_CLASS
       dfa_state2->type = YR_ATOM_TYPE_CLASS;
+    }
     return false;
   }
   else if (next_state->type == YR_ATOM_TYPE_CLASS)
   {
-    if (input_state->type == YR_ATOM_TYPE_ANY)
+    // Conflicts `.` vs. [...]
+    if (child_state->type == YR_ATOM_TYPE_ANY)
     {
       // New state with input from next_state (class)
-      memcpy(dfa_state1, input_state, sizeof(YR_AC_STATE));
+      memcpy(dfa_state1, child_state, sizeof(YR_AC_STATE));
       dfa_state1->input = next_state->input;
       dfa_state1->type = next_state->type;
       memcpy(
@@ -669,56 +668,60 @@ static bool _yr_ac_find_conflict_states(
           next_state->bitmap,
           sizeof(YR_BITMASK) * YR_BITMAP_SIZE);
 
-      // Updated input_state (without class from next_state)
-      memcpy(dfa_state2, input_state, sizeof(YR_AC_STATE));
+      // Updated child_state (without class from next_state)
+      memcpy(dfa_state2, child_state, sizeof(YR_AC_STATE));
       dfa_state2->type = YR_ATOM_TYPE_CLASS;
       for (int i = 0; i < YR_BITMAP_SIZE; i++)
         dfa_state2->bitmap[i] = dfa_state2->bitmap[i] - next_state->bitmap[i];
 
-      literal = _yr_ac_class_is_literal(dfa_state2->bitmap);
+      int literal = _yr_ac_class_get_literal(dfa_state2->bitmap);
       if (literal >= 0)
       {
         dfa_state2->input = literal;
         dfa_state2->type = YR_ATOM_TYPE_LITERAL;
       }
       return false;
-    }  // if (input_state->type == YR_ATOM_TYPE_ANY)
-    else if (input_state->type == YR_ATOM_TYPE_CLASS)
+    }  // if (child_state->type == YR_ATOM_TYPE_ANY)
+    // Conflicts [...] vs. [...]
+    else if (child_state->type == YR_ATOM_TYPE_CLASS)
     {
-      int_counter = 0;
-      bitmap2_counter = 0;
+      int int_counter = 0;
+      int diff_counter = 0;
+      YR_BITMASK intersetion[YR_BITMAP_SIZE];
+      YR_BITMASK diff[YR_BITMAP_SIZE];
+      yr_bitmask_clear_all(intersetion, sizeof(intersetion));
+      yr_bitmask_clear_all(diff, sizeof(diff));
 
       for (int i = 0; i < YR_BITMAP_SIZE; i++)
       {
-        intersetion[i] = (next_state->bitmap[i] & input_state->bitmap[i]);
+        intersetion[i] = (next_state->bitmap[i] & child_state->bitmap[i]);
         if (intersetion[i] != 0)
           int_counter++;
 
-        bitmap2[i] = input_state->bitmap[i] - intersetion[i];
-        if (bitmap2[i] != 0)
-          bitmap2_counter++;
+        diff[i] = child_state->bitmap[i] - intersetion[i];
+        if (diff[i] != 0)
+          diff_counter++;
       }
 
-      if ((int_counter != 0) && (bitmap2_counter != 0))
+      if ((int_counter != 0) && (diff_counter != 0))
       {
         // New state with intersected input from next_state
-        memcpy(dfa_state1, input_state, sizeof(YR_AC_STATE));
+        memcpy(dfa_state1, child_state, sizeof(YR_AC_STATE));
         memcpy(
             dfa_state1->bitmap,
             intersetion,
             sizeof(YR_BITMASK) * YR_BITMAP_SIZE);
-        literal = _yr_ac_class_is_literal(dfa_state1->bitmap);
+        int literal = _yr_ac_class_get_literal(dfa_state1->bitmap);
         if (literal >= 0)
         {
           dfa_state1->input = literal;
           dfa_state1->type = YR_ATOM_TYPE_LITERAL;
         }
 
-        // Updated input_state (without input from itersection)
-        memcpy(dfa_state2, input_state, sizeof(YR_AC_STATE));
-        memcpy(
-            dfa_state2->bitmap, bitmap2, sizeof(YR_BITMASK) * YR_BITMAP_SIZE);
-        literal = _yr_ac_class_is_literal(dfa_state2->bitmap);
+        // Updated child_state (without input from itersection)
+        memcpy(dfa_state2, child_state, sizeof(YR_AC_STATE));
+        memcpy(dfa_state2->bitmap, diff, sizeof(YR_BITMASK) * YR_BITMAP_SIZE);
+        literal = _yr_ac_class_get_literal(dfa_state2->bitmap);
         if (literal >= 0)
         {
           dfa_state2->input = literal;
@@ -726,7 +729,7 @@ static bool _yr_ac_find_conflict_states(
         }
         return false;
       }
-    }  // else if (input_state->type == YR_ATOM_TYPE_CLASS)
+    }  // else if (child_state->type == YR_ATOM_TYPE_CLASS)
   }    // else if (next_state->type == YR_ATOM_TYPE_CLASS)
 
   return true;
@@ -736,9 +739,11 @@ static bool _yr_ac_find_conflict_states(
 //
 // In case of collision, some symbols have to be excluded from the state,
 // and the copy of the state is created
+// dfa_state1 and dfa_state2 are deterministic copies of child_state and state
+// that caused the conflics
 //
 static bool _yr_ac_exclude_from_state(
-    YR_AC_STATE* input_state,
+    YR_AC_STATE* child_state,
     YR_AC_STATE* dfa_state1,
     YR_AC_STATE* dfa_state2,
     YR_ARENA* arena)
@@ -749,32 +754,32 @@ static bool _yr_ac_exclude_from_state(
   YR_AC_STATE* prev_state = NULL;
 
   next1 = _yr_ac_next_state_typed(
-      input_state->parent,
+      child_state->parent,
       dfa_state1->input,
       dfa_state1->type,
       dfa_state1->bitmap);
   next2 = _yr_ac_next_state_typed(
-      input_state->parent,
+      child_state->parent,
       dfa_state2->input,
       dfa_state2->type,
       dfa_state2->bitmap);
 
   if ((next1 != NULL) && (next2 != NULL))
   {
-    // Both version of the input_state already exist in the AC
-    _yr_ac_copy_path(input_state, input_state->parent, dfa_state1, arena);
-    _yr_ac_copy_path(input_state, input_state->parent, dfa_state2, arena);
-    temp_state = input_state->parent->first_child;
+    // Both version of the child_state already exist in the AC
+    _yr_ac_copy_path(child_state, child_state->parent, dfa_state1, arena);
+    _yr_ac_copy_path(child_state, child_state->parent, dfa_state2, arena);
+    temp_state = child_state->parent->first_child;
 
-    if (temp_state == input_state)
+    if (temp_state == child_state)
     {
-      input_state->parent->first_child = temp_state->siblings;
-      _yr_ac_state_destroy_updated(input_state);
-      input_state->type = YR_ATOM_TYPE_REMOVE;
+      child_state->parent->first_child = temp_state->siblings;
+      _yr_ac_state_destroy_updated(child_state);
+      child_state->type = YR_ATOM_TYPE_REMOVE;
       return true;
     }
 
-    while (temp_state != NULL && temp_state != input_state)
+    while (temp_state != NULL && temp_state != child_state)
     {
       prev_state = temp_state;
       temp_state = temp_state->siblings;
@@ -783,22 +788,22 @@ static bool _yr_ac_exclude_from_state(
     if (prev_state != NULL)
       prev_state->siblings = temp_state->siblings;
 
-    _yr_ac_state_destroy_updated(input_state);
-    input_state->type = YR_ATOM_TYPE_REMOVE;
+    _yr_ac_state_destroy_updated(child_state);
+    child_state->type = YR_ATOM_TYPE_REMOVE;
     return true;
   }
   else if (next2 != NULL)
   {
     // The updated state aleady exists in the AC
-    memcpy(input_state, dfa_state1, sizeof(YR_AC_STATE));
-    _yr_ac_copy_path(input_state, input_state->parent, dfa_state2, arena);
+    memcpy(child_state, dfa_state1, sizeof(YR_AC_STATE));
+    _yr_ac_copy_path(child_state, child_state->parent, dfa_state2, arena);
   }
   else
   {
-    // Neither version of the input_state already exist in the AC or there is
+    // Neither version of the child_state already exist in the AC or there is
     // only literal state
-    memcpy(input_state, dfa_state2, sizeof(YR_AC_STATE));
-    _yr_ac_copy_path(input_state, input_state->parent, dfa_state1, arena);
+    memcpy(child_state, dfa_state2, sizeof(YR_AC_STATE));
+    _yr_ac_copy_path(child_state, child_state->parent, dfa_state1, arena);
   }
 
   return false;
@@ -809,49 +814,59 @@ static bool _yr_ac_exclude_from_state(
 // Creates deterministic AC for failure function
 //
 static bool dfa_subtree(
-    YR_AC_STATE* state,
-    YR_AC_STATE* input_state,
+    YR_AC_STATE* parent_state,
+    YR_AC_STATE* child_state,
     YR_ARENA* arena)
 {
   bool pop = true;
 
-  if (input_state->type == YR_ATOM_TYPE_LITERAL)
+  // If type of child_state if literal, we do not have to do nothing
+  // We return true - we can pop the state from queue and move to another state
+  if (child_state->type == YR_ATOM_TYPE_LITERAL)
     return pop;
-
-  int literal = _yr_ac_class_is_literal(input_state->bitmap);
-  if (literal >= 0)
+  else if (child_state->type == YR_ATOM_TYPE_CLASS)
   {
-    input_state->input = literal;
-    input_state->type = YR_ATOM_TYPE_LITERAL;
+    int literal = _yr_ac_class_get_literal(child_state->bitmap);
+    if (literal >= 0)
+    {
+      child_state->input = literal;
+      child_state->type = YR_ATOM_TYPE_LITERAL;
+      return pop;
+    }
   }
 
+  YR_AC_STATE* next_state = parent_state->first_child;
+
+  // Deterministic version of child_state and next_state
   YR_AC_STATE* dfa_state1 = (YR_AC_STATE*) yr_malloc(sizeof(YR_AC_STATE));
   YR_AC_STATE* dfa_state2 = (YR_AC_STATE*) yr_malloc(sizeof(YR_AC_STATE));
-
-  YR_AC_STATE* next_state = state->first_child;
 
   while (next_state != NULL)
   {
     pop = true;
-    if (input_state == next_state)
+    // Skip the input state
+    if (child_state == next_state)
     {
       next_state = next_state->siblings;
       continue;
     }
 
+    // Find if there are conflicts in failure function
     pop = _yr_ac_find_conflict_states(
-        input_state, next_state, dfa_state1, dfa_state2);
+        child_state, next_state, dfa_state1, dfa_state2);
 
+    // We found conflicts we need to change the child_state
     if (!pop)
     {
-      if (_yr_ac_exclude_from_state(input_state, dfa_state1, dfa_state2, arena))
+      if (_yr_ac_exclude_from_state(child_state, dfa_state1, dfa_state2, arena))
       {
         yr_free(dfa_state1);
         yr_free(dfa_state2);
         return true;
       }
 
-      if (input_state->type == YR_ATOM_TYPE_LITERAL)
+      // The child_state can not cause any other conflicts anymore
+      if (child_state->type == YR_ATOM_TYPE_LITERAL)
         break;
     }
 
@@ -1551,25 +1566,29 @@ int yr_ac_add_string(
     YR_ATOM_LIST_ITEM* atom,
     YR_ARENA* arena)
 {
+  YR_AC_STATE* next_state = NULL;
   while (atom != NULL)
   {
     YR_AC_STATE* state = automaton->root;
 
     for (int i = 0; i < atom->atom.length; i++)
     {
+      int literal = -1;
       if (atom->atom.mask[i] == YR_ATOM_TYPE_CLASS)
       {
         // for a case like [a] - the class is a literal
-        int literal = _yr_ac_class_is_literal(atom->atom.bitmap[i]);
-        if (literal >= 0)
-        {
-          atom->atom.bytes[i] = literal;
-          atom->atom.mask[i] = YR_ATOM_TYPE_LITERAL;
-        }
+        literal = _yr_ac_class_get_literal(atom->atom.bitmap[i]);
       }
 
-      YR_AC_STATE* next_state = _yr_ac_next_state_typed(
-          state, atom->atom.bytes[i], atom->atom.mask[i], atom->atom.bitmap[i]);
+      if (literal >= 0)
+        next_state = _yr_ac_next_state_typed(
+            state, literal, YR_ATOM_TYPE_LITERAL, atom->atom.bitmap[i]);
+      else
+        next_state = _yr_ac_next_state_typed(
+            state,
+            atom->atom.bytes[i],
+            atom->atom.mask[i],
+            atom->atom.bitmap[i]);
 
       if (next_state == NULL)
       {

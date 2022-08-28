@@ -89,6 +89,7 @@ will end up using the "Look" atom alone, but in /a(bcd|efg)h/ atoms "bcd" and
 #include <yara/utils.h>
 #include "yara/re.h"
 
+
 ////////////////////////////////////////////////////////////////////////////////
 // Returns a numeric value indicating the quality of an atom. The quality
 // depends on some characteristics of the atom, including its length, number
@@ -860,6 +861,7 @@ struct STACK_ITEM
   RE_NODE* re_node;
   YR_ATOM_TREE_NODE* new_appending_node;
 };
+
 
 static void make_atom_from_re_nodes(
     YR_ATOM* atom,
