@@ -357,6 +357,14 @@ int main(int argc, char** argv)
       }",
       NULL);
 
+  assert_true_rule(
+      "import \"math\" \
+      rule test { \
+        condition: \
+          math.length(\"AXS\\x00ERS\") == 7 \
+      }",
+      NULL);
+
   yr_finalize();
 
   YR_DEBUG_FPRINTF(

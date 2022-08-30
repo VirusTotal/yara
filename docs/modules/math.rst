@@ -208,3 +208,13 @@ file and create signatures based on those results.
 
     *Example: math.to_int("011", 8) == "9"*
     *Example: math.to_int("-011", 0) == "-9"*
+
+.. c:function:: length(string)
+
+    .. versionadded:: 4.3.0
+
+    Return the length of the string, which can be any sequence of bytes. NULL
+    bytes included.
+
+    *Example: math.length("AXS\x00ERS") == 7*
+
