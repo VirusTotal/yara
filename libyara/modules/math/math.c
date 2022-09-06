@@ -759,27 +759,6 @@ define_function(to_string_base)
   return_string(&str);
 }
 
-define_function(to_int)
-{
-  char* s = string_argument(1);
-  int64_t result = strtoll(s, NULL, 0);
-  return_integer(result == 0 && errno ? YR_UNDEFINED : result);
-}
-
-define_function(to_int_base)
-{
-  char* s = string_argument(1);
-  int64_t base = integer_argument(2);
-  int64_t result = strtoll(s, NULL, base);
-  return_integer(result == 0 && errno ? YR_UNDEFINED : result);
-}
-
-define_function(string_length)
-{
-  SIZED_STRING* s = sized_string_argument(1);
-  return_integer(s->length);
-}
-
 begin_declarations
   declare_float("MEAN_BYTES");
   declare_function("in_range", "fff", "i", in_range);
@@ -805,9 +784,6 @@ begin_declarations
   declare_function("mode", "", "i", mode_global);
   declare_function("to_string", "i", "s", to_string);
   declare_function("to_string", "ii", "s", to_string_base);
-  declare_function("to_int", "s", "i", to_int);
-  declare_function("to_int", "si", "i", to_int_base);
-  declare_function("length", "s", "i", string_length);
 end_declarations
 
 int module_initialize(YR_MODULE* module)

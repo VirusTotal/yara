@@ -48,6 +48,8 @@ MODULES += modules/pe/pe_utils.c
 
 MODULES += modules/console/console.c
 
+MODULES += modules/string/string.c
+
 if CUCKOO_MODULE
 MODULES += modules/cuckoo/cuckoo.c
 endif

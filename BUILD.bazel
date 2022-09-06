@@ -78,6 +78,8 @@ yara_library(
         "pe",
         "tests",
         "time",
+        "console",
+        "string",
     ],
     modules_srcs = [
         "libyara/modules/cuckoo/cuckoo.c",
@@ -92,6 +94,8 @@ yara_library(
         "libyara/modules/pe/pe_utils.c",
         "libyara/modules/tests/tests.c",
         "libyara/modules/time/time.c",
+        "libyara/modules/console/console.c",
+        "libyara/modules/string/string.c",
     ],
     deps = [
         "@jansson",
