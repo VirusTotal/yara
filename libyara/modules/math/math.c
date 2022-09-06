@@ -32,6 +32,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <math.h>
 #include <yara/mem.h>
 #include <yara/modules.h>
+#include <yara/strutils.h>
 #include <yara/utils.h>
 
 #define MODULE_NAME math
@@ -730,7 +731,7 @@ define_function(to_string)
 {
   int64_t i = integer_argument(1);
   char str[INT64_MAX_STRING];
-  snprintf(str, INT64_MAX_STRING, "%lld", i);
+  snprintf(str, INT64_MAX_STRING, "%" PRId64, i);
   return_string(&str);
 }
 
@@ -743,13 +744,13 @@ define_function(to_string_base)
   switch (base)
   {
   case 10:
-    fmt = "%lld";
+    fmt = "%" PRId64;
     break;
   case 8:
-    fmt = "%llo";
+    fmt = "%" PRIo64;
     break;
   case 16:
-    fmt = "%llx";
+    fmt = "%" PRIx64;
     break;
   default:
     return_string(YR_UNDEFINED);
