@@ -999,7 +999,7 @@ struct YR_STRING_SET_ITERATOR
 struct YR_ITERATOR
 {
   // Index of the next function within the iter_next_func_table global array.
-  int next_func_idx;
+  uint8_t next_func_idx;
 
   union
   {
