@@ -197,13 +197,14 @@ union YYSTYPE
   int64_t         integer;
   double          double_;
   YR_MODIFIER     modifier;
+  YR_ENUMERATION  enumeration;
 
   YR_ARENA_REF tag;
   YR_ARENA_REF rule;
   YR_ARENA_REF meta;
   YR_ARENA_REF string;
 
-#line 207 "grammar.h"
+#line 208 "grammar.h"
 
 };
 typedef union YYSTYPE YYSTYPE;

@@ -2225,6 +2225,27 @@ void test_for()
       }",
       "abcde");
 
+  assert_true_rule(
+      "rule test { \
+        condition: \
+          for all i in (\"a\", \"b\") : (i == \"a\" or i == \"b\") \
+      }",
+      NULL);
+
+  assert_error(
+      "rule test { \
+        condition: \
+          for any i in (\"a\"): (i == 0) \
+      }",
+      ERROR_WRONG_TYPE);
+
+  assert_error(
+      "rule test { \
+        condition: \
+          for any i in (\"a\", 0): (i == 0) \
+      }",
+      ERROR_WRONG_TYPE);
+
   YR_DEBUG_FPRINTF(1, stderr, "} // %s()\n", __FUNCTION__);
 }
 
