@@ -1763,6 +1763,26 @@ expression
 
         $$.type = EXPRESSION_TYPE_BOOLEAN;
       }
+    | for_expression _OF_ string_set _AT_ primary_expression
+      {
+        if ($5.type != EXPRESSION_TYPE_INTEGER)
+        {
+          yr_compiler_set_error_extra_info(compiler,
+              "at expression must be an integer");
+
+          fail_with_error(ERROR_INVALID_VALUE);
+        }
+
+        if ($1.type == EXPRESSION_TYPE_INTEGER && $1.value.integer > $3)
+        {
+          yywarning(yyscanner,
+            "expression always false - requesting %" PRId64 " of %" PRId64 ".", $1.value.integer, $3);
+        }
+
+        yr_parser_emit(yyscanner, OP_OF_FOUND_AT, NULL);
+
+        $$.type = EXPRESSION_TYPE_BOOLEAN;
+      }
     | _NOT_ boolean_expression
       {
         yr_parser_emit(yyscanner, OP_NOT, NULL);

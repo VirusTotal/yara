@@ -607,6 +607,22 @@ static void test_warnings()
         2 of (a*) \
     }");
 
+  assert_warning("rule test { \
+    strings: \
+      $a = \"AXSERS\" \
+    condition: \
+      2 of ($a*) at 0\
+    }");
+
+  assert_error(
+      "rule test { \
+      strings: \
+        $a = \"AXSERS\" \
+      condition: \
+        1 of them at \"x\"\
+    }",
+      ERROR_INVALID_VALUE);
+
   YR_DEBUG_FPRINTF(1, stderr, "} // %s()\n", __FUNCTION__);
 }
 
@@ -1641,6 +1657,12 @@ static void test_count()
 static void test_at()
 {
   YR_DEBUG_FPRINTF(1, stderr, "+ %s() {\n", __FUNCTION__);
+
+  assert_true_rule(
+      "rule test { \
+        strings: $a = \"miss\" \
+        condition: any of them at 0}",
+      "mississippi");
 
   assert_true_rule(
       "rule test { \

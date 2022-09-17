@@ -123,6 +123,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define OP_OF_FOUND_IN           75
 #define OP_COUNT_IN              76
 #define OP_DEFINED               77
+#define OP_OF_FOUND_AT           78
 
 #define _OP_EQ    0
 #define _OP_NEQ   1
