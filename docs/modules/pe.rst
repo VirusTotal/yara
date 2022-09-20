@@ -1331,6 +1331,12 @@ Reference
 
             Ordinal of imported function. If ordinal does not exist this value is YR_UNDEFINED
 
+        .. c:member:: rva
+
+            .. versionadded:: 4.3.0
+
+            Relative virtual address (RVA) of imported function. If rva not found then this value is YR_UNDEFINED
+
     *Example: pe.import_details[1].library_name == "library_name"
 
 .. c:type:: delayed_import_details
@@ -1358,6 +1364,12 @@ Reference
         .. c:member:: ordinal
 
             Ordinal of imported function. If ordinal does not exist this value is YR_UNDEFINED
+
+        .. c:member:: rva
+
+            .. versionadded:: 4.3.0
+            
+            Relative virtual address (RVA) of imported function. If rva not found then this value is YR_UNDEFINED
 
     *Example: pe.delayed_import_details[1].name == "library_name"
 

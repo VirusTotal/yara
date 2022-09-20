@@ -30,7 +30,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <signal.h>
 #include <stdlib.h>
 #include <sys/types.h>
+#if !defined(_WIN32) && !defined(__CYGWIN__)
 #include <sys/wait.h>
+#endif
 #include <unistd.h>
 
 #include <yara.h>
