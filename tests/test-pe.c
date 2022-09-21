@@ -329,6 +329,14 @@ int main(int argc, char** argv)
       }",
       "tests/data/tiny");
 
+  assert_true_rule_file(
+      "import \"pe\" \
+      rule test { \
+        condition: \
+          pe.exphash() == \"69e300c67958698c5c147b2b563317bc\" \
+      }",
+      "tests/data/mtxex.dll");
+
 #endif
 
 #if defined(HAVE_LIBCRYPTO)

@@ -2699,6 +2699,98 @@ define_function(imphash)
   return_string(digest_ascii);
 }
 
+///
+/// Generate a hash of the imports
+/// Similar to imphash, makes use of export_details already in cache
+///
+define_function(exphash)
+{
+  YR_OBJECT* module = yr_module();
+
+  yr_md5_ctx ctx;
+
+  unsigned char digest[YR_MD5_LEN];
+  char* digest_ascii;
+
+  PE* pe = (PE*) module->data;
+
+  // If not a PE, return YR_UNDEFINED.
+  if (!pe)
+    return_string(YR_UNDEFINED);
+
+  // Lookup in cache first.
+  digest_ascii = (char*) yr_hash_table_lookup(pe->hash_table, "exphash", NULL);
+
+  if (digest_ascii != NULL)
+    return_string(digest_ascii);
+
+  yr_md5_init(&ctx);
+
+  // If PE, but no exported functions, return YR_UNDEFINED
+  int n = (int) yr_get_integer(module, "number_of_exports");
+
+  if (n == 0)
+    return_string(YR_UNDEFINED);
+
+  size_t final_name_len = 0;
+  SIZED_STRING* function_name_sized = NULL;
+  char* function_name = NULL;
+  bool first_export = true;
+  
+  // iterate over already populated export_details array
+  for (int i = 0; i < n; i++)
+  {
+    function_name_sized = yr_get_string(module, "export_details[%i].name", i);
+
+    // access raw SIZED_STRING fields
+    function_name = function_name_sized->c_string;
+    final_name_len = function_name_sized->length + 1;
+
+    // check if we're at the first export
+    if (!first_export)
+      final_name_len++;  // Additional byte to accommodate the extra comma
+
+    // allocate space for our delimited name
+    char* final_name = (char*) yr_malloc(final_name_len + 1);
+
+    if (final_name == NULL)
+      break;
+
+    sprintf(final_name, first_export ? "%s" : ",%s", function_name);
+
+    // made our exports all lower
+    for (int j = 0; j < final_name_len; j++)
+      final_name[j] = tolower(final_name[j]);
+
+    // finally, update our MD5 context
+    yr_md5_update(&ctx, final_name, final_name_len);
+
+    yr_free(final_name);
+    first_export = false;
+  }
+
+  yr_md5_final(digest, &ctx);
+
+  digest_ascii = (char*) yr_malloc(YR_MD5_LEN * 2 + 1);
+
+  if (digest_ascii == NULL)
+    return ERROR_INSUFFICIENT_MEMORY;
+
+  // change our digest to hex
+  for (int i = 0; i < YR_MD5_LEN; i++)
+  {
+    sprintf(digest_ascii + (i * 2), "%02x", digest[i]);
+  }
+
+  digest_ascii[YR_MD5_LEN * 2] = '\0';
+
+  // add exphash to our table cache
+  yr_hash_table_add(pe->hash_table, "exphash", NULL, digest_ascii);
+
+  // return the exphash
+  return_string(digest_ascii);
+}
+
 #endif  // defined(HAVE_LIBCRYPTO) || defined(HAVE_WINCRYPT_H)
 
 int64_t pe_imports_dll(IMPORTED_DLL* dll, char* dll_name)
