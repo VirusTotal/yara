@@ -364,6 +364,37 @@ _stop_iter:
   return ERROR_SUCCESS;
 }
 
+static int iter_text_string_set_next(YR_ITERATOR* self, YR_VALUE_STACK* stack)
+{
+  // Check that there's two available slots in the stack, one for the next
+  // item returned by the iterator and another one for the boolean that
+  // indicates if there are more items.
+  if (stack->sp + 1 >= stack->capacity)
+    return ERROR_EXEC_STACK_OVERFLOW;
+
+  // If the current index is equal or larger than array's length the iterator
+  // has reached the end of the array.
+  if (self->text_string_set_it.index >= self->text_string_set_it.count)
+    goto _stop_iter;
+
+  // Push the false value that indicates that the iterator is not exhausted.
+  stack->items[stack->sp++].i = 0;
+  stack->items[stack->sp++].ss =
+      self->text_string_set_it.strings[self->text_string_set_it.index];
+  self->text_string_set_it.index++;
+
+  return ERROR_SUCCESS;
+
+_stop_iter:
+
+  // Push true for indicating the iterator has been exhausted.
+  stack->items[stack->sp++].i = 1;
+  // Push YR_UNDEFINED as a placeholder for the next item.
+  stack->items[stack->sp++].i = YR_UNDEFINED;
+
+  return ERROR_SUCCESS;
+}
+
 // Global table that contains the "next" function for different types of
 // iterators. The reason for using this table is to avoid storing pointers
 // in the YARA's VM stack. Instead of the pointers we store an index within
@@ -374,6 +405,7 @@ static YR_ITERATOR_NEXT_FUNC iter_next_func_table[] = {
     iter_int_range_next,
     iter_int_enum_next,
     iter_string_set_next,
+    iter_text_string_set_next,
 };
 
 #define ITER_NEXT_ARRAY      0
@@ -381,6 +413,7 @@ static YR_ITERATOR_NEXT_FUNC iter_next_func_table[] = {
 #define ITER_NEXT_INT_RANGE  2
 #define ITER_NEXT_INT_ENUM   3
 #define ITER_NEXT_STRING_SET 4
+#define ITER_NEXT_TEXT_STRING_SET 5
 
 int yr_execute_code(YR_SCAN_CONTEXT* context)
 {
@@ -600,6 +633,41 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
 
         // One last pop of the UNDEFINED string
         pop(r2);
+        push(r3);
+      }
+
+      stop = (result != ERROR_SUCCESS);
+      break;
+
+    case OP_ITER_START_TEXT_STRING_SET:
+      YR_DEBUG_FPRINTF(
+          2,
+          stderr,
+          "- case OP_ITER_START_TEXT_STRING_SET: // %s()\n",
+          __FUNCTION__);
+
+      pop(r1);
+
+      r3.p = yr_notebook_alloc(
+          it_notebook,
+          sizeof(YR_ITERATOR) + sizeof(SIZED_STRING*) * (size_t) r1.i);
+
+      if (r3.p == NULL)
+      {
+        result = ERROR_INSUFFICIENT_MEMORY;
+      }
+      else
+      {
+        r3.it->text_string_set_it.count = r1.i;
+        r3.it->text_string_set_it.index = 0;
+        r3.it->next_func_idx = ITER_NEXT_TEXT_STRING_SET;
+
+        for (int64_t i = r1.i; i > 0; i--)
+        {
+          pop(r2);
+          r3.it->text_string_set_it.strings[i - 1] = r2.ss;
+        }
+
         push(r3);
       }
 
