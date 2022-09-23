@@ -285,8 +285,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 %type <modifier> hex_modifier
 %type <modifier> hex_modifiers
 
-%type <integer> integer_set
-%type <integer> integer_enumeration
+%type <enumeration> set
+%type <enumeration> enumeration
 %type <integer> rule_modifier
 %type <integer> rule_modifiers
 %type <integer> string_enumeration
@@ -346,6 +346,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
   int64_t         integer;
   double          double_;
   YR_MODIFIER     modifier;
+  YR_ENUMERATION  enumeration;
 
   YR_ARENA_REF tag;
   YR_ARENA_REF rule;
@@ -2065,7 +2066,7 @@ iterator
 
         fail_if_error(result);
       }
-    | integer_set
+    | set
       {
         int result = ERROR_SUCCESS;
 
@@ -2073,14 +2074,14 @@ iterator
 
         if (loop_ctx->vars_count == 1)
         {
-          loop_ctx->vars[0].type = EXPRESSION_TYPE_INTEGER;
+          loop_ctx->vars[0].type = $1.type;
           loop_ctx->vars[0].value.integer = YR_UNDEFINED;
         }
         else
         {
           yr_compiler_set_error_extra_info_fmt(
               compiler,
-              "iterator yields an integer on each iteration "
+              "iterator yields one value on each iteration "
               ", but the loop expects %d",
               loop_ctx->vars_count);
 
@@ -2092,19 +2093,32 @@ iterator
     ;
 
 
-integer_set
-    : '(' integer_enumeration ')'
+set
+    : '(' enumeration ')'
       {
-        // $2 contains the number of integers in the enumeration
-        fail_if_error(yr_parser_emit_push_const(yyscanner, $2));
+        // $2.count contains the number of items in the enumeration
+        fail_if_error(yr_parser_emit_push_const(yyscanner, $2.count));
 
-        fail_if_error(yr_parser_emit(
-            yyscanner, OP_ITER_START_INT_ENUM, NULL));
+        if ($2.type == EXPRESSION_TYPE_INTEGER)
+        {
+          fail_if_error(yr_parser_emit(
+              yyscanner, OP_ITER_START_INT_ENUM, NULL));
+        }
+        else
+        {
+          fail_if_error(yr_parser_emit(
+              yyscanner, OP_ITER_START_TEXT_STRING_SET, NULL));
+        }
+
+        $$.type = $2.type;
+
       }
     | range
       {
         fail_if_error(yr_parser_emit(
             yyscanner, OP_ITER_START_INT_RANGE, NULL));
+
+        $$.type = EXPRESSION_TYPE_INTEGER;
       }
     ;
 
@@ -2152,12 +2166,12 @@ range
     ;
 
 
-integer_enumeration
+enumeration
     : primary_expression
       {
         int result = ERROR_SUCCESS;
 
-        if ($1.type != EXPRESSION_TYPE_INTEGER)
+        if ($1.type != EXPRESSION_TYPE_INTEGER && $1.type != EXPRESSION_TYPE_STRING)
         {
           yr_compiler_set_error_extra_info(
               compiler, "wrong type for enumeration item");
@@ -2166,22 +2180,24 @@ integer_enumeration
 
         fail_if_error(result);
 
-        $$ = 1;
+        $$.type = $1.type;
+        $$.count = 1;
       }
-    | integer_enumeration ',' primary_expression
+    | enumeration ',' primary_expression
       {
         int result = ERROR_SUCCESS;
 
-        if ($3.type != EXPRESSION_TYPE_INTEGER)
+        if ($3.type != $1.type)
         {
           yr_compiler_set_error_extra_info(
-              compiler, "wrong type for enumeration item");
+              compiler, "enumerations must be all the same type");
           result = ERROR_WRONG_TYPE;
         }
 
         fail_if_error(result);
 
-        $$ = $1 + 1;
+        $$.type = $1.type;
+        $$.count = $1.count + 1;
       }
     ;
 

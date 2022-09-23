@@ -75,6 +75,12 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // variables.
 #define YR_INTERNAL_LOOP_VARS 3
 
+typedef struct _YR_ENUMERATION
+{
+  int type;
+  int count;
+} YR_ENUMERATION;
+
 typedef struct _YR_EXPRESSION
 {
   int type;
