@@ -1742,6 +1742,81 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
       push(r1);
       break;
 
+    case OP_OF_FOUND_AT:
+      YR_DEBUG_FPRINTF(
+          2, stderr, "- case OP_OF_FOUND_AT: // %s()\n", __FUNCTION__);
+
+      found = 0;
+      count = 0;
+
+      pop(r2);  // Match location
+      pop(r1);  // First string
+
+      // Match location must be defined.
+      if (is_undef(r2))
+      {
+        // Remove all the strings.
+        while (!is_undef(r1)) pop(r1);
+        // Remove the quantifier at the bottom of the stack.
+        pop(r1);
+        r1.i = YR_UNDEFINED;
+        push(r1);
+        break;
+      }
+
+      while (!is_undef(r1))
+      {
+#if YR_PARANOID_EXEC
+        ensure_within_rules_arena(r1.p);
+#endif
+        match = context->matches[r1.s->idx].head;
+
+        while (match != NULL)
+        {
+          // String match at the desired location?
+          if (match->base + match->offset == r2.i)
+          {
+            found++;
+            break;
+          }
+
+          // If current match is past desired location, we can stop as matches
+          // are sorted by offset in increasing order, so all remaining
+          // matches are past it.
+          if (match->base + match->offset > r2.i)
+            break;
+
+          match = match->next;
+        }
+
+        count++;
+        pop(r1);
+      }
+
+      pop(r2);  // Quantifier X in expressions like "X of string_set in range"
+
+      // Quantifier is "all".
+      if (is_undef(r2))
+      {
+        r1.i = found >= count ? 1 : 0;
+      }
+      // Quantifier is 0 or none. This is a special case in which we want
+      // exactly 0 strings matching. More information at:
+      // https://github.com/VirusTotal/yara/issues/1695
+      else if (r2.i == 0)
+      {
+        r1.i = found == 0 ? 1 : 0;
+      }
+      // In all other cases the number of strings matching should be at least
+      // the amount specified by the quantifier.
+      else
+      {
+        r1.i = found >= r2.i ? 1 : 0;
+      }
+
+      push(r1);
+      break;
+
     case OP_FILESIZE:
       r1.i = context->file_size;
       YR_DEBUG_FPRINTF(

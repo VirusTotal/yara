@@ -1221,6 +1221,13 @@ integer range, like this:
     all of ($a*) in (filesize-500..filesize)
     any of ($a*, $b*) in (1000..2000)
 
+Starting with YARA 4.3.0 it is possible to express a set of strings at a
+specific offset, like this:
+
+.. code-block:: yara
+
+    any of ($a*) at 0
+
 
 Applying the same condition to many strings
 -------------------------------------------
