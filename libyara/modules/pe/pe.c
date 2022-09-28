@@ -3559,7 +3559,8 @@ begin_declarations
 
 #if defined(HAVE_LIBCRYPTO) || defined(HAVE_WINCRYPT_H) || \
     defined(HAVE_COMMONCRYPTO_COMMONCRYPTO_H)
-  declare_function("imphash", "", "s", imphash);
+    declare_function("imphash", "", "s", imphash);
+    declare_function("exphash", "", "s", exphash);
 #endif
 
   declare_integer("IMPORT_DELAYED");
