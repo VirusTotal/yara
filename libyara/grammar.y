@@ -207,6 +207,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 %token <sized_string> _TEXT_STRING_                    "text string"
 %token <sized_string> _HEX_STRING_                     "hex string"
 %token <sized_string> _REGEXP_                         "regular expression"
+%token _BYTES_                                         "<bytes>"
 %token _ASCII_                                         "<ascii>"
 %token _WIDE_                                          "<wide>"
 %token _XOR_                                           "<xor>"
@@ -2476,6 +2477,32 @@ primary_expression
 
         $$.type = EXPRESSION_TYPE_INTEGER;
         $$.value.integer = YR_UNDEFINED;
+      }
+    | _BYTES_ '(' primary_expression ',' primary_expression ')'
+      {
+        int result = ERROR_SUCCESS;
+
+        check_type($3, EXPRESSION_TYPE_INTEGER, "bytes offset");
+        check_type($5, EXPRESSION_TYPE_INTEGER, "bytes length");
+
+        if ($3.value.integer != YR_UNDEFINED && $3.value.integer < 0)
+        {
+          yr_compiler_set_error_extra_info(compiler, "invalid bytes offset");
+          result = ERROR_INVALID_VALUE;
+        }
+        fail_if_error(result);
+
+        if ($5.value.integer != YR_UNDEFINED && $5.value.integer <= 0)
+        {
+          yr_compiler_set_error_extra_info(compiler, "invalid bytes length");
+          result = ERROR_INVALID_VALUE;
+        }
+        fail_if_error(result);
+
+        fail_if_error(yr_parser_emit(yyscanner, OP_READ_BYTES, NULL));
+
+        $$.type = EXPRESSION_TYPE_STRING;
+        $$.value.sized_string_ref = YR_ARENA_NULL_REF;
       }
     | _NUMBER_
       {

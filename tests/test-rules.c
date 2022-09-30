@@ -626,6 +626,44 @@ static void test_warnings()
   YR_DEBUG_FPRINTF(1, stderr, "} // %s()\n", __FUNCTION__);
 }
 
+static void test_bytes()
+{
+  YR_DEBUG_FPRINTF(1, stderr, "+ %s() {\n", __FUNCTION__);
+
+  assert_error("rule test { \
+    condition: \
+      bytes(-1, 10) \
+    }",
+      ERROR_INVALID_VALUE);
+
+  assert_error("rule test { \
+    condition: \
+      bytes(0, 0) \
+    }",
+      ERROR_INVALID_VALUE);
+
+  assert_error("rule test { \
+    condition: \
+      bytes(0, -10) \
+    }",
+      ERROR_INVALID_VALUE);
+
+  assert_true_rule("rule a { condition: bytes(0, 6) == \"AXSERS\" }", "AXSERS");
+
+  // If you ask for more bytes than is possible we truncate automatically.
+  assert_true_rule("rule a { condition: bytes(0, 6) == \"AXS\" }", "AXS");
+
+  // Attempting to check after the end of the file results in YR_UNDEFINED.
+  assert_true_rule("rule a { condition: not defined bytes(10, 10) }", "AXSERS");
+
+  // Make sure that attempts to read past the end of the file dynamically are
+  // also YR_UNDEFINED.
+  assert_true_rule(
+    "rule a { condition: not defined bytes(uint8(filesize - 1), 3) }", "AXSERS\xff");
+
+  YR_DEBUG_FPRINTF(1, stderr, "} // %s()\n", __FUNCTION__);
+}
+
 static void test_strings()
 {
   YR_DEBUG_FPRINTF(1, stderr, "+ %s() {\n", __FUNCTION__);
@@ -3795,6 +3833,7 @@ static void test_pass(int pass)
   test_tags();
   test_meta();
   test_warnings();
+  test_bytes();
 
 #if !defined(USE_NO_PROC) && !defined(_WIN32) && !defined(__CYGWIN__)
   test_process_scan();

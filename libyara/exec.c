@@ -408,11 +408,11 @@ static YR_ITERATOR_NEXT_FUNC iter_next_func_table[] = {
     iter_text_string_set_next,
 };
 
-#define ITER_NEXT_ARRAY      0
-#define ITER_NEXT_DICT       1
-#define ITER_NEXT_INT_RANGE  2
-#define ITER_NEXT_INT_ENUM   3
-#define ITER_NEXT_STRING_SET 4
+#define ITER_NEXT_ARRAY           0
+#define ITER_NEXT_DICT            1
+#define ITER_NEXT_INT_RANGE       2
+#define ITER_NEXT_INT_ENUM        3
+#define ITER_NEXT_STRING_SET      4
 #define ITER_NEXT_TEXT_STRING_SET 5
 
 int yr_execute_code(YR_SCAN_CONTEXT* context)
@@ -444,6 +444,7 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
   YR_OBJECT** obj_ptr;
   YR_ARENA* obj_arena;
   YR_NOTEBOOK* it_notebook;
+  YR_NOTEBOOK* bytes_notebook;
 
   char* identifier;
   char* args_fmt;
@@ -472,6 +473,12 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
 
   FAIL_ON_ERROR_WITH_CLEANUP(
       yr_notebook_create(512 * sizeof(YR_ITERATOR), &it_notebook),
+      yr_arena_release(obj_arena);
+      yr_free(stack.items));
+
+  FAIL_ON_ERROR_WITH_CLEANUP(
+      yr_notebook_create(512 * sizeof(SIZED_STRING), &bytes_notebook),
+      yr_notebook_destroy(it_notebook);
       yr_arena_release(obj_arena);
       yr_free(stack.items));
 
@@ -1836,6 +1843,54 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
       push(r1);
       break;
 
+    case OP_READ_BYTES:
+      YR_DEBUG_FPRINTF(
+          2, stderr, "- case OP_READ_BYTES: // %s()\n", __FUNCTION__);
+      pop(r2);  // length
+      pop(r1);  // offset
+      ensure_defined(r2);
+      ensure_defined(r1);
+
+      r3.i = YR_UNDEFINED;  // result
+
+      // Negative offset and zero (or negative) length are invalid. The compiler
+      // enforces this for statically defined values but we still need to check
+      // for them here for values which are not known at compile time.
+      if (r1.i < 0 || r2.i <= 0)
+      {
+        push(r3);
+        break;
+      }
+
+      YR_MEMORY_BLOCK* block = context->iterator->first(context->iterator);
+      while (block != NULL)
+      {
+        if (r1.i >= block->base && r1.i <= block->base + block->size)
+        {
+          const uint8_t* data = block->fetch_data(block);
+          if (data == NULL)
+            break;
+
+          // Make sure we only copy what is available.
+          int64_t length_to_copy = yr_min(
+              r2.i, (block->base + block->size) - block->base + r1.i);
+
+          SIZED_STRING* ss = (SIZED_STRING*) yr_notebook_alloc(
+              bytes_notebook, sizeof(SIZED_STRING) + length_to_copy);
+          if (ss == NULL)
+            break;
+
+          memcpy(ss->c_string, data + r1.i, length_to_copy);
+          ss->flags = 1;
+          ss->length = length_to_copy;
+          r3.ss = ss;
+          break;
+        }
+        block = context->iterator->next(context->iterator);
+      }
+      push(r3);
+      break;
+
     case OP_INT8:
       YR_DEBUG_FPRINTF(2, stderr, "- case OP_INT8: // %s()\n", __FUNCTION__);
       pop(r1);
@@ -2363,6 +2418,7 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
 
   yr_arena_release(obj_arena);
   yr_notebook_destroy(it_notebook);
+  yr_notebook_destroy(bytes_notebook);
   yr_modules_unload_all(context);
   yr_free(stack.items);
 

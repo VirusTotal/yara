@@ -445,6 +445,9 @@ $({letter}|{digit}|_)*  {
 }
 
 
+bytes { return _BYTES_; }
+
+
 u?int(8|16|32)(be)? {
 
   char* text = yytext;
