@@ -839,8 +839,9 @@ Reference
 
     .. c:member:: issuer
 
-        A string containing information about the issuer. These are some
-        examples::
+        A string containing information about the issuer. The formatting of
+        those strings depends on the library used, OpenSSL or Wincrypt.
+        These are some examples with OpenSSL::
 
             "/C=US/ST=Washington/L=Redmond/O=Microsoft Corporation/CN=Microsoft Code Signing PCA"
 
@@ -848,9 +849,18 @@ Reference
 
             "/C=GB/ST=Greater Manchester/L=Salford/O=COMODO CA Limited/CN=COMODO Code Signing CA 2"
 
+        And the same examples with Wincrypt::
+
+            "C=US, S=Washington, L=Redmond, O=Microsoft Corporation, CN=Microsoft Code Signing PCA"
+
+            "C=US, O=\"VeriSign, Inc.\", OU=VeriSign Trust Network, OU=Terms of use at https://www.verisign.com/rpa (c)10, CN=VeriSign Class 3 Code Signing 2010 CA"
+
+            "C=GB, S=Greater Manchester, L=Salford, O=COMODO CA Limited, CN=COMODO Code Signing CA 2"
+
     .. c:member:: subject
 
-        A string containing information about the subject.
+        A string containing information about the subject. See documentation
+        on the issuer field for more details on the format.
 
     .. c:member:: version
 
@@ -861,6 +871,7 @@ Reference
         String representation of the algorithm used for this
     signature. Usually "sha1WithRSAEncryption". It depends on the
     X.509 and PKCS#7 implementations and possibly their versions,
+    as well as whether OpenSSL or Wincrypt is used.
     consider using algorithm_oid instead.
 
     .. c:member:: algorithm_oid
@@ -878,6 +889,8 @@ Reference
     is functionally equivalent to::
 
             algorithm == "sha1WithRSAEncryption"
+
+    but only when using OpenSSL.
 
     .. c:member:: serial
 

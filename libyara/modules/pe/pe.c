@@ -1616,8 +1616,8 @@ static void pe_parse_exports(PE* pe)
 }
 
 // BoringSSL (https://boringssl.googlesource.com/boringssl/) doesn't support
-// some features used in pe_parse_certificates, if you are using BoringSSL
-// instead of OpenSSL you should define BORINGSSL for YARA to compile properly,
+// some features used here, if you are using BoringSSL instead of OpenSSL
+// you should define BORINGSSL for YARA to compile properly,
 // but you won't have signature-related features in the PE module.
 #if defined(HAVE_LIBCRYPTO) && !defined(BORINGSSL)
 
