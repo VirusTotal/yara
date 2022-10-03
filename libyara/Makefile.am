@@ -135,6 +135,12 @@ if GCC
 AM_CFLAGS+=-fvisibility=hidden
 endif
 
+if LINK_CRYPT32
+  USE_CRYPT32=-lcrypt32
+else
+  USE_CRYPT32=
+endif
+
 ACLOCAL_AMFLAGS=-I m4
 
 include_HEADERS = include/yara.h
@@ -196,6 +202,7 @@ dist_noinst_DATA = pb/yara.proto
 lib_LTLIBRARIES = libyara.la
 
 libyara_la_LDFLAGS = -version-number $(ABI_VERSION)
+libyara_la_LIBADD = $(USE_CRYPT32)
 
 BUILT_SOURCES = \
 	lexer.c \

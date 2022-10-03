@@ -30,6 +30,12 @@ if UB_SANITIZER
 AM_CFLAGS+=-fsanitize=undefined -fno-sanitize-recover=undefined
 endif
 
+if LINK_CRYPT32
+  USE_CRYPT32=-lcrypt32
+else
+  USE_CRYPT32=
+endif
+
 # Build the library in the hand subdirectory first.
 SUBDIRS = libyara
 DIST_SUBDIRS = libyara
@@ -64,34 +70,34 @@ tests_mapper_SOURCES = tests/mapper.c
 tests_mapper_CFLAGS = -O0
 
 test_alignment_SOURCES = tests/test-alignment.c tests/util.c
-test_alignment_LDADD = libyara/.libs/libyara.a
+test_alignment_LDADD = libyara/.libs/libyara.a $(USE_CRYPT32)
 test_arena_SOURCES = tests/test-arena.c tests/util.c
-test_arena_LDADD = libyara/.libs/libyara.a
+test_arena_LDADD = libyara/.libs/libyara.a $(USE_CRYPT32)
 test_atoms_SOURCES = tests/test-atoms.c tests/util.c
-test_atoms_LDADD = libyara/.libs/libyara.a
+test_atoms_LDADD = libyara/.libs/libyara.a $(USE_CRYPT32)
 test_rules_SOURCES = tests/test-rules.c tests/util.c
-test_rules_LDADD = libyara/.libs/libyara.a
+test_rules_LDADD = libyara/.libs/libyara.a $(USE_CRYPT32)
 if POSIX
 EXTRA_test_rules_DEPENDENCIES = tests/mapper$(EXEEXT)
 endif
 test_pe_SOURCES = tests/test-pe.c tests/util.c
-test_pe_LDADD = libyara/.libs/libyara.a
+test_pe_LDADD = libyara/.libs/libyara.a $(USE_CRYPT32)
 test_elf_SOURCES = tests/test-elf.c tests/util.c
-test_elf_LDADD = libyara/.libs/libyara.a
+test_elf_LDADD = libyara/.libs/libyara.a $(USE_CRYPT32)
 test_version_SOURCES = tests/test-version.c tests/util.c
-test_version_LDADD = libyara/.libs/libyara.a
+test_version_LDADD = libyara/.libs/libyara.a $(USE_CRYPT32)
 test_api_SOURCES = tests/test-api.c tests/util.c
-test_api_LDADD = libyara/.libs/libyara.a
+test_api_LDADD = libyara/.libs/libyara.a $(USE_CRYPT32)
 test_bitmask_SOURCES = tests/test-bitmask.c tests/util.c
-test_bitmask_LDADD = libyara/.libs/libyara.a
+test_bitmask_LDADD = libyara/.libs/libyara.a $(USE_CRYPT32)
 test_math_SOURCES = tests/test-math.c tests/util.c
-test_math_LDADD = libyara/.libs/libyara.a
+test_math_LDADD = libyara/.libs/libyara.a $(USE_CRYPT32)
 test_stack_SOURCES = tests/test-stack.c tests/util.c
-test_stack_LDADD = libyara/.libs/libyara.a
+test_stack_LDADD = libyara/.libs/libyara.a $(USE_CRYPT32)
 test_re_split_SOURCES = tests/test-re-split.c tests/util.c
-test_re_split_LDADD = libyara/.libs/libyara.a
+test_re_split_LDADD = libyara/.libs/libyara.a $(USE_CRYPT32)
 test_async_SOURCES = tests/test-async.c tests/util.c
-test_async_LDADD = libyara/.libs/libyara.a
+test_async_LDADD = libyara/.libs/libyara.a $(USE_CRYPT32)
 
 TESTS = $(check_PROGRAMS)
 TESTS_ENVIRONMENT = TOP_SRCDIR=$(top_srcdir) TOP_BUILDDIR=$(top_builddir)
@@ -120,38 +126,38 @@ if POSIX
 if !ADDRESS_SANITIZER
 check_PROGRAMS+=test-exception
 test_exception_SOURCES = tests/test-exception.c tests/util.c
-test_exception_LDADD = libyara/.libs/libyara.a
+test_exception_LDADD = libyara/.libs/libyara.a $(USE_CRYPT32)
 endif
 endif
 
 if MACHO_MODULE
 check_PROGRAMS+=test-macho
 test_macho_SOURCES = tests/test-macho.c tests/util.c
-test_macho_LDADD = libyara/.libs/libyara.a
+test_macho_LDADD = libyara/.libs/libyara.a $(USE_CRYPT32)
 endif
 
 if DEX_MODULE
 check_PROGRAMS+=test-dex
 test_dex_SOURCES = tests/test-dex.c tests/util.c
-test_dex_LDADD = libyara/.libs/libyara.a
+test_dex_LDADD = libyara/.libs/libyara.a $(USE_CRYPT32)
 endif
 
 if DOTNET_MODULE
 check_PROGRAMS+=test-dotnet
 test_dotnet_SOURCES = tests/test-dotnet.c tests/util.c
-test_dotnet_LDADD = libyara/.libs/libyara.a
+test_dotnet_LDADD = libyara/.libs/libyara.a $(USE_CRYPT32)
 endif
 
 if MAGIC_MODULE
 check_PROGRAMS+=test-magic
 test_magic_SOURCES = tests/test-magic.c tests/util.c
-test_magic_LDADD = libyara/.libs/libyara.a
+test_magic_LDADD = libyara/.libs/libyara.a $(USE_CRYPT32)
 endif
 
 if PB_TESTS_MODULE
 check_PROGRAMS+=test-pb
 test_pb_SOURCES = tests/test-pb.c tests/util.c
-test_pb_LDADD = libyara/.libs/libyara.a
+test_pb_LDADD = libyara/.libs/libyara.a $(USE_CRYPT32)
 endif
 
 # man pages

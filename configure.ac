@@ -297,7 +297,12 @@ AS_IF([test "x$have_crypto" = "xno"],
 	      AC_MSG_CHECKING([for Microsoft Crypto API])
         AC_CHECK_HEADERS([wincrypt.h],
           [
-	          AC_MSG_RESULT([The "hash" module functions will be provided through the Microsoft Crypto API])
+            PC_LIBS_PRIVATE="$PC_LIBS_PRIVATE -lcrypt32"
+            # We need to link against crypt32, but cannot use AC_SEARCH_LIBS,
+            # as for some reason it fails with mingw i686.
+            # Instead, define a conditional and link against crypt32 in the
+            # Makefile.am file.
+            AC_MSG_RESULT([The "hash" module functions will be provided through the Microsoft Crypto API])
             # FIXME: Add PC_LIBS_PRIVATE entries?
             build_hash_module=true
           ],
@@ -339,7 +344,7 @@ AS_IF([test "x$have_crypto" = "xno"],
   ])
 
 
-
+AM_CONDITIONAL([LINK_CRYPT32], [test x$ac_cv_header_wincrypt_h = xyes])
 AM_CONDITIONAL([GCC], [test "x$GCC" = xyes])
 AM_CONDITIONAL([PROTOC], [test "x${PROTOC}" != "x"])
 AM_CONDITIONAL([DEBUG], [test x$debug = xtrue])
