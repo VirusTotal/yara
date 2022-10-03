@@ -1843,7 +1843,7 @@ void _process_authenticode(
   yr_set_integer(signature_valid, pe->object, "is_signed");
 }
 
-static void pe_parse_certificates(PE* pe)
+static void pe_parse_certificates_with_openssl(PE* pe)
 {
   int counter = 0;
 
@@ -1873,7 +1873,299 @@ static void pe_parse_certificates(PE* pe)
   yr_set_integer(counter, pe->object, "number_of_signatures");
 }
 
-#endif  // defined(HAVE_LIBCRYPTO)
+#elif defined(HAVE_WINCRYPT_H)
+
+static char* get_cert_name(DWORD encoding_type, CERT_NAME_BLOB* blob)
+{
+  DWORD size;
+  char* name;
+
+  // Retrieve size for the name buffer. It includes the terminating '\0'.
+  size = CertNameToStrA(encoding_type, blob, CERT_X500_NAME_STR, NULL, 0);
+  if (!size)
+    return NULL;
+
+  // Allocate and fill the name.
+  name = yr_malloc(size);
+  if (!name)
+    return NULL;
+  if (!CertNameToStrA(encoding_type, blob, CERT_X500_NAME_STR, name, size))
+  {
+    yr_free(name);
+    return NULL;
+  }
+
+  return name;
+}
+
+// Convert of FILETIME object into a unix timestamp.
+static int64_t filetime_to_timestamp(FILETIME ft) {
+  uint64_t val;
+
+  // Get the filetime value as a uint64
+  val = ((uint64_t)ft.dwHighDateTime) << 32 | ((uint64_t)ft.dwLowDateTime);
+
+  // The value is a timestamp in hundred of nanoseconds since 1601.
+  // Convert to a regular timestamp first, then to the 1970 reference.
+  return (int64_t) (val / 10000000) - 11644473600;
+}
+
+// Convert a serial number into a string.
+//
+// If the returned pointer is not NULL, it must be freed.
+static char* serial_number_to_string(CRYPT_INTEGER_BLOB* blob) {
+  char* out;
+
+  if (blob->cbData == 0 || blob->cbData > 20)
+    return NULL;
+
+  // 3 char (2 digits + ':') for each byte, + 1 for the final '\0'.
+  out = yr_malloc(blob->cbData * 3 + 1);
+  if (!out)
+    return NULL;
+  for (uint32_t i = 0; i < blob->cbData; i++)
+    // serial number is stored from LSB to MSB, so walk in reverse when
+    // generating the string.
+    snprintf(out + i * 3, 4, "%02x:", blob->pbData[blob->cbData - i - 1]);
+
+  // remove trailing ':'
+  out[blob->cbData * 3 - 1] = '\0';
+
+  return out;
+}
+
+static void pe_parse_cert_context(
+    PE* pe, PCCERT_CONTEXT pCertContext, int sig_index)
+{
+  unsigned char thumbprint[YR_SHA1_LEN];
+  char thumbprint_ascii[YR_SHA1_LEN * 2 + 1];
+  yr_sha1_ctx sha1_context;
+  PCCRYPT_OID_INFO oid_info;
+  char* s;
+
+  yr_set_integer(
+    filetime_to_timestamp(pCertContext->pCertInfo->NotBefore),
+    pe->object,
+    "signatures[%i].not_before",
+    sig_index);
+  yr_set_integer(
+    filetime_to_timestamp(pCertContext->pCertInfo->NotAfter),
+    pe->object,
+    "signatures[%i].not_after",
+    sig_index);
+
+  yr_set_integer(
+    // The values are 0-based, so add one.
+    pCertContext->pCertInfo->dwVersion + 1,
+    pe->object,
+    "signatures[%i].version",
+    sig_index);
+
+  yr_set_string(
+    pCertContext->pCertInfo->SignatureAlgorithm.pszObjId,
+    pe->object,
+    "signatures[%i].algorithm_oid",
+    sig_index);
+
+  oid_info = CryptFindOIDInfo(
+    CRYPT_OID_INFO_OID_KEY,
+    pCertContext->pCertInfo->SignatureAlgorithm.pszObjId,
+    CRYPT_OID_DISABLE_SEARCH_DS_FLAG);
+  if (oid_info)
+  {
+    int len;
+    char* algo_name;
+
+    // Convert the wide-string name into an "ascii" one.
+    len = strnlen_w((const char *)oid_info->pwszName) + 1;
+    algo_name = yr_malloc(len);
+    if (algo_name)
+    {
+      strlcpy_w(algo_name, (const char *)oid_info->pwszName, len);
+
+      yr_set_string(
+        algo_name,
+        pe->object,
+        "signatures[%i].algorithm",
+        sig_index);
+      yr_free(algo_name);
+    }
+  }
+
+  s = get_cert_name(
+    pCertContext->dwCertEncodingType,
+    &(pCertContext->pCertInfo->Issuer));
+  if (s)
+  {
+    yr_set_string(s, pe->object, "signatures[%i].issuer", sig_index);
+    yr_free(s);
+  }
+  s = get_cert_name(
+    pCertContext->dwCertEncodingType,
+    &(pCertContext->pCertInfo->Subject)
+  );
+  if (s)
+  {
+    yr_set_string(s, pe->object, "signatures[%i].subject", sig_index);
+    yr_free(s);
+  }
+
+  s = serial_number_to_string(&(pCertContext->pCertInfo->SerialNumber));
+  if (s)
+  {
+    yr_set_string(s, pe->object, "signatures[%i].serial", sig_index);
+    yr_free(s);
+  }
+
+  // Hash the contents of the certificate to get the thumbprint
+  yr_sha1_init(&sha1_context);
+  yr_sha1_update(&sha1_context, pCertContext->pbCertEncoded,
+                 pCertContext->cbCertEncoded);
+  yr_sha1_final(thumbprint, &sha1_context);
+
+  for (int j = 0; j < YR_SHA1_LEN; j++) {
+    sprintf(thumbprint_ascii + (j * 2), "%02x", thumbprint[j]);
+  }
+  yr_set_string(
+    thumbprint_ascii,
+    pe->object,
+    "signatures[%i].thumbprint",
+    sig_index);
+}
+
+static void pe_parse_pkcs7_with_wincrypt(
+    PE* pe, unsigned char* cert_p, uint32_t length, int* counter)
+{
+  HCERTSTORE cert_store;
+  HCRYPTMSG crypt_msg;
+  CRYPT_INTEGER_BLOB blob = {
+      .cbData = length,
+      .pbData = cert_p,
+  };
+  PCCERT_CONTEXT signer_context = NULL;
+  BOOL res;
+
+  if (*counter >= MAX_PE_CERTS)
+    return;
+
+  res = CryptQueryObject(
+    CERT_QUERY_OBJECT_BLOB,
+    &blob,
+    CERT_QUERY_CONTENT_FLAG_PKCS7_SIGNED,
+    CERT_QUERY_FORMAT_FLAG_BINARY,
+    0,
+    NULL,
+    NULL,
+    NULL,
+    &cert_store,
+    &crypt_msg,
+    NULL);
+  if (!res)
+    return;
+
+  res = CryptMsgGetAndVerifySigner(
+    crypt_msg, 1, &cert_store, CMSG_SIGNER_ONLY_FLAG, &signer_context, NULL);
+  if (res)
+  {
+    pe_parse_cert_context(pe, signer_context, *counter);
+    (*counter)++;
+
+    CertFreeCertificateContext(signer_context);
+  }
+
+  CryptMsgClose(crypt_msg);
+  CertCloseStore(cert_store, 0);
+}
+
+static void pe_parse_certificates_with_wincrypt(PE* pe)
+{
+  int counter = 0;
+
+  const uint8_t* eod;
+  unsigned char* cert_p;
+  uint32_t cert_length;
+  uintptr_t end;
+
+  PWIN_CERTIFICATE win_cert;
+
+  PIMAGE_DATA_DIRECTORY directory = pe_get_directory_entry(
+      pe, IMAGE_DIRECTORY_ENTRY_SECURITY);
+
+  if (directory == NULL)
+    return;
+
+  // Default to 0 signatures until we know otherwise.
+  yr_set_integer(0, pe->object, "number_of_signatures");
+
+  // directory->VirtualAddress is a file offset. Don't call pe_rva_to_offset().
+  if (yr_le32toh(directory->VirtualAddress) == 0 ||
+      yr_le32toh(directory->VirtualAddress) > pe->data_size ||
+      yr_le32toh(directory->Size) > pe->data_size ||
+      yr_le32toh(directory->VirtualAddress) + yr_le32toh(directory->Size) >
+          pe->data_size)
+  {
+    return;
+  }
+
+  // Store the end of directory, making comparisons easier.
+  eod = pe->data + yr_le32toh(directory->VirtualAddress) +
+        yr_le32toh(directory->Size);
+
+  win_cert =
+      (PWIN_CERTIFICATE) (pe->data + yr_le32toh(directory->VirtualAddress));
+
+  //
+  // Walk the directory, pulling out certificates.
+  //
+  // Make sure WIN_CERTIFICATE fits within the directory.
+  // Make sure the Length specified fits within directory too.
+  //
+  // The docs say that the length is only for the Certificate, but the next
+  // paragraph contradicts that. All the binaries I've seen have the Length
+  // being the entire structure (Certificate included).
+  //
+
+  while (struct_fits_in_pe(pe, win_cert, WIN_CERTIFICATE) &&
+         yr_le32toh(win_cert->Length) > sizeof(WIN_CERTIFICATE) &&
+         fits_in_pe(pe, win_cert, yr_le32toh(win_cert->Length)) &&
+         (uint8_t*) win_cert + sizeof(WIN_CERTIFICATE) < eod &&
+         (uint8_t*) win_cert + yr_le32toh(win_cert->Length) <= eod)
+  {
+    // Some sanity checks
+
+    if (yr_le32toh(win_cert->Length) == 0 ||
+        (yr_le16toh(win_cert->Revision) != WIN_CERT_REVISION_1_0 &&
+         yr_le16toh(win_cert->Revision) != WIN_CERT_REVISION_2_0))
+    {
+      break;
+    }
+
+    // Don't support legacy revision for now.
+    // Make sure type is PKCS#7 too.
+
+    if (yr_le16toh(win_cert->Revision) != WIN_CERT_REVISION_2_0 ||
+        yr_le16toh(win_cert->CertificateType) != WIN_CERT_TYPE_PKCS_SIGNED_DATA)
+    {
+      end = (uintptr_t) ((uint8_t*) win_cert) + yr_le32toh(win_cert->Length);
+
+      // Next certificate is aligned to the next 8-bytes boundary.
+      win_cert = (PWIN_CERTIFICATE) ((end + 7) & -8);
+      continue;
+    }
+
+    cert_p = win_cert->Certificate;
+    cert_length = yr_le32toh(win_cert->Length);
+    end = (uintptr_t) ((uint8_t*) win_cert) + cert_length;
+    pe_parse_pkcs7_with_wincrypt(pe, cert_p, cert_length, &counter);
+
+    // Next certificate is aligned to the next 8-bytes boundary.
+    win_cert = (PWIN_CERTIFICATE) ((end + 7) & -8);
+  }
+
+  yr_set_integer(counter, pe->object, "number_of_signatures");
+}
+
+#endif  // defined(HAVE_LIBCRYPTO) || defined(HAVE_WINCRYPT_H)
 
 const char* pe_get_section_full_name(
     PE* pe,
@@ -3627,6 +3919,24 @@ begin_declarations
   // If any of the signatures correctly signs the binary
   declare_integer("is_signed");
   declare_integer("number_of_signatures");
+
+#elif defined(HAVE_WINCRYPT_H)
+
+  begin_struct_array("signatures")
+    declare_string("thumbprint");
+    declare_string("issuer");
+    declare_string("subject");
+    declare_integer("version");
+    declare_string("algorithm");
+    declare_string("algorithm_oid");
+    declare_string("serial");
+    declare_integer("not_before");
+    declare_integer("not_after");
+    declare_function("valid_on", "i", "i", valid_on);
+  end_struct_array("signatures")
+
+  declare_integer("number_of_signatures");
+
 #endif
 
   declare_function("rva_to_offset", "i", "i", rva_to_offset);
@@ -4013,7 +4323,9 @@ int module_load(
         pe_parse_debug_directory(pe);
 
 #if defined(HAVE_LIBCRYPTO) && !defined(BORINGSSL)
-        pe_parse_certificates(pe);
+        pe_parse_certificates_with_openssl(pe);
+#elif defined(HAVE_WINCRYPT_H)
+        pe_parse_certificates_with_wincrypt(pe);
 #endif
 
         pe->imported_dlls = pe_parse_imports(pe);
