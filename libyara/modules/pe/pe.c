@@ -1875,6 +1875,12 @@ static void pe_parse_certificates_with_openssl(PE* pe)
 
 #elif defined(HAVE_WINCRYPT_H)
 
+// This is defined in WinTrust.h, which should not be included, so redefine
+// it if needed
+#ifndef szOID_NESTED_SIGNATURE
+# define szOID_NESTED_SIGNATURE "1.3.6.1.4.1.311.2.4.1"
+#endif
+
 static char* get_cert_name(DWORD encoding_type, CERT_NAME_BLOB* blob)
 {
   DWORD size;
@@ -2033,6 +2039,31 @@ static void pe_parse_cert_context(
     sig_index);
 }
 
+static PCMSG_SIGNER_INFO crypt_msg_get_signer_info(HCRYPTMSG crypt_msg) {
+    PCMSG_SIGNER_INFO signer_info = NULL;
+    BOOL res = FALSE;
+    DWORD size = 0;
+
+    // Retrieve size for the signer info object.
+    res = CryptMsgGetParam(crypt_msg, CMSG_SIGNER_INFO_PARAM, 0, NULL, &size);
+    if (!res)
+        return NULL;
+
+    signer_info = yr_malloc(size);
+    if (!signer_info)
+        return NULL;
+
+    // Fill the allocated data.
+    res = CryptMsgGetParam(crypt_msg, CMSG_SIGNER_INFO_PARAM, 0, signer_info,
+                           &size);
+    if (!res) {
+        yr_free(signer_info);
+        return NULL;
+    }
+
+    return signer_info;
+}
+
 static void pe_parse_pkcs7_with_wincrypt(
     PE* pe, unsigned char* cert_p, uint32_t length, int* counter)
 {
@@ -2043,6 +2074,7 @@ static void pe_parse_pkcs7_with_wincrypt(
       .pbData = cert_p,
   };
   PCCERT_CONTEXT signer_context = NULL;
+  PCMSG_SIGNER_INFO signer_info;
   BOOL res;
 
   if (*counter >= MAX_PE_CERTS)
@@ -2071,6 +2103,28 @@ static void pe_parse_pkcs7_with_wincrypt(
     (*counter)++;
 
     CertFreeCertificateContext(signer_context);
+  }
+
+  // Parse nested signatures: look for the szOID_NESTED_SIGNATURE attribute
+  // in the signer info object.
+  signer_info = crypt_msg_get_signer_info(crypt_msg);
+  if (signer_info) {
+    for (int i = 0; i < signer_info->UnauthAttrs.cAttr; i++) {
+      PCRYPT_ATTRIBUTE attr = &signer_info->UnauthAttrs.rgAttr[i];
+
+      if (strcmp(attr->pszObjId, szOID_NESTED_SIGNATURE) == 0) {
+        // There are nested signatures: parse all of those.
+        for (uint32_t j = 0; j < attr->cValue; j++) {
+          pe_parse_pkcs7_with_wincrypt(
+            pe,
+            attr->rgValue[j].pbData,
+            attr->rgValue[j].cbData,
+            counter);
+        }
+      }
+    }
+
+    yr_free(signer_info);
   }
 
   CryptMsgClose(crypt_msg);
