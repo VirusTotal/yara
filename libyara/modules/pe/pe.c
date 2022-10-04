@@ -2083,13 +2083,51 @@ static char* serial_number_to_string(CRYPT_INTEGER_BLOB* blob) {
   return out;
 }
 
+static void pe_set_sig_algorithm(PE* pe, char* oid, const char *desc,
+                                 int sig_index)
+{
+  PCCRYPT_OID_INFO oid_info;
+  char* algo_name;
+  int len;
+
+  // Special handling for expected OIDs in authenticode signatures. This
+  // ensures we use the same algorithm name as the OpenSSL implementation,
+  // reducing differences between the two impls.
+  if (strcmp(oid, "1.2.840.113549.1.1.5") == 0) {
+      yr_set_string("sha1WithRSAEncryption", pe->object, desc, sig_index);
+      return;
+  }
+  if (strcmp(oid, "1.2.840.113549.1.1.11") == 0) {
+      yr_set_string("sha256WithRSAEncryption", pe->object, desc, sig_index);
+      return;
+  }
+
+  // For any other OID, get the name using the wincrypt API. This will
+  // most likely lead to a different name from the OpenSSL implementation
+  // however.
+  oid_info = CryptFindOIDInfo(CRYPT_OID_INFO_OID_KEY, oid,
+                              CRYPT_OID_DISABLE_SEARCH_DS_FLAG);
+  if (!oid_info)
+      return;
+
+  // Convert the wide-string name into an "ascii" one.
+  len = strnlen_w((const char *)oid_info->pwszName) + 1;
+  algo_name = yr_malloc(len);
+  if (!algo_name)
+      return;
+
+  strlcpy_w(algo_name, (const char *)oid_info->pwszName, len);
+
+  yr_set_string(algo_name, pe->object, desc, sig_index);
+  yr_free(algo_name);
+}
+
 static void pe_parse_cert_context(
     PE* pe, PCCERT_CONTEXT pCertContext, int sig_index)
 {
   unsigned char thumbprint[YR_SHA1_LEN];
   char thumbprint_ascii[YR_SHA1_LEN * 2 + 1];
   yr_sha1_ctx sha1_context;
-  PCCRYPT_OID_INFO oid_info;
   char* s;
 
   yr_set_integer(
@@ -2116,30 +2154,11 @@ static void pe_parse_cert_context(
     "signatures[%i].algorithm_oid",
     sig_index);
 
-  oid_info = CryptFindOIDInfo(
-    CRYPT_OID_INFO_OID_KEY,
+  pe_set_sig_algorithm(
+    pe,
     pCertContext->pCertInfo->SignatureAlgorithm.pszObjId,
-    CRYPT_OID_DISABLE_SEARCH_DS_FLAG);
-  if (oid_info)
-  {
-    int len;
-    char* algo_name;
-
-    // Convert the wide-string name into an "ascii" one.
-    len = strnlen_w((const char *)oid_info->pwszName) + 1;
-    algo_name = yr_malloc(len);
-    if (algo_name)
-    {
-      strlcpy_w(algo_name, (const char *)oid_info->pwszName, len);
-
-      yr_set_string(
-        algo_name,
-        pe->object,
-        "signatures[%i].algorithm",
-        sig_index);
-      yr_free(algo_name);
-    }
-  }
+    "signatures[%i].algorithm",
+    sig_index);
 
   s = get_cert_name(
     pCertContext->dwCertEncodingType,
