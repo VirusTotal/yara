@@ -191,3 +191,9 @@ int yr_modules_unload_all(YR_SCAN_CONTEXT* context)
 
   return ERROR_SUCCESS;
 }
+
+void yr_modules_print_names(void)
+{
+  for (int i = 0; i < sizeof(yr_modules_table) / sizeof(YR_MODULE); i++)
+    printf("%s\n", yr_modules_table[i].name);
+}
