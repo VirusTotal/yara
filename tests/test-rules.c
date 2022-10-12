@@ -607,6 +607,22 @@ static void test_warnings()
         2 of (a*) \
     }");
 
+  assert_warning("rule test { \
+    strings: \
+      $a = \"AXSERS\" \
+    condition: \
+      2 of ($a*) at 0\
+    }");
+
+  assert_error(
+      "rule test { \
+      strings: \
+        $a = \"AXSERS\" \
+      condition: \
+        1 of them at \"x\"\
+    }",
+      ERROR_INVALID_VALUE);
+
   YR_DEBUG_FPRINTF(1, stderr, "} // %s()\n", __FUNCTION__);
 }
 
@@ -1644,6 +1660,12 @@ static void test_at()
 
   assert_true_rule(
       "rule test { \
+        strings: $a = \"miss\" \
+        condition: any of them at 0}",
+      "mississippi");
+
+  assert_true_rule(
+      "rule test { \
         strings: $a = \"ssi\" \
         condition: $a at (1024+2) and $a at (1024+5) }",
       TEXT_1024_BYTES "mississippi");
@@ -2224,6 +2246,27 @@ void test_for()
           for any n in (1..10) : ( n of ($a*) ) \
       }",
       "abcde");
+
+  assert_true_rule(
+      "rule test { \
+        condition: \
+          for all i in (\"a\", \"b\") : (i == \"a\" or i == \"b\") \
+      }",
+      NULL);
+
+  assert_error(
+      "rule test { \
+        condition: \
+          for any i in (\"a\"): (i == 0) \
+      }",
+      ERROR_WRONG_TYPE);
+
+  assert_error(
+      "rule test { \
+        condition: \
+          for any i in (\"a\", 0): (i == 0) \
+      }",
+      ERROR_WRONG_TYPE);
 
   YR_DEBUG_FPRINTF(1, stderr, "} // %s()\n", __FUNCTION__);
 }

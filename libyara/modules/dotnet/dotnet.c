@@ -634,7 +634,8 @@ static char* get_type_def_or_ref_fullname(
     const CLASS_CONTEXT* ctx,
     uint32_t coded_index,
     GENERIC_PARAMETERS* class_gen_params,
-    GENERIC_PARAMETERS* method_gen_params)
+    GENERIC_PARAMETERS* method_gen_params,
+    uint32_t depth)  // against loops
 {
   // first 2 bits define table, index starts with third bit
   uint32_t index = coded_index >> 2;
@@ -714,7 +715,7 @@ static char* get_type_def_or_ref_fullname(
       // Valid blob
       if (blob_res.size)
         return parse_signature_type(
-            ctx, &sig_data, &sig_len, class_gen_params, NULL, 0);
+            ctx, &sig_data, &sig_len, class_gen_params, NULL, depth);
     }
   }
   return NULL;
@@ -729,7 +730,7 @@ static char* parse_signature_type(
     uint32_t depth  // against loops
 )
 {
-  // If atleast first type fits and we are not too nested
+  // If at least first type fits and we are not too nested
   if (*len < 1 || !fits_in_pe(ctx->pe, *data, 1) || depth > MAX_TYPE_DEPTH)
     return NULL;
 
@@ -859,7 +860,7 @@ static char* parse_signature_type(
     // followed by TypeDefOrRefOrSpecEncoded index
     coded_index = read_blob_unsigned(data, len);
     return get_type_def_or_ref_fullname(
-        ctx, coded_index, class_gen_params, method_gen_params);
+        ctx, coded_index, class_gen_params, method_gen_params, depth + 1);
     break;
 
   case TYPE_VAR:  // Generic class Var
@@ -1090,7 +1091,7 @@ static void parse_type_parents(
 {
   // Find the parent class
   char* parent = get_type_def_or_ref_fullname(
-      ctx, extends, class_gen_params, NULL);
+      ctx, extends, class_gen_params, NULL, 0);
 
   uint32_t base_type_idx = 0;
   if (parent)
@@ -1121,7 +1122,7 @@ static void parse_type_parents(
     if (row.Class == type_idx)
     {
       char* inteface = get_type_def_or_ref_fullname(
-          ctx, row.Interface, class_gen_params, NULL);
+          ctx, row.Interface, class_gen_params, NULL, 0);
       if (inteface)
       {
         yr_set_string(
@@ -1360,7 +1361,7 @@ static void parse_methods(
 
     uint32_t param_count = 0;
     char* return_type = NULL;
-    // If there is valid blob and atleast minimum to parse
+    // If there is valid blob and at least minimum to parse
     // (flags, paramCount, retType) parse these basic information
     if (blob_res.size && sig_len >= 3)
     {

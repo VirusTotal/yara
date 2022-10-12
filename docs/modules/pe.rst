@@ -1403,7 +1403,7 @@ Reference
     an MD5 hash of the PE's import table after some normalization. The imphash
     for a PE can be also computed with `pefile <http://code.google.com/p/pefile/>`_
     and you can find more information in `Mandiant's blog
-    <https://www.mandiant.com/blog/tracking-malware-import-hashing/>`_. The returned
+    <https://www.mandiant.com/resources/blog/tracking-malware-import-hashing/>`_. The returned
     hash string is always in lowercase.
 
     *Example: pe.imphash() == "b8bb385806b89680e13fc0cf24f4431e"*

@@ -996,10 +996,17 @@ struct YR_STRING_SET_ITERATOR
   YR_STRING* strings[1];
 };
 
+struct YR_TEXT_STRING_SET_ITERATOR
+{
+  int64_t count;
+  int64_t index;
+  SIZED_STRING* strings[1];
+};
+
 struct YR_ITERATOR
 {
   // Index of the next function within the iter_next_func_table global array.
-  int next_func_idx;
+  uint8_t next_func_idx;
 
   union
   {
@@ -1008,6 +1015,7 @@ struct YR_ITERATOR
     struct YR_INT_RANGE_ITERATOR int_range_it;
     struct YR_INT_ENUM_ITERATOR int_enum_it;
     struct YR_STRING_SET_ITERATOR string_set_it;
+    struct YR_TEXT_STRING_SET_ITERATOR text_string_set_it;
   };
 };
 
