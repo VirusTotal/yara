@@ -149,6 +149,7 @@ static bool show_strings = false;
 static bool show_string_length = false;
 static bool show_xor_key = false;
 static bool show_meta = false;
+static bool show_module_names = false;
 static bool show_namespace = false;
 static bool show_version = false;
 static bool show_help = false;
@@ -272,6 +273,12 @@ args_option_t options[] = {
         _T("print-module-data"),
         &show_module_data,
         _T("print module data")),
+
+    OPT_BOOLEAN(
+        'M',
+        _T("module-names"),
+        &show_module_names,
+        _T("show module names")),
 
     OPT_BOOLEAN(
         'e',
@@ -1393,6 +1400,15 @@ int _tmain(int argc, const char_t** argv)
   {
     fprintf(stderr, "maximum number of threads is %d\n", YR_MAX_THREADS);
     return EXIT_FAILURE;
+  }
+
+  // This can be done before yr_initialize() because we aren't calling any
+  // module functions, just accessing the name pointer for each module.
+  if (show_module_names)
+  {
+    for (YR_MODULE* module = yr_modules_get_table(); module->name != NULL; module++)
+      printf("%s\n", module->name);
+    return EXIT_SUCCESS;
   }
 
   if (argc < 2)

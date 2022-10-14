@@ -56,17 +56,16 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 YR_MODULE yr_modules_table[] = {
 #include <modules/module_list>
-};
+    {NULL, NULL, NULL, NULL, NULL, NULL}};
 
 #undef MODULE
 
 int yr_modules_initialize()
 {
-  int i;
-
-  for (i = 0; i < sizeof(yr_modules_table) / sizeof(YR_MODULE); i++)
+  for (YR_MODULE* module = yr_modules_table; module->initialize != NULL;
+       module++)
   {
-    int result = yr_modules_table[i].initialize(&yr_modules_table[i]);
+    int result = module->initialize(module);
 
     if (result != ERROR_SUCCESS)
       return result;
@@ -77,11 +76,9 @@ int yr_modules_initialize()
 
 int yr_modules_finalize()
 {
-  int i;
-
-  for (i = 0; i < sizeof(yr_modules_table) / sizeof(YR_MODULE); i++)
+  for (YR_MODULE* module = yr_modules_table; module->finalize != NULL; module++)
   {
-    int result = yr_modules_table[i].finalize(&yr_modules_table[i]);
+    int result = module->finalize(module);
 
     if (result != ERROR_SUCCESS)
       return result;
@@ -94,12 +91,12 @@ int yr_modules_do_declarations(
     const char* module_name,
     YR_OBJECT* main_structure)
 {
-  int i;
-
-  for (i = 0; i < sizeof(yr_modules_table) / sizeof(YR_MODULE); i++)
+  for (YR_MODULE* module = yr_modules_table;
+       module->name != NULL && module->declarations != NULL;
+       module++)
   {
-    if (strcmp(yr_modules_table[i].name, module_name) == 0)
-      return yr_modules_table[i].declarations(main_structure);
+    if (strcmp(module->name, module_name) == 0)
+      return module->declarations(main_structure);
   }
 
   return ERROR_UNKNOWN_MODULE;
@@ -107,7 +104,7 @@ int yr_modules_do_declarations(
 
 int yr_modules_load(const char* module_name, YR_SCAN_CONTEXT* context)
 {
-  int i, result;
+  int result;
 
   YR_MODULE_IMPORT mi;
 
@@ -151,11 +148,13 @@ int yr_modules_load(const char* module_name, YR_SCAN_CONTEXT* context)
           context->objects_table, module_name, NULL, module_structure),
       yr_object_destroy(module_structure));
 
-  for (i = 0; i < sizeof(yr_modules_table) / sizeof(YR_MODULE); i++)
+  for (YR_MODULE* module = yr_modules_table;
+       module->name != NULL && module->load != NULL;
+       module++)
   {
-    if (strcmp(yr_modules_table[i].name, module_name) == 0)
+    if (strcmp(module->name, module_name) == 0)
     {
-      result = yr_modules_table[i].load(
+      result = module->load(
           context, module_structure, mi.module_data, mi.module_data_size);
 
       if (result != ERROR_SUCCESS)
@@ -177,17 +176,24 @@ int yr_modules_load(const char* module_name, YR_SCAN_CONTEXT* context)
 
 int yr_modules_unload_all(YR_SCAN_CONTEXT* context)
 {
-  for (int i = 0; i < sizeof(yr_modules_table) / sizeof(YR_MODULE); i++)
+  for (YR_MODULE* module = yr_modules_table;
+       module->name != NULL && module->unload != NULL;
+       module++)
   {
     YR_OBJECT* module_structure = (YR_OBJECT*) yr_hash_table_remove(
-        context->objects_table, yr_modules_table[i].name, NULL);
+        context->objects_table, module->name, NULL);
 
     if (module_structure != NULL)
     {
-      yr_modules_table[i].unload(module_structure);
+      module->unload(module_structure);
       yr_object_destroy(module_structure);
     }
   }
 
   return ERROR_SUCCESS;
+}
+
+YR_MODULE* yr_modules_get_table(void)
+{
+  return yr_modules_table;
 }
