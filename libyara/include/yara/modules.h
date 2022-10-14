@@ -322,6 +322,6 @@ int yr_modules_load(const char* module_name, YR_SCAN_CONTEXT* context);
 
 int yr_modules_unload_all(YR_SCAN_CONTEXT* context);
 
-YR_API void yr_modules_print_names(void);
+YR_API YR_MODULE* yr_modules_get_table(void);
 
 #endif

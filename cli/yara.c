@@ -1406,7 +1406,8 @@ int _tmain(int argc, const char_t** argv)
   // module functions, just accessing the name pointer for each module.
   if (show_module_names)
   {
-    yr_modules_print_names();
+    for (YR_MODULE* module = yr_modules_get_table(); module->name != NULL; module++)
+      printf("%s\n", module->name);
     return EXIT_SUCCESS;
   }
 
