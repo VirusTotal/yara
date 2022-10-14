@@ -62,6 +62,7 @@ awesome list of [YARA-related stuff](https://github.com/InQuest/awesome-yara).
 * [Avast](https://www.avast.com/)
 * [BAE Systems](https://www.baesystems.com/home?r=ai)
 * [Bayshore Networks, Inc.](https://www.bayshorenetworks.com)
+* [Binalyze](https://www.binalyze.com/)
 * [BinaryAlert](https://github.com/airbnb/binaryalert)
 * [Blueliv](https://www.blueliv.com)
 * [Cisco Talos Intelligence Group](https://talosintelligence.com/)
