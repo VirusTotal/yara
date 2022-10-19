@@ -1788,7 +1788,8 @@ expression
         //
         // This means you can do "all of them at 0" if you only have one string
         // defined in the set.
-        if (($1.type == EXPRESSION_TYPE_INTEGER && $1.value.integer > 1) ||
+        if (($1.type == EXPRESSION_TYPE_INTEGER &&
+              !IS_UNDEFINED($1.value.integer) && $1.value.integer > 1) ||
               ($1.type == EXPRESSION_TYPE_QUANTIFIER &&
               $1.value.integer == FOR_EXPRESSION_ALL && $3 > 1))
         {
