@@ -1780,6 +1780,23 @@ expression
             "expression always false - requesting %" PRId64 " of %" PRId64 ".", $1.value.integer, $3);
         }
 
+        // Both of these are warnings:
+        //
+        // "N of them at 0" where N > 1
+        //
+        //"all of them at 0" where there is more than 1 in "them".
+        //
+        // This means you can do "all of them at 0" if you only have one string
+        // defined in the set.
+        if (($1.type == EXPRESSION_TYPE_INTEGER &&
+              !IS_UNDEFINED($1.value.integer) && $1.value.integer > 1) ||
+              ($1.type == EXPRESSION_TYPE_QUANTIFIER &&
+              $1.value.integer == FOR_EXPRESSION_ALL && $3 > 1))
+        {
+          yywarning(yyscanner,
+            "multiple strings at an offset is usually false.");
+        }
+
         yr_parser_emit(yyscanner, OP_OF_FOUND_AT, NULL);
 
         $$.type = EXPRESSION_TYPE_BOOLEAN;
