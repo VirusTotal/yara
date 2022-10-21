@@ -53,7 +53,7 @@ stamp-h1
 /yarac
 /libyara/modules/.dirstamp
 libyara/proc/.dirstamp
-libyara/yara.pc
+/yara.pc
 /tests/.dirstamp
 
 # Linux and Mac files
