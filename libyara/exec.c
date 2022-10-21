@@ -156,6 +156,12 @@ function_read(int8_t, big_endian);
 function_read(int16_t, big_endian);
 function_read(int32_t, big_endian);
 
+typedef struct _YR_BYTES_ALLOCED
+{
+  int64_t offset;
+  int64_t length;
+} YR_BYTES_ALLOCED;
+
 static const uint8_t* jmp_if(int condition, const uint8_t* ip)
 {
   int32_t off = 0;
@@ -445,6 +451,9 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
   YR_ARENA* obj_arena;
   YR_NOTEBOOK* it_notebook;
   YR_NOTEBOOK* bytes_notebook;
+  YR_HASH_TABLE* alloc_table;
+  YR_BYTES_ALLOCED alloc_key;
+  SIZED_STRING* ss;
 
   char* identifier;
   char* args_fmt;
@@ -481,6 +490,14 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
       yr_notebook_destroy(it_notebook);
       yr_arena_release(obj_arena);
       yr_free(stack.items));
+
+  // Is 100 here a reasonable value? I have no idea how many entries is
+  // reasonable guess.
+  FAIL_ON_ERROR_WITH_CLEANUP(yr_hash_table_create(100, &alloc_table),
+                             yr_notebook_destroy(bytes_notebook);
+                             yr_notebook_destroy(it_notebook);
+                             yr_arena_release(obj_arena);
+                             yr_free(stack.items));
 
 #ifdef YR_PROFILING_ENABLED
   start_time = yr_stopwatch_elapsed_ns(&context->stopwatch);
@@ -1862,6 +1879,18 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
         break;
       }
 
+      // If we have the allocation done already, return a pointer to that.
+      alloc_key.length = r2.i;
+      alloc_key.offset = r1.i;
+      ss = yr_hash_table_lookup_raw_key(
+          alloc_table, &alloc_key, sizeof(YR_BYTES_ALLOCED), NULL);
+      if (ss != NULL)
+      {
+        r3.ss = ss;
+        push(r3);
+        break;
+      }
+
       YR_MEMORY_BLOCK* block = context->iterator->first(context->iterator);
       while (block != NULL)
       {
@@ -1875,13 +1904,23 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
           int64_t length_to_copy = yr_min(
               r2.i, (block->base + block->size) - block->base + r1.i);
 
-          SIZED_STRING* ss = (SIZED_STRING*) yr_notebook_alloc(
+          ss = (SIZED_STRING*) yr_notebook_alloc(
               bytes_notebook, sizeof(SIZED_STRING) + length_to_copy);
           if (ss == NULL)
             break;
 
+          // Store the pointer to our string in the lookup table, so we can
+          // avoid an unnecessary allocation if we use the same offset and
+          // length pair again.
+          if (yr_hash_table_add_raw_key(
+                  alloc_table,
+                  &alloc_key,
+                  sizeof(YR_BYTES_ALLOCED),
+                  NULL,
+                  ss) != ERROR_SUCCESS)
+            break;
           memcpy(ss->c_string, data + r1.i, length_to_copy);
-          ss->flags = 1;
+          ss->flags = 0;
           ss->length = length_to_copy;
           r3.ss = ss;
           break;
@@ -2419,6 +2458,10 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
   yr_arena_release(obj_arena);
   yr_notebook_destroy(it_notebook);
   yr_notebook_destroy(bytes_notebook);
+  // We don't need a custom free function for this table because the only thing
+  // stored in it are pointers stored in a notebook which are free()'ed when the
+  // notebook is destroyed.
+  yr_hash_table_destroy(alloc_table, NULL);
   yr_modules_unload_all(context);
   yr_free(stack.items);
 
