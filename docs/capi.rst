@@ -261,7 +261,7 @@ will be called once with the ``CALLBACK_MSG_TOO_MANY_MATCHES``. When this happen
 warning. If your callback returns ``CALLBACK_CONTINUE``, the string will be disabled
 and scanning will continue, otherwise scanning will be halted.
 
-Your callback will be called from the console module (:ref:`console-module)
+Your callback will be called from the console module (:ref:`console-module`)
 with the ``CALLBACK_MSG_CONSOLE_LOG`` message. When this happens, the
 ``message_data`` argument will be a ``char*`` that is the string generated
 by the console module. Your callback can do whatever it wants with this string,
