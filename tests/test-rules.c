@@ -529,6 +529,22 @@ static void test_warnings()
   assert_warning("rule test { \
     strings: \
       $a = \"AXSERS\" \
+      $b = \"WXSMTS\" \
+    condition: \
+      2 of them at 0 \
+    }");
+
+  assert_warning("rule test { \
+    strings: \
+      $a = \"AXSERS\" \
+      $b = \"WXSMTS\" \
+    condition: \
+      all of them at 0 \
+    }");
+
+  assert_warning("rule test { \
+    strings: \
+      $a = \"AXSERS\" \
     condition: \
       0 of them \
     }");
