@@ -162,6 +162,9 @@ typedef struct _YR_BYTES_ALLOCED
   int64_t length;
 } YR_BYTES_ALLOCED;
 
+#define YR_BYTES_MAX_SIZE  1024  // We don't allow allocations above 1k bytes.
+#define YR_BYTES_MAX_COUNT 200   // Maximum number of allocations we allow.
+
 static const uint8_t* jmp_if(int condition, const uint8_t* ip)
 {
   int32_t off = 0;
@@ -450,9 +453,8 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
   YR_OBJECT** obj_ptr;
   YR_ARENA* obj_arena;
   YR_NOTEBOOK* it_notebook;
-  YR_NOTEBOOK* bytes_notebook;
-  YR_HASH_TABLE* alloc_table;
   YR_BYTES_ALLOCED alloc_key;
+  uint32_t alloc_count = 0;
   SIZED_STRING* ss;
 
   char* identifier;
@@ -484,20 +486,6 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
       yr_notebook_create(512 * sizeof(YR_ITERATOR), &it_notebook),
       yr_arena_release(obj_arena);
       yr_free(stack.items));
-
-  FAIL_ON_ERROR_WITH_CLEANUP(
-      yr_notebook_create(512 * sizeof(SIZED_STRING), &bytes_notebook),
-      yr_notebook_destroy(it_notebook);
-      yr_arena_release(obj_arena);
-      yr_free(stack.items));
-
-  // Is 100 here a reasonable value? I have no idea how many entries is
-  // reasonable guess.
-  FAIL_ON_ERROR_WITH_CLEANUP(yr_hash_table_create(100, &alloc_table),
-                             yr_notebook_destroy(bytes_notebook);
-                             yr_notebook_destroy(it_notebook);
-                             yr_arena_release(obj_arena);
-                             yr_free(stack.items));
 
 #ifdef YR_PROFILING_ENABLED
   start_time = yr_stopwatch_elapsed_ns(&context->stopwatch);
@@ -1872,8 +1860,13 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
 
       // Negative offset and zero (or negative) length are invalid. The compiler
       // enforces this for statically defined values but we still need to check
-      // for them here for values which are not known at compile time.
-      if (r1.i < 0 || r2.i <= 0)
+      // for them here for values which are not known at compile time. We also
+      // check for allocations bigger than the max size so users can't consume
+      // unbounded amounts of memory. Finally, we limit the total number of
+      // allocations so users can't allocate lots of small amounts until they
+      // hit the limit.
+      if (r1.i < 0 || r2.i <= 0 || r2.i > YR_BYTES_MAX_SIZE ||
+          alloc_count >= YR_BYTES_MAX_COUNT)
       {
         push(r3);
         break;
@@ -1883,7 +1876,7 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
       alloc_key.length = r2.i;
       alloc_key.offset = r1.i;
       ss = yr_hash_table_lookup_raw_key(
-          alloc_table, &alloc_key, sizeof(YR_BYTES_ALLOCED), NULL);
+          context->bytes_table, &alloc_key, sizeof(YR_BYTES_ALLOCED), NULL);
       if (ss != NULL)
       {
         r3.ss = ss;
@@ -1904,16 +1897,17 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
           int64_t length_to_copy = yr_min(
               r2.i, (block->base + block->size) - block->base + r1.i);
 
-          ss = (SIZED_STRING*) yr_notebook_alloc(
-              bytes_notebook, sizeof(SIZED_STRING) + length_to_copy);
+          ss = (SIZED_STRING*) yr_malloc(sizeof(SIZED_STRING) + length_to_copy);
           if (ss == NULL)
             break;
+
+          alloc_count++;
 
           // Store the pointer to our string in the lookup table, so we can
           // avoid an unnecessary allocation if we use the same offset and
           // length pair again.
           if (yr_hash_table_add_raw_key(
-                  alloc_table,
+                  context->bytes_table,
                   &alloc_key,
                   sizeof(YR_BYTES_ALLOCED),
                   NULL,
@@ -2457,11 +2451,6 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
 
   yr_arena_release(obj_arena);
   yr_notebook_destroy(it_notebook);
-  yr_notebook_destroy(bytes_notebook);
-  // We don't need a custom free function for this table because the only thing
-  // stored in it are pointers stored in a notebook which are free()'ed when the
-  // notebook is destroyed.
-  yr_hash_table_destroy(alloc_table, NULL);
   yr_modules_unload_all(context);
   yr_free(stack.items);
 

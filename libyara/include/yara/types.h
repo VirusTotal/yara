@@ -818,6 +818,10 @@ struct YR_SCAN_CONTEXT
   // profiling_info is a pointer to an array of YR_PROFILING_INFO structures,
   // one per rule. Entry N has the profiling information for rule with index N.
   YR_PROFILING_INFO* profiling_info;
+
+  // Map length and offset pairs to heap allocation. Used for the "bytes"
+  // keyword during bytecode execution.
+  YR_HASH_TABLE* bytes_table;
 };
 
 union YR_VALUE

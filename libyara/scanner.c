@@ -218,6 +218,11 @@ YR_API int yr_scanner_create(YR_RULES* rules, YR_SCANNER** scanner)
       yr_hash_table_create(64, &new_scanner->objects_table),
       yr_free(new_scanner));
 
+  // Is 100 here a reasonable value?
+  FAIL_ON_ERROR_WITH_CLEANUP(
+      yr_hash_table_create(100, &new_scanner->bytes_table),
+      yr_free(new_scanner));
+
   new_scanner->rules = rules;
   new_scanner->entry_point = YR_UNDEFINED;
   new_scanner->file_size = YR_UNDEFINED;
@@ -284,6 +289,12 @@ YR_API int yr_scanner_create(YR_RULES* rules, YR_SCANNER** scanner)
   return ERROR_SUCCESS;
 }
 
+static void _yr_scanner_clean_byte_table(SIZED_STRING* ss)
+{
+  if (ss != NULL)
+    yr_free(ss);
+}
+
 YR_API void yr_scanner_destroy(YR_SCANNER* scanner)
 {
   YR_DEBUG_FPRINTF(2, stderr, "- %s() {} \n", __FUNCTION__);
@@ -311,6 +322,13 @@ YR_API void yr_scanner_destroy(YR_SCANNER* scanner)
     yr_hash_table_destroy(
         scanner->objects_table,
         (YR_HASH_TABLE_FREE_VALUE_FUNC) yr_object_destroy);
+  }
+
+  if (scanner->bytes_table != NULL)
+  {
+    yr_hash_table_destroy(
+        scanner->bytes_table,
+        (YR_HASH_TABLE_FREE_VALUE_FUNC) _yr_scanner_clean_byte_table);
   }
 
 #ifdef YR_PROFILING_ENABLED
