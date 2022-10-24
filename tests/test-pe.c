@@ -440,16 +440,18 @@ int main(int argc, char** argv)
 
 #endif
 
-#if defined(HAVE_WINCRYPT_H)
+#if defined(HAVE_LIBCRYPTO) || defined(HAVE_WINCRYPT_H)
 
+  // Simplified version to be compatible with the Wincrypt implementation,
+  // which do not expose the whole set of parameters available with libcrypto.
   assert_true_rule_file(
       "import \"pe\" \
       rule test { \
         condition: \
           pe.number_of_signatures == 1 and \
           pe.signatures[0].thumbprint == \"c1bf1b8f751bf97626ed77f755f0a393106f2454\" and \
-          pe.signatures[0].issuer == \"C=US, O=Symantec Corporation, OU=Symantec Trust Network, CN=Symantec Class 3 SHA256 Code Signing CA\" and \
-          pe.signatures[0].subject == \"C=US, S=California, L=Menlo Park, O=\\\"Quicken, Inc.\\\", OU=Operations, CN=\\\"Quicken, Inc.\\\"\" and \
+          pe.signatures[0].issuer == \"/C=US/O=Symantec Corporation/OU=Symantec Trust Network/CN=Symantec Class 3 SHA256 Code Signing CA\" and \
+          pe.signatures[0].subject == \"/C=US/ST=California/L=Menlo Park/O=Quicken, Inc./OU=Operations/CN=Quicken, Inc.\" and \
           pe.signatures[0].version == 3 and \
           pe.signatures[0].algorithm == \"sha256RSA\" and \
           pe.signatures[0].algorithm_oid == \"1.2.840.113549.1.1.11\" and \

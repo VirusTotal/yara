@@ -1881,10 +1881,138 @@ static void pe_parse_certificates_with_openssl(PE* pe)
 # define szOID_NESTED_SIGNATURE "1.3.6.1.4.1.311.2.4.1"
 #endif
 
+// Convert a Wincrypt generated cert name to the OpenSSL format.
+//
+// The Wincrypt format is described here:
+// <https://learn.microsoft.com/en-us/windows/win32/api/wincrypt/nf-wincrypt-certnametostra#remarks>
+// - Use ', ' as separator for RDNs, and ' + ' for multivalue RDNs.
+// - Quote with " when some characters are present in the value
+// - Use a " for escaping the " character
+//
+// The OpenSSL format (for X509_NAME_online) is undocumented, but is:
+// - Prefix every RDN with '/'
+// - do not escape anything at all
+// This behavior changes in version 3.0.0 where '+' is used for multivalue
+// RDNs, and '/' and '+' are escaped with '\'. So use the "fixed" behavior.
+static char* convert_cert_name_to_openssl_format(const char* name)
+{
+  char* out_buffer;
+  char* out;
+  const char* in;
+  size_t out_size;
+
+  // Compute an upper bound on the size of the resulting string.
+  // - Separators are smaller: ', ' => '/', ' + ' => '+'. But the '/' is a
+  //   prefix and not a separator, so if there is a single RDN, we need +1
+  //   char.
+  // - Quotes are removed. However, '+' and '/' characters are escaped with
+  //   '\\'.
+  // - 'S=' becomes 'ST='.
+  // So to get an upper bound on the size, we can just do the sum of:
+  // - size of the input string
+  // - number of '+' or '/' characters (for the additionals '\\').
+  // - +1 for the leading '/'.
+  // - +1 for the 'S=' => 'ST='.
+  // - +1 for the closing '\0';
+  out_size = 3;
+  for (const char *p = name; *p; p++) {
+    if (*p == '/' || *p == '+') {
+      out_size++;
+    }
+    out_size++;
+  }
+
+  out_buffer = yr_malloc(out_size);
+  if (!out_buffer) {
+    return NULL;
+  }
+  out = out_buffer;
+  in = name;
+
+  // Parse the input string, and fill the output string at the same time.
+  while (*in) {
+    // Detect if the separator is ", " or " + "
+    if (in == name) {
+      *out++ = '/';
+    } else if (strncmp(in, ", ", 2) == 0) {
+      in += 2;
+      *out++ = '/';
+    } else if (strncmp(in, " + ", 3) == 0) {
+      in += 3;
+      *out++ = '+';
+    } else {
+      // Should not happen, return NULL as the conversion failed.
+      goto err;
+    }
+
+    // Add the RDN name
+    if (*in == 'S' && *(in + 1) == '=') {
+      // Specific case: Wincrypt uses 'S' instead of 'ST' for no good reason.
+      in++;
+      *out++ = 'S';
+      *out++ = 'T';
+    } else {
+      // Otherwise, just copy the RDN name up to the '=' character.
+      while (*in != '=') {
+        if (!*in) {
+          goto err;
+        }
+        *out++ = *in++;
+      }
+    }
+    // Copy the '=' character.
+    *out++ = *in++;
+
+    // Add the RDN value
+    if (*in == '"') {
+      // Value is quoted. Copy until reaching the next unescaped "
+      in++;
+      while (*in) {
+        if (*in == '"') {
+          if (*(in + 1) == '"') {
+            // This quote is escaped, so copy the quote as is
+            in += 2;
+            *out++ = '"';
+          } else {
+            break;
+          }
+        } else {
+          if (*in == '/' || *in == '+') {
+            *out++ = '\\';
+          }
+          *out++ = *in++;
+        }
+      }
+      if (!*in) {
+        goto err;
+      }
+      // Skip last "
+      in++;
+    } else {
+      // Value is not quoted, just copy until reaching a new separator.
+      while (*in && strncmp(in, ", ", 2) != 0 && strncmp(in, " + ", 3) != 0) {
+        if (*in == '/' || *in == '+') {
+          *out++ = '\\';
+        }
+        *out++ = *in++;
+      }
+    }
+  }
+
+  // Close out with a '\0'.
+  *out = '\0';
+  return out_buffer;
+
+err:
+  yr_free(out_buffer);
+  return NULL;
+}
+
 static char* get_cert_name(DWORD encoding_type, CERT_NAME_BLOB* blob)
 {
   DWORD size;
   char* name;
+  char* new_name;
 
   // Retrieve size for the name buffer. It includes the terminating '\0'.
   size = CertNameToStrA(encoding_type, blob, CERT_X500_NAME_STR, NULL, 0);
@@ -1899,6 +2027,21 @@ static char* get_cert_name(DWORD encoding_type, CERT_NAME_BLOB* blob)
   {
     yr_free(name);
     return NULL;
+  }
+
+  // The format used by wincrypt is different from the one used by OpenSSL.
+  // We want to have the same result, so we have two possibilities:
+  // - Parse the CERT_RDN elements by hand and reimplement the
+  //   X509_NAME_oneline algorithm.
+  // - Parse the wincrypt formatted string and generate a new one with
+  //   the OpenSSL one.
+  // The first solution sounds very bug-prone, so the second one is picked
+  // instead.
+  new_name = convert_cert_name_to_openssl_format(name);
+  if (new_name)
+  {
+    yr_free(name);
+    return new_name;
   }
 
   return name;

@@ -839,23 +839,14 @@ Reference
 
     .. c:member:: issuer
 
-        A string containing information about the issuer. The formatting of
-        those strings depends on the library used, OpenSSL or Wincrypt.
-        These are some examples with OpenSSL::
+        A string containing information about the issuer. These are some
+        examples::
 
             "/C=US/ST=Washington/L=Redmond/O=Microsoft Corporation/CN=Microsoft Code Signing PCA"
 
             "/C=US/O=VeriSign, Inc./OU=VeriSign Trust Network/OU=Terms of use at https://www.verisign.com/rpa (c)10/CN=VeriSign Class 3 Code Signing 2010 CA"
 
             "/C=GB/ST=Greater Manchester/L=Salford/O=COMODO CA Limited/CN=COMODO Code Signing CA 2"
-
-        And the same examples with Wincrypt::
-
-            "C=US, S=Washington, L=Redmond, O=Microsoft Corporation, CN=Microsoft Code Signing PCA"
-
-            "C=US, O=\"VeriSign, Inc.\", OU=VeriSign Trust Network, OU=Terms of use at https://www.verisign.com/rpa (c)10, CN=VeriSign Class 3 Code Signing 2010 CA"
-
-            "C=GB, S=Greater Manchester, L=Salford, O=COMODO CA Limited, CN=COMODO Code Signing CA 2"
 
     .. c:member:: subject
 
@@ -889,8 +880,6 @@ Reference
     is functionally equivalent to::
 
             algorithm == "sha1WithRSAEncryption"
-
-    but only when using OpenSSL.
 
     .. c:member:: serial
 
