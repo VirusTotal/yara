@@ -56,6 +56,7 @@ awesome list of [YARA-related stuff](https://github.com/InQuest/awesome-yara).
 
 ## Who's using YARA
 
+* [0x101 Cyber Security](https://0x101-cyber-security.de)
 * [ActiveCanopy](https://activecanopy.com/)
 * [Adlice](https://www.adlice.com/)
 * [AlienVault](https://otx.alienvault.com/)
