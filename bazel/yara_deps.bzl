@@ -51,9 +51,9 @@ def yara_deps():
     maybe(
         http_archive,
         name = "jansson",
-        url = "https://github.com/akheron/jansson/archive/v2.12.tar.gz",
-        sha256 = "76260d30e9bbd0ef392798525e8cd7fe59a6450c54ca6135672e3cd6a1642941",
-        strip_prefix = "jansson-2.12",
+        url = "https://github.com/akheron/jansson/archive/v2.14.tar.gz",
+        sha256 = "c739578bf6b764aa0752db9a2fdadcfe921c78f1228c7ec0bb47fa804c55d17b",
+        strip_prefix = "jansson-2.14",
         build_file = "@com_github_virustotal_yara//:bazel/jansson.BUILD",
     )
     maybe(

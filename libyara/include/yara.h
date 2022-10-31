@@ -40,6 +40,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "yara/object.h"
 #include "yara/scanner.h"
 #include "yara/stream.h"
+#include "yara/strutils.h"
 #include "yara/utils.h"
 
 #endif

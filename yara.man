@@ -67,6 +67,9 @@ Print metadata associated to the rule.
 .B \-D " --print-module-data"
 Print module data.
 .TP
+.B \-M " --module-names"
+show module names
+.TP
 .B \-e " --print-namespace"
 Print namespace associated to the rule.
 .TP
@@ -78,6 +81,9 @@ Print strings found in the file.
 .TP
 .B \-L " --print-string-length"
 Print length of strings found in the file.
+.TP
+.B \-X " --print-xor-key"
+Print xor key of matched strings.
 .TP
 .B \-g " --print-tags"
 Print the tags associated to the rule.

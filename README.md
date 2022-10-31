@@ -56,12 +56,14 @@ awesome list of [YARA-related stuff](https://github.com/InQuest/awesome-yara).
 
 ## Who's using YARA
 
+* [0x101 Cyber Security](https://0x101-cyber-security.de)
 * [ActiveCanopy](https://activecanopy.com/)
 * [Adlice](https://www.adlice.com/)
 * [AlienVault](https://otx.alienvault.com/)
 * [Avast](https://www.avast.com/)
 * [BAE Systems](https://www.baesystems.com/home?r=ai)
 * [Bayshore Networks, Inc.](https://www.bayshorenetworks.com)
+* [Binalyze](https://www.binalyze.com/)
 * [BinaryAlert](https://github.com/airbnb/binaryalert)
 * [Blueliv](https://www.blueliv.com)
 * [Cisco Talos Intelligence Group](https://talosintelligence.com/)
@@ -125,6 +127,7 @@ awesome list of [YARA-related stuff](https://github.com/InQuest/awesome-yara).
 * [ThreatConnect](https://www.threatconnect.com/)
 * [ThreatStream, Inc.](https://www.threatstream.com)
 * [Thug](https://github.com/buffer/thug)
+* [Threat.Zone](https://threat.zone)
 * [TouchWeb](https://www.touchweb.fr)
 * [Trend Micro](https://www.trendmicro.com)
 * [Uptycs Inc](https://www.uptycs.com/)

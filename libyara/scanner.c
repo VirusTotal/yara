@@ -37,6 +37,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <yara/object.h>
 #include <yara/proc.h>
 #include <yara/scanner.h>
+#include <yara/strutils.h>
 #include <yara/types.h>
 
 #include "exception.h"

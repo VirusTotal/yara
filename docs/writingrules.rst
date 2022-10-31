@@ -1221,6 +1221,13 @@ integer range, like this:
     all of ($a*) in (filesize-500..filesize)
     any of ($a*, $b*) in (1000..2000)
 
+Starting with YARA 4.3.0 it is possible to express a set of strings at a
+specific offset, like this:
+
+.. code-block:: yara
+
+    any of ($a*) at 0
+
 
 Applying the same condition to many strings
 -------------------------------------------
@@ -1267,6 +1274,18 @@ occurrences, the first offset, and the length of each string respectively.
 
     for all of them : ( # > 3 )
     for all of ($a*) : ( @ > @b )
+
+
+Starting with YARA 4.3.0 you can express conditions over text strings like this:
+
+.. code-block:: yara
+
+    for any s in ("71b36345516e076a0663e0bea97759e4", "1e7f7edeb06de02f2c2a9319de99e033") : ( pe.imphash() == s )
+
+It is worth remembering here that the two hashes referenced in the rule are
+normal text strings, and have nothing to do with the string section of the rule.
+Inside the loop condition the result of the `pe.imphash()` function is compared
+to each of the text strings, resulting in a more concise rule.
 
 
 Using anonymous strings with ``of`` and ``for..of``

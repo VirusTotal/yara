@@ -29,6 +29,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #if defined(USE_FREEBSD_PROC)
 
+#include <assert.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <sys/ptrace.h>

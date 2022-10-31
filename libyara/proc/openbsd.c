@@ -41,6 +41,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <errno.h>
 // clang-format on
 
+#include <assert.h>
 #include <yara/error.h>
 #include <yara/libyara.h>
 #include <yara/mem.h>
