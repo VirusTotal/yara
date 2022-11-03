@@ -1893,7 +1893,8 @@ static void pe_parse_certificates_with_openssl(PE* pe)
 // - Prefix every RDN with '/'
 // - do not escape anything at all
 // This behavior changes in version 3.0.0 where '+' is used for multivalue
-// RDNs, and '/' and '+' are escaped with '\'. So use the "fixed" behavior.
+// RDNs, and '/' and '+' are escaped with '\'. However, to keep backward
+// compatibility, we use the previous version.
 static char* convert_cert_name_to_openssl_format(const char* name)
 {
   char* out_buffer;
@@ -1905,23 +1906,14 @@ static char* convert_cert_name_to_openssl_format(const char* name)
   // - Separators are smaller: ', ' => '/', ' + ' => '+'. But the '/' is a
   //   prefix and not a separator, so if there is a single RDN, we need +1
   //   char.
-  // - Quotes are removed. However, '+' and '/' characters are escaped with
-  //   '\\'.
+  // - Quotes are removed.
   // - 'S=' becomes 'ST='.
   // So to get an upper bound on the size, we can just do the sum of:
   // - size of the input string
-  // - number of '+' or '/' characters (for the additionals '\\').
   // - +1 for the leading '/'.
   // - +1 for the 'S=' => 'ST='.
   // - +1 for the closing '\0';
-  out_size = 3;
-  for (const char *p = name; *p; p++) {
-    if (*p == '/' || *p == '+') {
-      out_size++;
-    }
-    out_size++;
-  }
-
+  out_size = strlen(name) + 3;
   out_buffer = yr_malloc(out_size);
   if (!out_buffer) {
     return NULL;
@@ -1939,7 +1931,7 @@ static char* convert_cert_name_to_openssl_format(const char* name)
       *out++ = '/';
     } else if (strncmp(in, " + ", 3) == 0) {
       in += 3;
-      *out++ = '+';
+      *out++ = '/';
     } else {
       // Should not happen, return NULL as the conversion failed.
       goto err;
@@ -1977,9 +1969,6 @@ static char* convert_cert_name_to_openssl_format(const char* name)
             break;
           }
         } else {
-          if (*in == '/' || *in == '+') {
-            *out++ = '\\';
-          }
           *out++ = *in++;
         }
       }
@@ -1991,9 +1980,6 @@ static char* convert_cert_name_to_openssl_format(const char* name)
     } else {
       // Value is not quoted, just copy until reaching a new separator.
       while (*in && strncmp(in, ", ", 2) != 0 && strncmp(in, " + ", 3) != 0) {
-        if (*in == '/' || *in == '+') {
-          *out++ = '\\';
-        }
         *out++ = *in++;
       }
     }
