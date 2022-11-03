@@ -1881,6 +1881,60 @@ static void pe_parse_certificates_with_openssl(PE* pe)
 # define szOID_NESTED_SIGNATURE "1.3.6.1.4.1.311.2.4.1"
 #endif
 
+// Add a RDN name to the converted cert name.
+//
+// This function is used to convert RDN names from wincrypt names to openssl
+// names, for known differences.
+static bool add_rdn_name(const char *rdn_name, size_t rdn_name_len,
+                         char **out_buffer, size_t *out_len, char **out)
+{
+  const char *new_name = NULL;
+
+  // Compare with the trailing "=" to ensure the string comparison matches
+  // properly. Otherwise, strncmp("O", "OID...", 1) would match.
+
+  // Replace this with a hashmap if it grows too much
+  if (strncmp(rdn_name, "E=", rdn_name_len + 1) == 0) {
+    new_name = "emailAddress";
+  } else if (strncmp(rdn_name, "OID.1.3.6.1.4.1.311.60.2.1.3=", rdn_name_len + 1) == 0) {
+    new_name = "jurisdictionC";
+  } else if (strncmp(rdn_name, "OID.1.3.6.1.4.1.311.60.2.1.2=", rdn_name_len + 1) == 0) {
+    new_name = "jurisdictionST";
+  } else if (strncmp(rdn_name, "OID.1.3.6.1.4.1.311.60.2.1.1=", rdn_name_len + 1) == 0) {
+    new_name = "jurisdictionL";
+  } else if (strncmp(rdn_name, "OID.2.5.4.15=", rdn_name_len + 1) == 0) {
+    new_name = "businessCategory";
+  } else if (strncmp(rdn_name, "SERIALNUMBER=", rdn_name_len + 1) == 0) {
+    new_name = "serialNumber";
+  }
+
+  if (new_name) {
+    char *new_buffer;
+    size_t new_name_len = strlen(new_name);
+    size_t out_pos = *out - *out_buffer;
+
+    // Resize the buffer to fit the new name
+    *out_len = *out_len + new_name_len - rdn_name_len;
+    new_buffer = yr_realloc(*out_buffer, *out_len);
+    if (!new_buffer) {
+      return false;
+    }
+
+    *out_buffer = new_buffer;
+    *out = new_buffer + out_pos;
+    rdn_name = new_name;
+    rdn_name_len = new_name_len;
+  }
+
+  // Buffer is correctly sized for the RDN name, copy it
+  for (size_t i = 0; i < rdn_name_len; i++) {
+      *(*out)++ = *rdn_name++;
+  }
+
+  return true;
+}
+
+
 // Convert a Wincrypt generated cert name to the OpenSSL format.
 //
 // The Wincrypt format is described here:
@@ -1940,18 +1994,28 @@ static char* convert_cert_name_to_openssl_format(const char* name)
     // Add the RDN name
     if (*in == 'S' && *(in + 1) == '=') {
       // Specific case: Wincrypt uses 'S' instead of 'ST' for no good reason.
+      // This is done outside of add_rdn_name because of how frequent it is,
+      // basically in all cert names.
       in++;
       *out++ = 'S';
       *out++ = 'T';
     } else {
-      // Otherwise, just copy the RDN name up to the '=' character.
-      while (*in != '=') {
+      // Otherwise, just get the RDN name up to the '=' character.
+      const char *rdn_start = in;
+
+      for (; *in != '='; in++) {
         if (!*in) {
           goto err;
         }
-        *out++ = *in++;
+      }
+
+      if (!add_rdn_name(rdn_start, in - rdn_start, &out_buffer, &out_size,
+                        &out))
+      {
+        goto err;
       }
     }
+
     // Copy the '=' character.
     *out++ = *in++;
 
