@@ -58,6 +58,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define PRIi32 "I32i"
 #endif
 
+#if !defined(PRIi64)
+#define PRIi64 "I64i"
+#endif
+
 #if !defined(PRIo64)
 #define PRIo64 "I64o"
 #endif
