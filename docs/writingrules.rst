@@ -166,8 +166,8 @@ you have an example of a hexadecimal string with wild-cards:
 As shown in the example the wild-cards are nibble-wise, which means that you can
 define just one nibble of the byte and leave the other unknown.
 
-In some cases you may wish to specify that a byte is not a specific value. For
-that you can use the not operator with a byte value:
+Starting with version 4.3.0, you may specify that a byte is not a specific
+value. For that you can use the not operator with a byte value:
 
 .. code-block:: yara
 
