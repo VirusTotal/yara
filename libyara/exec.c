@@ -1049,10 +1049,12 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
       pop(r1);
       ensure_defined(r2);
       ensure_defined(r1);
-      if (r2.i != 0)
-        r1.i = r1.i % r2.i;
-      else
+      // If divisor is zero the result is undefined. It's also undefined
+      // when dividing INT64_MIN by -1.
+      if (r2.i == 0 || (r1.i == INT64_MIN && r2.i == -1))
         r1.i = YR_UNDEFINED;
+      else
+        r1.i = r1.i % r2.i;
       push(r1);
       break;
 
@@ -2099,10 +2101,12 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
       pop(r1);
       ensure_defined(r2);
       ensure_defined(r1);
-      if (r2.i != 0)
-        r1.i = r1.i / r2.i;
-      else
+      // If divisor is zero the result is undefined. It's also undefined
+      // when dividing INT64_MIN by -1.
+      if (r2.i == 0 || (r1.i == INT64_MIN && r2.i == -1))
         r1.i = YR_UNDEFINED;
+      else
+        r1.i = r1.i / r2.i;
       push(r1);
       break;
 

@@ -3727,6 +3727,20 @@ void test_defined()
           not defined ($a at pe.number_of_resources) \
       }",
       NULL);
+
+  // Test that operations that would trigger a SIGFPE are detected and
+  // returns undefined
+  assert_true_rule(
+      "rule t { \
+        strings: \
+          $a = /aaa/ \
+        condition: \
+          (not defined (1 \\ #a)) and \
+          (not defined (1 % #a)) and \
+          (not defined ((#a + -0x7FFFFFFFFFFFFFFF - 1) \\ -1)) and \
+          (not defined ((#a + -0x7FFFFFFFFFFFFFFF - 1) % -1)) \
+      }",
+      NULL);
 }
 
 static void test_pass(int pass)
