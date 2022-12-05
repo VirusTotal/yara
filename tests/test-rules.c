@@ -2870,6 +2870,17 @@ static void test_comments()
         condition: !a == 9 }",
       "1234567890" TEXT_1024_BYTES);
 
+  // Test case for https://github.com/VirusTotal/yara/issues/1819
+  assert_true_rule(
+      "rule test { \
+        // single line comment with brace }\n\r \
+        strings: \
+          $a = \"foo\" ascii \
+        condition: \
+          $a \
+      }",
+      "foo");
+
   YR_DEBUG_FPRINTF(1, stderr, "} // %s()\n", __FUNCTION__);
 }
 
