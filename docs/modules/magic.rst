@@ -42,7 +42,10 @@ expect for different file types. These are a few examples:
     * ASCII text, with no line terminators
     * Zip archive data, at least v2.0 to extract
 
-
+libmagic will try and read its compiled file type database from /etc/magic.mgc
+by default. If this file doesn't exist, you can set the environment variable
+MAGIC to point to a magic.mgc file and libmagic will attempt to load from there
+as an alternative.
 
 .. c:function:: type()
 
