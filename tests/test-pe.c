@@ -873,6 +873,16 @@ int main(int argc, char** argv)
       }",
       "tests/data/pe_mingw");
 
+  assert_true_rule_file(
+      "import \"pe\" \
+      rule test { \
+        condition: \
+          pe.import_rva(\"PtImageRW.dll\", \"ord4\") == 254924 and \
+          pe.import_rva(\"PtPDF417Decode.dll\", 4) == 254948 \
+      }",
+      "tests/data/"
+      "ca21e1c32065352d352be6cde97f89c141d7737ea92434831f998080783d5386");
+
   yr_finalize();
 
   YR_DEBUG_FPRINTF(
