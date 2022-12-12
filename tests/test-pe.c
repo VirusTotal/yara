@@ -883,6 +883,16 @@ int main(int argc, char** argv)
       "tests/data/"
       "ca21e1c32065352d352be6cde97f89c141d7737ea92434831f998080783d5386");
 
+  assert_true_rule_file(
+      "import \"pe\" \
+      rule test { \
+        condition: \
+          pe.delayed_import_rva(\"QDB.dll\", \"ord116\") == \
+          pe.delayed_import_rva(\"QDB.dll\", 116) \
+      }",
+      "tests/data/"
+      "079a472d22290a94ebb212aa8015cdc8dd28a968c6b4d3b88acdd58ce2d3b885");
+
   yr_finalize();
 
   YR_DEBUG_FPRINTF(
