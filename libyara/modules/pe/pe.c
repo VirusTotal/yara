@@ -3039,6 +3039,96 @@ define_function(import_rva_ordinal)
   return_integer(YR_UNDEFINED);
 }
 
+define_function(delayed_import_rva)
+{
+  SIZED_STRING* in_dll_name = sized_string_argument(1);
+  SIZED_STRING* in_function_name = sized_string_argument(2);
+
+  SIZED_STRING* dll_name;
+  SIZED_STRING* function_name;
+  YR_OBJECT* module = yr_module();
+  PE* pe = (PE*) module->data;
+
+  if (!pe)
+    return_integer(YR_UNDEFINED);
+
+  int64_t num_imports = yr_get_integer(pe->object, "number_of_delayed_imports");
+  if (IS_UNDEFINED(num_imports))
+    return_integer(YR_UNDEFINED);
+
+  for (int i = 0; i < num_imports; i++)
+  {
+    dll_name = yr_get_string(module, "delayed_import_details[%i].library_name", i);
+    if (dll_name == NULL || IS_UNDEFINED(dll_name) ||
+        ss_compare(in_dll_name, dll_name) != 0)
+      continue;
+
+    int64_t num_functions = yr_get_integer(
+        module, "delayed_import_details[%i].number_of_functions", i);
+    if (IS_UNDEFINED(num_functions))
+      return_integer(YR_UNDEFINED);
+
+    for (int j = 0; j < num_functions; j++)
+    {
+      function_name = yr_get_string(
+          module, "delayed_import_details[%i].functions[%i].name", i, j);
+      if (function_name == NULL || IS_UNDEFINED(function_name))
+        continue;
+
+      if (ss_compare(in_function_name, function_name) == 0)
+        return_integer(yr_get_integer(
+            module, "delayed_import_details[%i].functions[%i].rva", i, j));
+    }
+  }
+
+  return_integer(YR_UNDEFINED);
+}
+
+define_function(delayed_import_rva_ordinal)
+{
+  SIZED_STRING* in_dll_name = sized_string_argument(1);
+  int64_t in_ordinal = integer_argument(2);
+
+  SIZED_STRING* dll_name;
+  int64_t ordinal;
+  YR_OBJECT* module = yr_module();
+  PE* pe = (PE*) module->data;
+
+  if (!pe)
+    return_integer(YR_UNDEFINED);
+
+  int64_t num_imports = yr_get_integer(pe->object, "number_of_delayed_imports");
+  if (IS_UNDEFINED(num_imports))
+    return_integer(YR_UNDEFINED);
+
+  for (int i = 0; i < num_imports; i++)
+  {
+    dll_name = yr_get_string(module, "delayed_import_details[%i].library_name", i);
+    if (dll_name == NULL || IS_UNDEFINED(dll_name) ||
+        ss_compare(in_dll_name, dll_name) != 0)
+      continue;
+
+    int64_t num_functions = yr_get_integer(
+        module, "delayed_import_details[%i].number_of_functions", i);
+    if (IS_UNDEFINED(num_functions))
+      return_integer(YR_UNDEFINED);
+
+    for (int j = 0; j < num_functions; j++)
+    {
+      ordinal = yr_get_integer(
+          module, "delayed_import_details[%i].functions[%i].ordinal", i, j);
+      if (IS_UNDEFINED(ordinal))
+        continue;
+
+      if (ordinal == in_ordinal)
+        return_integer(yr_get_integer(
+            module, "delayed_import_details[%i].functions[%i].rva", i, j));
+    }
+  }
+
+  return_integer(YR_UNDEFINED);
+}
+
 define_function(locale)
 {
   YR_OBJECT* module = yr_module();
@@ -3582,6 +3672,8 @@ begin_declarations
   declare_function("imports", "irr", "i", imports_regex);
   declare_function("import_rva", "ss", "i", import_rva);
   declare_function("import_rva", "si", "i", import_rva_ordinal);
+  declare_function("delayed_import_rva", "ss", "i", delayed_import_rva);
+  declare_function("delayed_import_rva", "si", "i", delayed_import_rva_ordinal);
   declare_function("locale", "i", "i", locale);
   declare_function("language", "i", "i", language);
   declare_function("is_dll", "", "i", is_dll);
