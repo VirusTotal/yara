@@ -560,6 +560,16 @@ Reference
 
         Section name.
 
+    .. c:member:: full_name
+
+        If the name in the section table contains a slash (/) followed by
+        a representation of the decimal number in ASCII format, then this field
+        contains a string from the specified offset in the string table.
+        Otherwise, this field contains the same value as a name field.
+
+        Even though it's not a standard, MinGW and Cygwin compilers use this
+        feature to store section names which are longer than 8 characters.
+
     .. c:member:: characteristics
 
         Section characteristics.
@@ -810,6 +820,12 @@ Reference
 
     Number of authenticode signatures in the PE.
 
+.. c:type:: is_signed
+
+    True if any of the PE signatures is verified. Verified here means, that the signature is formally correct: digests match,
+    signer public key correctly verifies the encrypted digest, etc. But this doesn't mean that the signer (and thus the signature)
+    can be trusted as there are no trust anchors involved in the verification.
+
 .. c:type:: signatures
 
     A zero-based array of signature objects, one for each authenticode
@@ -887,6 +903,119 @@ Reference
         Is equivalent to::
 
             timestamp >= pe.signatures[n].not_before and timestamp <= pe.signatures[n].not_after
+
+   .. c:member:: verified
+
+        Boolean, true if signature was sucessfully verified. More details about what the `verified` means is mentioned
+        under the attribute `pe.is_signed`.
+
+    .. c:member:: digest_alg
+
+        Name of the algorithm used for file digest. Usually "sha1" or "sha256"
+
+    .. c:member:: digest
+
+        Digest of the file signed in the signature.
+
+    .. c:member:: file_digest
+
+        Calculated digest using digest_alg of the analysed file.
+
+    .. c:member:: number_of_certificates
+
+        Number of the certificates stored in the signature, including the ones in countersignatures.
+
+    .. c:type:: certificates
+
+        A zero-based array of certificates stored in the signature, including the ones in countersignatures.
+        The members of the certificates are identical to those already explained before, with the same name.
+
+        .. c:member:: thumbprint
+        .. c:member:: issuer
+        .. c:member:: subject
+        .. c:member:: version
+        .. c:member:: algorithm
+        .. c:member:: serial
+        .. c:member:: not_before
+        .. c:member:: not_after
+    
+    .. c:type:: signer_info
+
+        Information about the signature signer.
+
+        .. c:member:: program_name
+
+            Optional program name stored in the signature.
+
+        .. c:member:: digest
+
+            Signed digest of the signature.
+
+        .. c:member:: digest_alg
+
+            Algorithm used for the digest of the signature. Usually "sha1" or "sha256"
+
+        .. c:member:: length_of_chain
+
+            Number of certificates in the signers chain.
+
+        .. c:type:: chain
+
+        A zero-based array of certificates in the signers chain. The members of the certificates are
+        identical to those already explained before, with the same name.
+
+            .. c:member:: thumbprint
+            .. c:member:: issuer
+            .. c:member:: subject
+            .. c:member:: version
+            .. c:member:: algorithm
+            .. c:member:: serial
+            .. c:member:: not_before
+            .. c:member:: not_after
+
+    .. c:member:: number_of_countersignatures
+
+        Number of the countersignatures of the signature.
+
+    .. c:type:: countersignatures
+
+        A zero-based array of the countersignatures of the signature.
+        Almost always it's just single timestamp one.
+
+        .. c:member:: verified
+
+            Boolean, true if countersignature was sucessfully verified. More details about what the `verified` means is mentioned
+            under the attribute `pe.is_signed`.
+
+        .. c:member:: sign_time
+
+            Integer - unix time of the timestamp signing time.
+
+        .. c:member:: digest
+
+            Signed digest of the countersignature.
+
+        .. c:member:: digest_alg
+
+            Algorithm used for the digest of the countersignature. Usually "sha1" or "sha256"
+
+        .. c:member:: length_of_chain
+
+            Number of certificates in the countersigners chain.
+
+        .. c:type:: chain
+
+        A zero-based array of certificates in the countersigners chain. The members of the certificates are
+        identical to those already explained before, with the same name.
+
+            .. c:member:: thumbprint
+            .. c:member:: issuer
+            .. c:member:: subject
+            .. c:member:: version
+            .. c:member:: algorithm
+            .. c:member:: serial
+            .. c:member:: not_before
+            .. c:member:: not_after
 
 .. c:type:: rich_signature
 
@@ -1063,9 +1192,13 @@ Reference
 
 .. c:type:: number_of_delayed_imports
 
+    .. versionadded:: 4.2.0
+
     Number of delayed imported DLLs in the PE. (Number of IMAGE_DELAYLOAD_DESCRIPTOR parsed from file)
 
 .. c:type:: number_of_delay_imported_functions
+
+    .. versionadded:: 4.2.0
 
     Number of delayed imported functions in the PE.
 
@@ -1120,6 +1253,8 @@ Reference
 
 .. c:function:: imports(import_flag, dll_name, function_name)
 
+    .. versionadded:: 4.2.0
+
     Function returning true if the PE imports *function_name* from *dll_name*,
     or false otherwise. *dll_name* is case insensitive.
 
@@ -1142,6 +1277,8 @@ Reference
 
 .. c:function:: imports(import_flag, import_flag, dll_name)
 
+    .. versionadded:: 4.2.0
+
     Function returning the number of functions from the *dll_name*, in the PE
     imports. *dll_name* is case insensitive.
 
@@ -1149,12 +1286,16 @@ Reference
 
 .. c:function:: imports(import_flag, dll_name, ordinal)
 
+    .. versionadded:: 4.2.0
+
     Function returning true if the PE imports *ordinal* from *dll_name*,
     or false otherwise. *dll_name* is case insensitive.
 
     *Example:  pe.imports(pe.IMPORT_DELAYED, "WS2_32.DLL", 3)*
 
 .. c:function:: imports(import_flag, dll_regexp, function_regexp)
+
+    .. versionadded:: 4.2.0
 
     Function returning the number of functions from the PE imports where a
     function name matches *function_regexp* and a DLL name matches
@@ -1165,6 +1306,8 @@ Reference
     *Example:  pe.imports(pe.IMPORT_DELAYED, /kernel32\.dll/i, /(Read|Write)ProcessMemory/) == 2*
 
 .. c:type:: import_details
+
+    .. versionadded:: 4.2.0
 
     Array of structures containing information about the PE's imports libraries.
 
@@ -1188,9 +1331,17 @@ Reference
 
             Ordinal of imported function. If ordinal does not exist this value is YR_UNDEFINED
 
+        .. c:member:: rva
+
+            .. versionadded:: 4.3.0
+
+            Relative virtual address (RVA) of imported function. If rva not found then this value is YR_UNDEFINED
+
     *Example: pe.import_details[1].library_name == "library_name"
 
 .. c:type:: delayed_import_details
+
+    .. versionadded:: 4.2.0
 
     Array of structures containing information about the PE's delayed imports libraries.
 
@@ -1213,6 +1364,12 @@ Reference
         .. c:member:: ordinal
 
             Ordinal of imported function. If ordinal does not exist this value is YR_UNDEFINED
+
+        .. c:member:: rva
+
+            .. versionadded:: 4.3.0
+            
+            Relative virtual address (RVA) of imported function. If rva not found then this value is YR_UNDEFINED
 
     *Example: pe.delayed_import_details[1].name == "library_name"
 
@@ -1246,7 +1403,7 @@ Reference
     an MD5 hash of the PE's import table after some normalization. The imphash
     for a PE can be also computed with `pefile <http://code.google.com/p/pefile/>`_
     and you can find more information in `Mandiant's blog
-    <https://www.mandiant.com/blog/tracking-malware-import-hashing/>`_. The returned
+    <https://www.mandiant.com/resources/blog/tracking-malware-import-hashing/>`_. The returned
     hash string is always in lowercase.
 
     *Example: pe.imphash() == "b8bb385806b89680e13fc0cf24f4431e"*
@@ -1267,13 +1424,13 @@ Reference
 
     *Example: pe.section_index(pe.entry_point)*
 
-.. c:function:: is_pe()
+.. c:type:: is_pe
 
     .. versionadded:: 3.8.0
 
     Return true if the file is a PE.
 
-    *Example: pe.is_pe()*
+    *Example: pe.is_pe*
 
 .. c:function:: is_dll()
 

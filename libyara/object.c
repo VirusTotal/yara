@@ -39,8 +39,15 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <yara/globals.h>
 #include <yara/mem.h>
 #include <yara/object.h>
+#include <yara/strutils.h>
 #include <yara/utils.h>
 
+////////////////////////////////////////////////////////////////////////////////
+// Creates a new object with the given type and identifier. If a parent is
+// specified the new object is owned by the parent and it will be destroyed when
+// the parent is destroyed. You must not call yr_object_destroy on an objected
+// that has a parent, you should destroy the parent instead.
+//
 int yr_object_create(
     int8_t type,
     const char* identifier,
@@ -48,10 +55,10 @@ int yr_object_create(
     YR_OBJECT** object)
 {
   YR_OBJECT* obj;
-  int i;
   size_t object_size = 0;
 
   assert(parent != NULL || object != NULL);
+  assert(identifier != NULL);
 
   switch (type)
   {
@@ -114,7 +121,7 @@ int yr_object_create(
     break;
   case OBJECT_TYPE_FUNCTION:
     object_as_function(obj)->return_obj = NULL;
-    for (i = 0; i < YR_MAX_OVERLOADED_FUNCTIONS; i++)
+    for (int i = 0; i < YR_MAX_OVERLOADED_FUNCTIONS; i++)
     {
       object_as_function(obj)->prototypes[i].arguments_fmt = NULL;
       object_as_function(obj)->prototypes[i].code = NULL;
@@ -186,7 +193,6 @@ int yr_object_function_create(
   YR_OBJECT_FUNCTION* f = NULL;
 
   int8_t return_type;
-  int i;
 
   // The parent of a function must be a structure.
   assert(parent != NULL && parent->type == OBJECT_TYPE_STRUCTURE);
@@ -219,14 +225,15 @@ int yr_object_function_create(
     FAIL_ON_ERROR(
         yr_object_create(OBJECT_TYPE_FUNCTION, identifier, parent, &o));
 
-    FAIL_ON_ERROR_WITH_CLEANUP(
-        yr_object_create(return_type, "result", o, &return_obj),
-        yr_object_destroy(o));
+    // In case of failure while creating return_obj we don't need to free the
+    // previously created "o" object, as it is already associated with its
+    // parent and will be destroyed when the parent is destroyed.
+    FAIL_ON_ERROR(yr_object_create(return_type, "result", o, &return_obj));
 
     f = object_as_function(o);
   }
 
-  for (i = 0; i < YR_MAX_OVERLOADED_FUNCTIONS; i++)
+  for (int i = 0; i < YR_MAX_OVERLOADED_FUNCTIONS; i++)
   {
     if (f->prototypes[i].arguments_fmt == NULL)
     {
@@ -306,14 +313,16 @@ int yr_object_from_external_variable(
   return result;
 }
 
+////////////////////////////////////////////////////////////////////////////////
+// Destroy an objects, and any other object that is a child of it. For example,
+// destroying a struct will destroy all its members.
+//
 void yr_object_destroy(YR_OBJECT* object)
 {
   YR_STRUCTURE_MEMBER* member;
   YR_STRUCTURE_MEMBER* next_member;
   YR_ARRAY_ITEMS* array_items;
   YR_DICTIONARY_ITEMS* dict_items;
-
-  int i;
 
   if (object == NULL)
     return;
@@ -345,7 +354,7 @@ void yr_object_destroy(YR_OBJECT* object)
 
     if (array_items != NULL)
     {
-      for (i = 0; i < array_items->length; i++)
+      for (int i = 0; i < array_items->length; i++)
         if (array_items->objects[i] != NULL)
           yr_object_destroy(array_items->objects[i]);
     }
@@ -361,7 +370,7 @@ void yr_object_destroy(YR_OBJECT* object)
 
     if (dict_items != NULL)
     {
-      for (i = 0; i < dict_items->used; i++)
+      for (int i = 0; i < dict_items->used; i++)
       {
         if (dict_items->objects[i].key != NULL)
           yr_free(dict_items->objects[i].key);
@@ -531,8 +540,6 @@ int yr_object_copy(YR_OBJECT* object, YR_OBJECT** object_copy)
 
   YR_STRUCTURE_MEMBER* structure_member;
 
-  int i;
-
   *object_copy = NULL;
 
   FAIL_ON_ERROR(
@@ -568,7 +575,7 @@ int yr_object_copy(YR_OBJECT* object, YR_OBJECT** object_copy)
         // cleanup
         yr_object_destroy(copy));
 
-    for (i = 0; i < YR_MAX_OVERLOADED_FUNCTIONS; i++)
+    for (int i = 0; i < YR_MAX_OVERLOADED_FUNCTIONS; i++)
       object_as_function(copy)->prototypes[i] =
           object_as_function(object)->prototypes[i];
 
@@ -691,7 +698,6 @@ int yr_object_array_set_item(YR_OBJECT* object, YR_OBJECT* item, int index)
 {
   YR_OBJECT_ARRAY* array;
 
-  int i;
   int capacity;
 
   assert(index >= 0);
@@ -728,7 +734,7 @@ int yr_object_array_set_item(YR_OBJECT* object, YR_OBJECT* item, int index)
     if (array->items == NULL)
       return ERROR_INSUFFICIENT_MEMORY;
 
-    for (i = array->items->capacity; i < capacity; i++)
+    for (int i = array->items->capacity; i < capacity; i++)
       array->items->objects[i] = NULL;
 
     array->items->capacity = capacity;
@@ -748,8 +754,6 @@ YR_OBJECT* yr_object_dict_get_item(
     int flags,
     const char* key)
 {
-  int i;
-
   YR_OBJECT* result = NULL;
   YR_OBJECT_DICTIONARY* dict;
 
@@ -759,7 +763,7 @@ YR_OBJECT* yr_object_dict_get_item(
 
   if (dict->items != NULL)
   {
-    for (i = 0; i < dict->items->used; i++)
+    for (int i = 0; i < dict->items->used; i++)
     {
       if (strcmp(dict->items->objects[i].key->c_string, key) == 0)
         result = dict->items->objects[i].obj;
@@ -781,7 +785,6 @@ int yr_object_dict_set_item(YR_OBJECT* object, YR_OBJECT* item, const char* key)
 {
   YR_OBJECT_DICTIONARY* dict;
 
-  int i;
   int count;
 
   assert(object->type == OBJECT_TYPE_DICTIONARY);
@@ -813,7 +816,7 @@ int yr_object_dict_set_item(YR_OBJECT* object, YR_OBJECT* item, const char* key)
     if (dict->items == NULL)
       return ERROR_INSUFFICIENT_MEMORY;
 
-    for (i = dict->items->used; i < count; i++)
+    for (int i = dict->items->used; i < count; i++)
     {
       dict->items->objects[i].key = NULL;
       dict->items->objects[i].obj = NULL;
@@ -853,7 +856,7 @@ bool yr_object_has_undefined_value(YR_OBJECT* object, const char* field, ...)
   switch (field_obj->type)
   {
   case OBJECT_TYPE_FLOAT:
-    return isnan(field_obj->value.d);
+    return yr_isnan(field_obj->value.d);
   case OBJECT_TYPE_STRING:
     return field_obj->value.ss == NULL;
   case OBJECT_TYPE_INTEGER:
@@ -1072,7 +1075,6 @@ YR_API void yr_object_print_data(
   YR_STRUCTURE_MEMBER* member;
 
   char indent_spaces[32];
-  int i;
 
   indent = yr_min(indent, sizeof(indent_spaces) - 1);
 
@@ -1105,10 +1107,9 @@ YR_API void yr_object_print_data(
 
     if (object->value.ss != NULL)
     {
-      size_t l;
       printf(" = \"");
 
-      for (l = 0; l < object->value.ss->length; l++)
+      for (size_t l = 0; l < object->value.ss->length; l++)
       {
         char c = object->value.ss->c_string[l];
 
@@ -1144,7 +1145,7 @@ YR_API void yr_object_print_data(
     break;
 
   case OBJECT_TYPE_ARRAY:
-    for (i = 0; i < yr_object_array_length(object); i++)
+    for (int i = 0; i < yr_object_array_length(object); i++)
     {
       YR_OBJECT* o = yr_object_array_get_item(object, 0, i);
 
@@ -1162,7 +1163,7 @@ YR_API void yr_object_print_data(
 
     if (dict_items != NULL)
     {
-      for (i = 0; i < dict_items->used; i++)
+      for (int i = 0; i < dict_items->used; i++)
       {
         printf("\n%s\t%s", indent_spaces, dict_items->objects[i].key->c_string);
 

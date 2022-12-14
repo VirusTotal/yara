@@ -5,16 +5,13 @@
 
 #define MAX_PE_SECTIONS 96
 
-
 #define IS_64BITS_PE(pe)                             \
   (yr_le16toh(pe->header64->OptionalHeader.Magic) == \
    IMAGE_NT_OPTIONAL_HDR64_MAGIC)
 
-
 #define OptionalHeader(pe, field)                        \
   (IS_64BITS_PE(pe) ? pe->header64->OptionalHeader.field \
                     : pe->header->OptionalHeader.field)
-
 
 //
 // Imports are stored in a linked list. Each node (IMPORTED_DLL) contains the
@@ -32,7 +29,6 @@ typedef struct _IMPORTED_DLL
 
 } IMPORTED_DLL, *PIMPORTED_DLL;
 
-
 //
 // This is used to track imported and exported functions. The "has_ordinal"
 // field is only used in the case of imports as those are optional. Every export
@@ -46,11 +42,11 @@ typedef struct _IMPORT_FUNCTION
   char* name;
   uint8_t has_ordinal;
   uint16_t ordinal;
+  uint64_t rva;
 
   struct _IMPORT_FUNCTION* next;
 
 } IMPORT_FUNCTION, *PIMPORT_FUNCTION;
-
 
 typedef struct _PE
 {
@@ -73,30 +69,19 @@ typedef struct _PE
 
 } PE;
 
-
-#define fits_in_pe(pe, pointer, size)                                    \
-  ((size_t) size <= pe->data_size && (uint8_t*) (pointer) >= pe->data && \
-   (uint8_t*) (pointer) <= pe->data + pe->data_size - size)
+#define fits_in_pe(pe, pointer, size)                                     \
+  ((size_t)(size) <= pe->data_size && (uint8_t*) (pointer) >= pe->data && \
+   (uint8_t*) (pointer) <= pe->data + pe->data_size - (size))
 
 #define struct_fits_in_pe(pe, pointer, struct_type) \
   fits_in_pe(pe, pointer, sizeof(struct_type))
 
-
 PIMAGE_NT_HEADERS32 pe_get_header(const uint8_t* data, size_t data_size);
-
 
 PIMAGE_DATA_DIRECTORY pe_get_directory_entry(PE* pe, int entry);
 
-
 int64_t pe_rva_to_offset(PE* pe, uint64_t rva);
 
-
 char* ord_lookup(char* dll, uint16_t ord);
-
-
-#if HAVE_LIBCRYPTO
-#include <openssl/asn1.h>
-time_t ASN1_get_time_t(const ASN1_TIME* time);
-#endif
 
 #endif

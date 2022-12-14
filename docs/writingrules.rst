@@ -57,25 +57,25 @@ keywords are reserved and cannot be used as an identifier:
      - matches
      - meta
      - nocase
-   * - not
+   * - none
+     - not
      - of
      - or
      - private
      - rule
      - startswith
      - strings
-     - them
-   * - true
+   * - them
+     - true
      - uint16
      - uint16be
      - uint32
      - uint32be
      - uint8
      - uint8be
-     - wide
-   * - xor
-     -
-     -
+   * - wide
+     - xor
+     - defined
      -
      -
      -
@@ -146,8 +146,8 @@ shown below.
 Hexadecimal strings
 -------------------
 
-Hexadecimal strings allow three special constructions that make them more
-flexible: wild-cards, jumps, and alternatives. Wild-cards are just placeholders
+Hexadecimal strings allow four special constructions that make them more
+flexible: wild-cards, not operators, jumps, and alternatives. Wild-cards are just placeholders
 that you can put into the string indicating that some bytes are unknown and they
 should match anything. The placeholder character is the question mark (?). Here
 you have an example of a hexadecimal string with wild-cards:
@@ -166,7 +166,27 @@ you have an example of a hexadecimal string with wild-cards:
 As shown in the example the wild-cards are nibble-wise, which means that you can
 define just one nibble of the byte and leave the other unknown.
 
-Wild-cards are useful when defining strings whose content can vary but you know
+Starting with version 4.3.0, you may specify that a byte is not a specific
+value. For that you can use the not operator with a byte value:
+
+.. code-block:: yara
+
+    rule NotExample
+    {
+        strings:
+            $hex_string = { F4 23 ~00 62 B4 }
+            $hex_string2 = { F4 23 ~?0 62 B4 }
+        condition:
+            $hex_string and $hex_string2
+    }
+
+In the example above we have a byte prefixed with a tilde (~), which is the not operator.
+This defines that the byte in that location can take any value except the value specified.
+In this case the first string will only match if the byte is not 00. The not operator can
+also be used with nibble-wise wild-cards, so the second string will only match if the
+second nibble is not zero.
+
+Wild-cards and not operators are useful when defining strings whose content can vary but you know
 the length of the variable chunks, however, this is not always the case. In some
 circumstances you may need to define strings with chunks of variable content and
 length. In those situations you can use jumps instead of wild-cards:
@@ -847,6 +867,7 @@ Precedence  Operator     Description                                Associativit
             matches      String matches regular expression
 ----------  -----------  -----------------------------------------  -------------
 11          not          Logical NOT                                Right-to-left
+            defined      Check if an expression is defined
 ----------  -----------  -----------------------------------------  -------------
 12          and          Logical AND                                Left-to-right
 ----------  -----------  -----------------------------------------  -------------
@@ -898,6 +919,16 @@ For example:
 
 This rule matches any file or process containing the string $a exactly six times,
 and more than ten occurrences of string $b.
+
+Starting with YARA 4.2.0 it is possible to express the count of a string in an
+integer range, like this:
+
+.. code-block:: yara
+
+    #a in (filesize-500..filesize) == 2
+
+In this example the number of 'a' strings in the last 500 bytes of the file must
+equal exactly 2.
 
 .. _string-offsets:
 
@@ -1083,6 +1114,8 @@ itself. As an example let's see a rule to distinguish PE files:
     }
 
 
+.. _sets-of-strings:
+
 Sets of strings
 ---------------
 
@@ -1156,7 +1189,7 @@ the equivalent keyword ``them`` for more legibility.
 
 In all the examples above, the number of strings have been specified by a
 numeric constant, but any expression returning a numeric value can be used.
-The keywords ``any`` and ``all`` can be used as well.
+The keywords ``any``, ``all`` and ``none`` can be used as well.
 
 .. code-block:: yara
 
@@ -1165,6 +1198,19 @@ The keywords ``any`` and ``all`` can be used as well.
     all of ($a*)      // all strings whose identifier starts by $a
     any of ($a,$b,$c) // any of $a, $b or $c
     1 of ($*)         // same that "any of them"
+    none of ($b*)     // zero of the set of strings that start with "$b"
+
+.. warning:: Due to the way YARA works internally, using "0 of them" is an
+    ambiguous part of the language which should be avoided in favor of "none
+    of them". To understand this, consider the meaning of "2 of them", which
+    is true if 2 or more of the strings match. Historically, "0 of them"
+    followed this principle and would evaluate to true if at least one of the
+    strings matched. This ambiguity is resolved in YARA 4.3.0 by making "0 of
+    them" evaluate to true if exactly 0 of the strings match. To improve on
+    the situation and make the intent clear, it is encouraged to use "none" in
+    place of 0. By not using an integer it is easier to reason about the meaning
+    of "none of them" without the historical understanding of "at least 0"
+    clouding the issue.
 
 
 Starting with YARA 4.2.0 it is possible to express a set of strings in an
@@ -1174,6 +1220,13 @@ integer range, like this:
 
     all of ($a*) in (filesize-500..filesize)
     any of ($a*, $b*) in (1000..2000)
+
+Starting with YARA 4.3.0 it is possible to express a set of strings at a
+specific offset, like this:
+
+.. code-block:: yara
+
+    any of ($a*) at 0
 
 
 Applying the same condition to many strings
@@ -1221,6 +1274,18 @@ occurrences, the first offset, and the length of each string respectively.
 
     for all of them : ( # > 3 )
     for all of ($a*) : ( @ > @b )
+
+
+Starting with YARA 4.3.0 you can express conditions over text strings like this:
+
+.. code-block:: yara
+
+    for any s in ("71b36345516e076a0663e0bea97759e4", "1e7f7edeb06de02f2c2a9319de99e033") : ( pe.imphash() == s )
+
+It is worth remembering here that the two hashes referenced in the rule are
+normal text strings, and have nothing to do with the string section of the rule.
+Inside the loop condition the result of the `pe.imphash()` function is compared
+to each of the text strings, resulting in a more concise rule.
 
 
 Using anonymous strings with ``of`` and ``for..of``
@@ -1382,6 +1447,54 @@ depend on others. Let's see an example:
 As can be seen in the example, a file will satisfy Rule2 only if it contains
 the string "dummy2" and satisfies Rule1. Note that it is strictly necessary to
 define the rule being invoked before the one that will make the invocation.
+
+Another way to reference other rules was introduced in 4.2.0 and that is sets
+of rules, which operate similarly to sets of strings (see
+:ref:`sets-of-strings)`. For example:
+
+.. code-block:: yara
+
+    rule Rule1
+    {
+        strings:
+            $a = "dummy1"
+
+        condition:
+            $a
+    }
+
+    rule Rule2
+    {
+        strings:
+            $a = "dummy2"
+
+        condition:
+            $a
+    }
+
+    rule MainRule
+    {
+        strings:
+            $a = "dummy2"
+
+        condition:
+            any of (Rule*)
+    }
+
+This example demonstrates how to use rule sets to describe higher order logic
+in a way which automatically grows with your rules. If you define another rule
+named ``Rule3`` before ``MainRule`` then it will automatically be included in
+the expansion of ``Rule*`` in the condition for MainRule.
+
+To use rule sets all of the rules included in the set **must** exist prior to
+the rule set being used. For example, the following will produce a compiler
+error because ``a2`` is defined after the rule set is used in ``x``:
+
+.. code-block:: yara
+
+    rule a1 { condition: true }
+    rule x { condition: 1 of (a*) }
+    rule a2 { condition: true }
 
 More about rules
 ================
@@ -1578,8 +1691,15 @@ files, because ``pe.entry_point`` is undefined for those files. This implies tha
 
 If the condition is ``pe.entry_point == 0x1000`` alone, it will evaluate to ``false``
 for non-PE files, and so will do ``pe.entry_point != 0x1000`` and
-``not pe.entry_point == 0x1000``, as non of these expressions make sense for non-PE
+``not pe.entry_point == 0x1000``, as none of these expressions make sense for non-PE
 files.
+
+To check if expression is defined use unary operator ``defined``. Example:
+
+.. code-block:: yara
+
+    defined pe.entry_point
+
 
 
 External variables

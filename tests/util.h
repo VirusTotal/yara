@@ -184,6 +184,18 @@ void assert_hex_atoms(
   } while (0);
 
 
+#define assert_match_count(rule, string, count)                         \
+  do {                                                                  \
+    int result = matches_string(rule, string);                          \
+    if (result != count) {                                              \
+      fprintf(stderr, "%s:%d: rule does not match count: "              \
+              "expected: %d actual: %d\n",                              \
+              __FILE__, __LINE__,                                       \
+              count, result);                                           \
+      exit(EXIT_FAILURE);                                               \
+    }                                                                   \
+  } while (0);
+
 #define assert_true_rule(rule, string)                                  \
   do {                                                                  \
     if (!matches_string(rule, string)) {                                \

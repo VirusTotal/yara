@@ -30,7 +30,7 @@ with :c:func:`yr_compiler_destroy`.
 
 You can use :c:func:`yr_compiler_add_file`, :c:func:`yr_compiler_add_fd`, or
 :c:func:`yr_compiler_add_string` to add one or more input sources to be
-compiler. Both of these functions receive an optional namespace. Rules added
+compiled. Both of these functions receive an optional namespace. Rules added
 under the same namespace behave as if they were contained within the same
 source file or string, so, rule identifiers must be unique among all the sources
 sharing a namespace. If the namespace argument is ``NULL`` the rules are put
@@ -39,7 +39,7 @@ in the *default* namespace.
 The :c:func:`yr_compiler_add_file`, :c:func:`yr_compiler_add_fd`, and
 :c:func:`yr_compiler_add_string` functions return the number of errors found in
 the source code. If the rules are correct they will return 0. If any of these
-functions return an error the compiler can't used anymore, neither for adding
+functions return an error the compiler can't be used anymore, neither for adding
 more rules nor getting the compiled rules.
 
 For obtaining detailed error information you must set a callback function by
@@ -60,7 +60,7 @@ functions. The callback function has the following prototype:
 
 Possible values for ``error_level`` are ``YARA_ERROR_LEVEL_ERROR`` and
 ``YARA_ERROR_LEVEL_WARNING``. The arguments ``file_name`` and ``line_number``
-contains the file name and line number where the error or warning occurs.
+contain the file name and line number where the error or warning occurred.
 ``file_name`` is the one passed to :c:func:`yr_compiler_add_file` or
 :c:func:`yr_compiler_add_fd`. It can be ``NULL`` if you passed ``NULL`` or if
 you're using :c:func:`yr_compiler_add_string`. `rule` is a pointer to the
@@ -226,6 +226,7 @@ Possible values for ``message`` are::
   CALLBACK_MSG_IMPORT_MODULE
   CALLBACK_MSG_MODULE_IMPORTED
   CALLBACK_MSG_TOO_MANY_MATCHES
+  CALLBACK_MSG_CONSOLE_LOG
 
 Your callback function will be called once for each rule with either
 a ``CALLBACK_MSG_RULE_MATCHING`` or ``CALLBACK_MSG_RULE_NOT_MATCHING`` message,
@@ -259,6 +260,12 @@ will be called once with the ``CALLBACK_MSG_TOO_MANY_MATCHES``. When this happen
 ``message_data`` is a ``YR_STRING*`` which points to the string which caused the
 warning. If your callback returns ``CALLBACK_CONTINUE``, the string will be disabled
 and scanning will continue, otherwise scanning will be halted.
+
+Your callback will be called from the console module (:ref:`console-module`)
+with the ``CALLBACK_MSG_CONSOLE_LOG`` message. When this happens, the
+``message_data`` argument will be a ``char*`` that is the string generated
+by the console module. Your callback can do whatever it wants with this string,
+including logging it to an external logging source, or printing it to stdout.
 
 Lastly, the callback function is also called with the
 ``CALLBACK_MSG_SCAN_FINISHED`` message when the scan is finished. In this case
@@ -997,7 +1004,7 @@ Functions
   Return a pointer to the ``YR_RULE`` which triggered a scanning error. In the
   case where the rule is unable to be determined, NULL is returned.
 
-.. c:function:: YR_RULE* yr_scanner_last_error_string(YR_SCANNER* scanner)
+.. c:function:: YR_STRING* yr_scanner_last_error_string(YR_SCANNER* scanner)
 
   .. versionadded:: 3.8.0
 

@@ -1,6 +1,6 @@
-#line 1 "re_lexer.c"
+#line 2 "re_lexer.c"
 
-#line 3 "re_lexer.c"
+#line 4 "re_lexer.c"
 
 #define  YY_INT_ALIGNED short int
 
@@ -639,8 +639,8 @@ static const YY_CHAR yy_meta[23] =
 
 static const flex_int16_t yy_base[51] =
     {   0,
-        0,   20,    3,    5,   50,   89,   89,   89,   10,   36,
-        0,   44,   43,   47,   38,   89,   26,   33,   89,   89,
+        0,   20,    3,    5,   49,   89,   89,   89,   10,   36,
+        0,   43,   38,   47,   89,   89,   26,   33,   89,   89,
        89,   89,   89,   89,   89,   89,    4,    5,    0,   33,
        32,   31,   29,   26,   24,   23,   15,   89,    8,   89,
        89,   89,    0,   89,   67,   72,   77,   82,   84,    4
@@ -661,7 +661,7 @@ static const flex_int16_t yy_nxt[112] =
        28,    9,   10,   39,    8,   14,   15,   14,   15,   29,
        11,    7,    8,   16,   17,   40,   41,   29,   29,   40,
        29,    9,   10,   29,    8,   29,   29,   29,   18,   38,
-       11,   18,   29,   19,   20,   21,   22,   29,   29,   44,
+       11,   18,   29,   19,   20,   21,   22,   29,   44,   44,
        44,   23,   24,   25,   26,   31,   32,   33,   44,   44,
        44,   44,   44,   34,   35,   36,   37,    6,    6,    6,
         6,    6,   12,   12,   12,   12,   12,   30,   44,   30,
@@ -678,7 +678,7 @@ static const flex_int16_t yy_chk[112] =
        28,    1,    1,   39,    1,    3,    3,    4,    4,   37,
         1,    2,    2,    9,    9,   27,   28,   36,   35,   39,
        34,    2,    2,   33,    2,   32,   31,   30,   18,   17,
-        2,   10,   15,   10,   10,   10,   10,   13,   12,    5,
+        2,   10,   13,   10,   10,   10,   10,   12,    5,    0,
         0,   10,   10,   10,   10,   14,   14,   14,    0,    0,
         0,    0,    0,   14,   14,   14,   14,   45,   45,   45,
        45,   45,   46,   46,   46,   46,   46,   47,    0,   47,
@@ -791,10 +791,10 @@ int read_escaped_char(
     yyscan_t yyscanner,
     uint8_t* escaped_char);
 
-#line 794 "re_lexer.c"
+#line 795 "re_lexer.c"
 #define YY_NO_UNISTD_H 1
 
-#line 797 "re_lexer.c"
+#line 798 "re_lexer.c"
 
 #define INITIAL 0
 #define char_class 1
@@ -1070,7 +1070,7 @@ YY_DECL
 #line 111 "re_lexer.l"
 
 
-#line 1073 "re_lexer.c"
+#line 1074 "re_lexer.c"
 
 	while ( /*CONSTCOND*/1 )		/* loops until end-of-file is reached */
 		{
@@ -1267,70 +1267,77 @@ YY_RULE_SETUP
 {
 
   // Any non-special character is passed as a CHAR token to the scanner.
-
-  yylval->integer = yytext[0];
-  return _CHAR_;
+  if (yytext[0] >= 32 && yytext[0] < 127)
+  {
+    yylval->integer = yytext[0];
+    return _CHAR_;
+  }
+  else
+  {
+    yyerror(yyscanner, lex_env, "non-ascii character");
+    yyterminate();
+  }
 }
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
-#line 234 "re_lexer.l"
+#line 241 "re_lexer.l"
 {
   return _WORD_CHAR_;
 }
 	YY_BREAK
 case 9:
 YY_RULE_SETUP
-#line 239 "re_lexer.l"
+#line 246 "re_lexer.l"
 {
   return _NON_WORD_CHAR_;
 }
 	YY_BREAK
 case 10:
 YY_RULE_SETUP
-#line 244 "re_lexer.l"
+#line 251 "re_lexer.l"
 {
   return _SPACE_;
 }
 	YY_BREAK
 case 11:
 YY_RULE_SETUP
-#line 249 "re_lexer.l"
+#line 256 "re_lexer.l"
 {
   return _NON_SPACE_;
 }
 	YY_BREAK
 case 12:
 YY_RULE_SETUP
-#line 254 "re_lexer.l"
+#line 261 "re_lexer.l"
 {
   return _DIGIT_;
 }
 	YY_BREAK
 case 13:
 YY_RULE_SETUP
-#line 259 "re_lexer.l"
+#line 266 "re_lexer.l"
 {
   return _NON_DIGIT_;
 }
 	YY_BREAK
 case 14:
 YY_RULE_SETUP
-#line 264 "re_lexer.l"
+#line 271 "re_lexer.l"
 {
   return _WORD_BOUNDARY_;
 }
 	YY_BREAK
 case 15:
 YY_RULE_SETUP
-#line 268 "re_lexer.l"
+#line 275 "re_lexer.l"
 {
   return _NON_WORD_BOUNDARY_;
 }
 	YY_BREAK
 case 16:
 YY_RULE_SETUP
-#line 273 "re_lexer.l"
+#line 280 "re_lexer.l"
 {
 
   yyerror(yyscanner, lex_env, "backreferences are not allowed");
@@ -1339,7 +1346,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 17:
 YY_RULE_SETUP
-#line 280 "re_lexer.l"
+#line 287 "re_lexer.l"
 {
 
   uint8_t c;
@@ -1358,7 +1365,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 18:
 YY_RULE_SETUP
-#line 297 "re_lexer.l"
+#line 304 "re_lexer.l"
 {
 
   // End of character class.
@@ -1374,12 +1381,29 @@ YY_RULE_SETUP
 case 19:
 /* rule 19 can match eol */
 YY_RULE_SETUP
-#line 311 "re_lexer.l"
+#line 318 "re_lexer.l"
 {
 
-  // A range inside a character class.
+  // A range inside a character class. The regexp is...
+  //
+  //   ( \x{hex_digit}{2}    Hex digit (i.e: \x01) ...
+  //   | \.                  ...or any escaped character (i.e. \\, \-) ...
+  //   | [^]\]               ...or any character except ] and \ ...
+  //   )
+  //   -                     ... followed by -
+  //   [^]]                  ... followed by any character except ]
+  //
+  // Some examples:
+  //
   //  [abc0-9]
-  //      ^- matching here
+  //      ^-^ matching range 0-9
+  //
+  //  [a-za-]
+  //   ^-^- matching range a-z
+  //
+  //  [\.-a]
+  //   ^--^- matching range \.-a
+  //
 
   uint16_t c;
   uint8_t start = yytext[0];
@@ -1422,67 +1446,55 @@ YY_RULE_SETUP
 	YY_BREAK
 case 20:
 YY_RULE_SETUP
-#line 357 "re_lexer.l"
+#line 381 "re_lexer.l"
 {
 
-  int i;
-
-  for (i = 0; i < 32; i++)
+  for (int i = 0; i < 32; i++)
     LEX_ENV->re_class.bitmap[i] |= word_chars[i];
 }
 	YY_BREAK
 case 21:
 YY_RULE_SETUP
-#line 366 "re_lexer.l"
+#line 388 "re_lexer.l"
 {
 
-  int i;
-
-  for (i = 0; i < 32; i++)
+  for (int i = 0; i < 32; i++)
     LEX_ENV->re_class.bitmap[i] |= ~word_chars[i];
 }
 	YY_BREAK
 case 22:
 YY_RULE_SETUP
-#line 375 "re_lexer.l"
+#line 395 "re_lexer.l"
 {
 
-  int i;
-
-  for (i = 0; i < 32; i++)
+  for (int i = 0; i < 32; i++)
     LEX_ENV->re_class.bitmap[i] |= space_chars[i];
 }
 	YY_BREAK
 case 23:
 YY_RULE_SETUP
-#line 384 "re_lexer.l"
+#line 402 "re_lexer.l"
 {
 
-  int i;
-
-  for (i = 0; i < 32; i++)
+  for (int i = 0; i < 32; i++)
     LEX_ENV->re_class.bitmap[i] |= ~space_chars[i];
 }
 	YY_BREAK
 case 24:
 YY_RULE_SETUP
-#line 393 "re_lexer.l"
+#line 409 "re_lexer.l"
 {
 
-  char c;
-
-  for (c = '0'; c <= '9'; c++)
+  for (char c = '0'; c <= '9'; c++)
     LEX_ENV->re_class.bitmap[c / 8] |= 1 << c % 8;
 }
 	YY_BREAK
 case 25:
 YY_RULE_SETUP
-#line 402 "re_lexer.l"
+#line 416 "re_lexer.l"
 {
 
-  int i;
-
-  for (i = 0; i < 32; i++)
+  for (int i = 0; i < 32; i++)
   {
     // digits 0-7 are in the sixth byte of the vector, let that byte alone
     if (i == 6)
@@ -1499,7 +1511,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 26:
 YY_RULE_SETUP
-#line 422 "re_lexer.l"
+#line 434 "re_lexer.l"
 {
 
   uint8_t c;
@@ -1517,7 +1529,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 27:
 YY_RULE_SETUP
-#line 438 "re_lexer.l"
+#line 450 "re_lexer.l"
 {
 
   if (yytext[0] >= 32 && yytext[0] < 127)
@@ -1535,7 +1547,7 @@ YY_RULE_SETUP
 }
 	YY_BREAK
 case YY_STATE_EOF(char_class):
-#line 455 "re_lexer.l"
+#line 467 "re_lexer.l"
 {
 
   // End of regexp reached while scanning a character class.
@@ -1546,22 +1558,15 @@ case YY_STATE_EOF(char_class):
 	YY_BREAK
 case 28:
 YY_RULE_SETUP
-#line 464 "re_lexer.l"
+#line 476 "re_lexer.l"
 {
-
-  if (yytext[0] >= 32 && yytext[0] < 127)
-  {
-    return yytext[0];
-  }
-  else
-  {
-    yyerror(yyscanner, lex_env, "non-ascii character");
-    yyterminate();
-  }
+  // Non-special characters have already been handled. This is a special character,
+  // which is thus passed as is to the scanner.
+  return yytext[0];
 }
 	YY_BREAK
 case YY_STATE_EOF(INITIAL):
-#line 478 "re_lexer.l"
+#line 483 "re_lexer.l"
 {
 
   yyterminate();
@@ -1569,10 +1574,10 @@ case YY_STATE_EOF(INITIAL):
 	YY_BREAK
 case 29:
 YY_RULE_SETUP
-#line 483 "re_lexer.l"
+#line 488 "re_lexer.l"
 ECHO;
 	YY_BREAK
-#line 1575 "re_lexer.c"
+#line 1581 "re_lexer.c"
 
 	case YY_END_OF_BUFFER:
 		{
@@ -2721,7 +2726,7 @@ void yyfree (void * ptr , yyscan_t yyscanner)
 
 #define YYTABLES_NAME "yytables"
 
-#line 483 "re_lexer.l"
+#line 488 "re_lexer.l"
 
 
 int escaped_char_value(
@@ -2871,7 +2876,13 @@ int yr_parse_re_string(
 
   FAIL_ON_ERROR(yr_re_ast_create(re_ast));
 
-  yylex_init(&yyscanner);
+  if (yylex_init(&yyscanner) != 0)
+  {
+    yr_re_ast_destroy(*re_ast);
+    *re_ast = NULL;
+    return ERROR_INSUFFICIENT_MEMORY;
+  }
+
   yyset_extra(*re_ast, yyscanner);
   yy_scan_string(re_string, yyscanner);
   yyparse(yyscanner, &lex_env);

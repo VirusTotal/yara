@@ -36,10 +36,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <yara/pe_utils.h>
 #include <yara/strutils.h>
 #include <yara/utils.h>
-
-#if HAVE_LIBCRYPTO
-#include <openssl/asn1.h>
-#endif
+#include <yara/dotnet.h>
 
 PIMAGE_NT_HEADERS32 pe_get_header(const uint8_t* data, size_t data_size)
 {
@@ -87,48 +84,33 @@ PIMAGE_NT_HEADERS32 pe_get_header(const uint8_t* data, size_t data_size)
 
 PIMAGE_DATA_DIRECTORY pe_get_directory_entry(PE* pe, int entry)
 {
-  PIMAGE_DATA_DIRECTORY directory_start;
-  uint8_t* optional_header_start;
-  uint16_t optional_header_size;
+  // Explanation
+  // https://github.com/VirusTotal/yara/issues/1525
 
-  // We are specifically NOT checking NumberOfRvaAndSizes here because it can
-  // lie. 7ff1bf680c80fd73c0b35084904848b3705480ddeb6d0eff62180bd14cd18570 has
-  // NumberOfRvaAndSizes set to 11 when in fact there is a valid
-  // IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR entry (which is more than 11). If we
-  // are overly strict here and only parse entries which are less than
-  // NumberOfRvaAndSizes we run the risk of missing otherwise perfectly valid
-  // files. Instead of being strict we check to make sure the entry is within
-  // the OptionalHeader, since SizeOfOptionalHeader includes the DataDirectory
-  // array.
+  // In Windows, any access to data directories is controlled by the
+  // RtlImageDirectoryEntryToData function. This is one of the first checks
+  // whether the desired directory entry is smaller than NumberOfRvaAndSizes.
+  // If it's not, it means that the requested directory entry is not there.
+  //
+  //  1. Must NOT check whether NumberOfRvaAndSizes > 0x10
+  //
+  //  2. Must check for NumberOfRvaAndSizes < DataDirectory except for 
+  //     IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR for 32-bit binary
+  //
+  //  3. The function must NOT check for SizeOfOptionalHeader
 
-  // In case someone requests an entry which is, by definition, invalid.
-  if (entry >= IMAGE_NUMBEROF_DIRECTORY_ENTRIES)
+
+  if ((entry != IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR || IS_64BITS_PE(pe)) &&
+      OptionalHeader(pe, NumberOfRvaAndSizes) < entry)
     return NULL;
 
-  if (IS_64BITS_PE(pe))
-  {
-    optional_header_start = (uint8_t*) &pe->header64->OptionalHeader;
-    optional_header_size = pe->header64->FileHeader.SizeOfOptionalHeader;
-    directory_start = pe->header64->OptionalHeader.DataDirectory;
-  }
-  else
-  {
-    optional_header_start = (uint8_t*) &pe->header->OptionalHeader;
-    optional_header_size = pe->header->FileHeader.SizeOfOptionalHeader;
-    directory_start = pe->header->OptionalHeader.DataDirectory;
-  }
+  PIMAGE_DATA_DIRECTORY result = &OptionalHeader(pe, DataDirectory)[entry];
 
-  // Make sure the entry doesn't point outside of the OptionalHeader.
-  if ((uint8_t*) (directory_start + entry) <=
-      optional_header_start + optional_header_size)
-  {
-    if (IS_64BITS_PE(pe))
-      return &pe->header64->OptionalHeader.DataDirectory[entry];
-    else
-      return &pe->header->OptionalHeader.DataDirectory[entry];
-  }
+  // Check that directory is in file
+  if (!struct_fits_in_pe(pe, result, IMAGE_DATA_DIRECTORY))
+    return NULL;
 
-  return NULL;
+  return result;
 }
 
 
@@ -276,53 +258,6 @@ time_t timegm(struct tm* tm)
 
 #endif  // HAVE__MKGMTIME
 #endif  // !HAVE_TIMEGM
-
-#if HAVE_LIBCRYPTO
-
-// Taken from http://stackoverflow.com/questions/10975542/asn1-time-conversion
-// and cleaned up. Also uses timegm(3) instead of mktime(3).
-
-time_t ASN1_get_time_t(const ASN1_TIME* time)
-{
-  struct tm t;
-  const char* str = (const char*) time->data;
-  size_t i = 0;
-
-  memset(&t, 0, sizeof(t));
-
-  if (time->type == V_ASN1_UTCTIME) /* two digit year */
-  {
-    t.tm_year = (str[i++] - '0') * 10;
-    t.tm_year += (str[i++] - '0');
-
-    if (t.tm_year < 70)
-      t.tm_year += 100;
-  }
-  else if (time->type == V_ASN1_GENERALIZEDTIME) /* four digit year */
-  {
-    t.tm_year = (str[i++] - '0') * 1000;
-    t.tm_year += (str[i++] - '0') * 100;
-    t.tm_year += (str[i++] - '0') * 10;
-    t.tm_year += (str[i++] - '0');
-    t.tm_year -= 1900;
-  }
-
-  t.tm_mon = (str[i++] - '0') * 10;
-  t.tm_mon += (str[i++] - '0') - 1;  // -1 since January is 0 not 1.
-  t.tm_mday = (str[i++] - '0') * 10;
-  t.tm_mday += (str[i++] - '0');
-  t.tm_hour = (str[i++] - '0') * 10;
-  t.tm_hour += (str[i++] - '0');
-  t.tm_min = (str[i++] - '0') * 10;
-  t.tm_min += (str[i++] - '0');
-  t.tm_sec = (str[i++] - '0') * 10;
-  t.tm_sec += (str[i++] - '0');
-
-  /* Note: we did not adjust the time based on time zone information */
-  return timegm(&t);
-}
-
-#endif
 
 
 // These ordinals are taken from pefile. If a lookup fails attempt to return

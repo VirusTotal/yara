@@ -1,4 +1,4 @@
-/* A Bison parser, made by GNU Bison 3.7.6.  */
+/* A Bison parser, made by GNU Bison 3.8.2.  */
 
 /* Bison interface for Yacc-like parsers in C
 
@@ -86,33 +86,35 @@ extern int yara_yydebug;
     _ENTRYPOINT_ = 287,            /* "<entrypoint>"  */
     _ALL_ = 288,                   /* "<all>"  */
     _ANY_ = 289,                   /* "<any>"  */
-    _IN_ = 290,                    /* "<in>"  */
-    _OF_ = 291,                    /* "<of>"  */
-    _FOR_ = 292,                   /* "<for>"  */
-    _THEM_ = 293,                  /* "<them>"  */
-    _MATCHES_ = 294,               /* "<matches>"  */
-    _CONTAINS_ = 295,              /* "<contains>"  */
-    _STARTSWITH_ = 296,            /* "<startswith>"  */
-    _ENDSWITH_ = 297,              /* "<endswith>"  */
-    _ICONTAINS_ = 298,             /* "<icontains>"  */
-    _ISTARTSWITH_ = 299,           /* "<istartswith>"  */
-    _IENDSWITH_ = 300,             /* "<iendswith>"  */
-    _IEQUALS_ = 301,               /* "<iequals>"  */
-    _IMPORT_ = 302,                /* "<import>"  */
-    _TRUE_ = 303,                  /* "<true>"  */
-    _FALSE_ = 304,                 /* "<false>"  */
-    _OR_ = 305,                    /* "<or>"  */
-    _AND_ = 306,                   /* "<and>"  */
-    _NOT_ = 307,                   /* "<not>"  */
-    _EQ_ = 308,                    /* "=="  */
-    _NEQ_ = 309,                   /* "!="  */
-    _LT_ = 310,                    /* "<"  */
-    _LE_ = 311,                    /* "<="  */
-    _GT_ = 312,                    /* ">"  */
-    _GE_ = 313,                    /* ">="  */
-    _SHIFT_LEFT_ = 314,            /* "<<"  */
-    _SHIFT_RIGHT_ = 315,           /* ">>"  */
-    UNARY_MINUS = 316              /* UNARY_MINUS  */
+    _NONE_ = 290,                  /* "<none>"  */
+    _IN_ = 291,                    /* "<in>"  */
+    _OF_ = 292,                    /* "<of>"  */
+    _FOR_ = 293,                   /* "<for>"  */
+    _THEM_ = 294,                  /* "<them>"  */
+    _MATCHES_ = 295,               /* "<matches>"  */
+    _CONTAINS_ = 296,              /* "<contains>"  */
+    _STARTSWITH_ = 297,            /* "<startswith>"  */
+    _ENDSWITH_ = 298,              /* "<endswith>"  */
+    _ICONTAINS_ = 299,             /* "<icontains>"  */
+    _ISTARTSWITH_ = 300,           /* "<istartswith>"  */
+    _IENDSWITH_ = 301,             /* "<iendswith>"  */
+    _IEQUALS_ = 302,               /* "<iequals>"  */
+    _IMPORT_ = 303,                /* "<import>"  */
+    _TRUE_ = 304,                  /* "<true>"  */
+    _FALSE_ = 305,                 /* "<false>"  */
+    _OR_ = 306,                    /* "<or>"  */
+    _AND_ = 307,                   /* "<and>"  */
+    _NOT_ = 308,                   /* "<not>"  */
+    _DEFINED_ = 309,               /* "<defined>"  */
+    _EQ_ = 310,                    /* "=="  */
+    _NEQ_ = 311,                   /* "!="  */
+    _LT_ = 312,                    /* "<"  */
+    _LE_ = 313,                    /* "<="  */
+    _GT_ = 314,                    /* ">"  */
+    _GE_ = 315,                    /* ">="  */
+    _SHIFT_LEFT_ = 316,            /* "<<"  */
+    _SHIFT_RIGHT_ = 317,           /* ">>"  */
+    UNARY_MINUS = 318              /* UNARY_MINUS  */
   };
   typedef enum yytokentype yytoken_kind_t;
 #endif
@@ -153,39 +155,41 @@ extern int yara_yydebug;
 #define _ENTRYPOINT_ 287
 #define _ALL_ 288
 #define _ANY_ 289
-#define _IN_ 290
-#define _OF_ 291
-#define _FOR_ 292
-#define _THEM_ 293
-#define _MATCHES_ 294
-#define _CONTAINS_ 295
-#define _STARTSWITH_ 296
-#define _ENDSWITH_ 297
-#define _ICONTAINS_ 298
-#define _ISTARTSWITH_ 299
-#define _IENDSWITH_ 300
-#define _IEQUALS_ 301
-#define _IMPORT_ 302
-#define _TRUE_ 303
-#define _FALSE_ 304
-#define _OR_ 305
-#define _AND_ 306
-#define _NOT_ 307
-#define _EQ_ 308
-#define _NEQ_ 309
-#define _LT_ 310
-#define _LE_ 311
-#define _GT_ 312
-#define _GE_ 313
-#define _SHIFT_LEFT_ 314
-#define _SHIFT_RIGHT_ 315
-#define UNARY_MINUS 316
+#define _NONE_ 290
+#define _IN_ 291
+#define _OF_ 292
+#define _FOR_ 293
+#define _THEM_ 294
+#define _MATCHES_ 295
+#define _CONTAINS_ 296
+#define _STARTSWITH_ 297
+#define _ENDSWITH_ 298
+#define _ICONTAINS_ 299
+#define _ISTARTSWITH_ 300
+#define _IENDSWITH_ 301
+#define _IEQUALS_ 302
+#define _IMPORT_ 303
+#define _TRUE_ 304
+#define _FALSE_ 305
+#define _OR_ 306
+#define _AND_ 307
+#define _NOT_ 308
+#define _DEFINED_ 309
+#define _EQ_ 310
+#define _NEQ_ 311
+#define _LT_ 312
+#define _LE_ 313
+#define _GT_ 314
+#define _GE_ 315
+#define _SHIFT_LEFT_ 316
+#define _SHIFT_RIGHT_ 317
+#define UNARY_MINUS 318
 
 /* Value type.  */
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 union YYSTYPE
 {
-#line 304 "grammar.y"
+#line 342 "grammar.y"
 
   YR_EXPRESSION   expression;
   SIZED_STRING*   sized_string;
@@ -193,13 +197,14 @@ union YYSTYPE
   int64_t         integer;
   double          double_;
   YR_MODIFIER     modifier;
+  YR_ENUMERATION  enumeration;
 
   YR_ARENA_REF tag;
   YR_ARENA_REF rule;
   YR_ARENA_REF meta;
   YR_ARENA_REF string;
 
-#line 203 "grammar.h"
+#line 208 "grammar.h"
 
 };
 typedef union YYSTYPE YYSTYPE;
@@ -209,6 +214,8 @@ typedef union YYSTYPE YYSTYPE;
 
 
 
+
 int yara_yyparse (void *yyscanner, YR_COMPILER* compiler);
+
 
 #endif /* !YY_YARA_YY_GRAMMAR_H_INCLUDED  */

@@ -20,6 +20,22 @@ int main(int argc, char** argv)
       "import \"pe\" \
       rule test { \
         condition: \
+          pe.is_pe \
+      }",
+      "tests/data/tiny");
+
+  assert_true_rule_file(
+      "import \"pe\" \
+      rule test { \
+        condition: \
+          not pe.is_pe \
+      }",
+      "tests/data/tiny-macho");
+
+  assert_true_rule_file(
+      "import \"pe\" \
+      rule test { \
+        condition: \
           pe.imports(\"KERNEL32.dll\", \"DeleteCriticalSection\") \
       }",
       "tests/data/tiny");
@@ -129,7 +145,6 @@ int main(int argc, char** argv)
           pe.imports(pe.IMPORT_STANDARD, /.*/, /.*CriticalSection/) \
       }",
       "tests/data/tiny-idata-5200");
-
 
   assert_true_rule_file(
       "import \"pe\" \
@@ -256,13 +271,13 @@ int main(int argc, char** argv)
       }",
       "")
 
-  assert_true_rule_file(
-      "import \"pe\" \
+      assert_true_rule_file(
+          "import \"pe\" \
       rule test { \
         condition: \
           pe.number_of_sections == 7 \
       }",
-      "tests/data/tiny");
+          "tests/data/tiny");
 
   assert_true_rule_file(
       "import \"pe\" \
@@ -322,9 +337,98 @@ int main(int argc, char** argv)
       "import \"pe\" \
       rule test { \
         condition: \
+          pe.is_signed and \
           pe.number_of_signatures == 1 and \
           pe.signatures[0].thumbprint == \"c1bf1b8f751bf97626ed77f755f0a393106f2454\" and \
-          pe.signatures[0].subject == \"/C=US/ST=California/L=Menlo Park/O=Quicken, Inc./OU=Operations/CN=Quicken, Inc.\" \
+          pe.signatures[0].subject == \"/C=US/ST=California/L=Menlo Park/O=Quicken, Inc./OU=Operations/CN=Quicken, Inc.\" and \
+          pe.signatures[0].verified and \
+          pe.signatures[0].digest_alg == \"sha1\" and \
+          pe.signatures[0].digest == \"f4ca190ec9052243b8882d492b1c12d04da7817f\" and \
+          pe.signatures[0].algorithm == \"sha256WithRSAEncryption\" and \
+          pe.signatures[0].algorithm_oid == \"1.2.840.113549.1.1.11\" and \
+          pe.signatures[0].file_digest == \"f4ca190ec9052243b8882d492b1c12d04da7817f\" and \
+          pe.signatures[0].number_of_certificates == 4 and \
+          pe.signatures[0].certificates[0].not_after == 1609372799 and \
+          pe.signatures[0].certificates[0].not_before == 1356048000 and \
+          pe.signatures[0].certificates[0].version == 3 and \
+          pe.signatures[0].certificates[0].serial == \"7e:93:eb:fb:7c:c6:4e:59:ea:4b:9a:77:d4:06:fc:3b\"  and \
+          pe.signatures[0].certificates[0].algorithm == \"sha1WithRSAEncryption\"  and \
+          pe.signatures[0].certificates[0].algorithm_oid == \"1.2.840.113549.1.1.5\" and \
+          pe.signatures[0].certificates[0].thumbprint == \"6c07453ffdda08b83707c09b82fb3d15f35336b1\"  and \
+          pe.signatures[0].certificates[0].issuer == \"/C=ZA/ST=Western Cape/L=Durbanville/O=Thawte/OU=Thawte Certification/CN=Thawte Timestamping CA\"  and \
+          pe.signatures[0].certificates[0].subject == \"/C=US/O=Symantec Corporation/CN=Symantec Time Stamping Services CA - G2\"  and \
+          pe.signatures[0].certificates[1].not_after == 1609286399 and \
+          pe.signatures[0].certificates[1].not_before == 1350518400 and \
+          pe.signatures[0].certificates[1].version == 3 and \
+          pe.signatures[0].certificates[1].serial == \"0e:cf:f4:38:c8:fe:bf:35:6e:04:d8:6a:98:1b:1a:50\"  and \
+          pe.signatures[0].certificates[1].algorithm == \"sha1WithRSAEncryption\"  and \
+          pe.signatures[0].certificates[1].algorithm_oid == \"1.2.840.113549.1.1.5\" and \
+          pe.signatures[0].certificates[1].thumbprint == \"65439929b67973eb192d6ff243e6767adf0834e4\"  and \
+          pe.signatures[0].certificates[1].issuer == \"/C=US/O=Symantec Corporation/CN=Symantec Time Stamping Services CA - G2\"  and \
+          pe.signatures[0].certificates[1].subject == \"/C=US/O=Symantec Corporation/CN=Symantec Time Stamping Services Signer - G4\"  and \
+          pe.signatures[0].certificates[2].not_after == 1559692799 and \
+          pe.signatures[0].certificates[2].not_before == 1491955200 and \
+          pe.signatures[0].certificates[2].version == 3 and \
+          pe.signatures[0].certificates[2].serial == \"21:bd:b2:cb:ec:e5:43:1e:24:f7:56:74:d6:0e:9c:1d\"  and \
+          pe.signatures[0].certificates[2].algorithm == \"sha256WithRSAEncryption\"  and \
+          pe.signatures[0].certificates[2].algorithm_oid == \"1.2.840.113549.1.1.11\" and \
+          pe.signatures[0].certificates[2].thumbprint == \"c1bf1b8f751bf97626ed77f755f0a393106f2454\"  and \
+          pe.signatures[0].certificates[2].issuer == \"/C=US/O=Symantec Corporation/OU=Symantec Trust Network/CN=Symantec Class 3 SHA256 Code Signing CA\"  and \
+          pe.signatures[0].certificates[2].subject == \"/C=US/ST=California/L=Menlo Park/O=Quicken, Inc./OU=Operations/CN=Quicken, Inc.\"  and \
+          pe.signatures[0].certificates[3].not_after == 1702166399 and \
+          pe.signatures[0].certificates[3].not_before == 1386633600 and \
+          pe.signatures[0].certificates[3].version == 3 and \
+          pe.signatures[0].certificates[3].serial == \"3d:78:d7:f9:76:49:60:b2:61:7d:f4:f0:1e:ca:86:2a\"  and \
+          pe.signatures[0].certificates[3].algorithm == \"sha256WithRSAEncryption\"  and \
+          pe.signatures[0].certificates[3].algorithm_oid == \"1.2.840.113549.1.1.11\" and \
+          pe.signatures[0].certificates[3].thumbprint == \"007790f6561dad89b0bcd85585762495e358f8a5\"  and \
+          pe.signatures[0].certificates[3].issuer == \"/C=US/O=VeriSign, Inc./OU=VeriSign Trust Network/OU=(c) 2006 VeriSign, Inc. - For authorized use only/CN=VeriSign Class 3 Public Primary Certification Authority - G5\"  and \
+          pe.signatures[0].certificates[3].subject == \"/C=US/O=Symantec Corporation/OU=Symantec Trust Network/CN=Symantec Class 3 SHA256 Code Signing CA\"  and \
+          pe.signatures[0].signer_info.digest == \"845555fec6e472a43b0714911d6c452a092e9632\"  and \
+          pe.signatures[0].signer_info.digest_alg == \"sha1\"  and \
+          pe.signatures[0].signer_info.length_of_chain == 2  and \
+          pe.signatures[0].signer_info.chain[0].not_after == 1559692799 and \
+          pe.signatures[0].signer_info.chain[0].not_before == 1491955200 and \
+          pe.signatures[0].signer_info.chain[0].version == 3 and \
+          pe.signatures[0].signer_info.chain[0].serial == \"21:bd:b2:cb:ec:e5:43:1e:24:f7:56:74:d6:0e:9c:1d\"  and \
+          pe.signatures[0].signer_info.chain[0].algorithm == \"sha256WithRSAEncryption\"  and \
+          pe.signatures[0].signer_info.chain[0].algorithm_oid == \"1.2.840.113549.1.1.11\" and \
+          pe.signatures[0].signer_info.chain[0].thumbprint == \"c1bf1b8f751bf97626ed77f755f0a393106f2454\"  and \
+          pe.signatures[0].signer_info.chain[0].issuer == \"/C=US/O=Symantec Corporation/OU=Symantec Trust Network/CN=Symantec Class 3 SHA256 Code Signing CA\"  and \
+          pe.signatures[0].signer_info.chain[0].subject == \"/C=US/ST=California/L=Menlo Park/O=Quicken, Inc./OU=Operations/CN=Quicken, Inc.\"  and \
+          pe.signatures[0].signer_info.chain[1].not_after == 1702166399 and \
+          pe.signatures[0].signer_info.chain[1].not_before == 1386633600 and \
+          pe.signatures[0].signer_info.chain[1].version == 3 and \
+          pe.signatures[0].signer_info.chain[1].serial == \"3d:78:d7:f9:76:49:60:b2:61:7d:f4:f0:1e:ca:86:2a\"  and \
+          pe.signatures[0].signer_info.chain[1].algorithm == \"sha256WithRSAEncryption\"  and \
+          pe.signatures[0].signer_info.chain[1].algorithm_oid == \"1.2.840.113549.1.1.11\" and \
+          pe.signatures[0].signer_info.chain[1].thumbprint == \"007790f6561dad89b0bcd85585762495e358f8a5\"  and \
+          pe.signatures[0].signer_info.chain[1].issuer == \"/C=US/O=VeriSign, Inc./OU=VeriSign Trust Network/OU=(c) 2006 VeriSign, Inc. - For authorized use only/CN=VeriSign Class 3 Public Primary Certification Authority - G5\"  and \
+          pe.signatures[0].signer_info.chain[1].subject == \"/C=US/O=Symantec Corporation/OU=Symantec Trust Network/CN=Symantec Class 3 SHA256 Code Signing CA\"  and \
+          pe.signatures[0].number_of_countersignatures == 1  and \
+          pe.signatures[0].countersignatures[0].length_of_chain == 2  and \
+          pe.signatures[0].countersignatures[0].digest == \"9fa1188e4c656d86e2d7fa133ee8138ac1ec4ec1\"  and \
+          pe.signatures[0].countersignatures[0].digest_alg == \"sha1\"  and \
+          pe.signatures[0].countersignatures[0].sign_time == 1528216551  and \
+          pe.signatures[0].countersignatures[0].verified  and \
+          pe.signatures[0].countersignatures[0].chain[0].not_after == 1609286399 and \
+          pe.signatures[0].countersignatures[0].chain[0].not_before == 1350518400 and \
+          pe.signatures[0].countersignatures[0].chain[0].version == 3 and \
+          pe.signatures[0].countersignatures[0].chain[0].serial == \"0e:cf:f4:38:c8:fe:bf:35:6e:04:d8:6a:98:1b:1a:50\"  and \
+          pe.signatures[0].countersignatures[0].chain[0].algorithm == \"sha1WithRSAEncryption\"  and \
+          pe.signatures[0].countersignatures[0].chain[0].algorithm_oid == \"1.2.840.113549.1.1.5\" and \
+          pe.signatures[0].countersignatures[0].chain[0].thumbprint == \"65439929b67973eb192d6ff243e6767adf0834e4\"  and \
+          pe.signatures[0].countersignatures[0].chain[0].issuer == \"/C=US/O=Symantec Corporation/CN=Symantec Time Stamping Services CA - G2\"  and \
+          pe.signatures[0].countersignatures[0].chain[0].subject == \"/C=US/O=Symantec Corporation/CN=Symantec Time Stamping Services Signer - G4\"  and \
+          pe.signatures[0].countersignatures[0].chain[1].not_after == 1609372799 and \
+          pe.signatures[0].countersignatures[0].chain[1].not_before == 1356048000 and \
+          pe.signatures[0].countersignatures[0].chain[1].version == 3 and \
+          pe.signatures[0].countersignatures[0].chain[1].serial == \"7e:93:eb:fb:7c:c6:4e:59:ea:4b:9a:77:d4:06:fc:3b\"  and \
+          pe.signatures[0].countersignatures[0].chain[1].algorithm == \"sha1WithRSAEncryption\"  and \
+          pe.signatures[0].countersignatures[0].chain[1].algorithm_oid == \"1.2.840.113549.1.1.5\" and \
+          pe.signatures[0].countersignatures[0].chain[1].thumbprint == \"6c07453ffdda08b83707c09b82fb3d15f35336b1\"  and \
+          pe.signatures[0].countersignatures[0].chain[1].issuer == \"/C=ZA/ST=Western Cape/L=Durbanville/O=Thawte/OU=Thawte Certification/CN=Thawte Timestamping CA\"  and \
+          pe.signatures[0].countersignatures[0].chain[1].subject == \"/C=US/O=Symantec Corporation/CN=Symantec Time Stamping Services CA - G2\" \
       }",
       "tests/data/"
       "079a472d22290a94ebb212aa8015cdc8dd28a968c6b4d3b88acdd58ce2d3b885");
@@ -404,6 +508,14 @@ int main(int argc, char** argv)
       }",
       "tests/data/"
       "079a472d22290a94ebb212aa8015cdc8dd28a968c6b4d3b88acdd58ce2d3b885");
+
+  assert_true_rule_file(
+      "import \"pe\" \
+      rule test { \
+        condition: \
+          pe.pdb_path == \"/Users/runner/work/OpenCorePkg/OpenCorePkg/UDK/Build/OpenCorePkg/DEBUG_XCODE5/X64/OpenCorePkg/Application/ChipTune/ChipTune/DEBUG/ChipTune.dll\" \
+      }",
+      "tests/data/ChipTune.efi");
 
   assert_false_rule_file(
       "import \"pe\" \
@@ -545,7 +657,8 @@ int main(int argc, char** argv)
               version.value == \"27.1.9.33\" \
           ) \
       }",
-      "tests/data/079a472d22290a94ebb212aa8015cdc8dd28a968c6b4d3b88acdd58ce2d3b885");
+      "tests/data/"
+      "079a472d22290a94ebb212aa8015cdc8dd28a968c6b4d3b88acdd58ce2d3b885");
 
   assert_true_rule_file(
       "import \"pe\" \
@@ -569,7 +682,159 @@ int main(int argc, char** argv)
                 )\
             )\
       }",
-      "tests/data/079a472d22290a94ebb212aa8015cdc8dd28a968c6b4d3b88acdd58ce2d3b885");
+      "tests/data/"
+      "079a472d22290a94ebb212aa8015cdc8dd28a968c6b4d3b88acdd58ce2d3b885");
+
+ assert_true_rule_file(
+      "import \"pe\" \
+      \
+      rule import_details_rva_32_v1_catch \
+      {\
+          condition:\
+            for any import_detail in pe.import_details: (\
+                import_detail.library_name == \"MSVCR100.dll\" and\
+                for any function in import_detail.functions : (\
+                    function.name == \"_initterm\" and\
+                    function.rva == 0x3084 \
+                )\
+            )\
+      }",
+      "tests/data/"
+      "079a472d22290a94ebb212aa8015cdc8dd28a968c6b4d3b88acdd58ce2d3b885");
+
+  assert_true_rule_file(
+      "import \"pe\" \
+      \
+      rule import_details_rva_32_v2_catch \
+      {\
+          condition:\
+            for any import_detail in pe.import_details: (\
+                import_detail.library_name == \"KERNEL32.dll\" and\
+                for any function in import_detail.functions : (\
+                    function.name == \"QueryPerformanceCounter\" and\
+                    function.rva == 0x3054 \
+                )\
+            )\
+      }",
+      "tests/data/"
+      "079a472d22290a94ebb212aa8015cdc8dd28a968c6b4d3b88acdd58ce2d3b885");
+
+  assert_true_rule_file(
+      "import \"pe\" \
+      \
+      rule import_details_rva_32_v3_catch \
+      {\
+          condition:\
+            for any import_detail in pe.import_details: (\
+                import_detail.library_name == \"KERNEL32.dll\" and\
+                for any function in import_detail.functions : (\
+                    function.name == \"CloseHandle\" and\
+                    function.rva == 0xd10c \
+                )\
+            )\
+      }",
+      "tests/data/"
+      "pe_imports");
+
+  assert_true_rule_file(
+      "import \"pe\" \
+      \
+      rule import_details_rva_64_v1_catch \
+      {\
+          condition:\
+            for any import_detail in pe.import_details: (\
+                import_detail.library_name == \"KERNEL32.dll\" and\
+                for any function in import_detail.functions : (\
+                    function.name == \"LoadLibraryExW\" and\
+                    function.rva == 0x2118 \
+                )\
+            )\
+      }",
+      "tests/data/"
+      "mtxex_modified_rsrc_rva.dll");
+
+  assert_true_rule_file(
+      "import \"pe\" \
+      \
+      rule import_details_rva_64_v2_catch \
+      {\
+          condition:\
+            for any import_detail in pe.import_details: (\
+                import_detail.library_name == \"KERNEL32.dll\" and\
+                for any function in import_detail.functions : (\
+                    function.name == \"GetCurrentProcessId\" and\
+                    function.rva == 0x21a0 \
+                )\
+            )\
+      }",
+      "tests/data/"
+      "mtxex_modified_rsrc_rva.dll");
+
+  assert_true_rule_file(
+      "import \"pe\" \
+      \
+      rule delayed_import_details_rva_32_v1_catch \
+      {\
+          condition:\
+            for any import_detail in pe.delayed_import_details: (\
+                import_detail.library_name == \"USER32.dll\" and\
+                for any function in import_detail.functions : (\
+                    function.name == \"MessageBoxA\" and\
+                    function.rva == 0x13884 \
+                )\
+            )\
+      }",
+      "tests/data/"
+      "pe_imports");
+
+  assert_true_rule_file(
+      "import \"pe\" \
+      \
+      rule delayed_import_details_rva_32_v2_catch \
+      {\
+          condition:\
+            for any import_detail in pe.delayed_import_details: (\
+                import_detail.library_name == \"USER32.dll\" and\
+                for any function in import_detail.functions : (\
+                    function.name == \"MessageBeep\" and\
+                    function.rva == 0x13880 \
+                )\
+            )\
+      }",
+      "tests/data/"
+      "pe_imports");
+
+  assert_true_rule_file(
+      "import \"pe\" \
+      \
+      rule import_delayed_import_details \
+      {\
+          condition:\
+            for any import_detail in pe.delayed_import_details : (\
+                import_detail.number_of_functions == 2 and\
+                import_detail.library_name == \"USER32.dll\" and\
+                for any function in import_detail.functions : (\
+                    function.name == \"MessageBoxA\"\
+                )\
+            )\
+      }",
+      "tests/data/pe_imports");
+
+  assert_true_rule_file(
+      "import \"pe\" \
+      \
+      rule import_details \
+      {\
+          condition:\
+            pe.number_of_imports == 2 and\
+            pe.import_details[0].library_name == \"KERNEL32.dll\" and\
+            pe.import_details[0].number_of_functions == 21 and\
+            pe.import_details[0].functions[20].name == \"VirtualQuery\" and\
+            pe.import_details[1].library_name == \"msvcrt.dll\" and\
+            pe.import_details[1].number_of_functions == 27 and\
+            pe.import_details[1].functions[26].name == \"vfprintf\"\
+      }",
+      "tests/data/tiny");
 
   assert_true_rule_file(
       "import \"pe\" \
@@ -584,8 +849,29 @@ int main(int argc, char** argv)
             pe.version_info[\"PrivateBuild\"] == \"\" and \
             pe.version_info[\"SpecialBuild\"] == \"\" \
       }",
-      "tests/data/ca21e1c32065352d352be6cde97f89c141d7737ea92434831f998080783d5386");
+      "tests/data/"
+      "ca21e1c32065352d352be6cde97f89c141d7737ea92434831f998080783d5386");
 
+  assert_true_rule_file(
+      "import \"pe\" \
+      rule section_name_comparison { \
+        condition: \
+          for all section in pe.sections : ( \
+              section.name == section.full_name \
+          )\
+      }",
+      "tests/data/tiny");
+
+  assert_true_rule_file(
+      "import \"pe\" \
+      rule section_name_comparison { \
+        condition: \
+          for any section in pe.sections : ( \
+              section.name == \"/4\" and\
+              section.full_name == \".debug_aranges\" \
+          )\
+      }",
+      "tests/data/pe_mingw");
 
   yr_finalize();
 

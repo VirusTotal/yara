@@ -36,9 +36,9 @@ def yara_deps():
     maybe(
         http_archive,
         name = "openssl",
-        url = "https://github.com/openssl/openssl/archive/OpenSSL_1_1_0h.tar.gz",
-        sha256 = "f56dd7d81ce8d3e395f83285bd700a1098ed5a4cb0a81ce9522e41e6db7e0389",
-        strip_prefix = "openssl-OpenSSL_1_1_0h",
+        url = "https://github.com/openssl/openssl/archive/refs/tags/OpenSSL_1_1_1n.tar.gz",
+        sha256 = "6b2d2440ced8c802aaa61475919f0870ec556694c466ebea460e35ea2b14839e",
+        strip_prefix = "openssl-OpenSSL_1_1_1n",
         build_file = "@com_github_virustotal_yara//:bazel/openssl.BUILD",
     )
     maybe(
@@ -51,9 +51,9 @@ def yara_deps():
     maybe(
         http_archive,
         name = "jansson",
-        url = "https://github.com/akheron/jansson/archive/v2.12.tar.gz",
-        sha256 = "76260d30e9bbd0ef392798525e8cd7fe59a6450c54ca6135672e3cd6a1642941",
-        strip_prefix = "jansson-2.12",
+        url = "https://github.com/akheron/jansson/archive/v2.14.tar.gz",
+        sha256 = "c739578bf6b764aa0752db9a2fdadcfe921c78f1228c7ec0bb47fa804c55d17b",
+        strip_prefix = "jansson-2.14",
         build_file = "@com_github_virustotal_yara//:bazel/jansson.BUILD",
     )
     maybe(

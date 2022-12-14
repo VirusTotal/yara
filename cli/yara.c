@@ -1,4 +1,4 @@
-﻿/*
+/*
 Copyright (c) 2007-2021. The YARA Authors. All Rights Reserved.
 
 Redistribution and use in source and binary forms, with or without modification,
@@ -147,7 +147,9 @@ static bool show_tags = false;
 static bool show_stats = false;
 static bool show_strings = false;
 static bool show_string_length = false;
+static bool show_xor_key = false;
 static bool show_meta = false;
+static bool show_module_names = false;
 static bool show_namespace = false;
 static bool show_version = false;
 static bool show_help = false;
@@ -163,6 +165,8 @@ static long timeout = 1000000;
 static long stack_size = DEFAULT_STACK_SIZE;
 static long threads = YR_MAX_THREADS;
 static long max_strings_per_rule = DEFAULT_MAX_STRINGS_PER_RULE;
+static long max_process_memory_chunk = DEFAULT_MAX_PROCESS_MEMORY_CHUNK;
+static long long skip_larger = 0;
 
 #define USAGE_STRING \
   "Usage: yara [OPTION]... [NAMESPACE:]RULES_FILE... FILE | DIR | PID"
@@ -213,14 +217,22 @@ args_option_t options[] = {
         _T("print only rules named IDENTIFIER"),
         _T("IDENTIFIER")),
 
-    OPT_INTEGER(
+    OPT_LONG(
+        0,
+        _T("max-process-memory-chunk"),
+        &max_process_memory_chunk,
+        _T("set maximum chunk size while reading process memory")
+        _T(" (default=1073741824)"),
+        _T("NUMBER")),
+
+    OPT_LONG(
         'l',
         _T("max-rules"),
         &limit,
         _T("abort scanning after matching a NUMBER of rules"),
         _T("NUMBER")),
 
-    OPT_INTEGER(
+    OPT_LONG(
         0,
         _T("max-strings-per-rule"),
         &max_strings_per_rule,
@@ -243,6 +255,12 @@ args_option_t options[] = {
         NULL),
 
     OPT_BOOLEAN(
+        'N',
+        _T("no-follow-symlinks"),
+        &follow_symlinks,
+        _T("do not follow symlinks when scanning")),
+
+    OPT_BOOLEAN(
         'w',
         _T("no-warnings"),
         &ignore_warnings,
@@ -255,6 +273,12 @@ args_option_t options[] = {
         _T("print-module-data"),
         &show_module_data,
         _T("print module data")),
+
+    OPT_BOOLEAN(
+        'M',
+        _T("module-names"),
+        &show_module_names,
+        _T("show module names")),
 
     OPT_BOOLEAN(
         'e',
@@ -280,6 +304,12 @@ args_option_t options[] = {
         &show_string_length,
         _T("print length of matched strings")),
 
+    OPT_BOOLEAN(
+        'X',
+        _T("print-xor-key"),
+        &show_xor_key,
+        _T("print xor key of matched strings")),
+
     OPT_BOOLEAN('g', _T("print-tags"), &show_tags, _T("print tags")),
 
     OPT_BOOLEAN(
@@ -289,18 +319,19 @@ args_option_t options[] = {
         _T("recursively search directories")),
 
     OPT_BOOLEAN(
-        'N',
-        _T("no-follow-symlinks"),
-        &follow_symlinks,
-        _T("do not follow symlinks when scanning")),
-
-    OPT_BOOLEAN(
         0,
         _T("scan-list"),
         &scan_list_search,
         _T("scan files listed in FILE, one per line")),
 
-    OPT_INTEGER(
+    OPT_LONG_LONG(
+        'z',
+        _T("skip-larger"),
+        &skip_larger,
+        _T("skip files larger than the given size when scanning a directory"),
+        _T("NUMBER")),
+
+    OPT_LONG(
         'k',
         _T("stack-size"),
         &stack_size,
@@ -315,14 +346,14 @@ args_option_t options[] = {
         _T("print only rules tagged as TAG"),
         _T("TAG")),
 
-    OPT_INTEGER(
+    OPT_LONG(
         'p',
         _T("threads"),
         &threads,
         _T("use the specified NUMBER of threads to scan a directory"),
         _T("NUMBER")),
 
-    OPT_INTEGER(
+    OPT_LONG(
         'a',
         _T("timeout"),
         &timeout,
@@ -461,7 +492,25 @@ static int scan_dir(const char_t* dir, SCAN_OPTIONS* scan_opts)
 
       if (!(FindFileData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
       {
-        result = file_queue_put(path, scan_opts->deadline);
+        LARGE_INTEGER file_size;
+
+        file_size.HighPart = FindFileData.nFileSizeHigh;
+        file_size.LowPart = FindFileData.nFileSizeLow;
+
+        if (skip_larger > file_size.QuadPart || skip_larger <= 0)
+        {
+          result = file_queue_put(path, scan_opts->deadline);
+        }
+        else
+        {
+          _ftprintf(
+              stderr,
+              _T("skipping %s (%" PRIu64
+                 " bytes) because it's larger than %lld bytes.\n"),
+              path,
+              file_size.QuadPart,
+              skip_larger);
+        }
       }
       else if (
           scan_opts->recursive_search &&
@@ -645,7 +694,20 @@ static int scan_dir(const char* dir, SCAN_OPTIONS* scan_opts)
       {
         if (S_ISREG(st.st_mode))
         {
-          result = file_queue_put(full_path, scan_opts->deadline);
+          if (skip_larger > st.st_size || skip_larger <= 0)
+          {
+            result = file_queue_put(full_path, scan_opts->deadline);
+          }
+          else
+          {
+            fprintf(
+                stderr,
+                "skipping %s (%" PRId64 " bytes) because it's larger than %lld"
+                " bytes.\n",
+                full_path,
+                st.st_size,
+                skip_larger);
+          }
         }
         else if (
             scan_opts->recursive_search && S_ISDIR(st.st_mode) &&
@@ -1033,7 +1095,7 @@ static int handle_message(
 
     // Show matched strings.
 
-    if (show_strings || show_string_length)
+    if (show_strings || show_string_length || show_xor_key)
     {
       YR_STRING* string;
 
@@ -1054,6 +1116,9 @@ static int handle_message(
                 _T("0x%" PRIx64 ":%" PF_S),
                 match->base + match->offset,
                 string->identifier);
+
+          if (show_xor_key)
+            _tprintf(_T(":xor(0x%02x)"), match->xor_key);
 
           if (show_strings)
           {
@@ -1133,6 +1198,9 @@ static int callback(
 #if defined(_WIN32)
       // In Windows restore stdout to normal text mode as yr_object_print_data
       // calls printf which is not supported in UTF-8 mode.
+      // Explicitly flush the buffer before the switch in case we already printed
+      // something and it haven't been flushed automatically.
+      fflush(stdout);
       _setmode(_fileno(stdout), _O_TEXT);
 #endif
 
@@ -1141,6 +1209,9 @@ static int callback(
 
 #if defined(_WIN32)
       // Go back to UTF-8 mode.
+      // Explicitly flush the buffer before the switch in case we already printed
+      // something and it haven't been flushed automatically.
+      fflush(stdout);
       _setmode(_fileno(stdout), _O_U8TEXT);
 #endif
 
@@ -1166,6 +1237,10 @@ static int callback(
     if (fail_on_warnings)
       return CALLBACK_ERROR;
 
+    return CALLBACK_CONTINUE;
+
+  case CALLBACK_MSG_CONSOLE_LOG:
+    _tprintf(_T("%" PF_S "\n"), (char*) message_data);
     return CALLBACK_CONTINUE;
   }
 
@@ -1242,6 +1317,8 @@ static int load_modules_data()
 
     if (module_data != NULL)
     {
+      module_data->module_name = modules_data[i];
+
       int result = yr_filemap_map(equal_sign + 1, &module_data->mapped_file);
 
       if (result != ERROR_SUCCESS)
@@ -1312,7 +1389,7 @@ int _tmain(int argc, const char_t** argv)
         YR_VERSION,
         USAGE_STRING);
 
-    args_print_usage(options, 40);
+    args_print_usage(options, 43);
     printf(
         "\nSend bug reports and suggestions to: vmalvarez@virustotal.com.\n");
 
@@ -1323,6 +1400,15 @@ int _tmain(int argc, const char_t** argv)
   {
     fprintf(stderr, "maximum number of threads is %d\n", YR_MAX_THREADS);
     return EXIT_FAILURE;
+  }
+
+  // This can be done before yr_initialize() because we aren't calling any
+  // module functions, just accessing the name pointer for each module.
+  if (show_module_names)
+  {
+    for (YR_MODULE* module = yr_modules_get_table(); module->name != NULL; module++)
+      printf("%s\n", module->name);
+    return EXIT_SUCCESS;
   }
 
   if (argc < 2)
@@ -1357,8 +1443,13 @@ int _tmain(int argc, const char_t** argv)
     exit_with_code(EXIT_FAILURE);
   }
 
-  yr_set_configuration(YR_CONFIG_STACK_SIZE, &stack_size);
-  yr_set_configuration(YR_CONFIG_MAX_STRINGS_PER_RULE, &max_strings_per_rule);
+  yr_set_configuration_uint32(YR_CONFIG_STACK_SIZE, (uint32_t) stack_size);
+
+  yr_set_configuration_uint32(
+      YR_CONFIG_MAX_STRINGS_PER_RULE, (uint32_t) max_strings_per_rule);
+
+  yr_set_configuration_uint64(
+      YR_CONFIG_MAX_PROCESS_MEMORY_CHUNK, max_process_memory_chunk);
 
   // Try to load the rules file as a binary file containing
   // compiled rules first
@@ -1402,7 +1493,6 @@ int _tmain(int argc, const char_t** argv)
       result = ERROR_COULD_NOT_OPEN_FILE;
     }
   }
-
   else
   {
     // Rules file didn't contain compiled rules, let's handle it
@@ -1558,7 +1648,7 @@ int _tmain(int argc, const char_t** argv)
     if (result == ERROR_COULD_NOT_OPEN_FILE)
     {
       // Is it a PID? To be a PID it must be made up entirely of digits.
-      char* endptr = NULL;
+      char_t* endptr = NULL;
       long pid = _tcstol(argv[argc - 1], &endptr, 10);
 
       if (pid > 0 && argv[argc - 1] != NULL && *endptr == '\x00')

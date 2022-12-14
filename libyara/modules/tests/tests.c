@@ -27,6 +27,7 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+#include <assert.h>
 #include <yara/modules.h>
 
 #define MODULE_NAME tests
@@ -80,7 +81,7 @@ define_function(empty)
 define_function(match)
 {
   return_integer(
-      yr_re_match(scan_context(), regexp_argument(1), string_argument(2)));
+      yr_re_match(yr_scan_context(), regexp_argument(1), string_argument(2)));
 }
 
 define_function(foobar)
@@ -169,33 +170,33 @@ int module_load(
     void* module_data,
     size_t module_data_size)
 {
-  set_integer(1, module_object, "constants.one");
-  set_integer(2, module_object, "constants.two");
-  set_string("foo", module_object, "constants.foo");
-  set_string("", module_object, "constants.empty");
+  yr_set_integer(1, module_object, "constants.one");
+  yr_set_integer(2, module_object, "constants.two");
+  yr_set_string("foo", module_object, "constants.foo");
+  yr_set_string("", module_object, "constants.empty");
 
-  set_integer(1, module_object, "struct_array[1].i");
+  yr_set_integer(1, module_object, "struct_array[1].i");
 
-  set_integer(0, module_object, "integer_array[%i]", 0);
-  set_integer(1, module_object, "integer_array[%i]", 1);
-  set_integer(2, module_object, "integer_array[%i]", 2);
-  set_integer(256, module_object, "integer_array[%i]", 256);
+  yr_set_integer(0, module_object, "integer_array[%i]", 0);
+  yr_set_integer(1, module_object, "integer_array[%i]", 1);
+  yr_set_integer(2, module_object, "integer_array[%i]", 2);
+  yr_set_integer(256, module_object, "integer_array[%i]", 256);
 
-  set_string("foo", module_object, "string_array[%i]", 0);
-  set_string("bar", module_object, "string_array[%i]", 1);
-  set_string("baz", module_object, "string_array[%i]", 2);
+  yr_set_string("foo", module_object, "string_array[%i]", 0);
+  yr_set_string("bar", module_object, "string_array[%i]", 1);
+  yr_set_string("baz", module_object, "string_array[%i]", 2);
 
-  set_sized_string("foo\0bar", 7, module_object, "string_array[%i]", 3);
+  yr_set_sized_string("foo\0bar", 7, module_object, "string_array[%i]", 3);
 
-  set_string("foo", module_object, "string_dict[%s]", "foo");
-  set_string("bar", module_object, "string_dict[\"bar\"]");
+  yr_set_string("foo", module_object, "string_dict[%s]", "foo");
+  yr_set_string("bar", module_object, "string_dict[\"bar\"]");
 
-  set_string("foo", module_object, "struct_dict[%s].s", "foo");
-  set_integer(1, module_object, "struct_dict[%s].i", "foo");
+  yr_set_string("foo", module_object, "struct_dict[%s].s", "foo");
+  yr_set_integer(1, module_object, "struct_dict[%s].i", "foo");
 
   if (module_data_size > 0 && module_data != NULL)
   {
-    set_sized_string(
+    yr_set_sized_string(
         (const char*) module_data,
         module_data_size,
         module_object,

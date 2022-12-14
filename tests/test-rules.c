@@ -33,7 +33,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <stdlib.h>
 #include <sys/stat.h>
 #include <sys/types.h>
-#include <sys/wait.h>
 #include <unistd.h>
 #include <yara.h>
 
@@ -75,6 +74,14 @@ static void test_boolean_operators()
   assert_false_rule("rule test { condition: true and false }", NULL);
 
   assert_false_rule("rule test { condition: false or false }", NULL);
+
+  assert_true_rule("rule test { condition: not var_false }", NULL);
+
+  assert_true_rule("rule test { condition: var_true }", NULL);
+
+  assert_false_rule("rule test { condition: var_false }", NULL);
+
+  assert_false_rule("rule test { condition: not var_true }", NULL);
 
   assert_false_rule(
       "import \"tests\" rule test { condition: not tests.undefined.i }", NULL);
@@ -268,6 +275,10 @@ static void test_arithmetic_operators()
   assert_true_rule("rule test { condition: 0o100 == 64 }", NULL);
 
   assert_true_rule("rule test { condition: 0o755 == 493 }", NULL);
+
+  // Test cases for issue #1631.
+  assert_true_rule("rule test { condition: var_one*3 == 3}", NULL);
+  assert_true_rule("rule test { condition: var_zero*3 == 0}", NULL);
 
   // TODO: This should return ERROR_INTEGER_OVERFLOW, but right now it returns
   // ERROR_SYNTAX_ERROR because after the lexer aborts with
@@ -465,6 +476,38 @@ static void test_syntax()
   // Test case for issue #1295
   assert_error("rule test rule test", ERROR_DUPLICATED_IDENTIFIER);
 
+  assert_error(
+      "rule test { strings: $a = \"a\" condition: -1 of them }",
+      ERROR_INVALID_VALUE);
+
+  assert_error(
+      "rule test { strings: $a = \"a\" condition: 0 + -1 of them }",
+      ERROR_INVALID_VALUE);
+
+  assert_error(
+      "rule test { strings: $a = \"a\" condition: for -1 of them: ($) }",
+      ERROR_INVALID_VALUE);
+
+  assert_error(
+      "rule test { strings: $a = \"a\" condition: for 0 + -1 of them: ($) }",
+      ERROR_INVALID_VALUE);
+
+  assert_error(
+      "rule test { strings: $a = \"a\" condition: \"foo\" of them }",
+      ERROR_INVALID_VALUE);
+
+  assert_error(
+      "rule test { strings: $a = \"a\" condition: for \"foo\" of them: ($) }",
+      ERROR_INVALID_VALUE);
+
+  assert_error(
+      "rule test { strings: $a = \"a\" condition: /foo/ of them }",
+      ERROR_INVALID_VALUE);
+
+  assert_error(
+      "rule test { strings: $a = \"a\" condition: for /foo/ of them: ($) }",
+      ERROR_INVALID_VALUE);
+
   YR_DEBUG_FPRINTF(1, stderr, "} // %s()\n", __FUNCTION__);
 }
 
@@ -475,6 +518,126 @@ static void test_anonymous_strings()
   assert_true_rule(
       "rule test { strings: $ = \"a\" $ = \"b\" condition: all of them }",
       "ab");
+
+  YR_DEBUG_FPRINTF(1, stderr, "} // %s()\n", __FUNCTION__);
+}
+
+static void test_warnings()
+{
+  YR_DEBUG_FPRINTF(1, stderr, "+ %s() {\n", __FUNCTION__);
+
+  assert_warning("rule test { \
+    strings: \
+      $a = \"AXSERS\" \
+      $b = \"WXSMTS\" \
+    condition: \
+      2 of them at 0 \
+    }");
+
+  assert_warning("rule test { \
+    strings: \
+      $a = \"AXSERS\" \
+      $b = \"WXSMTS\" \
+    condition: \
+      all of them at 0 \
+    }");
+
+  assert_warning("rule test { \
+    strings: \
+      $a = \"AXSERS\" \
+    condition: \
+      0 of them \
+    }");
+
+  assert_warning("rule test { \
+    strings: \
+      $a = \"AXSERS\" \
+    condition: \
+      for 0 of ($a*): ($) \
+    }");
+
+  assert_no_warnings("rule test { \
+    strings: \
+      $a = \"AXSERS\" \
+    condition: \
+      none of them \
+    }");
+
+  assert_no_warnings("rule test { \
+    strings: \
+      $a = \"AXSERS\" \
+    condition: \
+      for none of ($a*): ($) \
+    }");
+
+  assert_warning("rule test { \
+    strings: \
+      $a = \"AXSERS\" \
+    condition: \
+      1 + -1 of them \
+    }");
+
+  assert_warning("rule test { \
+    strings: \
+      $a = \"AXSERS\" \
+    condition: \
+      2 of them \
+    }");
+
+  assert_warning("rule test { \
+    strings: \
+      $a = \"AXSERS\" \
+    condition: \
+      2 of ($a) \
+    }");
+
+  assert_warning("rule test { \
+    strings: \
+      $a = \"AXSERS\" \
+    condition: \
+      2 of ($a*) \
+    }");
+
+  assert_warning("rule test { \
+    strings: \
+      $a = \"AXSERS\" \
+    condition: \
+      2 of ($a*) in (0..10) \
+    }");
+
+  assert_warning("rule a { \
+    condition: \
+      true \
+    } \
+    rule b { \
+      condition: \
+        2 of (a) \
+    }");
+
+  assert_warning("rule a { \
+    condition: \
+      true \
+    } \
+    rule b { \
+      condition: \
+        2 of (a*) \
+    }");
+
+  assert_warning("rule test { \
+    strings: \
+      $a = \"AXSERS\" \
+    condition: \
+      2 of ($a*) at 0\
+    }");
+
+  assert_error(
+      "rule test { \
+      strings: \
+        $a = \"AXSERS\" \
+      condition: \
+        1 of them at \"x\"\
+    }",
+      ERROR_INVALID_VALUE);
 
   YR_DEBUG_FPRINTF(1, stderr, "} // %s()\n", __FUNCTION__);
 }
@@ -618,6 +781,49 @@ static void test_strings()
              all of them in (0..10)\n\
        }",
       "foobarbaz" TEXT_1024_BYTES);
+
+  // https://github.com/VirusTotal/yara/issues/1695
+  assert_false_rule(
+      "rule test {\n\
+         strings:\n\
+             $a = \"AXS\"\n\
+             $b = \"ERS\"\n\
+         condition:\n\
+             none of them in (0..10)\n\
+       }",
+      "AXSERS" TEXT_1024_BYTES);
+
+  // https://github.com/VirusTotal/yara/issues/1757
+  assert_false_rule(
+      "rule test {\n\
+         strings:\n\
+             $a = \"foo\"\n\
+             $b = \"foo\"\n\
+         condition:\n\
+             none of them in (0..1)\n\
+       }",
+      "foo");
+
+  // https://github.com/VirusTotal/yara/issues/1660
+  assert_false_rule(
+      "rule test {\n\
+         strings:\n\
+             $a = \"foo\"\n\
+             $b = \"bar\"\n\
+             $c = \"baz\"\n\
+         condition:\n\
+             all of them in (0..1)\n\
+       }",
+      TEXT_1024_BYTES);
+
+  assert_true_rule(
+      "rule test {\n\
+         strings:\n\
+             $a = \"foo\"\n\
+         condition:\n\
+             #a == 3 and #a in (0..10) == 2\n\
+       }",
+      "foofoo" TEXT_1024_BYTES "foo");
 
   // xor by itself will match the plaintext version of the string too.
   assert_true_rule_file(
@@ -1140,7 +1346,6 @@ static void test_hex_strings()
       PE32_FILE);
 
   assert_true_rule_blob(
-
       "rule test { \
         strings: $a = { 6? 01 00 00 60 0? } \
         condition: $a }",
@@ -1266,6 +1471,54 @@ static void test_hex_strings()
         condition: $a }",
       TEXT_1024_BYTES "1234567890");
 
+  assert_true_rule(
+      "rule test { \
+        strings: $a = { 31 32 ~32 34 35 } \
+        condition: $a }",
+      TEXT_1024_BYTES "1234567890");
+
+  assert_false_rule(
+      "rule test { \
+        strings: $a = { 31 32 ~33 34 35 } \
+        condition: $a }",
+      TEXT_1024_BYTES "1234567890");
+
+  assert_true_rule(
+      "rule test { \
+        strings: $a = { ( 31 32 ~32 34 35 | 31 32 ~33 34 35 ) } \
+        condition: $a }",
+      TEXT_1024_BYTES "1234567890");
+
+  assert_true_rule(
+      "rule test { \
+        strings: $a = { 31 32 ~?2 34 35 } \
+        condition: $a }",
+      TEXT_1024_BYTES "1234567890");
+
+  assert_false_rule(
+      "rule test { \
+        strings: $a = { 31 32 ~?3 34 35 } \
+        condition: $a }",
+      TEXT_1024_BYTES "1234567890");
+
+  assert_true_rule(
+      "rule test { \
+        strings: $a = { 31 32 ~4? 34 35 } \
+        condition: $a }",
+      TEXT_1024_BYTES "1234567890");
+
+  assert_false_rule(
+      "rule test { \
+        strings: $a = { 31 32 ~3? 34 35 } \
+        condition: $a }",
+      TEXT_1024_BYTES "1234567890");
+
+  assert_true_rule(
+      "rule test { \
+        strings: $a = { ( 31 32 ~3? 34 35 | 31 32 ~?2 34 35 ) } \
+        condition: $a }",
+      TEXT_1024_BYTES "1234567890");
+
   assert_false_rule(
       "rule test { \
         strings: $a = { 35 36 [-] 31 32 } \
@@ -1379,6 +1632,24 @@ static void test_hex_strings()
         condition: $a ",
       ERROR_INVALID_HEX_STRING);
 
+  assert_error(
+      "rule test { \
+        strings: $a = { 01 02 ~ } \
+        condition: $a ",
+      ERROR_INVALID_HEX_STRING);
+
+  assert_error(
+      "rule test { \
+        strings: $a = { 01 ~0 11 } \
+        condition: $a ",
+      ERROR_INVALID_HEX_STRING);
+
+  assert_error(
+      "rule test { \
+        strings: $a = { 01 ~?? 11 } \
+        condition: $a ",
+      ERROR_INVALID_HEX_STRING);
+
   /* TODO: tests.py:551 ff. */
 
   YR_DEBUG_FPRINTF(1, stderr, "} // %s()\n", __FUNCTION__);
@@ -1402,6 +1673,12 @@ static void test_count()
 static void test_at()
 {
   YR_DEBUG_FPRINTF(1, stderr, "+ %s() {\n", __FUNCTION__);
+
+  assert_true_rule(
+      "rule test { \
+        strings: $a = \"miss\" \
+        condition: any of them at 0}",
+      "mississippi");
 
   assert_true_rule(
       "rule test { \
@@ -1524,6 +1801,54 @@ static void test_length()
   YR_DEBUG_FPRINTF(1, stderr, "} // %s()\n", __FUNCTION__);
 }
 
+static void test_rule_of()
+{
+  YR_DEBUG_FPRINTF(1, stderr, "+ %s() {\n", __FUNCTION__);
+
+  assert_match_count(
+      "rule a { condition: true } rule b { condition: 1 of (a) }", NULL, 2);
+
+  // https://github.com/VirusTotal/yara/issues/1695
+  assert_match_count(
+      "rule a { condition: false } rule b { condition: none of (a) }", NULL, 1);
+
+  assert_match_count(
+      "rule a1 { condition: true } "
+      "rule a2 { condition: true } "
+      "rule b { condition: 2 of (a*) }",
+      NULL,
+      3);
+
+  assert_match_count(
+      "rule a1 { condition: true } "
+      "rule a2 { condition: false } "
+      "rule b { condition: 50% of (a*) }",
+      NULL,
+      2);
+
+  assert_error("rule a { condition: all of (b*) }", ERROR_UNDEFINED_IDENTIFIER);
+
+  assert_error(
+      "rule a0 { condition: true } "
+      "rule b { condition: 1 of (a*) } "
+      "rule a1 { condition: true } ",
+      ERROR_IDENTIFIER_MATCHES_WILDCARD);
+
+  // Make sure repeating the rule set works
+  assert_match_count(
+      "rule a { condition: true } "
+      "rule b { condition: 1 of (a*) } "
+      "rule c { condition: 1 of (a*) }",
+      NULL,
+      3);
+
+  // This will compile but is false for the same reason that
+  // "rule x { condition: x }" is compiles but is false.
+  assert_false_rule("rule a { condition: 1 of (a*) }", NULL);
+
+  YR_DEBUG_FPRINTF(1, stderr, "} // %s()\n", __FUNCTION__);
+}
+
 static void test_of()
 {
   YR_DEBUG_FPRINTF(1, stderr, "+ %s() {\n", __FUNCTION__);
@@ -1531,6 +1856,17 @@ static void test_of()
   assert_true_rule(
       "rule test { strings: $a = \"ssi\" $b = \"mis\" $c = \"oops\" "
       "condition: any of them }",
+      TEXT_1024_BYTES "mississippi");
+
+  assert_true_rule(
+      "rule test { strings: $a = \"ssi\" $b = \"mis\" $c = \"oops\" "
+      "condition: none of them }",
+      TEXT_1024_BYTES "AXSERS");
+
+  // https://github.com/VirusTotal/yara/issues/1695
+  assert_false_rule(
+      "rule test { strings: $a = \"dummy1\" $b = \"dummy2\" $c = \"ssi\" "
+      "condition: none of them }",
       TEXT_1024_BYTES "mississippi");
 
   assert_true_rule(
@@ -1544,8 +1880,19 @@ static void test_of()
       TEXT_1024_BYTES "mississippi");
 
   assert_true_rule(
-      "rule test { strings: $a1 = \"dummy1\" $b1 = \"dummy1\" $b2 = \"ssi\""
+      "rule test { strings: $a1 = \"dummy1\" $b1 = \"dummy1\" $b2 = \"ssi\" "
       "condition: any of ($a*, $b*) }",
+      TEXT_1024_BYTES "mississippi");
+
+  assert_true_rule(
+      "rule test { strings: $a1 = \"dummy1\" $b1 = \"dummy1\" $b2 = \"ssi\" "
+      "condition: none of ($a*, $b*) }",
+      TEXT_1024_BYTES "AXSERS");
+
+  // https://github.com/VirusTotal/yara/issues/1695
+  assert_false_rule(
+      "rule test { strings: $a1 = \"dummy1\" $b1 = \"dummy2\" $b2 = \"ssi\" "
+      "condition: none of ($a*, $b*) }",
       TEXT_1024_BYTES "mississippi");
 
   assert_true_rule_blob(
@@ -1635,6 +1982,38 @@ static void test_of()
          condition: \
            tests.integer_array[5]% of them \
        }",
+      "mississippi");
+
+  // If one of the bounds can not be determined statically it isn't an error.
+  assert_true_rule(
+      "rule test { \
+      strings: \
+        $a = \"AXSERS\" \
+      condition: \
+        true or any of them in (0..filesize-100) \
+    }",
+      TEXT_1024_BYTES);
+
+  // Lower bound can not be negative, if it can be determined statically.
+  assert_error(
+      "rule test { \
+        strings: \
+          $a = \"AXSERS\" \
+        condition: \
+          $a in (-1..10) \
+      }",
+      ERROR_INVALID_VALUE);
+
+  // Make sure that an undefined range boundary returns an undefined value,
+  // which translates to false.
+  assert_false_rule(
+      "import \"tests\" \
+        rule test { \
+		      strings: \
+			      $a = \"missi\" \
+		      condition: \
+			      any of them in (0..tests.undefined.i) \
+	    }",
       "mississippi");
 
   YR_DEBUG_FPRINTF(1, stderr, "} // %s()\n", __FUNCTION__);
@@ -1864,6 +2243,46 @@ void test_for()
         ) \
       }",
       NULL);
+
+  // Lower bound must be less than upper bound, if it can be determined
+  // statically.
+  assert_error(
+      "rule test { \
+        condition: \
+          for any i in (10..1): (i) \
+      }",
+      ERROR_INVALID_VALUE);
+
+  // Test case for https://github.com/VirusTotal/yara/issues/1729
+  assert_true_rule(
+      "rule test { \
+        strings: \
+          $a = \"abcde\" \
+        condition: \
+          for any n in (1..10) : ( n of ($a*) ) \
+      }",
+      "abcde");
+
+  assert_true_rule(
+      "rule test { \
+        condition: \
+          for all i in (\"a\", \"b\") : (i == \"a\" or i == \"b\") \
+      }",
+      NULL);
+
+  assert_error(
+      "rule test { \
+        condition: \
+          for any i in (\"a\"): (i == 0) \
+      }",
+      ERROR_WRONG_TYPE);
+
+  assert_error(
+      "rule test { \
+        condition: \
+          for any i in (\"a\", 0): (i == 0) \
+      }",
+      ERROR_WRONG_TYPE);
 
   YR_DEBUG_FPRINTF(1, stderr, "} // %s()\n", __FUNCTION__);
 }
@@ -2125,6 +2544,11 @@ void test_re()
   assert_true_regexp("a[\\-b]", "ab", "ab");
   assert_true_regexp("a]", "a]", "a]");
   assert_true_regexp("a[]]b", "a]b", "a]b");
+  assert_true_regexp("[a-z]-b", "c-b-c", "c-b");  // Issue #1690
+  assert_true_regexp("a[]-]b", "a]b", "a]b");
+  assert_true_regexp("a[]-]b", "a-b", "a-b");
+  assert_true_regexp("[\\.-z]*", "...abc", "...abc");
+  assert_true_regexp("[\\.-]*", "...abc", "...");
   assert_true_regexp("a[\\]]b", "a]b", "a]b");
   assert_true_regexp("a[^bc]d", "aed", "aed");
   assert_false_regexp("a[^bc]d", "abd");
@@ -2336,6 +2760,14 @@ void test_re()
       "rule test { strings: $a =/abc([^\"\\\\])*\"/ nocase condition: $a }",
       TEXT_1024_BYTES "abc\xE0\x22");
 
+  // Non ascii characters are rejected in regular expressions.
+  assert_error(
+      "rule test { strings: $a = /¤/ condition: $a }",
+      ERROR_INVALID_REGULAR_EXPRESSION);
+  assert_error(
+      "rule test { strings: $a = /[1-£]/ condition: $a }",
+      ERROR_INVALID_REGULAR_EXPRESSION);
+
   YR_DEBUG_FPRINTF(1, stderr, "} // %s()\n", __FUNCTION__);
 }
 
@@ -2437,6 +2869,17 @@ static void test_comments()
         strings: $a = { /*Some*/ 31 /*interleaved*/ [-] /*comments*/ 38 39 } \
         condition: !a == 9 }",
       "1234567890" TEXT_1024_BYTES);
+
+  // Test case for https://github.com/VirusTotal/yara/issues/1819
+  assert_true_rule(
+      "rule test { \
+        // single line comment with brace }\n\r \
+        strings: \
+          $a = \"foo\" ascii \
+        condition: \
+          $a \
+      }",
+      "foo");
 
   YR_DEBUG_FPRINTF(1, stderr, "} // %s()\n", __FUNCTION__);
 }
@@ -2703,6 +3146,19 @@ static void test_modules()
       }",
       NULL);
 
+  assert_true_rule(
+      "import \"tests\" \
+      rule test { \
+        condition: \
+          for any item1 in tests.struct_array: ( \
+            item1.i == 1 and \
+            for any item2 in tests.struct_array: ( \
+              item2.i == item1.i \
+            ) \
+          ) \
+      }",
+      NULL);
+
   assert_error("import \"\\x00\"", ERROR_INVALID_MODULE_NAME);
 
   assert_error("import \"\"", ERROR_INVALID_MODULE_NAME);
@@ -2754,9 +3210,28 @@ static void test_hash_module()
             and \
           hash.crc32(0, filesize) == 0x8587d865 \
             and \
-          hash.crc32(\"TEST STRING\") == 0x51f9be31 \
+          hash.checksum32(0, filesize) == 0x1ef \
       }",
       blob);
+
+  assert_true_rule(
+      "import \"hash\" \
+       rule test { \
+        condition: \
+          hash.md5(\"TEST STRING\") == \
+            \"2d7d687432758a8eeeca7b7e5d518e7f\" \
+            and \
+          hash.sha1(\"TEST STRING\") == \
+            \"d39d009c05797a93a79720952e99c7054a24e7c4\" \
+            and \
+          hash.sha256(\"TEST STRING\") == \
+            \"fb6ca29024bd42f1894620ffa45fd976217e72d988b04ee02bb4793ab9d0c862\" \
+            and \
+          hash.crc32(\"TEST STRING\") == 0x51f9be31 \
+            and \
+          hash.checksum32(\"TEST STRING\") == 0x337 \
+      }",
+      NULL);
 
   // Test hash caching mechanism
 
@@ -2955,7 +3430,7 @@ void test_process_scan()
     exit(EXIT_FAILURE);
   }
 
-  spawn("/bin/sh", "-c", "VAR='Hello, world!'; sleep 600; true");
+  spawn("/bin/sh", "-c", "VAR='Hello, world!'; sleep 10; true");
 
   counters.rules_matching = 0;
   counters.rules_not_matching = 0;
@@ -3054,12 +3529,20 @@ void test_performance_warnings()
         strings: $a = { 01 ?? ?? 02 } \
         condition: $a }");
 
-  assert_warning("rule test { \
+  assert_no_warnings("rule test { \
         strings: $a = { 01 ?? ?2 03 } \
         condition: $a }");
 
-  assert_warning("rule test { \
+  assert_no_warnings("rule test { \
         strings: $a = { 01 ?? 02 1? } \
+        condition: $a }");
+
+  assert_warning("rule test { \
+        strings: $a = { 68 ?? 00 ?? 00 68 ?? 00 ?? 00} \
+        condition: $a }");
+
+  assert_no_warnings("rule test { \
+        strings: $a = { (61 62 63 64 ?? | 65 ?? ?? 00 00 66)} \
         condition: $a }");
 
   assert_warning("rule test { \
@@ -3138,6 +3621,10 @@ void test_performance_warnings()
         strings: $a = \"MZ\" \
         condition: $a }");
 
+  assert_no_warnings("rule test { \
+        strings: $a = \"ZZ\" \
+        condition: $a }");
+
   assert_warning("rule test { \
         strings: $a = \"                    \" xor(0x20) \
         condition: $a }");
@@ -3185,6 +3672,86 @@ static void test_meta()
       NULL);
 
   YR_DEBUG_FPRINTF(1, stderr, "} // %s()\n", __FUNCTION__);
+}
+
+void test_defined()
+{
+  assert_true_rule("rule t { condition: defined 1 }", NULL);
+
+  assert_false_rule(
+      "import \"pe\" \
+      rule t { \
+        condition: \
+          defined pe.number_of_resources \
+      }",
+      NULL);
+
+  assert_true_rule(
+      "import \"pe\" \
+      rule t { \
+        condition: \
+          not defined pe.number_of_resources \
+      }",
+      NULL);
+
+  assert_false_rule(
+      "import \"pe\" \
+      rule t { \
+        condition: \
+          defined not pe.number_of_resources \
+      }",
+      NULL);
+
+  assert_false_rule(
+      "import \"pe\" \
+      rule t { \
+        condition: \
+          defined pe.number_of_resources and pe.number_of_resources == 0 \
+      }",
+      NULL);
+
+  assert_true_rule(
+      "import \"pe\" \
+      rule t { \
+        condition: \
+          defined (pe.number_of_resources and pe.number_of_resources == 0) \
+      }",
+      NULL);
+
+  assert_true_rule(
+      "import \"pe\" \
+      rule t { \
+        condition: \
+          defined \"foo\" contains \"f\" \
+      }",
+      NULL);
+
+  // Test FOUND_IN and FOUND_AT propagates undefined values
+  assert_true_rule(
+      "import \"pe\" \
+      rule t { \
+        strings: \
+            $a = \"abc\" \
+        condition: \
+          not defined ($a in (0..pe.number_of_resources)) and \
+          not defined ($a in (pe.number_of_resources..5)) and \
+          not defined ($a at pe.number_of_resources) \
+      }",
+      NULL);
+
+  // Test that operations that would trigger a SIGFPE are detected and
+  // returns undefined
+  assert_true_rule(
+      "rule t { \
+        strings: \
+          $a = /aaa/ \
+        condition: \
+          (not defined (1 \\ #a)) and \
+          (not defined (1 % #a)) and \
+          (not defined ((#a + -0x7FFFFFFFFFFFFFFF - 1) \\ -1)) and \
+          (not defined ((#a + -0x7FFFFFFFFFFFFFFF - 1) % -1)) \
+      }",
+      NULL);
 }
 
 static void test_pass(int pass)
@@ -3249,6 +3816,7 @@ static void test_pass(int pass)
   test_offset();
   test_length();
   test_of();
+  test_rule_of();
   test_for();
   test_re();
   test_filesize();
@@ -3267,6 +3835,7 @@ static void test_pass(int pass)
   test_global_rules();
   test_tags();
   test_meta();
+  test_warnings();
 
 #if !defined(USE_NO_PROC) && !defined(_WIN32) && !defined(__CYGWIN__)
   test_process_scan();
@@ -3278,6 +3847,7 @@ static void test_pass(int pass)
 
   test_time_module();
   test_performance_warnings();
+  test_defined();
 
   if (pass >= 2)
   {

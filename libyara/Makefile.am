@@ -15,7 +15,7 @@
 #
 # See https://autotools.io/libtool/version.html for more details.
 #
-ABI_VERSION = 8:0:0
+ABI_VERSION = 9:0:1
 
 # Rules for generating YARA modules from .proto files. For each .proto file
 # three files are generated: .c, .pb-c.c, and .pb-c.h. The .c file is generated
@@ -46,6 +46,8 @@ MODULES += modules/time/time.c
 MODULES += modules/pe/pe.c
 MODULES += modules/pe/pe_utils.c
 
+MODULES += modules/console/console.c
+
 if CUCKOO_MODULE
 MODULES += modules/cuckoo/cuckoo.c
 endif
@@ -75,13 +77,29 @@ MODULES += modules/pb_tests/pb_tests.c
 MODULES += modules/pb_tests/pb_tests.pb-c.c
 endif
 
+if AUTHENTICODE_MODULE
+MODULES += modules/pe/authenticode-parser/authenticode.c
+MODULES += modules/pe/authenticode-parser/certificate.c
+MODULES += modules/pe/authenticode-parser/helper.c
+MODULES += modules/pe/authenticode-parser/countersignature.c
+MODULES += modules/pe/authenticode-parser/structs.c
+endif
+
 #
 # Add your modules here:
 #
 # MODULES += modules/yourmodule.c
 #
 
-AM_YFLAGS=-d
+#
+# When bison is used in POSIX yacc emulation mode (-y/--yacc option) it
+# produces warnings if we use Bison-specific features that are not supported
+# by yacc. With -Wno-yacc we turn off those warnings. Ideally we should call
+# bison without the -y/--yacc option, but autoconf insists on using bison in
+# yacc compatibility mode because of AC_PROG_YACC, and AC_PROG_BISON doesn't
+# exist.
+#
+AM_YFLAGS=-d -Wno-yacc
 
 AM_CFLAGS=-Wall -Wno-deprecated-declarations \
 	-D_GNU_SOURCE \
@@ -107,6 +125,10 @@ endif
 
 if ADDRESS_SANITIZER
 AM_CFLAGS+=-fsanitize=address
+endif
+
+if UB_SANITIZER
+AM_CFLAGS+=-fsanitize=undefined -fno-sanitize-recover=undefined
 endif
 
 if GCC
@@ -143,6 +165,7 @@ yarainclude_HEADERS = \
 	include/yara/rules.h \
 	include/yara/scan.h \
 	include/yara/scanner.h \
+	include/yara/simple_str.h \
 	include/yara/sizedstr.h \
 	include/yara/stack.h \
 	include/yara/stopwatch.h \
@@ -150,6 +173,7 @@ yarainclude_HEADERS = \
 	include/yara/strutils.h \
 	include/yara/threading.h \
 	include/yara/types.h \
+	include/yara/unaligned.h \
 	include/yara/utils.h
 
 noinst_HEADERS = \
@@ -211,11 +235,15 @@ libyara_la_SOURCES = \
 	rules.c \
 	scan.c \
 	scanner.c \
+	simple_str.c \
 	sizedstr.c \
 	stack.c \
 	stopwatch.c \
 	strutils.c \
 	stream.c \
+	tlshc/tlsh.c \
+	tlshc/tlsh_impl.c \
+	tlshc/tlsh_util.c \
 	threading.c
 
 

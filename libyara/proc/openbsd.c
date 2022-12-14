@@ -41,7 +41,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <errno.h>
 // clang-format on
 
+#include <assert.h>
 #include <yara/error.h>
+#include <yara/libyara.h>
 #include <yara/mem.h>
 #include <yara/proc.h>
 
@@ -62,6 +64,8 @@ int _yr_process_attach(int pid, YR_PROC_ITERATOR_CTX* context)
 
   if (proc_info == NULL)
     return ERROR_INSUFFICIENT_MEMORY;
+
+  memset(proc_info, 0, sizeof(YR_PROC_INFO));
 
   proc_info->pid = pid;
   if (ptrace(PT_ATTACH, pid, NULL, 0) == -1)
@@ -147,21 +151,36 @@ YR_API YR_MEMORY_BLOCK* yr_process_get_next_memory_block(
   int mib[] = {CTL_KERN, KERN_PROC_VMMAP, proc_info->pid};
   size_t len = sizeof(struct kinfo_vmentry);
 
+  uint64_t current_begin = context->current_block.base +
+                           context->current_block.size;
+
+  uint64_t max_process_memory_chunk;
+
+  yr_get_configuration_uint64(
+      YR_CONFIG_MAX_PROCESS_MEMORY_CHUNK, &max_process_memory_chunk);
+
   iterator->last_error = ERROR_SUCCESS;
 
-  if (sysctl(mib, 3, &proc_info->vm_entry, &len, NULL, 0) < 0)
-    return NULL;
+  if (proc_info->old_end <= current_begin)
+  {
+    if (sysctl(mib, 3, &proc_info->vm_entry, &len, NULL, 0) < 0)
+      return NULL;
 
-  // no more blocks
-  if (proc_info->old_end == proc_info->vm_entry.kve_end)
-    return NULL;
+    // no more blocks
+    if (proc_info->old_end == proc_info->vm_entry.kve_end)
+      return NULL;
 
-  proc_info->old_end = proc_info->vm_entry.kve_end;
-  context->current_block.base = proc_info->vm_entry.kve_start;
-  context->current_block.size = proc_info->vm_entry.kve_end -
-                                proc_info->vm_entry.kve_start;
+    current_begin = proc_info->vm_entry.kve_start;
+    proc_info->old_end = proc_info->vm_entry.kve_end;
 
-  proc_info->vm_entry.kve_start = proc_info->vm_entry.kve_start + 1;
+    proc_info->vm_entry.kve_start = proc_info->vm_entry.kve_start + 1;
+  }
+
+  context->current_block.base = current_begin;
+  context->current_block.size = yr_min(
+      proc_info->old_end - current_begin, max_process_memory_chunk);
+
+  assert(context->current_block.size > 0);
 
   return &context->current_block;
 }
@@ -174,7 +193,12 @@ YR_API YR_MEMORY_BLOCK* yr_process_get_first_memory_block(
 
   proc_info->vm_entry.kve_start = 0;
 
-  return yr_process_get_next_memory_block(iterator);
+  YR_MEMORY_BLOCK* result = yr_process_get_next_memory_block(iterator);
+
+  if (result == NULL)
+    iterator->last_error = ERROR_COULD_NOT_READ_PROCESS_MEMORY;
+
+  return result;
 }
 
 #endif

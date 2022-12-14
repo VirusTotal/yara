@@ -37,6 +37,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <yara/object.h>
 #include <yara/proc.h>
 #include <yara/scanner.h>
+#include <yara/strutils.h>
 #include <yara/types.h>
 
 #include "exception.h"
@@ -450,7 +451,7 @@ YR_API int yr_scanner_scan_mem_blocks(
     uint32_t max_match_data;
 
     FAIL_ON_ERROR(
-        yr_get_configuration(YR_CONFIG_MAX_MATCH_DATA, &max_match_data));
+        yr_get_configuration_uint32(YR_CONFIG_MAX_MATCH_DATA, &max_match_data));
 
     result = yr_notebook_create(
         1024 * (sizeof(YR_MATCH) + max_match_data), &scanner->matches_notebook);

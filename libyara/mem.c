@@ -73,11 +73,6 @@ void* yr_realloc(void* ptr, size_t size)
   return (void*) HeapReAlloc(hHeap, HEAP_ZERO_MEMORY, ptr, size);
 }
 
-void yr_free(void* ptr)
-{
-  HeapFree(hHeap, 0, ptr);
-}
-
 char* yr_strdup(const char* str)
 {
   size_t len = strlen(str);
@@ -104,6 +99,11 @@ char* yr_strndup(const char* str, size_t n)
   dup[len] = '\0';
 
   return (char*) dup;
+}
+
+YR_API void yr_free(void* ptr)
+{
+  HeapFree(hHeap, 0, ptr);
 }
 
 #else
@@ -137,11 +137,6 @@ void* yr_realloc(void* ptr, size_t size)
   return realloc(ptr, size);
 }
 
-void yr_free(void* ptr)
-{
-  free(ptr);
-}
-
 char* yr_strdup(const char* str)
 {
   return strdup(str);
@@ -150,6 +145,11 @@ char* yr_strdup(const char* str)
 char* yr_strndup(const char* str, size_t n)
 {
   return strndup(str, n);
+}
+
+YR_API void yr_free(void* ptr)
+{
+  free(ptr);
 }
 
 #endif

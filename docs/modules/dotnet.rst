@@ -77,6 +77,111 @@ Reference
 
     *Example: dotnet.guids[0] == "99c08ffd-f378-a891-10ab-c02fe11be6ef"*
 
+.. c:type:: number_of_classes
+    The number of classes in the file.
+
+.. c:type:: classes
+    An array of .NET classes stored in the metadata. Individual classes can be accessed
+    using the [] operator. Each class object contains the following attributes:
+
+    .. c:member:: fullname
+        Class full name.
+
+    .. c:member:: name
+        Class name.
+
+    .. c:member:: namespace
+        Class namespace.
+
+    .. c:member:: visibility
+        Class visibility specifier, options are:
+
+        ``private``
+        ``public``
+        ``protected``
+        ``internal``
+        ``private protected``
+        ``protected internal``
+
+    .. c:member:: type
+        Type of the object, options are:
+
+        ``class``
+        ``interface``
+
+    .. c:member:: abstract
+        Boolean representing if class is abstract.
+
+    .. c:member:: sealed
+        Boolean representing if class is sealed.
+
+    .. c:member:: number_of_generic_parameters
+        Number of generic parameters.
+
+    .. c:member:: generic_parameters
+        A zero-based array of generic parameters name. Individual parameters can be accessed using the [] operator.
+
+    .. c:member:: number_of_base_types
+        Number of the base types.
+
+    .. c:member:: base_types
+        A zero-based array of base types name. Individual base types can be accessed using the [] operator.
+
+    .. c:member:: number_of_methods
+        Number of the methods.
+
+    .. c:member:: methods
+        A zero-based array of method objects. Individual methods can be accessed by
+        using the [] operator. Each object contains following attributes:
+
+        .. c:member:: name
+            Method name.
+
+        .. c:member:: visibility
+            Method visibility specifier, options are:
+
+            ``private``
+            ``public``
+            ``protected``
+            ``internal``
+            ``private protected``
+            ``protected internal``
+
+        .. c:member:: static
+            Boolean representing if method is static.
+
+        .. c:member:: virtual
+            Boolean representing if method is virtual. 
+
+        .. c:member:: final
+            Boolean representing if method is final. 
+
+        .. c:member:: abstract
+            Boolean representing if method is abstract. 
+
+        .. c:member:: return_type
+            Method return type name.
+
+        .. c:member:: number_of_parameters
+            Number of the method parameters.
+
+        .. c:member:: parameters
+            A zero-based array of method parameters. Individual parameters can be accessed by using the [] operator.
+
+            .. c:member:: name
+                Parameter name.
+
+            .. c:member:: type
+                Parameter type.
+
+        .. c:member:: number_of_generic_parameters
+            Number of the method generic parameters.
+
+        .. c:member:: generic_parameters
+            A zero-based array of method generic parameters. Individual parameters can be accessed by using the [] operator.
+
+    *Example: dotnet.classes[0].fullname == "Launcher.Program"*
+
 .. c:type:: number_of_resources
 
     The number of resources in the .NET file. These are different from normal PE
@@ -187,3 +292,11 @@ Reference
     can be accessed by using the [] operator.
 
     *Example: dotnet.field_offsets[0] == 8675309*
+
+.. c:type:: is_dotnet
+
+    .. versionadded:: 4.2.0
+
+    Function returning true if the PE is indeed .NET.
+
+    *Example: dotnet.is_dotnet*

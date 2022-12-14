@@ -2,14 +2,17 @@ name: Build and test
 
 on: [push, pull_request]
 
+env:
+  UBSAN_OPTIONS: print_stacktrace=1
+
 jobs:
   standard-build:
     runs-on: ubuntu-latest
     strategy:
       matrix:
         config:
-        - "--enable-cuckoo --enable-magic --enable-pb-tests --enable-address-sanitizer"
-        - "--enable-profiling --enable-cuckoo --enable-magic --enable-pb-tests --enable-address-sanitizer"
+        - "--enable-debug --enable-cuckoo --enable-magic --enable-pb-tests --enable-address-sanitizer --enable-undefined-behaviour-sanitizer"
+        - "--enable-debug --enable-profiling --enable-cuckoo --enable-magic --enable-pb-tests --enable-address-sanitizer --enable-undefined-behaviour-sanitizer"
     steps:
       - uses: actions/checkout@v2
       - name: Install dependencies
@@ -26,6 +29,10 @@ jobs:
             protobuf-compiler \
             protobuf-c-compiler \
             libprotobuf-c-dev
+      - name: Print versions
+        run: |
+          bison --version
+          gcc --version
       - name: Prepare for building
         run: |
           ./bootstrap.sh
@@ -34,6 +41,9 @@ jobs:
         run: make clean && make
       - name: Run tests
         run: make check
+      - name: Print tests errors
+        if: ${{ failure() }}
+        run: cat test-suite.log
 
   mingw-build:
     runs-on: ubuntu-latest
@@ -76,5 +86,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-${{ env.cache-name }}-development
       - uses: actions/checkout@v2
-      - name: Build and run tests
-        run: bazel test @jansson//... //tests/...
+      - name: Build
+        run: bazel build @jansson//... //tests/...
+      - name: Run tests
+        run: bazel test --test_output=errors //tests/...

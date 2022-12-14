@@ -30,11 +30,11 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <yara/globals.h>
 #include <yara/mem.h>
 #include <yara/modules.h>
+#include <yara/strutils.h>
 
 #include "../crypto.h"
 
 #define MODULE_NAME hash
-
 
 typedef struct _CACHE_KEY
 {
@@ -42,7 +42,6 @@ typedef struct _CACHE_KEY
   int64_t length;
 
 } CACHE_KEY;
-
 
 const uint32_t crc32_tab[] = {
     0x00000000, 0x77073096, 0xee0e612c, 0x990951ba, 0x076dc419, 0x706af48f,
@@ -89,7 +88,6 @@ const uint32_t crc32_tab[] = {
     0x54de5729, 0x23d967bf, 0xb3667a2e, 0xc4614ab8, 0x5d681b02, 0x2a6f2b94,
     0xb40bbe37, 0xc30c8ea1, 0x5a05df1b, 0x2d02ef8d};
 
-
 static void digest_to_ascii(
     unsigned char* digest,
     char* digest_ascii,
@@ -102,7 +100,6 @@ static void digest_to_ascii(
 
   digest_ascii[digest_length * 2] = '\0';
 }
-
 
 static char* get_from_cache(
     YR_OBJECT* module_object,
@@ -130,7 +127,6 @@ static char* get_from_cache(
 
   return result;
 }
-
 
 static int add_to_cache(
     YR_OBJECT* module_object,
@@ -166,7 +162,6 @@ static int add_to_cache(
   return result;
 }
 
-
 define_function(string_md5)
 {
   unsigned char digest[YR_MD5_LEN];
@@ -191,7 +186,6 @@ define_function(string_md5)
 
   return_string(digest_ascii);
 }
-
 
 define_function(string_sha256)
 {
@@ -218,7 +212,6 @@ define_function(string_sha256)
   return_string(digest_ascii);
 }
 
-
 define_function(string_sha1)
 {
   unsigned char digest[YR_SHA1_LEN];
@@ -244,7 +237,6 @@ define_function(string_sha1)
   return_string(digest_ascii);
 }
 
-
 define_function(string_checksum32)
 {
   size_t i;
@@ -252,7 +244,7 @@ define_function(string_checksum32)
   SIZED_STRING* s = sized_string_argument(1);
   uint32_t checksum = 0;
 
-  for (i = 0; i < s->length; i++) checksum += (uint8_t)(s->c_string[i]);
+  for (i = 0; i < s->length; i++) checksum += (uint8_t) (s->c_string[i]);
 
   YR_DEBUG_FPRINTF(
       2,
@@ -265,7 +257,6 @@ define_function(string_checksum32)
   return_integer(checksum);
 }
 
-
 define_function(data_md5)
 {
   yr_md5_ctx md5_context;
@@ -276,7 +267,7 @@ define_function(data_md5)
 
   bool past_first_block = false;
 
-  YR_SCAN_CONTEXT* context = scan_context();
+  YR_SCAN_CONTEXT* context = yr_scan_context();
   YR_MEMORY_BLOCK* block = first_memory_block(context);
   YR_MEMORY_BLOCK_ITERATOR* iterator = context->iterator;
 
@@ -298,10 +289,9 @@ define_function(data_md5)
   {
     YR_DEBUG_FPRINTF(
         2, stderr, "} // %s() = YR_UNDEFINED // block == NULL\n", __FUNCTION__);
+
     return_string(YR_UNDEFINED);
   }
-
-  yr_md5_init(&md5_context);
 
   if (offset < 0 || length < 0 || offset < block->base)
   {
@@ -310,10 +300,11 @@ define_function(data_md5)
         stderr,
         "} // %s() = YR_UNDEFINED // bad offset / length\n",
         __FUNCTION__);
+
     return_string(YR_UNDEFINED);
   }
 
-  cached_ascii_digest = get_from_cache(module(), "md5", arg_offset, arg_length);
+  cached_ascii_digest = get_from_cache(yr_module(), "md5", arg_offset, arg_length);
 
   if (cached_ascii_digest != NULL)
   {
@@ -323,8 +314,11 @@ define_function(data_md5)
         "} // %s() = %s (cached)\n",
         __FUNCTION__,
         cached_ascii_digest);
+
     return_string(cached_ascii_digest);
   }
+
+  yr_md5_init(&md5_context);
 
   foreach_memory_block(iterator, block)
   {
@@ -336,9 +330,9 @@ define_function(data_md5)
 
       if (block_data != NULL)
       {
-        size_t data_offset = (size_t)(offset - block->base);
+        size_t data_offset = (size_t) (offset - block->base);
         size_t data_len = (size_t) yr_min(
-            length, (size_t)(block->size - data_offset));
+            length, (size_t) (block->size - data_offset));
 
         offset += data_len;
         length -= data_len;
@@ -361,12 +355,17 @@ define_function(data_md5)
           stderr,
           "} // %s() = YR_UNDEFINED // past_first_block\n",
           __FUNCTION__);
+
+      yr_md5_final(digest, &md5_context);
+
       return_string(YR_UNDEFINED);
     }
 
     if (block->base + block->size > offset + length)
       break;
   }
+
+  yr_md5_final(digest, &md5_context);
 
   if (!past_first_block)
   {
@@ -375,20 +374,18 @@ define_function(data_md5)
         stderr,
         "} // %s() = YR_UNDEFINED // !past_first_block\n",
         __FUNCTION__);
+
     return_string(YR_UNDEFINED);
   }
-
-  yr_md5_final(digest, &md5_context);
 
   digest_to_ascii(digest, digest_ascii, YR_MD5_LEN);
 
   FAIL_ON_ERROR(
-      add_to_cache(module(), "md5", arg_offset, arg_length, digest_ascii));
+      add_to_cache(yr_module(), "md5", arg_offset, arg_length, digest_ascii));
 
   YR_DEBUG_FPRINTF(2, stderr, "} // %s() = 0x%s\n", __FUNCTION__, digest_ascii);
   return_string(digest_ascii);
 }
-
 
 define_function(data_sha1)
 {
@@ -406,7 +403,7 @@ define_function(data_sha1)
   int64_t offset = arg_offset;
   int64_t length = arg_length;
 
-  YR_SCAN_CONTEXT* context = scan_context();
+  YR_SCAN_CONTEXT* context = yr_scan_context();
   YR_MEMORY_BLOCK* block = first_memory_block(context);
   YR_MEMORY_BLOCK_ITERATOR* iterator = context->iterator;
 
@@ -422,10 +419,9 @@ define_function(data_sha1)
   {
     YR_DEBUG_FPRINTF(
         2, stderr, "} // %s() = YR_UNDEFINED // block == NULL\n", __FUNCTION__);
+
     return_string(YR_UNDEFINED);
   }
-
-  yr_sha1_init(&sha_context);
 
   if (offset < 0 || length < 0 || offset < block->base)
   {
@@ -434,11 +430,12 @@ define_function(data_sha1)
         stderr,
         "} // %s() = YR_UNDEFINED // bad offset / length\n",
         __FUNCTION__);
+
     return_string(YR_UNDEFINED);
   }
 
   cached_ascii_digest = get_from_cache(
-      module(), "sha1", arg_offset, arg_length);
+      yr_module(), "sha1", arg_offset, arg_length);
 
   if (cached_ascii_digest != NULL)
   {
@@ -448,8 +445,11 @@ define_function(data_sha1)
         "} // %s() = %s (cached)\n",
         __FUNCTION__,
         cached_ascii_digest);
+
     return_string(cached_ascii_digest);
   }
+
+  yr_sha1_init(&sha_context);
 
   foreach_memory_block(iterator, block)
   {
@@ -460,7 +460,7 @@ define_function(data_sha1)
 
       if (block_data != NULL)
       {
-        size_t data_offset = (size_t)(offset - block->base);
+        size_t data_offset = (size_t) (offset - block->base);
         size_t data_len = (size_t) yr_min(
             length, (size_t) block->size - data_offset);
 
@@ -485,12 +485,16 @@ define_function(data_sha1)
           stderr,
           "} // %s() = YR_UNDEFINED // past_first_block\n",
           __FUNCTION__);
+
+      yr_sha1_final(digest, &sha_context);
       return_string(YR_UNDEFINED);
     }
 
     if (block->base + block->size > offset + length)
       break;
   }
+
+  yr_sha1_final(digest, &sha_context);
 
   if (!past_first_block)
   {
@@ -499,20 +503,18 @@ define_function(data_sha1)
         stderr,
         "} // %s() = YR_UNDEFINED // !past_first_block\n",
         __FUNCTION__);
+
     return_string(YR_UNDEFINED);
   }
-
-  yr_sha1_final(digest, &sha_context);
 
   digest_to_ascii(digest, digest_ascii, YR_SHA1_LEN);
 
   FAIL_ON_ERROR(
-      add_to_cache(module(), "sha1", arg_offset, arg_length, digest_ascii));
+      add_to_cache(yr_module(), "sha1", arg_offset, arg_length, digest_ascii));
 
   YR_DEBUG_FPRINTF(2, stderr, "} // %s() = 0x%s\n", __FUNCTION__, digest_ascii);
   return_string(digest_ascii);
 }
-
 
 define_function(data_sha256)
 {
@@ -530,7 +532,7 @@ define_function(data_sha256)
   int64_t offset = arg_offset;
   int64_t length = arg_length;
 
-  YR_SCAN_CONTEXT* context = scan_context();
+  YR_SCAN_CONTEXT* context = yr_scan_context();
   YR_MEMORY_BLOCK* block = first_memory_block(context);
   YR_MEMORY_BLOCK_ITERATOR* iterator = context->iterator;
 
@@ -546,10 +548,9 @@ define_function(data_sha256)
   {
     YR_DEBUG_FPRINTF(
         2, stderr, "} // %s() = YR_UNDEFINED // block == NULL\n", __FUNCTION__);
+
     return_string(YR_UNDEFINED);
   }
-
-  yr_sha256_init(&sha256_context);
 
   if (offset < 0 || length < 0 || offset < block->base)
   {
@@ -558,11 +559,12 @@ define_function(data_sha256)
         stderr,
         "} // %s() = YR_UNDEFINED // bad offset / length\n",
         __FUNCTION__);
+
     return_string(YR_UNDEFINED);
   }
 
   cached_ascii_digest = get_from_cache(
-      module(), "sha256", arg_offset, arg_length);
+      yr_module(), "sha256", arg_offset, arg_length);
 
   if (cached_ascii_digest != NULL)
   {
@@ -572,8 +574,11 @@ define_function(data_sha256)
         "} // %s() = %s (cached)\n",
         __FUNCTION__,
         cached_ascii_digest);
+
     return_string(cached_ascii_digest);
   }
+
+  yr_sha256_init(&sha256_context);
 
   foreach_memory_block(iterator, block)
   {
@@ -584,7 +589,7 @@ define_function(data_sha256)
 
       if (block_data != NULL)
       {
-        size_t data_offset = (size_t)(offset - block->base);
+        size_t data_offset = (size_t) (offset - block->base);
         size_t data_len = (size_t) yr_min(length, block->size - data_offset);
 
         offset += data_len;
@@ -608,12 +613,16 @@ define_function(data_sha256)
           stderr,
           "} // %s() = YR_UNDEFINED // past_first_block\n",
           __FUNCTION__);
+
+      yr_sha256_final(digest, &sha256_context);
       return_string(YR_UNDEFINED);
     }
 
     if (block->base + block->size > offset + length)
       break;
   }
+
+  yr_sha256_final(digest, &sha256_context);
 
   if (!past_first_block)
   {
@@ -622,20 +631,18 @@ define_function(data_sha256)
         stderr,
         "} // %s() = YR_UNDEFINED // !past_first_block\n",
         __FUNCTION__);
+
     return_string(YR_UNDEFINED);
   }
-
-  yr_sha256_final(digest, &sha256_context);
 
   digest_to_ascii(digest, digest_ascii, YR_SHA256_LEN);
 
   FAIL_ON_ERROR(
-      add_to_cache(module(), "sha256", arg_offset, arg_length, digest_ascii));
+      add_to_cache(yr_module(), "sha256", arg_offset, arg_length, digest_ascii));
 
   YR_DEBUG_FPRINTF(2, stderr, "} // %s() = 0x%s\n", __FUNCTION__, digest_ascii);
   return_string(digest_ascii);
 }
-
 
 define_function(data_checksum32)
 {
@@ -650,7 +657,7 @@ define_function(data_checksum32)
       offset,
       length);
 
-  YR_SCAN_CONTEXT* context = scan_context();
+  YR_SCAN_CONTEXT* context = yr_scan_context();
   YR_MEMORY_BLOCK* block = first_memory_block(context);
   YR_MEMORY_BLOCK_ITERATOR* iterator = context->iterator;
 
@@ -673,7 +680,7 @@ define_function(data_checksum32)
       {
         size_t i;
 
-        size_t data_offset = (size_t)(offset - block->base);
+        size_t data_offset = (size_t) (offset - block->base);
         size_t data_len = (size_t) yr_min(length, block->size - data_offset);
 
         offset += data_len;
@@ -707,7 +714,6 @@ define_function(data_checksum32)
   return_integer(checksum);
 }
 
-
 define_function(string_crc32)
 {
   size_t i;
@@ -729,14 +735,13 @@ define_function(string_crc32)
   return_integer(checksum ^ 0xFFFFFFFF);
 }
 
-
 define_function(data_crc32)
 {
   int64_t offset = integer_argument(1);  // offset where to start
   int64_t length = integer_argument(2);  // length of bytes we want hash on
   uint32_t checksum = 0xFFFFFFFF;
 
-  YR_SCAN_CONTEXT* context = scan_context();
+  YR_SCAN_CONTEXT* context = yr_scan_context();
   YR_MEMORY_BLOCK* block = first_memory_block(context);
   YR_MEMORY_BLOCK_ITERATOR* iterator = context->iterator;
 
@@ -766,7 +771,7 @@ define_function(data_crc32)
       {
         size_t i;
 
-        size_t data_offset = (size_t)(offset - block->base);
+        size_t data_offset = (size_t) (offset - block->base);
         size_t data_len = (size_t) yr_min(length, block->size - data_offset);
 
         offset += data_len;
@@ -803,7 +808,6 @@ define_function(data_crc32)
   return_integer(checksum ^ 0xFFFFFFFF);
 }
 
-
 begin_declarations
   declare_function("md5", "ii", "s", data_md5);
   declare_function("md5", "s", "s", string_md5);
@@ -821,7 +825,6 @@ begin_declarations
   declare_function("crc32", "s", "i", string_crc32);
 end_declarations
 
-
 int module_initialize(YR_MODULE* module)
 {
   YR_DEBUG_FPRINTF(2, stderr, "- %s() {}\n", __FUNCTION__);
@@ -829,14 +832,12 @@ int module_initialize(YR_MODULE* module)
   return ERROR_SUCCESS;
 }
 
-
 int module_finalize(YR_MODULE* module)
 {
   YR_DEBUG_FPRINTF(2, stderr, "- %s() {}\n", __FUNCTION__);
 
   return ERROR_SUCCESS;
 }
-
 
 int module_load(
     YR_SCAN_CONTEXT* context,
@@ -854,7 +855,6 @@ int module_load(
 
   return ERROR_SUCCESS;
 }
-
 
 int module_unload(YR_OBJECT* module_object)
 {

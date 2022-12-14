@@ -225,9 +225,16 @@ hex_digit     [0-9a-fA-F]
 [^\\\[\(\)\|\$\.\^\+\*\?] {
 
   // Any non-special character is passed as a CHAR token to the scanner.
-
-  yylval->integer = yytext[0];
-  return _CHAR_;
+  if (yytext[0] >= 32 && yytext[0] < 127)
+  {
+    yylval->integer = yytext[0];
+    return _CHAR_;
+  }
+  else
+  {
+    yyerror(yyscanner, lex_env, "non-ascii character");
+    yyterminate();
+  }
 }
 
 
@@ -308,11 +315,28 @@ hex_digit     [0-9a-fA-F]
 
 
 
-<char_class>(\\x{hex_digit}{2}|\\.|[^\\])\-[^]] {
+<char_class>(\\x{hex_digit}{2}|\\.|[^]\\])-[^]] {
 
-  // A range inside a character class.
+  // A range inside a character class. The regexp is...
+  //
+  //   ( \x{hex_digit}{2}    Hex digit (i.e: \x01) ...
+  //   | \.                  ...or any escaped character (i.e. \\, \-) ...
+  //   | [^]\]               ...or any character except ] and \ ...
+  //   )
+  //   -                     ... followed by -
+  //   [^]]                  ... followed by any character except ]
+  //
+  // Some examples:
+  //
   //  [abc0-9]
-  //      ^- matching here
+  //      ^-^ matching range 0-9
+  //
+  //  [a-za-]
+  //   ^-^- matching range a-z
+  //
+  //  [\.-a]
+  //   ^--^- matching range \.-a
+  //
 
   uint16_t c;
   uint8_t start = yytext[0];
@@ -356,54 +380,42 @@ hex_digit     [0-9a-fA-F]
 
 <char_class>\\w {
 
-  int i;
-
-  for (i = 0; i < 32; i++)
+  for (int i = 0; i < 32; i++)
     LEX_ENV->re_class.bitmap[i] |= word_chars[i];
 }
 
 
 <char_class>\\W {
 
-  int i;
-
-  for (i = 0; i < 32; i++)
+  for (int i = 0; i < 32; i++)
     LEX_ENV->re_class.bitmap[i] |= ~word_chars[i];
 }
 
 
 <char_class>\\s {
 
-  int i;
-
-  for (i = 0; i < 32; i++)
+  for (int i = 0; i < 32; i++)
     LEX_ENV->re_class.bitmap[i] |= space_chars[i];
 }
 
 
 <char_class>\\S {
 
-  int i;
-
-  for (i = 0; i < 32; i++)
+  for (int i = 0; i < 32; i++)
     LEX_ENV->re_class.bitmap[i] |= ~space_chars[i];
 }
 
 
 <char_class>\\d {
 
-  char c;
-
-  for (c = '0'; c <= '9'; c++)
+  for (char c = '0'; c <= '9'; c++)
     LEX_ENV->re_class.bitmap[c / 8] |= 1 << c % 8;
 }
 
 
 <char_class>\\D {
 
-  int i;
-
-  for (i = 0; i < 32; i++)
+  for (int i = 0; i < 32; i++)
   {
     // digits 0-7 are in the sixth byte of the vector, let that byte alone
     if (i == 6)
@@ -462,16 +474,9 @@ hex_digit     [0-9a-fA-F]
 
 
 . {
-
-  if (yytext[0] >= 32 && yytext[0] < 127)
-  {
-    return yytext[0];
-  }
-  else
-  {
-    yyerror(yyscanner, lex_env, "non-ascii character");
-    yyterminate();
-  }
+  // Non-special characters have already been handled. This is a special character,
+  // which is thus passed as is to the scanner.
+  return yytext[0];
 }
 
 
@@ -629,7 +634,13 @@ int yr_parse_re_string(
 
   FAIL_ON_ERROR(yr_re_ast_create(re_ast));
 
-  yylex_init(&yyscanner);
+  if (yylex_init(&yyscanner) != 0)
+  {
+    yr_re_ast_destroy(*re_ast);
+    *re_ast = NULL;
+    return ERROR_INSUFFICIENT_MEMORY;
+  }
+
   yyset_extra(*re_ast, yyscanner);
   yy_scan_string(re_string, yyscanner);
   yyparse(yyscanner, &lex_env);

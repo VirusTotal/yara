@@ -44,8 +44,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <yara/strutils.h>
 #include <yara/utils.h>
 
-#define todigit(x) \
-  ((x) >= 'A' && (x) <= 'F') ? ((uint8_t)(x - 'A' + 10)) : ((uint8_t)(x - '0'))
+#define todigit(x)                                        \
+  ((x) >= 'A' && (x) <= 'F') ? ((uint8_t) (x - 'A' + 10)) \
+                             : ((uint8_t) (x - '0'))
 
 int yr_parser_emit(
     yyscan_t yyscanner,
@@ -176,7 +177,8 @@ int yr_parser_emit_with_arg_reloc(
 
 int yr_parser_emit_pushes_for_strings(
     yyscan_t yyscanner,
-    const char* identifier)
+    const char* identifier,
+    int* count)
 {
   YR_COMPILER* compiler = yyget_extra(yyscanner);
 
@@ -219,6 +221,11 @@ int yr_parser_emit_pushes_for_strings(
     }
   }
 
+  if (count != NULL)
+  {
+    *count = matching;
+  }
+
   if (matching == 0)
   {
     yr_compiler_set_error_extra_info(
@@ -228,41 +235,110 @@ int yr_parser_emit_pushes_for_strings(
   return ERROR_SUCCESS;
 }
 
+// Emit OP_PUSH_RULE instructions for all rules whose identifier has given
+// prefix.
+int yr_parser_emit_pushes_for_rules(
+    yyscan_t yyscanner,
+    const char* prefix,
+    int* count)
+{
+  YR_COMPILER* compiler = yyget_extra(yyscanner);
+
+  // Make sure the compiler is parsing a rule
+  assert(compiler->current_rule_idx != UINT32_MAX);
+
+  YR_RULE* rule;
+  int matching = 0;
+
+  YR_NAMESPACE* ns = (YR_NAMESPACE*) yr_arena_get_ptr(
+      compiler->arena,
+      YR_NAMESPACES_TABLE,
+      compiler->current_namespace_idx * sizeof(struct YR_NAMESPACE));
+
+  // Can't use yr_rules_foreach here as that requires the rules to have been
+  // finalized (inserting a NULL rule at the end). This is done when
+  // yr_compiler_get_rules() is called, which also inserts a HALT instruction
+  // into the current position in the code arena. Obviously we aren't done
+  // compiling the rules yet so inserting a HALT is a bad idea. To deal with
+  // this I'm manually walking all the currently compiled rules (up to the
+  // current rule index) and comparing identifiers to see if it is one we should
+  // use.
+  //
+  // Further, we have to get compiler->current_rule_idx before we start because
+  // if we emit an OP_PUSH_RULE
+  rule = yr_arena_get_ptr(compiler->arena, YR_RULES_TABLE, 0);
+
+  for (uint32_t i = 0; i <= compiler->current_rule_idx; i++)
+  {
+    // Is rule->identifier prefixed by prefix?
+    if (strncmp(prefix, rule->identifier, strlen(prefix)) == 0)
+    {
+      uint32_t rule_idx = yr_hash_table_lookup_uint32(
+          compiler->rules_table, rule->identifier, ns->name);
+
+      if (rule_idx != UINT32_MAX)
+      {
+        FAIL_ON_ERROR(yr_parser_emit_with_arg(
+            yyscanner, OP_PUSH_RULE, rule_idx, NULL, NULL));
+        matching++;
+      }
+    }
+
+    rule++;
+  }
+
+  if (count != NULL)
+  {
+    *count = matching;
+  }
+
+  if (matching == 0)
+  {
+    yr_compiler_set_error_extra_info(compiler, prefix);
+    return ERROR_UNDEFINED_IDENTIFIER;
+  }
+
+  return ERROR_SUCCESS;
+}
+
 int yr_parser_emit_push_const(yyscan_t yyscanner, uint64_t argument)
 {
-  uint64_t u = (uint64_t) argument;
-  uint8_t buf[9];
-  int bufsz = 1;
-  if (u == YR_UNDEFINED)
+  uint8_t opcode[9];
+  int opcode_len = 1;
+
+  if (argument == YR_UNDEFINED)
   {
-    buf[0] = OP_PUSH_U;
+    opcode[0] = OP_PUSH_U;
   }
-  else if (u <= 0xff)
+  else if (argument <= 0xff)
   {
-    buf[0] = OP_PUSH_8;
-    bufsz += sizeof(uint8_t);
-    buf[1] = (uint8_t) argument;
+    opcode[0] = OP_PUSH_8;
+    opcode[1] = (uint8_t) argument;
+    opcode_len += sizeof(uint8_t);
   }
-  else if (u <= 0xffff)
+  else if (argument <= 0xffff)
   {
-    buf[0] = OP_PUSH_16;
-    bufsz += sizeof(uint16_t);
-    *((uint16_t*) (buf + 1)) = (uint16_t) argument;
+    opcode[0] = OP_PUSH_16;
+    uint16_t u = (uint16_t) argument;
+    memcpy(opcode + 1, &u, sizeof(uint16_t));
+    opcode_len += sizeof(uint16_t);
   }
-  else if (u <= 0xffffffff)
+  else if (argument <= 0xffffffff)
   {
-    buf[0] = OP_PUSH_32;
-    bufsz += sizeof(uint32_t);
-    *((uint32_t*) (buf + 1)) = (uint32_t) argument;
+    opcode[0] = OP_PUSH_32;
+    uint32_t u = (uint32_t) argument;
+    memcpy(opcode + 1, &u, sizeof(uint32_t));
+    opcode_len += sizeof(uint32_t);
   }
   else
   {
-    buf[0] = OP_PUSH;
-    bufsz += sizeof(uint64_t);
-    *((uint64_t*) (buf + 1)) = (uint64_t) argument;
+    opcode[0] = OP_PUSH;
+    memcpy(opcode + 1, &argument, sizeof(uint64_t));
+    opcode_len += sizeof(uint64_t);
   }
+
   return yr_arena_write_data(
-      yyget_extra(yyscanner)->arena, YR_CODE_SECTION, buf, bufsz, NULL);
+      yyget_extra(yyscanner)->arena, YR_CODE_SECTION, opcode, opcode_len, NULL);
 }
 
 int yr_parser_check_types(
@@ -408,35 +484,17 @@ static int _yr_parser_write_string(
     literal_string = yr_re_ast_extract_literal(re_ast);
 
     if (literal_string != NULL)
-    {
-      modifier.flags |= STRING_FLAGS_LITERAL;
       free_literal = true;
-    }
-    else
-    {
-      // Non-literal strings can't be marked as fixed offset because once we
-      // find a string atom in the scanned data we don't know the offset where
-      // the string should start, as the non-literal strings can contain
-      // variable-length portions.
-
-      modifier.flags &= ~STRING_FLAGS_FIXED_OFFSET;
-    }
   }
   else
   {
     literal_string = str;
-    modifier.flags |= STRING_FLAGS_LITERAL;
   }
 
-  string->flags = modifier.flags;
-  string->rule_idx = compiler->current_rule_idx;
-  string->idx = compiler->current_string_idx;
-  string->fixed_offset = YR_UNDEFINED;
-  string->chained_to = NULL;
-  string->string = NULL;
-
-  if (modifier.flags & STRING_FLAGS_LITERAL)
+  if (literal_string != NULL)
   {
+    modifier.flags |= STRING_FLAGS_LITERAL;
+
     result = _yr_compiler_store_data(
         compiler,
         literal_string->c_string,
@@ -459,6 +517,12 @@ static int _yr_parser_write_string(
   }
   else
   {
+    // Non-literal strings can't be marked as fixed offset because once we
+    // find a string atom in the scanned data we don't know the offset where
+    // the string should start, as the non-literal strings can contain
+    // variable-length portions.
+    modifier.flags &= ~STRING_FLAGS_FIXED_OFFSET;
+
     // Emit forwards code
     result = yr_re_ast_emit_code(re_ast, compiler->arena, false);
 
@@ -474,6 +538,11 @@ static int _yr_parser_write_string(
           &atom_list,
           min_atom_quality);
   }
+
+  string->flags = modifier.flags;
+  string->rule_idx = compiler->current_rule_idx;
+  string->idx = compiler->current_string_idx;
+  string->fixed_offset = YR_UNDEFINED;
 
   if (result == ERROR_SUCCESS)
   {
@@ -704,11 +773,11 @@ int yr_parser_reduce_string_declaration(
     if (re_ast->flags & RE_FLAGS_GREEDY)
       modifier.flags |= STRING_FLAGS_GREEDY_REGEXP;
 
-    // Regular expressions in the strings section can't mix greedy and ungreedy
-    // quantifiers like .* and .*?. That's because these regular expressions can
-    // be matched forwards and/or backwards depending on the atom found, and we
-    // need the regexp to be all-greedy or all-ungreedy to be able to properly
-    // calculate the length of the match.
+    // Regular expressions in the strings section can't mix greedy and
+    // ungreedy quantifiers like .* and .*?. That's because these regular
+    // expressions can be matched forwards and/or backwards depending on the
+    // atom found, and we need the regexp to be all-greedy or all-ungreedy to
+    // be able to properly calculate the length of the match.
 
     if ((re_ast->flags & RE_FLAGS_GREEDY) &&
         (re_ast->flags & RE_FLAGS_UNGREEDY))
@@ -773,14 +842,15 @@ int yr_parser_reduce_string_declaration(
 
       if (YR_ARENA_IS_NULL_REF(*string_ref))
       {
-        // This is the first string in the chain, the string reference returned
-        // by this function must point to this string.
+        // This is the first string in the chain, the string reference
+        // returned by this function must point to this string.
         *string_ref = ref;
       }
       else
       {
-        // This is not the first string in the chain, set the appropriate flags
-        // and fill the chained_to, chain_gap_min and chain_gap_max fields.
+        // This is not the first string in the chain, set the appropriate
+        // flags and fill the chained_to, chain_gap_min and chain_gap_max
+        // fields.
         YR_STRING* prev_string = (YR_STRING*) yr_arena_get_ptr(
             compiler->arena,
             YR_STRINGS_TABLE,
@@ -797,14 +867,14 @@ int yr_parser_reduce_string_declaration(
         // head of the string chain can have a fixed offset.
         new_string->flags &= ~STRING_FLAGS_FIXED_OFFSET;
 
-        // There is a previous string, but that string wasn't marked as part of
-        // a chain because we can't do that until knowing there will be another
-        // string, let's flag it now the we know.
+        // There is a previous string, but that string wasn't marked as part
+        // of a chain because we can't do that until knowing there will be
+        // another string, let's flag it now the we know.
         prev_string->flags |= STRING_FLAGS_CHAIN_PART;
 
         // There is a previous string, so this string is part of a chain, but
-        // there will be no more strings because there are no more AST to split,
-        // which means that this is the chain's tail.
+        // there will be no more strings because there are no more AST to
+        // split, which means that this is the chain's tail.
         if (remainder_re_ast == NULL)
           new_string->flags |= STRING_FLAGS_CHAIN_PART |
                                STRING_FLAGS_CHAIN_TAIL;
@@ -847,12 +917,28 @@ _exit:
   return result;
 }
 
+static int wildcard_iterator(
+    void* prefix,
+    size_t prefix_len,
+    void* _value,
+    void* data)
+{
+  const char* identifier = (const char*) data;
+
+  // If the identifier is prefixed by prefix, then it matches the wildcard.
+  if (!strncmp(prefix, identifier, prefix_len))
+    return ERROR_IDENTIFIER_MATCHES_WILDCARD;
+
+  return ERROR_SUCCESS;
+}
+
 int yr_parser_reduce_rule_declaration_phase_1(
     yyscan_t yyscanner,
     int32_t flags,
     const char* identifier,
     YR_ARENA_REF* rule_ref)
 {
+  int result;
   YR_FIXUP* fixup;
   YR_COMPILER* compiler = yyget_extra(yyscanner);
 
@@ -868,9 +954,26 @@ int yr_parser_reduce_rule_declaration_phase_1(
     // A rule or variable with the same identifier already exists, return the
     // appropriate error.
 
-    yr_compiler_set_error_extra_info(
-        compiler, identifier) return ERROR_DUPLICATED_IDENTIFIER;
+    yr_compiler_set_error_extra_info(compiler, identifier);
+    return ERROR_DUPLICATED_IDENTIFIER;
   }
+
+  // Iterate over all identifiers in wildcard_identifiers_table, and check if
+  // any of them are a prefix of the identifier being declared. If so, return
+  // ERROR_IDENTIFIER_MATCHES_WILDCARD.
+  result = yr_hash_table_iterate(
+      compiler->wildcard_identifiers_table,
+      ns->name,
+      wildcard_iterator,
+      (void*) identifier);
+
+  if (result == ERROR_IDENTIFIER_MATCHES_WILDCARD)
+  {
+    // This rule matches an existing wildcard rule set.
+    yr_compiler_set_error_extra_info(compiler, identifier);
+  }
+
+  FAIL_ON_ERROR(result);
 
   FAIL_ON_ERROR(yr_arena_allocate_struct(
       compiler->arena,
@@ -901,12 +1004,12 @@ int yr_parser_reduce_rule_declaration_phase_1(
   compiler->current_rule_idx = compiler->next_rule_idx;
   compiler->next_rule_idx++;
 
-  // The OP_INIT_RULE instruction behaves like a jump. When the rule is disabled
-  // it skips over the rule's code and go straight to the next rule's code. The
-  // jmp_offset_ref variable points to the jump's offset. The offset is set to 0
-  // as we don't know the jump target yet. When we finish generating the rule's
-  // code in yr_parser_reduce_rule_declaration_phase_2 the jump offset is set to
-  // its final value.
+  // The OP_INIT_RULE instruction behaves like a jump. When the rule is
+  // disabled it skips over the rule's code and go straight to the next rule's
+  // code. The jmp_offset_ref variable points to the jump's offset. The offset
+  // is set to 0 as we don't know the jump target yet. When we finish
+  // generating the rule's code in yr_parser_reduce_rule_declaration_phase_2
+  // the jump offset is set to its final value.
 
   FAIL_ON_ERROR(yr_parser_emit_with_arg_int32(
       yyscanner, OP_INIT_RULE, 0, NULL, &jmp_offset_ref));
@@ -948,8 +1051,8 @@ int yr_parser_reduce_rule_declaration_phase_2(
   YR_STRING* string;
   YR_COMPILER* compiler = yyget_extra(yyscanner);
 
-  yr_get_configuration(
-      YR_CONFIG_MAX_STRINGS_PER_RULE, (void*) &max_strings_per_rule);
+  yr_get_configuration_uint32(
+      YR_CONFIG_MAX_STRINGS_PER_RULE, &max_strings_per_rule);
 
   YR_RULE* rule = (YR_RULE*) yr_arena_ref_to_ptr(compiler->arena, rule_ref);
 
@@ -996,7 +1099,7 @@ int yr_parser_reduce_rule_declaration_phase_2(
                            compiler->arena, YR_CODE_SECTION) -
                        fixup->ref.offset + 1;
 
-  *jmp_offset_addr = jmp_offset;
+  memcpy(jmp_offset_addr, &jmp_offset, sizeof(jmp_offset));
 
   // Remove fixup from the stack.
   compiler->fixup_stack_head = fixup->next;

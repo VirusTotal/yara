@@ -103,7 +103,7 @@ args_option_t options[] = {
 
     OPT_BOOLEAN('h', _T("help"), &show_help, _T("show this help and exit")),
 
-    OPT_INTEGER(
+    OPT_LONG(
         0,
         _T("max-strings-per-rule"),
         &max_strings_per_rule,
@@ -228,7 +228,9 @@ int _tmain(int argc, const char_t** argv)
   cr.errors = 0;
   cr.warnings = 0;
 
-  yr_set_configuration(YR_CONFIG_MAX_STRINGS_PER_RULE, &max_strings_per_rule);
+  yr_set_configuration_uint32(
+      YR_CONFIG_MAX_STRINGS_PER_RULE, max_strings_per_rule);
+
   yr_compiler_set_callback(compiler, report_error, &cr);
 
   if (!compile_files(compiler, argc, argv))

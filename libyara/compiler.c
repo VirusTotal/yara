@@ -259,6 +259,10 @@ YR_API int yr_compiler_create(YR_COMPILER** compiler)
     result = yr_hash_table_create(10000, &new_compiler->strings_table);
 
   if (result == ERROR_SUCCESS)
+    result = yr_hash_table_create(
+        1000, &new_compiler->wildcard_identifiers_table);
+
+  if (result == ERROR_SUCCESS)
     result = yr_hash_table_create(10000, &new_compiler->sz_table);
 
   if (result == ERROR_SUCCESS)
@@ -282,20 +286,28 @@ YR_API int yr_compiler_create(YR_COMPILER** compiler)
 
 YR_API void yr_compiler_destroy(YR_COMPILER* compiler)
 {
-  yr_arena_release(compiler->arena);
+  if (compiler->arena != NULL)
+    yr_arena_release(compiler->arena);
 
   if (compiler->automaton != NULL)
     yr_ac_automaton_destroy(compiler->automaton);
 
-  yr_hash_table_destroy(compiler->rules_table, NULL);
+  if (compiler->rules_table != NULL)
+    yr_hash_table_destroy(compiler->rules_table, NULL);
 
-  yr_hash_table_destroy(compiler->strings_table, NULL);
+  if (compiler->strings_table != NULL)
+    yr_hash_table_destroy(compiler->strings_table, NULL);
 
-  yr_hash_table_destroy(compiler->sz_table, NULL);
+  if (compiler->wildcard_identifiers_table != NULL)
+    yr_hash_table_destroy(compiler->wildcard_identifiers_table, NULL);
 
-  yr_hash_table_destroy(
-      compiler->objects_table,
-      (YR_HASH_TABLE_FREE_VALUE_FUNC) yr_object_destroy);
+  if (compiler->sz_table != NULL)
+    yr_hash_table_destroy(compiler->sz_table, NULL);
+
+  if (compiler->objects_table != NULL)
+    yr_hash_table_destroy(
+        compiler->objects_table,
+        (YR_HASH_TABLE_FREE_VALUE_FUNC) yr_object_destroy);
 
   if (compiler->atoms_config.free_quality_table)
     yr_free(compiler->atoms_config.quality_table);
@@ -1000,7 +1012,8 @@ YR_API char* yr_compiler_get_error_message(
     snprintf(buffer, buffer_size, "regular expression is too complex");
     break;
   case ERROR_TOO_MANY_STRINGS:
-    yr_get_configuration(YR_CONFIG_MAX_STRINGS_PER_RULE, &max_strings_per_rule);
+    yr_get_configuration_uint32(
+        YR_CONFIG_MAX_STRINGS_PER_RULE, &max_strings_per_rule);
     snprintf(
         buffer,
         buffer_size,
@@ -1020,6 +1033,20 @@ YR_API char* yr_compiler_get_error_message(
     break;
   case ERROR_DUPLICATED_MODIFIER:
     snprintf(buffer, buffer_size, "duplicated modifier");
+    break;
+  case ERROR_IDENTIFIER_MATCHES_WILDCARD:
+    snprintf(
+        buffer,
+        buffer_size,
+        "rule identifier \"%s\" matches previously used wildcard rule set",
+        compiler->last_error_extra_info);
+    break;
+  case ERROR_INVALID_VALUE:
+    snprintf(
+        buffer,
+        buffer_size,
+        "invalid value in condition: \"%s\"",
+        compiler->last_error_extra_info);
     break;
   }
 

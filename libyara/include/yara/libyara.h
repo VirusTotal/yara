@@ -33,7 +33,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <yara/utils.h>
 
 #define YR_MAJOR_VERSION 4
-#define YR_MINOR_VERSION 1
+#define YR_MINOR_VERSION 2
 #define YR_MICRO_VERSION 1
 
 #define version_str(s)  _version_str(s)
@@ -72,21 +72,27 @@ typedef enum _YR_CONFIG_NAME
   YR_CONFIG_STACK_SIZE,
   YR_CONFIG_MAX_STRINGS_PER_RULE,
   YR_CONFIG_MAX_MATCH_DATA,
+  YR_CONFIG_MAX_PROCESS_MEMORY_CHUNK,
 
   YR_CONFIG_LAST  // End-of-enum marker, not a configuration
 
 } YR_CONFIG_NAME;
 
-#define DEFAULT_STACK_SIZE           16384
-#define DEFAULT_MAX_STRINGS_PER_RULE 10000
-#define DEFAULT_MAX_MATCH_DATA       512
+#define DEFAULT_STACK_SIZE                16384
+#define DEFAULT_MAX_STRINGS_PER_RULE      10000
+#define DEFAULT_MAX_MATCH_DATA            512
+#define DEFAULT_MAX_PROCESS_MEMORY_CHUNK  1073741824
 
 YR_API int yr_initialize(void);
 
 YR_API int yr_finalize(void);
 
 YR_API int yr_set_configuration(YR_CONFIG_NAME, void*);
+YR_API int yr_set_configuration_uint32(YR_CONFIG_NAME, uint32_t);
+YR_API int yr_set_configuration_uint64(YR_CONFIG_NAME, uint64_t);
 
 YR_API int yr_get_configuration(YR_CONFIG_NAME, void*);
+YR_API int yr_get_configuration_uint32(YR_CONFIG_NAME, uint32_t*);
+YR_API int yr_get_configuration_uint64(YR_CONFIG_NAME, uint64_t*);
 
 #endif

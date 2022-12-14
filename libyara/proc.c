@@ -27,6 +27,7 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+#include <assert.h>
 #include <yara/error.h>
 #include <yara/exec.h>
 #include <yara/globals.h>
@@ -54,6 +55,8 @@ YR_API int yr_process_open_iterator(int pid, YR_MEMORY_BLOCK_ITERATOR* iterator)
   iterator->context = context;
   iterator->first = yr_process_get_first_memory_block;
   iterator->next = yr_process_get_next_memory_block;
+  iterator->last_error = ERROR_SUCCESS;
+
   // In a process scan file size is undefined, when the file_size function is
   // set to NULL the value returned by the filesize keyword is YR_UNDEFINED.
   iterator->file_size = NULL;

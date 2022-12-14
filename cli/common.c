@@ -90,9 +90,9 @@ bool compile_files(YR_COMPILER* compiler, int argc, const char_t** argv)
       colon = (char_t*) _tcschr(argv[i], ':');
     }
 
-    // The namespace delimiter must be a colon not followed by a slash or
-    // backslash.
-    if (colon && *(colon + 1) != '\\' && *(colon + 1) != '/')
+    // The namespace delimiter must be a colon not followed by a backslash,
+    // as :\ is the separator for a drive letter in Windows.
+    if (colon && *(colon + 1) != '\\')
     {
       file_name = colon + 1;
       *colon = '\0';
