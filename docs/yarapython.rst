@@ -483,5 +483,46 @@ Reference
 
   .. py:attribute:: strings
 
-    List of tuples containing information about the matching strings. Each
-    tuple has the form: `(<offset>, <string identifier>, <string data>)`.
+    List of StringMatch objects.
+
+.. py:class:: StringMatch
+
+  Objects which represent string matches.
+
+  .. py:attribute:: identifier
+
+    Name of the matching string.
+
+  .. py:attribute:: instances
+
+    List of StringMatchInstance objects.
+
+  .. py:method:: is_xor()
+
+    Returns a boolean if the string is using the xor modifier.
+
+.. py:class:: StringMatchInstance
+
+  Objects which represent instances of matched strings.
+
+  .. py:attribute:: matched_data
+
+    Bytes of the matched data.
+
+  .. py:attribute:: matched_length
+
+    Length of the matched data.
+
+  .. py:attribute:: offset
+
+    Offset of the matched data.
+
+  .. py:attribute:: xor_key
+
+    XOR key found for the string.
+
+  .. py:method:: plaintext()
+
+    Returns the plaintext version of the string after xor key is applied. If
+    the string is not an xor string then no modification is done.
+
