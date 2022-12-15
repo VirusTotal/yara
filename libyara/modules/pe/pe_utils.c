@@ -141,8 +141,13 @@ int64_t pe_rva_to_offset(PE* pe, uint64_t rva)
         lowest_section_rva = yr_le32toh(section->VirtualAddress);
       }
 
+      uint32_t virtualSize = yr_le32toh(
+          section->Misc.VirtualSize != 0 ?
+          section->Misc.VirtualSize :
+          section->SizeOfRawData);
+
       if (rva >= yr_le32toh(section->VirtualAddress) &&
-          rva - yr_le32toh(section->VirtualAddress) < yr_le32toh(section->Misc.VirtualSize) &&
+          rva - yr_le32toh(section->VirtualAddress) < virtualSize &&
           section_rva <= yr_le32toh(section->VirtualAddress))
       {
         // Round section_offset
@@ -170,6 +175,11 @@ int64_t pe_rva_to_offset(PE* pe, uint64_t rva)
           if (rest)
             section_offset -= rest;
         }
+
+        // For multi-section images, real pointer to raw data is aligned down to sector size
+        if (yr_le32toh(OptionalHeader(pe, SectionAlignment)) >= PE_PAGE_SIZE)
+          section_offset = section_offset & ~(PE_SECTOR_SIZE - 1);
+
       }
 
       section++;

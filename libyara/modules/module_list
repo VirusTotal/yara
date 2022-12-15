@@ -4,6 +4,7 @@ MODULE(elf)
 MODULE(math)
 MODULE(time)
 MODULE(console)
+MODULE(string)
 
 #ifdef DOTNET_MODULE
 MODULE(dotnet)

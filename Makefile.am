@@ -86,6 +86,8 @@ test_bitmask_SOURCES = tests/test-bitmask.c tests/util.c
 test_bitmask_LDADD = libyara/.libs/libyara.a
 test_math_SOURCES = tests/test-math.c tests/util.c
 test_math_LDADD = libyara/.libs/libyara.a
+test_string_SOURCES = tests/test-string.c tests/util.c
+test_string_LDADD = libyara/.libs/libyara.a
 test_stack_SOURCES = tests/test-stack.c tests/util.c
 test_stack_LDADD = libyara/.libs/libyara.a
 test_re_split_SOURCES = tests/test-re-split.c tests/util.c
@@ -109,7 +111,8 @@ check_PROGRAMS = \
   test-math \
   test-stack \
   test-re-split \
-  test-async
+  test-async \
+  test-string
 
 EXTRA_PROGRAMS = tests/mapper
 CLEANFILES = tests/mapper$(EXEEXT)
