@@ -151,6 +151,12 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define EXTERNAL_VARIABLE_IS_NULL(x) \
   ((x) != NULL ? (x)->type == EXTERNAL_VARIABLE_TYPE_NULL : true)
 
+// The types of states in AC automaton
+#define YR_ATOM_TYPE_ANY     0x00
+#define YR_ATOM_TYPE_CLASS   0xCC
+#define YR_ATOM_TYPE_LITERAL 0xFF
+#define YR_ATOM_TYPE_REMOVE  0xEE
+
 typedef struct RE RE;
 typedef struct RE_AST RE_AST;
 typedef struct RE_NODE RE_NODE;
@@ -503,6 +509,7 @@ struct YR_MATCH
 struct YR_AC_STATE
 {
   YR_AC_STATE* failure;
+  YR_AC_STATE* parent;
   YR_AC_STATE* first_child;
   YR_AC_STATE* siblings;
 
@@ -512,6 +519,8 @@ struct YR_AC_STATE
 
   uint8_t depth;
   uint8_t input;
+  uint8_t type;
+  YR_BITMASK bitmap[YR_BITMAP_SIZE];
 
   uint32_t t_table_slot;
 };

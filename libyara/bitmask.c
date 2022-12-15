@@ -28,8 +28,71 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include <assert.h>
+#include <inttypes.h>
+#include <stdio.h>
+#include <string.h>
 #include <yara/bitmask.h>
 #include <yara/utils.h>
+
+////////////////////////////////////////////////////////////////////////////////
+// Utility functions for working with bitmaps.
+//
+// Declare a bitmask of n bits:
+//   YR_BITMASK my_bitmask[YR_BITMASK_SIZE(n)];
+//
+// Clear all bits:
+//   yr_bitmask_clear_all(my_bitmask)
+//
+// Set bit n to 1:
+//   yr_bitmask_set(my_bitmask, n)
+//
+// Clear bit n (set to 0):
+//   yr_bitmask_clear(my_bitmask, n)
+//
+// Check if bit n is set:
+//   yr_bitmask_is_set(my_bitmask, n)
+//
+void yr_bitmask_set(YR_BITMASK* bm, uint64_t c)
+{
+  (bm)[(c) / YR_BITMASK_SLOT_BITS] |= UINT64_C(1)
+                                      << ((c) % YR_BITMASK_SLOT_BITS);
+}
+
+void yr_bitmask_set_all(YR_BITMASK* bm, size_t size)
+{
+  memset(bm, ~0, size);
+}
+
+void yr_bitmask_clear(YR_BITMASK* bm, uint64_t c)
+{
+  (bm)[(c) / YR_BITMASK_SLOT_BITS] &= ~(
+      UINT64_C(1) << ((c) % YR_BITMASK_SLOT_BITS));
+}
+
+void yr_bitmask_clear_all(YR_BITMASK* bm, size_t size)
+{
+  memset(bm, 0, size);
+}
+
+uint64_t yr_bitmask_is_set(YR_BITMASK* bm, uint64_t c)
+{
+  return (bm)[(c) / YR_BITMASK_SLOT_BITS] &
+         (UINT64_C(1) << ((c) % YR_BITMASK_SLOT_BITS));
+}
+
+uint64_t yr_bitmask_is_not_set(YR_BITMASK* bm, uint64_t c)
+{
+  return !yr_bitmask_is_set(bm, c);
+}
+
+void yr_bitmask_print(YR_BITMASK* bm, size_t size)
+{
+  int i;
+  for (i = 0; i < size / sizeof(YR_BITMASK); i++)
+  {
+    printf("%016lX" PRIu64 "\n", bm[i]);
+  }
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 // Find the smallest offset within bitmask A where bitmask B can be accommodated
@@ -71,31 +134,31 @@ uint32_t yr_bitmask_find_non_colliding_offset(
   // Skip all slots that are filled with 1s. It's safe to do that because the
   // first bit of B is 1, so we won't be able to accommodate B at any offset
   // within such slots.
-  for (i = *off_a / YR_BITMASK_SLOT_BITS;
-       i <= len_a / YR_BITMASK_SLOT_BITS && a[i] == -1L;
+  for (i = YR_BITMASK_SIZE(*off_a);
+       i < YR_BITMASK_SIZE(len_a) && a[i] == UINT64_MAX;
        i++)
     ;
 
   *off_a = i;
 
-  for (; i <= len_a / YR_BITMASK_SLOT_BITS; i++)
+  for (; i < YR_BITMASK_SIZE(len_a); i++)
   {
     // The slot is filled with 1s, we can safely skip it.
-    if (a[i] == -1L)
+    if (a[i] == UINT64_MAX)
       continue;
 
     for (j = 0; j <= yr_min(len_a, YR_BITMASK_SLOT_BITS - 1); j++)
     {
       bool found = true;
 
-      for (k = 0; k <= len_b / YR_BITMASK_SLOT_BITS; k++)
+      for (k = 0; k < YR_BITMASK_SIZE(len_b); k++)
       {
         YR_BITMASK m = b[k] << j;
 
         if (j > 0 && k > 0)
           m |= b[k - 1] >> (YR_BITMASK_SLOT_BITS - j);
 
-        if ((i + k <= len_a / YR_BITMASK_SLOT_BITS) && (m & a[i + k]) != 0)
+        if ((i + k < YR_BITMASK_SIZE(len_a)) && (m & a[i + k]) != 0)
         {
           found = false;
           break;

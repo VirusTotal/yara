@@ -250,23 +250,23 @@ YR_API int yr_compiler_create(YR_COMPILER** compiler)
   new_compiler->atoms_config.quality_warning_threshold =
       YR_ATOM_QUALITY_WARNING_THRESHOLD;
 
-  result = yr_hash_table_create(5000, &new_compiler->rules_table);
+  result = yr_hash_table_create(10007, &new_compiler->rules_table);
 
   if (result == ERROR_SUCCESS)
-    result = yr_hash_table_create(1000, &new_compiler->objects_table);
+    result = yr_hash_table_create(10007, &new_compiler->objects_table);
 
   if (result == ERROR_SUCCESS)
-    result = yr_hash_table_create(10000, &new_compiler->strings_table);
+    result = yr_hash_table_create(101, &new_compiler->strings_table);
 
   if (result == ERROR_SUCCESS)
     result = yr_hash_table_create(
         1000, &new_compiler->wildcard_identifiers_table);
 
   if (result == ERROR_SUCCESS)
-    result = yr_hash_table_create(10000, &new_compiler->sz_table);
+    result = yr_hash_table_create(100000, &new_compiler->sz_table);
 
   if (result == ERROR_SUCCESS)
-    result = yr_arena_create(YR_NUM_SECTIONS, 1048576, &new_compiler->arena);
+    result = yr_arena_create(YR_NUM_SECTIONS, 32768, &new_compiler->arena);
 
   if (result == ERROR_SUCCESS)
     result = yr_ac_automaton_create(
