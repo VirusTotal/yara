@@ -70,6 +70,40 @@ jobs:
       - name: Build
         run: make clean && make
 
+  macosx-build:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install dependencies
+        run: |
+          brew install \
+            autoconf \
+            automake \
+            bison \
+            flex \
+            libtool \
+            pkg-config \
+            jansson \
+            libmagic \
+            openssl@3 \
+            protobuf \
+            protobuf-c
+      - name: Print versions
+        run: |
+          bison --version
+          gcc --version
+      - name: Prepare for building
+        run: |
+          ./bootstrap.sh
+          ./configure --enable-debug --enable-cuckoo --enable-magic --enable-pb-tests
+      - name: Build
+        run: make clean && make
+      - name: Run tests
+        run: make check
+      - name: Print tests errors
+        if: ${{ failure() }}
+        run: cat test-suite.log
+
   bazel-build:
     # The ubuntu-20.04 virtual environment has Bazel installed, see:
     # https://github.com/actions/virtual-environments
