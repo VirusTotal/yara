@@ -85,6 +85,33 @@ int main(int argc, char** argv)
       }",
       NULL);
 
+  // Test undefined cases:
+  // - on invalid base value
+  // - on underflow or underflow
+  assert_true_rule(
+      "import \"string\" \
+      rule test { \
+        condition: \
+          not defined string.to_int(\"1\", -1) and \
+          not defined string.to_int(\"1\", 1) and \
+          not defined string.to_int(\"1\", 37) \
+      }",
+      NULL);
+  assert_true_rule(
+      "import \"string\" \
+      rule test { \
+        condition: \
+          not defined string.to_int(\"9223372036854775808\") \
+      }",
+      NULL);
+  assert_true_rule(
+      "import \"string\" \
+      rule test { \
+        condition: \
+          not defined string.to_int(\"-9223372036854775809\") \
+      }",
+      NULL);
+
   assert_true_rule(
       "import \"string\" \
       rule test { \

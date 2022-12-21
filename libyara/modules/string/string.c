@@ -39,16 +39,18 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 define_function(to_int)
 {
   char* s = string_argument(1);
+  errno = 0;
   int64_t result = strtoll(s, NULL, 0);
-  return_integer(result == 0 && errno ? YR_UNDEFINED : result);
+  return_integer(errno ? YR_UNDEFINED : result);
 }
 
 define_function(to_int_base)
 {
   char* s = string_argument(1);
   int64_t base = integer_argument(2);
+  errno = 0;
   int64_t result = strtoll(s, NULL, base);
-  return_integer(result == 0 && errno ? YR_UNDEFINED : result);
+  return_integer(errno ? YR_UNDEFINED : result);
 }
 
 define_function(string_length)
