@@ -2398,6 +2398,14 @@ for_expression
           }
         }
 
+        if ($1.type == EXPRESSION_TYPE_FLOAT)
+        {
+          yr_compiler_set_error_extra_info_fmt(compiler,
+              "%a", $1.value.double_);
+
+          fail_with_error(ERROR_INVALID_VALUE);
+        }
+
         if ($1.type == EXPRESSION_TYPE_STRING)
         {
           SIZED_STRING* ss = yr_arena_ref_to_ptr(compiler->arena,

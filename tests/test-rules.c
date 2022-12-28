@@ -508,6 +508,10 @@ static void test_syntax()
       "rule test { strings: $a = \"a\" condition: for /foo/ of them: ($) }",
       ERROR_INVALID_VALUE);
 
+  assert_error(
+      "rule test { strings: $a = \"a\" condition: for 3.14159 of them: ($) }",
+      ERROR_INVALID_VALUE);
+
   YR_DEBUG_FPRINTF(1, stderr, "} // %s()\n", __FUNCTION__);
 }
 
