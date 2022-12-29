@@ -23,8 +23,10 @@ int main(int argc, char** argv)
 
   assert_true_rule_blob(
       "import \"magic\" rule test { condition: \
-      magic.type() contains \"MS-DOS executable\" and \
-      magic.mime_type() == \"application/x-dosexec\" }",
+      ( magic.type() contains \"MS-DOS executable\" or \
+        magic.type() contains \"PE32+ executable\" ) and                                                      \
+      ( magic.mime_type() == \"application/x-dosexec\" or \
+        magic.mime_type() == \"application/vnd.microsoft.portable-executable\" ) }",
       PE32_FILE);
 
   // Test case for https://github.com/VirusTotal/yara/issues/1663
