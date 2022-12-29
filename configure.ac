@@ -259,20 +259,19 @@ AC_ARG_WITH([crypto],
 
 AS_IF([test "x$with_crypto" != "xno"],
   [
-    AC_CHECK_HEADERS([openssl/md5.h],, [have_crypto=no])
-    AC_CHECK_HEADERS([openssl/sha.h],, [have_crypto=no])
+    AC_CHECK_HEADERS([openssl/evp.h],, [have_crypto=no])
     AC_CHECK_HEADERS([openssl/asn1.h],, [have_crypto=no])
     AC_CHECK_HEADERS([openssl/crypto.h],, [have_crypto=no])
     AC_CHECK_HEADERS([openssl/bio.h],, [have_crypto=no])
     AC_CHECK_HEADERS([openssl/pkcs7.h],, [have_crypto=no])
     AC_CHECK_HEADERS([openssl/x509.h],, [have_crypto=no])
     AC_CHECK_HEADERS([openssl/safestack.h],, [have_crypto=no])
-    AC_CHECK_LIB(crypto, MD5_Init,, [have_crypto=no])
-    AC_CHECK_LIB(crypto, MD5_Update,, [have_crypto=no])
-    AC_CHECK_LIB(crypto, MD5_Final,, [have_crypto=no])
-    AC_CHECK_LIB(crypto, SHA256_Init,, [have_crypto=no])
-    AC_CHECK_LIB(crypto, SHA256_Update,, [have_crypto=no])
-    AC_CHECK_LIB(crypto, SHA256_Final,, [have_crypto=no])
+    AC_CHECK_LIB(crypto, EVP_DigestInit,, [have_crypto=no])
+    AC_CHECK_LIB(crypto, EVP_DigestUpdate,, [have_crypto=no])
+    AC_CHECK_LIB(crypto, EVP_DigestFinal,, [have_crypto=no])
+    AC_CHECK_LIB(crypto, EVP_md5,, [have_crypto=no])
+    AC_CHECK_LIB(crypto, EVP_sha1,, [have_crypto=no])
+    AC_CHECK_LIB(crypto, EVP_sha256,, [have_crypto=no])
   ],
   [
     have_crypto=no
