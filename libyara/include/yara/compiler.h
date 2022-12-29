@@ -88,6 +88,7 @@ typedef struct _YR_EXPRESSION
   union
   {
     int64_t integer;
+    double double_;
     YR_OBJECT* object;
     YR_ARENA_REF sized_string_ref;
   } value;
