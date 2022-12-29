@@ -28,7 +28,7 @@ strings section of your rule.
     .. versionadded:: 4.3.0
 
     Convert the given string, interpreted with the given base, to a signed
-    integer. Base must be 0 or between 2 and 32 inclusive. If it is zero then
+    integer. Base must be 0 or between 2 and 36 inclusive. If it is zero then
     the string will be intrepreted as base 16 if it starts with "0x" or as base
     8 if it starts with "0". Leading '+' or '-' is also supported.
 

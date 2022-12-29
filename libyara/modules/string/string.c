@@ -77,6 +77,9 @@ define_function(to_int_base)
   int64_t base = integer_argument(2);
   int64_t result = 0;
 
+  if (!(base == 0 || (base >= 2 && base <= 36))) {
+      return_integer(YR_UNDEFINED);
+  }
   if (string_to_int(s, base, &result)) {
       return_integer(result);
   } else {
