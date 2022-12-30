@@ -1,4 +1,21 @@
-ABI_VERSION = 9:0:1
+# ABI_VERSION is passed to libtool as --version-number $(ABI_VERSION). This is
+# not related to YARA's release version, this is used for tracking changes in
+# the ABI, not in the project as a whole.
+#
+# The three number mean [current]:[revision]:[age], and they should updated as
+# follow:
+#
+# 1. With every release increment "revision".
+#
+# 2. If any interfaces have been added, removed, or changed since the last
+#    update, increment "current" and set "revision" to 0.
+#
+# 3. If the changes in the interface were backward compatible (i.e: only adding
+#    new APIs) increment "age", or set it to 0 if otherwise.
+#
+# See https://autotools.io/libtool/version.html for more details.
+#
+ABI_VERSION = 10:0:0
 
 AM_CFLAGS=-Wall -D_GNU_SOURCE -I$(srcdir)/libyara/include
 
