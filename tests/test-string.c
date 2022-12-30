@@ -55,15 +55,6 @@ int main(int argc, char** argv)
       }",
       NULL);
 
-  // Strings that are only partially converted are still fine.
-  assert_true_rule(
-      "import \"string\" \
-      rule test { \
-        condition: \
-          string.to_int(\"10A20\") == 10 \
-      }",
-      NULL);
-
   assert_true_rule(
       "import \"string\" \
       rule test { \
@@ -82,6 +73,56 @@ int main(int argc, char** argv)
           string.to_int(\"010\", 0) == 8 and \
           string.to_int(\"0x10\", 0) == 16 and \
           string.to_int(\"10\", 0) == 10 \
+      }",
+      NULL);
+
+  // Test undefined cases
+
+  // on invalid base value
+  assert_true_rule(
+      "import \"string\" \
+      rule test { \
+        condition: \
+          not defined string.to_int(\"1\", -1) and \
+          not defined string.to_int(\"1\", 1) and \
+          not defined string.to_int(\"1\", 37) \
+      }",
+      NULL);
+
+  // on underflow or underflow
+  assert_true_rule(
+      "import \"string\" \
+      rule test { \
+        condition: \
+          not defined string.to_int(\"9223372036854775808\") \
+      }",
+      NULL);
+  assert_true_rule(
+      "import \"string\" \
+      rule test { \
+        condition: \
+          not defined string.to_int(\"-9223372036854775809\") \
+      }",
+      NULL);
+
+  // if parsing does not use all the string
+  assert_true_rule(
+      "import \"string\" \
+      rule test { \
+        condition: \
+          not defined string.to_int(\"FOO\") and \
+          not defined string.to_int(\"10A20\") \
+      }",
+      NULL);
+
+  // if parsing does not consume any digits
+  assert_true_rule(
+      "import \"string\" \
+      rule test { \
+        condition: \
+          not defined string.to_int(\"\") and \
+          not defined string.to_int(\"   -\") and \
+          not defined string.to_int(\" +0x\") \
       }",
       NULL);
 

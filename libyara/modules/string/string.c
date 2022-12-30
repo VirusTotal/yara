@@ -36,19 +36,55 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define MODULE_NAME string
 
+bool string_to_int(char* s, int base, int64_t* result)
+{
+  char* endp = s;
+
+  errno = 0;
+  *result = strtoll(s, &endp, base);
+
+  if (errno != 0) {
+    // Error while parsing the string.
+    return false;
+  }
+  if (endp == s) {
+    // No digits were found.
+    return false;
+  }
+  if (*endp != '\0') {
+    // Parsing did not reach the end of the string.
+    return false;
+  }
+
+  return true;
+}
+
 define_function(to_int)
 {
   char* s = string_argument(1);
-  int64_t result = strtoll(s, NULL, 0);
-  return_integer(result == 0 && errno ? YR_UNDEFINED : result);
+  int64_t result = 0;
+
+  if (string_to_int(s, 0, &result)) {
+      return_integer(result);
+  } else {
+      return_integer(YR_UNDEFINED);
+  }
 }
 
 define_function(to_int_base)
 {
   char* s = string_argument(1);
   int64_t base = integer_argument(2);
-  int64_t result = strtoll(s, NULL, base);
-  return_integer(result == 0 && errno ? YR_UNDEFINED : result);
+  int64_t result = 0;
+
+  if (!(base == 0 || (base >= 2 && base <= 36))) {
+      return_integer(YR_UNDEFINED);
+  }
+  if (string_to_int(s, base, &result)) {
+      return_integer(result);
+  } else {
+      return_integer(YR_UNDEFINED);
+  }
 }
 
 define_function(string_length)
