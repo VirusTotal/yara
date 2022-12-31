@@ -157,6 +157,11 @@ YR_API int yr_filemap_map_fd(
 
 #else  // POSIX
 
+#ifdef __linux__
+#include <sys/vfs.h>
+#include <linux/magic.h>
+#endif
+
 #define MAP_EXTRA_FLAGS 0
 
 #if defined(__APPLE__)
@@ -184,6 +189,9 @@ YR_API int yr_filemap_map_fd(
     YR_MAPPED_FILE* pmapped_file)
 {
   struct stat st;
+#ifdef __linux__
+  struct statfs stfs;
+#endif
 
   pmapped_file->file = file;
   pmapped_file->data = NULL;
@@ -198,6 +206,16 @@ YR_API int yr_filemap_map_fd(
 
   if (offset > st.st_size)
     return ERROR_COULD_NOT_MAP_FILE;
+
+#ifdef __linux__
+  if (fstatfs(file, &stfs) != 0)
+    return ERROR_COULD_NOT_OPEN_FILE;
+
+  switch (stfs.f_type) {
+  case PROC_SUPER_MAGIC:
+    return ERROR_COULD_NOT_OPEN_FILE;
+  }
+#endif
 
   if (size == 0)
     size = (size_t)(st.st_size - offset);
