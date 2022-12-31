@@ -95,6 +95,7 @@ MODULES += libyara/modules/console/console.c
 MODULES += libyara/modules/string/string.c
 
 MODULES += libyara/modules/lnk/lnk.c
+MODULES += libyara/modules/lnk/lnk_utils.c
 
 if CUCKOO_MODULE
 MODULES += libyara/modules/cuckoo/cuckoo.c
