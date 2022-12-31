@@ -873,6 +873,37 @@ int main(int argc, char** argv)
       }",
       "tests/data/pe_mingw");
 
+  assert_true_rule_file(
+      "import \"pe\" \
+      rule test { \
+        condition: \
+          pe.import_rva(\"PtImageRW.dll\", \"ord4\") == 254924 and \
+          pe.import_rva(\"PtPDF417Decode.dll\", 4) == 254948 \
+      }",
+      "tests/data/"
+      "ca21e1c32065352d352be6cde97f89c141d7737ea92434831f998080783d5386");
+
+  assert_true_rule_file(
+      "import \"pe\" \
+      rule test { \
+        condition: \
+          pe.delayed_import_rva(\"QDB.dll\", \"ord116\") == \
+          pe.delayed_import_rva(\"QDB.dll\", 116) \
+      }",
+      "tests/data/"
+      "079a472d22290a94ebb212aa8015cdc8dd28a968c6b4d3b88acdd58ce2d3b885");
+
+  // The first 0x410 bytes of
+  // c6f9709feccf42f2d9e22057182fe185f177fb9daaa2649b4669a24f2ee7e3ba are enough
+  // to trigger the bug in https://github.com/VirusTotal/yara/pull/1561
+  assert_true_rule_file(
+      "import \"pe\" \
+      rule rva_to_offset_weird_sections { \
+        condition: \
+          pe.rva_to_offset(4096) == 1024 \
+      }",
+      "tests/data/c6f9709feccf42f2d9e22057182fe185f177fb9daaa2649b4669a24f2ee7e3ba_0h_410h");
+
   yr_finalize();
 
   YR_DEBUG_FPRINTF(

@@ -116,6 +116,7 @@ cc_test(
         "data/3b8b90159fa9b6048cc5410c5d53f116943564e4d05b04a843f9b3d0540d0c1c",
         "data/ChipTune.efi",
         "data/ca21e1c32065352d352be6cde97f89c141d7737ea92434831f998080783d5386",
+        "data/c6f9709feccf42f2d9e22057182fe185f177fb9daaa2649b4669a24f2ee7e3ba_0h_410h",
         "data/mtxex.dll",
         "data/mtxex_modified_rsrc_rva.dll",
         "data/pe_imports",
@@ -175,6 +176,17 @@ cc_test(
 cc_test(
     name = "test_math",
     srcs = ["test-math.c"],
+    copts = COPTS,
+    linkstatic = True,
+    deps = [
+        ":util",
+        "@//:libyara",
+    ],
+)
+
+cc_test(
+    name = "test_string",
+    srcs = ["test-string.c"],
     copts = COPTS,
     linkstatic = True,
     deps = [

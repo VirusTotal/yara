@@ -225,16 +225,9 @@ hex_digit     [0-9a-fA-F]
 [^\\\[\(\)\|\$\.\^\+\*\?] {
 
   // Any non-special character is passed as a CHAR token to the scanner.
-  if (yytext[0] >= 32 && yytext[0] < 127)
-  {
-    yylval->integer = yytext[0];
-    return _CHAR_;
-  }
-  else
-  {
-    yyerror(yyscanner, lex_env, "non-ascii character");
-    yyterminate();
-  }
+
+  yylval->integer = yytext[0];
+  return _CHAR_;
 }
 
 
@@ -474,9 +467,16 @@ hex_digit     [0-9a-fA-F]
 
 
 . {
-  // Non-special characters have already been handled. This is a special character,
-  // which is thus passed as is to the scanner.
-  return yytext[0];
+
+  if (yytext[0] >= 32 && yytext[0] < 127)
+  {
+    return yytext[0];
+  }
+  else
+  {
+    yyerror(yyscanner, lex_env, "non-ascii character");
+    yyterminate();
+  }
 }
 
 
