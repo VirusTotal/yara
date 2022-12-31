@@ -393,7 +393,7 @@ An optional string that stores the command-line arguments that are specified whe
 .. c:type:: icon_location
 An optional string that specifies the location of the icon to be used when displaying a shell link item in an icon view.
 
-*Example: icon_location == "C\\x00:\\x00\\\\x00P\\x00r\\x00o\\x00g\\x00r\\x00a\\x00m\\x00 \\x00F\\x00i\\x00l\\x00e\\x00s\\x00\\\\x00P\\x00e\\x00a\\x00Z\\x00i\\x00p\\x00\\\\x00r\\x00e\\x00s\\x00\\\\x00i\\x00c\\x00o\\x00n\\x00s\\x00\\\\x00p\\x00e\\x00a\\x00z\\x00i\\x00p\\x00_\\x00n\\x00e\\x00w\\x00.\\x00i\\x00c\\x00l\\x00"*
+*Example: lnk.icon_location == "C\\x00:\\x00\\\\x00P\\x00r\\x00o\\x00g\\x00r\\x00a\\x00m\\x00 \\x00F\\x00i\\x00l\\x00e\\x00s\\x00\\\\x00P\\x00e\\x00a\\x00Z\\x00i\\x00p\\x00\\\\x00r\\x00e\\x00s\\x00\\\\x00i\\x00c\\x00o\\x00n\\x00s\\x00\\\\x00p\\x00e\\x00a\\x00z\\x00i\\x00p\\x00_\\x00n\\x00e\\x00w\\x00.\\x00i\\x00c\\x00l\\x00"*
 
 .. c:type:: has_console_data
 Boolean flag which is set if a ConsoleDataBlock structure is present.
