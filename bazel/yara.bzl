@@ -171,6 +171,7 @@ def yara_library(
             "libyara/include/yara/lexer.h",
             "libyara/include/yara/libyara.h",
             "libyara/include/yara/limits.h",
+            "libyara/include/yara/lnk.h",
             "libyara/include/yara/macho.h",
             "libyara/include/yara/mem.h",
             "libyara/include/yara/modules.h",
