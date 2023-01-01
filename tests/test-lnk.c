@@ -24,7 +24,6 @@ int main(int argc, char** argv)
       }",
       "tests/data/lnk-standard");
 
-  /*
   assert_true_rule_file(
       "import \"lnk\" \
       rule creation_time { \
@@ -457,7 +456,6 @@ int main(int argc, char** argv)
           lnk.known_folder_data.known_folder_id[15] == 142 \
       }",
       "tests/data/lnk-extradata-2");
-  */
 
   yr_finalize();
 
