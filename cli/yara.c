@@ -308,7 +308,7 @@ args_option_t options[] = {
         'X',
         _T("print-xor-key"),
         &show_xor_key,
-        _T("print xor key of matched strings")),
+        _T("print xor key and plaintext of matched strings")),
 
     OPT_BOOLEAN('g', _T("print-tags"), &show_tags, _T("print tags")),
 
