@@ -192,6 +192,7 @@ noinst_HEADERS = \
 	libyara/include/yara/pe_utils.h \
 	libyara/include/yara/re_lexer.h \
 	libyara/include/yara/lnk.h \
+	libyara/include/yara/lnk_utils.h \
 	libyara/modules/module_list
 
 dist_noinst_DATA = libyara/pb/yara.proto
