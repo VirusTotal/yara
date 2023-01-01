@@ -288,6 +288,7 @@ cc_test(
         "data/lnk-overlay",
     ],
     linkstatic = True,
+    deps = [
         ":util",
         "@//:libyara",
     ],
