@@ -444,7 +444,7 @@ The ConsoleDataBlock structure specifies the display settings to use when a link
     .. c:member:: window_size_y
     A signed integer that specifies the vertical size (Y axis), in characters, of the console window.
     
-    *Example: lnk.console_data.window_size_x == 50*
+    *Example: lnk.console_data.window_size_y == 50*
     
     .. c:member:: window_origin_x
     A signed integer that specifies the horizontal coordinate (X axis), in pixels, of the console window origin.
