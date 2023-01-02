@@ -429,20 +429,32 @@ The ConsoleDataBlock structure specifies the display settings to use when a link
     .. c:member:: screen_buffer_size_x
     A signed integer that specifies the horizontal size (X axis), in characters, of the console window buffer.
     
+    *Example: lnk.console_data.screen_buffer_size_x == 120*
+    
     .. c:member:: screen_buffer_size_y
     A signed integer that specifies the vertical size (Y axis), in characters, of the console window buffer.
+    
+    *Example: lnk.console_data.screen_buffer_size_y == 3000*
     
     .. c:member:: window_size_x
     A signed integer that specifies the horizontal size (X axis), in characters, of the console window.
     
+    *Example: lnk.console_data.window_size_x == 120*
+    
     .. c:member:: window_size_y
     A signed integer that specifies the vertical size (Y axis), in characters, of the console window.
+    
+    *Example: lnk.console_data.window_size_x == 50*
     
     .. c:member:: window_origin_x
     A signed integer that specifies the horizontal coordinate (X axis), in pixels, of the console window origin.
     
+    *Example: lnk.console_data.window_origin_x == 0*
+    
     .. c:member:: window_origin_y
     A signed integer that specifies the vertical coordinate (Y axis), in pixels, of the console window origin.
+    
+    *Example: lnk.console_data.window_origin_y == 0*
     
     .. c:member:: font_size
     An unsigned integer that specifies the size, in pixels, of the font used in the console window. The two most significant bytes contain the font height and the two least significant bytes contain the font width. For vector fonts, the width is set to zero.

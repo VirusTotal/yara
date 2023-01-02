@@ -383,6 +383,30 @@ int main(int argc, char** argv)
           lnk.console_data.color_table[15] == 0x00ffffff \
       }",
       "tests/data/lnk-extradata-1");
+      
+  assert_true_rule_file(
+      "import \"lnk\" \
+      rule screen_buffer_size { \
+        condition: \
+          lnk.console_data.screen_buffer_size_x == 120 and lnk.console_data.screen_buffer_size_y == 3000 \
+      }",
+      "tests/data/lnk-extradata-1");
+      
+  assert_true_rule_file(
+      "import \"lnk\" \
+      rule window_size { \
+        condition: \
+          lnk.console_data.window_size_x == 120 and lnk.console_data.window_size_y == 50 \
+      }",
+      "tests/data/lnk-extradata-1");
+      
+  assert_true_rule_file(
+      "import \"lnk\" \
+      rule window_origin { \
+        condition: \
+          lnk.console_data.window_origin_x == 0 and lnk.console_data.window_origin_y == 0 \
+      }",
+      "tests/data/lnk-extradata-1");
 
   assert_true_rule_file(
       "import \"lnk\" \

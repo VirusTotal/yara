@@ -59,12 +59,12 @@ typedef struct _console_data_block_t
 {
   uint16_t fill_attributes;
   uint16_t popup_fill_attributes;
-  uint16_t screen_buffer_size_x;
-  uint16_t screen_buffer_size_y;
-  uint16_t window_size_x;
-  uint16_t window_size_y;
-  uint16_t window_origin_x;
-  uint16_t window_origin_y;
+  int16_t screen_buffer_size_x;
+  int16_t screen_buffer_size_y;
+  int16_t window_size_x;
+  int16_t window_size_y;
+  int16_t window_origin_x;
+  int16_t window_origin_y;
   uint32_t unused_1;
   uint32_t unused_2;
   uint32_t font_size;
