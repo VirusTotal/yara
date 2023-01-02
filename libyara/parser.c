@@ -700,7 +700,6 @@ int yr_parser_reduce_string_declaration(
     modifier.flags |= STRING_FLAGS_DOT_ALL;
 
   if (!(modifier.flags & STRING_FLAGS_WIDE) &&
-      !(modifier.flags & STRING_FLAGS_XOR) &&
       !(modifier.flags & STRING_FLAGS_BASE64 ||
         modifier.flags & STRING_FLAGS_BASE64_WIDE))
   {
