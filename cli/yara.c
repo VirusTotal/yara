@@ -308,7 +308,7 @@ args_option_t options[] = {
         'X',
         _T("print-xor-key"),
         &show_xor_key,
-        _T("print xor key of matched strings")),
+        _T("print xor key and plaintext of matched strings")),
 
     OPT_BOOLEAN('g', _T("print-tags"), &show_tags, _T("print tags")),
 
@@ -779,14 +779,15 @@ static int populate_scan_list(const char* filename, SCAN_OPTIONS* scan_opts)
 
 #endif
 
-static void print_string(const uint8_t* data, int length)
+static void print_string(const uint8_t* data, int length, uint8_t xor_key)
 {
   for (int i = 0; i < length; i++)
   {
-    if (data[i] >= 32 && data[i] <= 126)
-      _tprintf(_T("%c"), data[i]);
+    uint8_t c = data[i] ^ xor_key;
+    if (c >= 32 && c <= 126)
+      _tprintf(_T("%c"), c);
     else
-      _tprintf(_T("\\x%02X"), data[i]);
+      _tprintf(_T("\\x%02X"), c);
   }
 }
 
@@ -1118,7 +1119,11 @@ static int handle_message(
                 string->identifier);
 
           if (show_xor_key)
-            _tprintf(_T(":xor(0x%02x)"), match->xor_key);
+          {
+            _tprintf(_T(":xor(0x%02x,"), match->xor_key);
+            print_string(match->data, match->data_length, match->xor_key);
+            _tprintf(_T(")"));
+          }
 
           if (show_strings)
           {
@@ -1127,7 +1132,7 @@ static int handle_message(
             if (STRING_IS_HEX(string))
               print_hex_string(match->data, match->data_length);
             else
-              print_string(match->data, match->data_length);
+              print_string(match->data, match->data_length, 0);
           }
 
           _tprintf(_T("\n"));

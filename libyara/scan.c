@@ -912,6 +912,28 @@ static int _yr_scan_verify_literal_match(
   if (STRING_FITS_IN_ATOM(string))
   {
     forward_matches = ac_match->backtrack;
+    if (STRING_IS_XOR(string))
+    {
+      if (STRING_IS_WIDE(string))
+      {
+        _yr_scan_xor_wcompare(
+            data + offset,
+            data_size - offset,
+            string->string,
+            string->length,
+            &xor_key);
+      }
+
+      if (STRING_IS_ASCII(string))
+      {
+        _yr_scan_xor_compare(
+            data + offset,
+            data_size - offset,
+            string->string,
+            string->length,
+            &xor_key);
+      }
+    }
   }
   else if (STRING_IS_NO_CASE(string))
   {

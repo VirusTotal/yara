@@ -638,6 +638,96 @@ void test_scanner()
   yr_finalize();
 }
 
+// Return CALLBACK_ERROR if the xor key for any string is anything other than 1.
+static int xor_key_check(
+    YR_SCAN_CONTEXT* context,
+    int message,
+    void *message_data,
+    void* user_data)
+{
+  if (message == CALLBACK_MSG_RULE_MATCHING)
+  {
+    YR_RULE* r = (YR_RULE*) message_data;
+    YR_STRING* s;
+
+    yr_rule_strings_foreach(r, s)
+    {
+      YR_MATCH* m;
+
+      yr_string_matches_foreach(context, s, m)
+      {
+        if (m->xor_key != 1)
+          return CALLBACK_ERROR;
+      }
+    }
+    return CALLBACK_CONTINUE;
+  }
+
+  return CALLBACK_ERROR;
+}
+
+// https://github.com/VirusTotal/yara/issues/1851
+void test_xor_key_string_in_atom()
+{
+  const char* buf = "UihrU\x01i\x01h\x01r\x01"; // "This" xor'ed with 0x01
+  const char* rules_str = "\
+      rule test { \
+        strings: \
+          $a = \"This\" xor(1) \
+          $b = \"Th\" xor(1) wide \
+        condition: \
+          any of them \
+      }";
+
+  YR_COMPILER* compiler = NULL;
+  YR_RULES* rules = NULL;
+  YR_SCANNER* scanner = NULL;
+
+  yr_initialize();
+
+  if (yr_compiler_create(&compiler) != ERROR_SUCCESS)
+  {
+    perror("yr_compiler_create");
+    exit(EXIT_FAILURE);
+  }
+
+  if (yr_compiler_add_string(compiler, rules_str, NULL) != 0)
+  {
+    yr_compiler_destroy(compiler);
+    perror("yr_compiler_add_string");
+    exit(EXIT_FAILURE);
+  }
+
+  if (yr_compiler_get_rules(compiler, &rules) != ERROR_SUCCESS)
+  {
+    yr_compiler_destroy(compiler);
+    perror("yr_compiler_get_rules");
+    exit(EXIT_FAILURE);
+  }
+
+  yr_compiler_destroy(compiler);
+
+  if (yr_scanner_create(rules, &scanner) != ERROR_SUCCESS)
+  {
+    yr_rules_destroy(rules);
+    perror("yr_scanner_create");
+    exit(EXIT_FAILURE);
+  }
+
+  yr_scanner_set_callback(scanner, xor_key_check, NULL);
+
+  int err = yr_scanner_scan_mem(scanner, (uint8_t*) buf, strlen(buf));
+  if (err != ERROR_SUCCESS)
+  {
+    fprintf(stderr, "test_xor_key_string_in_atom failed");
+    exit(EXIT_FAILURE);
+  }
+
+  yr_scanner_destroy(scanner);
+  yr_rules_destroy(rules);
+  yr_finalize();
+}
+
 // Test case for https://github.com/VirusTotal/yara/issues/834. Use the same
 // scanner for scanning multiple files with a rule that imports the "tests"
 // module. If the unload_module function is called twice an assertion is
@@ -1012,6 +1102,7 @@ int main(int argc, char** argv)
   test_include_callback();
   test_save_load_rules();
   test_scanner();
+  test_xor_key_string_in_atom();
   test_ast_callback();
   test_rules_stats();
   test_issue_834();
