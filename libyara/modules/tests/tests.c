@@ -215,3 +215,5 @@ int module_unload(YR_OBJECT* module_object)
   module_object->data = (void*) 0xFABADA;
   return ERROR_SUCCESS;
 }
+
+yr_module_define();

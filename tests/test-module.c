@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2014. The YARA Authors. All Rights Reserved.
+Copyright (c) 2022. The YARA Authors. All Rights Reserved.
 
 Redistribution and use in source and binary forms, with or without modification,
 are permitted provided that the following conditions are met:
@@ -27,26 +27,25 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include <yara/modules.h>
+#include <yara.h>
 
-#define MODULE_NAME demo
+#include "util.h"
+
+#define MODULE_NAME mytest
 
 begin_declarations
-  declare_string("greeting");
+declare_integer("fortytwo");
 end_declarations
-
 
 int module_initialize(YR_MODULE* module)
 {
   return ERROR_SUCCESS;
 }
 
-
 int module_finalize(YR_MODULE* module)
 {
   return ERROR_SUCCESS;
 }
-
 
 int module_load(
     YR_SCAN_CONTEXT* context,
@@ -54,11 +53,10 @@ int module_load(
     void* module_data,
     size_t module_data_size)
 {
-  yr_set_string("Hello World!", module_object, "greeting");
+  yr_set_integer(42, module_object, "fortytwo");
 
   return ERROR_SUCCESS;
 }
-
 
 int module_unload(YR_OBJECT* module_object)
 {
@@ -66,3 +64,29 @@ int module_unload(YR_OBJECT* module_object)
 }
 
 yr_module_define();
+
+#undef MODULE_NAME
+
+int main(int argc, char** argv)
+{
+  int result = 0;
+
+  YR_DEBUG_INITIALIZE();
+  YR_DEBUG_FPRINTF(1, stderr, "+ %s() { // in %s\n", __FUNCTION__, __FILE__);
+
+  init_top_srcdir();
+  yr_initialize();
+
+  yr_modules_add(&mytest__module);
+
+  assert_true_rule(
+      "import \"mytest\" rule test { condition: mytest.fortytwo == 42 }",
+      NULL);
+
+  yr_finalize();
+
+  YR_DEBUG_FPRINTF(
+      1, stderr, "} = %d // %s() in %s\n", result, __FUNCTION__, __FILE__);
+
+  return result;
+}

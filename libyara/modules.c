@@ -31,52 +31,52 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <yara/libyara.h>
 #include <yara/modules.h>
 
-#define MODULE(name)                             \
-  int name##__declarations(YR_OBJECT* module);   \
-  int name##__load(                              \
-      YR_SCAN_CONTEXT* context,                  \
-      YR_OBJECT* module,                         \
-      void* module_data,                         \
-      size_t module_data_size);                  \
-  int name##__unload(YR_OBJECT* main_structure); \
-  int name##__initialize(YR_MODULE* module);     \
-  int name##__finalize(YR_MODULE* module);
+#define MODULE(name) extern YR_MODULE name##__module;
 
 #include <modules/module_list>
 
 #undef MODULE
 
-#define MODULE(name)     \
-  {#name,                \
-   name##__declarations, \
-   name##__load,         \
-   name##__unload,       \
-   name##__initialize,   \
-   name##__finalize},
+YR_MODULE** yr_modules_table = NULL;
+int yr_modules_count = 0;
 
-YR_MODULE yr_modules_table[] = {
-#include <modules/module_list>
-    {NULL, NULL, NULL, NULL, NULL, NULL}};
+YR_API int yr_modules_add(YR_MODULE* module)
+{
+  int result = module->initialize(module);
+  if (result != ERROR_SUCCESS)
+    return result;
 
-#undef MODULE
+  yr_modules_count++;
+  yr_modules_table = realloc(
+      yr_modules_table, yr_modules_count * sizeof(YR_MODULE*));
+  yr_modules_table[yr_modules_count - 1] = module;
+
+  return ERROR_SUCCESS;
+}
+
+#define foreach_modules(module) \
+  for (int i = 0; i < yr_modules_count && (module = yr_modules_table[i]); i++)
 
 int yr_modules_initialize()
 {
-  for (YR_MODULE* module = yr_modules_table; module->initialize != NULL;
-       module++)
-  {
-    int result = module->initialize(module);
+  int result;
 
-    if (result != ERROR_SUCCESS)
-      return result;
-  }
+#define MODULE(name)                        \
+  result = yr_modules_add(&name##__module); \
+  if (result != ERROR_SUCCESS)              \
+    return result;
+
+#include <modules/module_list>
+
+#undef MODULE
 
   return ERROR_SUCCESS;
 }
 
 int yr_modules_finalize()
 {
-  for (YR_MODULE* module = yr_modules_table; module->finalize != NULL; module++)
+  YR_MODULE* module;
+  foreach_modules(module)
   {
     int result = module->finalize(module);
 
@@ -91,9 +91,8 @@ int yr_modules_do_declarations(
     const char* module_name,
     YR_OBJECT* main_structure)
 {
-  for (YR_MODULE* module = yr_modules_table;
-       module->name != NULL && module->declarations != NULL;
-       module++)
+  YR_MODULE* module;
+  foreach_modules(module)
   {
     if (strcmp(module->name, module_name) == 0)
       return module->declarations(main_structure);
@@ -106,6 +105,7 @@ int yr_modules_load(const char* module_name, YR_SCAN_CONTEXT* context)
 {
   int result;
 
+  YR_MODULE* module;
   YR_MODULE_IMPORT mi;
 
   YR_OBJECT* module_structure = (YR_OBJECT*) yr_hash_table_lookup(
@@ -148,9 +148,7 @@ int yr_modules_load(const char* module_name, YR_SCAN_CONTEXT* context)
           context->objects_table, module_name, NULL, module_structure),
       yr_object_destroy(module_structure));
 
-  for (YR_MODULE* module = yr_modules_table;
-       module->name != NULL && module->load != NULL;
-       module++)
+  foreach_modules(module)
   {
     if (strcmp(module->name, module_name) == 0)
     {
@@ -176,9 +174,9 @@ int yr_modules_load(const char* module_name, YR_SCAN_CONTEXT* context)
 
 int yr_modules_unload_all(YR_SCAN_CONTEXT* context)
 {
-  for (YR_MODULE* module = yr_modules_table;
-       module->name != NULL && module->unload != NULL;
-       module++)
+  YR_MODULE* module;
+
+  foreach_modules(module)
   {
     YR_OBJECT* module_structure = (YR_OBJECT*) yr_hash_table_remove(
         context->objects_table, module->name, NULL);

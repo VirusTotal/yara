@@ -201,3 +201,5 @@ int module_unload(YR_OBJECT* module)
 
   return ERROR_SUCCESS;
 }
+
+yr_module_define();

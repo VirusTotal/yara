@@ -303,12 +303,27 @@ struct YR_MODULE
   YR_EXT_FINALIZE_FUNC finalize;
 };
 
+#define _yr_module_define_named(name) \
+  YR_MODULE name##__module = {        \
+      #name,                          \
+      name##__declarations,           \
+      name##__load,                   \
+      name##__unload,                 \
+      name##__initialize,             \
+      name##__finalize}
+
+#define yr_module_define_named(name) _yr_module_define_named(name)
+
+#define yr_module_define() yr_module_define_named(MODULE_NAME)
+
 struct YR_MODULE_IMPORT
 {
   const char* module_name;
   void* module_data;
   size_t module_data_size;
 };
+
+YR_API int yr_modules_add(YR_MODULE* module);
 
 int yr_modules_initialize(void);
 
