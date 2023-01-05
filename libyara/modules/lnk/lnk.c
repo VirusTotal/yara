@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2014. The YARA Authors. All Rights Reserved.
+Copyright (c) 2023. UpSight Security Inc. All Rights Reserved.
 
 Redistribution and use in source and binary forms, with or without modification,
 are permitted provided that the following conditions are met:
@@ -206,11 +206,11 @@ PLNK_HEADER lnk_get_header(const uint8_t* data, size_t data_size)
 }
 
 bool lnk_set_bounded_null_term_string(
-		bool bUnicode,
-		uint8_t* data,
-		size_t dataLen,
-		void* module_object,
-		const char* stringName)
+	bool bUnicode,
+	uint8_t* data,
+	size_t dataLen,
+	void* module_object,
+	const char* stringName)
 {
 	for (uint32_t i = 0; i < dataLen; i++)
 	{
