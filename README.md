@@ -130,6 +130,7 @@ awesome list of [YARA-related stuff](https://github.com/InQuest/awesome-yara).
 * [Threat.Zone](https://threat.zone)
 * [TouchWeb](https://www.touchweb.fr)
 * [Trend Micro](https://www.trendmicro.com)
+* [UpSight Security](https://www.upsightsecurity.com)
 * [Uptycs Inc](https://www.uptycs.com/)
 * [VirusTotal Intelligence](https://www.virustotal.com/intelligence/)
 * [VMRay](https://www.vmray.com/)
