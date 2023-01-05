@@ -64,14 +64,14 @@ typedef struct _LNK_HEADER {
 //C_ASSERT( (sizeof(struct _LNK_HEADER) == 0x4c));
 
 #define LINK_FLAG_HAS_TARGET_ID_LIST			0x0000001
-#define LINK_FLAG_HAS_LINK_INFO				0x0000002
+#define LINK_FLAG_HAS_LINKINFO				0x0000002
 #define LINK_FLAG_HAS_NAME				0x0000004
 #define LINK_FLAG_HAS_RELATIVE_PATH			0x0000008
 #define LINK_FLAG_HAS_WORKING_DIR			0x0000010
 #define LINK_FLAG_HAS_ARGUMENTS				0x0000020 // the fun one!
 #define LINK_FLAG_HAS_ICON_LOCATION			0x0000040 // another fun one!
 #define LINK_FLAG_IS_UNICODE				0x0000080
-#define LINK_FLAG_FORCE_NO_LINK_INFO			0x0000100
+#define LINK_FLAG_FORCE_NO_LINKINFO			0x0000100
 #define LINK_FLAG_HAS_EXPAND_STRING			0x0000200
 #define LINK_FLAG_RUN_IN_SEPARATE_PROCESS		0x0000400
 #define LINK_FLAG_HAS_DARWIN_PROPS			0x0001000
@@ -86,7 +86,7 @@ typedef struct _LNK_HEADER {
 #define LINK_FLAG_DISABLE_KNOWN_FOLDER_ALIAS		0x0400000
 #define LINK_FLAG_ALLOW_LINK_TO_LINK			0x0800000
 #define LINK_FLAG_UNALIAS_ON_SAVE			0x1000000
-#define LINK_FLAG_PREFER_ENVIORONMENT_PATH		0x2000000
+#define LINK_FLAG_PREFER_ENVIRONMENT_PATH		0x2000000
 #define LINK_FLAG_KEEP_LOCAL_ID_LIST_FOR_UNC_TARGET	0x4000000
 
 #define FILE_ATTRIBUTE_READONLY				0x0001
@@ -118,7 +118,7 @@ typedef struct _LNK_HEADER {
 #define SW_FORCEMINIMIZE 11 // https://github.com/EricZimmerman/Lnk.git 
 #define SW_NORMALNA 0xCC // Wine? https://github.com/EricZimmerman/Lnk.git
 
-typedef struct _LINK_INFO
+typedef struct _LINKINFO
 {
 	uint32_t m_LinkInfoSize;
 	uint32_t m_LinkInfoHeaderSize;
@@ -129,10 +129,10 @@ typedef struct _LINK_INFO
 	uint32_t m_CommonPathSuffixOffset;
 	uint32_t m_LocalBasePathOffsetUnicode; // optional - check size of header!
 	uint32_t m_CommonPathSuffixOffsetUnicode; // optional - check size of header!
-} LINK_INFO, *PLINK_INFO;
+} LINKINFO, *PLINKINFO;
 
-#define LINK_INFO_FLAG_VOLUME_ID_AND_LOCAL_BASE_PATH				0x1
-#define LINK_INFO_FLAG_COMMON_NETWORK_RELATIVE_LINK_AND_PATH_SUFFIX	0x2
+#define LINKINFO_FLAG_VOLUME_ID_AND_LOCAL_BASE_PATH				0x1
+#define LINKINFO_FLAG_COMMON_NETWORK_RELATIVE_LINK_AND_PATH_SUFFIX	0x2
 
 #pragma pack(pop)
 
@@ -144,19 +144,45 @@ typedef struct _LNK
 
 begin_declarations
 	declare_integer("is_lnk")
-	declare_integer("has_targetidlist")
-	declare_integer("has_linkinfo")
-	declare_integer("has_linkname")
-	declare_integer("has_relpath")
-	declare_integer("has_workdir")
-	declare_integer("has_args")
-	declare_integer("has_iconloc")
-	declare_integer("header_flags") 
-	declare_integer("linkinfo_flags") 
 
-	declare_string("link_target_local_base")
-	declare_string("link_target_network_base")
-	declare_string("link_target_suffix")
+	declare_integer("LINK_FLAG_HAS_TARGET_ID_LIST")
+	declare_integer("LINK_FLAG_HAS_LINKINFO")
+	declare_integer("LINK_FLAG_HAS_NAME")
+	declare_integer("LINK_FLAG_HAS_RELATIVE_PATH")
+	declare_integer("LINK_FLAG_HAS_WORKING_DIR")
+	declare_integer("LINK_FLAG_HAS_ARGUMENTS")
+	declare_integer("LINK_FLAG_HAS_ICON_LOCATION")
+	declare_integer("LINK_FLAG_IS_UNICODE")
+	declare_integer("LINK_FLAG_FORCE_NO_LINKINFO")
+	declare_integer("LINK_FLAG_HAS_EXPAND_STRING")
+	declare_integer("LINK_FLAG_RUN_IN_SEPARATE_PROCESS")
+	declare_integer("LINK_FLAG_HAS_DARWIN_PROPS")
+	declare_integer("LINK_FLAG_RUN_AS_USER")
+	declare_integer("LINK_FLAG_HAS_EXPAND_ICON")
+	declare_integer("LINK_FLAG_NO_PIDL_ALIAS")
+	declare_integer("LINK_FLAG_RUN_WITH_SHIM")
+	declare_integer("LINK_FLAG_NO_LINK_TRACK")
+	declare_integer("LINK_FLAG_ENABLE_TARGET_METADATA")
+	declare_integer("LINK_FLAG_DISABLE_LINK_PATH_TRACKING")
+	declare_integer("LINK_FLAG_DISABLE_KNOWN_FOLDER_TRACKING")
+	declare_integer("LINK_FLAG_DISABLE_KNOWN_FOLDER_ALIAS")
+	declare_integer("LINK_FLAG_ALLOW_LINK_TO_LINK")
+	declare_integer("LINK_FLAG_UNALIAS_ON_SAVE")
+	declare_integer("LINK_FLAG_PREFER_ENVIRONMENT_PATH")
+	declare_integer("LINK_FLAG_KEEP_LOCAL_ID_LIST_FOR_UNC_TARGET")
+
+	declare_integer("LINKINFO_FLAG_VOLUME_ID_AND_LOCAL_BASE_PATH")
+	declare_integer("LINKINFO_FLAG_COMMON_NETWORK_RELATIVE_LINK_AND_PATH_SUFFIX")
+
+	declare_integer("header_flags") 
+
+	begin_struct("linkinfo")
+		declare_integer("linkinfo_flags") 
+		declare_string("link_target_local_base")
+		declare_string("link_target_network_base")
+		declare_string("link_target_suffix")
+	end_struct("linkinfo")
+
 	declare_string("link_name")
 	declare_string("rel_path")
 	declare_string("work_dir")
@@ -207,7 +233,7 @@ PLNK_HEADER lnk_get_header(const uint8_t* data, size_t data_size)
 
 bool lnk_set_bounded_null_term_string(
 	bool bUnicode,
-	uint8_t* data,
+	const uint8_t* data,
 	size_t dataLen,
 	void* module_object,
 	const char* stringName)
@@ -248,7 +274,7 @@ bool lnk_set_bounded_null_term_string(
 bool
 lnk_set_string(
 	bool bUnicode,
-	uint8_t* *data,
+	const uint8_t* *data,
 	size_t *dataLen,
 	void* module_object,
 	const char *stringName)
@@ -290,6 +316,36 @@ int module_load(
 
 	yr_set_integer(0, module_object, "is_lnk");
 
+	// define flag constants
+	yr_set_integer(LINK_FLAG_HAS_TARGET_ID_LIST, module_object, "LINK_FLAG_HAS_TARGET_ID_LIST");
+	yr_set_integer(LINK_FLAG_HAS_LINKINFO, module_object, "LINK_FLAG_HAS_LINKINFO");
+	yr_set_integer(LINK_FLAG_HAS_NAME, module_object, "LINK_FLAG_HAS_NAME");
+	yr_set_integer(LINK_FLAG_HAS_RELATIVE_PATH, module_object, "LINK_FLAG_HAS_RELATIVE_PATH");
+	yr_set_integer(LINK_FLAG_HAS_WORKING_DIR, module_object, "LINK_FLAG_HAS_WORKING_DIR");
+	yr_set_integer(LINK_FLAG_HAS_ARGUMENTS, module_object, "LINK_FLAG_HAS_ARGUMENTS");
+	yr_set_integer(LINK_FLAG_HAS_ICON_LOCATION, module_object, "LINK_FLAG_HAS_ICON_LOCATION");
+	yr_set_integer(LINK_FLAG_IS_UNICODE, module_object, "LINK_FLAG_IS_UNICODE");
+	yr_set_integer(LINK_FLAG_FORCE_NO_LINKINFO, module_object, "LINK_FLAG_FORCE_NO_LINKINFO");
+	yr_set_integer(LINK_FLAG_HAS_EXPAND_STRING, module_object, "LINK_FLAG_HAS_EXPAND_STRING");
+	yr_set_integer(LINK_FLAG_RUN_IN_SEPARATE_PROCESS, module_object, "LINK_FLAG_RUN_IN_SEPARATE_PROCESS");
+	yr_set_integer(LINK_FLAG_HAS_DARWIN_PROPS, module_object, "LINK_FLAG_HAS_DARWIN_PROPS");
+	yr_set_integer(LINK_FLAG_RUN_AS_USER, module_object, "LINK_FLAG_RUN_AS_USER");
+	yr_set_integer(LINK_FLAG_HAS_EXPAND_ICON, module_object, "LINK_FLAG_HAS_EXPAND_ICON");
+	yr_set_integer(LINK_FLAG_NO_PIDL_ALIAS, module_object, "LINK_FLAG_NO_PIDL_ALIAS");
+	yr_set_integer(LINK_FLAG_RUN_WITH_SHIM, module_object, "LINK_FLAG_RUN_WITH_SHIM");
+	yr_set_integer(LINK_FLAG_NO_LINK_TRACK, module_object, "LINK_FLAG_NO_LINK_TRACK");
+	yr_set_integer(LINK_FLAG_ENABLE_TARGET_METADATA, module_object, "LINK_FLAG_ENABLE_TARGET_METADATA");
+	yr_set_integer(LINK_FLAG_DISABLE_LINK_PATH_TRACKING, module_object, "LINK_FLAG_DISABLE_LINK_PATH_TRACKING");
+	yr_set_integer(LINK_FLAG_DISABLE_KNOWN_FOLDER_TRACKING, module_object, "LINK_FLAG_DISABLE_KNOWN_FOLDER_TRACKING");
+	yr_set_integer(LINK_FLAG_DISABLE_KNOWN_FOLDER_ALIAS, module_object, "LINK_FLAG_DISABLE_KNOWN_FOLDER_ALIAS");
+	yr_set_integer(LINK_FLAG_ALLOW_LINK_TO_LINK, module_object, "LINK_FLAG_ALLOW_LINK_TO_LINK");
+	yr_set_integer(LINK_FLAG_UNALIAS_ON_SAVE, module_object, "LINK_FLAG_UNALIAS_ON_SAVE");
+	yr_set_integer(LINK_FLAG_PREFER_ENVIRONMENT_PATH, module_object, "LINK_FLAG_PREFER_ENVIRONMENT_PATH");
+	yr_set_integer(LINK_FLAG_KEEP_LOCAL_ID_LIST_FOR_UNC_TARGET, module_object, "LINK_FLAG_KEEP_LOCAL_ID_LIST_FOR_UNC_TARGET");
+
+	yr_set_integer(LINKINFO_FLAG_VOLUME_ID_AND_LOCAL_BASE_PATH, module_object, "LINKINFO_FLAG_VOLUME_ID_AND_LOCAL_BASE_PATH");
+	yr_set_integer(LINKINFO_FLAG_COMMON_NETWORK_RELATIVE_LINK_AND_PATH_SUFFIX, module_object, "LINKINFO_FLAG_COMMON_NETWORK_RELATIVE_LINK_AND_PATH_SUFFIX");
+
 	foreach_memory_block(iterator, block)
 	{
 		block_data = block->fetch_data(block);
@@ -303,20 +359,13 @@ int module_load(
 
 		if (pLnkHeader != NULL)
 		{
-			uint8_t *data = block_data;
+			const uint8_t *data = block_data;
 			size_t dataLen = block->size;
 			uint32_t header_flags = 0;
 
 			yr_set_integer(1, module_object, "is_lnk");
 			header_flags	= yr_le32toh(pLnkHeader->m_LinkFlags);
 			yr_set_integer(header_flags, module_object, "header_flags");
-			yr_set_integer(header_flags & LINK_FLAG_HAS_TARGET_ID_LIST ? 1 : 0, module_object, "has_targetidlist");
-			yr_set_integer(header_flags & LINK_FLAG_HAS_LINK_INFO ? 1 : 0, module_object, "has_linkinfo");
-			yr_set_integer(header_flags & LINK_FLAG_HAS_NAME ? 1 : 0, module_object, "has_linkname");
-			yr_set_integer(header_flags & LINK_FLAG_HAS_RELATIVE_PATH ? 1 : 0, module_object, "has_relpath");
-			yr_set_integer(header_flags & LINK_FLAG_HAS_WORKING_DIR ? 1 : 0, module_object, "has_workdir");
-			yr_set_integer(header_flags & LINK_FLAG_HAS_ARGUMENTS ? 1 : 0, module_object, "has_args");
-			yr_set_integer(header_flags & LINK_FLAG_HAS_ICON_LOCATION ? 1 : 0, module_object, "has_iconloc");
 			if (header_flags & LINK_FLAG_IS_UNICODE) // string fields are wide-char
 			{
 				 bUnicode = true; 
@@ -345,9 +394,9 @@ int module_load(
 				dataLen -= idListLen;
 			}
 
-			if (header_flags & LINK_FLAG_HAS_LINK_INFO)
+			if (header_flags & LINK_FLAG_HAS_LINKINFO)
 			{
-				PLINK_INFO pLinkInfo = NULL;
+				PLINKINFO pLinkInfo = NULL;
 					 uint32_t linkInfoHeaderSize = 0;
 				uint32_t linkInfoLen = 0;
 				uint32_t linkinfo_flags = 0;
@@ -355,7 +404,7 @@ int module_load(
 				{
 					goto error_return;
 				}
-				pLinkInfo = (PLINK_INFO) data;
+				pLinkInfo = (PLINKINFO) data;
 				linkInfoLen = yr_le32toh(pLinkInfo->m_LinkInfoSize);
 				if (dataLen < linkInfoLen)
 				{
@@ -367,19 +416,19 @@ int module_load(
 					goto error_return;
 				}
 				linkinfo_flags	= yr_le32toh(pLinkInfo->m_LinkInfoFlags);
-				yr_set_integer(linkinfo_flags, module_data, "linkinfo_flags");
+				yr_set_integer(linkinfo_flags, module_data, "linkinfo.linkinfo_flags");
 
 				// unicode wide
 				if (linkInfoHeaderSize >= 0x24)
 				{
-					if (linkinfo_flags & LINK_INFO_FLAG_VOLUME_ID_AND_LOCAL_BASE_PATH)
+					if (linkinfo_flags & LINKINFO_FLAG_VOLUME_ID_AND_LOCAL_BASE_PATH)
 					{
 						uint32_t baseOffset = yr_le32toh(pLinkInfo->m_LocalBasePathOffsetUnicode);
 						if (baseOffset >= linkInfoLen)
 						{
 							goto error_return;
 						}
-						if (!lnk_set_bounded_null_term_string(true, data + baseOffset, linkInfoLen-baseOffset, module_object, "link_target_local_base"))
+						if (!lnk_set_bounded_null_term_string(true, data + baseOffset, linkInfoLen-baseOffset, module_object, "linkinfo.link_target_local_base"))
 						{
 							goto error_return;		
 						}
@@ -389,21 +438,21 @@ int module_load(
 					{
 						 goto error_return;
 					}
-					if (!lnk_set_bounded_null_term_string(true, data + suffixOffset, linkInfoLen-suffixOffset, module_object, "link_target_suffix"))
+					if (!lnk_set_bounded_null_term_string(true, data + suffixOffset, linkInfoLen-suffixOffset, module_object, "linkinfo.link_target_suffix"))
 					{
 						 goto error_return;
 					}
 				}
 				else // code-page
 				{
-					if (linkinfo_flags & LINK_INFO_FLAG_VOLUME_ID_AND_LOCAL_BASE_PATH)
+					if (linkinfo_flags & LINKINFO_FLAG_VOLUME_ID_AND_LOCAL_BASE_PATH)
 					{
 						uint32_t baseOffset = yr_le32toh( pLinkInfo->m_LocalBasePathOffset);
 						if (baseOffset >= linkInfoLen)
 						{
 							goto error_return;
 						}
-						if (!lnk_set_bounded_null_term_string(false, data + baseOffset, linkInfoLen-baseOffset, module_object, "link_target_local_base"))
+						if (!lnk_set_bounded_null_term_string(false, data + baseOffset, linkInfoLen-baseOffset, module_object, "linkinfo.link_target_local_base"))
 						{
 							 goto error_return;
 						}
@@ -413,12 +462,12 @@ int module_load(
 					{
 						goto error_return;
 					}
-					if (!lnk_set_bounded_null_term_string(false, data + suffixOffset, linkInfoLen-suffixOffset, module_object, "link_target_suffix"))
+					if (!lnk_set_bounded_null_term_string(false, data + suffixOffset, linkInfoLen-suffixOffset, module_object, "linkinfo.link_target_suffix"))
 					{
 						 goto error_return;
 					}
 				}
-				if (linkinfo_flags & LINK_INFO_FLAG_COMMON_NETWORK_RELATIVE_LINK_AND_PATH_SUFFIX)
+				if (linkinfo_flags & LINKINFO_FLAG_COMMON_NETWORK_RELATIVE_LINK_AND_PATH_SUFFIX)
 				{
 					// this is an entirely different sub-structure yet again.
 				}
