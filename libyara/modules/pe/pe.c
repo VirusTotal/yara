@@ -1847,14 +1847,14 @@ static void pe_parse_certificates(PE* pe)
 {
   int counter = 0;
 
+  // Default to 0 signatures until we know otherwise.
+  yr_set_integer(0, pe->object, "number_of_signatures");
+
   PIMAGE_DATA_DIRECTORY directory = pe_get_directory_entry(
       pe, IMAGE_DIRECTORY_ENTRY_SECURITY);
 
   if (directory == NULL)
     return;
-
-  // Default to 0 signatures until we know otherwise.
-  yr_set_integer(0, pe->object, "number_of_signatures");
 
   // directory->VirtualAddress is a file offset. Don't call pe_rva_to_offset().
   if (yr_le32toh(directory->VirtualAddress) == 0 ||
