@@ -139,6 +139,9 @@ cc_test(
     name = "test_elf",
     srcs = ["test-elf.c"],
     copts = COPTS,
+    data = [
+        "data/elf_with_imports",
+    ],
     linkstatic = True,
     deps = [
         ":blob",

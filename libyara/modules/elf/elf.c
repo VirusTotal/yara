@@ -102,7 +102,8 @@ define_function(telfhash)
         string functions (str.* and mem.*), gcc changes them depending on arch
         symbols starting with . or _ */
     bool is_bad_prefix = name[0] == '.' || name[0] == '_';
-    bool is_x86_64 = name[0] == '.' || name[0] == '_';
+    size_t namelen = strlen(name);
+    bool is_x86_64 = namelen >= 2 && strncmp(name + namelen - 2, "64", 2) == 0;
     bool is_mem_or_str = strncmp(name, "str", 3) == 0 ||
                          strncmp(name, "mem", 3) == 0;
 
