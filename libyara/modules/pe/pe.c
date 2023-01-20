@@ -912,8 +912,8 @@ static IMPORT_FUNCTION* pe_parse_import_descriptor(
         has_ordinal = 1;
       }
 
-      rva_address = yr_le32toh(
-          import_descriptor->FirstThunk + (sizeof(uint32_t) * func_idx));
+      rva_address = yr_le32toh(import_descriptor->FirstThunk) +
+                    (sizeof(uint32_t) * func_idx);
 
       if (name != NULL || has_ordinal == 1)
       {
