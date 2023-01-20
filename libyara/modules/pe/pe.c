@@ -837,7 +837,8 @@ static IMPORT_FUNCTION* pe_parse_import_descriptor(
         has_ordinal = 1;
       }
 
-      rva_address =  yr_le64toh(import_descriptor->FirstThunk + (sizeof(uint64_t) * func_idx));
+      rva_address = yr_le64toh(import_descriptor->FirstThunk) +
+                    (sizeof(uint64_t) * func_idx);
 
       if (name != NULL || has_ordinal == 1)
       {
@@ -911,7 +912,8 @@ static IMPORT_FUNCTION* pe_parse_import_descriptor(
         has_ordinal = 1;
       }
 
-      rva_address =  yr_le32toh(import_descriptor->FirstThunk + (sizeof(uint32_t) * func_idx));
+      rva_address = yr_le32toh(
+          import_descriptor->FirstThunk + (sizeof(uint32_t) * func_idx));
 
       if (name != NULL || has_ordinal == 1)
       {
@@ -1013,7 +1015,8 @@ void pe_set_imports(
     {
       yr_set_string(func->name, pe->object, fun_name, dll_cnt, fun_cnt);
       if (func->has_ordinal)
-        yr_set_integer(func->ordinal, pe->object, fun_ordinal, dll_cnt, fun_cnt);
+        yr_set_integer(
+            func->ordinal, pe->object, fun_ordinal, dll_cnt, fun_cnt);
       else
         yr_set_integer(YR_UNDEFINED, pe->object, fun_ordinal, dll_cnt, fun_cnt);
       if (func->rva)
@@ -1114,7 +1117,8 @@ static IMPORTED_DLL* pe_parse_imports(PE* pe)
   }
 
   yr_set_integer(num_imports, pe->object, "number_of_imports");
-  yr_set_integer(num_function_imports, pe->object, "number_of_imported_functions");
+  yr_set_integer(
+      num_function_imports, pe->object, "number_of_imported_functions");
   pe_set_imports(
       pe,
       head,
@@ -1369,7 +1373,7 @@ static void* pe_parse_delayed_imports(PE* pe)
         imported_func->has_ordinal = 1;
       }
 
-      imported_func->rva =  yr_le64toh(func_rva);
+      imported_func->rva = yr_le64toh(func_rva);
 
       num_function_imports++;
       name_rva += pointer_size;
@@ -1628,19 +1632,22 @@ static void pe_parse_exports(PE* pe)
     for (int j = 0; j < cert->sha1.len; ++j)                                   \
       sprintf(thumbprint_ascii + (j * 2), "%02x", cert->sha1.data[j]);         \
                                                                                \
-    yr_set_string(                                                                \
+    yr_set_string(                                                             \
         (char*) thumbprint_ascii, pe->object, fmt ".thumbprint", __VA_ARGS__); \
                                                                                \
-    yr_set_string(cert->issuer, pe->object, fmt ".issuer", __VA_ARGS__);          \
-    yr_set_string(cert->subject, pe->object, fmt ".subject", __VA_ARGS__);        \
+    yr_set_string(cert->issuer, pe->object, fmt ".issuer", __VA_ARGS__);       \
+    yr_set_string(cert->subject, pe->object, fmt ".subject", __VA_ARGS__);     \
     /* Versions are zero based, so add one.  */                                \
-    yr_set_integer(cert->version + 1, pe->object, fmt ".version", __VA_ARGS__);   \
-    yr_set_string(cert->sig_alg, pe->object, fmt ".algorithm", __VA_ARGS__);      \
-    yr_set_string(                                                                \
+    yr_set_integer(                                                            \
+        cert->version + 1, pe->object, fmt ".version", __VA_ARGS__);           \
+    yr_set_string(cert->sig_alg, pe->object, fmt ".algorithm", __VA_ARGS__);   \
+    yr_set_string(                                                             \
         cert->sig_alg_oid, pe->object, fmt ".algorithm_oid", __VA_ARGS__);     \
-    yr_set_string(cert->serial, pe->object, fmt ".serial", __VA_ARGS__);          \
-    yr_set_integer(cert->not_before, pe->object, fmt ".not_before", __VA_ARGS__); \
-    yr_set_integer(cert->not_after, pe->object, fmt ".not_after", __VA_ARGS__);   \
+    yr_set_string(cert->serial, pe->object, fmt ".serial", __VA_ARGS__);       \
+    yr_set_integer(                                                            \
+        cert->not_before, pe->object, fmt ".not_before", __VA_ARGS__);         \
+    yr_set_integer(                                                            \
+        cert->not_after, pe->object, fmt ".not_after", __VA_ARGS__);           \
   } while (0)
 
 void _process_authenticode(
@@ -1677,7 +1684,8 @@ void _process_authenticode(
       for (int j = 0; j < authenticode->digest.len; ++j)
         sprintf(digest_ascii + (j * 2), "%02x", authenticode->digest.data[j]);
 
-      yr_set_string(digest_ascii, pe->object, "signatures[%i].digest", *sig_count);
+      yr_set_string(
+          digest_ascii, pe->object, "signatures[%i].digest", *sig_count);
       yr_free(digest_ascii);
     }
 
@@ -2101,7 +2109,8 @@ static void pe_parse_header(PE* pe, uint64_t base_address, int flags)
       pe->object,
       "size_of_headers");
 
-  yr_set_integer(yr_le32toh(OptionalHeader(pe, CheckSum)), pe->object, "checksum");
+  yr_set_integer(
+      yr_le32toh(OptionalHeader(pe, CheckSum)), pe->object, "checksum");
 
   yr_set_integer(
       yr_le16toh(OptionalHeader(pe, Subsystem)), pe->object, "subsystem");
@@ -2291,7 +2300,8 @@ static void pe_parse_header(PE* pe, uint64_t base_address, int flags)
   if (last_section_end && (pe->data_size > last_section_end))
   {
     yr_set_integer(last_section_end, pe->object, "overlay.offset");
-    yr_set_integer(pe->data_size - last_section_end, pe->object, "overlay.size");
+    yr_set_integer(
+        pe->data_size - last_section_end, pe->object, "overlay.size");
   }
   else
   {
@@ -3058,7 +3068,8 @@ define_function(delayed_import_rva)
 
   for (int i = 0; i < num_imports; i++)
   {
-    dll_name = yr_get_string(module, "delayed_import_details[%i].library_name", i);
+    dll_name = yr_get_string(
+        module, "delayed_import_details[%i].library_name", i);
     if (dll_name == NULL || IS_UNDEFINED(dll_name) ||
         ss_compare(in_dll_name, dll_name) != 0)
       continue;
@@ -3103,7 +3114,8 @@ define_function(delayed_import_rva_ordinal)
 
   for (int i = 0; i < num_imports; i++)
   {
-    dll_name = yr_get_string(module, "delayed_import_details[%i].library_name", i);
+    dll_name = yr_get_string(
+        module, "delayed_import_details[%i].library_name", i);
     if (dll_name == NULL || IS_UNDEFINED(dll_name) ||
         ss_compare(in_dll_name, dll_name) != 0)
       continue;
@@ -3148,7 +3160,8 @@ define_function(locale)
 
   for (int i = 0; i < n; i++)
   {
-    uint64_t rsrc_language = yr_get_integer(module, "resources[%i].language", i);
+    uint64_t rsrc_language = yr_get_integer(
+        module, "resources[%i].language", i);
 
     if ((rsrc_language & 0xFFFF) == locale)
       return_integer(1);
@@ -3176,7 +3189,8 @@ define_function(language)
 
   for (int i = 0; i < n; i++)
   {
-    uint64_t rsrc_language = yr_get_integer(module, "resources[%i].language", i);
+    uint64_t rsrc_language = yr_get_integer(
+        module, "resources[%i].language", i);
 
     if ((rsrc_language & 0xFF) == language)
       return_integer(1);
@@ -3754,7 +3768,8 @@ begin_declarations
     declare_string("digest");
     declare_string("file_digest");
     declare_integer("number_of_certificates");
-    begin_struct_array("certificates");
+    begin_struct_array("certificates")
+      ;
       declare_string("thumbprint");
       declare_string("issuer");
       declare_string("subject");
@@ -3766,12 +3781,14 @@ begin_declarations
       declare_integer("not_after");
     end_struct_array("certificates");
 
-    begin_struct("signer_info");
+    begin_struct("signer_info")
+      ;
       declare_string("program_name");
       declare_string("digest");
       declare_string("digest_alg");
       declare_integer("length_of_chain");
-      begin_struct_array("chain");
+      begin_struct_array("chain")
+        ;
         declare_string("thumbprint");
         declare_string("issuer");
         declare_string("subject");
@@ -3785,13 +3802,15 @@ begin_declarations
     end_struct("signer_info");
 
     declare_integer("number_of_countersignatures");
-    begin_struct_array("countersignatures");
+    begin_struct_array("countersignatures")
+      ;
       declare_integer("verified");
       declare_integer("sign_time");
       declare_string("digest_alg");
       declare_string("digest");
       declare_integer("length_of_chain");
-      begin_struct_array("chain");
+      begin_struct_array("chain")
+        ;
         declare_string("thumbprint");
         declare_string("issuer");
         declare_string("subject");
@@ -3860,16 +3879,19 @@ int module_load(
   yr_set_integer(IMAGE_FILE_MACHINE_M32R, module_object, "MACHINE_M32R");
   yr_set_integer(IMAGE_FILE_MACHINE_MIPS16, module_object, "MACHINE_MIPS16");
   yr_set_integer(IMAGE_FILE_MACHINE_MIPSFPU, module_object, "MACHINE_MIPSFPU");
-  yr_set_integer(IMAGE_FILE_MACHINE_MIPSFPU16, module_object, "MACHINE_MIPSFPU16");
+  yr_set_integer(
+      IMAGE_FILE_MACHINE_MIPSFPU16, module_object, "MACHINE_MIPSFPU16");
   yr_set_integer(IMAGE_FILE_MACHINE_POWERPC, module_object, "MACHINE_POWERPC");
-  yr_set_integer(IMAGE_FILE_MACHINE_POWERPCFP, module_object, "MACHINE_POWERPCFP");
+  yr_set_integer(
+      IMAGE_FILE_MACHINE_POWERPCFP, module_object, "MACHINE_POWERPCFP");
   yr_set_integer(IMAGE_FILE_MACHINE_R4000, module_object, "MACHINE_R4000");
   yr_set_integer(IMAGE_FILE_MACHINE_SH3, module_object, "MACHINE_SH3");
   yr_set_integer(IMAGE_FILE_MACHINE_SH3DSP, module_object, "MACHINE_SH3DSP");
   yr_set_integer(IMAGE_FILE_MACHINE_SH4, module_object, "MACHINE_SH4");
   yr_set_integer(IMAGE_FILE_MACHINE_SH5, module_object, "MACHINE_SH5");
   yr_set_integer(IMAGE_FILE_MACHINE_THUMB, module_object, "MACHINE_THUMB");
-  yr_set_integer(IMAGE_FILE_MACHINE_WCEMIPSV2, module_object, "MACHINE_WCEMIPSV2");
+  yr_set_integer(
+      IMAGE_FILE_MACHINE_WCEMIPSV2, module_object, "MACHINE_WCEMIPSV2");
   yr_set_integer(
       IMAGE_FILE_MACHINE_TARGET_HOST, module_object, "MACHINE_TARGET_HOST");
   yr_set_integer(IMAGE_FILE_MACHINE_R3000, module_object, "MACHINE_R3000");
@@ -3889,7 +3911,8 @@ int module_load(
   yr_set_integer(
       IMAGE_SUBSYSTEM_WINDOWS_CUI, module_object, "SUBSYSTEM_WINDOWS_CUI");
   yr_set_integer(IMAGE_SUBSYSTEM_OS2_CUI, module_object, "SUBSYSTEM_OS2_CUI");
-  yr_set_integer(IMAGE_SUBSYSTEM_POSIX_CUI, module_object, "SUBSYSTEM_POSIX_CUI");
+  yr_set_integer(
+      IMAGE_SUBSYSTEM_POSIX_CUI, module_object, "SUBSYSTEM_POSIX_CUI");
   yr_set_integer(
       IMAGE_SUBSYSTEM_NATIVE_WINDOWS,
       module_object,
@@ -3928,14 +3951,16 @@ int module_load(
       IMAGE_DLLCHARACTERISTICS_FORCE_INTEGRITY,
       module_object,
       "FORCE_INTEGRITY");
-  yr_set_integer(IMAGE_DLLCHARACTERISTICS_NX_COMPAT, module_object, "NX_COMPAT");
+  yr_set_integer(
+      IMAGE_DLLCHARACTERISTICS_NX_COMPAT, module_object, "NX_COMPAT");
   yr_set_integer(
       IMAGE_DLLCHARACTERISTICS_NO_ISOLATION, module_object, "NO_ISOLATION");
   yr_set_integer(IMAGE_DLLCHARACTERISTICS_NO_SEH, module_object, "NO_SEH");
   yr_set_integer(IMAGE_DLLCHARACTERISTICS_NO_BIND, module_object, "NO_BIND");
   yr_set_integer(
       IMAGE_DLLCHARACTERISTICS_APPCONTAINER, module_object, "APPCONTAINER");
-  yr_set_integer(IMAGE_DLLCHARACTERISTICS_WDM_DRIVER, module_object, "WDM_DRIVER");
+  yr_set_integer(
+      IMAGE_DLLCHARACTERISTICS_WDM_DRIVER, module_object, "WDM_DRIVER");
   yr_set_integer(IMAGE_DLLCHARACTERISTICS_GUARD_CF, module_object, "GUARD_CF");
   yr_set_integer(
       IMAGE_DLLCHARACTERISTICS_TERMINAL_SERVER_AWARE,
@@ -3943,26 +3968,31 @@ int module_load(
       "TERMINAL_SERVER_AWARE");
 
   yr_set_integer(IMAGE_FILE_RELOCS_STRIPPED, module_object, "RELOCS_STRIPPED");
-  yr_set_integer(IMAGE_FILE_EXECUTABLE_IMAGE, module_object, "EXECUTABLE_IMAGE");
+  yr_set_integer(
+      IMAGE_FILE_EXECUTABLE_IMAGE, module_object, "EXECUTABLE_IMAGE");
   yr_set_integer(
       IMAGE_FILE_LINE_NUMS_STRIPPED, module_object, "LINE_NUMS_STRIPPED");
   yr_set_integer(
       IMAGE_FILE_LOCAL_SYMS_STRIPPED, module_object, "LOCAL_SYMS_STRIPPED");
-  yr_set_integer(IMAGE_FILE_AGGRESIVE_WS_TRIM, module_object, "AGGRESIVE_WS_TRIM");
+  yr_set_integer(
+      IMAGE_FILE_AGGRESIVE_WS_TRIM, module_object, "AGGRESIVE_WS_TRIM");
   yr_set_integer(
       IMAGE_FILE_LARGE_ADDRESS_AWARE, module_object, "LARGE_ADDRESS_AWARE");
-  yr_set_integer(IMAGE_FILE_BYTES_REVERSED_LO, module_object, "BYTES_REVERSED_LO");
+  yr_set_integer(
+      IMAGE_FILE_BYTES_REVERSED_LO, module_object, "BYTES_REVERSED_LO");
   yr_set_integer(IMAGE_FILE_32BIT_MACHINE, module_object, "MACHINE_32BIT");
   yr_set_integer(IMAGE_FILE_DEBUG_STRIPPED, module_object, "DEBUG_STRIPPED");
   yr_set_integer(
       IMAGE_FILE_REMOVABLE_RUN_FROM_SWAP,
       module_object,
       "REMOVABLE_RUN_FROM_SWAP");
-  yr_set_integer(IMAGE_FILE_NET_RUN_FROM_SWAP, module_object, "NET_RUN_FROM_SWAP");
+  yr_set_integer(
+      IMAGE_FILE_NET_RUN_FROM_SWAP, module_object, "NET_RUN_FROM_SWAP");
   yr_set_integer(IMAGE_FILE_SYSTEM, module_object, "SYSTEM");
   yr_set_integer(IMAGE_FILE_DLL, module_object, "DLL");
   yr_set_integer(IMAGE_FILE_UP_SYSTEM_ONLY, module_object, "UP_SYSTEM_ONLY");
-  yr_set_integer(IMAGE_FILE_BYTES_REVERSED_HI, module_object, "BYTES_REVERSED_HI");
+  yr_set_integer(
+      IMAGE_FILE_BYTES_REVERSED_HI, module_object, "BYTES_REVERSED_HI");
 
   yr_set_integer(
       IMAGE_DIRECTORY_ENTRY_EXPORT,
@@ -4056,7 +4086,8 @@ int module_load(
       IMAGE_SCN_NO_DEFER_SPEC_EXC, module_object, "SECTION_NO_DEFER_SPEC_EXC");
   yr_set_integer(IMAGE_SCN_GPREL, module_object, "SECTION_GPREL");
   yr_set_integer(IMAGE_SCN_MEM_FARDATA, module_object, "SECTION_MEM_FARDATA");
-  yr_set_integer(IMAGE_SCN_MEM_PURGEABLE, module_object, "SECTION_MEM_PURGEABLE");
+  yr_set_integer(
+      IMAGE_SCN_MEM_PURGEABLE, module_object, "SECTION_MEM_PURGEABLE");
   yr_set_integer(IMAGE_SCN_MEM_16BIT, module_object, "SECTION_MEM_16BIT");
   yr_set_integer(IMAGE_SCN_MEM_LOCKED, module_object, "SECTION_MEM_LOCKED");
   yr_set_integer(IMAGE_SCN_MEM_PRELOAD, module_object, "SECTION_MEM_PRELOAD");
@@ -4064,9 +4095,12 @@ int module_load(
   yr_set_integer(IMAGE_SCN_ALIGN_2BYTES, module_object, "SECTION_ALIGN_2BYTES");
   yr_set_integer(IMAGE_SCN_ALIGN_4BYTES, module_object, "SECTION_ALIGN_4BYTES");
   yr_set_integer(IMAGE_SCN_ALIGN_8BYTES, module_object, "SECTION_ALIGN_8BYTES");
-  yr_set_integer(IMAGE_SCN_ALIGN_16BYTES, module_object, "SECTION_ALIGN_16BYTES");
-  yr_set_integer(IMAGE_SCN_ALIGN_32BYTES, module_object, "SECTION_ALIGN_32BYTES");
-  yr_set_integer(IMAGE_SCN_ALIGN_64BYTES, module_object, "SECTION_ALIGN_64BYTES");
+  yr_set_integer(
+      IMAGE_SCN_ALIGN_16BYTES, module_object, "SECTION_ALIGN_16BYTES");
+  yr_set_integer(
+      IMAGE_SCN_ALIGN_32BYTES, module_object, "SECTION_ALIGN_32BYTES");
+  yr_set_integer(
+      IMAGE_SCN_ALIGN_64BYTES, module_object, "SECTION_ALIGN_64BYTES");
   yr_set_integer(
       IMAGE_SCN_ALIGN_128BYTES, module_object, "SECTION_ALIGN_128BYTES");
   yr_set_integer(
@@ -4088,7 +4122,8 @@ int module_load(
       IMAGE_SCN_MEM_DISCARDABLE, module_object, "SECTION_MEM_DISCARDABLE");
   yr_set_integer(
       IMAGE_SCN_MEM_NOT_CACHED, module_object, "SECTION_MEM_NOT_CACHED");
-  yr_set_integer(IMAGE_SCN_MEM_NOT_PAGED, module_object, "SECTION_MEM_NOT_PAGED");
+  yr_set_integer(
+      IMAGE_SCN_MEM_NOT_PAGED, module_object, "SECTION_MEM_NOT_PAGED");
   yr_set_integer(IMAGE_SCN_MEM_SHARED, module_object, "SECTION_MEM_SHARED");
   yr_set_integer(IMAGE_SCN_MEM_EXECUTE, module_object, "SECTION_MEM_EXECUTE");
   yr_set_integer(IMAGE_SCN_MEM_READ, module_object, "SECTION_MEM_READ");
@@ -4115,13 +4150,15 @@ int module_load(
   yr_set_integer(RESOURCE_TYPE_VERSION, module_object, "RESOURCE_TYPE_VERSION");
   yr_set_integer(
       RESOURCE_TYPE_DLGINCLUDE, module_object, "RESOURCE_TYPE_DLGINCLUDE");
-  yr_set_integer(RESOURCE_TYPE_PLUGPLAY, module_object, "RESOURCE_TYPE_PLUGPLAY");
+  yr_set_integer(
+      RESOURCE_TYPE_PLUGPLAY, module_object, "RESOURCE_TYPE_PLUGPLAY");
   yr_set_integer(RESOURCE_TYPE_VXD, module_object, "RESOURCE_TYPE_VXD");
   yr_set_integer(
       RESOURCE_TYPE_ANICURSOR, module_object, "RESOURCE_TYPE_ANICURSOR");
   yr_set_integer(RESOURCE_TYPE_ANIICON, module_object, "RESOURCE_TYPE_ANIICON");
   yr_set_integer(RESOURCE_TYPE_HTML, module_object, "RESOURCE_TYPE_HTML");
-  yr_set_integer(RESOURCE_TYPE_MANIFEST, module_object, "RESOURCE_TYPE_MANIFEST");
+  yr_set_integer(
+      RESOURCE_TYPE_MANIFEST, module_object, "RESOURCE_TYPE_MANIFEST");
 
   yr_set_integer(
       IMAGE_DEBUG_TYPE_UNKNOWN, module_object, "IMAGE_DEBUG_TYPE_UNKNOWN");
@@ -4132,7 +4169,8 @@ int module_load(
   yr_set_integer(IMAGE_DEBUG_TYPE_MISC, module_object, "IMAGE_DEBUG_TYPE_MISC");
   yr_set_integer(
       IMAGE_DEBUG_TYPE_EXCEPTION, module_object, "IMAGE_DEBUG_TYPE_EXCEPTION");
-  yr_set_integer(IMAGE_DEBUG_TYPE_FIXUP, module_object, "IMAGE_DEBUG_TYPE_FIXUP");
+  yr_set_integer(
+      IMAGE_DEBUG_TYPE_FIXUP, module_object, "IMAGE_DEBUG_TYPE_FIXUP");
   yr_set_integer(
       IMAGE_DEBUG_TYPE_OMAP_TO_SRC,
       module_object,
@@ -4147,15 +4185,18 @@ int module_load(
       IMAGE_DEBUG_TYPE_RESERVED10,
       module_object,
       "IMAGE_DEBUG_TYPE_RESERVED10");
-  yr_set_integer(IMAGE_DEBUG_TYPE_CLSID, module_object, "IMAGE_DEBUG_TYPE_CLSID");
+  yr_set_integer(
+      IMAGE_DEBUG_TYPE_CLSID, module_object, "IMAGE_DEBUG_TYPE_CLSID");
   yr_set_integer(
       IMAGE_DEBUG_TYPE_VC_FEATURE,
       module_object,
       "IMAGE_DEBUG_TYPE_VC_FEATURE");
   yr_set_integer(IMAGE_DEBUG_TYPE_POGO, module_object, "IMAGE_DEBUG_TYPE_POGO");
-  yr_set_integer(IMAGE_DEBUG_TYPE_ILTCG, module_object, "IMAGE_DEBUG_TYPE_ILTCG");
+  yr_set_integer(
+      IMAGE_DEBUG_TYPE_ILTCG, module_object, "IMAGE_DEBUG_TYPE_ILTCG");
   yr_set_integer(IMAGE_DEBUG_TYPE_MPX, module_object, "IMAGE_DEBUG_TYPE_MPX");
-  yr_set_integer(IMAGE_DEBUG_TYPE_REPRO, module_object, "IMAGE_DEBUG_TYPE_REPRO");
+  yr_set_integer(
+      IMAGE_DEBUG_TYPE_REPRO, module_object, "IMAGE_DEBUG_TYPE_REPRO");
 
   yr_set_integer(0, module_object, "is_pe");
 
