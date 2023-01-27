@@ -1693,14 +1693,14 @@ void _process_authenticode(
       yr_free(digest_ascii);
     }
 
+    yr_set_integer(
+        authenticode->certs ? authenticode->certs->count : 0,
+        pe->object,
+        "signatures[%i].number_of_certificates",
+        *sig_count);
+
     if (authenticode->certs)
     {
-      yr_set_integer(
-          authenticode->certs->count,
-          pe->object,
-          "signatures[%i].number_of_certificates",
-          *sig_count);
-
       for (int k = 0; k < authenticode->certs->count; ++k)
       {
         write_certificate(
@@ -1748,14 +1748,14 @@ void _process_authenticode(
         yr_free(digest_ascii);
       }
 
+      yr_set_integer(
+          signer->chain ? signer->chain->count : 0,
+          pe->object,
+          "signatures[%i].signer_info.length_of_chain",
+          *sig_count);
+
       if (signer->chain)
       {
-        yr_set_integer(
-            signer->chain->count,
-            pe->object,
-            "signatures[%i].signer_info.length_of_chain",
-            *sig_count);
-
         for (int k = 0; k < signer->chain->count; ++k)
         {
           write_certificate(
@@ -1767,14 +1767,15 @@ void _process_authenticode(
         }
       }
     }
+
+    yr_set_integer(
+        authenticode->countersigs ? authenticode->countersigs->count : 0,
+        pe->object,
+        "signatures[%i].number_of_countersignatures",
+        *sig_count);
+
     if (authenticode->countersigs)
     {
-      yr_set_integer(
-          authenticode->countersigs->count,
-          pe->object,
-          "signatures[%i].number_of_countersignatures",
-          *sig_count);
-
       for (int j = 0; j < authenticode->countersigs->count; ++j)
       {
         const Countersignature* counter =
@@ -1814,15 +1815,15 @@ void _process_authenticode(
           yr_free(digest_ascii);
         }
 
+        yr_set_integer(
+            counter->chain ? counter->chain->count : 0,
+            pe->object,
+            "signatures[%i].countersignatures[%i].length_of_chain",
+            *sig_count,
+            j);
+
         if (counter->chain)
         {
-          yr_set_integer(
-              counter->chain->count,
-              pe->object,
-              "signatures[%i].countersignatures[%i].length_of_chain",
-              *sig_count,
-              j);
-
           for (int k = 0; k < counter->chain->count; ++k)
           {
             write_certificate(
@@ -1847,14 +1848,14 @@ static void pe_parse_certificates(PE* pe)
 {
   int counter = 0;
 
+  // Default to 0 signatures until we know otherwise.
+  yr_set_integer(0, pe->object, "number_of_signatures");
+
   PIMAGE_DATA_DIRECTORY directory = pe_get_directory_entry(
       pe, IMAGE_DIRECTORY_ENTRY_SECURITY);
 
   if (directory == NULL)
     return;
-
-  // Default to 0 signatures until we know otherwise.
-  yr_set_integer(0, pe->object, "number_of_signatures");
 
   // directory->VirtualAddress is a file offset. Don't call pe_rva_to_offset().
   if (yr_le32toh(directory->VirtualAddress) == 0 ||

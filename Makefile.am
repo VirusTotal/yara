@@ -59,6 +59,10 @@ if UB_SANITIZER
 AM_CFLAGS+=-fsanitize=undefined -fno-sanitize-recover=undefined
 endif
 
+if GCC
+AM_CFLAGS+=-fvisibility=hidden
+endif
+
 ACLOCAL_AMFLAGS=-I m4
 
 # Rules for generating YARA modules from .proto files. For each .proto file
@@ -301,35 +305,49 @@ tests_mapper_CFLAGS = -O0
 
 test_alignment_SOURCES = tests/test-alignment.c tests/util.c
 test_alignment_LDADD = libyara.la
+test_alignment_LDFLAGS = -static
 test_arena_SOURCES = tests/test-arena.c tests/util.c
 test_arena_LDADD = libyara.la
+test_arena_LDFLAGS = -static
 test_atoms_SOURCES = tests/test-atoms.c tests/util.c
 test_atoms_LDADD = libyara.la
+test_atoms_LDFLAGS = -static
 test_rules_SOURCES = tests/test-rules.c tests/util.c
 test_rules_LDADD = libyara.la
+test_rules_LDFLAGS = -static
 if POSIX
 EXTRA_test_rules_DEPENDENCIES = tests/mapper$(EXEEXT)
 endif
 test_pe_SOURCES = tests/test-pe.c tests/util.c
 test_pe_LDADD = libyara.la
+test_pe_LDFLAGS = -static
 test_elf_SOURCES = tests/test-elf.c tests/util.c
 test_elf_LDADD = libyara.la
+test_elf_LDFLAGS = -static
 test_version_SOURCES = tests/test-version.c tests/util.c
 test_version_LDADD = libyara.la
+test_version_LDFLAGS = -static
 test_api_SOURCES = tests/test-api.c tests/util.c
 test_api_LDADD = libyara.la
+test_api_LDFLAGS = -static
 test_bitmask_SOURCES = tests/test-bitmask.c tests/util.c
 test_bitmask_LDADD = libyara.la
+test_bitmask_LDFLAGS = -static
 test_math_SOURCES = tests/test-math.c tests/util.c
 test_math_LDADD = libyara.la
+test_math_LDFLAGS = -static
 test_string_SOURCES = tests/test-string.c tests/util.c
 test_string_LDADD = libyara.la
+test_string_LDFLAGS = -static
 test_stack_SOURCES = tests/test-stack.c tests/util.c
 test_stack_LDADD = libyara.la
+test_stack_LDFLAGS = -static
 test_re_split_SOURCES = tests/test-re-split.c tests/util.c
 test_re_split_LDADD = libyara.la
+test_re_split_LDFLAGS = -static
 test_async_SOURCES = tests/test-async.c tests/util.c
 test_async_LDADD = libyara.la
+test_async_LDFLAGS = -static
 
 TESTS = $(check_PROGRAMS)
 TESTS_ENVIRONMENT = TOP_SRCDIR=$(top_srcdir) TOP_BUILDDIR=$(top_builddir)
@@ -360,6 +378,7 @@ if !ADDRESS_SANITIZER
 check_PROGRAMS+=test-exception
 test_exception_SOURCES = tests/test-exception.c tests/util.c
 test_exception_LDADD = libyara.la
+test_exception_LDFLAGS = -static
 endif
 endif
 
@@ -367,30 +386,35 @@ if MACHO_MODULE
 check_PROGRAMS+=test-macho
 test_macho_SOURCES = tests/test-macho.c tests/util.c
 test_macho_LDADD = libyara.la
+test_macho_LDFLAGS = -static
 endif
 
 if DEX_MODULE
 check_PROGRAMS+=test-dex
 test_dex_SOURCES = tests/test-dex.c tests/util.c
 test_dex_LDADD = libyara.la
+test_dex_LDFLAGS = -static
 endif
 
 if DOTNET_MODULE
 check_PROGRAMS+=test-dotnet
 test_dotnet_SOURCES = tests/test-dotnet.c tests/util.c
 test_dotnet_LDADD = libyara.la
+test_dotnet_LDFLAGS = -static
 endif
 
 if MAGIC_MODULE
 check_PROGRAMS+=test-magic
 test_magic_SOURCES = tests/test-magic.c tests/util.c
 test_magic_LDADD = libyara.la
+test_magic_LDFLAGS = -static
 endif
 
 if PB_TESTS_MODULE
 check_PROGRAMS+=test-pb
 test_pb_SOURCES = tests/test-pb.c tests/util.c
 test_pb_LDADD = libyara.la
+test_pb_LDFLAGS = -static
 endif
 
 # man pages
