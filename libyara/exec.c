@@ -408,11 +408,11 @@ static YR_ITERATOR_NEXT_FUNC iter_next_func_table[] = {
     iter_text_string_set_next,
 };
 
-#define ITER_NEXT_ARRAY      0
-#define ITER_NEXT_DICT       1
-#define ITER_NEXT_INT_RANGE  2
-#define ITER_NEXT_INT_ENUM   3
-#define ITER_NEXT_STRING_SET 4
+#define ITER_NEXT_ARRAY           0
+#define ITER_NEXT_DICT            1
+#define ITER_NEXT_INT_RANGE       2
+#define ITER_NEXT_INT_ENUM        3
+#define ITER_NEXT_STRING_SET      4
 #define ITER_NEXT_TEXT_STRING_SET 5
 
 int yr_execute_code(YR_SCAN_CONTEXT* context)
@@ -1411,6 +1411,10 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
       {
         result = yr_arena_write_data(obj_arena, 0, &r1.o, sizeof(r1.o), NULL);
         obj_count++;
+      }
+      else
+      {
+        r1.i = YR_UNDEFINED;
       }
 
       stop = (result != ERROR_SUCCESS);
