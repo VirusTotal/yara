@@ -3673,6 +3673,20 @@ static void test_meta()
 void test_defined()
 {
   assert_true_rule("rule t { condition: defined 1 }", NULL);
+  assert_false_rule("rule t { condition: defined true and false }", NULL);
+  assert_true_rule("rule t { condition: defined (true and false) }", NULL);
+
+  assert_true_rule(
+      "import \"pe\" \
+      rule t { \
+        condition: \
+          defined ( \
+            for any x in (0..10) : ( \
+              pe.number_of_resources == 0 \
+            ) \
+          ) \
+      }",
+      NULL);
 
   assert_false_rule(
       "import \"pe\" \
