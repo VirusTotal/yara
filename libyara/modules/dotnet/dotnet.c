@@ -118,7 +118,7 @@ BLOB_PARSE_RESULT dotnet_parse_blob_entry(PE* pe, const uint8_t* offset)
 
   if ((*offset & 0x80) == 0x00)
   {
-    result.length = (DWORD) *offset;
+    result.length = (uint32_t) (*offset);
     result.size = 1;
   }
   else if ((*offset & 0xC0) == 0x80)
@@ -1163,6 +1163,7 @@ static bool parse_method_params(
 
   // Array to hold all the possible parameters
   PARAMETERS* params = yr_calloc(param_count, sizeof(PARAMETERS));
+
   if (!params)
     return false;
 
@@ -1174,10 +1175,11 @@ static bool parse_method_params(
     char* name = NULL;
     bool alloc = false;  // Flag if name needs freeing
 
-    if (data)            // We need param table mostly just for the param name
+    if (data)  // We need param table mostly just for the param name
     {
       PARAM_ROW row = {0};
       bool result = read_param(ctx, data, &row);
+
       if (!result)
       {  // Cleanup and return
         for (uint32_t j = 0; j < idx; ++j)
@@ -1334,6 +1336,7 @@ static void parse_methods(
   {
     const uint8_t* data = get_table_offset(
         &ctx->tables->methoddef, methodlist + idx);
+
     if (!data)
       break;
 
@@ -1355,11 +1358,12 @@ static void parse_methods(
 
     // Read the blob entry with signature data
     const uint8_t* sig_data = ctx->blob_heap + row.Signature;
+
     BLOB_PARSE_RESULT blob_res = dotnet_parse_blob_entry(ctx->pe, sig_data);
     sig_data += blob_res.size;
     uint32_t sig_len = blob_res.length;
-
     uint32_t param_count = 0;
+
     char* return_type = NULL;
     // If there is valid blob and at least minimum to parse
     // (flags, paramCount, retType) parse these basic information
@@ -1394,6 +1398,7 @@ static void parse_methods(
         sig_len,
         class_gen_params,
         &method_gen_params);
+
     if (!result)
       goto clean_next;
 
@@ -1837,10 +1842,8 @@ STREAMS dotnet_parse_stream_headers(
       headers.us = stream_header;
 
     // Stream name is padded to a multiple of 4.
-    stream_header = (PSTREAM_HEADER) ((uint8_t*) stream_header +
-                                      sizeof(STREAM_HEADER) +
-                                      strlen(stream_name) + 4 -
-                                      (strlen(stream_name) % 4));
+    stream_header =
+        (PSTREAM_HEADER) ((uint8_t*) stream_header + sizeof(STREAM_HEADER) + strlen(stream_name) + 4 - (strlen(stream_name) % 4));
   }
 
   yr_set_integer(i, pe->object, "number_of_streams");
@@ -2294,8 +2297,8 @@ void dotnet_parse_tilde_2(
           }
 
           // Check the Type field.
-          customattribute_table = (PCUSTOMATTRIBUTE_TABLE) (row_ptr +
-                                                            index_size);
+          customattribute_table =
+              (PCUSTOMATTRIBUTE_TABLE) (row_ptr + index_size);
 
           if (index_size2 == 4)
           {
@@ -2403,9 +2406,8 @@ void dotnet_parse_tilde_2(
           }
 
           // Get the Value field.
-          customattribute_table = (PCUSTOMATTRIBUTE_TABLE) (row_ptr +
-                                                            index_size +
-                                                            index_size2);
+          customattribute_table =
+              (PCUSTOMATTRIBUTE_TABLE) (row_ptr + index_size + index_size2);
 
           if (index_sizes.blob == 4)
             blob_index = *(DWORD*) customattribute_table;
@@ -2726,8 +2728,8 @@ void dotnet_parse_tilde_2(
             pe,
             string_offset,
             str_heap_size,
-            yr_le32toh(*(DWORD*) (row_ptr + 4 + 2 + 2 + 2 + 2 + 4 +
-                                  index_sizes.blob)));
+            yr_le32toh(*(
+                DWORD*) (row_ptr + 4 + 2 + 2 + 2 + 2 + 4 + index_sizes.blob)));
       else
         name = pe_get_dotnet_string(
             pe,
@@ -3057,8 +3059,9 @@ void dotnet_parse_tilde_2(
       .index_sizes = &index_sizes,
       .str_heap = string_offset,
       .str_size = str_heap_size,
-      .blob_heap = pe->data + streams->metadata_root + streams->blob->Offset,
-      .blob_size = streams->blob->Size};
+      .blob_heap = pe->data + streams->metadata_root +
+                   yr_le32toh(streams->blob->Offset),
+      .blob_size = yr_le32toh(streams->blob->Size)};
 
   parse_user_types(&class_context);
 }
@@ -3097,8 +3100,8 @@ void dotnet_parse_tilde(PE* pe, PCLI_HEADER cli_header, PSTREAMS streams)
   // Default index sizes are 2. Will be bumped to 4 if necessary.
   memset(&index_sizes, 2, sizeof(index_sizes));
 
-  tilde_header = (PTILDE_HEADER) (pe->data + metadata_root +
-                                  yr_le32toh(streams->tilde->Offset));
+  tilde_header =
+      (PTILDE_HEADER) (pe->data + metadata_root + yr_le32toh(streams->tilde->Offset));
 
   if (!struct_fits_in_pe(pe, tilde_header, TILDE_HEADER))
     return;
@@ -3263,7 +3266,7 @@ static bool dotnet_is_dotnet(PE* pe)
 
   if (IS_64BITS_PE(pe))
   {
-    if (yr_le16toh(OptionalHeader(pe, NumberOfRvaAndSizes)) <
+    if (yr_le32toh(OptionalHeader(pe, NumberOfRvaAndSizes)) <
         IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR)
       return false;
   }
