@@ -837,7 +837,7 @@ static IMPORT_FUNCTION* pe_parse_import_descriptor(
         has_ordinal = 1;
       }
 
-      rva_address = yr_le64toh(import_descriptor->FirstThunk) +
+      rva_address = yr_le32toh(import_descriptor->FirstThunk) +
                     (sizeof(uint64_t) * func_idx);
 
       if (name != NULL || has_ordinal == 1)
@@ -1010,15 +1010,18 @@ void pe_set_imports(
   for (; dll != NULL; dll = dll->next, dll_cnt++)
   {
     int fun_cnt = 0;
+
     for (IMPORT_FUNCTION* func = dll->functions; func != NULL;
          func = func->next, fun_cnt++)
     {
       yr_set_string(func->name, pe->object, fun_name, dll_cnt, fun_cnt);
+
       if (func->has_ordinal)
         yr_set_integer(
             func->ordinal, pe->object, fun_ordinal, dll_cnt, fun_cnt);
       else
         yr_set_integer(YR_UNDEFINED, pe->object, fun_ordinal, dll_cnt, fun_cnt);
+
       if (func->rva)
         yr_set_integer(func->rva, pe->object, rva, dll_cnt, fun_cnt);
       else
@@ -1327,6 +1330,7 @@ static void* pe_parse_delayed_imports(PE* pe)
     {
       uint64_t nameAddress = pe_parse_delay_import_pointer(
           pe, pointer_size, name_rva);
+
       uint64_t funcAddress = pe_parse_delay_import_pointer(
           pe, pointer_size, func_rva);
 
@@ -1359,6 +1363,7 @@ static void* pe_parse_delayed_imports(PE* pe)
               image_base, nameAddress);
 
         offset = pe_rva_to_offset(pe, nameAddress + sizeof(uint16_t));
+
         imported_func->name = (char*) yr_strndup(
             (char*) (pe->data + offset),
             yr_min(available_space(pe, (char*) (pe->data + offset)), 512));
@@ -1366,14 +1371,14 @@ static void* pe_parse_delayed_imports(PE* pe)
       else
       {
         // If imported by ordinal. Lookup the ordinal.
-        imported_func->name = ord_lookup(
-            dll_name, yr_le64toh(nameAddress) & 0xFFFF);
+        imported_func->name = ord_lookup(dll_name, nameAddress & 0xFFFF);
+
         // Also store the ordinal.
-        imported_func->ordinal = yr_le64toh(nameAddress) & 0xFFFF;
+        imported_func->ordinal = nameAddress & 0xFFFF;
         imported_func->has_ordinal = 1;
       }
 
-      imported_func->rva = yr_le64toh(func_rva);
+      imported_func->rva = func_rva;
 
       num_function_imports++;
       name_rva += pointer_size;
@@ -3064,6 +3069,7 @@ define_function(delayed_import_rva)
     return_integer(YR_UNDEFINED);
 
   int64_t num_imports = yr_get_integer(pe->object, "number_of_delayed_imports");
+
   if (IS_UNDEFINED(num_imports))
     return_integer(YR_UNDEFINED);
 
@@ -3071,12 +3077,14 @@ define_function(delayed_import_rva)
   {
     dll_name = yr_get_string(
         module, "delayed_import_details[%i].library_name", i);
+
     if (dll_name == NULL || IS_UNDEFINED(dll_name) ||
         ss_compare(in_dll_name, dll_name) != 0)
       continue;
 
     int64_t num_functions = yr_get_integer(
         module, "delayed_import_details[%i].number_of_functions", i);
+
     if (IS_UNDEFINED(num_functions))
       return_integer(YR_UNDEFINED);
 
@@ -3084,6 +3092,7 @@ define_function(delayed_import_rva)
     {
       function_name = yr_get_string(
           module, "delayed_import_details[%i].functions[%i].name", i, j);
+
       if (function_name == NULL || IS_UNDEFINED(function_name))
         continue;
 
@@ -3117,12 +3126,14 @@ define_function(delayed_import_rva_ordinal)
   {
     dll_name = yr_get_string(
         module, "delayed_import_details[%i].library_name", i);
+
     if (dll_name == NULL || IS_UNDEFINED(dll_name) ||
         ss_compare(in_dll_name, dll_name) != 0)
       continue;
 
     int64_t num_functions = yr_get_integer(
         module, "delayed_import_details[%i].number_of_functions", i);
+
     if (IS_UNDEFINED(num_functions))
       return_integer(YR_UNDEFINED);
 
@@ -3130,6 +3141,7 @@ define_function(delayed_import_rva_ordinal)
     {
       ordinal = yr_get_integer(
           module, "delayed_import_details[%i].functions[%i].ordinal", i, j);
+
       if (IS_UNDEFINED(ordinal))
         continue;
 
