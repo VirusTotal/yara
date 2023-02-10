@@ -961,6 +961,7 @@ static char* parse_signature_type(
       break;
 
     uint32_t gen_count = read_blob_unsigned(data, len);
+
     // Sanity check for corrupted files
     if (gen_count > MAX_GEN_PARAM_COUNT)
     {
@@ -981,12 +982,15 @@ static char* parse_signature_type(
     {
       char* param_type = parse_signature_type(
           ctx, data, len, class_gen_params, method_gen_params, depth + 1);
-      if (i)
-        sstr_appendf(ss, ",");
-      if (param_type)
-        sstr_appendf(ss, "%s", param_type);
 
-      yr_free(param_type);
+      if (param_type != NULL)
+      {
+        if (i > 0)
+          sstr_appendf(ss, ",");
+
+        sstr_appendf(ss, "%s", param_type);
+        yr_free(param_type);
+      }
     }
     bool res = sstr_appendf(ss, ">");
     if (res)
@@ -1005,6 +1009,14 @@ static char* parse_signature_type(
       (*len)--;
 
       uint32_t param_count = read_blob_unsigned(data, len);
+
+      // Sanity check for corrupted files
+      if (param_count > MAX_PARAM_COUNT)
+      {
+        yr_free(tmp);
+        break;
+      }
+
       tmp = parse_signature_type(
           ctx, data, len, class_gen_params, method_gen_params, depth + 1);
 
@@ -1025,15 +1037,18 @@ static char* parse_signature_type(
       {
         char* param_type = parse_signature_type(
             ctx, data, len, class_gen_params, method_gen_params, depth + 1);
-        if (i)
-          sstr_appendf(ss, ", ");
-        if (param_type)
-          sstr_appendf(ss, "%s", param_type);
 
-        yr_free(param_type);
+        if (param_type != NULL)
+        {
+          if (i > 0)
+            sstr_appendf(ss, ", ");
+
+          sstr_appendf(ss, "%s", param_type);
+          yr_free(param_type);
+        }
       }
-      bool res = sstr_appendf(ss, ")>");
-      if (res)
+
+      if (sstr_appendf(ss, ")>"))
         ret_type = sstr_move(ss);
 
       sstr_free(ss);
@@ -1175,7 +1190,7 @@ static bool parse_method_params(
     char* name = NULL;
     bool alloc = false;  // Flag if name needs freeing
 
-    if (data)  // We need param table mostly just for the param name
+    if (data)            // We need param table mostly just for the param name
     {
       PARAM_ROW row = {0};
       bool result = read_param(ctx, data, &row);
@@ -1842,8 +1857,10 @@ STREAMS dotnet_parse_stream_headers(
       headers.us = stream_header;
 
     // Stream name is padded to a multiple of 4.
-    stream_header =
-        (PSTREAM_HEADER) ((uint8_t*) stream_header + sizeof(STREAM_HEADER) + strlen(stream_name) + 4 - (strlen(stream_name) % 4));
+    stream_header = (PSTREAM_HEADER) ((uint8_t*) stream_header +
+                                      sizeof(STREAM_HEADER) +
+                                      strlen(stream_name) + 4 -
+                                      (strlen(stream_name) % 4));
   }
 
   yr_set_integer(i, pe->object, "number_of_streams");
@@ -2297,8 +2314,8 @@ void dotnet_parse_tilde_2(
           }
 
           // Check the Type field.
-          customattribute_table =
-              (PCUSTOMATTRIBUTE_TABLE) (row_ptr + index_size);
+          customattribute_table = (PCUSTOMATTRIBUTE_TABLE) (row_ptr +
+                                                            index_size);
 
           if (index_size2 == 4)
           {
@@ -2406,8 +2423,9 @@ void dotnet_parse_tilde_2(
           }
 
           // Get the Value field.
-          customattribute_table =
-              (PCUSTOMATTRIBUTE_TABLE) (row_ptr + index_size + index_size2);
+          customattribute_table = (PCUSTOMATTRIBUTE_TABLE) (row_ptr +
+                                                            index_size +
+                                                            index_size2);
 
           if (index_sizes.blob == 4)
             blob_index = *(DWORD*) customattribute_table;
@@ -2728,8 +2746,8 @@ void dotnet_parse_tilde_2(
             pe,
             string_offset,
             str_heap_size,
-            yr_le32toh(*(
-                DWORD*) (row_ptr + 4 + 2 + 2 + 2 + 2 + 4 + index_sizes.blob)));
+            yr_le32toh(*(DWORD*) (row_ptr + 4 + 2 + 2 + 2 + 2 + 4 +
+                                  index_sizes.blob)));
       else
         name = pe_get_dotnet_string(
             pe,
@@ -3100,8 +3118,8 @@ void dotnet_parse_tilde(PE* pe, PCLI_HEADER cli_header, PSTREAMS streams)
   // Default index sizes are 2. Will be bumped to 4 if necessary.
   memset(&index_sizes, 2, sizeof(index_sizes));
 
-  tilde_header =
-      (PTILDE_HEADER) (pe->data + metadata_root + yr_le32toh(streams->tilde->Offset));
+  tilde_header = (PTILDE_HEADER) (pe->data + metadata_root +
+                                  yr_le32toh(streams->tilde->Offset));
 
   if (!struct_fits_in_pe(pe, tilde_header, TILDE_HEADER))
     return;
