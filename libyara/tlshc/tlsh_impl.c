@@ -840,14 +840,7 @@ int tlsh_impl_from_tlsh_str(TlshImpl *impl, const char *str)
     impl->lsh_bin.checksum[k] = swap_byte(tmp.checksum[k]);
   }
   impl->lsh_bin.lvalue = swap_byte(tmp.lvalue);
-
-#if defined(WORDS_BIGENDIAN)
-  // In big endian architectures swapping the nibbles is not necessary, as they
-  // are already swapped. See: https://github.com/VirusTotal/yara/issues/1874
-  impl->lsh_bin.Q.qb = tmp.Q.qb;
-#else
   impl->lsh_bin.Q.qb = swap_byte(tmp.Q.qb);
-#endif
 
   for (int i = 0; i < CODE_SIZE; i++)
   {

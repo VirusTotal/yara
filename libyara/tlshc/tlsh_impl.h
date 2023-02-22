@@ -56,6 +56,9 @@ extern "C"
 {
 #endif
 
+#pragma pack(push)
+#pragma pack(1)
+
   typedef struct
   {
     unsigned char checksum[TLSH_CHECKSUM_LEN];
@@ -65,12 +68,19 @@ extern "C"
       unsigned char qb;
       struct
       {
-        unsigned char q1ratio : 4;
+#if defined(WORDS_BIGENDIAN)
         unsigned char q2ratio : 4;
+        unsigned char q1ratio : 4;
+#else
+      unsigned char q1ratio : 4;
+      unsigned char q2ratio : 4;
+#endif
       } QR;
     } Q;
     unsigned char tmp_code[CODE_SIZE];
   } LshBinStruct;
+
+#pragma pop
 
   typedef struct TlshImpl
   {
