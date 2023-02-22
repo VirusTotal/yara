@@ -1,0 +1,27 @@
+name: Test Big Endian.
+
+on: [push, pull_request]
+
+jobs:
+  one:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Setup multiarch/qemu-user-static
+      run: |
+        docker run --rm --privileged multiarch/qemu-user-static:register --reset
+    - name: ubuntu-core:s390x-focal
+      uses: docker://multiarch/ubuntu-core:s390x-focal
+      with:
+        args: >
+          bash -c
+          "
+          apt-get update -y && 
+          DEBIAN_FRONTEND=noninteractive TZ=Etc/UTC apt-get -y install tzdata &&
+          apt-get install -y automake libtool make gcc pkg-config bison git &&
+          git clone https://github.com/VirusTotal/yara &&
+          cd yara &&
+          ./bootstrap.sh &&
+          ./configure --disable-proc-scan &&
+          make &&
+          make check
+          "
