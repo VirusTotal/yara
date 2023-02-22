@@ -840,7 +840,15 @@ int tlsh_impl_from_tlsh_str(TlshImpl *impl, const char *str)
     impl->lsh_bin.checksum[k] = swap_byte(tmp.checksum[k]);
   }
   impl->lsh_bin.lvalue = swap_byte(tmp.lvalue);
+
+#if defined(WORDS_BIGENDIAN)
+  // In big endian architectures swapping the nibbles is not necessary, as they
+  // are already swapped. See: https://github.com/VirusTotal/yara/issues/1874
+  impl->lsh_bin.Q.qb = tmp.Q.qb;
+#else
   impl->lsh_bin.Q.qb = swap_byte(tmp.Q.qb);
+#endif
+
   for (int i = 0; i < CODE_SIZE; i++)
   {
     impl->lsh_bin.tmp_code[i] = (tmp.tmp_code[CODE_SIZE - 1 - i]);
@@ -873,7 +881,15 @@ const char *hash2(
     tmp.checksum[k] = swap_byte(impl->lsh_bin.checksum[k]);
   }
   tmp.lvalue = swap_byte(impl->lsh_bin.lvalue);
+
+#if defined(WORDS_BIGENDIAN)
+  // In big endian architectures swapping the bytes is not necessary, as they
+  // are already swapped. See: https://github.com/VirusTotal/yara/issues/1874
+  tmp.Q.qb = impl->lsh_bin.Q.qb;
+#else
   tmp.Q.qb = swap_byte(impl->lsh_bin.Q.qb);
+#endif
+
   for (int i = 0; i < CODE_SIZE; i++)
   {
     tmp.tmp_code[i] = (impl->lsh_bin.tmp_code[CODE_SIZE - 1 - i]);
