@@ -80,7 +80,7 @@ extern "C"
     unsigned char tmp_code[CODE_SIZE];
   } LshBinStruct;
 
-#pragma pop
+#pragma pack(pop)
 
   typedef struct TlshImpl
   {
