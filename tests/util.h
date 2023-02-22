@@ -96,6 +96,10 @@ int compile_rule(
     char* string,
     YR_RULES** rules);
 
+int compile_rule_ex(
+    char* string,
+    YR_RULES** rules,
+    bool strict_escape_flag);
 
 typedef struct SCAN_CALLBACK_CTX SCAN_CALLBACK_CTX;
 
@@ -331,6 +335,26 @@ void assert_hex_atoms(
   } while (0);
 
 
+#define assert_warnings_strict_escape(rule, w) do {                     \
+    YR_RULES* rules;                                                    \
+    bool strict_escape = true;                                          \
+    int result = compile_rule_ex(rule, &rules, strict_escape);          \
+    if (result == ERROR_SUCCESS) {                                      \
+      yr_rules_destroy(rules);                                          \
+      if (warnings < w) {                                               \
+        fprintf(stderr, "%s:%d: expecting warning\n",                   \
+                __FILE__, __LINE__);                                    \
+        exit(EXIT_FAILURE);                                             \
+      }                                                                 \
+    }                                                                   \
+    else {                                                              \
+      fprintf(stderr, "%s:%d: failed to compile << %s >>: %s\n",        \
+              __FILE__, __LINE__, rule, compile_error);                 \
+      exit(EXIT_FAILURE);                                               \
+    }                                                                   \
+  } while (0);
+
+
 #define assert_no_warnings(rule) do {                                   \
     YR_RULES* rules;                                                    \
     int result = compile_rule(rule, &rules);                            \
@@ -351,6 +375,10 @@ void assert_hex_atoms(
 
 
 #define assert_warning(rule) assert_warnings(rule, 1)
+
+
+#define assert_warning_strict_escape(rule) \
+  assert_warnings_strict_escape(rule, 1)
 
 
 #define assert_true_regexp(regexp,string,expected) do {                 \

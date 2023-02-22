@@ -88,7 +88,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // fail_if_error() is used in parser actions for aborting the parsing if an
 // error has occurred. See fail_with_error for details.
 #define fail_if_error(e) \
-    if (e != ERROR_SUCCESS) \
+    if (e != ERROR_SUCCESS && e != ERROR_UNKNOWN_ESCAPE_SEQUENCE) \
     { \
       fail_with_error(e); \
     }
@@ -1259,6 +1259,7 @@ regexp
 
         int result = ERROR_SUCCESS;
         int re_flags = 0;
+        int parser_flags = RE_PARSER_FLAG_NONE;
 
         if ($1->flags & SIZED_STRING_FLAGS_NO_CASE)
           re_flags |= RE_FLAGS_NO_CASE;
@@ -1266,9 +1267,13 @@ regexp
         if ($1->flags & SIZED_STRING_FLAGS_DOT_ALL)
           re_flags |= RE_FLAGS_DOT_ALL;
 
+        if (compiler->strict_escape)
+          parser_flags |= RE_PARSER_FLAG_ENABLE_STRICT_ESCAPE_SEQUENCES;
+
         result = yr_re_compile(
             $1->c_string,
             re_flags,
+            parser_flags,
             compiler->arena,
             &re_ref,
             &error);
@@ -1285,6 +1290,13 @@ regexp
               yr_arena_ref_to_ptr(compiler->arena, &re_ref),
               NULL,
               NULL);
+
+        if (result == ERROR_UNKNOWN_ESCAPE_SEQUENCE)
+        {
+          yywarning(
+            yyscanner,
+            "unknown escape sequence");
+        }
 
         fail_if_error(result);
 

@@ -2584,7 +2584,8 @@ void test_re()
   assert_true_regexp("[\\x01-\\x03]+", "\x01\x02\x03", "\x01\x02\x03");
   assert_false_regexp("[\\x00-\\x02]+", "\x03\x04\x05");
   assert_true_regexp("[\\x5D]", "]", "]");
-  assert_true_regexp("[\\0x5A-\\x5D]", "\x5B", "\x5B");
+  assert_true_regexp("[\\x5A-\\x5D]", "\x5B", "\x5B");
+  assert_false_regexp("[\\x5A-\\x5D]", "\x4F")
   assert_true_regexp("[\\x5D-\\x5F]", "\x5E", "\x5E");
   assert_true_regexp("[\\x5C-\\x5F]", "\x5E", "\x5E");
   assert_true_regexp("[\\x5D-\\x5F]", "\x5E", "\x5E");
@@ -3505,6 +3506,26 @@ void test_process_scan()
 }
 #endif
 
+void test_invalid_escape_sequences_warnings()
+ {
+    YR_DEBUG_FPRINTF(1, stderr, "+ %s() {\n", __FUNCTION__);
+
+    assert_warning_strict_escape("rule test { strings: $a = /ab\\cdef/ condition: $a }");
+    assert_no_warnings("rule test { strings: $a = /abcdef/ condition: $a }");
+    assert_warning_strict_escape("rule test { strings: $a = /ab\\cdef/ condition: $a }");
+    assert_no_warnings("rule test { strings: $a = /abcdef/ condition: $a }");
+    assert_warning_strict_escape("rule test { strings: $a = /\\\\WINDOWS\\\\system32\\\\\\victim\\.exe\\.exe/ condition: $a }");
+    assert_no_warnings("rule test { strings: $a = /\\\\WINDOWS\\\\system32\\\\victim\\.exe\\.exe/ condition: $a }");
+    assert_warning_strict_escape("rule test { strings: $a = /AppData\\\\Roaming\\\\[0-9]{9,12}\\VMwareCplLauncher\\.exe/ condition: $a }");
+    assert_no_warnings("rule test { strings: $a = /AppData\\\\Roaming\\\\[0-9]{9,12}\\\\VMwareCplLauncher\\.exe/ condition: $a }");
+    assert_warning_strict_escape("rule test { strings: $a = /ab[\\000-\\343]/ condition: $a }");
+    assert_no_warnings("rule test { strings: $a = /ab[\\x00-\\x43]/ condition: $a }");
+    assert_warning_strict_escape("rule test { strings: $a = /C:\\Users\\\\[^\\\\]+\\\\AppData\\\\Local\\\\AzireVPN\\\\token\\.txt/ condition: $a }");
+    assert_no_warnings("rule test { strings: $a = /C:\\\\Users\\\\[^\\\\]+\\\\AppData\\\\Local\\\\AzireVPN\\\\token\\.txt/ condition: $a }");
+    
+    YR_DEBUG_FPRINTF(1, stderr, "} // %s()\n", __FUNCTION__);   
+}
+
 void test_performance_warnings()
 {
   YR_DEBUG_FPRINTF(1, stderr, "+ %s() {\n", __FUNCTION__);
@@ -3856,6 +3877,7 @@ static void test_pass(int pass)
 #endif
 
   test_time_module();
+  test_invalid_escape_sequences_warnings();
   test_performance_warnings();
   test_defined();
 

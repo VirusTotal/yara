@@ -747,23 +747,37 @@ int yr_parser_reduce_string_declaration(
     if (modifier.flags & STRING_FLAGS_HEXADECIMAL)
       result = yr_re_parse_hex(str->c_string, &re_ast, &re_error);
     else if (modifier.flags & STRING_FLAGS_REGEXP)
-      result = yr_re_parse(str->c_string, &re_ast, &re_error);
+    {
+      int flags = RE_PARSER_FLAG_NONE;
+      if (compiler->strict_escape)
+        flags |= RE_PARSER_FLAG_ENABLE_STRICT_ESCAPE_SEQUENCES;
+      result = yr_re_parse(str->c_string, &re_ast, &re_error, flags);
+    }
     else
       result = yr_base64_ast_from_string(str, modifier, &re_ast, &re_error);
 
     if (result != ERROR_SUCCESS)
     {
-      snprintf(
-          message,
-          sizeof(message),
-          "invalid %s \"%s\": %s",
-          (modifier.flags & STRING_FLAGS_HEXADECIMAL) ? "hex string"
-                                                      : "regular expression",
-          identifier,
-          re_error.message);
+      if (result == ERROR_UNKNOWN_ESCAPE_SEQUENCE)
+      {
+        yywarning(
+          yyscanner,
+          "unknown escape sequence");
+      }
+      else 
+      {
+        snprintf(
+            message,
+            sizeof(message),
+            "invalid %s \"%s\": %s",
+            (modifier.flags & STRING_FLAGS_HEXADECIMAL) ? "hex string"
+                                                        : "regular expression",
+            identifier,
+            re_error.message);
 
-      yr_compiler_set_error_extra_info(compiler, message);
-      goto _exit;
+        yr_compiler_set_error_extra_info(compiler, message);
+        goto _exit;
+      }
     }
 
     if (re_ast->flags & RE_FLAGS_FAST_REGEXP)

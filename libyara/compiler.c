@@ -240,6 +240,7 @@ YR_API int yr_compiler_create(YR_COMPILER** compiler)
   new_compiler->re_ast_clbk_user_data = NULL;
   new_compiler->last_error = ERROR_SUCCESS;
   new_compiler->last_error_line = 0;
+  new_compiler->strict_escape = false;
   new_compiler->current_line = 0;
   new_compiler->file_name_stack_ptr = 0;
   new_compiler->fixup_stack_head = NULL;
