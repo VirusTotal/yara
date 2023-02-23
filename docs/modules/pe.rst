@@ -1043,6 +1043,12 @@ Reference
 
         Data after being decrypted by XORing it with the key.
 
+    .. c:member:: version_data
+
+        .. versionadded:: 4.3.0
+
+        Version fields after being decrypted by XORing it with the key.
+
     .. c:function:: version(version, [toolid])
 
         .. versionadded:: 3.5.0
