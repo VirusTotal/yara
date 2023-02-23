@@ -141,10 +141,12 @@ static void pe_parse_rich_signature(PE* pe, uint64_t base_address)
   DWORD* rich_ptr = NULL;
   BYTE* raw_data = NULL;
   BYTE* clear_data = NULL;
+  BYTE* version_data = NULL;
   DWORD* p = NULL;
   uint32_t nthdr_offset = 0;
   uint32_t key = 0;
   size_t rich_len = 0;
+  int64_t rich_count = 0;
 
   if (pe->data_size < sizeof(IMAGE_DOS_HEADER))
     return;
@@ -214,7 +216,7 @@ static void pe_parse_rich_signature(PE* pe, uint64_t base_address)
     return;
   }
 
-  // Multiple by 4 because we are counting in DWORDs.
+  // Multiply by 4 because we are counting in DWORDs.
   rich_len = (rich_ptr - (DWORD*) rich_signature) * 4;
   raw_data = (BYTE*) yr_malloc(rich_len);
 
@@ -254,11 +256,40 @@ static void pe_parse_rich_signature(PE* pe, uint64_t base_address)
   yr_set_sized_string(
       (char*) raw_data, rich_len, pe->object, "rich_signature.raw_data");
 
+  yr_free(raw_data);
+
   yr_set_sized_string(
       (char*) clear_data, rich_len, pe->object, "rich_signature.clear_data");
 
-  yr_free(raw_data);
+  // Allocate space for just the version data. This is a series of every other
+  // dword from the clear data. This is useful to be able to hash alone.
+  // We need to skip the first 3 DWORDs of the RICH_SIGNATURE, which are DanS
+  // and XOR keys.
+  rich_count = (rich_len - sizeof(RICH_SIGNATURE)) / sizeof(RICH_VERSION_INFO);
+  version_data = (BYTE*) yr_malloc(rich_count * sizeof(DWORD));
+  if (!version_data)
+  {
+    yr_free(clear_data);
+    return;
+  }
+
+  rich_signature = (PRICH_SIGNATURE) clear_data;
+  for (int i = 0; i < rich_count; i++)
+  {
+    memcpy(
+        version_data + (i * sizeof(DWORD)),
+        &rich_signature->versions[i],
+        sizeof(DWORD));
+  }
+
+  yr_set_sized_string(
+      (char*) version_data,
+      rich_count * sizeof(DWORD),
+      pe->object,
+      "rich_signature.version_data");
+
   yr_free(clear_data);
+  yr_free(version_data);
 }
 
 static void pe_parse_debug_directory(PE* pe)
@@ -3654,6 +3685,7 @@ begin_declarations
     declare_integer("key");
     declare_string("raw_data");
     declare_string("clear_data");
+    declare_string("version_data");
     declare_function("version", "i", "i", rich_version);
     declare_function("version", "ii", "i", rich_version_toolid);
     declare_function("toolid", "i", "i", rich_toolid);
