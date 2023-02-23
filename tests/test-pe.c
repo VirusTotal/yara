@@ -561,6 +561,10 @@ int main(int argc, char** argv)
           pe.export_details[0].offset == 1072 and \
           pe.export_details[0].name == \"DllGetClassObject\" and \
           pe.export_details[0].ordinal == 1 and \
+          pe.export_details[0].rva == 0x1030 and \
+          pe.export_details[1].rva == 0x267d and \
+          pe.export_details[2].rva == 0x26a8 and \
+          pe.export_details[3].rva == 0x26ca and \
           pe.export_details[1].forward_name == \"COMSVCS.GetObjectContext\" \
       }",
       "tests/data/mtxex.dll");
@@ -607,7 +611,8 @@ int main(int argc, char** argv)
       "import \"pe\" \
       rule test { \
         condition: \
-          pe.export_details[0].name == \"CP_PutItem\" \
+          pe.export_details[0].name == \"CP_PutItem\" and \
+          pe.export_details[0].rva == 0x106c \
       }",
       "tests/data/"
       "079a472d22290a94ebb212aa8015cdc8dd28a968c6b4d3b88acdd58ce2d3b885.upx");

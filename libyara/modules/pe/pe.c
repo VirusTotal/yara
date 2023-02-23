@@ -1573,6 +1573,9 @@ static void pe_parse_exports(PE* pe)
     yr_set_integer(
         ordinal_base + i, pe->object, "export_details[%i].ordinal", exp_sz);
 
+    yr_set_integer(
+        yr_le32toh(function_addrs[i]), pe->object, "export_details[%i].rva", exp_sz);
+
     // Don't check for a failure here since some packers make this an invalid
     // value.
     offset = pe_rva_to_offset(pe, yr_le32toh(function_addrs[i]));
@@ -3720,6 +3723,7 @@ begin_declarations
     declare_string("name");
     declare_string("forward_name");
     declare_integer("ordinal");
+    declare_integer("rva");
   end_struct_array("export_details")
 
   begin_struct_array("import_details")
