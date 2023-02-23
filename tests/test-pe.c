@@ -904,6 +904,18 @@ int main(int argc, char** argv)
       }",
       "tests/data/c6f9709feccf42f2d9e22057182fe185f177fb9daaa2649b4669a24f2ee7e3ba_0h_410h");
 
+  assert_true_rule_file(
+      "import \"pe\" \
+      rule invalid_offset { \
+        condition: \
+          not defined pe.export_details[0].offset and  \
+          not defined pe.export_details[7].offset and  \
+          not defined pe.export_details[15].offset and \
+          not defined pe.export_details[21].offset     \
+      }",
+      "tests/data/"
+      "05cd06e6a202e12be22a02700ed6f1604e803ca8867277d852e8971efded0650");
+
   yr_finalize();
 
   YR_DEBUG_FPRINTF(
