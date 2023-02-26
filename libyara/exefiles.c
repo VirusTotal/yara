@@ -105,7 +105,7 @@ uint64_t yr_pe_rva_to_offset(
             sizeof(IMAGE_SECTION_HEADER) <
         buffer_length)
     {
-      if (rva >= section->VirtualAddress &&
+      if (rva >= yr_le32toh(section->VirtualAddress) &&
           section_rva <= yr_le32toh(section->VirtualAddress))
       {
         section_rva = yr_le32toh(section->VirtualAddress);
