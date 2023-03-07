@@ -103,6 +103,7 @@ awesome list of [YARA-related stuff](https://github.com/InQuest/awesome-yara).
 * [McAfee Advanced Threat Defense](https://mcafee.com/atd)
 * [Metaflows](https://www.metaflows.com)
 * [NBS System](https://www.nbs-system.com/)
+* [NetLock](https://netlockendpoint.com) 
 * [Nextron Systems](https://www.nextron-systems.com)
 * [Nozomi Networks](https://www.nozominetworks.com)
 * [osquery](https://www.osquery.io)
