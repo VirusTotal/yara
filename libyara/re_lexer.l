@@ -294,6 +294,8 @@ hex_digit     [0-9a-fA-F]
   else if (return_code == UNKNOWN_ESCAPE_SEQUENCE)
   {
     yywarning(yyscanner, lex_env, "unknown escape sequence");
+    yylval->integer = c;
+    return _CHAR_;
   }
   else
   {
@@ -446,6 +448,7 @@ hex_digit     [0-9a-fA-F]
   else if (return_code == UNKNOWN_ESCAPE_SEQUENCE)
   {
     yywarning(yyscanner, lex_env, "unknown escape sequence");
+    LEX_ENV->re_class.bitmap[c / 8] |= 1 << c % 8;
   }
   else
   {

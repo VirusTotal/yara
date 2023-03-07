@@ -242,8 +242,11 @@ int yr_re_compile(
 {
   RE_AST* re_ast;
   RE _re;
+  int result;
 
-  FAIL_ON_ERROR(yr_re_parse(re_string, &re_ast, error, parser_flags));
+  result = yr_re_parse(re_string, &re_ast, error, parser_flags);
+  if (result != ERROR_UNKNOWN_ESCAPE_SEQUENCE)
+    FAIL_ON_ERROR(result);
 
   _re.flags = flags;
 
@@ -256,7 +259,7 @@ int yr_re_compile(
 
   yr_re_ast_destroy(re_ast);
 
-  return ERROR_SUCCESS;
+  return result;
 }
 
 ////////////////////////////////////////////////////////////////////////////////

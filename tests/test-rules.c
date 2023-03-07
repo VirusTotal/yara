@@ -2411,6 +2411,16 @@ void test_re()
       "rule test { strings: $a = /\\b/ wide condition: $a }",
       TEXT_1024_BYTES "abc");
 
+  assert_true_rule_blob(
+    "rule test { condition: \"avb\" matches /a\\vb/ }",
+    TEXT_1024_BYTES "rule test { condition: \"avb\" matches /a\\vb/ }"
+  )
+
+   assert_false_rule_blob(
+    "rule test { condition: \"ab\" matches /a\\vb/ }",
+    TEXT_1024_BYTES "rule test { condition: \"avb\" matches /a\\vb/ }"
+  )
+
   assert_regexp_syntax_error(")");
   assert_true_regexp("abc", "abc", "abc");
   assert_false_regexp("abc", "xbc");
@@ -3522,6 +3532,7 @@ void test_invalid_escape_sequences_warnings()
     assert_no_warnings("rule test { strings: $a = /ab[\\x00-\\x43]/ condition: $a }");
     assert_warning_strict_escape("rule test { strings: $a = /C:\\Users\\\\[^\\\\]+\\\\AppData\\\\Local\\\\AzireVPN\\\\token\\.txt/ condition: $a }");
     assert_no_warnings("rule test { strings: $a = /C:\\\\Users\\\\[^\\\\]+\\\\AppData\\\\Local\\\\AzireVPN\\\\token\\.txt/ condition: $a }");
+    assert_warning_strict_escape("rule test { condition: \"avb\" matches /a\\vb/ }");
     
     YR_DEBUG_FPRINTF(1, stderr, "} // %s()\n", __FUNCTION__);   
 }

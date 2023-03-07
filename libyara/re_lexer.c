@@ -1357,6 +1357,8 @@ YY_RULE_SETUP
   else if (return_code == UNKNOWN_ESCAPE_SEQUENCE)
   {
     yywarning(yyscanner, lex_env, "unknown escape sequence");
+    yylval->integer = c;
+    return _CHAR_;
   }
   else
   {
@@ -1367,7 +1369,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 18:
 YY_RULE_SETUP
-#line 306 "libyara/re_lexer.l"
+#line 308 "libyara/re_lexer.l"
 {
 
   // End of character class.
@@ -1383,7 +1385,7 @@ YY_RULE_SETUP
 case 19:
 /* rule 19 can match eol */
 YY_RULE_SETUP
-#line 320 "libyara/re_lexer.l"
+#line 322 "libyara/re_lexer.l"
 {
 
   // A range inside a character class. The regexp is...
@@ -1448,7 +1450,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 20:
 YY_RULE_SETUP
-#line 383 "libyara/re_lexer.l"
+#line 385 "libyara/re_lexer.l"
 {
 
   for (int i = 0; i < 32; i++)
@@ -1457,7 +1459,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 21:
 YY_RULE_SETUP
-#line 390 "libyara/re_lexer.l"
+#line 392 "libyara/re_lexer.l"
 {
 
   for (int i = 0; i < 32; i++)
@@ -1466,7 +1468,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 22:
 YY_RULE_SETUP
-#line 397 "libyara/re_lexer.l"
+#line 399 "libyara/re_lexer.l"
 {
 
   for (int i = 0; i < 32; i++)
@@ -1475,7 +1477,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 23:
 YY_RULE_SETUP
-#line 404 "libyara/re_lexer.l"
+#line 406 "libyara/re_lexer.l"
 {
 
   for (int i = 0; i < 32; i++)
@@ -1484,7 +1486,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 24:
 YY_RULE_SETUP
-#line 411 "libyara/re_lexer.l"
+#line 413 "libyara/re_lexer.l"
 {
 
   for (char c = '0'; c <= '9'; c++)
@@ -1493,7 +1495,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 25:
 YY_RULE_SETUP
-#line 418 "libyara/re_lexer.l"
+#line 420 "libyara/re_lexer.l"
 {
 
   for (int i = 0; i < 32; i++)
@@ -1513,7 +1515,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 26:
 YY_RULE_SETUP
-#line 436 "libyara/re_lexer.l"
+#line 438 "libyara/re_lexer.l"
 {
 
   uint8_t c;
@@ -1527,6 +1529,7 @@ YY_RULE_SETUP
   else if (return_code == UNKNOWN_ESCAPE_SEQUENCE)
   {
     yywarning(yyscanner, lex_env, "unknown escape sequence");
+    LEX_ENV->re_class.bitmap[c / 8] |= 1 << c % 8;
   }
   else
   {
@@ -1537,7 +1540,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 27:
 YY_RULE_SETUP
-#line 458 "libyara/re_lexer.l"
+#line 461 "libyara/re_lexer.l"
 {
 
   if (yytext[0] >= 32 && yytext[0] < 127)
@@ -1555,7 +1558,7 @@ YY_RULE_SETUP
 }
 	YY_BREAK
 case YY_STATE_EOF(char_class):
-#line 475 "libyara/re_lexer.l"
+#line 478 "libyara/re_lexer.l"
 {
 
   // End of regexp reached while scanning a character class.
@@ -1566,7 +1569,7 @@ case YY_STATE_EOF(char_class):
 	YY_BREAK
 case 28:
 YY_RULE_SETUP
-#line 484 "libyara/re_lexer.l"
+#line 487 "libyara/re_lexer.l"
 {
 
   if (yytext[0] >= 32 && yytext[0] < 127)
@@ -1581,7 +1584,7 @@ YY_RULE_SETUP
 }
 	YY_BREAK
 case YY_STATE_EOF(INITIAL):
-#line 498 "libyara/re_lexer.l"
+#line 501 "libyara/re_lexer.l"
 {
 
   yyterminate();
@@ -1589,10 +1592,10 @@ case YY_STATE_EOF(INITIAL):
 	YY_BREAK
 case 29:
 YY_RULE_SETUP
-#line 503 "libyara/re_lexer.l"
+#line 506 "libyara/re_lexer.l"
 ECHO;
 	YY_BREAK
-#line 1595 "libyara/re_lexer.c"
+#line 1598 "libyara/re_lexer.c"
 
 	case YY_END_OF_BUFFER:
 		{
@@ -2741,7 +2744,7 @@ void yyfree (void * ptr , yyscan_t yyscanner)
 
 #define YYTABLES_NAME "yytables"
 
-#line 503 "libyara/re_lexer.l"
+#line 506 "libyara/re_lexer.l"
 
 
 int escaped_char_value(
