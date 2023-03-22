@@ -372,6 +372,11 @@ YR_API YR_MEMORY_BLOCK* yr_process_get_next_memory_block(
       // If the row was parsed correctly sscan must return 7.
       if (n == 7)
       {
+        // skip the memory region that doesn't have read permission.
+        if (perm[0] != 'r')
+        {
+          continue;
+        }
         // path_start contains the offset within buffer where the path starts,
         // the path should start with /.
         if (buffer[path_start] == '/')
