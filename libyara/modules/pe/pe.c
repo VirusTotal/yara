@@ -419,7 +419,7 @@ static const PIMAGE_RESOURCE_DIR_STRING_U parse_resource_name(
 
     // Move past the length and make sure we have enough bytes for the string.
     if (!fits_in_pe(
-            pe, pNameString, sizeof(uint16_t) + pNameString->Length * 2))
+            pe, pNameString, sizeof(uint16_t) + yr_le16toh(pNameString->Length) * 2))
       return NULL;
 
     return pNameString;
@@ -724,7 +724,7 @@ static void pe_set_resource_string_or_id(
   if (rsrc_string)
   {
     // Multiply by 2 because it is a Unicode string.
-    size_t length = rsrc_string->Length * 2;
+    size_t length = yr_le16toh(rsrc_string->Length) * 2;
 
     // Check if the whole string fits in the PE image.
     // If not, the name becomes UNDEFINED by default.
@@ -2023,7 +2023,7 @@ static void pe_parse_header(PE* pe, uint64_t base_address, int flags)
       "number_of_symbols");
 
   yr_set_integer(
-      yr_le32toh(pe->header->FileHeader.SizeOfOptionalHeader),
+      yr_le16toh(pe->header->FileHeader.SizeOfOptionalHeader),
       pe->object,
       "size_of_optional_header");
 
@@ -2057,7 +2057,7 @@ static void pe_parse_header(PE* pe, uint64_t base_address, int flags)
       "number_of_rva_and_sizes");
 
   yr_set_integer(
-      yr_le32toh(OptionalHeader(pe, Magic)), pe->object, "opthdr_magic");
+      yr_le16toh(OptionalHeader(pe, Magic)), pe->object, "opthdr_magic");
 
   yr_set_integer(
       OptionalHeader(pe, MajorLinkerVersion),
@@ -2153,7 +2153,7 @@ static void pe_parse_header(PE* pe, uint64_t base_address, int flags)
       yr_le16toh(OptionalHeader(pe, Subsystem)), pe->object, "subsystem");
 
   yr_set_integer(
-      OptionalHeader(pe, DllCharacteristics),
+      yr_le16toh(OptionalHeader(pe, DllCharacteristics)),
       pe->object,
       "dll_characteristics");
 
@@ -2187,7 +2187,7 @@ static void pe_parse_header(PE* pe, uint64_t base_address, int flags)
   data_dir = IS_64BITS_PE(pe) ? pe->header64->OptionalHeader.DataDirectory
                               : pe->header->OptionalHeader.DataDirectory;
 
-  ddcount = yr_le16toh(OptionalHeader(pe, NumberOfRvaAndSizes));
+  ddcount = yr_le32toh(OptionalHeader(pe, NumberOfRvaAndSizes));
   ddcount = yr_min(ddcount, IMAGE_NUMBEROF_DIRECTORY_ENTRIES);
 
   for (int i = 0; i < ddcount; i++)
