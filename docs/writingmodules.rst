@@ -226,9 +226,10 @@ Just add a new line for your module::
 And that's all! Now you're ready to build YARA with your brand-new module
 included. Just go to the source tree root directory and type as always::
 
+    ./bootstrap.sh
+    ./configure
     make
     sudo make install
-
 
 Now you should be able to create a rule like this:
 
