@@ -1622,6 +1622,8 @@ static void pe_parse_exports(PE* pe)
     }
     else
     {
+      if (offset < 0)
+        offset = YR_UNDEFINED;
       yr_set_integer(offset, pe->object, "export_details[%i].offset", exp_sz);
     }
 
