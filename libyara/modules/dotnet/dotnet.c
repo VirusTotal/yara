@@ -274,7 +274,7 @@ static const char* get_typedef_type(uint32_t flags)
 static char* create_full_name(const char* name, const char* namespace)
 {
   if (!name || !strlen(name))
-    return namespace ? strdup(namespace) : NULL;
+    return namespace ? yr_strdup(namespace) : NULL;
 
   // No namespace -> return name only
   if (!namespace || !strlen(namespace))
