@@ -453,7 +453,7 @@ Reference
 
   .. py:method:: save(...)
 
-    .. versionchanged:: 3.4.0
+  .. versionchanged:: 3.4.0
 
     Save compiled rules to a file. Either *filepath* or *file* must be provided.
 
@@ -462,6 +462,8 @@ Reference
     :raises: **yara.Error**: If an error occurred while saving the file.
 
 .. py:class:: Match
+
+  .. versionadded:: 4.3.0
 
   Objects returned by :py:meth:`yara.Rules.match`, representing a match.
 
@@ -487,6 +489,8 @@ Reference
 
 .. py:class:: StringMatch
 
+  .. versionadded:: 3.4.0
+
   Objects which represent string matches.
 
   .. py:attribute:: identifier
@@ -502,6 +506,8 @@ Reference
     Returns a boolean if the string is using the xor modifier.
 
 .. py:class:: StringMatchInstance
+
+  .. versionadded:: 4.3.0
 
   Objects which represent instances of matched strings.
 
@@ -525,4 +531,3 @@ Reference
 
     Returns the plaintext version of the string after xor key is applied. If
     the string is not an xor string then no modification is done.
-
