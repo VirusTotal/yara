@@ -3019,7 +3019,7 @@ define_function(import_rva)
   {
     dll_name = yr_get_string(module, "import_details[%i].library_name", i);
     if (dll_name == NULL || IS_UNDEFINED(dll_name) ||
-        ss_compare(in_dll_name, dll_name) != 0)
+        ss_icompare(in_dll_name, dll_name) != 0)
       continue;
 
     int64_t num_functions = yr_get_integer(
@@ -3034,7 +3034,7 @@ define_function(import_rva)
       if (function_name == NULL || IS_UNDEFINED(function_name))
         continue;
 
-      if (ss_compare(in_function_name, function_name) == 0)
+      if (ss_icompare(in_function_name, function_name) == 0)
         return_integer(yr_get_integer(
             module, "import_details[%i].functions[%i].rva", i, j));
     }
@@ -3064,7 +3064,7 @@ define_function(import_rva_ordinal)
   {
     dll_name = yr_get_string(module, "import_details[%i].library_name", i);
     if (dll_name == NULL || IS_UNDEFINED(dll_name) ||
-        ss_compare(in_dll_name, dll_name) != 0)
+        ss_icompare(in_dll_name, dll_name) != 0)
       continue;
 
     int64_t num_functions = yr_get_integer(
@@ -3112,7 +3112,7 @@ define_function(delayed_import_rva)
         module, "delayed_import_details[%i].library_name", i);
 
     if (dll_name == NULL || IS_UNDEFINED(dll_name) ||
-        ss_compare(in_dll_name, dll_name) != 0)
+        ss_icompare(in_dll_name, dll_name) != 0)
       continue;
 
     int64_t num_functions = yr_get_integer(
@@ -3129,7 +3129,7 @@ define_function(delayed_import_rva)
       if (function_name == NULL || IS_UNDEFINED(function_name))
         continue;
 
-      if (ss_compare(in_function_name, function_name) == 0)
+      if (ss_icompare(in_function_name, function_name) == 0)
         return_integer(yr_get_integer(
             module, "delayed_import_details[%i].functions[%i].rva", i, j));
     }
@@ -3161,7 +3161,7 @@ define_function(delayed_import_rva_ordinal)
         module, "delayed_import_details[%i].library_name", i);
 
     if (dll_name == NULL || IS_UNDEFINED(dll_name) ||
-        ss_compare(in_dll_name, dll_name) != 0)
+        ss_icompare(in_dll_name, dll_name) != 0)
       continue;
 
     int64_t num_functions = yr_get_integer(
