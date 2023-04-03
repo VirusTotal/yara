@@ -883,7 +883,7 @@ int main(int argc, char** argv)
       "tests/data/pe_mingw");
 
   // These are intentionally using DLL and function names with incorrect case
-  // sure the string compare is case insensitive.
+  // to be sure the string compare is case insensitive.
   assert_true_rule_file(
       "import \"pe\" \
       rule test { \
@@ -895,7 +895,7 @@ int main(int argc, char** argv)
       "ca21e1c32065352d352be6cde97f89c141d7737ea92434831f998080783d5386");
 
   // These are intentionally using DLL and function names with incorrect case
-  // sure the string compare is case insensitive.
+  // to be sure the string compare is case insensitive.
   assert_true_rule_file(
       "import \"pe\" \
       rule test { \
