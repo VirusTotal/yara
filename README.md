@@ -78,6 +78,7 @@ awesome list of [YARA-related stuff](https://github.com/InQuest/awesome-yara).
 * [Dtex Systems](https://dtexsystems.com)
 * [ESET](https://www.eset.com)
 * [ESTsecurity](https://www.estsecurity.com)
+* [Elastic Security](https://github.com/elastic/protections-artifacts)
 * [Fidelis XPS](https://www.fidelissecurity.com/network-security-appliance/Fidelis-XPS)
 * [FireEye, Inc.](https://www.fireeye.com)
 * [Forcepoint](https://www.forcepoint.com)
@@ -135,6 +136,5 @@ awesome list of [YARA-related stuff](https://github.com/InQuest/awesome-yara).
 * [We Watch Your Website](https://www.wewatchyourwebsite.com/)
 * [x64dbg](https://x64dbg.com)
 * [YALIH](https://github.com/Masood-M/YALIH)
-* [Elastic Security](https://github.com/elastic/protections-artifacts)
 
 Are you using it? Want to see your site listed here?
