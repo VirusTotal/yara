@@ -283,6 +283,24 @@ int main(int argc, char** argv)
           not defined(math.to_string(32, 9)) \
       }",
       NULL);
+      
+  assert_true_rule_blob(
+      "import \"math\" \
+      rule test { \
+        condition: \
+          math.index_of_coincidence(3, 43) > 0.021848 and \
+          math.index_of_coincidence(3, 43) < 0.021850 \
+      }",
+      "AAAThe quick brown fox jumps over the lazy dogAAA");
+      
+  assert_true_rule(
+      "import \"math\" \
+      rule test { \
+        condition: \
+          math.index_of_coincidence(\"The quick brown fox jumps over the lazy dog\") > 0.021848 and \
+          math.index_of_coincidence(\"The quick brown fox jumps over the lazy dog\") < 0.021850 \
+      }",
+      NULL);
 
   yr_finalize();
 
