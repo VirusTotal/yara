@@ -30,6 +30,22 @@ int main(int argc, char** argv)
           lnk.creation_time == 1221251237 \
       }",
       "tests/data/lnk-standard");
+      
+  assert_true_rule_file(
+      "import \"lnk\" \
+      rule access_time { \
+        condition: \
+          lnk.access_time == 1221251237 \
+      }",
+      "tests/data/lnk-standard");
+      
+  assert_true_rule_file(
+      "import \"lnk\" \
+      rule write_time { \
+        condition: \
+          lnk.write_time == 1221251237 \
+      }",
+      "tests/data/lnk-standard");
 	  
   assert_true_rule_file(
       "import \"lnk\" \
