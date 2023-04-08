@@ -242,6 +242,16 @@ YR_API int yr_scanner_create(YR_RULES* rules, YR_SCANNER** scanner)
   new_scanner->unconfirmed_matches = (YR_MATCHES*) yr_calloc(
       rules->num_strings, sizeof(YR_MATCHES));
 
+  if (new_scanner->rule_matches_flags == NULL ||
+      new_scanner->ns_unsatisfied_flags == NULL ||
+      new_scanner->strings_temp_disabled == NULL ||
+      new_scanner->matches == NULL ||  //
+      new_scanner->unconfirmed_matches == NULL)
+  {
+    yr_scanner_destroy(new_scanner);
+    return ERROR_INSUFFICIENT_MEMORY;
+  }
+
 #ifdef YR_PROFILING_ENABLED
   new_scanner->profiling_info = yr_calloc(
       rules->num_rules, sizeof(YR_PROFILING_INFO));

@@ -1320,7 +1320,8 @@ using the syntax: @a[i], where i is an index indicating which occurrence
 of the string $a you are referring to. (@a[1], @a[2],...).
 
 Sometimes you will need to iterate over some of these offsets and guarantee
-they satisfy a given condition. For example:
+they satisfy a given condition. In such cases you can use the ``for..in`` syntax, 
+for example:
 
 .. code-block:: yara
 
@@ -1365,17 +1366,15 @@ applies here:
     for any i in (1..#a) : ( @a[i] < 100 )
     for 2 i in (1..#a) : ( @a[i] < 100 )
 
-In summary, the syntax of this operator is:
-
-.. code-block:: yara
-
-    for expression identifier in indexes : ( boolean_expression )
+The ``for..in`` operator is similar to ``for..of``, but the latter iterates over
+a set of strings, while the former iterates over ranges, enumerations, arrays and 
+dictionaries. 
 
 
 Iterators
 ---------
 
-In YARA 4.0 the ``for..of`` operator was improved and now it can be used to
+In YARA 4.0 the ``for..in`` operator was improved and now it can be used to
 iterate not only over integer enumerations and ranges (e.g: 1,2,3,4 and 1..4),
 but also over any kind of iterable data type, like arrays and dictionaries
 defined by YARA modules. For example, the following expression is valid in
@@ -1401,7 +1400,7 @@ hold the key and value for each entry in the dictionary, for example:
 
     for any k,v in some_dict : ( k == "foo" and v == "bar" )
 
-In general the ``for..of`` operator has the form:
+In general the ``for..in`` operator has the form:
 
 .. code-block:: yara
 

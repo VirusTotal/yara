@@ -118,7 +118,7 @@ BLOB_PARSE_RESULT dotnet_parse_blob_entry(PE* pe, const uint8_t* offset)
 
   if ((*offset & 0x80) == 0x00)
   {
-    result.length = (DWORD) *offset;
+    result.length = (uint32_t) (*offset);
     result.size = 1;
   }
   else if ((*offset & 0xC0) == 0x80)
@@ -274,7 +274,7 @@ static const char* get_typedef_type(uint32_t flags)
 static char* create_full_name(const char* name, const char* namespace)
 {
   if (!name || !strlen(name))
-    return namespace ? strdup(namespace) : NULL;
+    return namespace ? yr_strdup(namespace) : NULL;
 
   // No namespace -> return name only
   if (!namespace || !strlen(namespace))
@@ -961,6 +961,7 @@ static char* parse_signature_type(
       break;
 
     uint32_t gen_count = read_blob_unsigned(data, len);
+
     // Sanity check for corrupted files
     if (gen_count > MAX_GEN_PARAM_COUNT)
     {
@@ -981,12 +982,15 @@ static char* parse_signature_type(
     {
       char* param_type = parse_signature_type(
           ctx, data, len, class_gen_params, method_gen_params, depth + 1);
-      if (i)
-        sstr_appendf(ss, ",");
-      if (param_type)
-        sstr_appendf(ss, "%s", param_type);
 
-      yr_free(param_type);
+      if (param_type != NULL)
+      {
+        if (i > 0)
+          sstr_appendf(ss, ",");
+
+        sstr_appendf(ss, "%s", param_type);
+        yr_free(param_type);
+      }
     }
     bool res = sstr_appendf(ss, ">");
     if (res)
@@ -1005,6 +1009,14 @@ static char* parse_signature_type(
       (*len)--;
 
       uint32_t param_count = read_blob_unsigned(data, len);
+
+      // Sanity check for corrupted files
+      if (param_count > MAX_PARAM_COUNT)
+      {
+        yr_free(tmp);
+        break;
+      }
+
       tmp = parse_signature_type(
           ctx, data, len, class_gen_params, method_gen_params, depth + 1);
 
@@ -1025,15 +1037,18 @@ static char* parse_signature_type(
       {
         char* param_type = parse_signature_type(
             ctx, data, len, class_gen_params, method_gen_params, depth + 1);
-        if (i)
-          sstr_appendf(ss, ", ");
-        if (param_type)
-          sstr_appendf(ss, "%s", param_type);
 
-        yr_free(param_type);
+        if (param_type != NULL)
+        {
+          if (i > 0)
+            sstr_appendf(ss, ", ");
+
+          sstr_appendf(ss, "%s", param_type);
+          yr_free(param_type);
+        }
       }
-      bool res = sstr_appendf(ss, ")>");
-      if (res)
+
+      if (sstr_appendf(ss, ")>"))
         ret_type = sstr_move(ss);
 
       sstr_free(ss);
@@ -1163,6 +1178,7 @@ static bool parse_method_params(
 
   // Array to hold all the possible parameters
   PARAMETERS* params = yr_calloc(param_count, sizeof(PARAMETERS));
+
   if (!params)
     return false;
 
@@ -1178,6 +1194,7 @@ static bool parse_method_params(
     {
       PARAM_ROW row = {0};
       bool result = read_param(ctx, data, &row);
+
       if (!result)
       {  // Cleanup and return
         for (uint32_t j = 0; j < idx; ++j)
@@ -1334,6 +1351,7 @@ static void parse_methods(
   {
     const uint8_t* data = get_table_offset(
         &ctx->tables->methoddef, methodlist + idx);
+
     if (!data)
       break;
 
@@ -1355,11 +1373,12 @@ static void parse_methods(
 
     // Read the blob entry with signature data
     const uint8_t* sig_data = ctx->blob_heap + row.Signature;
+
     BLOB_PARSE_RESULT blob_res = dotnet_parse_blob_entry(ctx->pe, sig_data);
     sig_data += blob_res.size;
     uint32_t sig_len = blob_res.length;
-
     uint32_t param_count = 0;
+
     char* return_type = NULL;
     // If there is valid blob and at least minimum to parse
     // (flags, paramCount, retType) parse these basic information
@@ -1394,6 +1413,7 @@ static void parse_methods(
         sig_len,
         class_gen_params,
         &method_gen_params);
+
     if (!result)
       goto clean_next;
 
@@ -3057,8 +3077,9 @@ void dotnet_parse_tilde_2(
       .index_sizes = &index_sizes,
       .str_heap = string_offset,
       .str_size = str_heap_size,
-      .blob_heap = pe->data + streams->metadata_root + streams->blob->Offset,
-      .blob_size = streams->blob->Size};
+      .blob_heap = pe->data + streams->metadata_root +
+                   yr_le32toh(streams->blob->Offset),
+      .blob_size = yr_le32toh(streams->blob->Size)};
 
   parse_user_types(&class_context);
 }
@@ -3263,7 +3284,7 @@ static bool dotnet_is_dotnet(PE* pe)
 
   if (IS_64BITS_PE(pe))
   {
-    if (yr_le16toh(OptionalHeader(pe, NumberOfRvaAndSizes)) <
+    if (yr_le32toh(OptionalHeader(pe, NumberOfRvaAndSizes)) <
         IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR)
       return false;
   }

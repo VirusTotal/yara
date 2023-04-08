@@ -1203,8 +1203,8 @@ static int callback(
 #if defined(_WIN32)
       // In Windows restore stdout to normal text mode as yr_object_print_data
       // calls printf which is not supported in UTF-8 mode.
-      // Explicitly flush the buffer before the switch in case we already printed
-      // something and it haven't been flushed automatically.
+      // Explicitly flush the buffer before the switch in case we already
+      // printed something and it haven't been flushed automatically.
       fflush(stdout);
       _setmode(_fileno(stdout), _O_TEXT);
 #endif
@@ -1214,8 +1214,8 @@ static int callback(
 
 #if defined(_WIN32)
       // Go back to UTF-8 mode.
-      // Explicitly flush the buffer before the switch in case we already printed
-      // something and it haven't been flushed automatically.
+      // Explicitly flush the buffer before the switch in case we already
+      // printed something and it haven't been flushed automatically.
       fflush(stdout);
       _setmode(_fileno(stdout), _O_U8TEXT);
 #endif
@@ -1411,8 +1411,11 @@ int _tmain(int argc, const char_t** argv)
   // module functions, just accessing the name pointer for each module.
   if (show_module_names)
   {
-    for (YR_MODULE* module = yr_modules_get_table(); module->name != NULL; module++)
+    for (YR_MODULE* module = yr_modules_get_table(); module->name != NULL;
+         module++)
+    {
       printf("%s\n", module->name);
+    }
     return EXIT_SUCCESS;
   }
 
@@ -1615,9 +1618,6 @@ int _tmain(int argc, const char_t** argv)
     else
     {
       result = populate_scan_list(argv[argc - 1], &scan_opts);
-
-      if (result != ERROR_SUCCESS)
-        exit_with_code(EXIT_FAILURE);
     }
 
     file_queue_finish();
@@ -1629,6 +1629,9 @@ int _tmain(int argc, const char_t** argv)
       yr_scanner_destroy(thread_args[i].scanner);
 
     file_queue_destroy();
+
+    if (result != ERROR_SUCCESS)
+      exit_with_code(EXIT_FAILURE);
   }
   else
   {

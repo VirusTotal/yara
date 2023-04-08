@@ -10,6 +10,8 @@ int main(int argc, char** argv)
   YR_DEBUG_INITIALIZE();
   YR_DEBUG_FPRINTF(1, stderr, "+ %s() { // in %s\n", __FUNCTION__, argv[0]);
 
+  init_top_srcdir();
+
   yr_initialize();
 
   assert_true_rule_blob(
@@ -257,6 +259,16 @@ int main(int argc, char** argv)
             elf.dynamic[i].val == 0x4003c0) \
       }",
       ELF_x64_FILE);
+
+  assert_true_rule_file(
+      "import \"elf\" \
+      rule test { \
+        condition: \
+          elf.telfhash() == \
+            \"T174B012188204F00184540770331E0B111373086019509C464D0ACE88181266C09774FA\" \
+      }",
+      "tests/data/elf_with_imports");
+
 
   yr_finalize();
 

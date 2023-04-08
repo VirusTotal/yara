@@ -42,7 +42,19 @@ case $host_alias in
      i?86-*-mingw*) CFLAGS="$CFLAGS -D__MINGW_USE_VC2005_COMPAT" ;;
 esac
 
-case $host_os in
+AC_ARG_ENABLE([proc-scan],
+  [AS_HELP_STRING([--disable-proc-scan], [disable process scanning])],
+  [if test x$enableval = xyes; then
+    AC_MSG_ERROR([
+*****************************************************************
+  Process scanning is enabled by default, remove --enable-proc-scan.
+*****************************************************************
+])
+  else
+    proc_interface=none
+    CFLAGS="$CFLAGS -DUSE_NO_PROC"
+  fi],
+  [case $host_os in
     darwin*) CFLAGS="$CFLAGS -I/opt/local/include"
              # Starting with Mac OS X 10.11 (El Capitan) the OpenSSL headers
              # are in /usr/local/opt/openssl/include
@@ -74,7 +86,9 @@ case $host_os in
             CFLAGS="$CFLAGS -DUSE_NO_PROC"
             proc_interface=none
             jemalloc_prefix= ;;
-esac
+  esac])
+
+
 
 ACX_PTHREAD(
     [LIBS="$PTHREAD_LIBS $LIBS"

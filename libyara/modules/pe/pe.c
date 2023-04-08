@@ -141,10 +141,12 @@ static void pe_parse_rich_signature(PE* pe, uint64_t base_address)
   DWORD* rich_ptr = NULL;
   BYTE* raw_data = NULL;
   BYTE* clear_data = NULL;
+  BYTE* version_data = NULL;
   DWORD* p = NULL;
   uint32_t nthdr_offset = 0;
   uint32_t key = 0;
   size_t rich_len = 0;
+  int64_t rich_count = 0;
 
   if (pe->data_size < sizeof(IMAGE_DOS_HEADER))
     return;
@@ -214,7 +216,7 @@ static void pe_parse_rich_signature(PE* pe, uint64_t base_address)
     return;
   }
 
-  // Multiple by 4 because we are counting in DWORDs.
+  // Multiply by 4 because we are counting in DWORDs.
   rich_len = (rich_ptr - (DWORD*) rich_signature) * 4;
   raw_data = (BYTE*) yr_malloc(rich_len);
 
@@ -254,11 +256,40 @@ static void pe_parse_rich_signature(PE* pe, uint64_t base_address)
   yr_set_sized_string(
       (char*) raw_data, rich_len, pe->object, "rich_signature.raw_data");
 
+  yr_free(raw_data);
+
   yr_set_sized_string(
       (char*) clear_data, rich_len, pe->object, "rich_signature.clear_data");
 
-  yr_free(raw_data);
+  // Allocate space for just the version data. This is a series of every other
+  // dword from the clear data. This is useful to be able to hash alone.
+  // We need to skip the first 3 DWORDs of the RICH_SIGNATURE, which are DanS
+  // and XOR keys.
+  rich_count = (rich_len - sizeof(RICH_SIGNATURE)) / sizeof(RICH_VERSION_INFO);
+  version_data = (BYTE*) yr_malloc(rich_count * sizeof(DWORD));
+  if (!version_data)
+  {
+    yr_free(clear_data);
+    return;
+  }
+
+  rich_signature = (PRICH_SIGNATURE) clear_data;
+  for (int i = 0; i < rich_count; i++)
+  {
+    memcpy(
+        version_data + (i * sizeof(DWORD)),
+        &rich_signature->versions[i],
+        sizeof(DWORD));
+  }
+
+  yr_set_sized_string(
+      (char*) version_data,
+      rich_count * sizeof(DWORD),
+      pe->object,
+      "rich_signature.version_data");
+
   yr_free(clear_data);
+  yr_free(version_data);
 }
 
 static void pe_parse_debug_directory(PE* pe)
@@ -388,7 +419,7 @@ static const PIMAGE_RESOURCE_DIR_STRING_U parse_resource_name(
 
     // Move past the length and make sure we have enough bytes for the string.
     if (!fits_in_pe(
-            pe, pNameString, sizeof(uint16_t) + pNameString->Length * 2))
+            pe, pNameString, sizeof(uint16_t) + yr_le16toh(pNameString->Length) * 2))
       return NULL;
 
     return pNameString;
@@ -693,7 +724,7 @@ static void pe_set_resource_string_or_id(
   if (rsrc_string)
   {
     // Multiply by 2 because it is a Unicode string.
-    size_t length = rsrc_string->Length * 2;
+    size_t length = yr_le16toh(rsrc_string->Length) * 2;
 
     // Check if the whole string fits in the PE image.
     // If not, the name becomes UNDEFINED by default.
@@ -837,7 +868,8 @@ static IMPORT_FUNCTION* pe_parse_import_descriptor(
         has_ordinal = 1;
       }
 
-      rva_address =  yr_le64toh(import_descriptor->FirstThunk + (sizeof(uint64_t) * func_idx));
+      rva_address = yr_le32toh(import_descriptor->FirstThunk) +
+                    (sizeof(uint64_t) * func_idx);
 
       if (name != NULL || has_ordinal == 1)
       {
@@ -911,7 +943,8 @@ static IMPORT_FUNCTION* pe_parse_import_descriptor(
         has_ordinal = 1;
       }
 
-      rva_address =  yr_le32toh(import_descriptor->FirstThunk + (sizeof(uint32_t) * func_idx));
+      rva_address = yr_le32toh(import_descriptor->FirstThunk) +
+                    (sizeof(uint32_t) * func_idx);
 
       if (name != NULL || has_ordinal == 1)
       {
@@ -1008,14 +1041,18 @@ void pe_set_imports(
   for (; dll != NULL; dll = dll->next, dll_cnt++)
   {
     int fun_cnt = 0;
+
     for (IMPORT_FUNCTION* func = dll->functions; func != NULL;
          func = func->next, fun_cnt++)
     {
       yr_set_string(func->name, pe->object, fun_name, dll_cnt, fun_cnt);
+
       if (func->has_ordinal)
-        yr_set_integer(func->ordinal, pe->object, fun_ordinal, dll_cnt, fun_cnt);
+        yr_set_integer(
+            func->ordinal, pe->object, fun_ordinal, dll_cnt, fun_cnt);
       else
         yr_set_integer(YR_UNDEFINED, pe->object, fun_ordinal, dll_cnt, fun_cnt);
+
       if (func->rva)
         yr_set_integer(func->rva, pe->object, rva, dll_cnt, fun_cnt);
       else
@@ -1114,7 +1151,8 @@ static IMPORTED_DLL* pe_parse_imports(PE* pe)
   }
 
   yr_set_integer(num_imports, pe->object, "number_of_imports");
-  yr_set_integer(num_function_imports, pe->object, "number_of_imported_functions");
+  yr_set_integer(
+      num_function_imports, pe->object, "number_of_imported_functions");
   pe_set_imports(
       pe,
       head,
@@ -1323,6 +1361,7 @@ static void* pe_parse_delayed_imports(PE* pe)
     {
       uint64_t nameAddress = pe_parse_delay_import_pointer(
           pe, pointer_size, name_rva);
+
       uint64_t funcAddress = pe_parse_delay_import_pointer(
           pe, pointer_size, func_rva);
 
@@ -1355,6 +1394,7 @@ static void* pe_parse_delayed_imports(PE* pe)
               image_base, nameAddress);
 
         offset = pe_rva_to_offset(pe, nameAddress + sizeof(uint16_t));
+
         imported_func->name = (char*) yr_strndup(
             (char*) (pe->data + offset),
             yr_min(available_space(pe, (char*) (pe->data + offset)), 512));
@@ -1362,14 +1402,14 @@ static void* pe_parse_delayed_imports(PE* pe)
       else
       {
         // If imported by ordinal. Lookup the ordinal.
-        imported_func->name = ord_lookup(
-            dll_name, yr_le64toh(nameAddress) & 0xFFFF);
+        imported_func->name = ord_lookup(dll_name, nameAddress & 0xFFFF);
+
         // Also store the ordinal.
-        imported_func->ordinal = yr_le64toh(nameAddress) & 0xFFFF;
+        imported_func->ordinal = nameAddress & 0xFFFF;
         imported_func->has_ordinal = 1;
       }
 
-      imported_func->rva =  yr_le64toh(func_rva);
+      imported_func->rva = func_rva;
 
       num_function_imports++;
       name_rva += pointer_size;
@@ -1582,6 +1622,8 @@ static void pe_parse_exports(PE* pe)
     }
     else
     {
+      if (offset < 0)
+        offset = YR_UNDEFINED;
       yr_set_integer(offset, pe->object, "export_details[%i].offset", exp_sz);
     }
 
@@ -1628,19 +1670,22 @@ static void pe_parse_exports(PE* pe)
     for (int j = 0; j < cert->sha1.len; ++j)                                   \
       sprintf(thumbprint_ascii + (j * 2), "%02x", cert->sha1.data[j]);         \
                                                                                \
-    yr_set_string(                                                                \
+    yr_set_string(                                                             \
         (char*) thumbprint_ascii, pe->object, fmt ".thumbprint", __VA_ARGS__); \
                                                                                \
-    yr_set_string(cert->issuer, pe->object, fmt ".issuer", __VA_ARGS__);          \
-    yr_set_string(cert->subject, pe->object, fmt ".subject", __VA_ARGS__);        \
+    yr_set_string(cert->issuer, pe->object, fmt ".issuer", __VA_ARGS__);       \
+    yr_set_string(cert->subject, pe->object, fmt ".subject", __VA_ARGS__);     \
     /* Versions are zero based, so add one.  */                                \
-    yr_set_integer(cert->version + 1, pe->object, fmt ".version", __VA_ARGS__);   \
-    yr_set_string(cert->sig_alg, pe->object, fmt ".algorithm", __VA_ARGS__);      \
-    yr_set_string(                                                                \
+    yr_set_integer(                                                            \
+        cert->version + 1, pe->object, fmt ".version", __VA_ARGS__);           \
+    yr_set_string(cert->sig_alg, pe->object, fmt ".algorithm", __VA_ARGS__);   \
+    yr_set_string(                                                             \
         cert->sig_alg_oid, pe->object, fmt ".algorithm_oid", __VA_ARGS__);     \
-    yr_set_string(cert->serial, pe->object, fmt ".serial", __VA_ARGS__);          \
-    yr_set_integer(cert->not_before, pe->object, fmt ".not_before", __VA_ARGS__); \
-    yr_set_integer(cert->not_after, pe->object, fmt ".not_after", __VA_ARGS__);   \
+    yr_set_string(cert->serial, pe->object, fmt ".serial", __VA_ARGS__);       \
+    yr_set_integer(                                                            \
+        cert->not_before, pe->object, fmt ".not_before", __VA_ARGS__);         \
+    yr_set_integer(                                                            \
+        cert->not_after, pe->object, fmt ".not_after", __VA_ARGS__);           \
   } while (0)
 
 void _process_authenticode(
@@ -1677,7 +1722,8 @@ void _process_authenticode(
       for (int j = 0; j < authenticode->digest.len; ++j)
         sprintf(digest_ascii + (j * 2), "%02x", authenticode->digest.data[j]);
 
-      yr_set_string(digest_ascii, pe->object, "signatures[%i].digest", *sig_count);
+      yr_set_string(
+          digest_ascii, pe->object, "signatures[%i].digest", *sig_count);
       yr_free(digest_ascii);
     }
 
@@ -1693,14 +1739,14 @@ void _process_authenticode(
       yr_free(digest_ascii);
     }
 
+    yr_set_integer(
+        authenticode->certs ? authenticode->certs->count : 0,
+        pe->object,
+        "signatures[%i].number_of_certificates",
+        *sig_count);
+
     if (authenticode->certs)
     {
-      yr_set_integer(
-          authenticode->certs->count,
-          pe->object,
-          "signatures[%i].number_of_certificates",
-          *sig_count);
-
       for (int k = 0; k < authenticode->certs->count; ++k)
       {
         write_certificate(
@@ -1748,14 +1794,14 @@ void _process_authenticode(
         yr_free(digest_ascii);
       }
 
+      yr_set_integer(
+          signer->chain ? signer->chain->count : 0,
+          pe->object,
+          "signatures[%i].signer_info.length_of_chain",
+          *sig_count);
+
       if (signer->chain)
       {
-        yr_set_integer(
-            signer->chain->count,
-            pe->object,
-            "signatures[%i].signer_info.length_of_chain",
-            *sig_count);
-
         for (int k = 0; k < signer->chain->count; ++k)
         {
           write_certificate(
@@ -1767,14 +1813,15 @@ void _process_authenticode(
         }
       }
     }
+
+    yr_set_integer(
+        authenticode->countersigs ? authenticode->countersigs->count : 0,
+        pe->object,
+        "signatures[%i].number_of_countersignatures",
+        *sig_count);
+
     if (authenticode->countersigs)
     {
-      yr_set_integer(
-          authenticode->countersigs->count,
-          pe->object,
-          "signatures[%i].number_of_countersignatures",
-          *sig_count);
-
       for (int j = 0; j < authenticode->countersigs->count; ++j)
       {
         const Countersignature* counter =
@@ -1814,15 +1861,15 @@ void _process_authenticode(
           yr_free(digest_ascii);
         }
 
+        yr_set_integer(
+            counter->chain ? counter->chain->count : 0,
+            pe->object,
+            "signatures[%i].countersignatures[%i].length_of_chain",
+            *sig_count,
+            j);
+
         if (counter->chain)
         {
-          yr_set_integer(
-              counter->chain->count,
-              pe->object,
-              "signatures[%i].countersignatures[%i].length_of_chain",
-              *sig_count,
-              j);
-
           for (int k = 0; k < counter->chain->count; ++k)
           {
             write_certificate(
@@ -1847,14 +1894,14 @@ static void pe_parse_certificates(PE* pe)
 {
   int counter = 0;
 
+  // Default to 0 signatures until we know otherwise.
+  yr_set_integer(0, pe->object, "number_of_signatures");
+
   PIMAGE_DATA_DIRECTORY directory = pe_get_directory_entry(
       pe, IMAGE_DIRECTORY_ENTRY_SECURITY);
 
   if (directory == NULL)
     return;
-
-  // Default to 0 signatures until we know otherwise.
-  yr_set_integer(0, pe->object, "number_of_signatures");
 
   // directory->VirtualAddress is a file offset. Don't call pe_rva_to_offset().
   if (yr_le32toh(directory->VirtualAddress) == 0 ||
@@ -1978,7 +2025,7 @@ static void pe_parse_header(PE* pe, uint64_t base_address, int flags)
       "number_of_symbols");
 
   yr_set_integer(
-      yr_le32toh(pe->header->FileHeader.SizeOfOptionalHeader),
+      yr_le16toh(pe->header->FileHeader.SizeOfOptionalHeader),
       pe->object,
       "size_of_optional_header");
 
@@ -2012,7 +2059,7 @@ static void pe_parse_header(PE* pe, uint64_t base_address, int flags)
       "number_of_rva_and_sizes");
 
   yr_set_integer(
-      yr_le32toh(OptionalHeader(pe, Magic)), pe->object, "opthdr_magic");
+      yr_le16toh(OptionalHeader(pe, Magic)), pe->object, "opthdr_magic");
 
   yr_set_integer(
       OptionalHeader(pe, MajorLinkerVersion),
@@ -2101,13 +2148,14 @@ static void pe_parse_header(PE* pe, uint64_t base_address, int flags)
       pe->object,
       "size_of_headers");
 
-  yr_set_integer(yr_le32toh(OptionalHeader(pe, CheckSum)), pe->object, "checksum");
+  yr_set_integer(
+      yr_le32toh(OptionalHeader(pe, CheckSum)), pe->object, "checksum");
 
   yr_set_integer(
       yr_le16toh(OptionalHeader(pe, Subsystem)), pe->object, "subsystem");
 
   yr_set_integer(
-      OptionalHeader(pe, DllCharacteristics),
+      yr_le16toh(OptionalHeader(pe, DllCharacteristics)),
       pe->object,
       "dll_characteristics");
 
@@ -2141,7 +2189,7 @@ static void pe_parse_header(PE* pe, uint64_t base_address, int flags)
   data_dir = IS_64BITS_PE(pe) ? pe->header64->OptionalHeader.DataDirectory
                               : pe->header->OptionalHeader.DataDirectory;
 
-  ddcount = yr_le16toh(OptionalHeader(pe, NumberOfRvaAndSizes));
+  ddcount = yr_le32toh(OptionalHeader(pe, NumberOfRvaAndSizes));
   ddcount = yr_min(ddcount, IMAGE_NUMBEROF_DIRECTORY_ENTRIES);
 
   for (int i = 0; i < ddcount; i++)
@@ -2291,7 +2339,8 @@ static void pe_parse_header(PE* pe, uint64_t base_address, int flags)
   if (last_section_end && (pe->data_size > last_section_end))
   {
     yr_set_integer(last_section_end, pe->object, "overlay.offset");
-    yr_set_integer(pe->data_size - last_section_end, pe->object, "overlay.size");
+    yr_set_integer(
+        pe->data_size - last_section_end, pe->object, "overlay.size");
   }
   else
   {
@@ -2970,7 +3019,7 @@ define_function(import_rva)
   {
     dll_name = yr_get_string(module, "import_details[%i].library_name", i);
     if (dll_name == NULL || IS_UNDEFINED(dll_name) ||
-        ss_compare(in_dll_name, dll_name) != 0)
+        ss_icompare(in_dll_name, dll_name) != 0)
       continue;
 
     int64_t num_functions = yr_get_integer(
@@ -2985,7 +3034,7 @@ define_function(import_rva)
       if (function_name == NULL || IS_UNDEFINED(function_name))
         continue;
 
-      if (ss_compare(in_function_name, function_name) == 0)
+      if (ss_icompare(in_function_name, function_name) == 0)
         return_integer(yr_get_integer(
             module, "import_details[%i].functions[%i].rva", i, j));
     }
@@ -3015,7 +3064,7 @@ define_function(import_rva_ordinal)
   {
     dll_name = yr_get_string(module, "import_details[%i].library_name", i);
     if (dll_name == NULL || IS_UNDEFINED(dll_name) ||
-        ss_compare(in_dll_name, dll_name) != 0)
+        ss_icompare(in_dll_name, dll_name) != 0)
       continue;
 
     int64_t num_functions = yr_get_integer(
@@ -3053,18 +3102,22 @@ define_function(delayed_import_rva)
     return_integer(YR_UNDEFINED);
 
   int64_t num_imports = yr_get_integer(pe->object, "number_of_delayed_imports");
+
   if (IS_UNDEFINED(num_imports))
     return_integer(YR_UNDEFINED);
 
   for (int i = 0; i < num_imports; i++)
   {
-    dll_name = yr_get_string(module, "delayed_import_details[%i].library_name", i);
+    dll_name = yr_get_string(
+        module, "delayed_import_details[%i].library_name", i);
+
     if (dll_name == NULL || IS_UNDEFINED(dll_name) ||
-        ss_compare(in_dll_name, dll_name) != 0)
+        ss_icompare(in_dll_name, dll_name) != 0)
       continue;
 
     int64_t num_functions = yr_get_integer(
         module, "delayed_import_details[%i].number_of_functions", i);
+
     if (IS_UNDEFINED(num_functions))
       return_integer(YR_UNDEFINED);
 
@@ -3072,10 +3125,11 @@ define_function(delayed_import_rva)
     {
       function_name = yr_get_string(
           module, "delayed_import_details[%i].functions[%i].name", i, j);
+
       if (function_name == NULL || IS_UNDEFINED(function_name))
         continue;
 
-      if (ss_compare(in_function_name, function_name) == 0)
+      if (ss_icompare(in_function_name, function_name) == 0)
         return_integer(yr_get_integer(
             module, "delayed_import_details[%i].functions[%i].rva", i, j));
     }
@@ -3103,13 +3157,16 @@ define_function(delayed_import_rva_ordinal)
 
   for (int i = 0; i < num_imports; i++)
   {
-    dll_name = yr_get_string(module, "delayed_import_details[%i].library_name", i);
+    dll_name = yr_get_string(
+        module, "delayed_import_details[%i].library_name", i);
+
     if (dll_name == NULL || IS_UNDEFINED(dll_name) ||
-        ss_compare(in_dll_name, dll_name) != 0)
+        ss_icompare(in_dll_name, dll_name) != 0)
       continue;
 
     int64_t num_functions = yr_get_integer(
         module, "delayed_import_details[%i].number_of_functions", i);
+
     if (IS_UNDEFINED(num_functions))
       return_integer(YR_UNDEFINED);
 
@@ -3117,6 +3174,7 @@ define_function(delayed_import_rva_ordinal)
     {
       ordinal = yr_get_integer(
           module, "delayed_import_details[%i].functions[%i].ordinal", i, j);
+
       if (IS_UNDEFINED(ordinal))
         continue;
 
@@ -3148,7 +3206,8 @@ define_function(locale)
 
   for (int i = 0; i < n; i++)
   {
-    uint64_t rsrc_language = yr_get_integer(module, "resources[%i].language", i);
+    uint64_t rsrc_language = yr_get_integer(
+        module, "resources[%i].language", i);
 
     if ((rsrc_language & 0xFFFF) == locale)
       return_integer(1);
@@ -3176,7 +3235,8 @@ define_function(language)
 
   for (int i = 0; i < n; i++)
   {
-    uint64_t rsrc_language = yr_get_integer(module, "resources[%i].language", i);
+    uint64_t rsrc_language = yr_get_integer(
+        module, "resources[%i].language", i);
 
     if ((rsrc_language & 0xFF) == language)
       return_integer(1);
@@ -3639,6 +3699,7 @@ begin_declarations
     declare_integer("key");
     declare_string("raw_data");
     declare_string("clear_data");
+    declare_string("version_data");
     declare_function("version", "i", "i", rich_version);
     declare_function("version", "ii", "i", rich_version_toolid);
     declare_function("toolid", "i", "i", rich_toolid);
@@ -3754,7 +3815,8 @@ begin_declarations
     declare_string("digest");
     declare_string("file_digest");
     declare_integer("number_of_certificates");
-    begin_struct_array("certificates");
+    begin_struct_array("certificates")
+      ;
       declare_string("thumbprint");
       declare_string("issuer");
       declare_string("subject");
@@ -3766,12 +3828,14 @@ begin_declarations
       declare_integer("not_after");
     end_struct_array("certificates");
 
-    begin_struct("signer_info");
+    begin_struct("signer_info")
+      ;
       declare_string("program_name");
       declare_string("digest");
       declare_string("digest_alg");
       declare_integer("length_of_chain");
-      begin_struct_array("chain");
+      begin_struct_array("chain")
+        ;
         declare_string("thumbprint");
         declare_string("issuer");
         declare_string("subject");
@@ -3785,13 +3849,15 @@ begin_declarations
     end_struct("signer_info");
 
     declare_integer("number_of_countersignatures");
-    begin_struct_array("countersignatures");
+    begin_struct_array("countersignatures")
+      ;
       declare_integer("verified");
       declare_integer("sign_time");
       declare_string("digest_alg");
       declare_string("digest");
       declare_integer("length_of_chain");
-      begin_struct_array("chain");
+      begin_struct_array("chain")
+        ;
         declare_string("thumbprint");
         declare_string("issuer");
         declare_string("subject");
@@ -3860,16 +3926,19 @@ int module_load(
   yr_set_integer(IMAGE_FILE_MACHINE_M32R, module_object, "MACHINE_M32R");
   yr_set_integer(IMAGE_FILE_MACHINE_MIPS16, module_object, "MACHINE_MIPS16");
   yr_set_integer(IMAGE_FILE_MACHINE_MIPSFPU, module_object, "MACHINE_MIPSFPU");
-  yr_set_integer(IMAGE_FILE_MACHINE_MIPSFPU16, module_object, "MACHINE_MIPSFPU16");
+  yr_set_integer(
+      IMAGE_FILE_MACHINE_MIPSFPU16, module_object, "MACHINE_MIPSFPU16");
   yr_set_integer(IMAGE_FILE_MACHINE_POWERPC, module_object, "MACHINE_POWERPC");
-  yr_set_integer(IMAGE_FILE_MACHINE_POWERPCFP, module_object, "MACHINE_POWERPCFP");
+  yr_set_integer(
+      IMAGE_FILE_MACHINE_POWERPCFP, module_object, "MACHINE_POWERPCFP");
   yr_set_integer(IMAGE_FILE_MACHINE_R4000, module_object, "MACHINE_R4000");
   yr_set_integer(IMAGE_FILE_MACHINE_SH3, module_object, "MACHINE_SH3");
   yr_set_integer(IMAGE_FILE_MACHINE_SH3DSP, module_object, "MACHINE_SH3DSP");
   yr_set_integer(IMAGE_FILE_MACHINE_SH4, module_object, "MACHINE_SH4");
   yr_set_integer(IMAGE_FILE_MACHINE_SH5, module_object, "MACHINE_SH5");
   yr_set_integer(IMAGE_FILE_MACHINE_THUMB, module_object, "MACHINE_THUMB");
-  yr_set_integer(IMAGE_FILE_MACHINE_WCEMIPSV2, module_object, "MACHINE_WCEMIPSV2");
+  yr_set_integer(
+      IMAGE_FILE_MACHINE_WCEMIPSV2, module_object, "MACHINE_WCEMIPSV2");
   yr_set_integer(
       IMAGE_FILE_MACHINE_TARGET_HOST, module_object, "MACHINE_TARGET_HOST");
   yr_set_integer(IMAGE_FILE_MACHINE_R3000, module_object, "MACHINE_R3000");
@@ -3889,7 +3958,8 @@ int module_load(
   yr_set_integer(
       IMAGE_SUBSYSTEM_WINDOWS_CUI, module_object, "SUBSYSTEM_WINDOWS_CUI");
   yr_set_integer(IMAGE_SUBSYSTEM_OS2_CUI, module_object, "SUBSYSTEM_OS2_CUI");
-  yr_set_integer(IMAGE_SUBSYSTEM_POSIX_CUI, module_object, "SUBSYSTEM_POSIX_CUI");
+  yr_set_integer(
+      IMAGE_SUBSYSTEM_POSIX_CUI, module_object, "SUBSYSTEM_POSIX_CUI");
   yr_set_integer(
       IMAGE_SUBSYSTEM_NATIVE_WINDOWS,
       module_object,
@@ -3928,14 +3998,16 @@ int module_load(
       IMAGE_DLLCHARACTERISTICS_FORCE_INTEGRITY,
       module_object,
       "FORCE_INTEGRITY");
-  yr_set_integer(IMAGE_DLLCHARACTERISTICS_NX_COMPAT, module_object, "NX_COMPAT");
+  yr_set_integer(
+      IMAGE_DLLCHARACTERISTICS_NX_COMPAT, module_object, "NX_COMPAT");
   yr_set_integer(
       IMAGE_DLLCHARACTERISTICS_NO_ISOLATION, module_object, "NO_ISOLATION");
   yr_set_integer(IMAGE_DLLCHARACTERISTICS_NO_SEH, module_object, "NO_SEH");
   yr_set_integer(IMAGE_DLLCHARACTERISTICS_NO_BIND, module_object, "NO_BIND");
   yr_set_integer(
       IMAGE_DLLCHARACTERISTICS_APPCONTAINER, module_object, "APPCONTAINER");
-  yr_set_integer(IMAGE_DLLCHARACTERISTICS_WDM_DRIVER, module_object, "WDM_DRIVER");
+  yr_set_integer(
+      IMAGE_DLLCHARACTERISTICS_WDM_DRIVER, module_object, "WDM_DRIVER");
   yr_set_integer(IMAGE_DLLCHARACTERISTICS_GUARD_CF, module_object, "GUARD_CF");
   yr_set_integer(
       IMAGE_DLLCHARACTERISTICS_TERMINAL_SERVER_AWARE,
@@ -3943,26 +4015,31 @@ int module_load(
       "TERMINAL_SERVER_AWARE");
 
   yr_set_integer(IMAGE_FILE_RELOCS_STRIPPED, module_object, "RELOCS_STRIPPED");
-  yr_set_integer(IMAGE_FILE_EXECUTABLE_IMAGE, module_object, "EXECUTABLE_IMAGE");
+  yr_set_integer(
+      IMAGE_FILE_EXECUTABLE_IMAGE, module_object, "EXECUTABLE_IMAGE");
   yr_set_integer(
       IMAGE_FILE_LINE_NUMS_STRIPPED, module_object, "LINE_NUMS_STRIPPED");
   yr_set_integer(
       IMAGE_FILE_LOCAL_SYMS_STRIPPED, module_object, "LOCAL_SYMS_STRIPPED");
-  yr_set_integer(IMAGE_FILE_AGGRESIVE_WS_TRIM, module_object, "AGGRESIVE_WS_TRIM");
+  yr_set_integer(
+      IMAGE_FILE_AGGRESIVE_WS_TRIM, module_object, "AGGRESIVE_WS_TRIM");
   yr_set_integer(
       IMAGE_FILE_LARGE_ADDRESS_AWARE, module_object, "LARGE_ADDRESS_AWARE");
-  yr_set_integer(IMAGE_FILE_BYTES_REVERSED_LO, module_object, "BYTES_REVERSED_LO");
+  yr_set_integer(
+      IMAGE_FILE_BYTES_REVERSED_LO, module_object, "BYTES_REVERSED_LO");
   yr_set_integer(IMAGE_FILE_32BIT_MACHINE, module_object, "MACHINE_32BIT");
   yr_set_integer(IMAGE_FILE_DEBUG_STRIPPED, module_object, "DEBUG_STRIPPED");
   yr_set_integer(
       IMAGE_FILE_REMOVABLE_RUN_FROM_SWAP,
       module_object,
       "REMOVABLE_RUN_FROM_SWAP");
-  yr_set_integer(IMAGE_FILE_NET_RUN_FROM_SWAP, module_object, "NET_RUN_FROM_SWAP");
+  yr_set_integer(
+      IMAGE_FILE_NET_RUN_FROM_SWAP, module_object, "NET_RUN_FROM_SWAP");
   yr_set_integer(IMAGE_FILE_SYSTEM, module_object, "SYSTEM");
   yr_set_integer(IMAGE_FILE_DLL, module_object, "DLL");
   yr_set_integer(IMAGE_FILE_UP_SYSTEM_ONLY, module_object, "UP_SYSTEM_ONLY");
-  yr_set_integer(IMAGE_FILE_BYTES_REVERSED_HI, module_object, "BYTES_REVERSED_HI");
+  yr_set_integer(
+      IMAGE_FILE_BYTES_REVERSED_HI, module_object, "BYTES_REVERSED_HI");
 
   yr_set_integer(
       IMAGE_DIRECTORY_ENTRY_EXPORT,
@@ -4056,7 +4133,8 @@ int module_load(
       IMAGE_SCN_NO_DEFER_SPEC_EXC, module_object, "SECTION_NO_DEFER_SPEC_EXC");
   yr_set_integer(IMAGE_SCN_GPREL, module_object, "SECTION_GPREL");
   yr_set_integer(IMAGE_SCN_MEM_FARDATA, module_object, "SECTION_MEM_FARDATA");
-  yr_set_integer(IMAGE_SCN_MEM_PURGEABLE, module_object, "SECTION_MEM_PURGEABLE");
+  yr_set_integer(
+      IMAGE_SCN_MEM_PURGEABLE, module_object, "SECTION_MEM_PURGEABLE");
   yr_set_integer(IMAGE_SCN_MEM_16BIT, module_object, "SECTION_MEM_16BIT");
   yr_set_integer(IMAGE_SCN_MEM_LOCKED, module_object, "SECTION_MEM_LOCKED");
   yr_set_integer(IMAGE_SCN_MEM_PRELOAD, module_object, "SECTION_MEM_PRELOAD");
@@ -4064,9 +4142,12 @@ int module_load(
   yr_set_integer(IMAGE_SCN_ALIGN_2BYTES, module_object, "SECTION_ALIGN_2BYTES");
   yr_set_integer(IMAGE_SCN_ALIGN_4BYTES, module_object, "SECTION_ALIGN_4BYTES");
   yr_set_integer(IMAGE_SCN_ALIGN_8BYTES, module_object, "SECTION_ALIGN_8BYTES");
-  yr_set_integer(IMAGE_SCN_ALIGN_16BYTES, module_object, "SECTION_ALIGN_16BYTES");
-  yr_set_integer(IMAGE_SCN_ALIGN_32BYTES, module_object, "SECTION_ALIGN_32BYTES");
-  yr_set_integer(IMAGE_SCN_ALIGN_64BYTES, module_object, "SECTION_ALIGN_64BYTES");
+  yr_set_integer(
+      IMAGE_SCN_ALIGN_16BYTES, module_object, "SECTION_ALIGN_16BYTES");
+  yr_set_integer(
+      IMAGE_SCN_ALIGN_32BYTES, module_object, "SECTION_ALIGN_32BYTES");
+  yr_set_integer(
+      IMAGE_SCN_ALIGN_64BYTES, module_object, "SECTION_ALIGN_64BYTES");
   yr_set_integer(
       IMAGE_SCN_ALIGN_128BYTES, module_object, "SECTION_ALIGN_128BYTES");
   yr_set_integer(
@@ -4088,7 +4169,8 @@ int module_load(
       IMAGE_SCN_MEM_DISCARDABLE, module_object, "SECTION_MEM_DISCARDABLE");
   yr_set_integer(
       IMAGE_SCN_MEM_NOT_CACHED, module_object, "SECTION_MEM_NOT_CACHED");
-  yr_set_integer(IMAGE_SCN_MEM_NOT_PAGED, module_object, "SECTION_MEM_NOT_PAGED");
+  yr_set_integer(
+      IMAGE_SCN_MEM_NOT_PAGED, module_object, "SECTION_MEM_NOT_PAGED");
   yr_set_integer(IMAGE_SCN_MEM_SHARED, module_object, "SECTION_MEM_SHARED");
   yr_set_integer(IMAGE_SCN_MEM_EXECUTE, module_object, "SECTION_MEM_EXECUTE");
   yr_set_integer(IMAGE_SCN_MEM_READ, module_object, "SECTION_MEM_READ");
@@ -4115,13 +4197,15 @@ int module_load(
   yr_set_integer(RESOURCE_TYPE_VERSION, module_object, "RESOURCE_TYPE_VERSION");
   yr_set_integer(
       RESOURCE_TYPE_DLGINCLUDE, module_object, "RESOURCE_TYPE_DLGINCLUDE");
-  yr_set_integer(RESOURCE_TYPE_PLUGPLAY, module_object, "RESOURCE_TYPE_PLUGPLAY");
+  yr_set_integer(
+      RESOURCE_TYPE_PLUGPLAY, module_object, "RESOURCE_TYPE_PLUGPLAY");
   yr_set_integer(RESOURCE_TYPE_VXD, module_object, "RESOURCE_TYPE_VXD");
   yr_set_integer(
       RESOURCE_TYPE_ANICURSOR, module_object, "RESOURCE_TYPE_ANICURSOR");
   yr_set_integer(RESOURCE_TYPE_ANIICON, module_object, "RESOURCE_TYPE_ANIICON");
   yr_set_integer(RESOURCE_TYPE_HTML, module_object, "RESOURCE_TYPE_HTML");
-  yr_set_integer(RESOURCE_TYPE_MANIFEST, module_object, "RESOURCE_TYPE_MANIFEST");
+  yr_set_integer(
+      RESOURCE_TYPE_MANIFEST, module_object, "RESOURCE_TYPE_MANIFEST");
 
   yr_set_integer(
       IMAGE_DEBUG_TYPE_UNKNOWN, module_object, "IMAGE_DEBUG_TYPE_UNKNOWN");
@@ -4132,7 +4216,8 @@ int module_load(
   yr_set_integer(IMAGE_DEBUG_TYPE_MISC, module_object, "IMAGE_DEBUG_TYPE_MISC");
   yr_set_integer(
       IMAGE_DEBUG_TYPE_EXCEPTION, module_object, "IMAGE_DEBUG_TYPE_EXCEPTION");
-  yr_set_integer(IMAGE_DEBUG_TYPE_FIXUP, module_object, "IMAGE_DEBUG_TYPE_FIXUP");
+  yr_set_integer(
+      IMAGE_DEBUG_TYPE_FIXUP, module_object, "IMAGE_DEBUG_TYPE_FIXUP");
   yr_set_integer(
       IMAGE_DEBUG_TYPE_OMAP_TO_SRC,
       module_object,
@@ -4147,15 +4232,18 @@ int module_load(
       IMAGE_DEBUG_TYPE_RESERVED10,
       module_object,
       "IMAGE_DEBUG_TYPE_RESERVED10");
-  yr_set_integer(IMAGE_DEBUG_TYPE_CLSID, module_object, "IMAGE_DEBUG_TYPE_CLSID");
+  yr_set_integer(
+      IMAGE_DEBUG_TYPE_CLSID, module_object, "IMAGE_DEBUG_TYPE_CLSID");
   yr_set_integer(
       IMAGE_DEBUG_TYPE_VC_FEATURE,
       module_object,
       "IMAGE_DEBUG_TYPE_VC_FEATURE");
   yr_set_integer(IMAGE_DEBUG_TYPE_POGO, module_object, "IMAGE_DEBUG_TYPE_POGO");
-  yr_set_integer(IMAGE_DEBUG_TYPE_ILTCG, module_object, "IMAGE_DEBUG_TYPE_ILTCG");
+  yr_set_integer(
+      IMAGE_DEBUG_TYPE_ILTCG, module_object, "IMAGE_DEBUG_TYPE_ILTCG");
   yr_set_integer(IMAGE_DEBUG_TYPE_MPX, module_object, "IMAGE_DEBUG_TYPE_MPX");
-  yr_set_integer(IMAGE_DEBUG_TYPE_REPRO, module_object, "IMAGE_DEBUG_TYPE_REPRO");
+  yr_set_integer(
+      IMAGE_DEBUG_TYPE_REPRO, module_object, "IMAGE_DEBUG_TYPE_REPRO");
 
   yr_set_integer(0, module_object, "is_pe");
 

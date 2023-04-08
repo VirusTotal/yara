@@ -841,6 +841,7 @@ int tlsh_impl_from_tlsh_str(TlshImpl *impl, const char *str)
   }
   impl->lsh_bin.lvalue = swap_byte(tmp.lvalue);
   impl->lsh_bin.Q.qb = swap_byte(tmp.Q.qb);
+
   for (int i = 0; i < CODE_SIZE; i++)
   {
     impl->lsh_bin.tmp_code[i] = (tmp.tmp_code[CODE_SIZE - 1 - i]);
@@ -874,6 +875,7 @@ const char *hash2(
   }
   tmp.lvalue = swap_byte(impl->lsh_bin.lvalue);
   tmp.Q.qb = swap_byte(impl->lsh_bin.Q.qb);
+
   for (int i = 0; i < CODE_SIZE; i++)
   {
     tmp.tmp_code[i] = (impl->lsh_bin.tmp_code[CODE_SIZE - 1 - i]);
