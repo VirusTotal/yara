@@ -239,13 +239,11 @@ The passed dictionary will be something like this:
     'namespace': 'default',
     'rule': 'my_rule',
     'meta': {},
-    'strings': [(81L, '$a', 'abc'), (141L, '$b', 'def')]
+    'strings': [StringMatch, StringMatch]
   }
 
 The *matches* field indicates if the rule matches the data or not. The
-*strings* fields is a list of matching strings, with vectors of the form::
-
-  (<offset>, <string identifier>, <string data>)
+*strings* field is a list of :py:class:`yara.StringMatch` objects.
 
 The ``match`` method returns a list of instances of the class :py:class:`yara.Match`.
 Instances of this class have the same attributes as the dictionary passed to the
