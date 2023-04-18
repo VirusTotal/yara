@@ -34,7 +34,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define YR_MAJOR_VERSION 4
 #define YR_MINOR_VERSION 3
-#define YR_MICRO_VERSION 0
+#define YR_MICRO_VERSION 1
 
 #define version_str(s)  _version_str(s)
 #define _version_str(s) #s
@@ -78,10 +78,10 @@ typedef enum _YR_CONFIG_NAME
 
 } YR_CONFIG_NAME;
 
-#define DEFAULT_STACK_SIZE                16384
-#define DEFAULT_MAX_STRINGS_PER_RULE      10000
-#define DEFAULT_MAX_MATCH_DATA            512
-#define DEFAULT_MAX_PROCESS_MEMORY_CHUNK  1073741824
+#define DEFAULT_STACK_SIZE               16384
+#define DEFAULT_MAX_STRINGS_PER_RULE     10000
+#define DEFAULT_MAX_MATCH_DATA           512
+#define DEFAULT_MAX_PROCESS_MEMORY_CHUNK 1073741824
 
 YR_API int yr_initialize(void);
 
