@@ -347,7 +347,7 @@ of the string definition, in the same line:
 
 With the ``nocase`` modifier the string *foobar* will match *Foobar*, *FOOBAR*,
 and *fOoBaR*. This modifier can be used in conjunction with any modifier,
-except ``base64`` and ``base64wide``.
+except ``base64``, ``base64wide`` and ``xor``.
 
 Wide-character strings
 ^^^^^^^^^^^^^^^^^^^^^^
