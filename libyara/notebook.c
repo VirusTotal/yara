@@ -68,11 +68,11 @@ struct YR_NOTEBOOK_PAGE
 };
 
 ////////////////////////////////////////////////////////////////////////////////
-// Creates a new notebook. The notebook initially has a single page of the
-// specified size, but more pages are created if needed.
+// Creates a new notebook. The notebook initially has a single page of size
+// min_page_size, but more pages will be created as needed.
 //
 // Args:
-//   page_size: Size of each page in the notebook.
+//   min_page_size: The minimum size of each page in the notebook.
 //   notebook: Address of a pointer to the newly created notebook.
 //
 // Returns:
