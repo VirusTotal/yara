@@ -48,7 +48,11 @@ typedef struct YR_NOTEBOOK_PAGE YR_NOTEBOOK_PAGE;
 // all the buffers allocated via yr_notebook_alloc().
 struct YR_NOTEBOOK
 {
-  // Size of each page in the notebook.
+  // Size of pages in the notebook. Most pages are this size, but some
+  // of them can be 2x, 3x, or in general Nx this size. This happens when
+  // yr_notebook_alloc is called with a size that is larger than page_size,
+  // which means that the notebook needs to allocate a page that is larger
+  // than the rest for accomodating the requested buffer.
   size_t page_size;
   // Pointer to the first page in the book, this is also the most recently
   // created page, the one that is being filled.
@@ -147,15 +151,16 @@ void* yr_notebook_alloc(YR_NOTEBOOK* notebook, size_t size)
   // deferrencing pointers to types larger than a byte.
   size = (size + 7) & ~0x7;
 
-  // The requested memory size can't be larger than a notebook's page.
-  assert(size <= notebook->page_size);
-
   // If the requested size doesn't fit in current page's free space, allocate
   // a new page.
   if (notebook->page_size - notebook->page_list_head->used < size)
   {
+    // The new page must be able to fit the requested buffer, so find the
+    // multiple of notebook->page_size that is larger than size.
+    size_t page_size = (size / notebook->page_size + 1) * notebook->page_size;
+
     YR_NOTEBOOK_PAGE* new_page = yr_malloc(
-        sizeof(YR_NOTEBOOK_PAGE) + notebook->page_size);
+        sizeof(YR_NOTEBOOK_PAGE) + page_size);
 
     if (new_page == NULL)
       return NULL;
