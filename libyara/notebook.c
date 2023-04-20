@@ -48,12 +48,8 @@ typedef struct YR_NOTEBOOK_PAGE YR_NOTEBOOK_PAGE;
 // all the buffers allocated via yr_notebook_alloc().
 struct YR_NOTEBOOK
 {
-  // Size of pages in the notebook. Most pages are this size, but some
-  // of them can be 2x, 3x, or in general Nx this size. This happens when
-  // yr_notebook_alloc is called with a size that is larger than page_size,
-  // which means that the notebook needs to allocate a page that is larger
-  // than the rest for accomodating the requested buffer.
-  size_t page_size;
+  // The mininum size of each page in the notebook.
+  size_t min_page_size;
   // Pointer to the first page in the book, this is also the most recently
   // created page, the one that is being filled.
   YR_NOTEBOOK_PAGE* page_list_head;
@@ -61,6 +57,8 @@ struct YR_NOTEBOOK
 
 struct YR_NOTEBOOK_PAGE
 {
+  // Size of this page.
+  size_t size;
   // Amount of bytes in the page that are actually used.
   size_t used;
   // Pointer to next page.
@@ -81,7 +79,7 @@ struct YR_NOTEBOOK_PAGE
 //   ERROR_SUCCESS
 //   ERROR_INSUFFICIENT_MEMORY
 //
-int yr_notebook_create(size_t page_size, YR_NOTEBOOK** notebook)
+int yr_notebook_create(size_t min_page_size, YR_NOTEBOOK** notebook)
 {
   YR_NOTEBOOK* new_notebook = yr_malloc(sizeof(YR_NOTEBOOK));
 
@@ -89,7 +87,7 @@ int yr_notebook_create(size_t page_size, YR_NOTEBOOK** notebook)
     return ERROR_INSUFFICIENT_MEMORY;
 
   new_notebook->page_list_head = yr_malloc(
-      sizeof(YR_NOTEBOOK_PAGE) + page_size);
+      sizeof(YR_NOTEBOOK_PAGE) + min_page_size);
 
   if (new_notebook->page_list_head == NULL)
   {
@@ -97,7 +95,8 @@ int yr_notebook_create(size_t page_size, YR_NOTEBOOK** notebook)
     return ERROR_INSUFFICIENT_MEMORY;
   }
 
-  new_notebook->page_size = page_size;
+  new_notebook->min_page_size = min_page_size;
+  new_notebook->page_list_head->size = min_page_size;
   new_notebook->page_list_head->used = 0;
   new_notebook->page_list_head->next = NULL;
 
@@ -151,13 +150,18 @@ void* yr_notebook_alloc(YR_NOTEBOOK* notebook, size_t size)
   // deferrencing pointers to types larger than a byte.
   size = (size + 7) & ~0x7;
 
+  YR_NOTEBOOK_PAGE* current_page = notebook->page_list_head;
+
   // If the requested size doesn't fit in current page's free space, allocate
   // a new page.
-  if (notebook->page_size - notebook->page_list_head->used < size)
+  if (current_page->size - current_page->used < size)
   {
+    size_t min_size = notebook->min_page_size;
+
     // The new page must be able to fit the requested buffer, so find the
-    // multiple of notebook->page_size that is larger than size.
-    size_t page_size = (size / notebook->page_size + 1) * notebook->page_size;
+    // multiple of notebook->min_page_size that is larger or equal than than
+    // size.
+    size_t page_size = (size / min_size) * min_size + min_size;
 
     YR_NOTEBOOK_PAGE* new_page = yr_malloc(
         sizeof(YR_NOTEBOOK_PAGE) + page_size);
@@ -165,6 +169,7 @@ void* yr_notebook_alloc(YR_NOTEBOOK* notebook, size_t size)
     if (new_page == NULL)
       return NULL;
 
+    new_page->size = page_size;
     new_page->used = 0;
     new_page->next = notebook->page_list_head;
     notebook->page_list_head = new_page;
