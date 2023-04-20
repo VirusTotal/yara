@@ -652,11 +652,6 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
           it_notebook,
           sizeof(YR_ITERATOR) + sizeof(SIZED_STRING*) * (size_t) r1.i);
 
-      memset(
-          r3.p,
-          0xcc,
-          sizeof(YR_ITERATOR) + sizeof(SIZED_STRING*) * (size_t) r1.i);
-
       if (r3.p == NULL)
       {
         result = ERROR_INSUFFICIENT_MEMORY;
