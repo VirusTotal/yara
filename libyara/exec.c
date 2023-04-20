@@ -470,9 +470,10 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
       yr_arena_create(1, 512 * sizeof(YR_OBJECT*), &obj_arena),
       yr_free(stack.items));
 
-  FAIL_ON_ERROR_WITH_CLEANUP(yr_notebook_create(1048576, &it_notebook),
-                             yr_arena_release(obj_arena);
-                             yr_free(stack.items));
+  FAIL_ON_ERROR_WITH_CLEANUP(
+      yr_notebook_create(512 * sizeof(YR_ITERATOR), &it_notebook),
+      yr_arena_release(obj_arena);
+      yr_free(stack.items));
 
 #ifdef YR_PROFILING_ENABLED
   start_time = yr_stopwatch_elapsed_ns(&context->stopwatch);
@@ -649,6 +650,11 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
 
       r3.p = yr_notebook_alloc(
           it_notebook,
+          sizeof(YR_ITERATOR) + sizeof(SIZED_STRING*) * (size_t) r1.i);
+
+      memset(
+          r3.p,
+          0xcc,
           sizeof(YR_ITERATOR) + sizeof(SIZED_STRING*) * (size_t) r1.i);
 
       if (r3.p == NULL)
