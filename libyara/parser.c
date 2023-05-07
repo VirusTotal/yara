@@ -1380,6 +1380,41 @@ static int _yr_parser_operator_to_opcode(const char* op, int expression_type)
   return OP_ERROR;
 }
 
+int yr_parser_integer_width_check(
+    YR_EXPRESSION int_func_expr,
+    YR_EXPRESSION int_expr)
+{
+  uint64_t expr_mask;
+  switch (int_func_expr.value.integer)
+  {
+    case OP_INT8:
+    case OP_UINT8:
+    case OP_INT8BE:
+    case OP_UINT8BE:
+      expr_mask = 0xff;
+      break;
+    case OP_INT16:
+    case OP_UINT16:
+    case OP_INT16BE:
+    case OP_UINT16BE:
+      expr_mask = 0xffff;
+      break;
+    case OP_INT32:
+    case OP_UINT32:
+    case OP_INT32BE:
+    case OP_UINT32BE:
+      expr_mask = 0xffffffff;
+      break;
+    default:
+      return ERROR_INTERNAL_FATAL_ERROR;
+  }
+
+  if (int_expr.value.integer & ~expr_mask)
+    return ERROR_INVALID_ARGUMENT;
+
+  return ERROR_SUCCESS;
+}
+
 int yr_parser_reduce_operation(
     yyscan_t yyscanner,
     const char* op,

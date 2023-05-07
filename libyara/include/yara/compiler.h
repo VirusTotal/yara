@@ -42,14 +42,15 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define YARA_ERROR_LEVEL_WARNING 1
 
 // Expression type constants are powers of two because they are used as flags.
-#define EXPRESSION_TYPE_UNKNOWN    0
-#define EXPRESSION_TYPE_BOOLEAN    1
-#define EXPRESSION_TYPE_INTEGER    2
-#define EXPRESSION_TYPE_STRING     4
-#define EXPRESSION_TYPE_REGEXP     8
-#define EXPRESSION_TYPE_OBJECT     16
-#define EXPRESSION_TYPE_FLOAT      32
-#define EXPRESSION_TYPE_QUANTIFIER 64
+#define EXPRESSION_TYPE_UNKNOWN          0
+#define EXPRESSION_TYPE_BOOLEAN          1
+#define EXPRESSION_TYPE_INTEGER          2
+#define EXPRESSION_TYPE_STRING           4
+#define EXPRESSION_TYPE_REGEXP           8
+#define EXPRESSION_TYPE_OBJECT           16
+#define EXPRESSION_TYPE_FLOAT            32
+#define EXPRESSION_TYPE_QUANTIFIER       64
+#define EXPRESSION_TYPE_INTEGER_FUNCTION 128
 
 // The compiler uses an arena to store the data it generates during the
 // compilation. Each buffer in the arena is used for storing a different type

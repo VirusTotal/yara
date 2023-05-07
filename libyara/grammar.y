@@ -1931,6 +1931,36 @@ expression
       }
     | primary_expression _EQ_ primary_expression
       {
+        int result = ERROR_SUCCESS;
+
+        if ($1.type == EXPRESSION_TYPE_INTEGER_FUNCTION &&
+            $3.type == EXPRESSION_TYPE_INTEGER)
+        {
+          if ($3.value.integer != YR_UNDEFINED)
+          {
+            result = yr_parser_integer_width_check($1, $3);
+            if (result != ERROR_SUCCESS)
+              yywarning(yyscanner,
+                  "integer function comparison always false");
+          }
+
+          // Change it to an integer so we can reduce it properly.
+          $1.type = EXPRESSION_TYPE_INTEGER;
+        } else if ($1.type == EXPRESSION_TYPE_INTEGER &&
+            $3.type == EXPRESSION_TYPE_INTEGER_FUNCTION)
+        {
+          if ($1.value.integer != YR_UNDEFINED)
+          {
+            result = yr_parser_integer_width_check($3, $1);
+            if (result != ERROR_SUCCESS)
+              yywarning(yyscanner,
+                  "integer function comparison always false");
+          }
+
+          // Change it to an integer so we can reduce it properly.
+          $3.type = EXPRESSION_TYPE_INTEGER;
+        }
+
         fail_if_error(yr_parser_reduce_operation(
             yyscanner, "==", $1, $3));
 
@@ -2499,8 +2529,8 @@ primary_expression
         fail_if_error(yr_parser_emit(
             yyscanner, (uint8_t) (OP_READ_INT + $1), NULL));
 
-        $$.type = EXPRESSION_TYPE_INTEGER;
-        $$.value.integer = YR_UNDEFINED;
+        $$.type = EXPRESSION_TYPE_INTEGER_FUNCTION;
+        $$.value.integer = OP_READ_INT + $1;
       }
     | _NUMBER_
       {

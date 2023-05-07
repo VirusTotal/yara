@@ -512,6 +512,15 @@ static void test_syntax()
       "rule test { strings: $a = \"a\" condition: for 3.14159 of them: ($) }",
       ERROR_INVALID_VALUE);
 
+  assert_error(
+      "rule test { \
+      strings: \
+        $a = \"AXSERS\" \
+      condition: \
+        1 of them at \"x\"\
+    }",
+      ERROR_INVALID_VALUE);
+
   YR_DEBUG_FPRINTF(1, stderr, "} // %s()\n", __FUNCTION__);
 }
 
@@ -634,14 +643,34 @@ static void test_warnings()
       2 of ($a*) at 0\
     }");
 
-  assert_error(
-      "rule test { \
-      strings: \
-        $a = \"AXSERS\" \
-      condition: \
-        1 of them at \"x\"\
-    }",
-      ERROR_INVALID_VALUE);
+  // Be sure to check both orders of expressions.
+  assert_warnings("rule test { \
+    condition: \
+      int8(0) == 0x1100 and \
+      int8be(0) == 0x1100 and \
+      uint8(0) == 0x1100 and \
+      uint8be(0) == 0x1100 and \
+      int16(0) == 0x110000 and \
+      int16be(0) == 0x110000 and \
+      uint16(0) == 0x110000 and \
+      uint16be(0) == 0x110000 and \
+      int32(0) == 0x1100000000 and \
+      int32be(0) == 0x1100000000 and \
+      uint32(0) == 0x1100000000 and \
+      uint32be(0) == 0x1100000000 and \
+      0x1100 == int8(0) and \
+      0x1100 == int8be(0) and \
+      0x1100 == uint8(0) and \
+      0x1100 == uint8be(0) and \
+      0x110000 == int16(0) and \
+      0x110000 == int16be(0) and \
+      0x110000 == uint16(0) and \
+      0x110000 == uint16be(0) and \
+      0x1100000000 == int32(0) and \
+      0x1100000000 == int32be(0) and \
+      0x1100000000 == uint32(0) and \
+      0x1100000000 == uint32be(0) \
+    }", 24);
 
   YR_DEBUG_FPRINTF(1, stderr, "} // %s()\n", __FUNCTION__);
 }
@@ -3328,6 +3357,13 @@ void test_integer_functions()
   assert_true_rule(
       "rule test { condition: uint32be(1024) == 0xAABBCCDD}",
       TEXT_1024_BYTES "\xaa\xbb\xcc\xdd");
+
+  // https://github.com/VirusTotal/yara/issues/1918
+  // These are test cases that make sure we only have warnings when we have a
+  // defined integer to compare against.
+  assert_no_warnings(
+    "rule test { condition: uint8(0) == filesize }"
+  );
 
   YR_DEBUG_FPRINTF(1, stderr, "} // %s()\n", __FUNCTION__);
 }
