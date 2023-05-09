@@ -98,6 +98,8 @@ MODULES += libyara/modules/console/console.c
 
 MODULES += libyara/modules/string/string.c
 
+MODULES += libyara/modules/text/text.c
+
 if CUCKOO_MODULE
 MODULES += libyara/modules/cuckoo/cuckoo.c
 endif
