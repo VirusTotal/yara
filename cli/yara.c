@@ -1225,6 +1225,28 @@ static int callback(
 
     return CALLBACK_CONTINUE;
 
+  case CALLBACK_MSG_TOO_SLOW_SCANNING:
+    if (ignore_warnings)
+      return CALLBACK_CONTINUE;
+
+    string = (YR_STRING*) message_data;
+    rule = &context->rules->rules_table[string->rule_idx];
+
+    if (rule != NULL && string != NULL)
+      fprintf(
+          stderr,
+          "warning: rule \"%s\": scanning with string %s is taking a very long "
+          "time, it is either too general or very common.\n",
+          rule->identifier,
+          string->identifier);
+    else
+      return CALLBACK_CONTINUE;
+
+    if (fail_on_warnings)
+      return CALLBACK_ERROR;
+
+    return CALLBACK_CONTINUE;
+
   case CALLBACK_MSG_TOO_MANY_MATCHES:
     if (ignore_warnings)
       return CALLBACK_CONTINUE;
