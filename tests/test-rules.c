@@ -3359,11 +3359,12 @@ void test_integer_functions()
       TEXT_1024_BYTES "\xaa\xbb\xcc\xdd");
 
   // https://github.com/VirusTotal/yara/issues/1918
-  // These are test cases that make sure we only have warnings when we have a
-  // defined integer to compare against.
-  assert_no_warnings(
-    "rule test { condition: uint8(0) == filesize }"
-  );
+  // Make sure we only have warnings when we have a defined integer to compare
+  // against.
+  assert_no_warnings("rule test { condition: uint8(0) == filesize }");
+
+  // Make sure that intXX operations are changed to integer expressions.
+  assert_no_warnings("rule test { condition: uint8(uint8(0)) }");
 
   YR_DEBUG_FPRINTF(1, stderr, "} // %s()\n", __FUNCTION__);
 }

@@ -70,51 +70,62 @@ extern int yara_yydebug;
     _STRING_IDENTIFIER_WITH_WILDCARD_ = 271, /* "string identifier with wildcard"  */
     _NUMBER_ = 272,                /* "integer number"  */
     _DOUBLE_ = 273,                /* "floating point number"  */
-    _INTEGER_FUNCTION_ = 274,      /* "integer function"  */
-    _TEXT_STRING_ = 275,           /* "text string"  */
-    _HEX_STRING_ = 276,            /* "hex string"  */
-    _REGEXP_ = 277,                /* "regular expression"  */
-    _ASCII_ = 278,                 /* "<ascii>"  */
-    _WIDE_ = 279,                  /* "<wide>"  */
-    _XOR_ = 280,                   /* "<xor>"  */
-    _BASE64_ = 281,                /* "<base64>"  */
-    _BASE64_WIDE_ = 282,           /* "<base64wide>"  */
-    _NOCASE_ = 283,                /* "<nocase>"  */
-    _FULLWORD_ = 284,              /* "<fullword>"  */
-    _AT_ = 285,                    /* "<at>"  */
-    _FILESIZE_ = 286,              /* "<filesize>"  */
-    _ENTRYPOINT_ = 287,            /* "<entrypoint>"  */
-    _ALL_ = 288,                   /* "<all>"  */
-    _ANY_ = 289,                   /* "<any>"  */
-    _NONE_ = 290,                  /* "<none>"  */
-    _IN_ = 291,                    /* "<in>"  */
-    _OF_ = 292,                    /* "<of>"  */
-    _FOR_ = 293,                   /* "<for>"  */
-    _THEM_ = 294,                  /* "<them>"  */
-    _MATCHES_ = 295,               /* "<matches>"  */
-    _CONTAINS_ = 296,              /* "<contains>"  */
-    _STARTSWITH_ = 297,            /* "<startswith>"  */
-    _ENDSWITH_ = 298,              /* "<endswith>"  */
-    _ICONTAINS_ = 299,             /* "<icontains>"  */
-    _ISTARTSWITH_ = 300,           /* "<istartswith>"  */
-    _IENDSWITH_ = 301,             /* "<iendswith>"  */
-    _IEQUALS_ = 302,               /* "<iequals>"  */
-    _IMPORT_ = 303,                /* "<import>"  */
-    _TRUE_ = 304,                  /* "<true>"  */
-    _FALSE_ = 305,                 /* "<false>"  */
-    _OR_ = 306,                    /* "<or>"  */
-    _AND_ = 307,                   /* "<and>"  */
-    _NOT_ = 308,                   /* "<not>"  */
-    _DEFINED_ = 309,               /* "<defined>"  */
-    _EQ_ = 310,                    /* "=="  */
-    _NEQ_ = 311,                   /* "!="  */
-    _LT_ = 312,                    /* "<"  */
-    _LE_ = 313,                    /* "<="  */
-    _GT_ = 314,                    /* ">"  */
-    _GE_ = 315,                    /* ">="  */
-    _SHIFT_LEFT_ = 316,            /* "<<"  */
-    _SHIFT_RIGHT_ = 317,           /* ">>"  */
-    UNARY_MINUS = 318              /* UNARY_MINUS  */
+    _TEXT_STRING_ = 274,           /* "text string"  */
+    _HEX_STRING_ = 275,            /* "hex string"  */
+    _REGEXP_ = 276,                /* "regular expression"  */
+    _INT8_FUNCTION_ = 277,         /* "<int8>"  */
+    _UINT8_FUNCTION_ = 278,        /* "<uint8>"  */
+    _INT16_FUNCTION_ = 279,        /* "<int16>"  */
+    _UINT16_FUNCTION_ = 280,       /* "<uint16>"  */
+    _INT32_FUNCTION_ = 281,        /* "<int32>"  */
+    _UINT32_FUNCTION_ = 282,       /* "<uint32>"  */
+    _INT8BE_FUNCTION_ = 283,       /* "<int8be>"  */
+    _UINT8BE_FUNCTION_ = 284,      /* "<uint8be>"  */
+    _INT16BE_FUNCTION_ = 285,      /* "<int16be>"  */
+    _UINT16BE_FUNCTION_ = 286,     /* "<uint16be>"  */
+    _INT32BE_FUNCTION_ = 287,      /* "<int32be>"  */
+    _UINT32BE_FUNCTION_ = 288,     /* "<uint32be>"  */
+    _ASCII_ = 289,                 /* "<ascii>"  */
+    _WIDE_ = 290,                  /* "<wide>"  */
+    _XOR_ = 291,                   /* "<xor>"  */
+    _BASE64_ = 292,                /* "<base64>"  */
+    _BASE64_WIDE_ = 293,           /* "<base64wide>"  */
+    _NOCASE_ = 294,                /* "<nocase>"  */
+    _FULLWORD_ = 295,              /* "<fullword>"  */
+    _AT_ = 296,                    /* "<at>"  */
+    _FILESIZE_ = 297,              /* "<filesize>"  */
+    _ENTRYPOINT_ = 298,            /* "<entrypoint>"  */
+    _ALL_ = 299,                   /* "<all>"  */
+    _ANY_ = 300,                   /* "<any>"  */
+    _NONE_ = 301,                  /* "<none>"  */
+    _IN_ = 302,                    /* "<in>"  */
+    _OF_ = 303,                    /* "<of>"  */
+    _FOR_ = 304,                   /* "<for>"  */
+    _THEM_ = 305,                  /* "<them>"  */
+    _MATCHES_ = 306,               /* "<matches>"  */
+    _CONTAINS_ = 307,              /* "<contains>"  */
+    _STARTSWITH_ = 308,            /* "<startswith>"  */
+    _ENDSWITH_ = 309,              /* "<endswith>"  */
+    _ICONTAINS_ = 310,             /* "<icontains>"  */
+    _ISTARTSWITH_ = 311,           /* "<istartswith>"  */
+    _IENDSWITH_ = 312,             /* "<iendswith>"  */
+    _IEQUALS_ = 313,               /* "<iequals>"  */
+    _IMPORT_ = 314,                /* "<import>"  */
+    _TRUE_ = 315,                  /* "<true>"  */
+    _FALSE_ = 316,                 /* "<false>"  */
+    _OR_ = 317,                    /* "<or>"  */
+    _AND_ = 318,                   /* "<and>"  */
+    _NOT_ = 319,                   /* "<not>"  */
+    _DEFINED_ = 320,               /* "<defined>"  */
+    _EQ_ = 321,                    /* "=="  */
+    _NEQ_ = 322,                   /* "!="  */
+    _LT_ = 323,                    /* "<"  */
+    _LE_ = 324,                    /* "<="  */
+    _GT_ = 325,                    /* ">"  */
+    _GE_ = 326,                    /* ">="  */
+    _SHIFT_LEFT_ = 327,            /* "<<"  */
+    _SHIFT_RIGHT_ = 328,           /* ">>"  */
+    UNARY_MINUS = 329              /* UNARY_MINUS  */
   };
   typedef enum yytokentype yytoken_kind_t;
 #endif
@@ -139,57 +150,68 @@ extern int yara_yydebug;
 #define _STRING_IDENTIFIER_WITH_WILDCARD_ 271
 #define _NUMBER_ 272
 #define _DOUBLE_ 273
-#define _INTEGER_FUNCTION_ 274
-#define _TEXT_STRING_ 275
-#define _HEX_STRING_ 276
-#define _REGEXP_ 277
-#define _ASCII_ 278
-#define _WIDE_ 279
-#define _XOR_ 280
-#define _BASE64_ 281
-#define _BASE64_WIDE_ 282
-#define _NOCASE_ 283
-#define _FULLWORD_ 284
-#define _AT_ 285
-#define _FILESIZE_ 286
-#define _ENTRYPOINT_ 287
-#define _ALL_ 288
-#define _ANY_ 289
-#define _NONE_ 290
-#define _IN_ 291
-#define _OF_ 292
-#define _FOR_ 293
-#define _THEM_ 294
-#define _MATCHES_ 295
-#define _CONTAINS_ 296
-#define _STARTSWITH_ 297
-#define _ENDSWITH_ 298
-#define _ICONTAINS_ 299
-#define _ISTARTSWITH_ 300
-#define _IENDSWITH_ 301
-#define _IEQUALS_ 302
-#define _IMPORT_ 303
-#define _TRUE_ 304
-#define _FALSE_ 305
-#define _OR_ 306
-#define _AND_ 307
-#define _NOT_ 308
-#define _DEFINED_ 309
-#define _EQ_ 310
-#define _NEQ_ 311
-#define _LT_ 312
-#define _LE_ 313
-#define _GT_ 314
-#define _GE_ 315
-#define _SHIFT_LEFT_ 316
-#define _SHIFT_RIGHT_ 317
-#define UNARY_MINUS 318
+#define _TEXT_STRING_ 274
+#define _HEX_STRING_ 275
+#define _REGEXP_ 276
+#define _INT8_FUNCTION_ 277
+#define _UINT8_FUNCTION_ 278
+#define _INT16_FUNCTION_ 279
+#define _UINT16_FUNCTION_ 280
+#define _INT32_FUNCTION_ 281
+#define _UINT32_FUNCTION_ 282
+#define _INT8BE_FUNCTION_ 283
+#define _UINT8BE_FUNCTION_ 284
+#define _INT16BE_FUNCTION_ 285
+#define _UINT16BE_FUNCTION_ 286
+#define _INT32BE_FUNCTION_ 287
+#define _UINT32BE_FUNCTION_ 288
+#define _ASCII_ 289
+#define _WIDE_ 290
+#define _XOR_ 291
+#define _BASE64_ 292
+#define _BASE64_WIDE_ 293
+#define _NOCASE_ 294
+#define _FULLWORD_ 295
+#define _AT_ 296
+#define _FILESIZE_ 297
+#define _ENTRYPOINT_ 298
+#define _ALL_ 299
+#define _ANY_ 300
+#define _NONE_ 301
+#define _IN_ 302
+#define _OF_ 303
+#define _FOR_ 304
+#define _THEM_ 305
+#define _MATCHES_ 306
+#define _CONTAINS_ 307
+#define _STARTSWITH_ 308
+#define _ENDSWITH_ 309
+#define _ICONTAINS_ 310
+#define _ISTARTSWITH_ 311
+#define _IENDSWITH_ 312
+#define _IEQUALS_ 313
+#define _IMPORT_ 314
+#define _TRUE_ 315
+#define _FALSE_ 316
+#define _OR_ 317
+#define _AND_ 318
+#define _NOT_ 319
+#define _DEFINED_ 320
+#define _EQ_ 321
+#define _NEQ_ 322
+#define _LT_ 323
+#define _LE_ 324
+#define _GT_ 325
+#define _GE_ 326
+#define _SHIFT_LEFT_ 327
+#define _SHIFT_RIGHT_ 328
+#define UNARY_MINUS 329
 
 /* Value type.  */
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 union YYSTYPE
 {
-#line 342 "libyara/grammar.y"
+#line 354 "libyara/grammar.y"
 
   YR_EXPRESSION   expression;
   SIZED_STRING*   sized_string;
@@ -204,7 +226,7 @@ union YYSTYPE
   YR_ARENA_REF meta;
   YR_ARENA_REF string;
 
-#line 208 "libyara/grammar.h"
+#line 230 "libyara/grammar.h"
 
 };
 typedef union YYSTYPE YYSTYPE;

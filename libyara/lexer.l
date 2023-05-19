@@ -162,53 +162,65 @@ octdigit      [0-7]
 
 %%
 
-".."                    { return _DOT_DOT_;     }
-"<"                     { return _LT_;          }
-">"                     { return _GT_;          }
-"<="                    { return _LE_;          }
-">="                    { return _GE_;          }
-"=="                    { return _EQ_;          }
-"!="                    { return _NEQ_;         }
-"<<"                    { return _SHIFT_LEFT_;  }
-">>"                    { return _SHIFT_RIGHT_; }
-"private"               { return _PRIVATE_;     }
-"global"                { return _GLOBAL_;      }
-"rule"                  { return _RULE_;        }
-"meta"                  { return _META_;        }
-"strings"               { return _STRINGS_;     }
-"ascii"                 { return _ASCII_;       }
-"wide"                  { return _WIDE_;        }
-"xor"                   { return _XOR_;         }
-"base64"                { return _BASE64_;      }
-"base64wide"            { return _BASE64_WIDE_; }
-"fullword"              { return _FULLWORD_;    }
-"nocase"                { return _NOCASE_;      }
-"condition"             { return _CONDITION_;   }
-"true"                  { return _TRUE_;        }
-"false"                 { return _FALSE_;       }
-"not"                   { return _NOT_;         }
-"and"                   { return _AND_;         }
-"or"                    { return _OR_;          }
-"at"                    { return _AT_;          }
-"in"                    { return _IN_;          }
-"of"                    { return _OF_;          }
-"them"                  { return _THEM_;        }
-"for"                   { return _FOR_;         }
-"all"                   { return _ALL_;         }
-"any"                   { return _ANY_;         }
-"none"                  { return _NONE_;        }
-"entrypoint"            { return _ENTRYPOINT_;  }
-"filesize"              { return _FILESIZE_;    }
-"matches"               { return _MATCHES_;     }
-"contains"              { return _CONTAINS_;    }
-"startswith"            { return _STARTSWITH_;  }
-"endswith"              { return _ENDSWITH_;    }
-"icontains"             { return _ICONTAINS_;   }
-"istartswith"           { return _ISTARTSWITH_; }
-"iendswith"             { return _IENDSWITH_;   }
-"iequals"               { return _IEQUALS_;     }
-"import"                { return _IMPORT_;      }
-"defined"               { return _DEFINED_;     }
+".."                    { return _DOT_DOT_;           }
+"<"                     { return _LT_;                }
+">"                     { return _GT_;                }
+"<="                    { return _LE_;                }
+">="                    { return _GE_;                }
+"=="                    { return _EQ_;                }
+"!="                    { return _NEQ_;               }
+"<<"                    { return _SHIFT_LEFT_;        }
+">>"                    { return _SHIFT_RIGHT_;       }
+"private"               { return _PRIVATE_;           }
+"global"                { return _GLOBAL_;            }
+"rule"                  { return _RULE_;              }
+"meta"                  { return _META_;              }
+"strings"               { return _STRINGS_;           }
+"ascii"                 { return _ASCII_;             }
+"wide"                  { return _WIDE_;              }
+"xor"                   { return _XOR_;               }
+"base64"                { return _BASE64_;            }
+"base64wide"            { return _BASE64_WIDE_;       }
+"fullword"              { return _FULLWORD_;          }
+"nocase"                { return _NOCASE_;            }
+"condition"             { return _CONDITION_;         }
+"true"                  { return _TRUE_;              }
+"false"                 { return _FALSE_;             }
+"not"                   { return _NOT_;               }
+"and"                   { return _AND_;               }
+"or"                    { return _OR_;                }
+"at"                    { return _AT_;                }
+"in"                    { return _IN_;                }
+"of"                    { return _OF_;                }
+"them"                  { return _THEM_;              }
+"for"                   { return _FOR_;               }
+"all"                   { return _ALL_;               }
+"any"                   { return _ANY_;               }
+"none"                  { return _NONE_;              }
+"entrypoint"            { return _ENTRYPOINT_;        }
+"filesize"              { return _FILESIZE_;          }
+"matches"               { return _MATCHES_;           }
+"contains"              { return _CONTAINS_;          }
+"startswith"            { return _STARTSWITH_;        }
+"endswith"              { return _ENDSWITH_;          }
+"icontains"             { return _ICONTAINS_;         }
+"istartswith"           { return _ISTARTSWITH_;       }
+"iendswith"             { return _IENDSWITH_;         }
+"iequals"               { return _IEQUALS_;           }
+"import"                { return _IMPORT_;            }
+"defined"               { return _DEFINED_;           }
+"int8"                  { return _INT8_FUNCTION_;     }
+"uint8"                 { return _UINT8_FUNCTION_;    }
+"int16"                 { return _INT16_FUNCTION_;    }
+"uint16"                { return _UINT16_FUNCTION_;   }
+"int32"                 { return _INT32_FUNCTION_;    }
+"uint32"                { return _UINT32_FUNCTION_;   }
+"int8be"                { return _INT8BE_FUNCTION_;   }
+"uint8be"               { return _UINT8BE_FUNCTION_;  }
+"int16be"               { return _INT16BE_FUNCTION_;  }
+"uint16be"              { return _UINT16BE_FUNCTION_; }
+"int32be"               { return _INT32BE_FUNCTION_;  }
+"uint32be"              { return _UINT32BE_FUNCTION_; }
 
 
 "/*"                    { BEGIN(comment);       }
@@ -442,45 +454,6 @@ $({letter}|{digit}|_)*  {
   }
 
   return _STRING_LENGTH_;
-}
-
-
-u?int(8|16|32)(be)? {
-
-  char* text = yytext;
-
-  if (*text == 'u')
-  {
-    yylval->integer = 3;
-    text++;
-  }
-  else
-  {
-    yylval->integer = 0;
-  }
-
-  if (strstr(text, "int8") == text)
-  {
-    yylval->integer += 0;
-    text += 4;
-  }
-  else if (strstr(text, "int16") == text)
-  {
-    yylval->integer += 1;
-    text += 5;
-  }
-  else if (strstr(text, "int32") == text)
-  {
-    yylval->integer += 2;
-    text += 5;
-  }
-
-  if (strcmp(text, "be") == 0)
-  {
-    yylval->integer += 6;
-  }
-
-  return _INTEGER_FUNCTION_;
 }
 
 

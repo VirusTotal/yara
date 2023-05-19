@@ -179,19 +179,21 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define IS_DBL_OP(x) ((x) >= OP_DBL_BEGIN && (x) <= OP_DBL_END)
 #define IS_STR_OP(x) ((x) >= OP_STR_BEGIN && (x) <= OP_STR_END)
 
+// OP_READ_INT is unused now that the lexer is returning proper tokens for each
+// invididual intXX operation.
 #define OP_READ_INT 240
-#define OP_INT8     (OP_READ_INT + 0)
-#define OP_INT16    (OP_READ_INT + 1)
-#define OP_INT32    (OP_READ_INT + 2)
-#define OP_UINT8    (OP_READ_INT + 3)
-#define OP_UINT16   (OP_READ_INT + 4)
-#define OP_UINT32   (OP_READ_INT + 5)
-#define OP_INT8BE   (OP_READ_INT + 6)
-#define OP_INT16BE  (OP_READ_INT + 7)
-#define OP_INT32BE  (OP_READ_INT + 8)
-#define OP_UINT8BE  (OP_READ_INT + 9)
-#define OP_UINT16BE (OP_READ_INT + 10)
-#define OP_UINT32BE (OP_READ_INT + 11)
+#define OP_INT8     240
+#define OP_INT16    241
+#define OP_INT32    242
+#define OP_UINT8    243
+#define OP_UINT16   244
+#define OP_UINT32   245
+#define OP_INT8BE   246
+#define OP_INT16BE  247
+#define OP_INT32BE  248
+#define OP_UINT8BE  249
+#define OP_UINT16BE 250
+#define OP_UINT32BE 251
 
 #define OPERATION(operator, op1, op2) \
   (IS_UNDEFINED(op1) || IS_UNDEFINED(op2)) ? (YR_UNDEFINED) : (op1 operator op2)

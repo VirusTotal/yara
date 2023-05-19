@@ -203,10 +203,21 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
     "string identifier with wildcard"
 %token <integer> _NUMBER_                              "integer number"
 %token <double_> _DOUBLE_                              "floating point number"
-%token <integer> _INTEGER_FUNCTION_                    "integer function"
 %token <sized_string> _TEXT_STRING_                    "text string"
 %token <sized_string> _HEX_STRING_                     "hex string"
 %token <sized_string> _REGEXP_                         "regular expression"
+%token <expression> _INT8_FUNCTION_                    "<int8>"
+%token <expression> _UINT8_FUNCTION_                   "<uint8>"
+%token <expression> _INT16_FUNCTION_                   "<int16>"
+%token <expression> _UINT16_FUNCTION_                  "<uint16>"
+%token <expression> _INT32_FUNCTION_                   "<int32>"
+%token <expression> _UINT32_FUNCTION_                  "<uint32>"
+%token <expression> _INT8BE_FUNCTION_                  "<int8be>"
+%token <expression> _UINT8BE_FUNCTION_                 "<uint8be>"
+%token <expression> _INT16BE_FUNCTION_                 "<int16be>"
+%token <expression> _UINT16BE_FUNCTION_                "<uint16be>"
+%token <expression> _INT32BE_FUNCTION_                 "<int32be>"
+%token <expression> _UINT32BE_FUNCTION_                "<uint32be>"
 %token _ASCII_                                         "<ascii>"
 %token _WIDE_                                          "<wide>"
 %token _XOR_                                           "<xor>"
@@ -304,6 +315,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 %type <expression> regexp
 %type <expression> for_expression
 %type <expression> for_quantifier
+%type <expression> integer_function
 
 
 %type <c_string> arguments
@@ -1933,32 +1945,24 @@ expression
       {
         int result = ERROR_SUCCESS;
 
-        if ($1.type == EXPRESSION_TYPE_INTEGER_FUNCTION &&
-            $3.type == EXPRESSION_TYPE_INTEGER)
+        if ($1.type == EXPRESSION_TYPE_INTEGER &&
+            $1.width != 0 &&
+            $3.type == EXPRESSION_TYPE_INTEGER &&
+            $3.value.integer != YR_UNDEFINED)
         {
-          if ($3.value.integer != YR_UNDEFINED)
-          {
-            result = yr_parser_integer_width_check($1, $3);
-            if (result != ERROR_SUCCESS)
-              yywarning(yyscanner,
-                  "integer function comparison always false");
-          }
-
-          // Change it to an integer so we can reduce it properly.
-          $1.type = EXPRESSION_TYPE_INTEGER;
+          result = yr_parser_integer_width_check($1, $3);
+          if (result != ERROR_SUCCESS)
+            yywarning(yyscanner,
+                "integer function comparison always false");
         } else if ($1.type == EXPRESSION_TYPE_INTEGER &&
-            $3.type == EXPRESSION_TYPE_INTEGER_FUNCTION)
+            $1.value.integer != YR_UNDEFINED &&
+            $3.type == EXPRESSION_TYPE_INTEGER &&
+            $3.width != 0)
         {
-          if ($1.value.integer != YR_UNDEFINED)
-          {
-            result = yr_parser_integer_width_check($3, $1);
-            if (result != ERROR_SUCCESS)
-              yywarning(yyscanner,
-                  "integer function comparison always false");
-          }
-
-          // Change it to an integer so we can reduce it properly.
-          $3.type = EXPRESSION_TYPE_INTEGER;
+          result = yr_parser_integer_width_check($3, $1);
+          if (result != ERROR_SUCCESS)
+            yywarning(yyscanner,
+                "integer function comparison always false");
         }
 
         fail_if_error(yr_parser_reduce_operation(
@@ -2493,6 +2497,82 @@ for_quantifier
     ;
 
 
+integer_function
+    : _INT8_FUNCTION_
+      {
+        $$.type = EXPRESSION_TYPE_INTEGER_FUNCTION;
+        $$.width = 8;
+        $$.value.integer = OP_INT8;
+      }
+    | _UINT8_FUNCTION_
+      {
+        $$.type = EXPRESSION_TYPE_INTEGER_FUNCTION;
+        $$.width = 8;
+        $$.value.integer = OP_UINT8;
+      }
+    | _INT16_FUNCTION_
+      {
+        $$.type = EXPRESSION_TYPE_INTEGER_FUNCTION;
+        $$.width = 16;
+        $$.value.integer = OP_INT16;
+      }
+    | _UINT16_FUNCTION_
+      {
+        $$.type = EXPRESSION_TYPE_INTEGER_FUNCTION;
+        $$.width = 16;
+        $$.value.integer = OP_UINT16;
+      }
+    | _INT32_FUNCTION_
+      {
+        $$.type = EXPRESSION_TYPE_INTEGER_FUNCTION;
+        $$.width = 32;
+        $$.value.integer = OP_INT32;
+      }
+    | _UINT32_FUNCTION_
+      {
+        $$.type = EXPRESSION_TYPE_INTEGER_FUNCTION;
+        $$.width = 32;
+        $$.value.integer = OP_UINT32;
+      }
+    | _INT8BE_FUNCTION_
+      {
+        $$.type = EXPRESSION_TYPE_INTEGER_FUNCTION;
+        $$.width = 8;
+        $$.value.integer = OP_INT8BE;
+      }
+    | _UINT8BE_FUNCTION_
+      {
+        $$.type = EXPRESSION_TYPE_INTEGER_FUNCTION;
+        $$.width = 8;
+        $$.value.integer = OP_UINT8BE;
+      }
+    | _INT16BE_FUNCTION_
+      {
+        $$.type = EXPRESSION_TYPE_INTEGER_FUNCTION;
+        $$.width = 16;
+        $$.value.integer = OP_INT16BE;
+      }
+    | _UINT16BE_FUNCTION_
+      {
+        $$.type = EXPRESSION_TYPE_INTEGER_FUNCTION;
+        $$.width = 16;
+        $$.value.integer = OP_UINT16BE;
+      }
+    | _INT32BE_FUNCTION_
+      {
+        $$.type = EXPRESSION_TYPE_INTEGER_FUNCTION;
+        $$.width = 32;
+        $$.value.integer = OP_INT32BE;
+      }
+    | _UINT32BE_FUNCTION_
+      {
+        $$.type = EXPRESSION_TYPE_INTEGER_FUNCTION;
+        $$.width = 32;
+        $$.value.integer = OP_UINT32BE;
+      }
+    ;
+
+
 primary_expression
     : '(' primary_expression ')'
       {
@@ -2518,19 +2598,15 @@ primary_expression
         $$.type = EXPRESSION_TYPE_INTEGER;
         $$.value.integer = YR_UNDEFINED;
       }
-    | _INTEGER_FUNCTION_ '(' primary_expression ')'
+    | integer_function '(' primary_expression ')'
       {
         check_type($3, EXPRESSION_TYPE_INTEGER, "intXXXX or uintXXXX");
 
-        // _INTEGER_FUNCTION_ could be any of int8, int16, int32, uint8,
-        // uint32, etc. $1 contains an index that added to OP_READ_INT results
-        // in the proper OP_INTXX opcode.
-
         fail_if_error(yr_parser_emit(
-            yyscanner, (uint8_t) (OP_READ_INT + $1), NULL));
+            yyscanner, (uint8_t) $1.value.integer, NULL));
 
-        $$.type = EXPRESSION_TYPE_INTEGER_FUNCTION;
-        $$.value.integer = OP_READ_INT + $1;
+        $$.type = EXPRESSION_TYPE_INTEGER;
+        $$.value.integer = YR_UNDEFINED;
       }
     | _NUMBER_
       {

@@ -85,6 +85,7 @@ typedef struct _YR_ENUMERATION
 typedef struct _YR_EXPRESSION
 {
   int type;
+  int width; // Used to store the width of intXX expressions.
 
   union
   {

@@ -1120,7 +1120,7 @@ int yr_parser_reduce_string_identifier(
   YR_STRING* string;
   YR_COMPILER* compiler = yyget_extra(yyscanner);
 
-  if (strcmp(identifier, "$") == 0)  // is an anonymous string ?
+  if (strcmp(identifier, "$") == 0)            // is an anonymous string ?
   {
     if (compiler->loop_for_of_var_index >= 0)  // inside a loop ?
     {
@@ -1384,35 +1384,9 @@ int yr_parser_integer_width_check(
     YR_EXPRESSION int_func_expr,
     YR_EXPRESSION int_expr)
 {
-  uint64_t expr_mask;
-  switch (int_func_expr.value.integer)
-  {
-    case OP_INT8:
-    case OP_UINT8:
-    case OP_INT8BE:
-    case OP_UINT8BE:
-      expr_mask = 0xff;
-      break;
-    case OP_INT16:
-    case OP_UINT16:
-    case OP_INT16BE:
-    case OP_UINT16BE:
-      expr_mask = 0xffff;
-      break;
-    case OP_INT32:
-    case OP_UINT32:
-    case OP_INT32BE:
-    case OP_UINT32BE:
-      expr_mask = 0xffffffff;
-      break;
-    default:
-      return ERROR_INTERNAL_FATAL_ERROR;
-  }
-
-  if (int_expr.value.integer & ~expr_mask)
-    return ERROR_INVALID_ARGUMENT;
-
-  return ERROR_SUCCESS;
+  return (int_expr.value.integer & ~(1 << int_func_expr.width))
+             ? ERROR_INVALID_ARGUMENT
+             : ERROR_SUCCESS;
 }
 
 int yr_parser_reduce_operation(
