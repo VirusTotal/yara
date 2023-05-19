@@ -995,8 +995,8 @@ static const yytype_int16 yyrline[] =
     2485,  2491,  2501,  2507,  2513,  2519,  2525,  2531,  2537,  2543,
     2549,  2555,  2561,  2567,  2577,  2581,  2589,  2601,  2611,  2618,
     2625,  2650,  2662,  2674,  2686,  2701,  2713,  2728,  2771,  2792,
-    2827,  2862,  2896,  2921,  2938,  2948,  2958,  2968,  2978,  2998,
-    3018
+    2828,  2864,  2899,  2925,  2943,  2954,  2965,  2976,  2986,  3007,
+    3028
 };
 #endif
 
@@ -5083,12 +5083,13 @@ yyreduce:
         }
 
         fail_if_error(result);
+        (yyval.expression).width = 0;
       }
-#line 5088 "libyara/grammar.c"
+#line 5089 "libyara/grammar.c"
     break;
 
   case 170: /* primary_expression: primary_expression '-' primary_expression  */
-#line 2828 "libyara/grammar.y"
+#line 2829 "libyara/grammar.y"
       {
         int result = yr_parser_reduce_operation(
             yyscanner, "-", (yyvsp[-2].expression), (yyvsp[0].expression));
@@ -5122,12 +5123,13 @@ yyreduce:
         }
 
         fail_if_error(result);
+        (yyval.expression).width = 0;
       }
-#line 5127 "libyara/grammar.c"
+#line 5129 "libyara/grammar.c"
     break;
 
   case 171: /* primary_expression: primary_expression '*' primary_expression  */
-#line 2863 "libyara/grammar.y"
+#line 2865 "libyara/grammar.y"
       {
         int result = yr_parser_reduce_operation(
             yyscanner, "*", (yyvsp[-2].expression), (yyvsp[0].expression));
@@ -5160,12 +5162,13 @@ yyreduce:
         }
 
         fail_if_error(result);
+        (yyval.expression).width = 0;
       }
-#line 5165 "libyara/grammar.c"
+#line 5168 "libyara/grammar.c"
     break;
 
   case 172: /* primary_expression: primary_expression '\\' primary_expression  */
-#line 2897 "libyara/grammar.y"
+#line 2900 "libyara/grammar.y"
       {
         int result = yr_parser_reduce_operation(
             yyscanner, "\\", (yyvsp[-2].expression), (yyvsp[0].expression));
@@ -5189,12 +5192,13 @@ yyreduce:
         }
 
         fail_if_error(result);
+        (yyval.expression).width = 0;
       }
-#line 5194 "libyara/grammar.c"
+#line 5198 "libyara/grammar.c"
     break;
 
   case 173: /* primary_expression: primary_expression '%' primary_expression  */
-#line 2922 "libyara/grammar.y"
+#line 2926 "libyara/grammar.y"
       {
         check_type((yyvsp[-2].expression), EXPRESSION_TYPE_INTEGER, "%");
         check_type((yyvsp[0].expression), EXPRESSION_TYPE_INTEGER, "%");
@@ -5210,12 +5214,13 @@ yyreduce:
         {
           fail_if_error(ERROR_DIVISION_BY_ZERO);
         }
+        (yyval.expression).width = 0;
       }
-#line 5215 "libyara/grammar.c"
+#line 5220 "libyara/grammar.c"
     break;
 
   case 174: /* primary_expression: primary_expression '^' primary_expression  */
-#line 2939 "libyara/grammar.y"
+#line 2944 "libyara/grammar.y"
       {
         check_type((yyvsp[-2].expression), EXPRESSION_TYPE_INTEGER, "^");
         check_type((yyvsp[0].expression), EXPRESSION_TYPE_INTEGER, "^");
@@ -5224,12 +5229,13 @@ yyreduce:
 
         (yyval.expression).type = EXPRESSION_TYPE_INTEGER;
         (yyval.expression).value.integer = OPERATION(^, (yyvsp[-2].expression).value.integer, (yyvsp[0].expression).value.integer);
+        (yyval.expression).width = 0;
       }
-#line 5229 "libyara/grammar.c"
+#line 5235 "libyara/grammar.c"
     break;
 
   case 175: /* primary_expression: primary_expression '&' primary_expression  */
-#line 2949 "libyara/grammar.y"
+#line 2955 "libyara/grammar.y"
       {
         check_type((yyvsp[-2].expression), EXPRESSION_TYPE_INTEGER, "^");
         check_type((yyvsp[0].expression), EXPRESSION_TYPE_INTEGER, "^");
@@ -5238,12 +5244,13 @@ yyreduce:
 
         (yyval.expression).type = EXPRESSION_TYPE_INTEGER;
         (yyval.expression).value.integer = OPERATION(&, (yyvsp[-2].expression).value.integer, (yyvsp[0].expression).value.integer);
+        (yyval.expression).width = 0;
       }
-#line 5243 "libyara/grammar.c"
+#line 5250 "libyara/grammar.c"
     break;
 
   case 176: /* primary_expression: primary_expression '|' primary_expression  */
-#line 2959 "libyara/grammar.y"
+#line 2966 "libyara/grammar.y"
       {
         check_type((yyvsp[-2].expression), EXPRESSION_TYPE_INTEGER, "|");
         check_type((yyvsp[0].expression), EXPRESSION_TYPE_INTEGER, "|");
@@ -5252,12 +5259,13 @@ yyreduce:
 
         (yyval.expression).type = EXPRESSION_TYPE_INTEGER;
         (yyval.expression).value.integer = OPERATION(|, (yyvsp[-2].expression).value.integer, (yyvsp[0].expression).value.integer);
+        (yyval.expression).width = 0;
       }
-#line 5257 "libyara/grammar.c"
+#line 5265 "libyara/grammar.c"
     break;
 
   case 177: /* primary_expression: '~' primary_expression  */
-#line 2969 "libyara/grammar.y"
+#line 2977 "libyara/grammar.y"
       {
         check_type((yyvsp[0].expression), EXPRESSION_TYPE_INTEGER, "~");
 
@@ -5267,11 +5275,11 @@ yyreduce:
         (yyval.expression).value.integer = ((yyvsp[0].expression).value.integer == YR_UNDEFINED) ?
             YR_UNDEFINED : ~((yyvsp[0].expression).value.integer);
       }
-#line 5271 "libyara/grammar.c"
+#line 5279 "libyara/grammar.c"
     break;
 
   case 178: /* primary_expression: primary_expression "<<" primary_expression  */
-#line 2979 "libyara/grammar.y"
+#line 2987 "libyara/grammar.y"
       {
         int result;
 
@@ -5288,14 +5296,15 @@ yyreduce:
           (yyval.expression).value.integer = OPERATION(<<, (yyvsp[-2].expression).value.integer, (yyvsp[0].expression).value.integer);
 
         (yyval.expression).type = EXPRESSION_TYPE_INTEGER;
+        (yyval.expression).width = 0;
 
         fail_if_error(result);
       }
-#line 5295 "libyara/grammar.c"
+#line 5304 "libyara/grammar.c"
     break;
 
   case 179: /* primary_expression: primary_expression ">>" primary_expression  */
-#line 2999 "libyara/grammar.y"
+#line 3008 "libyara/grammar.y"
       {
         int result;
 
@@ -5312,22 +5321,23 @@ yyreduce:
           (yyval.expression).value.integer = OPERATION(<<, (yyvsp[-2].expression).value.integer, (yyvsp[0].expression).value.integer);
 
         (yyval.expression).type = EXPRESSION_TYPE_INTEGER;
+        (yyval.expression).width = 0;
 
         fail_if_error(result);
       }
-#line 5319 "libyara/grammar.c"
+#line 5329 "libyara/grammar.c"
     break;
 
   case 180: /* primary_expression: regexp  */
-#line 3019 "libyara/grammar.y"
+#line 3029 "libyara/grammar.y"
       {
         (yyval.expression) = (yyvsp[0].expression);
       }
-#line 5327 "libyara/grammar.c"
+#line 5337 "libyara/grammar.c"
     break;
 
 
-#line 5331 "libyara/grammar.c"
+#line 5341 "libyara/grammar.c"
 
       default: break;
     }
@@ -5551,5 +5561,5 @@ yyreturnlab:
   return yyresult;
 }
 
-#line 3024 "libyara/grammar.y"
+#line 3034 "libyara/grammar.y"
 

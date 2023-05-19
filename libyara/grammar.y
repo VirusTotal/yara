@@ -2823,6 +2823,7 @@ primary_expression
         }
 
         fail_if_error(result);
+        $$.width = 0;
       }
     | primary_expression '-' primary_expression
       {
@@ -2858,6 +2859,7 @@ primary_expression
         }
 
         fail_if_error(result);
+        $$.width = 0;
       }
     | primary_expression '*' primary_expression
       {
@@ -2892,6 +2894,7 @@ primary_expression
         }
 
         fail_if_error(result);
+        $$.width = 0;
       }
     | primary_expression '\\' primary_expression
       {
@@ -2917,6 +2920,7 @@ primary_expression
         }
 
         fail_if_error(result);
+        $$.width = 0;
       }
     | primary_expression '%' primary_expression
       {
@@ -2934,6 +2938,7 @@ primary_expression
         {
           fail_if_error(ERROR_DIVISION_BY_ZERO);
         }
+        $$.width = 0;
       }
     | primary_expression '^' primary_expression
       {
@@ -2944,6 +2949,7 @@ primary_expression
 
         $$.type = EXPRESSION_TYPE_INTEGER;
         $$.value.integer = OPERATION(^, $1.value.integer, $3.value.integer);
+        $$.width = 0;
       }
     | primary_expression '&' primary_expression
       {
@@ -2954,6 +2960,7 @@ primary_expression
 
         $$.type = EXPRESSION_TYPE_INTEGER;
         $$.value.integer = OPERATION(&, $1.value.integer, $3.value.integer);
+        $$.width = 0;
       }
     | primary_expression '|' primary_expression
       {
@@ -2964,6 +2971,7 @@ primary_expression
 
         $$.type = EXPRESSION_TYPE_INTEGER;
         $$.value.integer = OPERATION(|, $1.value.integer, $3.value.integer);
+        $$.width = 0;
       }
     | '~' primary_expression
       {
@@ -2992,6 +3000,7 @@ primary_expression
           $$.value.integer = OPERATION(<<, $1.value.integer, $3.value.integer);
 
         $$.type = EXPRESSION_TYPE_INTEGER;
+        $$.width = 0;
 
         fail_if_error(result);
       }
@@ -3012,6 +3021,7 @@ primary_expression
           $$.value.integer = OPERATION(<<, $1.value.integer, $3.value.integer);
 
         $$.type = EXPRESSION_TYPE_INTEGER;
+        $$.width = 0;
 
         fail_if_error(result);
       }

@@ -3366,6 +3366,20 @@ void test_integer_functions()
   // Make sure that intXX operations are changed to integer expressions.
   assert_no_warnings("rule test { condition: uint8(uint8(0)) }");
 
+  // Make sure any operation which can change the width of the expression resets
+  // the expression width to zero. Failure to do this will cause warnings that
+  // do not apply.
+  assert_no_warnings("rule a { condition: uint8(0) + 1 == 0x1100 }");
+  assert_no_warnings("rule b { condition: uint8(0) - 1 == 0x1100 }");
+  assert_no_warnings("rule c { condition: uint8(0) * 1 == 0x1100 }");
+  assert_no_warnings("rule d { condition: uint8(0) \\ 1 == 0x1100 }");
+  assert_no_warnings("rule e { condition: uint8(0) % 1 == 0x1100 }");
+  assert_no_warnings("rule f { condition: uint8(0) ^ 1 == 0x1100 }");
+  assert_no_warnings("rule g { condition: uint8(0) & 1 == 0x1100 }");
+  assert_no_warnings("rule h { condition: uint8(0) | 1 == 0x1100 }");
+  assert_no_warnings("rule i { condition: uint8(0) << 8 == 0x1100 }");
+  assert_no_warnings("rule j { condition: uint8(0) >> 8 == 0x1100 }");
+
   YR_DEBUG_FPRINTF(1, stderr, "} // %s()\n", __FUNCTION__);
 }
 
