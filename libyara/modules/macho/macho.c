@@ -1032,9 +1032,14 @@ define_function(ep_for_arch_subtype)
 
     if (type == type_arg && subtype == subtype_arg)
     {
-      uint64_t file_offset = yr_get_integer(module, "fat_arch[%i].offset", i);
       uint64_t entry_point = yr_get_integer(module, "file[%i].entry_point", i);
-      return_integer(file_offset + entry_point);
+      uint64_t file_offset = yr_get_integer(module, "fat_arch[%i].offset", i);
+
+      if (entry_point == YR_UNDEFINED) {
+        return_integer(YR_UNDEFINED);
+      } else {
+        return_integer(file_offset + entry_point);
+      }
     }
   }
 

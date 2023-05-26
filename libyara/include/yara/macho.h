@@ -540,7 +540,7 @@ typedef struct
   uint64_t lr;
   uint64_t sp;
   uint64_t pc;
-  uint64_t cpsr;
+  uint32_t cpsr;
 } yr_arm_thread_state64_t;
 
 typedef struct

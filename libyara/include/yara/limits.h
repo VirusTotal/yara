@@ -114,6 +114,18 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define YR_MAX_STRING_MATCHES 1000000
 #endif
 
+// The number of matches before detecting slow scanning. If more matches are found
+// the scan will have a CALLBACK_MSG_TOO_SLOW_SCANNING.
+#ifndef YR_SLOW_STRING_MATCHES
+#define YR_SLOW_STRING_MATCHES 600000
+#endif
+
+// If size of the input is bigger then 0.2 MB and 0-length atoms are used
+// the scan will have a CALLBACK_MSG_TOO_SLOW_SCANNING.
+#ifndef YR_FILE_SIZE_THRESHOLD
+#define YR_FILE_SIZE_THRESHOLD 200000
+#endif
+
 // Maximum number of argument that a function in a YARA module can have.
 #ifndef YR_MAX_FUNCTION_ARGS
 #define YR_MAX_FUNCTION_ARGS 128

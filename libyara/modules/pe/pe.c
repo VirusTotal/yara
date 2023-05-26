@@ -141,10 +141,12 @@ static void pe_parse_rich_signature(PE* pe, uint64_t base_address)
   DWORD* rich_ptr = NULL;
   BYTE* raw_data = NULL;
   BYTE* clear_data = NULL;
+  BYTE* version_data = NULL;
   DWORD* p = NULL;
   uint32_t nthdr_offset = 0;
   uint32_t key = 0;
   size_t rich_len = 0;
+  int64_t rich_count = 0;
 
   if (pe->data_size < sizeof(IMAGE_DOS_HEADER))
     return;
@@ -214,7 +216,7 @@ static void pe_parse_rich_signature(PE* pe, uint64_t base_address)
     return;
   }
 
-  // Multiple by 4 because we are counting in DWORDs.
+  // Multiply by 4 because we are counting in DWORDs.
   rich_len = (rich_ptr - (DWORD*) rich_signature) * 4;
   raw_data = (BYTE*) yr_malloc(rich_len);
 
@@ -254,11 +256,40 @@ static void pe_parse_rich_signature(PE* pe, uint64_t base_address)
   yr_set_sized_string(
       (char*) raw_data, rich_len, pe->object, "rich_signature.raw_data");
 
+  yr_free(raw_data);
+
   yr_set_sized_string(
       (char*) clear_data, rich_len, pe->object, "rich_signature.clear_data");
 
-  yr_free(raw_data);
+  // Allocate space for just the version data. This is a series of every other
+  // dword from the clear data. This is useful to be able to hash alone.
+  // We need to skip the first 3 DWORDs of the RICH_SIGNATURE, which are DanS
+  // and XOR keys.
+  rich_count = (rich_len - sizeof(RICH_SIGNATURE)) / sizeof(RICH_VERSION_INFO);
+  version_data = (BYTE*) yr_malloc(rich_count * sizeof(DWORD));
+  if (!version_data)
+  {
+    yr_free(clear_data);
+    return;
+  }
+
+  rich_signature = (PRICH_SIGNATURE) clear_data;
+  for (int i = 0; i < rich_count; i++)
+  {
+    memcpy(
+        version_data + (i * sizeof(DWORD)),
+        &rich_signature->versions[i],
+        sizeof(DWORD));
+  }
+
+  yr_set_sized_string(
+      (char*) version_data,
+      rich_count * sizeof(DWORD),
+      pe->object,
+      "rich_signature.version_data");
+
   yr_free(clear_data);
+  yr_free(version_data);
 }
 
 static void pe_parse_debug_directory(PE* pe)
@@ -388,7 +419,7 @@ static const PIMAGE_RESOURCE_DIR_STRING_U parse_resource_name(
 
     // Move past the length and make sure we have enough bytes for the string.
     if (!fits_in_pe(
-            pe, pNameString, sizeof(uint16_t) + pNameString->Length * 2))
+            pe, pNameString, sizeof(uint16_t) + yr_le16toh(pNameString->Length) * 2))
       return NULL;
 
     return pNameString;
@@ -693,7 +724,7 @@ static void pe_set_resource_string_or_id(
   if (rsrc_string)
   {
     // Multiply by 2 because it is a Unicode string.
-    size_t length = rsrc_string->Length * 2;
+    size_t length = yr_le16toh(rsrc_string->Length) * 2;
 
     // Check if the whole string fits in the PE image.
     // If not, the name becomes UNDEFINED by default.
@@ -1591,6 +1622,8 @@ static void pe_parse_exports(PE* pe)
     }
     else
     {
+      if (offset < 0)
+        offset = YR_UNDEFINED;
       yr_set_integer(offset, pe->object, "export_details[%i].offset", exp_sz);
     }
 
@@ -1992,7 +2025,7 @@ static void pe_parse_header(PE* pe, uint64_t base_address, int flags)
       "number_of_symbols");
 
   yr_set_integer(
-      yr_le32toh(pe->header->FileHeader.SizeOfOptionalHeader),
+      yr_le16toh(pe->header->FileHeader.SizeOfOptionalHeader),
       pe->object,
       "size_of_optional_header");
 
@@ -2026,7 +2059,7 @@ static void pe_parse_header(PE* pe, uint64_t base_address, int flags)
       "number_of_rva_and_sizes");
 
   yr_set_integer(
-      yr_le32toh(OptionalHeader(pe, Magic)), pe->object, "opthdr_magic");
+      yr_le16toh(OptionalHeader(pe, Magic)), pe->object, "opthdr_magic");
 
   yr_set_integer(
       OptionalHeader(pe, MajorLinkerVersion),
@@ -2122,7 +2155,7 @@ static void pe_parse_header(PE* pe, uint64_t base_address, int flags)
       yr_le16toh(OptionalHeader(pe, Subsystem)), pe->object, "subsystem");
 
   yr_set_integer(
-      OptionalHeader(pe, DllCharacteristics),
+      yr_le16toh(OptionalHeader(pe, DllCharacteristics)),
       pe->object,
       "dll_characteristics");
 
@@ -2156,7 +2189,7 @@ static void pe_parse_header(PE* pe, uint64_t base_address, int flags)
   data_dir = IS_64BITS_PE(pe) ? pe->header64->OptionalHeader.DataDirectory
                               : pe->header->OptionalHeader.DataDirectory;
 
-  ddcount = yr_le16toh(OptionalHeader(pe, NumberOfRvaAndSizes));
+  ddcount = yr_le32toh(OptionalHeader(pe, NumberOfRvaAndSizes));
   ddcount = yr_min(ddcount, IMAGE_NUMBEROF_DIRECTORY_ENTRIES);
 
   for (int i = 0; i < ddcount; i++)
@@ -2986,7 +3019,7 @@ define_function(import_rva)
   {
     dll_name = yr_get_string(module, "import_details[%i].library_name", i);
     if (dll_name == NULL || IS_UNDEFINED(dll_name) ||
-        ss_compare(in_dll_name, dll_name) != 0)
+        ss_icompare(in_dll_name, dll_name) != 0)
       continue;
 
     int64_t num_functions = yr_get_integer(
@@ -3001,7 +3034,7 @@ define_function(import_rva)
       if (function_name == NULL || IS_UNDEFINED(function_name))
         continue;
 
-      if (ss_compare(in_function_name, function_name) == 0)
+      if (ss_icompare(in_function_name, function_name) == 0)
         return_integer(yr_get_integer(
             module, "import_details[%i].functions[%i].rva", i, j));
     }
@@ -3031,7 +3064,7 @@ define_function(import_rva_ordinal)
   {
     dll_name = yr_get_string(module, "import_details[%i].library_name", i);
     if (dll_name == NULL || IS_UNDEFINED(dll_name) ||
-        ss_compare(in_dll_name, dll_name) != 0)
+        ss_icompare(in_dll_name, dll_name) != 0)
       continue;
 
     int64_t num_functions = yr_get_integer(
@@ -3079,7 +3112,7 @@ define_function(delayed_import_rva)
         module, "delayed_import_details[%i].library_name", i);
 
     if (dll_name == NULL || IS_UNDEFINED(dll_name) ||
-        ss_compare(in_dll_name, dll_name) != 0)
+        ss_icompare(in_dll_name, dll_name) != 0)
       continue;
 
     int64_t num_functions = yr_get_integer(
@@ -3096,7 +3129,7 @@ define_function(delayed_import_rva)
       if (function_name == NULL || IS_UNDEFINED(function_name))
         continue;
 
-      if (ss_compare(in_function_name, function_name) == 0)
+      if (ss_icompare(in_function_name, function_name) == 0)
         return_integer(yr_get_integer(
             module, "delayed_import_details[%i].functions[%i].rva", i, j));
     }
@@ -3128,7 +3161,7 @@ define_function(delayed_import_rva_ordinal)
         module, "delayed_import_details[%i].library_name", i);
 
     if (dll_name == NULL || IS_UNDEFINED(dll_name) ||
-        ss_compare(in_dll_name, dll_name) != 0)
+        ss_icompare(in_dll_name, dll_name) != 0)
       continue;
 
     int64_t num_functions = yr_get_integer(
@@ -3666,6 +3699,7 @@ begin_declarations
     declare_integer("key");
     declare_string("raw_data");
     declare_string("clear_data");
+    declare_string("version_data");
     declare_function("version", "i", "i", rich_version);
     declare_function("version", "ii", "i", rich_version_toolid);
     declare_function("toolid", "i", "i", rich_toolid);
@@ -3852,8 +3886,15 @@ int module_initialize(YR_MODULE* module)
 {
 #if defined(HAVE_LIBCRYPTO)
   // Initialize OpenSSL global objects for the auth library before any
-  // multithreaded environment as it is not thread-safe
-  initialize_authenticode_parser();
+  // multithreaded environment as it is not thread-safe. This can
+  // only be called once per process.
+  static bool s_initialized = false;
+
+  if (!s_initialized)
+  {
+    s_initialized = true;
+    initialize_authenticode_parser();
+  }
 #endif
   return ERROR_SUCCESS;
 }

@@ -1210,8 +1210,8 @@ static int callback(
 #if defined(_WIN32)
       // In Windows restore stdout to normal text mode as yr_object_print_data
       // calls printf which is not supported in UTF-8 mode.
-      // Explicitly flush the buffer before the switch in case we already printed
-      // something and it haven't been flushed automatically.
+      // Explicitly flush the buffer before the switch in case we already
+      // printed something and it haven't been flushed automatically.
       fflush(stdout);
       _setmode(_fileno(stdout), _O_TEXT);
 #endif
@@ -1221,14 +1221,36 @@ static int callback(
 
 #if defined(_WIN32)
       // Go back to UTF-8 mode.
-      // Explicitly flush the buffer before the switch in case we already printed
-      // something and it haven't been flushed automatically.
+      // Explicitly flush the buffer before the switch in case we already
+      // printed something and it haven't been flushed automatically.
       fflush(stdout);
       _setmode(_fileno(stdout), _O_U8TEXT);
 #endif
 
       cli_mutex_unlock(&output_mutex);
     }
+
+    return CALLBACK_CONTINUE;
+
+  case CALLBACK_MSG_TOO_SLOW_SCANNING:
+    if (ignore_warnings)
+      return CALLBACK_CONTINUE;
+
+    string = (YR_STRING*) message_data;
+    rule = &context->rules->rules_table[string->rule_idx];
+
+    if (rule != NULL && string != NULL)
+      fprintf(
+          stderr,
+          "warning: rule \"%s\": scanning with string %s is taking a very long "
+          "time, it is either too general or very common.\n",
+          rule->identifier,
+          string->identifier);
+    else
+      return CALLBACK_CONTINUE;
+
+    if (fail_on_warnings)
+      return CALLBACK_ERROR;
 
     return CALLBACK_CONTINUE;
 
@@ -1418,8 +1440,11 @@ int _tmain(int argc, const char_t** argv)
   // module functions, just accessing the name pointer for each module.
   if (show_module_names)
   {
-    for (YR_MODULE* module = yr_modules_get_table(); module->name != NULL; module++)
+    for (YR_MODULE* module = yr_modules_get_table(); module->name != NULL;
+         module++)
+    {
       printf("%s\n", module->name);
+    }
     return EXIT_SUCCESS;
   }
 
@@ -1627,9 +1652,6 @@ int _tmain(int argc, const char_t** argv)
     else
     {
       result = populate_scan_list(argv[argc - 1], &scan_opts);
-
-      if (result != ERROR_SUCCESS)
-        exit_with_code(EXIT_FAILURE);
     }
 
     file_queue_finish();
@@ -1641,6 +1663,9 @@ int _tmain(int argc, const char_t** argv)
       yr_scanner_destroy(thread_args[i].scanner);
 
     file_queue_destroy();
+
+    if (result != ERROR_SUCCESS)
+      exit_with_code(EXIT_FAILURE);
   }
   else
   {

@@ -624,6 +624,15 @@ int main(int argc, char** argv)
       "tests/data/"
       "079a472d22290a94ebb212aa8015cdc8dd28a968c6b4d3b88acdd58ce2d3b885");
 
+  assert_true_rule_file(
+      "import \"pe\" \
+      rule test { \
+        condition: \
+          pe.rich_signature.version_data == \"\\x1b\\x9d\\x9c\\x00\\x1b\\x9d\\x9e\\x00\\x1b\\x9d\\xaa\\x00ov\\xab\\x00\\x09x\\x93\\x00\\x00\\x00\\x01\\x00\\x1b\\x9d\\xab\\x00\\x1b\\x9d\\x9b\\x00\\x1b\\x9d\\x9a\\x00\\x1b\\x9d\\x9d\\x00\" \
+      }",
+      "tests/data/"
+      "079a472d22290a94ebb212aa8015cdc8dd28a968c6b4d3b88acdd58ce2d3b885");
+
   // This is the first 840 bytes (just enough to make sure the rich header is
   // parsed) of
   // 3593d3d08761d8ddc269dde945c0cb07e5cef5dd46ad9eefc22d17901f542093.
@@ -873,22 +882,26 @@ int main(int argc, char** argv)
       }",
       "tests/data/pe_mingw");
 
+  // These are intentionally using DLL and function names with incorrect case
+  // to be sure the string compare is case insensitive.
   assert_true_rule_file(
       "import \"pe\" \
       rule test { \
         condition: \
-          pe.import_rva(\"PtImageRW.dll\", \"ord4\") == 254924 and \
-          pe.import_rva(\"PtPDF417Decode.dll\", 4) == 254948 \
+          pe.import_rva(\"ptimagerw.dll\", \"ORD4\") == 254924 and \
+          pe.import_rva(\"ptPDF417decode.dll\", 4) == 254948 \
       }",
       "tests/data/"
       "ca21e1c32065352d352be6cde97f89c141d7737ea92434831f998080783d5386");
 
+  // These are intentionally using DLL and function names with incorrect case
+  // to be sure the string compare is case insensitive.
   assert_true_rule_file(
       "import \"pe\" \
       rule test { \
         condition: \
-          pe.delayed_import_rva(\"QDB.dll\", \"ord116\") == \
-          pe.delayed_import_rva(\"QDB.dll\", 116) \
+          pe.delayed_import_rva(\"qdb.dll\", \"ORD116\") == \
+          pe.delayed_import_rva(\"qdb.dll\", 116) \
       }",
       "tests/data/"
       "079a472d22290a94ebb212aa8015cdc8dd28a968c6b4d3b88acdd58ce2d3b885");
@@ -903,6 +916,18 @@ int main(int argc, char** argv)
           pe.rva_to_offset(4096) == 1024 \
       }",
       "tests/data/c6f9709feccf42f2d9e22057182fe185f177fb9daaa2649b4669a24f2ee7e3ba_0h_410h");
+
+  assert_true_rule_file(
+      "import \"pe\" \
+      rule invalid_offset { \
+        condition: \
+          not defined pe.export_details[0].offset and  \
+          not defined pe.export_details[7].offset and  \
+          not defined pe.export_details[15].offset and \
+          not defined pe.export_details[21].offset     \
+      }",
+      "tests/data/"
+      "05cd06e6a202e12be22a02700ed6f1604e803ca8867277d852e8971efded0650");
 
   yr_finalize();
 

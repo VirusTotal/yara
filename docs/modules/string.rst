@@ -21,7 +21,7 @@ strings section of your rule.
 
     *Example: string.to_int("1234") == 1234*
     *Example: string.to_int("-10") == -10*
-    *Example: string.to_int("-010" == -8*
+    *Example: string.to_int("-010") == -8*
 
 .. c:function:: to_int(string, base)
 
@@ -32,8 +32,8 @@ strings section of your rule.
     the string will be intrepreted as base 16 if it starts with "0x" or as base
     8 if it starts with "0". Leading '+' or '-' is also supported.
 
-    *Example: string.to_int("011", 8) == "9"*
-    *Example: string.to_int("-011", 0) == "-9"*
+    *Example: string.to_int("011", 8) == 9*
+    *Example: string.to_int("-011", 0) == -9*
 
 .. c:function:: length(string)
 

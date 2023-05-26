@@ -68,6 +68,8 @@ static int _yr_scanner_scan_mem_block(
   size_t i = 0;
   uint32_t state = YR_AC_ROOT_STATE;
   uint16_t index;
+  YR_STRING* report_string = NULL;
+  YR_RULE* rule = NULL;
 
   while (i < block->size)
   {
@@ -103,6 +105,14 @@ static int _yr_scanner_scan_mem_block(
       // match resides.
 
       match = &rules->ac_match_pool[match_table[state] - 1];
+
+      if (scanner->matches->count >= YR_SLOW_STRING_MATCHES)
+      {
+        report_string = match->string;
+        rule = report_string
+                   ? &scanner->rules->rules_table[report_string->rule_idx]
+                   : NULL;
+      }
 
       while (match != NULL)
       {
@@ -159,6 +169,25 @@ static int _yr_scanner_scan_mem_block(
       }
 
       match = match->next;
+    }
+  }
+
+  if (rule != NULL &&
+      scanner->matches->count >= YR_SLOW_STRING_MATCHES &&
+      scanner->matches->count < YR_MAX_STRING_MATCHES)
+  {
+    if (rule != NULL && report_string != NULL)
+    {
+      result = scanner->callback(
+        scanner,
+        CALLBACK_MSG_TOO_SLOW_SCANNING,
+        (void*) report_string,
+        scanner->user_data);
+      if (result != CALLBACK_CONTINUE)
+      {
+        result = ERROR_TOO_SLOW_SCANNING;
+        goto _exit;
+      }
     }
   }
 
@@ -655,6 +684,7 @@ YR_API int yr_scanner_scan_mem(
 
   YR_MEMORY_BLOCK block;
   YR_MEMORY_BLOCK_ITERATOR iterator;
+  int result;
 
   block.size = buffer_size;
   block.base = 0;
@@ -667,7 +697,20 @@ YR_API int yr_scanner_scan_mem(
   iterator.file_size = _yr_get_file_size;
   iterator.last_error = ERROR_SUCCESS;
 
-  int result = yr_scanner_scan_mem_blocks(scanner, &iterator);
+  // Detect cases where every byte of input is checked for match and input size is bigger then 0.2 MB
+  if (scanner->rules->ac_match_table[YR_AC_ROOT_STATE] != 0 && buffer_size > YR_FILE_SIZE_THRESHOLD)
+  {
+    YR_STRING* report_string = scanner->rules->ac_match_pool[YR_AC_ROOT_STATE].string;
+    result = scanner->callback(
+          scanner,
+          CALLBACK_MSG_TOO_SLOW_SCANNING,
+          (void*) report_string,
+          scanner->user_data);
+    if (result != CALLBACK_CONTINUE)
+      return ERROR_TOO_SLOW_SCANNING;
+  }
+
+  result = yr_scanner_scan_mem_blocks(scanner, &iterator);
 
   YR_DEBUG_FPRINTF(
       2,
