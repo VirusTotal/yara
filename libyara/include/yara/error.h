@@ -110,7 +110,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define ERROR_TOO_SLOW_SCANNING              65
 #define ERROR_UNKNOWN_ESCAPE_SEQUENCE        66
 
-
 #define GOTO_EXIT_ON_ERROR(x)    \
   {                              \
     result = (x);                \

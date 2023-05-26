@@ -2819,14 +2819,11 @@ int escaped_char_value(
   case '@':
   case '<':
   case '>':
-  case ' ':
   case '~':
   case '&':
   case '%':
-  case ';':
     *value = text[1];
     break;
-
   default:
     *value = text[1];
     if (strict_escape)

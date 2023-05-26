@@ -2418,7 +2418,7 @@ void test_re()
 
    assert_false_rule_blob(
     "rule test { condition: \"ab\" matches /a\\vb/ }",
-    TEXT_1024_BYTES "rule test { condition: \"avb\" matches /a\\vb/ }"
+    TEXT_1024_BYTES "rule test { condition: \"ab\" matches /a\\vb/ }"
   )
 
   assert_regexp_syntax_error(")");
@@ -3521,6 +3521,9 @@ void test_invalid_escape_sequences_warnings()
     YR_DEBUG_FPRINTF(1, stderr, "+ %s() {\n", __FUNCTION__);
 
     assert_warning_strict_escape("rule test { strings: $a = /ab\\cdef/ condition: $a }");
+    assert_warning_strict_escape("rule test { strings: $a = /ab\\ def/ condition: $a }");
+    assert_warning_strict_escape("rule test { strings: $a = /ab\\;def/ condition: $a }");
+    assert_no_warnings("rule test { strings: $a = /ab\\*def/ condition: $a }");
     assert_no_warnings("rule test { strings: $a = /abcdef/ condition: $a }");
     assert_warning_strict_escape("rule test { strings: $a = /ab\\cdef/ condition: $a }");
     assert_no_warnings("rule test { strings: $a = /abcdef/ condition: $a }");
