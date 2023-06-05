@@ -3884,7 +3884,7 @@ end_declarations
 
 int module_initialize(YR_MODULE* module)
 {
-#if defined(HAVE_LIBCRYPTO)
+#if defined(HAVE_LIBCRYPTO) && !defined(BORINGSSL)
   // Initialize OpenSSL global objects for the auth library before any
   // multithreaded environment as it is not thread-safe. This can
   // only be called once per process.
