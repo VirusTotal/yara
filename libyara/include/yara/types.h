@@ -293,6 +293,8 @@ struct YR_RULE
   // Number of atoms generated for this rule.
   int32_t num_atoms;
 
+  uint32_t required_strings;
+
   DECLARE_REFERENCE(const char*, identifier);
   DECLARE_REFERENCE(const char*, tags);
   DECLARE_REFERENCE(YR_META*, metas);
@@ -814,6 +816,10 @@ struct YR_SCAN_CONTEXT
   // and chain_gap_max), so the matches for S1 are put in "unconfirmed_matches"
   // until they can be confirmed or discarded.
   YR_MATCHES* unconfirmed_matches;
+
+  // A bitmap with one bit per rule, bit N is unset when the condition for rule
+  // with index N is guaranteed to evaluate to false.
+  YR_BITMASK* rule_evaluate_condition_flags;
 
   // profiling_info is a pointer to an array of YR_PROFILING_INFO structures,
   // one per rule. Entry N has the profiling information for rule with index N.

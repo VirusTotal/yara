@@ -93,6 +93,12 @@ typedef struct _YR_EXPRESSION
     YR_ARENA_REF sized_string_ref;
   } value;
 
+  // Boolean expressions can hold a string count. If not empty, this indicates that the condition
+  // can only be fulfilled if at least so many strings match.
+  struct {
+    int count;
+  } required_strings;
+
   // An expression can have an associated identifier, if "ptr" is not NULL it
   // points to the identifier name, if it is NULL, then "ref" holds a reference
   // to the identifier within YR_SZ_POOL. When the identifier is in YR_SZ_POOL
