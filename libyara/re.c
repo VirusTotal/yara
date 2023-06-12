@@ -2291,10 +2291,11 @@ int yr_re_fast_exec(
         break;
 
       case RE_OPCODE_REPEAT_ANY_UNGREEDY:
-        if (bytes_matched >= max_bytes_matched)
+        repeat_any_args = (RE_REPEAT_ANY_ARGS*) (ip + 1);
+
+        if (bytes_matched + repeat_any_args->min >= max_bytes_matched)
           break;
 
-        repeat_any_args = (RE_REPEAT_ANY_ARGS*) (ip + 1);
         match = true;
 
         const uint8_t* next_opcode = ip + 1 + sizeof(RE_REPEAT_ANY_ARGS);
