@@ -1120,7 +1120,7 @@ int yr_parser_reduce_string_identifier(
   YR_STRING* string;
   YR_COMPILER* compiler = yyget_extra(yyscanner);
 
-  if (strcmp(identifier, "$") == 0)  // is an anonymous string ?
+  if (strcmp(identifier, "$") == 0)            // is an anonymous string ?
   {
     if (compiler->loop_for_of_var_index >= 0)  // inside a loop ?
     {
@@ -1378,6 +1378,15 @@ static int _yr_parser_operator_to_opcode(const char* op, int expression_type)
   }
 
   return OP_ERROR;
+}
+
+int yr_parser_integer_width_check(
+    YR_EXPRESSION int_func_expr,
+    YR_EXPRESSION int_expr)
+{
+  return (int_expr.value.integer & ~(1 << int_func_expr.width))
+             ? ERROR_INVALID_ARGUMENT
+             : ERROR_SUCCESS;
 }
 
 int yr_parser_reduce_operation(

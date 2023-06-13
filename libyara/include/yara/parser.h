@@ -121,7 +121,7 @@ int yr_parser_emit_pushes_for_strings(
 int yr_parser_emit_pushes_for_rules(
     yyscan_t yyscanner,
     const char* identifier,
-    int *count);
+    int* count);
 
 int yr_parser_reduce_external(
     yyscan_t yyscanner,
@@ -135,5 +135,9 @@ int yr_parser_reduce_operation(
     const char* operation,
     YR_EXPRESSION left_operand,
     YR_EXPRESSION right_operand);
+
+int yr_parser_integer_width_check(
+    YR_EXPRESSION int_func_expr,
+    YR_EXPRESSION int_expr);
 
 #endif
