@@ -613,6 +613,10 @@ struct YR_RULES
   // the instructions are defined by the OP_X macros in exec.h.
   const uint8_t* code_start;
 
+  // A bitmap with one bit per rule, bit N is set when the condition for rule
+  // might evaluate to true even without any string matches.
+  YR_BITMASK* rule_evaluate_condition_flags;
+
   // Total number of rules.
   uint32_t num_rules;
 

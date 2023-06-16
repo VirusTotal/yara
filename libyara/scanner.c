@@ -508,16 +508,10 @@ YR_API int yr_scanner_scan_mem_blocks(
     if (result != ERROR_SUCCESS)
       goto _exit;
 
-    for (i = 0; i < scanner->rules->num_rules; i++)
-    {
-      // If a rule has no required_strings, this means that the condition might
-      // evaluate to true without any matching strings, and we therefore have to
-      // mark it as "to be evaluated" from the beginning.
-      if (scanner->rules->rules_table[i].required_strings == 0)
-      {
-        yr_bitmask_set(scanner->rule_evaluate_condition_flags, i);
-      }
-    }
+    memcpy(
+      scanner->rule_evaluate_condition_flags,
+      scanner->rules->rule_evaluate_condition_flags,
+      sizeof(YR_BITMASK) * YR_BITMASK_SIZE(rules->num_rules));
 
     yr_stopwatch_start(&scanner->stopwatch);
 
