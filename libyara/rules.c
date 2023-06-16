@@ -336,6 +336,14 @@ int yr_rules_from_arena(YR_ARENA* arena, YR_RULES** rules)
   if (new_rules == NULL)
     return ERROR_INSUFFICIENT_MEMORY;
 
+  new_rules->rule_evaluate_condition_flags = (YR_BITMASK*) yr_calloc(
+      sizeof(YR_BITMASK), YR_BITMASK_SIZE(new_rules->num_rules));
+  if (new_rules->rule_evaluate_condition_flags == NULL)
+  {
+    yr_free(new_rules);
+    return ERROR_INSUFFICIENT_MEMORY;
+  }
+
   // Now YR_RULES relies on this arena, let's increment the arena's
   // reference count so that if the original owner of the arena calls
   // yr_arena_destroy the arena is not destroyed.
@@ -367,8 +375,6 @@ int yr_rules_from_arena(YR_ARENA* arena, YR_RULES** rules)
   // If a rule has no required_strings, this means that the condition might
   // evaluate to true without any matching strings, and we therefore have to
   // mark it as "to be evaluated" from the beginning.
-  new_rules->rule_evaluate_condition_flags = (YR_BITMASK*) yr_calloc(
-      sizeof(YR_BITMASK), YR_BITMASK_SIZE(new_rules->num_rules));
   for (int i = 0; i < new_rules->num_rules; i++)
   {
     if (new_rules->rules_table[i].required_strings == 0)
