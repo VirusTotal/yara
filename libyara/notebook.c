@@ -64,7 +64,10 @@ struct YR_NOTEBOOK_PAGE
   // Pointer to next page.
   YR_NOTEBOOK_PAGE* next;
   // Page's data.
-  uint8_t data[0];
+  //
+  // This field must be 8-byte aligned to guarantee that all notebooks
+  // allocations are 8-byte aligned.
+  YR_ALIGN(8) uint8_t data[0];
 };
 
 ////////////////////////////////////////////////////////////////////////////////
