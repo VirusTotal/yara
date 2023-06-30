@@ -1167,11 +1167,12 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
       current_rule = &context->rules->rules_table[current_rule_idx];
 
       // If the rule is disabled let's skip its code.
-      ip = jmp_if(RULE_IS_DISABLED(current_rule), ip);
+      bool disabled = RULE_IS_DISABLED(current_rule) || yr_bitmask_is_not_set(context->rule_evaluate_condition_flags, current_rule_idx);
+      ip = jmp_if(disabled, ip);
 
       // Skip the bytes corresponding to the rule's index, but only if not
       // taking the jump.
-      if (!RULE_IS_DISABLED(current_rule))
+      if (!disabled)
         ip += sizeof(uint32_t);
 
       break;

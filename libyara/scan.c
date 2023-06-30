@@ -575,6 +575,8 @@ static int _yr_scan_verify_chained_string_match(
               match_data - match_offset + match->offset,
               match->data_length);
 
+          yr_bitmask_set(context->rule_evaluate_condition_flags, string->rule_idx);
+
           FAIL_ON_ERROR(_yr_scan_add_match_to_list(
               match, &context->matches[string->idx], false));
         }
@@ -749,6 +751,8 @@ static int _yr_scan_match_callback(
       new_match->next = NULL;
       new_match->is_private = STRING_IS_PRIVATE(string);
       new_match->xor_key = callback_args->xor_key;
+
+      yr_bitmask_set(callback_args->context->rule_evaluate_condition_flags, string->rule_idx);
 
       FAIL_ON_ERROR(_yr_scan_add_match_to_list(
           new_match,

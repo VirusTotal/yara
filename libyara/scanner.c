@@ -214,6 +214,11 @@ static void _yr_scanner_clean_matches(YR_SCANNER* scanner)
       sizeof(YR_BITMASK) * YR_BITMASK_SIZE(scanner->rules->num_rules));
 
   memset(
+      scanner->rule_evaluate_condition_flags,
+      0,
+      sizeof(YR_BITMASK) * YR_BITMASK_SIZE(scanner->rules->num_rules));
+
+  memset(
       scanner->ns_unsatisfied_flags,
       0,
       sizeof(YR_BITMASK) * YR_BITMASK_SIZE(scanner->rules->num_namespaces));
@@ -259,6 +264,9 @@ YR_API int yr_scanner_create(YR_RULES* rules, YR_SCANNER** scanner)
   new_scanner->rule_matches_flags = (YR_BITMASK*) yr_calloc(
       sizeof(YR_BITMASK), YR_BITMASK_SIZE(rules->num_rules));
 
+  new_scanner->rule_evaluate_condition_flags = (YR_BITMASK*) yr_calloc(
+      sizeof(YR_BITMASK), YR_BITMASK_SIZE(rules->num_rules));
+
   new_scanner->ns_unsatisfied_flags = (YR_BITMASK*) yr_calloc(
       sizeof(YR_BITMASK), YR_BITMASK_SIZE(rules->num_namespaces));
 
@@ -272,6 +280,7 @@ YR_API int yr_scanner_create(YR_RULES* rules, YR_SCANNER** scanner)
       rules->num_strings, sizeof(YR_MATCHES));
 
   if (new_scanner->rule_matches_flags == NULL ||
+      new_scanner->rule_evaluate_condition_flags == NULL ||
       new_scanner->ns_unsatisfied_flags == NULL ||
       new_scanner->strings_temp_disabled == NULL ||
       new_scanner->matches == NULL ||  //
@@ -358,6 +367,7 @@ YR_API void yr_scanner_destroy(YR_SCANNER* scanner)
 
   yr_free(scanner->rule_matches_flags);
   yr_free(scanner->ns_unsatisfied_flags);
+  yr_free(scanner->rule_evaluate_condition_flags);
   yr_free(scanner->strings_temp_disabled);
   yr_free(scanner->matches);
   yr_free(scanner->unconfirmed_matches);
@@ -497,6 +507,11 @@ YR_API int yr_scanner_scan_mem_blocks(
 
     if (result != ERROR_SUCCESS)
       goto _exit;
+
+    memcpy(
+      scanner->rule_evaluate_condition_flags,
+      scanner->rules->rule_evaluate_condition_flags,
+      sizeof(YR_BITMASK) * YR_BITMASK_SIZE(rules->num_rules));
 
     yr_stopwatch_start(&scanner->stopwatch);
 
