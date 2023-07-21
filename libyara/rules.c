@@ -337,7 +337,7 @@ int yr_rules_from_arena(YR_ARENA* arena, YR_RULES** rules)
     return ERROR_INSUFFICIENT_MEMORY;
 
   new_rules->rule_evaluate_condition_flags = (YR_BITMASK*) yr_calloc(
-      sizeof(YR_BITMASK), YR_BITMASK_SIZE(new_rules->num_rules));
+      sizeof(YR_BITMASK), YR_BITMASK_SIZE(summary->num_rules));
   if (new_rules->rule_evaluate_condition_flags == NULL)
   {
     yr_free(new_rules);
