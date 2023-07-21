@@ -2776,6 +2776,15 @@ void test_re()
       "rule test { strings: $a =/abc([^\"\\\\])*\"/ nocase condition: $a }",
       TEXT_1024_BYTES "abc\xE0\x22");
 
+  // Test case for issue #1933
+  assert_true_rule_blob(
+      "rule test { strings: $a = /a.{1}1/ ascii wide condition: $a }",
+      "a\0b\0\x31\0");
+
+  // Test case for issue #1933
+  assert_true_rule_blob(
+      "rule test { strings: $a = /a.{1}1/ ascii wide condition: $a }", "ab1\0");
+
   YR_DEBUG_FPRINTF(1, stderr, "} // %s()\n", __FUNCTION__);
 }
 

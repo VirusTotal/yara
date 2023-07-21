@@ -575,7 +575,8 @@ static int _yr_scan_verify_chained_string_match(
               match_data - match_offset + match->offset,
               match->data_length);
 
-          yr_bitmask_set(context->rule_evaluate_condition_flags, string->rule_idx);
+          yr_bitmask_set(
+              context->rule_evaluate_condition_flags, string->rule_idx);
 
           FAIL_ON_ERROR(_yr_scan_add_match_to_list(
               match, &context->matches[string->idx], false));
@@ -752,7 +753,9 @@ static int _yr_scan_match_callback(
       new_match->is_private = STRING_IS_PRIVATE(string);
       new_match->xor_key = callback_args->xor_key;
 
-      yr_bitmask_set(callback_args->context->rule_evaluate_condition_flags, string->rule_idx);
+      yr_bitmask_set(
+          callback_args->context->rule_evaluate_condition_flags,
+          string->rule_idx);
 
       FAIL_ON_ERROR(_yr_scan_add_match_to_list(
           new_match,
@@ -800,8 +803,6 @@ static int _yr_scan_verify_re_match(
   CALLBACK_ARGS callback_args;
   RE_EXEC_FUNC exec;
 
-  int forward_matches = -1;
-  int backward_matches = -1;
   int flags = 0;
 
   if (STRING_IS_GREEDY_REGEXP(ac_match->string))
@@ -818,7 +819,21 @@ static int _yr_scan_verify_re_match(
   else
     exec = yr_re_exec;
 
-  if (STRING_IS_ASCII(ac_match->string) || STRING_IS_BASE64(ac_match->string) ||
+  callback_args.string = ac_match->string;
+  callback_args.context = context;
+  callback_args.data = data;
+  callback_args.data_size = data_size;
+  callback_args.data_base = data_base;
+  callback_args.forward_matches = -1;
+  callback_args.full_word = STRING_IS_FULL_WORD(ac_match->string);
+  // xor modifier is not valid for RE but set it so we don't leak stack values.
+  callback_args.xor_key = 0;
+
+  if (STRING_IS_ASCII(ac_match->string) ||
+      // The base64 and base64wide are not supported in regexps, but strings
+      // with these modifiers are converted to a regexp with three
+      // alternatives.
+      STRING_IS_BASE64(ac_match->string) ||
       STRING_IS_BASE64_WIDE(ac_match->string))
   {
     FAIL_ON_ERROR(exec(
@@ -830,59 +845,59 @@ static int _yr_scan_verify_re_match(
         flags,
         NULL,
         NULL,
-        &forward_matches));
+        &callback_args.forward_matches));
+
+    if (callback_args.forward_matches != -1 && ac_match->backward_code != NULL)
+    {
+      FAIL_ON_ERROR(exec(
+          context,
+          ac_match->backward_code,
+          data + offset,
+          data_size - offset,
+          offset,
+          flags | RE_FLAGS_BACKWARDS | RE_FLAGS_EXHAUSTIVE,
+          _yr_scan_match_callback,
+          (void*) &callback_args,
+          NULL));
+    }
+    else if (callback_args.forward_matches > 0)
+    {
+      FAIL_ON_ERROR(
+          _yr_scan_match_callback(data + offset, 0, flags, &callback_args));
+    }
   }
 
-  if ((forward_matches == -1) && (STRING_IS_WIDE(ac_match->string) &&
-                                  !(STRING_IS_BASE64(ac_match->string) ||
-                                    STRING_IS_BASE64_WIDE(ac_match->string))))
+  if (STRING_IS_WIDE(ac_match->string))
   {
-    flags |= RE_FLAGS_WIDE;
     FAIL_ON_ERROR(exec(
         context,
         ac_match->forward_code,
         data + offset,
         data_size - offset,
         offset,
-        flags,
+        flags | RE_FLAGS_WIDE,
         NULL,
         NULL,
-        &forward_matches));
-  }
+        &callback_args.forward_matches));
 
-  if (forward_matches == -1)
-    return ERROR_SUCCESS;
-
-  if (forward_matches == 0 && ac_match->backward_code == NULL)
-    return ERROR_SUCCESS;
-
-  callback_args.string = ac_match->string;
-  callback_args.context = context;
-  callback_args.data = data;
-  callback_args.data_size = data_size;
-  callback_args.data_base = data_base;
-  callback_args.forward_matches = forward_matches;
-  callback_args.full_word = STRING_IS_FULL_WORD(ac_match->string);
-  // xor modifier is not valid for RE but set it so we don't leak stack values.
-  callback_args.xor_key = 0;
-
-  if (ac_match->backward_code != NULL)
-  {
-    FAIL_ON_ERROR(exec(
-        context,
-        ac_match->backward_code,
-        data + offset,
-        data_size - offset,
-        offset,
-        flags | RE_FLAGS_BACKWARDS | RE_FLAGS_EXHAUSTIVE,
-        _yr_scan_match_callback,
-        (void*) &callback_args,
-        &backward_matches));
-  }
-  else
-  {
-    FAIL_ON_ERROR(
-        _yr_scan_match_callback(data + offset, 0, flags, &callback_args));
+    if (callback_args.forward_matches != -1 && ac_match->backward_code != NULL)
+    {
+      FAIL_ON_ERROR(exec(
+          context,
+          ac_match->backward_code,
+          data + offset,
+          data_size - offset,
+          offset,
+          flags | RE_FLAGS_WIDE | RE_FLAGS_BACKWARDS | RE_FLAGS_EXHAUSTIVE,
+          _yr_scan_match_callback,
+          (void*) &callback_args,
+          NULL));
+    }
+    else if (callback_args.forward_matches > 0)
+    {
+      FAIL_ON_ERROR(
+          _yr_scan_match_callback(data + offset, 0, flags, &callback_args));
+    }
   }
 
   return ERROR_SUCCESS;
