@@ -1703,7 +1703,7 @@ void _process_authenticode(
   {
     const Authenticode* authenticode = auth_array->signatures[i];
 
-    signature_valid = authenticode->verify_flags == AUTHENTICODE_VFY_VALID
+    signature_valid |= authenticode->verify_flags == AUTHENTICODE_VFY_VALID
                           ? true
                           : false;
 
