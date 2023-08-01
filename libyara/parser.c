@@ -1070,11 +1070,24 @@ int yr_parser_reduce_rule_declaration_phase_2(
     // Only the heading fragment in a chain of strings (the one with
     // chained_to == NULL) must be referenced. All other fragments
     // are never marked as referenced.
+    //
+    // Any string identifier that starts with '_' can be unreferenced. Anonymous
+    // strings must always be referenced.
 
-    if (!STRING_IS_REFERENCED(string) && string->chained_to == NULL)
+    if (!STRING_IS_REFERENCED(string) && string->chained_to == NULL &&
+        (STRING_IS_ANONYMOUS(string) ||
+         (!STRING_IS_ANONYMOUS(string) && string->identifier[1] != '_')))
     {
       yr_compiler_set_error_extra_info(
           compiler, string->identifier) return ERROR_UNREFERENCED_STRING;
+    }
+
+    // If a string is unreferenced we need to unset the FIXED_OFFSET flag so
+    // that it will match anywhere.
+    if (!STRING_IS_REFERENCED(string) && string->chained_to == NULL &&
+        STRING_IS_FIXED_OFFSET(string))
+    {
+      string->flags &= ~STRING_FLAGS_FIXED_OFFSET;
     }
 
     strings_in_rule++;
@@ -1120,7 +1133,7 @@ int yr_parser_reduce_string_identifier(
   YR_STRING* string;
   YR_COMPILER* compiler = yyget_extra(yyscanner);
 
-  if (strcmp(identifier, "$") == 0)  // is an anonymous string ?
+  if (strcmp(identifier, "$") == 0)            // is an anonymous string ?
   {
     if (compiler->loop_for_of_var_index >= 0)  // inside a loop ?
     {
