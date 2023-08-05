@@ -68,6 +68,8 @@ static int _yr_scanner_scan_mem_block(
   size_t i = 0;
   uint32_t state = YR_AC_ROOT_STATE;
   uint16_t index;
+  YR_STRING* report_string = NULL;
+  YR_RULE* rule = NULL;
 
   while (i < block->size)
   {
@@ -103,6 +105,14 @@ static int _yr_scanner_scan_mem_block(
       // match resides.
 
       match = &rules->ac_match_pool[match_table[state] - 1];
+
+      if (scanner->matches->count >= YR_SLOW_STRING_MATCHES)
+      {
+        report_string = match->string;
+        rule = report_string
+                   ? &scanner->rules->rules_table[report_string->rule_idx]
+                   : NULL;
+      }
 
       while (match != NULL)
       {
@@ -162,6 +172,25 @@ static int _yr_scanner_scan_mem_block(
     }
   }
 
+  if (rule != NULL &&
+      scanner->matches->count >= YR_SLOW_STRING_MATCHES &&
+      scanner->matches->count < YR_MAX_STRING_MATCHES)
+  {
+    if (rule != NULL && report_string != NULL)
+    {
+      result = scanner->callback(
+        scanner,
+        CALLBACK_MSG_TOO_SLOW_SCANNING,
+        (void*) report_string,
+        scanner->user_data);
+      if (result != CALLBACK_CONTINUE)
+      {
+        result = ERROR_TOO_SLOW_SCANNING;
+        goto _exit;
+      }
+    }
+  }
+
 _exit:
 
   YR_DEBUG_FPRINTF(
@@ -181,6 +210,11 @@ static void _yr_scanner_clean_matches(YR_SCANNER* scanner)
 
   memset(
       scanner->rule_matches_flags,
+      0,
+      sizeof(YR_BITMASK) * YR_BITMASK_SIZE(scanner->rules->num_rules));
+
+  memset(
+      scanner->rule_evaluate_condition_flags,
       0,
       sizeof(YR_BITMASK) * YR_BITMASK_SIZE(scanner->rules->num_rules));
 
@@ -230,6 +264,9 @@ YR_API int yr_scanner_create(YR_RULES* rules, YR_SCANNER** scanner)
   new_scanner->rule_matches_flags = (YR_BITMASK*) yr_calloc(
       sizeof(YR_BITMASK), YR_BITMASK_SIZE(rules->num_rules));
 
+  new_scanner->rule_evaluate_condition_flags = (YR_BITMASK*) yr_calloc(
+      sizeof(YR_BITMASK), YR_BITMASK_SIZE(rules->num_rules));
+
   new_scanner->ns_unsatisfied_flags = (YR_BITMASK*) yr_calloc(
       sizeof(YR_BITMASK), YR_BITMASK_SIZE(rules->num_namespaces));
 
@@ -243,6 +280,7 @@ YR_API int yr_scanner_create(YR_RULES* rules, YR_SCANNER** scanner)
       rules->num_strings, sizeof(YR_MATCHES));
 
   if (new_scanner->rule_matches_flags == NULL ||
+      new_scanner->rule_evaluate_condition_flags == NULL ||
       new_scanner->ns_unsatisfied_flags == NULL ||
       new_scanner->strings_temp_disabled == NULL ||
       new_scanner->matches == NULL ||  //
@@ -329,6 +367,7 @@ YR_API void yr_scanner_destroy(YR_SCANNER* scanner)
 
   yr_free(scanner->rule_matches_flags);
   yr_free(scanner->ns_unsatisfied_flags);
+  yr_free(scanner->rule_evaluate_condition_flags);
   yr_free(scanner->strings_temp_disabled);
   yr_free(scanner->matches);
   yr_free(scanner->unconfirmed_matches);
@@ -468,6 +507,11 @@ YR_API int yr_scanner_scan_mem_blocks(
 
     if (result != ERROR_SUCCESS)
       goto _exit;
+
+    memcpy(
+      scanner->rule_evaluate_condition_flags,
+      scanner->rules->rule_evaluate_condition_flags,
+      sizeof(YR_BITMASK) * YR_BITMASK_SIZE(rules->num_rules));
 
     yr_stopwatch_start(&scanner->stopwatch);
 
@@ -655,6 +699,7 @@ YR_API int yr_scanner_scan_mem(
 
   YR_MEMORY_BLOCK block;
   YR_MEMORY_BLOCK_ITERATOR iterator;
+  int result;
 
   block.size = buffer_size;
   block.base = 0;
@@ -667,7 +712,20 @@ YR_API int yr_scanner_scan_mem(
   iterator.file_size = _yr_get_file_size;
   iterator.last_error = ERROR_SUCCESS;
 
-  int result = yr_scanner_scan_mem_blocks(scanner, &iterator);
+  // Detect cases where every byte of input is checked for match and input size is bigger then 0.2 MB
+  if (scanner->rules->ac_match_table[YR_AC_ROOT_STATE] != 0 && buffer_size > YR_FILE_SIZE_THRESHOLD)
+  {
+    YR_STRING* report_string = scanner->rules->ac_match_pool[YR_AC_ROOT_STATE].string;
+    result = scanner->callback(
+          scanner,
+          CALLBACK_MSG_TOO_SLOW_SCANNING,
+          (void*) report_string,
+          scanner->user_data);
+    if (result != CALLBACK_CONTINUE)
+      return ERROR_TOO_SLOW_SCANNING;
+  }
+
+  result = yr_scanner_scan_mem_blocks(scanner, &iterator);
 
   YR_DEBUG_FPRINTF(
       2,

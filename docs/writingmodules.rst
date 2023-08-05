@@ -61,7 +61,7 @@ as our starting point. The file looks like this:
         void* module_data,
         size_t module_data_size)
     {
-      set_string("Hello World!", module_object, "greeting");
+      yr_set_string("Hello World!", module_object, "greeting");
       return ERROR_SUCCESS;
     }
 
@@ -204,24 +204,24 @@ The second step is modifying the *Makefile.am* to tell the *make* program that
 the source code for your module must be compiled and linked into YARA. At the
 very beginning of *libyara/Makefile.am* you'll find this::
 
-    MODULES =  modules/tests/tests.c
-    MODULES += modules/pe/pe.c
+    MODULES =  libyara/modules/tests/tests.c
+    MODULES += libyara/modules/pe/pe.c
 
     if CUCKOO_MODULE
-    MODULES += modules/cuckoo/cuckoo.c
+    MODULES += libyara/modules/cuckoo/cuckoo.c
     endif
 
 
 Just add a new line for your module::
 
-    MODULES =  modules/tests/tests.c
-    MODULES += modules/pe/pe.c
+    MODULES =  libyara/modules/tests/tests.c
+    MODULES += libyara/modules/pe/pe.c
 
     if CUCKOO_MODULE
-    MODULES += modules/cuckoo/cuckoo.c
+    MODULES += libyara/modules/cuckoo/cuckoo.c
     endif
 
-    MODULES += modules/demo/demo.c
+    MODULES += libyara/modules/demo/demo.c
 
 And that's all! Now you're ready to build YARA with your brand-new module
 included. Just go to the source tree root directory and type as always::

@@ -78,6 +78,7 @@ awesome list of [YARA-related stuff](https://github.com/InQuest/awesome-yara).
 * [Dtex Systems](https://dtexsystems.com)
 * [ESET](https://www.eset.com)
 * [ESTsecurity](https://www.estsecurity.com)
+* [Elastic Security](https://github.com/elastic/protections-artifacts)
 * [Fidelis XPS](https://www.fidelissecurity.com/network-security-appliance/Fidelis-XPS)
 * [FireEye, Inc.](https://www.fireeye.com)
 * [Forcepoint](https://www.forcepoint.com)
