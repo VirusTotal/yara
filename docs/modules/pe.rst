@@ -1450,6 +1450,15 @@ Reference
 
     *Example: pe.imphash() == "b8bb385806b89680e13fc0cf24f4431e"*
 
+.. c:function:: exphash()
+
+    .. versionadded:: 4.2.3
+
+    Function returning the export hash or exphash for the PE. The export hash
+    is a MD5 hash of the PE's export table.
+
+    *Example: pe.exphash() == "69e300c67958698c5c147b2b563317bc"*
+
 .. c:function:: section_index(name)
 
     Function returning the index into the sections array for the section that has
