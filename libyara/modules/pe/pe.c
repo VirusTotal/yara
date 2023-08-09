@@ -871,7 +871,7 @@ static IMPORT_FUNCTION* pe_parse_import_descriptor(
       rva_address = yr_le32toh(import_descriptor->FirstThunk) +
                     (sizeof(uint64_t) * func_idx);
 
-      if (name != NULL || has_ordinal == 1)
+      if ((name != NULL && strcmp(name, "")) || has_ordinal == 1)
       {
         IMPORT_FUNCTION* imported_func = (IMPORT_FUNCTION*) yr_calloc(
             1, sizeof(IMPORT_FUNCTION));
@@ -946,7 +946,7 @@ static IMPORT_FUNCTION* pe_parse_import_descriptor(
       rva_address = yr_le32toh(import_descriptor->FirstThunk) +
                     (sizeof(uint32_t) * func_idx);
 
-      if (name != NULL || has_ordinal == 1)
+      if ((name != NULL && strcmp(name, "")) || has_ordinal == 1)
       {
         IMPORT_FUNCTION* imported_func = (IMPORT_FUNCTION*) yr_calloc(
             1, sizeof(IMPORT_FUNCTION));
@@ -1127,7 +1127,6 @@ static IMPORTED_DLL* pe_parse_imports(PE* pe)
         if (functions != NULL)
         {
           imported_dll->name = yr_strdup(dll_name);
-          ;
           imported_dll->functions = functions;
           imported_dll->next = NULL;
 

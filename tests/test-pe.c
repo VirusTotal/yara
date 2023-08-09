@@ -329,6 +329,16 @@ int main(int argc, char** argv)
       }",
       "tests/data/tiny");
 
+  // Make sure imports with no ordinal and an empty name are skipped. This is
+  // consistent with the behavior of pefile.
+  assert_true_rule_file(
+      "import \"pe\" \
+      rule test { \
+        condition: \
+          pe.imphash() == \"0eff3a0eb037af8c1ef0bada984d6af5\" \
+      }",
+      "tests/data/tiny_empty_import_name");
+
 #endif
 
 #if defined(HAVE_LIBCRYPTO)
