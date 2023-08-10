@@ -836,6 +836,11 @@ static IMPORT_FUNCTION* pe_parse_import_descriptor(
 {
   IMPORT_FUNCTION* head = NULL;
   IMPORT_FUNCTION* tail = NULL;
+  // This is tracked separately from num_function_imports because that is the
+  // number of successfully parsed imports, while this is the number of imports
+  // attempted to be parsed. This allows us to stop parsing on too many imports
+  // while still accurately recording the number of successfully parsed imports.
+  int parsed_imports = 0;
 
   int64_t offset = pe_rva_to_offset(
       pe, yr_le32toh(import_descriptor->OriginalFirstThunk));
@@ -856,12 +861,14 @@ static IMPORT_FUNCTION* pe_parse_import_descriptor(
 
     while (struct_fits_in_pe(pe, thunks64, IMAGE_THUNK_DATA64) &&
            yr_le64toh(thunks64->u1.Ordinal) != 0 &&
-           *num_function_imports < MAX_PE_IMPORTS)
+           parsed_imports < MAX_PE_IMPORTS)
     {
       char* name = NULL;
       uint16_t ordinal = 0;
       uint8_t has_ordinal = 0;
       uint64_t rva_address = 0;
+
+      parsed_imports++;
 
       if (!(yr_le64toh(thunks64->u1.Ordinal) & IMAGE_ORDINAL_FLAG64))
       {
@@ -917,9 +924,9 @@ static IMPORT_FUNCTION* pe_parse_import_descriptor(
           tail->next = imported_func;
 
         tail = imported_func;
+        (*num_function_imports)++;
       }
 
-      (*num_function_imports)++;
       thunks64++;
       func_idx++;
     }
@@ -937,6 +944,8 @@ static IMPORT_FUNCTION* pe_parse_import_descriptor(
       uint16_t ordinal = 0;
       uint8_t has_ordinal = 0;
       uint32_t rva_address = 0;
+
+      parsed_imports++;
 
       if (!(yr_le32toh(thunks32->u1.Ordinal) & IMAGE_ORDINAL_FLAG32))
       {
@@ -992,9 +1001,9 @@ static IMPORT_FUNCTION* pe_parse_import_descriptor(
           tail->next = imported_func;
 
         tail = imported_func;
+        (*num_function_imports)++;
       }
 
-      (*num_function_imports)++;
       thunks32++;
       func_idx++;
     }
@@ -1094,6 +1103,7 @@ void pe_set_imports(
 static IMPORTED_DLL* pe_parse_imports(PE* pe)
 {
   int64_t offset;
+  int parsed_imports = 0;        // Number of parsed DLLs
   int num_imports = 0;           // Number of imported DLLs
   int num_function_imports = 0;  // Total number of functions imported
 
@@ -1123,8 +1133,10 @@ static IMPORTED_DLL* pe_parse_imports(PE* pe)
   imports = (PIMAGE_IMPORT_DESCRIPTOR) (pe->data + offset);
 
   while (struct_fits_in_pe(pe, imports, IMAGE_IMPORT_DESCRIPTOR) &&
-         yr_le32toh(imports->Name) != 0 && num_imports < MAX_PE_IMPORTS)
+         yr_le32toh(imports->Name) != 0 && parsed_imports < MAX_PE_IMPORTS)
   {
+    parsed_imports++;
+
     int64_t offset = pe_rva_to_offset(pe, yr_le32toh(imports->Name));
 
     if (offset >= 0)
@@ -1159,6 +1171,7 @@ static IMPORTED_DLL* pe_parse_imports(PE* pe)
             tail->next = imported_dll;
 
           tail = imported_dll;
+          num_imports++;
         }
         else
         {
@@ -1167,7 +1180,6 @@ static IMPORTED_DLL* pe_parse_imports(PE* pe)
       }
     }
 
-    num_imports++;
     imports++;
   }
 
