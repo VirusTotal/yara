@@ -326,8 +326,8 @@ static void pe_parse_debug_directory(PE* pe)
   {
     int64_t pcv_hdr_offset = 0;
 
-    debug_dir =
-        (PIMAGE_DEBUG_DIRECTORY) (pe->data + debug_dir_offset + i * sizeof(IMAGE_DEBUG_DIRECTORY));
+    debug_dir = (PIMAGE_DEBUG_DIRECTORY) (pe->data + debug_dir_offset +
+                                          i * sizeof(IMAGE_DEBUG_DIRECTORY));
 
     if (!struct_fits_in_pe(pe, debug_dir, IMAGE_DEBUG_DIRECTORY))
       break;
@@ -409,7 +409,8 @@ static const PIMAGE_RESOURCE_DIR_STRING_U parse_resource_name(
   if (yr_le32toh(entry->Name) & 0x80000000)
   {
     const PIMAGE_RESOURCE_DIR_STRING_U pNameString =
-        (PIMAGE_RESOURCE_DIR_STRING_U) (rsrc_data + (yr_le32toh(entry->Name) & 0x7FFFFFFF));
+        (PIMAGE_RESOURCE_DIR_STRING_U) (rsrc_data +
+                                        (yr_le32toh(entry->Name) & 0x7FFFFFFF));
 
     // A resource directory string is 2 bytes for the length and then a variable
     // length Unicode string. Make sure we have at least 2 bytes.
@@ -419,7 +420,9 @@ static const PIMAGE_RESOURCE_DIR_STRING_U parse_resource_name(
 
     // Move past the length and make sure we have enough bytes for the string.
     if (!fits_in_pe(
-            pe, pNameString, sizeof(uint16_t) + yr_le16toh(pNameString->Length) * 2))
+            pe,
+            pNameString,
+            sizeof(uint16_t) + yr_le16toh(pNameString->Length) * 2))
       return NULL;
 
     return pNameString;
@@ -806,6 +809,25 @@ static int pe_collect_resources(
   return RESOURCE_CALLBACK_CONTINUE;
 }
 
+// Function names should have only lowercase, uppercase, digits and a small
+// subset of special characters. This is to match behavior of pefile. See
+// https://github.com/erocarrera/pefile/blob/593d094e35198dad92aaf040bef17eb800c8a373/pefile.py#L2326-L2348
+static int valid_function_name(char* name)
+{
+  if (!strcmp(name, ""))
+    return 0;
+
+  size_t i = 0;
+  for (char c = name[i]; c != '\x00'; c = name[++i])
+  {
+    if (!(c >= 'a' && c <= 'z') && !(c >= 'A' && c <= 'Z') &&
+        !(c >= '0' && c <= '9') && c != '.' && c != '_' && c != '?' &&
+        c != '@' && c != '$' && c != '(' && c != ')' && c != '<' && c != '>')
+      return 0;
+  }
+  return 1;
+}
+
 static IMPORT_FUNCTION* pe_parse_import_descriptor(
     PE* pe,
     PIMAGE_IMPORT_DESCRIPTOR import_descriptor,
@@ -848,8 +870,8 @@ static IMPORT_FUNCTION* pe_parse_import_descriptor(
 
         if (offset >= 0)
         {
-          PIMAGE_IMPORT_BY_NAME import =
-              (PIMAGE_IMPORT_BY_NAME) (pe->data + offset);
+          PIMAGE_IMPORT_BY_NAME import = (PIMAGE_IMPORT_BY_NAME) (pe->data +
+                                                                  offset);
 
           if (struct_fits_in_pe(pe, import, IMAGE_IMPORT_BY_NAME))
           {
@@ -871,7 +893,7 @@ static IMPORT_FUNCTION* pe_parse_import_descriptor(
       rva_address = yr_le32toh(import_descriptor->FirstThunk) +
                     (sizeof(uint64_t) * func_idx);
 
-      if ((name != NULL && strcmp(name, "")) || has_ordinal == 1)
+      if ((name != NULL && valid_function_name(name)) || has_ordinal == 1)
       {
         IMPORT_FUNCTION* imported_func = (IMPORT_FUNCTION*) yr_calloc(
             1, sizeof(IMPORT_FUNCTION));
@@ -923,8 +945,8 @@ static IMPORT_FUNCTION* pe_parse_import_descriptor(
 
         if (offset >= 0)
         {
-          PIMAGE_IMPORT_BY_NAME import =
-              (PIMAGE_IMPORT_BY_NAME) (pe->data + offset);
+          PIMAGE_IMPORT_BY_NAME import = (PIMAGE_IMPORT_BY_NAME) (pe->data +
+                                                                  offset);
 
           if (struct_fits_in_pe(pe, import, IMAGE_IMPORT_BY_NAME))
           {
@@ -946,7 +968,7 @@ static IMPORT_FUNCTION* pe_parse_import_descriptor(
       rva_address = yr_le32toh(import_descriptor->FirstThunk) +
                     (sizeof(uint32_t) * func_idx);
 
-      if ((name != NULL && strcmp(name, "")) || has_ordinal == 1)
+      if ((name != NULL && valid_function_name(name)) || has_ordinal == 1)
       {
         IMPORT_FUNCTION* imported_func = (IMPORT_FUNCTION*) yr_calloc(
             1, sizeof(IMPORT_FUNCTION));

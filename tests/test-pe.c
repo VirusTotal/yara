@@ -335,7 +335,7 @@ int main(int argc, char** argv)
       "import \"pe\" \
       rule test { \
         condition: \
-          pe.imphash() == \"0eff3a0eb037af8c1ef0bada984d6af5\" \
+          pe.imphash() == \"b441b7fd09648ae6a06cea0e090128d6\" \
       }",
       "tests/data/tiny_empty_import_name");
 
