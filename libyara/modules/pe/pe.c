@@ -3636,6 +3636,10 @@ begin_declarations
   declare_integer("IMAGE_DEBUG_TYPE_MPX");
   declare_integer("IMAGE_DEBUG_TYPE_REPRO");
 
+  declare_integer("IMPORT_DELAYED");
+  declare_integer("IMPORT_STANDARD");
+  declare_integer("IMPORT_ANY");
+
   declare_integer("is_pe");
   declare_integer("machine");
   declare_integer("number_of_sections");
@@ -3743,10 +3747,6 @@ begin_declarations
     defined(HAVE_COMMONCRYPTO_COMMONCRYPTO_H)
   declare_function("imphash", "", "s", imphash);
 #endif
-
-  declare_integer("IMPORT_DELAYED");
-  declare_integer("IMPORT_STANDARD");
-  declare_integer("IMPORT_ANY");
 
   declare_function("section_index", "s", "i", section_index_name);
   declare_function("section_index", "i", "i", section_index_addr);
