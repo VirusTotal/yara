@@ -900,7 +900,15 @@ static IMPORT_FUNCTION* pe_parse_import_descriptor(
       rva_address = yr_le32toh(import_descriptor->FirstThunk) +
                     (sizeof(uint64_t) * func_idx);
 
-      if ((name != NULL && valid_function_name(name)) || has_ordinal == 1)
+      if (name != NULL && !valid_function_name(name))
+      {
+        yr_free(name);
+        thunks64++;
+        func_idx++;
+        continue;
+      }
+
+      if (name != NULL || has_ordinal == 1)
       {
         IMPORT_FUNCTION* imported_func = (IMPORT_FUNCTION*) yr_calloc(
             1, sizeof(IMPORT_FUNCTION));
@@ -908,23 +916,24 @@ static IMPORT_FUNCTION* pe_parse_import_descriptor(
         if (imported_func == NULL)
         {
           yr_free(name);
-          continue;
         }
+        else
+        {
+          imported_func->name = name;
+          imported_func->ordinal = ordinal;
+          imported_func->has_ordinal = has_ordinal;
+          imported_func->rva = rva_address;
+          imported_func->next = NULL;
 
-        imported_func->name = name;
-        imported_func->ordinal = ordinal;
-        imported_func->has_ordinal = has_ordinal;
-        imported_func->rva = rva_address;
-        imported_func->next = NULL;
+          if (head == NULL)
+            head = imported_func;
 
-        if (head == NULL)
-          head = imported_func;
+          if (tail != NULL)
+            tail->next = imported_func;
 
-        if (tail != NULL)
-          tail->next = imported_func;
-
-        tail = imported_func;
-        (*num_function_imports)++;
+          tail = imported_func;
+          (*num_function_imports)++;
+        }
       }
 
       thunks64++;
@@ -977,7 +986,15 @@ static IMPORT_FUNCTION* pe_parse_import_descriptor(
       rva_address = yr_le32toh(import_descriptor->FirstThunk) +
                     (sizeof(uint32_t) * func_idx);
 
-      if ((name != NULL && valid_function_name(name)) || has_ordinal == 1)
+      if (name != NULL && !valid_function_name(name))
+      {
+        yr_free(name);
+        thunks32++;
+        func_idx++;
+        continue;
+      }
+
+      if (name != NULL || has_ordinal == 1)
       {
         IMPORT_FUNCTION* imported_func = (IMPORT_FUNCTION*) yr_calloc(
             1, sizeof(IMPORT_FUNCTION));
@@ -985,23 +1002,24 @@ static IMPORT_FUNCTION* pe_parse_import_descriptor(
         if (imported_func == NULL)
         {
           yr_free(name);
-          continue;
         }
+        else
+        {
+          imported_func->name = name;
+          imported_func->ordinal = ordinal;
+          imported_func->has_ordinal = has_ordinal;
+          imported_func->rva = rva_address;
+          imported_func->next = NULL;
 
-        imported_func->name = name;
-        imported_func->ordinal = ordinal;
-        imported_func->has_ordinal = has_ordinal;
-        imported_func->rva = rva_address;
-        imported_func->next = NULL;
+          if (head == NULL)
+            head = imported_func;
 
-        if (head == NULL)
-          head = imported_func;
+          if (tail != NULL)
+            tail->next = imported_func;
 
-        if (tail != NULL)
-          tail->next = imported_func;
-
-        tail = imported_func;
-        (*num_function_imports)++;
+          tail = imported_func;
+          (*num_function_imports)++;
+        }
       }
 
       thunks32++;
