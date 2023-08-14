@@ -123,9 +123,10 @@ int yr_object_set_string(
     const char* field,
     ...) YR_PRINTF_LIKE(4, 5);
 
-int yr_object_array_length(YR_OBJECT* object);
+YR_API int yr_object_array_length(YR_OBJECT* object);
 
-YR_OBJECT* yr_object_array_get_item(YR_OBJECT* object, int flags, int index);
+YR_API YR_OBJECT* yr_object_array_get_item(YR_OBJECT* object, int flags,
+                                           int index);
 
 int yr_object_array_set_item(YR_OBJECT* object, YR_OBJECT* item, int index);
 
