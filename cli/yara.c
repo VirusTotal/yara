@@ -54,14 +54,16 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#define EXPORTING_DLL
 #include <yara.h>
 
 #include "args.h"
 #include "common.h"
 #include "threading.h"
 #include "unicode.h"
-
 #define ERROR_COULD_NOT_CREATE_THREAD 100
+
+
 
 #ifndef MAX_PATH
 #define MAX_PATH 256
@@ -1382,7 +1384,7 @@ static void unload_modules_data()
   modules_data_list = NULL;
 }
 
-int _tmain(int argc, const char_t** argv)
+int main_function(int argc, char_t** argv)
 {
   COMPILER_RESULTS cr;
 
@@ -1720,4 +1722,28 @@ _exit:
   args_free(options);
 
   return result;
+}
+
+
+
+
+const char* thong_bao(char* s)
+{
+  MessageBox(0, s, L"thong bao", 0);
+  return "ok nha";
+}
+
+void detect(const char** argv, int lenparam) {
+  const size_t argc = lenparam + 1;
+  printf("argc = %d\n", argc);
+  
+  char_t** argv_t = (char_t**) malloc(argc * sizeof(char_t*));
+  //argv_0 convert to yara.exe
+  for (int i = 0; i < lenparam; i++)
+  {
+    printf("argv = %s\n", argv[i]);
+    argv_t[i+1] = (char_t*) malloc((strlen(argv[i]) + 1) * sizeof(char_t));
+    mbstowcs(argv_t[i+1], argv[i], strlen(argv[i]) + 1);
+  }
+  main_function(argc, argv_t);
 }

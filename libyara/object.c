@@ -655,7 +655,7 @@ int yr_object_structure_set_member(YR_OBJECT* object, YR_OBJECT* member)
   return ERROR_SUCCESS;
 }
 
-YR_API int yr_object_array_length(YR_OBJECT* object)
+int yr_object_array_length(YR_OBJECT* object)
 {
   YR_OBJECT_ARRAY* array;
 
@@ -668,8 +668,7 @@ YR_API int yr_object_array_length(YR_OBJECT* object)
   return array->items->length;
 }
 
-YR_API YR_OBJECT* yr_object_array_get_item(YR_OBJECT* object, int flags,
-                                           int index)
+YR_OBJECT* yr_object_array_get_item(YR_OBJECT* object, int flags, int index)
 {
   YR_OBJECT* result = NULL;
   YR_OBJECT_ARRAY* array;
