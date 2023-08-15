@@ -63,8 +63,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "unicode.h"
 #define ERROR_COULD_NOT_CREATE_THREAD 100
 
-
-
 #ifndef MAX_PATH
 #define MAX_PATH 256
 #endif
@@ -1384,8 +1382,10 @@ static void unload_modules_data()
   modules_data_list = NULL;
 }
 
-int main_function(int argc, char_t** argv)
+int main_function(int argc, char_t** argv, char** result1)
 {
+  int index = 0;
+
   COMPILER_RESULTS cr;
 
   YR_COMPILER* compiler = NULL;
@@ -1410,19 +1410,30 @@ int main_function(int argc, char_t** argv)
 
   if (show_help)
   {
-    printf(
-        "YARA %s, the pattern matching swiss army knife.\n"
-        "%s\n\n"
-        "Mandatory arguments to long options are mandatory for "
-        "short options too.\n\n",
-        YR_VERSION,
-        USAGE_STRING);
+    /* printf(
+         "YARA %s, the pattern matching swiss army knife.\n"
+         "%s\n\n"
+         "Mandatory arguments to long options are mandatory for "
+         "short options too.\n\n",
+         YR_VERSION,
+         USAGE_STRING);*/
+
+    result1[index++] = "YARA %s, the pattern matching swiss army knife.\n";
+
+    result1[index++] = "Mandatory arguments to long options are mandatory for "
+                       "short options too.\n";
+
+    result1[index++] = YR_VERSION;
+
+    result1[index++] = USAGE_STRING;
 
     args_print_usage(options, 43);
-    printf(
-        "\nSend bug reports and suggestions to: vmalvarez@virustotal.com.\n");
+    /*printf(
+        "\nSend bug reports and suggestions to: vmalvarez@virustotal.com.\n");*/
+    result1[index++] =
+        "\nSend bug reports and suggestions to: vmalvarez@virustotal.com.\n";
 
-    return EXIT_SUCCESS;
+    return index;
   }
 
   if (threads > YR_MAX_THREADS)
@@ -1724,26 +1735,31 @@ _exit:
   return result;
 }
 
-
-
-
 const char* thong_bao(char* s)
 {
   MessageBox(0, s, L"thong bao", 0);
   return "ok nha";
 }
 
-void detect(const char** argv, int lenparam) {
+const detectResult* detect(const char** argv, int lenparam)
+{
+  int rows = 100;
+  detectResult* dr = calloc(1, sizeof(detectResult));
+  dr->result = calloc(rows, sizeof(char*));
+
   const size_t argc = lenparam + 1;
-  printf("argc = %d\n", argc);
-  
+  // printf("argc = %d\n", argc);
+
   char_t** argv_t = (char_t**) malloc(argc * sizeof(char_t*));
-  //argv_0 convert to yara.exe
+  // argv_0 convert to yara.exe
   for (int i = 0; i < lenparam; i++)
   {
-    printf("argv = %s\n", argv[i]);
-    argv_t[i+1] = (char_t*) malloc((strlen(argv[i]) + 1) * sizeof(char_t));
-    mbstowcs(argv_t[i+1], argv[i], strlen(argv[i]) + 1);
+    // printf("argv = %s\n", argv[i]);
+    argv_t[i + 1] = (char_t*) malloc((strlen(argv[i]) + 1) * sizeof(char_t));
+    mbstowcs(argv_t[i + 1], argv[i], strlen(argv[i]) + 1);
   }
-  main_function(argc, argv_t);
+  int a = main_function(argc, argv_t, dr->result);
+  dr->size = a;
+  printf("main : %d", a);
+  return dr;
 }

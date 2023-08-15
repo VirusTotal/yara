@@ -1,48 +1,67 @@
-// testrundll.cpp : This file contains the 'main' function. Program execution begins and ends there.
+// testrundll.cpp : This file contains the 'main' function. Program execution
+// begins and ends there.
 //
 
+#include <windows.h>
+#include <cstdlib>
 #include <iostream>
-#include <windows.h> 
 using namespace std;
-typedef void (__cdecl* MYPROC)(const char** argv,int lenparam);
+typedef struct detectResult
+{
+  int size;
+  char** result;
+} detectResult;
+typedef const detectResult*(__cdecl* MYPROC)(const char** argv, int lenparam);
+
 int main()
 {
-    HINSTANCE hinstLib;
-    MYPROC ProcAdd;
-    BOOL fFreeResult, fRunTimeLinkSuccess = FALSE;
+  HINSTANCE hinstLib;
+  MYPROC ProcAdd;
 
-    // Get a handle to the DLL module.
+  BOOL fFreeResult, fRunTimeLinkSuccess = FALSE;
 
-    hinstLib = LoadLibrary(TEXT("yara64.dll"));
+  // Get a handle to the DLL module.
 
-    // If the handle is valid, try to get the function address.
+  hinstLib = LoadLibrary(TEXT("yara64.dll"));
 
-    if (hinstLib != NULL)
+  // If the handle is valid, try to get the function address.
+
+  if (hinstLib != NULL)
+
+  {
+    const detectResult* result;
+    ProcAdd = (MYPROC) GetProcAddress(hinstLib, "detect");
+
+    // ProcAdd1 = (MYPROC)GetProcAddress(hinstLib, "detect");
+
+    // If the function address is valid, call the function.
+
+    if (NULL != ProcAdd)
     {
-        ProcAdd = (MYPROC)GetProcAddress(hinstLib, "detect");
+      fRunTimeLinkSuccess = TRUE;
 
-        // If the function address is valid, call the function.
+      int lenparam = 1;
 
-        if (NULL != ProcAdd)
-        {
-            fRunTimeLinkSuccess = TRUE;
-            const char* argv[] = { "--help"};
-            int lenparam = 1;
-            (ProcAdd)(argv, lenparam);
-            const char* argv1[] = { "checkpefile.yara","test-alignment.exe" };
-            (ProcAdd)(argv1, lenparam);
-            const char* argv2[] = { "checkpefile.yara","test-alignment.exe" };
-            (ProcAdd)(argv2,lenparam);
+      const char* argv2[] = {"--help"};
+      /*(ProcAdd1)(argv2, lenparam);*/
 
-        }
-        // Free the DLL module.
+      result = (ProcAdd) (argv2, lenparam);
+      for (size_t i = 0; i < result->size; i++)
+      {
+        printf("\nresult: %s", result->result[i]);
+      }
 
-        fFreeResult = FreeLibrary(hinstLib);
+      /*const char* argv2[] = { "checkpefile.yara","test-alignment.exe" };
+      (ProcAdd)(argv2,lenparam);*/
     }
+    // Free the DLL module.
 
-    // If unable to call the DLL function, use an alternative.
-    if (!fRunTimeLinkSuccess)
-        printf("Message printed from executable\n");
+    fFreeResult = FreeLibrary(hinstLib);
+  }
 
-    return 0;
+  // If unable to call the DLL function, use an alternative.
+  if (!fRunTimeLinkSuccess)
+    printf("Message printed from executable\n");
+
+  return 0;
 }
