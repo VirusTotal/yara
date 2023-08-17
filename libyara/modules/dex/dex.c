@@ -434,13 +434,6 @@ error:
 }
 
 
-static int32_t read_uleb128(const uint8_t* pStream, uint32_t* size)
-{
-  bool error;
-  return read_uleb128_bounded(pStream, (const uint8_t*) SIZE_MAX, size, &error);
-}
-
-
 static int64_t dex_get_integer(
     YR_OBJECT* object,
     const char* pattern,
@@ -592,18 +585,26 @@ uint32_t load_encoded_field(
   printf("[DEX] Parse encoded field start_offset:0x%zx\n", start_offset);
 #endif
 
+  const uint8_t* data_cur_start = dex->data + start_offset;
   if (!fits_in_dex(dex, dex->data + start_offset, sizeof(uint32_t) * 2))
     return 0;
 
+  const uint8_t* data_end = dex->data + dex->data_size;
   uint32_t current_size = 0;
-
+  bool error = false;
   encoded_field_t encoded_field;
 
-  encoded_field.field_idx_diff = (uint32_t) read_uleb128(
-      (dex->data + start_offset + current_size), &current_size);
+  encoded_field.field_idx_diff =
+      (uint32_t) read_uleb128_bounded((dex->data + start_offset + current_size),
+                                      data_end, &current_size, &error);
+  if (error)
+    return 0;
 
-  encoded_field.access_flags = (uint32_t) read_uleb128(
-      (dex->data + start_offset + current_size), &current_size);
+  encoded_field.access_flags =
+      (uint32_t) read_uleb128_bounded((dex->data + start_offset + current_size),
+                                      data_end, &current_size, &error);
+  if (error)
+    return 0;
 
   yr_set_integer(
       encoded_field.field_idx_diff,
@@ -946,6 +947,8 @@ void dex_parse(DEX* dex, uint64_t base_address)
   uint32_t index_encoded_method = 0;
   uint32_t index_encoded_field = 0;
 
+  const uint8_t* data_end = dex->data + dex->data_size;
+
   if (!struct_fits_in_dex(dex, dex->data, dex_header_t))
     return;
 
@@ -981,9 +984,12 @@ void dex_parse(DEX* dex, uint64_t base_address)
             sizeof(uint32_t)))
       continue;
 
-    uint32_t value = (uint32_t) read_uleb128(
+    bool error = false;
+    uint32_t value = (uint32_t) read_uleb128_bounded(
         (dex->data + yr_le32toh(string_id_item->string_data_offset)),
-        &uleb128_size);
+        data_end, &uleb128_size, &error);
+    if (error)
+      continue;
 
 #ifdef DEBUG_DEX_MODULE
     printf("[DEX] STRING ID item size:0x%x\n", value);
@@ -1271,25 +1277,34 @@ void dex_parse(DEX* dex, uint64_t base_address)
         return;
 
       uleb128_size = 0;
+      bool error = false;
 
-      class_data_item.static_fields_size = (uint32_t) read_uleb128(
+      class_data_item.static_fields_size = (uint32_t) read_uleb128_bounded(
           (dex->data + yr_le32toh(class_id_item->class_data_offset)),
-          &uleb128_size);
+          data_end, &uleb128_size, &error);
+      if (error)
+        return;
 
-      class_data_item.instance_fields_size = (uint32_t) read_uleb128(
+      class_data_item.instance_fields_size = (uint32_t) read_uleb128_bounded(
           (dex->data + yr_le32toh(class_id_item->class_data_offset) +
            uleb128_size),
-          &uleb128_size);
+          data_end, &uleb128_size, &error);
+      if (error)
+        return;
 
-      class_data_item.direct_methods_size = (uint32_t) read_uleb128(
+      class_data_item.direct_methods_size = (uint32_t) read_uleb128_bounded(
           (dex->data + yr_le32toh(class_id_item->class_data_offset) +
            uleb128_size),
-          &uleb128_size);
+          data_end, &uleb128_size, &error);
+      if (error)
+        return;
 
-      class_data_item.virtual_methods_size = (uint32_t) read_uleb128(
+      class_data_item.virtual_methods_size = (uint32_t) read_uleb128_bounded(
           (dex->data + yr_le32toh(class_id_item->class_data_offset) +
            uleb128_size),
-          &uleb128_size);
+          data_end, &uleb128_size, &error);
+      if (error)
+        return;
 
       yr_set_integer(
           class_data_item.static_fields_size,
