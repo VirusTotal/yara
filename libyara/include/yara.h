@@ -42,26 +42,19 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "yara/stream.h"
 #include "yara/strutils.h"
 #include "yara/utils.h"
+
 #endif
 
 
 #ifndef INDLL_H
 #define INDLL_H
 
-typedef struct detectResult
-{
-  int size;
-  char** result;
-} detectResult;
-
 #ifdef EXPORTING_DLL
-extern __declspec(dllexport) const char* thong_bao(char* s, int lenparam);
 extern __declspec(dllexport) const
     detectResult* detect(const char** argv, int argc);
 #else
-extern __declspec(dllimport) const char* thong_bao(char* s, int lenparam);
 extern __declspec(dllexport) const
-    detectResult* detect(const char** argv, int argc);
+    detectResults* detect(const char** argv, int argc);
 #endif
 
 #endif

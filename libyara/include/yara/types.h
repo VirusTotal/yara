@@ -41,6 +41,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "notebook.h"
 
+
+
+
 #define DECLARE_REFERENCE(type, name) \
   union                               \
   {                                   \
@@ -151,6 +154,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define EXTERNAL_VARIABLE_IS_NULL(x) \
   ((x) != NULL ? (x)->type == EXTERNAL_VARIABLE_TYPE_NULL : true)
 
+
+
 typedef struct RE RE;
 typedef struct RE_AST RE_AST;
 typedef struct RE_NODE RE_NODE;
@@ -207,6 +212,42 @@ typedef struct YR_MODIFIER YR_MODIFIER;
 typedef struct YR_ITERATOR YR_ITERATOR;
 
 typedef uint32_t YR_AC_TRANSITION;
+
+
+
+typedef struct detectResult
+{
+  const wchar_t* file_name;
+  int size;
+  const wchar_t** rules;
+} detectResult;
+
+typedef struct detectResults
+{
+  int size;
+  detectResult** dr;
+} detectResults;
+
+
+
+
+
+
+//void insertFirst(char rule)
+//{
+//  // tao mot link
+//  struct detectResult* link = (struct detectResult*) malloc(
+//      sizeof(struct detectResult));
+//
+//  
+//  link->rule = rule;
+//
+//  // tro link nay toi first node cu
+//  link->next = head;
+//
+//  // tro first toi first node moi
+//  head = link;
+//}
 
 #pragma pack(push)
 #pragma pack(8)
@@ -828,6 +869,8 @@ struct YR_SCAN_CONTEXT
   // profiling_info is a pointer to an array of YR_PROFILING_INFO structures,
   // one per rule. Entry N has the profiling information for rule with index N.
   YR_PROFILING_INFO* profiling_info;
+
+  detectResult* rule_match;
 };
 
 union YR_VALUE

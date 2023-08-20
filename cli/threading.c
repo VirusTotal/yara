@@ -45,6 +45,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <time.h>
 #include <yara/error.h>
 #include "threading.h"
+#include <yara/types.h>
+
+
 
 int cli_mutex_init(MUTEX* mutex)
 {

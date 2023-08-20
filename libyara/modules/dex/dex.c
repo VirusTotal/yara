@@ -369,39 +369,56 @@ end_declarations
 
 // https://android.googlesource.com/platform/dalvik/+/android-4.4.2_r2/libdex/Leb128.cpp
 
-static int32_t read_uleb128(const uint8_t* pStream, uint32_t* size)
+static int32_t read_uleb128_bounded(
+    const uint8_t* pStream,
+    const uint8_t* pStreamEnd,
+    uint32_t* size,
+    bool* error)
 {
   const uint8_t* ptr = pStream;
+  int32_t result = 0;
 
-  int32_t result = *(ptr++);
+  *error = false;
+  if (ptr == pStreamEnd)
+    goto error;
+
+  result = *(ptr++);
   *size = *size + 1;
 
   if (result > 0x7f)
   {
+    if (ptr == pStreamEnd)
+      goto error;
     int cur = *(ptr++);
     *size = *size + 1;
     result = (result & 0x7f) | ((cur & 0x7f) << 7);
 
     if (cur > 0x7f)
     {
+      if (ptr == pStreamEnd)
+        goto error;
       cur = *(ptr++);
       *size = *size + 1;
       result |= (cur & 0x7f) << 14;
 
       if (cur > 0x7f)
       {
+        if (ptr == pStreamEnd)
+          goto error;
         cur = *(ptr++);
         *size = *size + 1;
         result |= (cur & 0x7f) << 21;
 
         if (cur > 0x7f)
         {
+          if (ptr == pStreamEnd)
+            goto error;
           /*
            * Note: We don't check to see if cur is out of
            * range here, meaning we tolerate garbage in the
            * high four-order bits.
            */
-          cur = *(ptr++);
+          cur = *ptr;
           *size = *size + 1;
           result |= cur << 28;
         }
@@ -410,6 +427,17 @@ static int32_t read_uleb128(const uint8_t* pStream, uint32_t* size)
   }
 
   return result;
+
+error:
+  *error = true;
+  return result;
+}
+
+
+static int32_t read_uleb128(const uint8_t* pStream, uint32_t* size)
+{
+  bool error;
+  return read_uleb128_bounded(pStream, (const uint8_t*) SIZE_MAX, size, &error);
 }
 
 
@@ -700,20 +728,29 @@ uint32_t load_encoded_method(
   printf("[DEX] Parse encoded method start_offset:0x%zx\n", start_offset);
 #endif
 
-  if (!fits_in_dex(dex, dex->data + start_offset, sizeof(uint32_t) * 3))
+  const uint8_t* data_cur_start = dex->data + start_offset;
+  if (!fits_in_dex(dex, data_cur_start, sizeof(uint32_t) * 3))
     return 0;
 
+  const uint8_t* data_end = dex->data + dex->data_size;
   uint32_t current_size = 0;
+  bool error = false;
   encoded_method_t encoded_method;
 
-  encoded_method.method_idx_diff = (uint32_t) read_uleb128(
-      (dex->data + start_offset + current_size), &current_size);
+  encoded_method.method_idx_diff = (uint32_t) read_uleb128_bounded(
+      (data_cur_start + current_size), data_end, &current_size, &error);
+  if (error)
+    return 0;
 
-  encoded_method.access_flags = (uint32_t) read_uleb128(
-      (dex->data + start_offset + current_size), &current_size);
+  encoded_method.access_flags = (uint32_t) read_uleb128_bounded(
+      (data_cur_start + current_size), data_end, &current_size, &error);
+  if (error)
+    return 0;
 
-  encoded_method.code_off = (uint32_t) read_uleb128(
-      (dex->data + start_offset + current_size), &current_size);
+  encoded_method.code_off = (uint32_t) read_uleb128_bounded(
+      (data_cur_start + current_size), data_end, &current_size, &error);
+  if (error)
+    return 0;
 
   yr_set_integer(
       encoded_method.method_idx_diff,

@@ -54,13 +54,13 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#define EXPORTING_DLL
 #include <yara.h>
 
 #include "args.h"
 #include "common.h"
 #include "threading.h"
 #include "unicode.h"
+
 #define ERROR_COULD_NOT_CREATE_THREAD 100
 
 #ifndef MAX_PATH
@@ -77,11 +77,16 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define MAX_ARGS_MODULE_DATA 32
 #define MAX_QUEUED_FILES     64
 
+#define MAX_LINES       1000
+#define MAX_LINE_LENGTH 256
+
 #define exit_with_code(code) \
   {                          \
     result = code;           \
     goto _exit;              \
   }
+
+
 
 typedef struct _MODULE_DATA
 {
@@ -104,7 +109,8 @@ typedef struct _THREAD_ARGS
   CALLBACK_ARGS callback_args;
   time_t deadline;
   int current_count;
-
+  
+    
 } THREAD_ARGS;
 
 typedef struct _QUEUED_FILE
@@ -127,6 +133,7 @@ typedef struct SCAN_OPTIONS
   time_t deadline;
 
 } SCAN_OPTIONS;
+
 
 #define MAX_ARGS_TAG         32
 #define MAX_ARGS_IDENTIFIER  32
@@ -374,11 +381,12 @@ args_option_t options[] = {
 // position. The array has room for one extra element to avoid queue_head
 // being equal to queue_tail in a full queue. The only situation where
 // queue_head == queue_tail is when queue is empty.
-
+const char* filelogname = "log.txt";  // Path: log.txt
 QUEUED_FILE file_queue[MAX_QUEUED_FILES + 1];
 
 int queue_head;
 int queue_tail;
+
 
 SEMAPHORE used_slots;
 SEMAPHORE unused_slots;
@@ -387,6 +395,163 @@ MUTEX queue_mutex;
 MUTEX output_mutex;
 
 MODULE_DATA* modules_data_list = NULL;
+
+int CountElements(wchar_t** array)
+{
+  int count = 0;
+  while (array[count])
+  {
+    count++;
+  }
+  return count;
+}
+
+int check_file_exists(const char* filename)
+{
+  return GetFileAttributesA(filename) != INVALID_FILE_ATTRIBUTES;
+}
+
+wchar_t* ConvertToWideChar(const char* input)
+{
+  int length = strlen(input) + 1;
+  int requiredSize = MultiByteToWideChar(CP_UTF8, 0, input, length, NULL, 0);
+  wchar_t* output = (wchar_t*) malloc(requiredSize * sizeof(wchar_t));
+  if (output == NULL)
+  {
+    return NULL;
+  }
+  MultiByteToWideChar(CP_UTF8, 0, input, length, output, requiredSize);
+  return output;
+}
+
+int WriteToFile(const char* filename, wchar_t* content)
+{
+  HANDLE fileHandle;
+  while (1)
+  {
+    fileHandle = CreateFileA(
+        filename, FILE_APPEND_DATA, 0, NULL, OPEN_ALWAYS, 0, NULL);
+    if (fileHandle == INVALID_HANDLE_VALUE)
+    {
+      printf("Error opening file. Error code: %d\n", GetLastError());
+      Sleep(100);
+      continue;
+    }
+    break;
+  }
+  DWORD bytesWritten;
+  int result = WriteFile(
+      fileHandle,
+      content,
+      wcslen(content) * sizeof(wchar_t),
+      &bytesWritten,
+      NULL);
+  CloseHandle(fileHandle);
+  if (result == 0 && bytesWritten > 0)
+  {
+    printf("Error writing to file. Error code: %d\n", GetLastError());
+    return 0;
+  }
+  return 1;
+}
+
+wchar_t* ReadWideFile(const char* filename)
+{
+  HANDLE fileHandle = CreateFileA(
+      filename,
+      GENERIC_READ,
+      FILE_SHARE_READ,
+      NULL,
+      OPEN_EXISTING,
+      FILE_ATTRIBUTE_NORMAL,
+      NULL);
+  if (fileHandle == INVALID_HANDLE_VALUE)
+  {
+    printf(
+        "Failed to open file '%s'. Error code: %d\n", filename, GetLastError());
+    return NULL;
+  }
+
+  LARGE_INTEGER fileSize;
+  if (!GetFileSizeEx(fileHandle, &fileSize))
+  {
+    CloseHandle(fileHandle);
+    printf("Failed to get file size. Error code: %d\n", GetLastError());
+    return NULL;
+  }
+
+  DWORD bytesRead;
+  wchar_t* buffer = (wchar_t*) calloc(fileSize.QuadPart, sizeof(wchar_t));
+  if (buffer == NULL)
+  {
+    CloseHandle(fileHandle);
+    return NULL;
+  }
+
+  if (!ReadFile(fileHandle, buffer, fileSize.QuadPart, &bytesRead, NULL))
+  {
+    CloseHandle(fileHandle);
+    free(buffer);
+    printf("Failed to read file. Error code: %d\n", GetLastError());
+    return NULL;
+  }
+
+  buffer[fileSize.QuadPart] = L'\0';
+
+  CloseHandle(fileHandle);
+  return buffer;
+}
+
+wchar_t** SplitString(const wchar_t* input, wchar_t delimiter)
+{
+  int count = 1;
+  const wchar_t* p = input;
+
+  while (*p)
+  {
+    if (*p == delimiter)
+    {
+      count++;
+    }
+    p++;
+  }
+
+  wchar_t** result = (wchar_t**) LocalAlloc(
+      LMEM_ZEROINIT, (count + 1) * sizeof(wchar_t*));
+  if (!result)
+  {
+    return NULL;
+  }
+
+  int currentIndex = 0;
+  p = input;
+  const wchar_t* start = p;
+
+  while (*p)
+  {
+    if (*p == delimiter || *(p + 1) == L'\0')
+    {
+      int length = (*p == delimiter) ? (p - start) : (p - start + 1);
+      result[currentIndex] = (wchar_t*) LocalAlloc(
+          LMEM_ZEROINIT, (length + 1) * sizeof(wchar_t));
+      if (!result[currentIndex])
+      {
+        for (int i = 0; i < currentIndex; i++)
+        {
+          LocalFree(result[i]);
+        }
+        LocalFree(result);
+        return NULL;
+      }
+      wcsncpy_s(result[currentIndex], length + 1, start, length);
+      currentIndex++;
+      start = p + 1;
+    }
+    p++;
+  }
+
+  return result;
+}
 
 static int file_queue_init()
 {
@@ -529,8 +694,12 @@ static int scan_dir(const char_t* dir, SCAN_OPTIONS* scan_opts)
   return result;
 }
 
+
+
+
 static int scan_file(YR_SCANNER* scanner, const char_t* filename)
 {
+  
   YR_FILE_DESCRIPTOR fd = CreateFile(
       filename,
       GENERIC_READ,
@@ -545,6 +714,39 @@ static int scan_file(YR_SCANNER* scanner, const char_t* filename)
 
   int result = yr_scanner_scan_fd(scanner, fd);
 
+  scanner->rule_match->file_name = filename;
+
+  
+
+   if (scanner->rule_match->size == 0)
+   {
+    return result;
+
+   }
+    
+
+  WriteToFile(filelogname, filename);
+  WriteToFile(filelogname, L"\t");
+  /*fwprintf(
+      stderr,
+      L"rule_scanfile_name_con: %s \n", f_con);*/
+
+  for (int i = 0; i < scanner->rule_match->size; i++)
+  {
+    
+    
+
+    const char* rule_f = scanner->rule_match->rules[i];
+    wchar_t* rf = ConvertToWideChar(rule_f);
+ 
+
+    WriteToFile(filelogname, rf);
+    WriteToFile(filelogname, L"\t");
+  }
+  WriteToFile(filelogname, L"\n");
+
+ 
+  
   CloseHandle(fd);
 
   return result;
@@ -1039,7 +1241,7 @@ static int handle_message(
     if (show_namespace)
       _tprintf(_T("%" PF_S ":"), rule->ns->name);
 
-    _tprintf(_T("%" PF_S " "), rule->identifier);
+    //_tprintf(_T("%" PF_S " "), rule->identifier);
 
     if (show_tags)
     {
@@ -1091,8 +1293,9 @@ static int handle_message(
 
       _tprintf(_T("] "));
     }
+    Sleep(100);
 
-    _tprintf(_T("%s\n"), ((CALLBACK_ARGS*) data)->file_path);
+    //_tprintf(_T("%s\n"), ((CALLBACK_ARGS*) data)->file_path);
 
     // Show matched strings.
 
@@ -1280,8 +1483,11 @@ static DWORD WINAPI scanning_thread(LPVOID param)
 static void* scanning_thread(void* param)
 #endif
 {
+  
   int result = ERROR_SUCCESS;
   THREAD_ARGS* args = (THREAD_ARGS*) param;
+  //fprintf(stderr, "research size: %d \n", args->drS->size);
+  
 
   char_t* file_path = file_queue_get(args->deadline);
 
@@ -1299,8 +1505,11 @@ static void* scanning_thread(void* param)
 
       result = scan_file(args->scanner, file_path);
 
+
+
       if (print_count_only)
       {
+        
         cli_mutex_lock(&output_mutex);
         _tprintf(_T("%s: %d\n"), file_path, args->callback_args.current_count);
         cli_mutex_unlock(&output_mutex);
@@ -1308,8 +1517,9 @@ static void* scanning_thread(void* param)
 
       if (result != ERROR_SUCCESS)
       {
+          
         cli_mutex_lock(&output_mutex);
-        _ftprintf(stderr, _T("error scanning %s: "), file_path);
+        _ftprintf(stderr, _T("error scanning hello %s: "), file_path);
         print_scanner_error(args->scanner, result);
         cli_mutex_unlock(&output_mutex);
       }
@@ -1382,9 +1592,26 @@ static void unload_modules_data()
   modules_data_list = NULL;
 }
 
-int main_function(int argc, char_t** argv, char** result1)
+int main_function(int argc, const char_t** argv, detectResults* drS)
 {
-  int index = 0;
+  DeleteFileA(filelogname);  
+  drS->size = 0;
+
+  drS->dr = calloc(100, sizeof(detectResult*));
+
+  for (int i = 0; i < 100; i++)
+  {
+    detectResult* dr = calloc(1, sizeof(detectResult));
+    dr->rules = calloc(100, sizeof(char*));
+    //fprintf(stderr, "%d", i);
+    drS->dr[i] = dr;
+
+  }
+
+  
+
+  /*printf("argc: %d", argc);
+  printf("argc: %s", argv[1]);*/
 
   COMPILER_RESULTS cr;
 
@@ -1410,30 +1637,19 @@ int main_function(int argc, char_t** argv, char** result1)
 
   if (show_help)
   {
-    /* printf(
-         "YARA %s, the pattern matching swiss army knife.\n"
-         "%s\n\n"
-         "Mandatory arguments to long options are mandatory for "
-         "short options too.\n\n",
-         YR_VERSION,
-         USAGE_STRING);*/
-
-    result1[index++] = "YARA %s, the pattern matching swiss army knife.\n";
-
-    result1[index++] = "Mandatory arguments to long options are mandatory for "
-                       "short options too.\n";
-
-    result1[index++] = YR_VERSION;
-
-    result1[index++] = USAGE_STRING;
+    printf(
+        "YARA %s, the pattern matching swiss army knife.\n"
+        "%s\n\n"
+        "Mandatory arguments to long options are mandatory for "
+        "short options too.\n\n",
+        YR_VERSION,
+        USAGE_STRING);
 
     args_print_usage(options, 43);
-    /*printf(
-        "\nSend bug reports and suggestions to: vmalvarez@virustotal.com.\n");*/
-    result1[index++] =
-        "\nSend bug reports and suggestions to: vmalvarez@virustotal.com.\n";
+    printf(
+        "\nSend bug reports and suggestions to: vmalvarez@virustotal.com.\n");
 
-    return index;
+    return EXIT_SUCCESS;
   }
 
   if (threads > YR_MAX_THREADS)
@@ -1593,6 +1809,7 @@ int main_function(int argc, char_t** argv, char** result1)
   }
 
   if (show_stats)
+    //printf("rule: ");
     print_rules_stats(rules);
 
   cli_mutex_init(&output_mutex);
@@ -1624,6 +1841,7 @@ int main_function(int argc, char_t** argv, char** result1)
     {
       thread_args[i].deadline = scan_opts.deadline;
       thread_args[i].current_count = 0;
+      //thread_args[i].drS = drS;
 
       result = yr_scanner_create(rules, &thread_args[i].scanner);
 
@@ -1640,12 +1858,14 @@ int main_function(int argc, char_t** argv, char** result1)
 
       if (cli_create_thread(
               &thread[i], scanning_thread, (void*) &thread_args[i]))
+
+
       {
         print_error(ERROR_COULD_NOT_CREATE_THREAD);
         exit_with_code(EXIT_FAILURE);
       }
     }
-
+    
     if (arg_is_dir)
     {
       scan_dir(argv[argc - 1], &scan_opts);
@@ -1655,13 +1875,27 @@ int main_function(int argc, char_t** argv, char** result1)
       result = populate_scan_list(argv[argc - 1], &scan_opts);
     }
 
+
     file_queue_finish();
 
     // Wait for scan threads to finish
     for (int i = 0; i < threads; i++) cli_thread_join(&thread[i]);
 
     for (int i = 0; i < threads; i++)
+    {
+      YR_SCANNER* scanner = thread_args[i].scanner;
+      detectResult* dr = scanner->rule_match;
+
+      /*fwprintf(stderr, L"rule_thread_namefile:%s \n", dr->file_name);
+      for (int i = 0; i < dr->size; i++)
+      {
+        fprintf(stderr, "\n%s \n",  dr->rules[i]);
+      
+      }*/
       yr_scanner_destroy(thread_args[i].scanner);
+    }
+     
+
 
     file_queue_destroy();
 
@@ -1687,6 +1921,7 @@ int main_function(int argc, char_t** argv, char** result1)
     // Assume the last argument is a file first. This assures we try to process
     // files that start with numbers first.
     result = scan_file(scanner, argv[argc - 1]);
+    
 
     if (result == ERROR_COULD_NOT_OPEN_FILE)
     {
@@ -1695,12 +1930,52 @@ int main_function(int argc, char_t** argv, char** result1)
       long pid = _tcstol(argv[argc - 1], &endptr, 10);
 
       if (pid > 0 && argv[argc - 1] != NULL && *endptr == '\x00')
+      {
         result = yr_scanner_scan_proc(scanner, (int) pid);
+        //scanner->rule_match->file_name = L"hihi";
+
+        char c_pid[10];
+
+        sprintf(c_pid, "%d", pid);
+
+        char* f_pid = c_pid;
+        wchar_t* f_name = ConvertToWideChar(f_pid);
+
+
+        if (scanner->rule_match->size == 0)
+        {
+          return result;
+        }
+
+        
+
+        WriteToFile(filelogname, f_name);
+        WriteToFile(filelogname, L"\t");
+        
+
+        for (int i = 0; i < scanner->rule_match->size; i++)
+        {
+          
+          /*fprintf(
+              stderr, "rule_scanfile11: %s \n", scanner->rule_match->rules[i]);*/
+
+          const char* rule_f = scanner->rule_match->rules[i];
+          wchar_t* rf = ConvertToWideChar(rule_f);
+          //fwprintf(stderr, L"rule_scanfile_con: %s \n", rf);
+
+          WriteToFile(filelogname, rf);
+          WriteToFile(filelogname, L"\t");
+        }
+        WriteToFile(filelogname, L"\n");
+        
+      }
+      
+      
     }
 
     if (result != ERROR_SUCCESS)
     {
-      _ftprintf(stderr, _T("error scanning %s: "), argv[argc - 1]);
+      _ftprintf(stderr, _T("error scanning hello %s: "), argv[argc - 1]);
       print_scanner_error(scanner, result);
       exit_with_code(EXIT_FAILURE);
     }
@@ -1715,8 +1990,82 @@ int main_function(int argc, char_t** argv, char** result1)
 
   result = EXIT_SUCCESS;
 
-_exit:
+  
 
+  wchar_t* wideContentRead = ReadWideFile(filelogname);
+  if (wideContentRead == NULL)
+  {
+    printf("Error reading file.\n");
+    return 1;
+  }
+  //wprintf(L"Content read from the file: %s\n", wideContentRead);
+
+  wchar_t** file_result = SplitString(wideContentRead, L'\n');
+  if (file_result)
+  {
+    int index = 0;
+    
+    while (file_result[index])
+    {
+      //wprintf(L"[%d]: %s\n", index, file_result[index]);
+      wchar_t** file_rules = SplitString(file_result[index], L'\t');
+      int index_r = 0;
+      detectResult* dr = calloc(1, sizeof(detectResult));
+      dr->size = 0;
+      dr->rules = calloc(50, sizeof(wchar_t*));
+      while (file_rules[index_r])
+      {
+        //wprintf(L"fName: %s \n", file_rules[index_r]);
+        if (index_r == 0)
+        {
+          dr->file_name = file_rules[index_r];
+          
+          index_r++;
+          continue;
+        }
+        dr->rules[index_r-1] =
+            file_rules[index_r];
+        index_r++;
+      }
+      dr->size = index_r -1;
+      drS->dr[drS->size++] = dr;
+      //free(dr);
+
+      //LocalFree(file_result[index]);
+      index++;
+    }
+    //LocalFree(file_result);
+
+  }
+
+ /* wprintf(L"size_dr: %d \n", drS->size);
+
+  int index_dr = drS->size;
+
+  for (int i = 0; i < drS->size; i++)
+  {
+    wprintf(L"filename_dr: %s \n", drS->dr[i]->file_name);
+  
+  }*/
+
+ 
+    
+  
+
+  //for (int i = 0; i < drS->size; i++)
+  //{
+  //  wprintf(L"filename_dr: %s \n", drS->dr[i]->file_name);
+  //  /*for (int j = 0; j < drS->dr[i]->size; j++)
+  //  {
+  //    wprintf(L"rule_dr%d: %s \n", j,drS->dr[i]->rules[j]);
+  //  
+  //  }*/
+  //}
+
+  
+
+_exit:
+  Sleep(100);
   unload_modules_data();
 
   if (scanner != NULL)
@@ -1732,34 +2081,50 @@ _exit:
 
   args_free(options);
 
+  DeleteFileA(filelogname);
+
+  
+  
+
   return result;
 }
 
-const char* thong_bao(char* s)
-{
-  MessageBox(0, s, L"thong bao", 0);
-  return "ok nha";
-}
 
-const detectResult* detect(const char** argv, int lenparam)
-{
-  int rows = 100;
-  detectResult* dr = calloc(1, sizeof(detectResult));
-  dr->result = calloc(rows, sizeof(char*));
 
-  const size_t argc = lenparam + 1;
-  // printf("argc = %d\n", argc);
+const detectResults* detect(const wchar_t** argv, int lenparam){
+ // for (int i = 0; i < lenparam; i++)
+ // {
+	//wprintf(L"argv_detect: %s \n", argv[i]);
+ // }
+ // printf("lenparam_detect: %d \n", lenparam);
 
-  char_t** argv_t = (char_t**) malloc(argc * sizeof(char_t*));
-  // argv_0 convert to yara.exe
-  for (int i = 0; i < lenparam; i++)
-  {
-    // printf("argv = %s\n", argv[i]);
-    argv_t[i + 1] = (char_t*) malloc((strlen(argv[i]) + 1) * sizeof(char_t));
-    mbstowcs(argv_t[i + 1], argv[i], strlen(argv[i]) + 1);
+
+  detectResults* drS;
+  drS = calloc(1, sizeof(detectResults));
+
+  //padding param
+  lenparam = lenparam + 1;
+    wchar_t** argv_padding = calloc(lenparam, sizeof(wchar_t*));
+    argv_padding[0] = L"yara";
+    for (int i = 1; i < lenparam; i++)
+    {
+        argv_padding[i] = argv[i - 1];
+    }
+  //run main function
+      main_function(lenparam, argv_padding, drS);
+
+
+  //for (int i = 0; i < drS->size; i++)
+  //{
+  //  wprintf(L"filename_drttt: %s \n", drS->dr[i]->file_name);
+  //  for (int j = 0; j < drS->dr[i]->size; j++)
+  //  {
+  //    wprintf(L"rule_dr%d: %s \n", j, drS->dr[i]->rules[j]);
+  //  }
+  //}
+   return drS;
   }
-  int a = main_function(argc, argv_t, dr->result);
-  dr->size = a;
-  printf("main : %d", a);
-  return dr;
-}
+
+
+
+

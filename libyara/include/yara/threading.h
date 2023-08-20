@@ -33,10 +33,14 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #if defined(_WIN32) || defined(__CYGWIN__)
 
 #include <windows.h>
+#include "types.h"
+
+
 
 typedef DWORD YR_THREAD_ID;
 typedef DWORD YR_THREAD_STORAGE_KEY;
 typedef HANDLE YR_MUTEX;
+
 
 #define YR_TLS __declspec(thread)
 

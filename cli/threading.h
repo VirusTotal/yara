@@ -32,6 +32,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #if defined(_WIN32) || defined(__CYGWIN__)
 #include <windows.h>
+#include <yara/types.h>
+
+
 #else
 #include <pthread.h>
 #include <sys/stat.h>

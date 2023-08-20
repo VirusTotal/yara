@@ -8,10 +8,19 @@
 using namespace std;
 typedef struct detectResult
 {
+  const wchar_t* file_name;
   int size;
-  char** result;
+  const wchar_t** rules;
 } detectResult;
-typedef const detectResult*(__cdecl* MYPROC)(const char** argv, int lenparam);
+
+typedef struct detectResults
+{
+  int size;
+  detectResult** dr;
+} detectResults;
+
+typedef const detectResults*(
+    __cdecl* MYPROC)(const wchar_t** argv, int lenparam);
 
 int main()
 {
@@ -29,7 +38,7 @@ int main()
   if (hinstLib != NULL)
 
   {
-    const detectResult* result;
+    const detectResults* drS;
     ProcAdd = (MYPROC) GetProcAddress(hinstLib, "detect");
 
     // ProcAdd1 = (MYPROC)GetProcAddress(hinstLib, "detect");
@@ -40,19 +49,21 @@ int main()
     {
       fRunTimeLinkSuccess = TRUE;
 
-      int lenparam = 1;
+      const wchar_t* command[] = {
+          L"C:\\Users\\TRUNG\\Desktop\\yara\\testrundll\\x64\\Debug\\checkpefile.yara",
+          L"helo"};
+      int lenparam = sizeof(command) / sizeof(command[0]);
 
-      const char* argv2[] = {"--help"};
-      /*(ProcAdd1)(argv2, lenparam);*/
-
-      result = (ProcAdd) (argv2, lenparam);
-      for (size_t i = 0; i < result->size; i++)
+      drS = (ProcAdd) (command, lenparam);
+      for (int i = 0; i < drS->size; i++)
       {
-        printf("\nresult: %s", result->result[i]);
+        wprintf(L"dataresult_filename: %s \n", drS->dr[i]->file_name);
+        for (int j = 0; j < drS->dr[i]->size; j++)
+        {
+          wprintf(L"dataresult_rule:%d: %s \n", j, drS->dr[i]->rules[j]);
+        }
+        wprintf(L"-----------------------------------\n");
       }
-
-      /*const char* argv2[] = { "checkpefile.yara","test-alignment.exe" };
-      (ProcAdd)(argv2,lenparam);*/
     }
     // Free the DLL module.
 
