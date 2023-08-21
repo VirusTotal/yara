@@ -2026,14 +2026,14 @@ const char* pe_get_section_full_name(
     unsigned int one_char = (unsigned char)(string[len]);
 
     // Valid string
-    if(one_char == 0)
+    if (one_char == 0)
     {
       *section_full_name_length = len;
       return string;
     }
 
     // string contain unprintable character
-    if(!isprint(one_char))
+    if (!isprint(one_char))
       return NULL;
   }
 
