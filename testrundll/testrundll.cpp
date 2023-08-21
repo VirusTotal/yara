@@ -41,7 +41,6 @@ int main()
     const detectResults* drS;
     ProcAdd = (MYPROC) GetProcAddress(hinstLib, "detect");
 
-    // ProcAdd1 = (MYPROC)GetProcAddress(hinstLib, "detect");
 
     // If the function address is valid, call the function.
 
@@ -49,9 +48,10 @@ int main()
     {
       fRunTimeLinkSuccess = TRUE;
 
-      const wchar_t* command[] = {
-          L"C:\\Users\\TRUNG\\Desktop\\yara\\testrundll\\x64\\Debug\\checkpefile.yara",
-          L"helo"};
+      /*const wchar_t* command[] = {
+          L"checkpefile.yara",
+          L"9364"};*/
+      const wchar_t* command[] = {L"checkpefile.yara", L"helo"};
       int lenparam = sizeof(command) / sizeof(command[0]);
 
       drS = (ProcAdd) (command, lenparam);
