@@ -1,7 +1,7 @@
 // testrundll.cpp : This file contains the 'main' function. Program execution
 // begins and ends there.
 //
-
+#define _CRT_SECURE_NO_WARNINGS
 #include <windows.h>
 #include <cstdlib>
 #include <iostream>
@@ -24,6 +24,16 @@ typedef const detectResults*(
 
 int main(int agrc, const char** argv)
 {
+
+
+    wchar_t rule_path[256];
+    wchar_t path_scan[256]; 
+    wprintf(L"Nhap duong dan file rule: ");
+    wscanf(L"%255ls", rule_path);
+    wprintf(L"Nhap duong dan file can scan: ");
+    wscanf(L"%255ls", path_scan);
+
+
   HINSTANCE hinstLib;
   MYPROC ProcAdd;
 
@@ -51,18 +61,21 @@ int main(int agrc, const char** argv)
       /*const wchar_t* command[] = {
           L"checkpefile.yara",
           L"9364"};*/
-      const wchar_t* command[] = {
-          L"C:\\Users\\TRUNG\\Desktop\\yara-dll\\testrundll\\x64\\Debug\\checkpefile.yara",
-          L"C:\\Users\\TRUNG\\Desktop\\yara-dll\\testrundll\\x64\\Debug\\helo"};
+      /*const wchar_t* command[] = {
+          L"C:\\Users\\TRUNG\\Desktop\\scanner\\checkpefile.yara",
+          L"C:\\Users\\TRUNG\\Desktop\\scanner\\helo"};*/
+      const wchar_t* command[] = { rule_path, path_scan };
       int lenparam = sizeof(command) / sizeof(command[0]);
 
       drS = (ProcAdd) (command, lenparam);
       for (int i = 0; i < drS->size; i++)
       {
-        wprintf(L"dataresult_filename: %s \n", drS->dr[i]->file_name);
+        wprintf(L"File scan: %s \n", drS->dr[i]->file_name);
+        wprintf(L"Number of match rule: %d \n", drS->dr[i]->size);
+        wprintf(L"Match rule:\n");
         for (int j = 0; j < drS->dr[i]->size; j++)
         {
-          wprintf(L"dataresult_rule:%d: %s \n", j, drS->dr[i]->rules[j]);
+          wprintf(L"\t[%d]: %s \n", j, drS->dr[i]->rules[j]);
         }
         wprintf(L"-----------------------------------\n");
       }
