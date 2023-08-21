@@ -30,7 +30,7 @@ int main(int agrc, const char** argv)
     wchar_t path_scan[256]; 
     wprintf(L"Nhap duong dan file rule: ");
     wscanf(L"%255ls", rule_path);
-    wprintf(L"Nhap duong dan file can scan: ");
+    wprintf(L"Nhap PID hoac duong dan file can scan: ");
     wscanf(L"%255ls", path_scan);
 
 
@@ -70,7 +70,7 @@ int main(int agrc, const char** argv)
       drS = (ProcAdd) (command, lenparam);
       for (int i = 0; i < drS->size; i++)
       {
-        wprintf(L"File scan: %s \n", drS->dr[i]->file_name);
+        wprintf(L"File(PID) scan: %s \n", drS->dr[i]->file_name);
         wprintf(L"Number of match rule: %d \n", drS->dr[i]->size);
         wprintf(L"Match rule:\n");
         for (int j = 0; j < drS->dr[i]->size; j++)
