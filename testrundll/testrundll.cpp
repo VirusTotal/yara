@@ -22,7 +22,7 @@ typedef struct detectResults
 typedef const detectResults*(
     __cdecl* MYPROC)(const wchar_t** argv, int lenparam);
 
-int main()
+int main(int agrc, const char** argv)
 {
   HINSTANCE hinstLib;
   MYPROC ProcAdd;
@@ -51,7 +51,9 @@ int main()
       /*const wchar_t* command[] = {
           L"checkpefile.yara",
           L"9364"};*/
-      const wchar_t* command[] = {L"checkpefile.yara", L"helo"};
+      const wchar_t* command[] = {
+          L"C:\\Users\\TRUNG\\Desktop\\yara-dll\\testrundll\\x64\\Debug\\checkpefile.yara",
+          L"C:\\Users\\TRUNG\\Desktop\\yara-dll\\testrundll\\x64\\Debug\\helo"};
       int lenparam = sizeof(command) / sizeof(command[0]);
 
       drS = (ProcAdd) (command, lenparam);
