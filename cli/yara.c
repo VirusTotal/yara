@@ -2104,7 +2104,7 @@ const detectResults* detect(const wchar_t** argv, int lenparam){
 
   //padding param
   lenparam = lenparam + 1;
-    wchar_t** argv_padding = calloc(lenparam, sizeof(wchar_t*));
+    wchar_t** argv_padding = calloc(lenparam+1, sizeof(wchar_t*));
     argv_padding[0] = L"yara";
     argv_padding[lenparam] = L"endparam";
     for (int i = 1; i < lenparam; i++)
