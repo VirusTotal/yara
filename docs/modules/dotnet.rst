@@ -250,6 +250,19 @@ Reference
 
     The typelib of the file.
 
+.. c:type:: number_of_constants
+
+    The number of constants in the .NET file.
+
+.. c:type:: constants
+
+    A zero-based array of strings, one for each constant the .NET file has. 
+    Individual constants can be accessed by using the [] operator.
+
+.. c:type:: number_of_assembly_refs
+
+    The number of objects for .NET assembly reference information.
+
 .. c:type:: assembly_refs
 
     Object for .NET assembly reference information.
