@@ -157,6 +157,7 @@ static bool ignore_warnings = false;
 static bool fast_scan = false;
 static bool negate = false;
 static bool print_count_only = false;
+static bool strict_escape = false;
 static bool fail_on_warnings = false;
 static bool rules_are_compiled = false;
 static bool disable_console_logs = false;
@@ -191,6 +192,12 @@ args_option_t options[] = {
         _T("count"),
         &print_count_only,
         _T("print only number of matches")),
+
+    OPT_BOOLEAN(
+        'E',
+        _T("strict-escape"),
+        &strict_escape,
+        _T("warn on unknown escape sequences")),
 
     OPT_STRING_MULTI(
         'd',
@@ -1564,6 +1571,11 @@ int _tmain(int argc, const char_t** argv)
     cr.warnings = 0;
 
     yr_compiler_set_callback(compiler, print_compiler_error, &cr);
+
+    if (strict_escape)
+      compiler->strict_escape = true;
+    else
+      compiler->strict_escape = false;
 
     if (!compile_files(compiler, argc, argv))
       exit_with_code(EXIT_FAILURE);

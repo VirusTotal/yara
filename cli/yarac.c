@@ -73,6 +73,7 @@ static char* ext_vars[MAX_ARGS_EXT_VAR + 1];
 static bool ignore_warnings = false;
 static bool show_version = false;
 static bool show_help = false;
+static bool strict_escape = false;
 static bool fail_on_warnings = false;
 static long max_strings_per_rule = DEFAULT_MAX_STRINGS_PER_RULE;
 
@@ -102,6 +103,12 @@ args_option_t options[] = {
         _T("fail on warnings")),
 
     OPT_BOOLEAN('h', _T("help"), &show_help, _T("show this help and exit")),
+
+    OPT_BOOLEAN(
+        'E',
+        _T("strict-escape"),
+        &strict_escape,
+        _T("warn on unknown escape sequences")),
 
     OPT_LONG(
         0,
@@ -232,6 +239,11 @@ int _tmain(int argc, const char_t** argv)
       YR_CONFIG_MAX_STRINGS_PER_RULE, max_strings_per_rule);
 
   yr_compiler_set_callback(compiler, report_error, &cr);
+
+  if (strict_escape)
+    compiler->strict_escape = true;
+  else
+    compiler->strict_escape = false;
 
   if (!compile_files(compiler, argc, argv))
     exit_with_code(EXIT_FAILURE);
