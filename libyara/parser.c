@@ -216,6 +216,7 @@ int yr_parser_emit_pushes_for_strings(
 
         string->flags |= STRING_FLAGS_REFERENCED;
         string->flags &= ~STRING_FLAGS_FIXED_OFFSET;
+        string->flags &= ~STRING_FLAGS_SINGLE_MATCH;
         matching++;
       }
     }
