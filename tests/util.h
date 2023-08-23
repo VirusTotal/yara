@@ -183,6 +183,16 @@ void assert_hex_atoms(
     }                                                                   \
   } while (0);
 
+// Ensure that a particular string is found when scanning. This is useful for
+// making sure that unreferenced strings are searched for properly.
+// Specifically, making sure they have STRING_FLAGS_FIXED_OFFSET unset.
+#define assert_string_capture(rule, string, expected) do {              \
+    if (!capture_string(rule, string, expected)) {                      \
+      fprintf(stderr, "%s:%d: rule does not match\n",                   \
+              __FILE__, __LINE__);                                      \
+      exit(EXIT_FAILURE);                                               \
+    }                                                                   \
+  } while (0);
 
 #define assert_match_count(rule, string, count)                         \
   do {                                                                  \

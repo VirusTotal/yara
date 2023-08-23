@@ -512,6 +512,16 @@ static void test_syntax()
       "rule test { strings: $a = \"a\" condition: for 3.14159 of them: ($) }",
       ERROR_INVALID_VALUE);
 
+  assert_error(
+      "rule test { strings: $a = \"a\" condition: true }",
+      ERROR_UNREFERENCED_STRING);
+
+  // String identifiers prefixed with '_' are allowed to be unreferenced.
+  // Any unreferenced string must be searched for anywhere.
+  assert_string_capture(
+      "rule test { strings: $a = \"AXS\" $_b = \"ERS\" condition: $a }",
+      "AXSERS", "ERS");
+
   YR_DEBUG_FPRINTF(1, stderr, "} // %s()\n", __FUNCTION__);
 }
 
@@ -522,6 +532,11 @@ static void test_anonymous_strings()
   assert_true_rule(
       "rule test { strings: $ = \"a\" $ = \"b\" condition: all of them }",
       "ab");
+
+  // Anonymous strings must be referenced.
+  assert_error(
+      "rule test { strings: $ = \"a\" condition: true }",
+      ERROR_UNREFERENCED_STRING);
 
   YR_DEBUG_FPRINTF(1, stderr, "} // %s()\n", __FUNCTION__);
 }
