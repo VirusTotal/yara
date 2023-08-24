@@ -56,6 +56,7 @@ with noyywrap then we can remove this pragma.
 #include <yara/re_lexer.h>
 #include <yara/threading.h>
 #include <yara/strutils.h>
+#include <yara/compiler.h>
 
 
 #ifdef _WIN32
@@ -82,11 +83,13 @@ static uint8_t space_chars[] = {
 
 int escaped_char_value(
     char* text,
-    uint8_t* value);
+    uint8_t* value,
+    bool strict_escape);
 
 int read_escaped_char(
     yyscan_t yyscanner,
-    uint8_t* escaped_char);
+    uint8_t* escaped_char,
+    bool strict_escape);
 
 %}
 
@@ -280,9 +283,17 @@ hex_digit     [0-9a-fA-F]
 \\ {
 
   uint8_t c;
+  int return_code;
 
-  if (read_escaped_char(yyscanner, &c))
+  return_code = read_escaped_char(yyscanner, &c, LEX_ENV->strict_escape);
+  if (return_code == VALID_ESCAPE_SEQUENCE)
   {
+    yylval->integer = c;
+    return _CHAR_;
+  }
+  else if (return_code == UNKNOWN_ESCAPE_SEQUENCE)
+  {
+    yywarning(yyscanner, lex_env, "unknown escape sequence");
     yylval->integer = c;
     return _CHAR_;
   }
@@ -337,7 +348,7 @@ hex_digit     [0-9a-fA-F]
 
   if (start == '\\')
   {
-    if (!escaped_char_value(yytext, &start))
+    if (!escaped_char_value(yytext, &start, LEX_ENV->strict_escape))
     {
       yyerror(yyscanner, lex_env, "illegal escape sequence");
       yyterminate();
@@ -351,7 +362,7 @@ hex_digit     [0-9a-fA-F]
 
   if (end == '\\')
   {
-    if (!read_escaped_char(yyscanner, &end))
+    if (!read_escaped_char(yyscanner, &end, LEX_ENV->strict_escape))
     {
       yyerror(yyscanner, lex_env, "illegal escape sequence");
       yyterminate();
@@ -427,9 +438,16 @@ hex_digit     [0-9a-fA-F]
 <char_class>\\ {
 
   uint8_t c;
+  int return_code;
 
-  if (read_escaped_char(yyscanner, &c))
+  return_code = read_escaped_char(yyscanner, &c, LEX_ENV->strict_escape);
+  if (return_code == VALID_ESCAPE_SEQUENCE)
   {
+    LEX_ENV->re_class.bitmap[c / 8] |= 1 << c % 8;
+  }
+  else if (return_code == UNKNOWN_ESCAPE_SEQUENCE)
+  {
+    yywarning(yyscanner, lex_env, "unknown escape sequence");
     LEX_ENV->re_class.bitmap[c / 8] |= 1 << c % 8;
   }
   else
@@ -489,7 +507,8 @@ hex_digit     [0-9a-fA-F]
 
 int escaped_char_value(
     char* text,
-    uint8_t* value)
+    uint8_t* value,
+    bool strict_escape)
 {
   unsigned int hex_value;
   char hex[3];
@@ -528,11 +547,49 @@ int escaped_char_value(
     *value = '\a';
     break;
 
+  // Support metacharacters in escape sequences
+  case '\\':
+  case '^':
+  case '$':
+  case '.':
+  case '|':
+  case '(':
+  case ')':
+  case '[':
+  case ']':
+
+  // Support other special characters that are used in rules and need to be escaped
+  case '*':
+  case '+':
+  case '?':
+  case '"':
+  case '\'':
+  case '-':
+  case '{':
+  case '}':
+  case '#':
+  case ':':
+  case '_':
+  case '=':
+  case '/':
+  case '!':
+  case ',':
+  case '@':
+  case '<':
+  case '>':
+  case '~':
+  case '&':
+  case '%':
+    *value = text[1];
+    break;
   default:
     *value = text[1];
+    if (strict_escape)
+      return UNKNOWN_ESCAPE_SEQUENCE;
+    return VALID_ESCAPE_SEQUENCE;
   }
 
-  return 1;
+  return VALID_ESCAPE_SEQUENCE;
 }
 
 
@@ -545,7 +602,8 @@ int escaped_char_value(
 
 int read_escaped_char(
     yyscan_t yyscanner,
-    uint8_t* escaped_char)
+    uint8_t* escaped_char,
+    bool strict_escape)
 {
   char text[4] = {0, 0, 0, 0};
 
@@ -568,7 +626,7 @@ int read_escaped_char(
       return 0;
   }
 
-  return escaped_char_value(text, escaped_char);
+  return escaped_char_value(text, escaped_char, strict_escape);
 }
 
 
@@ -599,7 +657,7 @@ void yyerror(
   // subsequent errors like "syntax error, unexpected $end" caused by
   // early parser termination.
 
-  if (lex_env->last_error == ERROR_SUCCESS)
+  if (lex_env->last_error == ERROR_SUCCESS || lex_env->last_error == ERROR_UNKNOWN_ESCAPE_SEQUENCE)
   {
     lex_env->last_error = ERROR_INVALID_REGULAR_EXPRESSION;
 
@@ -610,17 +668,40 @@ void yyerror(
   }
 }
 
+void yywarning(
+    yyscan_t yyscanner,
+    RE_LEX_ENVIRONMENT* lex_env,
+    const char *error_message)
+{
+  // Do not overwrite Errors
+  // print out warning only if there is not any other error beforehand
+
+  if (lex_env->last_error == ERROR_SUCCESS)
+  {
+    lex_env->last_error = ERROR_UNKNOWN_ESCAPE_SEQUENCE;
+
+    strlcpy(
+        lex_env->last_error_message,
+        error_message,
+        sizeof(lex_env->last_error_message));
+  }
+}
 
 int yr_parse_re_string(
   const char* re_string,
   RE_AST** re_ast,
-  RE_ERROR* error)
+  RE_ERROR* error,
+  int flags)
 {
   yyscan_t yyscanner;
   jmp_buf recovery_trampoline;
   RE_LEX_ENVIRONMENT lex_env;
 
   lex_env.last_error = ERROR_SUCCESS;
+  if (flags & RE_PARSER_FLAG_ENABLE_STRICT_ESCAPE_SEQUENCES)
+    lex_env.strict_escape = true;
+   else
+    lex_env.strict_escape = false;
   lex_env.last_error_message[0] = '\0';
 
   yr_thread_storage_set_value(
@@ -648,8 +729,11 @@ int yr_parse_re_string(
 
   if (lex_env.last_error != ERROR_SUCCESS)
   {
-    yr_re_ast_destroy(*re_ast);
-    *re_ast = NULL;
+    if (lex_env.last_error != ERROR_UNKNOWN_ESCAPE_SEQUENCE)
+    {
+      yr_re_ast_destroy(*re_ast);
+      *re_ast = NULL;
+    }
 
     strlcpy(
         error->message,

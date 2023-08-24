@@ -361,7 +361,7 @@ int _yr_base64_create_regexp(
   // printf("%s\n", re_str);
 
   FAIL_ON_ERROR_WITH_CLEANUP(
-      yr_re_parse(re_str, re_ast, re_error), yr_free(re_str));
+      yr_re_parse(re_str, re_ast, re_error, RE_PARSER_FLAG_NONE), yr_free(re_str));
 
   yr_free(re_str);
 

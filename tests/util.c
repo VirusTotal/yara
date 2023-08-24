@@ -389,6 +389,12 @@ static void _compiler_callback(
 
 int compile_rule(char* string, YR_RULES** rules)
 {
+  bool strict_escape_flag = false;
+  return compile_rule_ex(string, rules, strict_escape_flag);
+}
+
+int compile_rule_ex(char* string, YR_RULES** rules, bool strict_escape_flag)
+{
   YR_COMPILER* compiler = NULL;
   int result = ERROR_SUCCESS;
 
@@ -400,6 +406,8 @@ int compile_rule(char* string, YR_RULES** rules)
     perror("yr_compiler_create");
     goto _exit;
   }
+
+  compiler->strict_escape = strict_escape_flag;
 
   yr_compiler_set_callback(compiler, _compiler_callback, &warnings);
 
@@ -711,7 +719,7 @@ void assert_re_atoms(char* re, int expected_atom_count, atom* expected_atoms)
 
   int exit_code;
 
-  yr_re_parse(re, &re_ast, &re_error);
+  yr_re_parse(re, &re_ast, &re_error, RE_PARSER_FLAG_NONE);
   exit_code = _assert_atoms(re_ast, expected_atom_count, expected_atoms);
 
   if (re_ast != NULL)

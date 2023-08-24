@@ -237,6 +237,7 @@ typedef struct _YR_COMPILER
   int current_line;
   int last_error;
   int last_error_line;
+  bool strict_escape;
 
   jmp_buf error_recovery;
 
@@ -380,6 +381,12 @@ YR_API int yr_compiler_add_fd(
     YR_FILE_DESCRIPTOR rules_fd,
     const char* namespace_,
     const char* file_name);
+
+YR_API int yr_compiler_add_bytes(
+    YR_COMPILER* compiler,
+    const void* rules_data,
+    size_t rules_size,
+    const char* namespace_);
 
 YR_API int yr_compiler_add_string(
     YR_COMPILER* compiler,

@@ -216,6 +216,7 @@ int yr_parser_emit_pushes_for_strings(
 
         string->flags |= STRING_FLAGS_REFERENCED;
         string->flags &= ~STRING_FLAGS_FIXED_OFFSET;
+        string->flags &= ~STRING_FLAGS_SINGLE_MATCH;
         matching++;
       }
     }
@@ -747,23 +748,37 @@ int yr_parser_reduce_string_declaration(
     if (modifier.flags & STRING_FLAGS_HEXADECIMAL)
       result = yr_re_parse_hex(str->c_string, &re_ast, &re_error);
     else if (modifier.flags & STRING_FLAGS_REGEXP)
-      result = yr_re_parse(str->c_string, &re_ast, &re_error);
+    {
+      int flags = RE_PARSER_FLAG_NONE;
+      if (compiler->strict_escape)
+        flags |= RE_PARSER_FLAG_ENABLE_STRICT_ESCAPE_SEQUENCES;
+      result = yr_re_parse(str->c_string, &re_ast, &re_error, flags);
+    }
     else
       result = yr_base64_ast_from_string(str, modifier, &re_ast, &re_error);
 
     if (result != ERROR_SUCCESS)
     {
-      snprintf(
-          message,
-          sizeof(message),
-          "invalid %s \"%s\": %s",
-          (modifier.flags & STRING_FLAGS_HEXADECIMAL) ? "hex string"
-                                                      : "regular expression",
-          identifier,
-          re_error.message);
+      if (result == ERROR_UNKNOWN_ESCAPE_SEQUENCE)
+      {
+        yywarning(
+          yyscanner,
+          "unknown escape sequence");
+      }
+      else 
+      {
+        snprintf(
+            message,
+            sizeof(message),
+            "invalid %s \"%s\": %s",
+            (modifier.flags & STRING_FLAGS_HEXADECIMAL) ? "hex string"
+                                                        : "regular expression",
+            identifier,
+            re_error.message);
 
-      yr_compiler_set_error_extra_info(compiler, message);
-      goto _exit;
+        yr_compiler_set_error_extra_info(compiler, message);
+        goto _exit;
+      }
     }
 
     if (re_ast->flags & RE_FLAGS_FAST_REGEXP)
@@ -1070,11 +1085,24 @@ int yr_parser_reduce_rule_declaration_phase_2(
     // Only the heading fragment in a chain of strings (the one with
     // chained_to == NULL) must be referenced. All other fragments
     // are never marked as referenced.
+    //
+    // Any string identifier that starts with '_' can be unreferenced. Anonymous
+    // strings must always be referenced.
 
-    if (!STRING_IS_REFERENCED(string) && string->chained_to == NULL)
+    if (!STRING_IS_REFERENCED(string) && string->chained_to == NULL &&
+        (STRING_IS_ANONYMOUS(string) ||
+         (!STRING_IS_ANONYMOUS(string) && string->identifier[1] != '_')))
     {
       yr_compiler_set_error_extra_info(
           compiler, string->identifier) return ERROR_UNREFERENCED_STRING;
+    }
+
+    // If a string is unreferenced we need to unset the FIXED_OFFSET flag so
+    // that it will match anywhere.
+    if (!STRING_IS_REFERENCED(string) && string->chained_to == NULL &&
+        STRING_IS_FIXED_OFFSET(string))
+    {
+      string->flags &= ~STRING_FLAGS_FIXED_OFFSET;
     }
 
     strings_in_rule++;
@@ -1120,7 +1148,7 @@ int yr_parser_reduce_string_identifier(
   YR_STRING* string;
   YR_COMPILER* compiler = yyget_extra(yyscanner);
 
-  if (strcmp(identifier, "$") == 0)  // is an anonymous string ?
+  if (strcmp(identifier, "$") == 0)            // is an anonymous string ?
   {
     if (compiler->loop_for_of_var_index >= 0)  // inside a loop ?
     {

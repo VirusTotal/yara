@@ -157,8 +157,10 @@ static bool ignore_warnings = false;
 static bool fast_scan = false;
 static bool negate = false;
 static bool print_count_only = false;
+static bool strict_escape = false;
 static bool fail_on_warnings = false;
 static bool rules_are_compiled = false;
+static bool disable_console_logs = false;
 static long total_count = 0;
 static long limit = 0;
 static long timeout = 1000000;
@@ -191,6 +193,12 @@ args_option_t options[] = {
         &print_count_only,
         _T("print only number of matches")),
 
+    OPT_BOOLEAN(
+        'E',
+        _T("strict-escape"),
+        &strict_escape,
+        _T("warn on unknown escape sequences")),
+
     OPT_STRING_MULTI(
         'd',
         _T("define"),
@@ -198,6 +206,12 @@ args_option_t options[] = {
         MAX_ARGS_EXT_VAR,
         _T("define external variable"),
         _T("VAR=VALUE")),
+
+    OPT_BOOLEAN(
+        'q',
+        _T("disable-console-logs"),
+        &disable_console_logs,
+        _T("disable printing console log messages")),
 
     OPT_BOOLEAN(
         0,
@@ -1267,7 +1281,8 @@ static int callback(
     return CALLBACK_CONTINUE;
 
   case CALLBACK_MSG_CONSOLE_LOG:
-    _tprintf(_T("%" PF_S "\n"), (char*) message_data);
+    if (!disable_console_logs)
+      _tprintf(_T("%" PF_S "\n"), (char*) message_data);
     return CALLBACK_CONTINUE;
   }
 
@@ -1556,6 +1571,11 @@ int _tmain(int argc, const char_t** argv)
     cr.warnings = 0;
 
     yr_compiler_set_callback(compiler, print_compiler_error, &cr);
+
+    if (strict_escape)
+      compiler->strict_escape = true;
+    else
+      compiler->strict_escape = false;
 
     if (!compile_files(compiler, argc, argv))
       exit_with_code(EXIT_FAILURE);

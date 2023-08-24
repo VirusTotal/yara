@@ -48,11 +48,12 @@ int main(int argc, char** argv)
       }",
       "tests/data/tiny-idata-51ff");
 
-  assert_false_rule_file(
+  // The imports are so corrupted that we can not parse any of them.
+  assert_true_rule_file(
       "import \"pe\" \
       rule test { \
         condition: \
-          pe.imports(\"KERNEL32.dll\", \"DeleteCriticalSection\") \
+          pe.number_of_imports == 0 and pe.number_of_imported_functions == 0 \
       }",
       "tests/data/tiny-idata-5200");
 
@@ -72,22 +73,6 @@ int main(int argc, char** argv)
       }",
       "tests/data/tiny");
 
-  assert_true_rule_file(
-      "import \"pe\" \
-      rule test { \
-        condition: \
-          pe.imports(/.*/, /.*/) \
-      }",
-      "tests/data/tiny-idata-5200");
-
-  assert_false_rule_file(
-      "import \"pe\" \
-      rule test { \
-        condition: \
-          pe.imports(/.*/, /.*CriticalSection/) \
-      }",
-      "tests/data/tiny-idata-5200");
-
   ///////////////////////////////
 
   assert_true_rule_file(
@@ -106,14 +91,6 @@ int main(int argc, char** argv)
       }",
       "tests/data/tiny-idata-51ff");
 
-  assert_false_rule_file(
-      "import \"pe\" \
-      rule test { \
-        condition: \
-          pe.imports(pe.IMPORT_STANDARD, \"KERNEL32.dll\", \"DeleteCriticalSection\") \
-      }",
-      "tests/data/tiny-idata-5200");
-
   assert_true_rule_file(
       "import \"pe\" \
       rule test { \
@@ -129,22 +106,6 @@ int main(int argc, char** argv)
           pe.imports(pe.IMPORT_STANDARD, /kernel32\\.dll/i, /.*/) == 21 \
       }",
       "tests/data/tiny");
-
-  assert_true_rule_file(
-      "import \"pe\" \
-      rule test { \
-        condition: \
-          pe.imports(pe.IMPORT_STANDARD, /.*/, /.*/) \
-      }",
-      "tests/data/tiny-idata-5200");
-
-  assert_false_rule_file(
-      "import \"pe\" \
-      rule test { \
-        condition: \
-          pe.imports(pe.IMPORT_STANDARD, /.*/, /.*CriticalSection/) \
-      }",
-      "tests/data/tiny-idata-5200");
 
   assert_true_rule_file(
       "import \"pe\" \
@@ -221,14 +182,6 @@ int main(int argc, char** argv)
       }",
       "tests/data/tiny-idata-51ff");
 
-  assert_false_rule_file(
-      "import \"pe\" \
-      rule test { \
-        condition: \
-          pe.imports(pe.IMPORT_ANY, \"KERNEL32.dll\", \"DeleteCriticalSection\") \
-      }",
-      "tests/data/tiny-idata-5200");
-
   assert_true_rule_file(
       "import \"pe\" \
       rule test { \
@@ -244,22 +197,6 @@ int main(int argc, char** argv)
           pe.imports(pe.IMPORT_ANY, /kernel32\\.dll/i, /.*/) == 21 \
       }",
       "tests/data/tiny");
-
-  assert_true_rule_file(
-      "import \"pe\" \
-      rule test { \
-        condition: \
-          pe.imports(pe.IMPORT_ANY, /.*/, /.*/) \
-      }",
-      "tests/data/tiny-idata-5200");
-
-  assert_false_rule_file(
-      "import \"pe\" \
-      rule test { \
-        condition: \
-          pe.imports(pe.IMPORT_ANY, /.*/, /.*CriticalSection/) \
-      }",
-      "tests/data/tiny-idata-5200");
 
   assert_true_rule(
       "import \"pe\" \
@@ -328,6 +265,16 @@ int main(int argc, char** argv)
           pe.imphash() == \"1720bf764274b7a4052bbef0a71adc0d\" \
       }",
       "tests/data/tiny");
+
+  // Make sure imports with no ordinal and an empty name are skipped. This is
+  // consistent with the behavior of pefile.
+  assert_true_rule_file(
+      "import \"pe\" \
+      rule test { \
+        condition: \
+          pe.imphash() == \"b441b7fd09648ae6a06cea0e090128d6\" \
+      }",
+      "tests/data/tiny_empty_import_name");
 
 #endif
 
@@ -561,6 +508,10 @@ int main(int argc, char** argv)
           pe.export_details[0].offset == 1072 and \
           pe.export_details[0].name == \"DllGetClassObject\" and \
           pe.export_details[0].ordinal == 1 and \
+          pe.export_details[0].rva == 0x1030 and \
+          pe.export_details[1].rva == 0x267d and \
+          pe.export_details[2].rva == 0x26a8 and \
+          pe.export_details[3].rva == 0x26ca and \
           pe.export_details[1].forward_name == \"COMSVCS.GetObjectContext\" \
       }",
       "tests/data/mtxex.dll");
@@ -607,7 +558,8 @@ int main(int argc, char** argv)
       "import \"pe\" \
       rule test { \
         condition: \
-          pe.export_details[0].name == \"CP_PutItem\" \
+          pe.export_details[0].name == \"CP_PutItem\" and \
+          pe.export_details[0].rva == 0x106c \
       }",
       "tests/data/"
       "079a472d22290a94ebb212aa8015cdc8dd28a968c6b4d3b88acdd58ce2d3b885.upx");
