@@ -22,7 +22,7 @@ int main(int argc, char** argv)
           lnk.is_lnk \
       }",
       "tests/data/lnk-standard");
-/*
+      
   assert_true_rule_file(
       "import \"lnk\" \
       rule creation_time { \
@@ -102,6 +102,7 @@ int main(int argc, char** argv)
           not lnk.has_hotkey and not defined lnk.hotkey \
       }",
       "tests/data/lnk-standard");
+  /*
 
   assert_true_rule_file(
       "import \"lnk\" \

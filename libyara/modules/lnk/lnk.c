@@ -2056,34 +2056,34 @@ int module_load(
 
       // Convert timestamps from Windows TIMESTAMP to Unix timestamp
       yr_set_integer(
-          convertWindowsTimeToUnixTime(lnk_header->creation_time),
+          yr_le64toh(convertWindowsTimeToUnixTime(lnk_header->creation_time)),
           module_object,
           "creation_time");
 
       yr_set_integer(
-          convertWindowsTimeToUnixTime(lnk_header->access_time),
+          yr_le64toh(convertWindowsTimeToUnixTime(lnk_header->access_time)),
           module_object,
           "access_time");
 
       yr_set_integer(
-          convertWindowsTimeToUnixTime(lnk_header->write_time),
+          yr_le64toh(convertWindowsTimeToUnixTime(lnk_header->write_time)),
           module_object,
           "write_time");
 
-      yr_set_integer(lnk_header->file_size, module_object, "file_size");
-      yr_set_integer(lnk_header->link_flags, module_object, "link_flags");
+      yr_set_integer(yr_le32toh(lnk_header->file_size), module_object, "file_size");
+      yr_set_integer(yr_le32toh(lnk_header->link_flags), module_object, "link_flags");
       yr_set_integer(
-          lnk_header->file_attributes_flags,
+          yr_le32toh(lnk_header->file_attributes_flags),
           module_object,
           "file_attributes_flags");
-      yr_set_integer(lnk_header->icon_index, module_object, "icon_index");
-      yr_set_integer(lnk_header->show_command, module_object, "show_command");
-      yr_set_integer(lnk_header->hotkey_flags, module_object, "hotkey_flags");
+      yr_set_integer(yr_le32toh(lnk_header->icon_index), module_object, "icon_index");
+      yr_set_integer(yr_le32toh(lnk_header->show_command), module_object, "show_command");
+      yr_set_integer(yr_le16toh(lnk_header->hotkey_flags), module_object, "hotkey_flags");
 
       // Hotkey handling code
-      if (lnk_header->hotkey_flags & 0xFF)
+      if (yr_le16toh(lnk_header->hotkey_flags) & 0xFF)
       {
-        hotkey_str = get_hotkey_char(lnk_header->hotkey_flags & 0xFF);
+        hotkey_str = get_hotkey_char(yr_le16toh(lnk_header->hotkey_flags) & 0xFF);
 
         if (hotkey_str)
         {
@@ -2099,7 +2099,7 @@ int module_load(
       }
 
       yr_set_integer(
-          (lnk_header->hotkey_flags >> 8),
+          (yr_le16toh(lnk_header->hotkey_flags) >> 8),
           module_object,
           "hotkey_modifier_flags");
 
@@ -2108,7 +2108,7 @@ int module_load(
       block_data_size_remaining -= sizeof(shell_link_header_t);
 
       // Optional parsing of LinkTargetIDList
-      if (lnk_header->link_flags & HAS_LINK_TARGET_ID_LIST)
+      if (yr_le32toh(lnk_header->link_flags) & HAS_LINK_TARGET_ID_LIST)
       {
         id_list_size = parse_link_target_id_list(
             current_location, module_object, block_data_size_remaining);
@@ -2129,7 +2129,7 @@ int module_load(
         block_data_size_remaining -= id_list_size;
       }
 
-      if (lnk_header->link_flags & HAS_LINK_INFO)
+      if (yr_le32toh(lnk_header->link_flags) & HAS_LINK_INFO)
       {
         link_info_size = parse_link_info(
             current_location, module_object, block_data_size_remaining);
@@ -2151,14 +2151,14 @@ int module_load(
       }
 
       // NAME_STRING
-      if (lnk_header->link_flags & HAS_NAME)
+      if (yr_le32toh(lnk_header->link_flags) & HAS_NAME)
       {
         string_data_size = parse_string_data(
             current_location,
             module_object,
             block_data_size_remaining,
             "name_string",
-            lnk_header->link_flags & IS_UNICODE);
+            yr_le32toh(lnk_header->link_flags) & IS_UNICODE);
 
         if (string_data_size == 0)
         {
@@ -2177,14 +2177,14 @@ int module_load(
       }
 
       // RELATIVE_PATH
-      if (lnk_header->link_flags & HAS_RELATIVE_PATH)
+      if (yr_le32toh(lnk_header->link_flags) & HAS_RELATIVE_PATH)
       {
         string_data_size = parse_string_data(
             current_location,
             module_object,
             block_data_size_remaining,
             "relative_path",
-            lnk_header->link_flags & IS_UNICODE);
+            yr_le32toh(lnk_header->link_flags) & IS_UNICODE);
 
         if (string_data_size == 0)
         {
@@ -2203,14 +2203,14 @@ int module_load(
       }
 
       // WORKING_DIR
-      if (lnk_header->link_flags & HAS_WORKING_DIR)
+      if (yr_le32toh(lnk_header->link_flags) & HAS_WORKING_DIR)
       {
         string_data_size = parse_string_data(
             current_location,
             module_object,
             block_data_size_remaining,
             "working_dir",
-            lnk_header->link_flags & IS_UNICODE);
+            yr_le32toh(lnk_header->link_flags) & IS_UNICODE);
 
         if (string_data_size == 0)
         {
@@ -2229,14 +2229,14 @@ int module_load(
       }
 
       // COMMAND_LINK_ARGUMENTS
-      if (lnk_header->link_flags & HAS_ARGUMENTS)
+      if (yr_le32toh(lnk_header->link_flags) & HAS_ARGUMENTS)
       {
         string_data_size = parse_string_data(
             current_location,
             module_object,
             block_data_size_remaining,
             "command_line_arguments",
-            lnk_header->link_flags & IS_UNICODE);
+            yr_le32toh(lnk_header->link_flags) & IS_UNICODE);
 
         if (string_data_size == 0)
         {
@@ -2255,14 +2255,14 @@ int module_load(
       }
 
       // ICON_LOCATION
-      if (lnk_header->link_flags & HAS_ICON_LOCATION)
+      if (yr_le32toh(lnk_header->link_flags) & HAS_ICON_LOCATION)
       {
         string_data_size = parse_string_data(
             current_location,
             module_object,
             block_data_size_remaining,
             "icon_location",
-            lnk_header->link_flags & IS_UNICODE);
+            yr_le32toh(lnk_header->link_flags) & IS_UNICODE);
 
         if (string_data_size == 0)
         {
