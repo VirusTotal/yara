@@ -488,28 +488,28 @@ uint32_t parse_volume_id(
   memcpy(&volume_id, (volume_id_t*) volume_id_ptr, sizeof(volume_id_t));
 
   yr_set_integer(
-      volume_id.volume_id_size, module_object, "link_info.volume_id.size");
+      yr_le32toh(volume_id.volume_id_size), module_object, "link_info.volume_id.size");
   yr_set_integer(
-      volume_id.drive_type, module_object, "link_info.volume_id.drive_type");
+      yr_le32toh(volume_id.drive_type), module_object, "link_info.volume_id.drive_type");
   yr_set_integer(
-      volume_id.drive_serial_number,
+      yr_le32toh(volume_id.drive_serial_number),
       module_object,
       "link_info.volume_id.drive_serial_number");
   yr_set_integer(
-      volume_id.volume_label_offset,
+      yr_le32toh(volume_id.volume_label_offset),
       module_object,
       "link_info.volume_id.volume_label_offset");
 
   // To work out the size of the data, we need to subtract the size of
   // the whole structure from the VolumeIDSize. However, this structure
   // size is variable based on if the unicode offset is present.
-  size_of_data = volume_id.volume_id_size - volume_id.volume_label_offset;
+  size_of_data = yr_le32toh(volume_id.volume_id_size) - yr_le32toh(volume_id.volume_label_offset);
 
   volume_id_ptr += sizeof(volume_id_t);
   block_data_size_remaining -= sizeof(volume_id_t);
   total_data_read += sizeof(volume_id_t);
 
-  if (volume_id.volume_label_offset == 0x14)
+  if (yr_le32toh(volume_id.volume_label_offset) == 0x14)
   {
     if (block_data_size_remaining < sizeof(volume_label_offset_unicode))
     {
@@ -521,7 +521,7 @@ uint32_t parse_volume_id(
         volume_id_ptr,
         sizeof(volume_label_offset_unicode));
     yr_set_integer(
-        volume_label_offset_unicode,
+        yr_le32toh(volume_label_offset_unicode),
         module_object,
         "link_info.volume_id.volume_label_offset_unicode");
     volume_id_ptr += sizeof(volume_label_offset_unicode);
@@ -530,7 +530,7 @@ uint32_t parse_volume_id(
 
     // Compensate for extra entry in the structure
     // Todo: Extra checks if this size makes sense?
-    size_of_data = volume_id.volume_id_size - volume_label_offset_unicode;
+    size_of_data = yr_le32toh(volume_id.volume_id_size) - yr_le32toh(volume_label_offset_unicode);
   }
 
   if (block_data_size_remaining < size_of_data)
@@ -587,30 +587,30 @@ uint32_t parse_common_network_relative_link(
       sizeof(common_network_relative_link_t));
 
   yr_set_integer(
-      common_network_relative_link.common_network_relative_link_size,
+      yr_le32toh(common_network_relative_link.common_network_relative_link_size),
       module_object,
       "link_info.common_network_relative_link.size");
   yr_set_integer(
-      common_network_relative_link.common_network_relative_link_flags,
+      yr_le32toh(common_network_relative_link.common_network_relative_link_flags),
       module_object,
       "link_info.common_network_relative_link.flags");
   yr_set_integer(
-      common_network_relative_link.net_name_offset,
+      yr_le32toh(common_network_relative_link.net_name_offset),
       module_object,
       "link_info.common_network_relative_link.net_name_offset");
   yr_set_integer(
-      common_network_relative_link.device_name_offset,
+      yr_le32toh(common_network_relative_link.device_name_offset),
       module_object,
       "link_info.common_network_relative_link.device_name_offset");
   yr_set_integer(
-      common_network_relative_link.network_provider_type,
+      yr_le32toh(common_network_relative_link.network_provider_type),
       module_object,
       "link_info.common_network_relative_link.network_provider_type");
 
   common_network_relative_link_ptr += sizeof(common_network_relative_link_t);
   block_data_size_remaining -= sizeof(common_network_relative_link_t);
 
-  if (common_network_relative_link.net_name_offset > 0x14)
+  if (yr_le32toh(common_network_relative_link.net_name_offset) > 0x14)
   {
     if (block_data_size_remaining < sizeof(net_name_offset_unicode))
     {
@@ -622,7 +622,7 @@ uint32_t parse_common_network_relative_link(
         common_network_relative_link_ptr,
         sizeof(net_name_offset_unicode));
     yr_set_integer(
-        net_name_offset_unicode,
+        yr_le32toh(net_name_offset_unicode),
         module_object,
         "link_info.common_network_relative_link.net_name_offset_unicode");
     common_network_relative_link_ptr += sizeof(net_name_offset_unicode);
@@ -638,7 +638,7 @@ uint32_t parse_common_network_relative_link(
         common_network_relative_link_ptr,
         sizeof(device_name_offset_unicode));
     yr_set_integer(
-        device_name_offset_unicode,
+        yr_le32toh(device_name_offset_unicode),
         module_object,
         "link_info.common_network_relative_link.device_name_offset_unicode");
     common_network_relative_link_ptr += sizeof(device_name_offset_unicode);
@@ -774,7 +774,7 @@ uint32_t parse_common_network_relative_link(
     yr_free(device_name_unicode);
   }
 
-  return common_network_relative_link.common_network_relative_link_size;
+  return yr_le32toh(common_network_relative_link.common_network_relative_link_size);
 }
 
 uint32_t parse_link_info(
@@ -843,9 +843,9 @@ uint32_t parse_link_info(
   //   if LinkInfoHeaderSize > 0x24:
   //     LocalBasePathOffsetUnicode is 0
 
-  if (link_info_fixed_header->link_info_flags & VOLUME_ID_AND_LOCAL_BASE_PATH)
+  if (yr_le32toh(link_info_fixed_header->link_info_flags) & VOLUME_ID_AND_LOCAL_BASE_PATH)
   {
-    if (link_info_fixed_header->link_info_header_size >= 0x24)
+    if (yr_le32toh(link_info_fixed_header->link_info_header_size) >= 0x24)
     {
       if (block_data_size_remaining < sizeof(local_base_path_offset_unicode))
       {
@@ -857,14 +857,14 @@ uint32_t parse_link_info(
           link_info_ptr,
           sizeof(local_base_path_offset_unicode));
       yr_set_integer(
-          local_base_path_offset_unicode,
+          yr_le32toh(local_base_path_offset_unicode),
           module_object,
           "link_info.local_base_path_offset_unicode");
       link_info_ptr += sizeof(local_base_path_offset_unicode);
       block_data_size_remaining -= sizeof(local_base_path_offset_unicode);
     }
 
-    if (link_info_fixed_header->volume_id_offset)
+    if (yr_le32toh(link_info_fixed_header->volume_id_offset))
     {
       yr_set_integer(1, module_object, "link_info.has_volume_id");
 
@@ -891,7 +891,7 @@ uint32_t parse_link_info(
     }
 
     // Handle LocalBasePath
-    if (link_info_fixed_header->local_base_path_offset)
+    if (yr_le32toh(link_info_fixed_header->local_base_path_offset))
     {
       local_base_path_len = strlen((const char*) link_info_ptr);
 
@@ -919,7 +919,7 @@ uint32_t parse_link_info(
     }
   }
 
-  if (link_info_fixed_header->link_info_header_size >= 0x24)
+  if (yr_le32toh(link_info_fixed_header->link_info_header_size) >= 0x24)
   {
     if (block_data_size_remaining < sizeof(common_path_suffix_offset_unicode))
     {
@@ -931,17 +931,17 @@ uint32_t parse_link_info(
         link_info_ptr,
         sizeof(common_path_suffix_offset_unicode));
     yr_set_integer(
-        common_path_suffix_offset_unicode,
+        yr_le32toh(common_path_suffix_offset_unicode),
         module_object,
         "link_info.common_path_suffix_offset_unicode");
     link_info_ptr += sizeof(common_path_suffix_offset_unicode);
     block_data_size_remaining -= sizeof(common_path_suffix_offset_unicode);
   }
 
-  if (link_info_fixed_header->link_info_flags &
+  if (yr_le32toh(link_info_fixed_header->link_info_flags) &
       COMMON_NETWORK_RELATIVE_LINK_AND_PATH_SUFFIX)
   {
-    if (link_info_fixed_header->common_network_relative_link_offset)
+    if (yr_le32toh(link_info_fixed_header->common_network_relative_link_offset))
     {
       common_network_relative_link_size = parse_common_network_relative_link(
           link_info_ptr, module_object, block_data_size_remaining);
@@ -962,7 +962,7 @@ uint32_t parse_link_info(
   }
 
   // Handle CommonPathSuffix
-  if (link_info_fixed_header->common_path_suffix_offset)
+  if (yr_le32toh(link_info_fixed_header->common_path_suffix_offset))
   {
     if (block_data_size_remaining < 1)
     {
@@ -1104,7 +1104,7 @@ uint32_t parse_link_info(
     yr_free(common_path_suffix_unicode);
   }
 
-  return (int) link_info_fixed_header->link_info_size;
+  return (int) yr_le32toh(link_info_fixed_header->link_info_size);
 }
 
 uint32_t parse_string_data(

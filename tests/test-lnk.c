@@ -134,7 +134,6 @@ int main(int argc, char** argv)
           lnk.link_target_id_list.item_id_list[3].size == 0x46 and lnk.link_target_id_list.item_id_list[3].data == \"2\\x00\\x00\\x00\\x00\\x00,9i\\xa3 \\x00a.txt\\x004\\x00\\x07\\x00\\x04\\x00\\xef\\xbe,9i\\xa3,9i\\xa3&\\x00\\x00\\x00-n\\x00\\x00\\x00\\x00\\x96\\x01\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00a\\x00.\\x00t\\x00x\\x00t\\x00\\x00\\x00\\x14\\x00\" \
       }",
       "tests/data/lnk-standard");
-      /*
 
   assert_true_rule_file(
       "import \"lnk\" \
@@ -255,6 +254,7 @@ int main(int argc, char** argv)
           lnk.link_info.common_path_suffix == \"\\x00\" \
       }",
       "tests/data/lnk-standard");
+      /*
 
   assert_true_rule_file(
       "import \"lnk\" \
