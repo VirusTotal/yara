@@ -2046,11 +2046,11 @@ int module_load(
   {
     // Validate LNK header
     lnk_header = (shell_link_header_t*) block_data;
-    if (lnk_header->header_size == HEADER_SIZE &&
-        lnk_header->clsid[0] == LINK_CLSID_0 &&
-        lnk_header->clsid[1] == LINK_CLSID_1 &&
-        lnk_header->clsid[2] == LINK_CLSID_2 &&
-        lnk_header->clsid[3] == LINK_CLSID_3)
+    if (yr_le32toh(lnk_header->header_size) == HEADER_SIZE &&
+        yr_le32toh(lnk_header->clsid[0]) == LINK_CLSID_0 &&
+        yr_le32toh(lnk_header->clsid[1]) == LINK_CLSID_1 &&
+        yr_le32toh(lnk_header->clsid[2]) == LINK_CLSID_2 &&
+        yr_le32toh(lnk_header->clsid[3]) == LINK_CLSID_3)
     {
       yr_set_integer(1, module_object, "is_lnk");
 
