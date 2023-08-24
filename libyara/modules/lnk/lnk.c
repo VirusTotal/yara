@@ -359,13 +359,13 @@ uint32_t parse_id_list(
   memcpy(&item_id_size, id_list_ptr, sizeof(item_id_size));
   block_data_size_remaining -= sizeof(item_id_size);
 
-  while (item_id_size != 0)
+  while (yr_le16toh(item_id_size) != 0)
   {
     // Subtract 2 to not include it
     if (extra_data)
     {
       yr_set_integer(
-          item_id_size - 2,
+          yr_le16toh(item_id_size) - 2,
           module_object,
           "vista_and_above_id_list_data.item_id_list[%i].size",
           num_item_ids);
@@ -373,7 +373,7 @@ uint32_t parse_id_list(
     else
     {
       yr_set_integer(
-          item_id_size - 2,
+          yr_le16toh(item_id_size) - 2,
           module_object,
           "link_target_id_list.item_id_list[%i].size",
           num_item_ids);
@@ -451,7 +451,7 @@ uint32_t parse_link_target_id_list(
   block_data_size_remaining -= sizeof(id_list_size);
 
   yr_set_integer(
-      id_list_size, module_object, "link_target_id_list.item_id_list_size");
+      yr_le16toh(id_list_size), module_object, "link_target_id_list.item_id_list_size");
 
   // Get pointer to start of IDList
   link_target_id_list_ptr += sizeof(id_list_size);
@@ -466,7 +466,7 @@ uint32_t parse_link_target_id_list(
   }
 
   // Return the size of the whole section to compute where the next one starts
-  return id_list_size + 2;
+  return yr_le16toh(id_list_size) + 2;
 }
 
 uint32_t parse_volume_id(
@@ -803,29 +803,29 @@ uint32_t parse_link_info(
   link_info_fixed_header = (link_info_fixed_header_t*) link_info_ptr;
 
   yr_set_integer(
-      link_info_fixed_header->link_info_size, module_object, "link_info.size");
+      yr_le32toh(link_info_fixed_header->link_info_size), module_object, "link_info.size");
   yr_set_integer(
-      link_info_fixed_header->link_info_header_size,
+      yr_le32toh(link_info_fixed_header->link_info_header_size),
       module_object,
       "link_info.header_size");
   yr_set_integer(
-      link_info_fixed_header->link_info_flags,
+      yr_le32toh(link_info_fixed_header->link_info_flags),
       module_object,
       "link_info.flags");
   yr_set_integer(
-      link_info_fixed_header->volume_id_offset,
+      yr_le32toh(link_info_fixed_header->volume_id_offset),
       module_object,
       "link_info.volume_id_offset");
   yr_set_integer(
-      link_info_fixed_header->local_base_path_offset,
+      yr_le32toh(link_info_fixed_header->local_base_path_offset),
       module_object,
       "link_info.local_base_path_offset");
   yr_set_integer(
-      link_info_fixed_header->common_network_relative_link_offset,
+      yr_le32toh(link_info_fixed_header->common_network_relative_link_offset),
       module_object,
       "link_info.common_network_relative_link_offset");
   yr_set_integer(
-      link_info_fixed_header->common_path_suffix_offset,
+      yr_le32toh(link_info_fixed_header->common_path_suffix_offset),
       module_object,
       "link_info.common_path_suffix_offset");
 
