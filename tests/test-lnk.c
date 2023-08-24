@@ -46,7 +46,6 @@ int main(int argc, char** argv)
           lnk.write_time == 1221251237 \
       }",
       "tests/data/lnk-standard");
-      /*
 	  
   assert_true_rule_file(
       "import \"lnk\" \
@@ -103,6 +102,7 @@ int main(int argc, char** argv)
           not lnk.has_hotkey and not defined lnk.hotkey \
       }",
       "tests/data/lnk-standard");
+      /*
 
   assert_true_rule_file(
       "import \"lnk\" \

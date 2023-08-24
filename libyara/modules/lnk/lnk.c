@@ -2056,17 +2056,17 @@ int module_load(
 
       // Convert timestamps from Windows TIMESTAMP to Unix timestamp
       yr_set_integer(
-          yr_le64toh(convertWindowsTimeToUnixTime(lnk_header->creation_time)),
+          convertWindowsTimeToUnixTime(yr_le64toh(lnk_header->creation_time)),
           module_object,
           "creation_time");
 
       yr_set_integer(
-          yr_le64toh(convertWindowsTimeToUnixTime(lnk_header->access_time)),
+          convertWindowsTimeToUnixTime(yr_le64toh(lnk_header->access_time)),
           module_object,
           "access_time");
 
       yr_set_integer(
-          yr_le64toh(convertWindowsTimeToUnixTime(lnk_header->write_time)),
+          convertWindowsTimeToUnixTime(yr_le64toh(lnk_header->write_time)),
           module_object,
           "write_time");
 
