@@ -382,7 +382,7 @@ uint32_t parse_id_list(
     // Get pointer to the ItemID Data
     item_id_data_ptr = id_list_ptr + sizeof(item_id_size);
 
-    if (block_data_size_remaining < item_id_size - sizeof(item_id_size))
+    if (block_data_size_remaining < yr_le16toh(item_id_size) - sizeof(item_id_size))
     {
       return 0;
     }
@@ -391,7 +391,7 @@ uint32_t parse_id_list(
     {
       yr_set_sized_string(
           (const char*) item_id_data_ptr,
-          item_id_size - sizeof(item_id_size),
+          yr_le16toh(item_id_size) - sizeof(item_id_size),
           module_object,
           "vista_and_above_id_list_data.item_id_list[%i].data",
           num_item_ids);
@@ -400,15 +400,15 @@ uint32_t parse_id_list(
     {
       yr_set_sized_string(
           (const char*) item_id_data_ptr,
-          item_id_size - sizeof(item_id_size),
+          yr_le16toh(item_id_size) - sizeof(item_id_size),
           module_object,
           "link_target_id_list.item_id_list[%i].data",
           num_item_ids);
     }
-    block_data_size_remaining -= item_id_size - sizeof(item_id_size);
+    block_data_size_remaining -= yr_le16toh(item_id_size) - sizeof(item_id_size);
 
     num_item_ids += 1;
-    id_list_ptr += item_id_size;
+    id_list_ptr += yr_le16toh(item_id_size);
 
     // Get the next ItemIDSize (or 0x0000 if we've reached TerminalID)
     if (block_data_size_remaining < sizeof(item_id_size))
