@@ -1134,17 +1134,17 @@ uint32_t parse_string_data(
 
   if (is_unicode)
   {
-    if (block_data_size_remaining < count_characters * 2)
+    if (block_data_size_remaining < yr_le16toh(count_characters) * 2)
     {
       return 0;
     }
 
-    string_size = count_characters * 2;
+    string_size = yr_le16toh(count_characters) * 2;
   }
 
   else
   {
-    string_size = count_characters;
+    string_size = yr_le16toh(count_characters);
   }
 
   // Do these extra comparisons due to "format not a string literal and no
@@ -1216,45 +1216,45 @@ uint32_t parse_console_data_block(
       module_object,
       "console_data.block_signature");
   yr_set_integer(
-      console_data_block.fill_attributes,
+      yr_le16toh(console_data_block.fill_attributes),
       module_object,
       "console_data.fill_attributes");
   yr_set_integer(
-      console_data_block.popup_fill_attributes,
+      yr_le16toh(console_data_block.popup_fill_attributes),
       module_object,
       "console_data.popup_fill_attributes");
   yr_set_integer(
-      console_data_block.screen_buffer_size_x,
+      yr_le16toh(console_data_block.screen_buffer_size_x),
       module_object,
       "console_data.screen_buffer_size_x");
   yr_set_integer(
-      console_data_block.screen_buffer_size_y,
+      yr_le16toh(console_data_block.screen_buffer_size_y),
       module_object,
       "console_data.screen_buffer_size_y");
   yr_set_integer(
-      console_data_block.window_size_x,
+      yr_le16toh(console_data_block.window_size_x),
       module_object,
       "console_data.window_size_x");
   yr_set_integer(
-      console_data_block.window_size_y,
+      yr_le16toh(console_data_block.window_size_y),
       module_object,
       "console_data.window_size_y");
   yr_set_integer(
-      console_data_block.window_origin_x,
+      yr_le16toh(console_data_block.window_origin_x),
       module_object,
       "console_data.window_origin_x");
   yr_set_integer(
-      console_data_block.window_origin_y,
+      yr_le16toh(console_data_block.window_origin_y),
       module_object,
       "console_data.window_origin_y");
   yr_set_integer(
-      console_data_block.font_size, module_object, "console_data.font_size");
+      yr_le32toh(console_data_block.font_size), module_object, "console_data.font_size");
   yr_set_integer(
-      console_data_block.font_family,
+      yr_le32toh(console_data_block.font_family),
       module_object,
       "console_data.font_family");
   yr_set_integer(
-      console_data_block.font_weight,
+      yr_le32toh(console_data_block.font_weight),
       module_object,
       "console_data.font_weight");
   yr_set_sized_string(
@@ -1263,40 +1263,40 @@ uint32_t parse_console_data_block(
       module_object,
       "console_data.face_name");
   yr_set_integer(
-      console_data_block.cursor_size,
+      yr_le32toh(console_data_block.cursor_size),
       module_object,
       "console_data.cursor_size");
   yr_set_integer(
-      console_data_block.full_screen,
+      yr_le32toh(console_data_block.full_screen),
       module_object,
       "console_data.full_screen");
   yr_set_integer(
-      console_data_block.quick_edit, module_object, "console_data.quick_edit");
+      yr_le32toh(console_data_block.quick_edit), module_object, "console_data.quick_edit");
   yr_set_integer(
-      console_data_block.insert_mode,
+      yr_le32toh(console_data_block.insert_mode),
       module_object,
       "console_data.insert_mode");
   yr_set_integer(
-      console_data_block.auto_position,
+      yr_le32toh(console_data_block.auto_position),
       module_object,
       "console_data.auto_position");
   yr_set_integer(
-      console_data_block.history_buffer_size,
+      yr_le32toh(console_data_block.history_buffer_size),
       module_object,
       "console_data.history_buffer_size");
   yr_set_integer(
-      console_data_block.number_of_history_buffers,
+      yr_le32toh(console_data_block.number_of_history_buffers),
       module_object,
       "console_data.number_of_history_buffers");
   yr_set_integer(
-      console_data_block.history_no_dup,
+      yr_le32toh(console_data_block.history_no_dup),
       module_object,
       "console_data.history_no_dup");
 
   for (i = 0; i < 16; i++)
   {
     yr_set_integer(
-        console_data_block.color_table[i],
+        yr_le32toh(console_data_block.color_table[i]),
         module_object,
         "console_data.color_table[%i]",
         i);
@@ -1331,7 +1331,7 @@ uint32_t parse_console_fe_data_block(
       module_object,
       "console_fe_data.block_signature");
   yr_set_integer(
-      console_fe_data.code_page, module_object, "console_fe_data.code_page");
+      yr_le32toh(console_fe_data.code_page), module_object, "console_fe_data.code_page");
 
   return 1;
 }
@@ -1476,7 +1476,7 @@ uint32_t parse_known_folder_data_block(
       module_object,
       "known_folder_data.block_signature");
   yr_set_integer(
-      known_folder_data.offset, module_object, "known_folder_data.offset");
+      yr_le32toh(known_folder_data.offset), module_object, "known_folder_data.offset");
 
   for (i = 0; i < 16; i++)
   {
@@ -1567,11 +1567,11 @@ uint32_t parse_special_folder_data_block(
       module_object,
       "special_folder_data.block_signature");
   yr_set_integer(
-      special_folder_data.special_folder_id,
+      yr_le32toh(special_folder_data.special_folder_id),
       module_object,
       "special_folder_data.special_folder_id");
   yr_set_integer(
-      special_folder_data.offset, module_object, "special_folder_data.offset");
+      yr_le32toh(special_folder_data.offset), module_object, "special_folder_data.offset");
 
   return 1;
 }
@@ -2309,7 +2309,7 @@ int module_load(
 
         // The TerminalBlock must be less than 0x04, so iterate until we find it
         // (or run out of space)
-        while (extra_data_block_size >= 0x04)
+        while (yr_le32toh(extra_data_block_size) >= 0x04)
         {
           // Only do this in the loop so we don't overshoot the end of the block
           block_data_size_remaining -= sizeof(extra_data_block_size);
@@ -2332,17 +2332,17 @@ int module_load(
                   module_object,
                   block_data_size_remaining,
                   extra_data_block_size,
-                  extra_data_block_signature))
+                  yr_le32toh(extra_data_block_signature)))
           {
             break;
           }
 
           // Don't add/take away the block size + signature, as those have
           // already been dealt with
-          current_location += extra_data_block_size -
+          current_location += yr_le32toh(extra_data_block_size) -
                               sizeof(extra_data_block_size) -
                               sizeof(extra_data_block_signature);
-          block_data_size_remaining -= extra_data_block_size -
+          block_data_size_remaining -= yr_le32toh(extra_data_block_size) -
                                        sizeof(extra_data_block_size) -
                                        sizeof(extra_data_block_signature);
 

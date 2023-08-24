@@ -254,7 +254,6 @@ int main(int argc, char** argv)
           lnk.link_info.common_path_suffix == \"\\x00\" \
       }",
       "tests/data/lnk-standard");
-      /*
 
   assert_true_rule_file(
       "import \"lnk\" \
@@ -496,7 +495,7 @@ int main(int argc, char** argv)
           lnk.known_folder_data.known_folder_id[15] == 142 \
       }",
       "tests/data/lnk-extradata-2");
-*/
+
   yr_finalize();
 
   YR_DEBUG_FPRINTF(
