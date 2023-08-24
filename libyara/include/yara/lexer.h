@@ -96,6 +96,8 @@ void yyfatal(yyscan_t yyscanner, const char* error_message);
 
 YY_EXTRA_TYPE yyget_extra(yyscan_t yyscanner);
 
+int yr_lex_parse_rules_bytes(const void* rules_data, size_t rules_size, YR_COMPILER* compiler);
+
 int yr_lex_parse_rules_string(const char* rules_string, YR_COMPILER* compiler);
 
 int yr_lex_parse_rules_file(FILE* rules_file, YR_COMPILER* compiler);
