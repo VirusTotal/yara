@@ -2331,7 +2331,7 @@ int module_load(
                   current_location,
                   module_object,
                   block_data_size_remaining,
-                  extra_data_block_size,
+                  yr_le32toh(extra_data_block_size),
                   yr_le32toh(extra_data_block_signature)))
           {
             break;
