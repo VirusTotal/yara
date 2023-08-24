@@ -140,9 +140,8 @@ jobs:
           apt-get update -y && 
           DEBIAN_FRONTEND=noninteractive TZ=Etc/UTC apt-get -y install tzdata &&
           apt-get install -y automake libtool make gcc pkg-config bison git &&
-          git clone https://github.com/BitsOfBinary/yara &&
+          git clone https://github.com/VirusTotal/yara &&
           cd yara &&
-          git checkout lnk-module &&
           ./bootstrap.sh &&
           ./configure --disable-proc-scan &&
           make &&
