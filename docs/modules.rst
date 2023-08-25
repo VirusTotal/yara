@@ -22,6 +22,6 @@ modules in the :ref:`writing-modules` section.
    Time <modules/time>
    Console <modules/console>
    String <modules/string>
-
+   LNK <modules/lnk>
 
 

@@ -98,6 +98,9 @@ MODULES += libyara/modules/console/console.c
 
 MODULES += libyara/modules/string/string.c
 
+MODULES += libyara/modules/lnk/lnk.c
+MODULES += libyara/modules/lnk/lnk_utils.c
+
 if CUCKOO_MODULE
 MODULES += libyara/modules/cuckoo/cuckoo.c
 endif
@@ -192,6 +195,8 @@ noinst_HEADERS = \
 	libyara/include/yara/pe.h \
 	libyara/include/yara/pe_utils.h \
 	libyara/include/yara/re_lexer.h \
+	libyara/include/yara/lnk.h \
+	libyara/include/yara/lnk_utils.h \
 	libyara/modules/module_list
 
 dist_noinst_DATA = libyara/pb/yara.proto
@@ -348,6 +353,9 @@ test_re_split_LDFLAGS = -static
 test_async_SOURCES = tests/test-async.c tests/util.c
 test_async_LDADD = libyara.la
 test_async_LDFLAGS = -static
+test_lnk_SOURCES = tests/test-lnk.c tests/util.c
+test_lnk_LDADD = libyara.la
+test_lnk_LDFLAGS = -static
 
 TESTS = $(check_PROGRAMS)
 TESTS_ENVIRONMENT = TOP_SRCDIR=$(top_srcdir) TOP_BUILDDIR=$(top_builddir)
@@ -366,7 +374,8 @@ check_PROGRAMS = \
   test-stack \
   test-re-split \
   test-async \
-  test-string
+  test-string \
+  test-lnk
 
 EXTRA_PROGRAMS = tests/mapper
 CLEANFILES = tests/mapper$(EXEEXT)
