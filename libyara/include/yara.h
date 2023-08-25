@@ -51,10 +51,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #ifdef EXPORTING_DLL
 extern __declspec(dllexport) const
-    detectResult* detect(const char** argv, int argc);
+    detectResult* detect(const wchar_t** argv, int argc);
 #else
 extern __declspec(dllexport) const
-    detectResults* detect(const char** argv, int argc);
+    detectResults* detect(const wchar_t** argv, int argc);
 #endif
 
 #endif
