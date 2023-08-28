@@ -747,6 +747,17 @@ condition. Any other string must be referenced in the condition. This is useful
 if you want to search for particular strings and handle them in a custom
 callback but don't really need them for your condition logic.
 
+.. code-block:: yara
+
+    rule PrivateStringExample
+    {
+        strings:
+            $_unreferenced = "AXSERS"
+
+        condition:
+            true
+    }
+
 String Modifier Summary
 -----------------------
 
