@@ -512,6 +512,16 @@ static void test_syntax()
       "rule test { strings: $a = \"a\" condition: for 3.14159 of them: ($) }",
       ERROR_INVALID_VALUE);
 
+  assert_error(
+      "rule test { strings: $a = \"a\" condition: true }",
+      ERROR_UNREFERENCED_STRING);
+
+  // String identifiers prefixed with '_' are allowed to be unreferenced.
+  // Any unreferenced string must be searched for anywhere.
+  assert_string_capture(
+      "rule test { strings: $a = \"AXS\" $_b = \"ERS\" condition: $a }",
+      "AXSERS", "ERS");
+
   YR_DEBUG_FPRINTF(1, stderr, "} // %s()\n", __FUNCTION__);
 }
 
@@ -522,6 +532,11 @@ static void test_anonymous_strings()
   assert_true_rule(
       "rule test { strings: $ = \"a\" $ = \"b\" condition: all of them }",
       "ab");
+
+  // Anonymous strings must be referenced.
+  assert_error(
+      "rule test { strings: $ = \"a\" condition: true }",
+      ERROR_UNREFERENCED_STRING);
 
   YR_DEBUG_FPRINTF(1, stderr, "} // %s()\n", __FUNCTION__);
 }
@@ -2423,6 +2438,16 @@ void test_re()
       "rule test { strings: $a = /\\b/ wide condition: $a }",
       TEXT_1024_BYTES "abc");
 
+  assert_true_rule_blob(
+    "rule test { condition: \"avb\" matches /a\\vb/ }",
+    TEXT_1024_BYTES "rule test { condition: \"avb\" matches /a\\vb/ }"
+  )
+
+   assert_false_rule_blob(
+    "rule test { condition: \"ab\" matches /a\\vb/ }",
+    TEXT_1024_BYTES "rule test { condition: \"ab\" matches /a\\vb/ }"
+  )
+
   assert_regexp_syntax_error(")");
   assert_true_regexp("abc", "abc", "abc");
   assert_false_regexp("abc", "xbc");
@@ -2596,7 +2621,8 @@ void test_re()
   assert_true_regexp("[\\x01-\\x03]+", "\x01\x02\x03", "\x01\x02\x03");
   assert_false_regexp("[\\x00-\\x02]+", "\x03\x04\x05");
   assert_true_regexp("[\\x5D]", "]", "]");
-  assert_true_regexp("[\\0x5A-\\x5D]", "\x5B", "\x5B");
+  assert_true_regexp("[\\x5A-\\x5D]", "\x5B", "\x5B");
+  assert_false_regexp("[\\x5A-\\x5D]", "\x4F")
   assert_true_regexp("[\\x5D-\\x5F]", "\x5E", "\x5E");
   assert_true_regexp("[\\x5C-\\x5F]", "\x5E", "\x5E");
   assert_true_regexp("[\\x5D-\\x5F]", "\x5E", "\x5E");
@@ -3526,6 +3552,30 @@ void test_process_scan()
 }
 #endif
 
+void test_invalid_escape_sequences_warnings()
+ {
+    YR_DEBUG_FPRINTF(1, stderr, "+ %s() {\n", __FUNCTION__);
+
+    assert_warning_strict_escape("rule test { strings: $a = /ab\\cdef/ condition: $a }");
+    assert_warning_strict_escape("rule test { strings: $a = /ab\\ def/ condition: $a }");
+    assert_warning_strict_escape("rule test { strings: $a = /ab\\;def/ condition: $a }");
+    assert_no_warnings("rule test { strings: $a = /ab\\*def/ condition: $a }");
+    assert_no_warnings("rule test { strings: $a = /abcdef/ condition: $a }");
+    assert_warning_strict_escape("rule test { strings: $a = /ab\\cdef/ condition: $a }");
+    assert_no_warnings("rule test { strings: $a = /abcdef/ condition: $a }");
+    assert_warning_strict_escape("rule test { strings: $a = /\\\\WINDOWS\\\\system32\\\\\\victim\\.exe\\.exe/ condition: $a }");
+    assert_no_warnings("rule test { strings: $a = /\\\\WINDOWS\\\\system32\\\\victim\\.exe\\.exe/ condition: $a }");
+    assert_warning_strict_escape("rule test { strings: $a = /AppData\\\\Roaming\\\\[0-9]{9,12}\\VMwareCplLauncher\\.exe/ condition: $a }");
+    assert_no_warnings("rule test { strings: $a = /AppData\\\\Roaming\\\\[0-9]{9,12}\\\\VMwareCplLauncher\\.exe/ condition: $a }");
+    assert_warning_strict_escape("rule test { strings: $a = /ab[\\000-\\343]/ condition: $a }");
+    assert_no_warnings("rule test { strings: $a = /ab[\\x00-\\x43]/ condition: $a }");
+    assert_warning_strict_escape("rule test { strings: $a = /C:\\Users\\\\[^\\\\]+\\\\AppData\\\\Local\\\\AzireVPN\\\\token\\.txt/ condition: $a }");
+    assert_no_warnings("rule test { strings: $a = /C:\\\\Users\\\\[^\\\\]+\\\\AppData\\\\Local\\\\AzireVPN\\\\token\\.txt/ condition: $a }");
+    assert_warning_strict_escape("rule test { condition: \"avb\" matches /a\\vb/ }");
+    
+    YR_DEBUG_FPRINTF(1, stderr, "} // %s()\n", __FUNCTION__);   
+}
+
 void test_performance_warnings()
 {
   YR_DEBUG_FPRINTF(1, stderr, "+ %s() {\n", __FUNCTION__);
@@ -3877,6 +3927,7 @@ static void test_pass(int pass)
 #endif
 
   test_time_module();
+  test_invalid_escape_sequences_warnings();
   test_performance_warnings();
   test_defined();
 

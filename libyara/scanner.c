@@ -40,10 +40,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <yara/strutils.h>
 #include <yara/types.h>
 
-
 #include "exception.h"
-
-
 
 static int _yr_scanner_scan_mem_block(
     YR_SCANNER* scanner,
@@ -329,13 +326,9 @@ YR_API int yr_scanner_create(YR_RULES* rules, YR_SCANNER** scanner)
     yr_object_set_canary(object, new_scanner->canary);
     external++;
   }
-  
-  new_scanner->rule_match = calloc(1, sizeof(detectResult));
-  new_scanner->rule_match->rules = calloc(100, sizeof(char*));
-  
+
   *scanner = new_scanner;
 
-  
   return ERROR_SUCCESS;
 }
 
@@ -582,31 +575,15 @@ YR_API int yr_scanner_scan_mem_blocks(
   if (result != ERROR_SUCCESS)
     goto _exit;
 
-  
-
   for (i = 0, rule = rules->rules_table; !RULE_IS_NULL(rule); i++, rule++)
   {
-    int check = 0;
     int message = 0;
 
     if (yr_bitmask_is_set(scanner->rule_matches_flags, i) &&
         yr_bitmask_is_not_set(scanner->ns_unsatisfied_flags, rule->ns->idx))
     {
       if (scanner->flags & SCAN_FLAGS_REPORT_RULES_MATCHING)
-      {
         message = CALLBACK_MSG_RULE_MATCHING;
-        scanner->rule_match->rules[scanner->rule_match->size++] =
-            rule->identifier;
-          
-       
-        
-        /*fprintf(
-            stderr,
-            "rule_match: %s\n",
-            scanner->rule_match->rules[scanner->rule_match->size-1]);
-      */
-      }
-       
     }
     else
     {
@@ -616,7 +593,6 @@ YR_API int yr_scanner_scan_mem_blocks(
 
     if (message != 0 && !RULE_IS_PRIVATE(rule))
     {
-      
       switch (scanner->callback(scanner, message, rule, scanner->user_data))
       {
       case CALLBACK_ABORT:
@@ -629,7 +605,6 @@ YR_API int yr_scanner_scan_mem_blocks(
       }
     }
   }
-  
 
   scanner->callback(
       scanner, CALLBACK_MSG_SCAN_FINISHED, NULL, scanner->user_data);

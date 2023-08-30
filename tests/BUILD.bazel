@@ -278,3 +278,22 @@ cc_test(
         "@//:libyara",
     ],
 )
+
+cc_test(
+    name = "test_lnk",
+    srcs = ["test-lnk.c"],
+    copts = COPTS,
+    data = [
+        "data/lnk-standard",
+        "data/lnk-extradata-1",
+        "data/lnk-extradata-2",
+        "data/lnk-malformed",
+        "data/lnk-network",
+        "data/lnk-overlay",
+    ],
+    linkstatic = True,
+    deps = [
+        ":util",
+        "@//:libyara",
+    ],
+)

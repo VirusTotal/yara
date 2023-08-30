@@ -1,0 +1,52 @@
+IsPeFile3 C:\Users\TRUNG\Desktop\libyara\yara64.dll
+IsPeFile4 C:\Users\TRUNG\Desktop\libyara\yara64.dll
+IsPeFile3 C:\Users\TRUNG\Desktop\libyara\yara32.dll
+IsPeFile4 C:\Users\TRUNG\Desktop\libyara\yara32.dll
+IsPeFile3 D:\Study\Thuc tap\checkvm.exe
+IsPeFile4 D:\Study\Thuc tap\checkvm.exe
+IsPeFile3 C:\Users\TRUNG\Desktop\libyara\yara64.dll
+IsPeFile4 C:\Users\TRUNG\Desktop\libyara\yara64.dll
+IsPeFile3 C:\Users\TRUNG\Desktop\libyara\yara32.dll
+IsPeFile4 C:\Users\TRUNG\Desktop\libyara\yara32.dll
+IsPeFile3 D:\Study\Thuc tap\checkvm.exe
+IsPeFile4 D:\Study\Thuc tap\checkvm.exe
+IsPeFile3 C:\Users\TRUNG\Desktop\libyara\yara32.dll
+IsPeFile4 C:\Users\TRUNG\Desktop\libyara\yara32.dll
+IsPeFile3 C:\Users\TRUNG\Desktop\libyara\yara64.dll
+IsPeFile4 C:\Users\TRUNG\Desktop\libyara\yara64.dll
+IsPeFile3 C:\Users\TRUNG\Desktop\libyara\yara64.dll
+IsPeFile4 C:\Users\TRUNG\Desktop\libyara\yara64.dll
+IsPeFile3 C:\Users\TRUNG\Desktop\libyara\yara32.dll
+IsPeFile4 C:\Users\TRUNG\Desktop\libyara\yara32.dll
+IsPeFile3 D:\Study\Thuc tap\checkvm.exe
+IsPeFile4 D:\Study\Thuc tap\checkvm.exe
+IsPeFile3 C:\Users\TRUNG\Desktop\libyara\yara64.dll
+IsPeFile4 C:\Users\TRUNG\Desktop\libyara\yara64.dll
+IsPeFile3 C:\Users\TRUNG\Desktop\libyara\yara32.dll
+IsPeFile4 C:\Users\TRUNG\Desktop\libyara\yara32.dll
+IsPeFile3 D:\Study\Thuc tap\checkvm.exe
+IsPeFile4 D:\Study\Thuc tap\checkvm.exe
+IsPeFile3 獉敐楆敬3婍䤀偳䙥汩㑥
+C:\Users\TRUNG\Desktop\libyara\yara64.dll
+獉敐楆敬3婍䤀偳䙥汩㑥
+C:\Users\TRUNG\Desktop\libyara\yara32.dll
+獉敐楆敬4
+C:\Users\TRUNG\Desktop\libyara\yara64.dll
+獉敐楆敬4
+C:\Users\TRUNG\Desktop\libyara\yara32.dll
+獉敐楆敬3婍䤀偳䙥汩㑥
+D:\Study\Thuc tap\checkvm.exe
+獉敐楆敬4
+D:\Study\Thuc tap\checkvm.exe
+IsPeFile3
+C:\Users\TRUNG\Desktop\libyara\yara64.dll
+IsPeFile3
+C:\Users\TRUNG\Desktop\libyara\yara32.dll
+IsPeFile4
+C:\Users\TRUNG\Desktop\libyara\yara64.dll
+IsPeFile4
+C:\Users\TRUNG\Desktop\libyara\yara32.dll
+IsPeFile3
+D:\Study\Thuc tap\checkvm.exe
+IsPeFile4
+D:\Study\Thuc tap\checkvm.exe

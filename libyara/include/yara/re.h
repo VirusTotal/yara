@@ -101,6 +101,11 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define RE_FLAGS_GREEDY      0x400
 #define RE_FLAGS_UNGREEDY    0x800
 
+enum YR_RE_PARSER_FLAGS {
+    RE_PARSER_FLAG_NONE = 0 << 0,
+    RE_PARSER_FLAG_ENABLE_STRICT_ESCAPE_SEQUENCES = 1 << 0,
+};
+
 typedef int RE_MATCH_CALLBACK_FUNC(
     const uint8_t* match,
     int match_length,
@@ -155,13 +160,14 @@ int yr_re_fast_exec(
     void* callback_args,
     int* matches);
 
-int yr_re_parse(const char* re_string, RE_AST** re_ast, RE_ERROR* error);
+int yr_re_parse(const char* re_string, RE_AST** re_ast, RE_ERROR* error, int flags);
 
 int yr_re_parse_hex(const char* hex_string, RE_AST** re_ast, RE_ERROR* error);
 
 int yr_re_compile(
     const char* re_string,
     int flags,
+    int parser_flags,
     YR_ARENA* arena,
     YR_ARENA_REF* ref,
     RE_ERROR* error);

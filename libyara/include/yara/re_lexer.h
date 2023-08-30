@@ -30,6 +30,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #undef yyparse
 #undef yylex
 #undef yyerror
+#undef yywarning
 #undef yyfatal
 #undef yychar
 #undef yydebug
@@ -44,6 +45,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define yyparse      re_yyparse
 #define yylex        re_yylex
 #define yyerror      re_yyerror
+#define yywarning    re_yywarning
 #define yyfatal      re_yyfatal
 #define yychar       re_yychar
 #define yydebug      re_yydebug
@@ -59,11 +61,15 @@ typedef void* yyscan_t;
 #define YY_EXTRA_TYPE RE_AST*
 #define YY_USE_CONST
 
+#define VALID_ESCAPE_SEQUENCE     1
+#define UNKNOWN_ESCAPE_SEQUENCE   2
+
 typedef struct _RE_LEX_ENVIRONMENT
 {
   RE_CLASS re_class;
   int last_error;
   char last_error_message[256];
+  bool strict_escape;
 
 } RE_LEX_ENVIRONMENT;
 
@@ -94,8 +100,13 @@ void yyerror(
     RE_LEX_ENVIRONMENT* lex_env,
     const char* error_message);
 
+void yywarning(
+    yyscan_t yyscanner,
+    RE_LEX_ENVIRONMENT* lex_env,
+    const char* error_message);
+
 void yyfatal(yyscan_t yyscanner, const char* error_message);
 
 int yyparse(void* yyscanner, RE_LEX_ENVIRONMENT* lex_env);
 
-int yr_parse_re_string(const char* re_string, RE_AST** re_ast, RE_ERROR* error);
+int yr_parse_re_string(const char* re_string, RE_AST** re_ast, RE_ERROR* error, int flags);

@@ -240,6 +240,7 @@ YR_API int yr_compiler_create(YR_COMPILER** compiler)
   new_compiler->re_ast_clbk_user_data = NULL;
   new_compiler->last_error = ERROR_SUCCESS;
   new_compiler->last_error_line = 0;
+  new_compiler->strict_escape = false;
   new_compiler->current_line = 0;
   new_compiler->file_name_stack_ptr = 0;
   new_compiler->fixup_stack_head = NULL;
@@ -627,6 +628,31 @@ YR_API int yr_compiler_add_fd(
     _yr_compiler_pop_file_name(compiler);
 
   return result;
+}
+
+YR_API int yr_compiler_add_bytes(
+    YR_COMPILER* compiler,
+    const void* rules_data,
+    size_t rules_size,
+    const char* namespace_)
+{
+  // Don't allow calls to yr_compiler_add_bytes() after
+  // yr_compiler_get_rules() has been called.
+  assert(compiler->rules == NULL);
+
+  // Don't allow calls to yr_compiler_add_bytes() if a previous call to
+  // yr_compiler_add_XXXX failed.
+  assert(compiler->errors == 0);
+
+  if (namespace_ != NULL)
+    compiler->last_error = _yr_compiler_set_namespace(compiler, namespace_);
+  else
+    compiler->last_error = _yr_compiler_set_namespace(compiler, "default");
+
+  if (compiler->last_error != ERROR_SUCCESS)
+    return ++compiler->errors;
+
+  return yr_lex_parse_rules_bytes(rules_data, rules_size, compiler);
 }
 
 YR_API int yr_compiler_add_string(

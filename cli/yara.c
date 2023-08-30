@@ -77,16 +77,11 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define MAX_ARGS_MODULE_DATA 32
 #define MAX_QUEUED_FILES     64
 
-#define MAX_LINES       1000
-#define MAX_LINE_LENGTH 256
-
 #define exit_with_code(code) \
   {                          \
     result = code;           \
     goto _exit;              \
   }
-
-
 
 typedef struct _MODULE_DATA
 {
@@ -109,8 +104,7 @@ typedef struct _THREAD_ARGS
   CALLBACK_ARGS callback_args;
   time_t deadline;
   int current_count;
-  
-    
+
 } THREAD_ARGS;
 
 typedef struct _QUEUED_FILE
@@ -126,6 +120,8 @@ typedef struct COMPILER_RESULTS
 
 } COMPILER_RESULTS;
 
+
+
 typedef struct SCAN_OPTIONS
 {
   bool follow_symlinks;
@@ -134,6 +130,14 @@ typedef struct SCAN_OPTIONS
 
 } SCAN_OPTIONS;
 
+
+COMPILER_RESULTS cr;
+
+YR_COMPILER* compiler = NULL;
+YR_RULES* rules = NULL;
+YR_SCANNER* scanner = NULL;
+SCAN_OPTIONS scan_opts;
+int flags = 0;
 
 #define MAX_ARGS_TAG         32
 #define MAX_ARGS_IDENTIFIER  32
@@ -164,8 +168,10 @@ static bool ignore_warnings = false;
 static bool fast_scan = false;
 static bool negate = false;
 static bool print_count_only = false;
+static bool strict_escape = false;
 static bool fail_on_warnings = false;
 static bool rules_are_compiled = false;
+static bool disable_console_logs = false;
 static long total_count = 0;
 static long limit = 0;
 static long timeout = 1000000;
@@ -198,6 +204,12 @@ args_option_t options[] = {
         &print_count_only,
         _T("print only number of matches")),
 
+    OPT_BOOLEAN(
+        'E',
+        _T("strict-escape"),
+        &strict_escape,
+        _T("warn on unknown escape sequences")),
+
     OPT_STRING_MULTI(
         'd',
         _T("define"),
@@ -205,6 +217,12 @@ args_option_t options[] = {
         MAX_ARGS_EXT_VAR,
         _T("define external variable"),
         _T("VAR=VALUE")),
+
+    OPT_BOOLEAN(
+        'q',
+        _T("disable-console-logs"),
+        &disable_console_logs,
+        _T("disable printing console log messages")),
 
     OPT_BOOLEAN(
         0,
@@ -381,12 +399,11 @@ args_option_t options[] = {
 // position. The array has room for one extra element to avoid queue_head
 // being equal to queue_tail in a full queue. The only situation where
 // queue_head == queue_tail is when queue is empty.
-const char* filelogname = "log.txt";  // Path: log.txt
+
 QUEUED_FILE file_queue[MAX_QUEUED_FILES + 1];
 
 int queue_head;
 int queue_tail;
-
 
 SEMAPHORE used_slots;
 SEMAPHORE unused_slots;
@@ -395,21 +412,6 @@ MUTEX queue_mutex;
 MUTEX output_mutex;
 
 MODULE_DATA* modules_data_list = NULL;
-
-int CountElements(wchar_t** array)
-{
-  int count = 0;
-  while (array[count])
-  {
-    count++;
-  }
-  return count;
-}
-
-int check_file_exists(const char* filename)
-{
-  return GetFileAttributesA(filename) != INVALID_FILE_ATTRIBUTES;
-}
 
 wchar_t* ConvertToWideChar(const char* input)
 {
@@ -423,6 +425,7 @@ wchar_t* ConvertToWideChar(const char* input)
   MultiByteToWideChar(CP_UTF8, 0, input, length, output, requiredSize);
   return output;
 }
+
 
 int WriteToFile(const char* filename, wchar_t* content)
 {
@@ -694,12 +697,8 @@ static int scan_dir(const char_t* dir, SCAN_OPTIONS* scan_opts)
   return result;
 }
 
-
-
-
 static int scan_file(YR_SCANNER* scanner, const char_t* filename)
 {
-  
   YR_FILE_DESCRIPTOR fd = CreateFile(
       filename,
       GENERIC_READ,
@@ -714,39 +713,6 @@ static int scan_file(YR_SCANNER* scanner, const char_t* filename)
 
   int result = yr_scanner_scan_fd(scanner, fd);
 
-  scanner->rule_match->file_name = filename;
-
-  
-
-   if (scanner->rule_match->size == 0)
-   {
-    return result;
-
-   }
-    
-
-  WriteToFile(filelogname, filename);
-  WriteToFile(filelogname, L"\t");
-  /*fwprintf(
-      stderr,
-      L"rule_scanfile_name_con: %s \n", f_con);*/
-
-  for (int i = 0; i < scanner->rule_match->size; i++)
-  {
-    
-    
-
-    const char* rule_f = scanner->rule_match->rules[i];
-    wchar_t* rf = ConvertToWideChar(rule_f);
- 
-
-    WriteToFile(filelogname, rf);
-    WriteToFile(filelogname, L"\t");
-  }
-  WriteToFile(filelogname, L"\n");
-
- 
-  
   CloseHandle(fd);
 
   return result;
@@ -1233,6 +1199,7 @@ static int handle_message(
   bool is_matching = (message == CALLBACK_MSG_RULE_MATCHING);
 
   show = show && ((!negate && is_matching) || (negate && !is_matching));
+  
 
   if (show && !print_count_only)
   {
@@ -1240,9 +1207,11 @@ static int handle_message(
 
     if (show_namespace)
       _tprintf(_T("%" PF_S ":"), rule->ns->name);
+   
+    _tprintf(_T("%" PF_S " "), rule->identifier);
 
-    //_tprintf(_T("%" PF_S " "), rule->identifier);
-
+    wchar_t * rulename= ConvertToWideChar(rule->identifier);
+    //WriteToFile('log.txt', rulename);
     if (show_tags)
     {
       _tprintf(_T("["));
@@ -1293,9 +1262,11 @@ static int handle_message(
 
       _tprintf(_T("] "));
     }
-    Sleep(100);
+    
+    _tprintf(_T("%s\n"), ((CALLBACK_ARGS*) data)->file_path);
 
-    //_tprintf(_T("%s\n"), ((CALLBACK_ARGS*) data)->file_path);
+    //WriteToFile('log.txt', ((CALLBACK_ARGS*) data)->file_path);
+
 
     // Show matched strings.
 
@@ -1351,6 +1322,7 @@ static int handle_message(
     ((CALLBACK_ARGS*) data)->current_count++;
     total_count++;
   }
+  //Close file log.txt
 
   if (limit != 0 && total_count >= limit)
     return CALLBACK_ABORT;
@@ -1369,7 +1341,6 @@ static int callback(
   YR_RULE* rule;
   YR_OBJECT* object;
   MODULE_DATA* module_data;
-
   switch (message)
   {
   case CALLBACK_MSG_RULE_MATCHING:
@@ -1470,7 +1441,9 @@ static int callback(
     return CALLBACK_CONTINUE;
 
   case CALLBACK_MSG_CONSOLE_LOG:
-    _tprintf(_T("%" PF_S "\n"), (char*) message_data);
+    if (!disable_console_logs)
+      _tprintf(_T("%" PF_S "\n"), (char*) message_data);
+
     return CALLBACK_CONTINUE;
   }
 
@@ -1483,11 +1456,8 @@ static DWORD WINAPI scanning_thread(LPVOID param)
 static void* scanning_thread(void* param)
 #endif
 {
-  
   int result = ERROR_SUCCESS;
   THREAD_ARGS* args = (THREAD_ARGS*) param;
-  //fprintf(stderr, "research size: %d \n", args->drS->size);
-  
 
   char_t* file_path = file_queue_get(args->deadline);
 
@@ -1505,11 +1475,8 @@ static void* scanning_thread(void* param)
 
       result = scan_file(args->scanner, file_path);
 
-
-
       if (print_count_only)
       {
-        
         cli_mutex_lock(&output_mutex);
         _tprintf(_T("%s: %d\n"), file_path, args->callback_args.current_count);
         cli_mutex_unlock(&output_mutex);
@@ -1517,9 +1484,8 @@ static void* scanning_thread(void* param)
 
       if (result != ERROR_SUCCESS)
       {
-          
         cli_mutex_lock(&output_mutex);
-        _ftprintf(stderr, _T("error scanning hello %s: "), file_path);
+        _ftprintf(stderr, _T("error scanning %s: "), file_path);
         print_scanner_error(args->scanner, result);
         cli_mutex_unlock(&output_mutex);
       }
@@ -1592,65 +1558,22 @@ static void unload_modules_data()
   modules_data_list = NULL;
 }
 
-int main_function(int argc, const char_t** argv, detectResults* drS)
-{
-  DeleteFileA(filelogname);  
-  drS->size = 0;
 
-  drS->dr = calloc(100, sizeof(detectResult*));
-
-  for (int i = 0; i < 100; i++)
-  {
-    detectResult* dr = calloc(1, sizeof(detectResult));
-    dr->rules = calloc(100, sizeof(char*));
-    //fprintf(stderr, "%d", i);
-    drS->dr[i] = dr;
-
-  }
-
-  
-
-  /*printf("argc: %d", argc);
-  printf("argc: %s", argv[1]);*/
-
-  COMPILER_RESULTS cr;
-
-  YR_COMPILER* compiler = NULL;
-  YR_RULES* rules = NULL;
-  YR_SCANNER* scanner = NULL;
-  SCAN_OPTIONS scan_opts;
-
-  bool arg_is_dir = false;
-  int flags = 0;
+int init_function(const wchar_t* pathRule) 
+ {
   int result;
+  int argc =3;
+  const char_t* argv[3];
+  for (int i = 0; i < argc; i++)
+  {
+    argv[i] = pathRule;
+  }
 
   argc = args_parse(options, argc, argv);
 
   scan_opts.follow_symlinks = follow_symlinks;
   scan_opts.recursive_search = recursive_search;
 
-  if (show_version)
-  {
-    printf("%s\n", YR_VERSION);
-    return EXIT_SUCCESS;
-  }
-
-  if (show_help)
-  {
-    printf(
-        "YARA %s, the pattern matching swiss army knife.\n"
-        "%s\n\n"
-        "Mandatory arguments to long options are mandatory for "
-        "short options too.\n\n",
-        YR_VERSION,
-        USAGE_STRING);
-
-    args_print_usage(options, 43);
-    printf(
-        "\nSend bug reports and suggestions to: vmalvarez@virustotal.com.\n");
-
-    return EXIT_SUCCESS;
-  }
 
   if (threads > YR_MAX_THREADS)
   {
@@ -1670,18 +1593,6 @@ int main_function(int argc, const char_t** argv, detectResults* drS)
     return EXIT_SUCCESS;
   }
 
-  if (argc < 2)
-  {
-    // After parsing the command-line options we expect two additional
-    // arguments, the rules file and the target file, directory or pid to
-    // be scanned.
-
-    fprintf(stderr, "yara: wrong number of arguments\n");
-    fprintf(stderr, "%s\n\n", USAGE_STRING);
-    fprintf(stderr, "Try `--help` for more options\n");
-
-    return EXIT_FAILURE;
-  }
 
 #if defined(_WIN32) && defined(_UNICODE)
   // In Windows set stdout to UTF-8 mode.
@@ -1692,14 +1603,14 @@ int main_function(int argc, const char_t** argv, detectResults* drS)
 #endif
 
   if (!load_modules_data())
-    exit_with_code(EXIT_FAILURE);
+    return -1;
 
   result = yr_initialize();
 
   if (result != ERROR_SUCCESS)
   {
     fprintf(stderr, "error: initialization error (%d)\n", result);
-    exit_with_code(EXIT_FAILURE);
+    return -1;
   }
 
   yr_set_configuration_uint32(YR_CONFIG_STACK_SIZE, (uint32_t) stack_size);
@@ -1724,7 +1635,7 @@ int main_function(int argc, const char_t** argv, detectResults* drS)
           stderr,
           "error: can't accept multiple rules files if one of them is in "
           "compiled form.\n");
-      exit_with_code(EXIT_FAILURE);
+      return -1;
     }
 
     // Not using yr_rules_load because it does not have support for unicode
@@ -1758,14 +1669,14 @@ int main_function(int argc, const char_t** argv, detectResults* drS)
     // as a text file containing rules in source form.
 
     if (yr_compiler_create(&compiler) != ERROR_SUCCESS)
-      exit_with_code(EXIT_FAILURE);
+      return -1;
 
     result = define_external_variables(ext_vars, NULL, compiler);
 
     if (result != ERROR_SUCCESS)
     {
       print_error(result);
-      exit_with_code(EXIT_FAILURE);
+      return -1;
     }
 
     if (atom_quality_table != NULL)
@@ -1777,7 +1688,7 @@ int main_function(int argc, const char_t** argv, detectResults* drS)
       {
         fprintf(stderr, "error loading atom quality table: ");
         print_error(result);
-        exit_with_code(EXIT_FAILURE);
+        return -1;
       }
     }
 
@@ -1786,14 +1697,19 @@ int main_function(int argc, const char_t** argv, detectResults* drS)
 
     yr_compiler_set_callback(compiler, print_compiler_error, &cr);
 
+    if (strict_escape)
+      compiler->strict_escape = true;
+    else
+      compiler->strict_escape = false;
+
     if (!compile_files(compiler, argc, argv))
-      exit_with_code(EXIT_FAILURE);
+      return -1;
 
     if (cr.errors > 0)
-      exit_with_code(EXIT_FAILURE);
+      return -1;
 
     if (fail_on_warnings && cr.warnings > 0)
-      exit_with_code(EXIT_FAILURE);
+      return -1;
 
     result = yr_compiler_get_rules(compiler, &rules);
 
@@ -1805,11 +1721,10 @@ int main_function(int argc, const char_t** argv, detectResults* drS)
   if (result != ERROR_SUCCESS)
   {
     print_error(result);
-    exit_with_code(EXIT_FAILURE);
+    return -1;
   }
 
   if (show_stats)
-    //printf("rule: ");
     print_rules_stats(rules);
 
   cli_mutex_init(&output_mutex);
@@ -1818,20 +1733,29 @@ int main_function(int argc, const char_t** argv, detectResults* drS)
     flags |= SCAN_FLAGS_FAST_MODE;
 
   scan_opts.deadline = time(NULL) + timeout;
+  return 1;
 
-  arg_is_dir = is_directory(argv[argc - 1]);
+}
+
+int detect(const wchar_t* pathFileScan)
+{
+  bool arg_is_dir = false;
+  int result;
+  int flags = 0;
+
+  arg_is_dir = is_directory(pathFileScan);
 
   if (scan_list_search && arg_is_dir)
   {
     fprintf(stderr, "error: cannot use a directory as scan list.\n");
-    exit_with_code(EXIT_FAILURE);
+    return -1;
   }
   else if (scan_list_search || arg_is_dir)
   {
     if (file_queue_init() != 0)
     {
       print_error(ERROR_INTERNAL_FATAL_ERROR);
-      exit_with_code(EXIT_FAILURE);
+      return -1;
     }
 
     THREAD thread[YR_MAX_THREADS];
@@ -1841,14 +1765,13 @@ int main_function(int argc, const char_t** argv, detectResults* drS)
     {
       thread_args[i].deadline = scan_opts.deadline;
       thread_args[i].current_count = 0;
-      //thread_args[i].drS = drS;
 
       result = yr_scanner_create(rules, &thread_args[i].scanner);
 
       if (result != ERROR_SUCCESS)
       {
         print_error(result);
-        exit_with_code(EXIT_FAILURE);
+        return -1;
       }
 
       yr_scanner_set_callback(
@@ -1858,23 +1781,20 @@ int main_function(int argc, const char_t** argv, detectResults* drS)
 
       if (cli_create_thread(
               &thread[i], scanning_thread, (void*) &thread_args[i]))
-
-
       {
         print_error(ERROR_COULD_NOT_CREATE_THREAD);
-        exit_with_code(EXIT_FAILURE);
+        return -1;
       }
     }
-    
+
     if (arg_is_dir)
     {
-      scan_dir(argv[argc - 1], &scan_opts);
+      scan_dir(pathFileScan, &scan_opts);
     }
     else
     {
-      result = populate_scan_list(argv[argc - 1], &scan_opts);
+      result = populate_scan_list(pathFileScan, &scan_opts);
     }
-
 
     file_queue_finish();
 
@@ -1882,36 +1802,23 @@ int main_function(int argc, const char_t** argv, detectResults* drS)
     for (int i = 0; i < threads; i++) cli_thread_join(&thread[i]);
 
     for (int i = 0; i < threads; i++)
-    {
-      YR_SCANNER* scanner = thread_args[i].scanner;
-      detectResult* dr = scanner->rule_match;
-
-      /*fwprintf(stderr, L"rule_thread_namefile:%s \n", dr->file_name);
-      for (int i = 0; i < dr->size; i++)
-      {
-        fprintf(stderr, "\n%s \n",  dr->rules[i]);
-      
-      }*/
       yr_scanner_destroy(thread_args[i].scanner);
-    }
-     
-
 
     file_queue_destroy();
 
     if (result != ERROR_SUCCESS)
-      exit_with_code(EXIT_FAILURE);
+      return -1;
   }
   else
   {
-    CALLBACK_ARGS user_data = {argv[argc - 1], 0};
+    CALLBACK_ARGS user_data = {pathFileScan, 0};
 
     result = yr_scanner_create(rules, &scanner);
 
     if (result != ERROR_SUCCESS)
     {
       _ftprintf(stderr, _T("error: %d\n"), result);
-      exit_with_code(EXIT_FAILURE);
+      return -1;
     }
 
     yr_scanner_set_callback(scanner, callback, &user_data);
@@ -1920,64 +1827,23 @@ int main_function(int argc, const char_t** argv, detectResults* drS)
 
     // Assume the last argument is a file first. This assures we try to process
     // files that start with numbers first.
-    result = scan_file(scanner, argv[argc - 1]);
-    
+    result = scan_file(scanner, pathFileScan);
 
     if (result == ERROR_COULD_NOT_OPEN_FILE)
     {
       // Is it a PID? To be a PID it must be made up entirely of digits.
       char_t* endptr = NULL;
-      long pid = _tcstol(argv[argc - 1], &endptr, 10);
+      long pid = _tcstol(pathFileScan, &endptr, 10);
 
-      if (pid > 0 && argv[argc - 1] != NULL && *endptr == '\x00')
-      {
+      if (pid > 0 && pathFileScan != NULL && *endptr == '\x00')
         result = yr_scanner_scan_proc(scanner, (int) pid);
-        //scanner->rule_match->file_name = L"hihi";
-
-        char c_pid[10];
-
-        sprintf(c_pid, "%d", pid);
-
-        char* f_pid = c_pid;
-        wchar_t* f_name = ConvertToWideChar(f_pid);
-
-
-        if (scanner->rule_match->size == 0)
-        {
-          return result;
-        }
-
-        
-
-        WriteToFile(filelogname, f_name);
-        WriteToFile(filelogname, L"\t");
-        
-
-        for (int i = 0; i < scanner->rule_match->size; i++)
-        {
-          
-          /*fprintf(
-              stderr, "rule_scanfile11: %s \n", scanner->rule_match->rules[i]);*/
-
-          const char* rule_f = scanner->rule_match->rules[i];
-          wchar_t* rf = ConvertToWideChar(rule_f);
-          //fwprintf(stderr, L"rule_scanfile_con: %s \n", rf);
-
-          WriteToFile(filelogname, rf);
-          WriteToFile(filelogname, L"\t");
-        }
-        WriteToFile(filelogname, L"\n");
-        
-      }
-      
-      
     }
 
     if (result != ERROR_SUCCESS)
     {
-      _ftprintf(stderr, _T("error scanning hello %s: "), argv[argc - 1]);
+      _ftprintf(stderr, _T("error scanning %s: "), pathFileScan);
       print_scanner_error(scanner, result);
-      exit_with_code(EXIT_FAILURE);
+      return -1;
     }
 
     if (print_count_only)
@@ -1989,83 +1855,9 @@ int main_function(int argc, const char_t** argv, detectResults* drS)
   }
 
   result = EXIT_SUCCESS;
+}
 
-  
-
-  wchar_t* wideContentRead = ReadWideFile(filelogname);
-  if (wideContentRead == NULL)
-  {
-    printf("Error reading file.\n");
-    return 1;
-  }
-  //wprintf(L"Content read from the file: %s\n", wideContentRead);
-
-  wchar_t** file_result = SplitString(wideContentRead, L'\n');
-  if (file_result)
-  {
-    int index = 0;
-    
-    while (file_result[index])
-    {
-      //wprintf(L"[%d]: %s\n", index, file_result[index]);
-      wchar_t** file_rules = SplitString(file_result[index], L'\t');
-      int index_r = 0;
-      detectResult* dr = calloc(1, sizeof(detectResult));
-      dr->size = 0;
-      dr->rules = calloc(50, sizeof(wchar_t*));
-      while (file_rules[index_r])
-      {
-        //wprintf(L"fName: %s \n", file_rules[index_r]);
-        if (index_r == 0)
-        {
-          dr->file_name = file_rules[index_r];
-          
-          index_r++;
-          continue;
-        }
-        dr->rules[index_r-1] =
-            file_rules[index_r];
-        index_r++;
-      }
-      dr->size = index_r -1;
-      drS->dr[drS->size++] = dr;
-      //free(dr);
-
-      //LocalFree(file_result[index]);
-      index++;
-    }
-    //LocalFree(file_result);
-
-  }
-
- /* wprintf(L"size_dr: %d \n", drS->size);
-
-  int index_dr = drS->size;
-
-  for (int i = 0; i < drS->size; i++)
-  {
-    wprintf(L"filename_dr: %s \n", drS->dr[i]->file_name);
-  
-  }*/
-
- 
-    
-  
-
-  //for (int i = 0; i < drS->size; i++)
-  //{
-  //  wprintf(L"filename_dr: %s \n", drS->dr[i]->file_name);
-  //  /*for (int j = 0; j < drS->dr[i]->size; j++)
-  //  {
-  //    wprintf(L"rule_dr%d: %s \n", j,drS->dr[i]->rules[j]);
-  //  
-  //  }*/
-  //}
-
-  
-
-_exit:
-  Sleep(100);
+void destroy() {
   unload_modules_data();
 
   if (scanner != NULL)
@@ -2080,52 +1872,24 @@ _exit:
   yr_finalize();
 
   args_free(options);
-
-  DeleteFileA(filelogname);
-
-  
-  
-
-  return result;
 }
 
-
-
-const detectResults* detect(const wchar_t** argv, int lenparam){
- // for (int i = 0; i < lenparam; i++)
- // {
-	//wprintf(L"argv_detect: %s \n", argv[i]);
- // }
- // printf("lenparam_detect: %d \n", lenparam);
-
-
-  detectResults* drS;
-  drS = calloc(1, sizeof(detectResults));
-
-  //padding param
-  lenparam = lenparam + 1;
-    wchar_t** argv_padding = calloc(lenparam+1, sizeof(wchar_t*));
-    argv_padding[0] = L"yara";
-    argv_padding[lenparam] = L"endparam";
-    for (int i = 1; i < lenparam; i++)
-    {
-        argv_padding[i] = argv[i - 1];
-    }
-  //run main function
-      main_function(lenparam, argv_padding, drS);
-
-
-  //for (int i = 0; i < drS->size; i++)
-  //{
-  //  wprintf(L"filename_drttt: %s \n", drS->dr[i]->file_name);
-  //  for (int j = 0; j < drS->dr[i]->size; j++)
-  //  {
-  //    wprintf(L"rule_dr%d: %s \n", j, drS->dr[i]->rules[j]);
-  //  }
-  //}
-   return drS;
+int _tmain(int argc, const char_t** argv) {
+    
+    //main_funtion(argc, argv);
+  int result = init_function(
+      L"C:\\Users\\TRUNG\\Desktop\\libyara\\checkpefile.yara");
+  if (result == -1)
+  {
+    return EXIT_FAILURE;
   }
 
+  detect(L"C:\\Users\\TRUNG\\Desktop\\libyara");
+  fprintf(stderr, "Call secord:\n");
+  detect(L"D:\\Study\\Thuc tap\\checkvm.exe");
+  destroy();
 
+    
 
-
+  return 0;
+}

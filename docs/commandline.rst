@@ -61,6 +61,10 @@ Available options are:
 
   Define external variable. This option can be used multiple times.
 
+.. option:: -q --disable-console-logs
+
+  Disable printing console log messages.
+
 .. option:: --fail-on-warnings
 
   Treat warnings as errors. Has no effect if used with --no-warnings.
