@@ -131,6 +131,7 @@ typedef struct SCAN_OPTIONS
 } SCAN_OPTIONS;
 
 
+
 COMPILER_RESULTS cr;
 
 YR_COMPILER* compiler = NULL;
@@ -412,6 +413,9 @@ MUTEX queue_mutex;
 MUTEX output_mutex;
 
 MODULE_DATA* modules_data_list = NULL;
+detectResult* dr = NULL;
+
+const char* filesavetemp = "log.txt";
 
 wchar_t* ConvertToWideChar(const char* input)
 {
@@ -1210,8 +1214,10 @@ static int handle_message(
    
     _tprintf(_T("%" PF_S " "), rule->identifier);
 
-    wchar_t * rulename= ConvertToWideChar(rule->identifier);
-    //WriteToFile('log.txt', rulename);
+    //wchar_t * rulename= ConvertToWideChar(rule->identifier);
+    //WriteToFile(filesavetemp, rulename);
+    //WriteToFile(filesavetemp, L'\r');
+    dr->rules[dr->size++] = rule->identifier;
     if (show_tags)
     {
       _tprintf(_T("["));
@@ -1265,9 +1271,9 @@ static int handle_message(
     
     _tprintf(_T("%s\n"), ((CALLBACK_ARGS*) data)->file_path);
 
-    //WriteToFile('log.txt', ((CALLBACK_ARGS*) data)->file_path);
-
-
+    //WriteToFile(filesavetemp, ((CALLBACK_ARGS*) data)->file_path);
+   // WriteToFile(filesavetemp, L'\n');
+    dr->file_name = ((CALLBACK_ARGS*) data)->file_path;
     // Show matched strings.
 
     if (show_strings || show_string_length || show_xor_key)
@@ -1737,25 +1743,36 @@ int init_function(const wchar_t* pathRule)
 
 }
 
-int detect(const wchar_t* pathFileScan)
+const detectResult* detect(const wchar_t* pathFileScan)
 {
+
+  
   bool arg_is_dir = false;
   int result;
   int flags = 0;
 
   arg_is_dir = is_directory(pathFileScan);
+  if (arg_is_dir == true)
+  {
+    fprintf(stderr, "Chua ho tro quet thu muc\n");
+    return NULL;
+  }
+
+  dr = (detectResult*) calloc(1, sizeof(detectResult));
+  dr->rules = (wchar_t**) calloc(100, sizeof(char*));
+  dr->size = 0;
 
   if (scan_list_search && arg_is_dir)
   {
     fprintf(stderr, "error: cannot use a directory as scan list.\n");
-    return -1;
+    return NULL;
   }
   else if (scan_list_search || arg_is_dir)
   {
     if (file_queue_init() != 0)
     {
       print_error(ERROR_INTERNAL_FATAL_ERROR);
-      return -1;
+      return NULL;
     }
 
     THREAD thread[YR_MAX_THREADS];
@@ -1771,7 +1788,7 @@ int detect(const wchar_t* pathFileScan)
       if (result != ERROR_SUCCESS)
       {
         print_error(result);
-        return -1;
+        return NULL;
       }
 
       yr_scanner_set_callback(
@@ -1783,7 +1800,7 @@ int detect(const wchar_t* pathFileScan)
               &thread[i], scanning_thread, (void*) &thread_args[i]))
       {
         print_error(ERROR_COULD_NOT_CREATE_THREAD);
-        return -1;
+        return NULL;
       }
     }
 
@@ -1807,7 +1824,7 @@ int detect(const wchar_t* pathFileScan)
     file_queue_destroy();
 
     if (result != ERROR_SUCCESS)
-      return -1;
+      return NULL;
   }
   else
   {
@@ -1818,7 +1835,7 @@ int detect(const wchar_t* pathFileScan)
     if (result != ERROR_SUCCESS)
     {
       _ftprintf(stderr, _T("error: %d\n"), result);
-      return -1;
+      return NULL;
     }
 
     yr_scanner_set_callback(scanner, callback, &user_data);
@@ -1843,7 +1860,7 @@ int detect(const wchar_t* pathFileScan)
     {
       _ftprintf(stderr, _T("error scanning %s: "), pathFileScan);
       print_scanner_error(scanner, result);
-      return -1;
+      return NULL;
     }
 
     if (print_count_only)
@@ -1854,7 +1871,11 @@ int detect(const wchar_t* pathFileScan)
 #endif
   }
 
+  const detectResult * dr_result = dr;
+  dr = NULL;
+
   result = EXIT_SUCCESS;
+  return dr_result;
 }
 
 void destroy() {
@@ -1884,9 +1905,9 @@ int _tmain(int argc, const char_t** argv) {
     return EXIT_FAILURE;
   }
 
-  detect(L"C:\\Users\\TRUNG\\Desktop\\libyara");
+  const detectResult * dr1= detect(L"C:\\Users\\TRUNG\\Desktop\\yara-dll\\windows\\vs2017\\Debug\\test-alignment.exe");
   fprintf(stderr, "Call secord:\n");
-  detect(L"D:\\Study\\Thuc tap\\checkvm.exe");
+  const detectResult* dr2 = detect(L"D:\\Study\\Thuc tap\\checkvm.exe");
   destroy();
 
     

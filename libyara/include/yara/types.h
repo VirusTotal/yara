@@ -41,6 +41,13 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "notebook.h"
 
+typedef struct detectResult
+{
+  const wchar_t* file_name;
+  int size;
+  const char** rules;
+} detectResult;
+
 #define DECLARE_REFERENCE(type, name) \
   union                               \
   {                                   \

@@ -47,16 +47,18 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 
+
 #ifndef INDLL_H
 #define INDLL_H
 
 #ifdef EXPORTING_DLL
 extern __declspec(dllexport) int init_function(const wchar_t* pathRule);
-extern __declspec(dllexport) int detect(const wchar_t* pathFileScan);
+extern __declspec(dllexport) const detectResult* detect(
+    const wchar_t* pathFileScan);
 extern __declspec(dllexport) void destroy();
 #else
 extern __declspec(dllexport) int init_function(const wchar_t* pathRule);
-extern __declspec(dllexport) int detect(const wchar_t* pathFileScan);
+extern __declspec(dllexport) const detectResult* detect(const wchar_t* pathFileScan);
 extern __declspec(dllexport) void destroy();
 #endif
 
