@@ -56,36 +56,39 @@ int main(int agrc, const char** argv)
         if (result != -1)
         {
           const detectResult* dr1 = Detect(path_scan);
-
-          wprintf(L"File(PID) scan: %s \n", dr1->file_name);
-          wprintf(L"Number of match rule: %d \n", dr1->size);
-          wprintf(L"Match rule:\n");
-          for (int j = 0; j < dr1->size; j++)
+          if (dr1 != NULL)
           {
-            printf("\t[%d]: %s \n", j, dr1->rules[j]);
-          }
-          wprintf(L"-----------------------------------\n");
-        }
+                wprintf(L"File(PID) scan: %s \n", dr1->file_name);
+                wprintf(L"Number of match rule: %d \n", dr1->size);
+                wprintf(L"Match rule:\n");
+                for (int j = 0; j < dr1->size; j++)
+                {
+                  printf("\t[%d]: %s \n", j, dr1->rules[j]);
+                }
+                wprintf(L"-----------------------------------\n");
+          }         
+        
 
-        printf("Call lan 2");
-        printf("***************************");
-        result = InitFunction(rule_path);
-        if (result != -1) {
+            printf("Call lan 2");
+            printf("***************************");
+
             const detectResult* dr2 = Detect(path_scan);
-          wprintf(L"File(PID) scan: %s \n", dr2->file_name);
-          wprintf(L"Number of match rule: %d \n", dr2->size);
-          wprintf(L"Match rule:\n");
-          for (int j = 0; j < dr2->size; j++)
-          {
-            printf("\t[%d]: %s \n", j, dr2->rules[j]);
-          }
-          printf("-----------------------------------\n");
+            if (dr2 != NULL)
+            {
+                wprintf(L"File(PID) scan: %s \n", dr2->file_name);
+                wprintf(L"Number of match rule: %d \n", dr2->size);
+                wprintf(L"Match rule:\n");
+                for (int j = 0; j < dr2->size; j++)
+                {
+                  printf("\t[%d]: %s \n", j, dr2->rules[j]);
+                }
+                printf("-----------------------------------\n");
+            }
         }
        
         //DOn dep
         Destroy();
     }
-
     
     fFreeResult = FreeLibrary(hinstLib);
   }
