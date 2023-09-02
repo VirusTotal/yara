@@ -738,6 +738,26 @@ the C API.
             $text_string
     }
 
+Unreferenced strings
+--------------------
+
+YARA 4.4.0 allows for unreferenced strings in the condition. If a string
+identifier starts with an ``_`` then it does not have to be referenced in the
+condition. Any other string must be referenced in the condition. This is useful
+if you want to search for particular strings and handle them in a custom
+callback but don't really need them for your condition logic.
+
+.. code-block:: yara
+
+    rule PrivateStringExample
+    {
+        strings:
+            $_unreferenced = "AXSERS"
+
+        condition:
+            true
+    }
+
 String Modifier Summary
 -----------------------
 
