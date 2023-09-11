@@ -37,10 +37,13 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define EOL ((size_t) -1)
 
-#define YR_ARENA_FILE_VERSION 20
+#define YR_ARENA_FILE_VERSION 21
 
-#define YR_ARENA_NULL_REF \
-  (YR_ARENA_REF) { UINT32_MAX, UINT32_MAX }
+#define YR_ARENA_NULL_REF  \
+  (YR_ARENA_REF)           \
+  {                        \
+    UINT32_MAX, UINT32_MAX \
+  }
 
 #define YR_ARENA_IS_NULL_REF(ref) \
   (memcmp(&(ref), &YR_ARENA_NULL_REF, sizeof(YR_ARENA_NULL_REF)) == 0)
