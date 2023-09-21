@@ -755,7 +755,7 @@ And the value for ``qux`` like this:
 
 Do you remember that the ``module_object`` argument for ``module_load`` was a
 pointer to a ``YR_OBJECT``? Do you remember that this ``YR_OBJECT`` is a
-structure just like ``bar`` is? Well, you could also set the values for ``bar``
+structure just like ``foo`` is? Well, you could also set the values for ``bar``
 and ``qux`` like this:
 
 .. code-block:: c
@@ -873,7 +873,7 @@ following example:
         void* module_data,
         size_t module_data_size)
     {
-        module->data = yr_malloc(sizeof(MY_DATA));
+        module_object->data = yr_malloc(sizeof(MY_DATA));
         ((MY_DATA*) module_object->data)->some_integer = 0;
 
         return ERROR_SUCCESS;
