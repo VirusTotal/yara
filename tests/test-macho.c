@@ -33,6 +33,34 @@ int main(int argc, char** argv)
     macho.flags & macho.MH_PIE }",
       MACHO_X86_FILE);
 
+  // Dylibs
+
+  assert_true_rule_file(
+      "import \"macho\" rule test { condition: \
+    macho.number_of_dylibs == 0 }",
+      "tests/data/tiny-macho");
+
+  assert_true_rule_blob(
+      "import \"macho\" rule test { condition: \
+    macho.number_of_dylibs == 1 }",
+      MACHO_X86_FILE);
+
+  assert_true_rule_blob(
+      "import \"macho\" rule test { condition: \
+    macho.dylibs[0].name == \"/usr/lib/libSystem.B.dylib\"}",
+      MACHO_X86_FILE);
+
+  assert_true_rule_blob(
+      "import \"macho\" rule test { condition: \
+    macho.number_of_dylibs == 2 }",
+      MACHO_X86_64_DYLIB_FILE);
+
+    assert_true_rule_blob(
+    "import \"macho\" rule test { condition: \
+    macho.dylibs[0].name == \"fact_x86_64.dylib\" and \
+    macho.dylibs[1].name == \"/usr/lib/libSystem.B.dylib\"}",
+      MACHO_X86_64_DYLIB_FILE);
+
   // Segments
 
   assert_true_rule_blob(
