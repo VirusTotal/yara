@@ -298,6 +298,9 @@ static void pe_parse_debug_directory(PE* pe)
   PIMAGE_DEBUG_DIRECTORY debug_dir;
   int64_t debug_dir_offset;
   int i, dcount;
+  // Use pdb_done to determine if we have already parsed the first available PDB
+  // path.
+  int parsed_dirs = 0, pdb_done = 0;
   size_t pdb_path_len;
   char* pdb_path = NULL;
 
@@ -331,6 +334,27 @@ static void pe_parse_debug_directory(PE* pe)
 
     if (!struct_fits_in_pe(pe, debug_dir, IMAGE_DEBUG_DIRECTORY))
       break;
+
+    // Intentionally pulling out timestamps even if it isn't CODEVIEW as it is
+    // still useful to know.
+    yr_set_integer(
+        yr_le32toh(debug_dir->TimeDateStamp),
+        pe->object,
+        "debug_infos[%i].timestamp",
+        i);
+
+    // Intentionally pulling out timestamps even if it isn't CODEVIEW as it is
+    // still useful to know.
+    yr_set_integer(
+        yr_le32toh(debug_dir->Type),
+        pe->object,
+        "debug_infos[%i].type",
+        i);
+
+    // Increment parsed_dirs here because we have filled in part of the
+    // structure at this index in the array, even if we can only populate other
+    // information from CODEVIEW debug entries.
+    parsed_dirs++;
 
     if (yr_le32toh(debug_dir->Type) != IMAGE_DEBUG_TYPE_CODEVIEW)
       continue;
@@ -387,11 +411,20 @@ static void pe_parse_debug_directory(PE* pe)
 
       if (pdb_path_len > 0 && pdb_path_len < MAX_PATH)
       {
-        yr_set_sized_string(pdb_path, pdb_path_len, pe->object, "pdb_path");
-        break;
+        // Earlier versions of YARA only parsed the first debug entry with a PDB
+        // path. We have to maintain this for backwards compatability reasons.
+        if (!pdb_done)
+        {
+          yr_set_sized_string(pdb_path, pdb_path_len, pe->object, "pdb_path");
+        }
+        // We always parse all PDB paths for debug_infos array.
+        yr_set_sized_string(
+            pdb_path, pdb_path_len, pe->object, "debug_infos[%i].pdb_path", i);
       }
     }
   }
+
+  yr_set_integer(parsed_dirs, pe->object, "number_of_debug_infos");
 }
 
 // Return a pointer to the resource directory string or NULL.
@@ -1656,7 +1689,10 @@ static void pe_parse_exports(PE* pe)
         ordinal_base + i, pe->object, "export_details[%i].ordinal", exp_sz);
 
     yr_set_integer(
-        yr_le32toh(function_addrs[i]), pe->object, "export_details[%i].rva", exp_sz);
+        yr_le32toh(function_addrs[i]),
+        pe->object,
+        "export_details[%i].rva",
+        exp_sz);
 
     // Don't check for a failure here since some packers make this an invalid
     // value.
@@ -1758,8 +1794,8 @@ void _process_authenticode(
     const Authenticode* authenticode = auth_array->signatures[i];
 
     signature_valid |= authenticode->verify_flags == AUTHENTICODE_VFY_VALID
-                          ? true
-                          : false;
+                           ? true
+                           : false;
 
     yr_set_integer(
         signature_valid, pe->object, "signatures[%i].verified", *sig_count);
@@ -3794,6 +3830,13 @@ begin_declarations
   declare_function("is_dll", "", "i", is_dll);
   declare_function("is_32bit", "", "i", is_32bit);
   declare_function("is_64bit", "", "i", is_64bit);
+
+  declare_integer("number_of_debug_infos");
+  begin_struct_array("debug_infos")
+    declare_integer("type");
+    declare_integer("timestamp");
+    declare_string("pdb_path");
+  end_struct_array("debug_infos");
 
   declare_integer("number_of_imports");
   declare_integer("number_of_imported_functions");
