@@ -311,6 +311,26 @@ typedef struct
   uint32_t cmdsize;
 } yr_load_command_t;
 
+union lc_str {
+	uint32_t	offset;	
+#ifndef __LP64__
+	char		*ptr;
+#endif 
+};
+
+typedef struct {
+    union lc_str  name;
+    uint32_t timestamp;
+    uint32_t current_version;
+    uint32_t compatibility_version;
+} yr_dylib_t;
+
+typedef struct {
+	uint32_t	cmd;
+	uint32_t	cmdsize;
+	yr_dylib_t	dylib;
+} yr_dylib_command_t;
+
 typedef struct
 {
   uint32_t cmd;

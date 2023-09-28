@@ -100,6 +100,18 @@ static void swap_load_command(yr_load_command_t* lc)
   lc->cmdsize = yr_bswap32(lc->cmdsize);
 }
 
+static void swap_dylib(yr_dylib_t* dy) {
+  dy->timestamp = yr_bswap32(dy->timestamp);
+  dy->current_version = yr_bswap32(dy->current_version);
+  dy->compatibility_version = yr_bswap32(dy->compatibility_version);
+}
+
+static void swap_dylib_command(yr_dylib_command_t* dc)
+{
+  dc->cmd = yr_bswap32(dc->cmd);
+  dc->cmdsize=yr_bswap32(dc->cmdsize);
+}
+
 static void swap_segment_command(yr_segment_command_32_t* sg)
 {
   sg->cmd = yr_bswap32(sg->cmd);
@@ -449,6 +461,17 @@ void macho_handle_segment(
   }
 }
 
+// Strings from the `lc_str` unions will often have padding, remove it with this
+uint32_t handle_name_padding(char* str, uint32_t len, char c) {
+    int j = 0;
+    for (int i = 0; i < len; i++)
+        if (str[i] != c)
+            str[j++] = str[i];
+    str[j] = '\0';
+
+    return j;
+}
+
 void macho_handle_segment_64(
     const uint8_t* data,
     size_t size,
@@ -539,6 +562,51 @@ void macho_handle_segment_64(
   }
 }
 
+void macho_handle_dylib(
+    void* data,
+    size_t size,
+    const unsigned i,
+    YR_OBJECT* object)
+{
+  if (size < sizeof(yr_dylib_command_t))
+    return;
+  
+  yr_dylib_command_t dc;
+
+  memcpy(&dc, data, sizeof(yr_dylib_command_t));
+
+  int should_swap = should_swap_bytes(yr_get_integer(object, "magic"));
+
+  if (should_swap)
+    swap_dylib_command(&dc);
+
+  uint32_t name_length = dc.cmdsize - sizeof(yr_dylib_command_t);
+  void*  name_pointer = ((uint8_t *) data) + sizeof(yr_dylib_command_t);
+  
+  if (name_pointer == NULL)
+    return;
+  
+  char* dylib_name = malloc(name_length);  
+
+  if (dylib_name == NULL)
+    return;
+
+  strncpy(dylib_name, name_pointer, name_length);
+
+  // clean up the padding from the dylib
+  uint32_t len_without_padding = handle_name_padding(dylib_name, name_length, 0x00);
+
+  yr_set_sized_string(dylib_name, len_without_padding, object, "dylibs[%i].name", i);
+  free(dylib_name);
+
+  if (should_swap)
+    swap_dylib(&dc.dylib);
+    
+  yr_set_integer(dc.dylib.timestamp, object,"dylibs[%i].timestamp",i);
+  yr_set_integer(dc.dylib.compatibility_version, object,"dylibs[%i].compatibility_version",i);
+  yr_set_integer(dc.dylib.current_version, object,"dylibs[%i].current_version",i);
+}
+
 // Parse Mach-O file.
 
 void macho_parse_file(
@@ -579,8 +647,9 @@ void macho_parse_file(
   if (!macho_is_32(data))
     yr_set_integer(header.reserved, object, "reserved");
 
-  // The first command parsing pass handles only segments.
+  // The first command parsing pass handles only segments and dylibs.
   uint64_t seg_count = 0;
+  uint64_t dylib_count = 0;
   uint64_t parsed_size = header_size;
   uint8_t* command = (uint8_t*) (data + header_size);
 
@@ -610,6 +679,12 @@ void macho_parse_file(
     case LC_SEGMENT_64:
       macho_handle_segment_64(command, size - parsed_size, seg_count++, object);
       break;
+    case LC_ID_DYLIB:
+    case LC_LOAD_DYLIB:
+    case LC_LOAD_WEAK_DYLIB:
+    case LC_REEXPORT_DYLIB:
+      macho_handle_dylib(command, size - parsed_size, dylib_count++, object);
+      break;
     }
 
     command += command_struct.cmdsize;
@@ -617,6 +692,7 @@ void macho_parse_file(
   }
 
   yr_set_integer(seg_count, object, "number_of_segments");
+  yr_set_integer(dylib_count, object, "number_of_dylibs");
 
   // The second command parsing pass handles others, who use segment count.
   parsed_size = header_size;
@@ -1228,6 +1304,15 @@ begin_declarations
   declare_integer("sizeofcmds");
   declare_integer("flags");
   declare_integer("reserved");
+
+  // Dylibs
+  declare_integer("number_of_dylibs");
+  begin_struct_array("dylibs");
+    declare_string("name");
+    declare_integer("timestamp");
+    declare_integer("current_version");
+    declare_integer("compatibility_version");
+  end_struct_array("dylibs");
 
   // Segments and nested sections
   declare_integer("number_of_segments");
