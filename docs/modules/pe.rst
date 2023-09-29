@@ -1089,6 +1089,36 @@ Reference
 
     *Example: pe.pdb_path == "D:\\workspace\\2018_R9_RelBld\\target\\checkout\\custprof\\Release\\custprof.pdb"*
 
+.. c:type:: debug_details
+
+    .. versionadded:: 4.4.0
+
+    Array of structures containing information about the PE's debug information.
+
+    .. c:member:: type
+
+        Type of debug information
+
+    .. c:member:: timestamp
+
+        Timestamp in the debug entry.
+
+    .. c:member:: pdb_path
+
+        Path of the PDB file for this entry.
+
+.. c:type:: number_of_debug_details
+
+    .. versionadded:: 4.4.0
+
+    Number of entries in the debug_details array.
+
+.. c:type:: load_config_timestamp
+
+    .. versionadded:: 4.4.0
+
+    Timestamp pulled from the load configuration, if present.
+
 .. c:function:: exports(function_name)
 
     Function returning true if the PE exports *function_name* or
