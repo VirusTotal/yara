@@ -261,16 +261,16 @@ int main(int argc, char** argv)
       "import \"pe\" \
       rule test { \
         condition: \
-          pe.number_of_debug_infos == 3 and \
-          pe.debug_infos[0].type == 2 and \
-          pe.debug_infos[0].timestamp == 1827812126 and \
-          pe.debug_infos[0].pdb_path == \"mtxex.pdb\" and \
-          pe.debug_infos[1].type == 13 and \
-          pe.debug_infos[1].timestamp == 1827812126 and \
-          not defined pe.debug_infos[1].pdb_path and \
-          pe.debug_infos[2].type == 16 and \
-          pe.debug_infos[2].timestamp == 1827812126 and \
-          not defined pe.debug_infos[2].pdb_path and \
+          pe.number_of_debug_details == 3 and \
+          pe.debug_details[0].type == 2 and \
+          pe.debug_details[0].timestamp == 1827812126 and \
+          pe.debug_details[0].pdb_path == \"mtxex.pdb\" and \
+          pe.debug_details[1].type == 13 and \
+          pe.debug_details[1].timestamp == 1827812126 and \
+          not defined pe.debug_details[1].pdb_path and \
+          pe.debug_details[2].type == 16 and \
+          pe.debug_details[2].timestamp == 1827812126 and \
+          not defined pe.debug_details[2].pdb_path and \
           pe.pdb_path == \"mtxex.pdb\" \
       }",
       "tests/data/mtxex.dll");
@@ -496,7 +496,7 @@ int main(int argc, char** argv)
    * mtxex.dll is
    * 23e72ce7e9cdbc80c0095484ebeb02f56b21e48fd67044e69e7a2ae76db631e5, which was
    * taken from a Windows 10 install. The details of which are:
-   * 
+   *
    * export_timestamp = 1827812126
    * dll_name = "mtxex.dll"
    * number_of_exports = 4
