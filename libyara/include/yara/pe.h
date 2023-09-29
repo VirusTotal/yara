@@ -566,6 +566,75 @@ typedef struct _IMAGE_RESOURCE_DIRECTORY
   WORD NumberOfIdEntries;
 } IMAGE_RESOURCE_DIRECTORY, *PIMAGE_RESOURCE_DIRECTORY;
 
+typedef struct _IMAGE_LOAD_CONFIG_DIRECTORY32
+{
+  DWORD Characteristics;
+  DWORD TimeDateStamp;
+  WORD MajorVersion;
+  WORD MinorVersion;
+  DWORD GlobalFlagsClear;
+  DWORD GlobalFlagsSet;
+  DWORD CriticalSectionDefaultTimeout;
+  DWORD DeCommitFreeBlockThreshold;
+  DWORD DeCommitTotalFreeThreshold;
+  DWORD LockPrefixTable;
+  DWORD MaximumAllocationSize;
+  DWORD VirtualMemoryThreshold;
+  DWORD ProcessAffinityMask;
+  DWORD ProcessHeapFlags;
+  WORD CSDVersion;
+  WORD Reserved;
+  DWORD EditList;
+  DWORD SecurityCookie;
+  DWORD SEHandlerTable;
+  DWORD SEHandlerCount;
+  DWORD GuardCFCheckFunctionPointer;
+  DWORD GuardCFDispatchFunctionPointer;
+  DWORD GuardCFFunctionTable;
+  DWORD GuardCFFunctionCount;
+  DWORD GuardFlags;
+  BYTE CodeIntegrity[12];
+  DWORD GuardAddressTakenIatEntryTable;
+  DWORD GuardAddressTakenIatEntryCount;
+  DWORD GuardLongJumpTargetTable;
+  DWORD GuardLongJumpTargetCount;
+} IMAGE_LOAD_CONFIG_DIRECTORY32, *PIMAGE_LOAD_CONFIG_DIRECTORY32;
+
+typedef struct _IMAGE_LOAD_CONFIG_DIRECTORY64
+{
+  DWORD Characteristics;
+  DWORD TimeDateStamp;
+  WORD MajorVersion;
+  WORD MinorVersion;
+  DWORD GlobalFlagsClear;
+  DWORD GlobalFlagsSet;
+  DWORD CriticalSectionDefaultTimeout;
+  ULONGLONG DeCommitFreeBlockThreshold;
+  ULONGLONG DeCommitTotalFreeThreshold;
+  ULONGLONG LockPrefixTable;
+  ULONGLONG MaximumAllocationSize;
+  ULONGLONG VirtualMemoryThreshold;
+  ULONGLONG ProcessAffinityMask;
+  DWORD ProcessHeapFlags;
+  WORD CSDVersion;
+  WORD Reserved;
+  ULONGLONG EditList;
+  ULONGLONG SecurityCookie;
+  ULONGLONG SEHandlerTable;
+  ULONGLONG SEHandlerCount;
+  ULONGLONG GuardCFCheckFunctionPointer;
+  ULONGLONG GuardCFDispatchFunctionPointer;
+  ULONGLONG GuardCFFunctionTable;
+  ULONGLONG GuardCFFunctionCount;
+  DWORD GuardFlags;
+  BYTE CodeIntegrity[12];
+  ULONGLONG GuardAddressTakenIatEntryTable;
+  ULONGLONG GuardAddressTakenIatEntryCount;
+  ULONGLONG GuardLongJumpTargetTable;
+  ULONGLONG GuardLongJumpTargetCount;
+} IMAGE_LOAD_CONFIG_DIRECTORY64, *PIMAGE_LOAD_CONFIG_DIRECTORY64;
+
+
 #define IMAGE_DEBUG_TYPE_FPO           3
 #define IMAGE_DEBUG_TYPE_MISC          4
 #define IMAGE_DEBUG_TYPE_EXCEPTION     5
