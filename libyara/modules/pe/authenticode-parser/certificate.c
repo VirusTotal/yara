@@ -141,7 +141,7 @@ CertificateArray* parse_signer_chain(X509* signCert, STACK_OF(X509) * certs)
     goto error;
 
   result->certs = (Certificate**) calloc(certCount, sizeof(Certificate*));
-  if (!result->certs)
+  if (!result->certs && certCount > 0)
     goto error;
 
   /* Convert each certificate to internal representation */
