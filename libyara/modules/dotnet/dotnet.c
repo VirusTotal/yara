@@ -1179,7 +1179,7 @@ static bool parse_method_params(
   // Array to hold all the possible parameters
   PARAMETERS* params = yr_calloc(param_count, sizeof(PARAMETERS));
 
-  if (!params)
+  if (params == NULL && param_count > 0)
     return false;
 
   for (uint32_t idx = 0; idx < param_count; ++idx)
