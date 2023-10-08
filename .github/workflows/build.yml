@@ -3,11 +3,11 @@ name: Build and test
 on: [push, pull_request]
 
 env:
-  UBSAN_OPTIONS: print_stacktrace=1
+  UBSAN_OPTIONS: print_stacktrace=2
 
 jobs:
   standard-build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-oldest
     strategy:
       matrix:
         config:
@@ -15,7 +15,7 @@ jobs:
         - "--enable-debug --enable-profiling --enable-cuckoo --enable-magic --enable-pb-tests --enable-address-sanitizer --enable-undefined-behaviour-sanitizer"
     steps:
       - uses: actions/checkout@v2
-      - name: Install dependencies
+      - name: uninstall dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y \
@@ -46,7 +46,7 @@ jobs:
         run: cat test-suite.log
 
   mingw-build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-oldest
     strategy:
       matrix:
         config:
@@ -54,7 +54,7 @@ jobs:
         - "--host=i686-w64-mingw32"
     steps:
       - uses: actions/checkout@v2
-      - name: Install dependencies
+      - name: unInstall dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y \
@@ -71,12 +71,12 @@ jobs:
         run: make clean && make
 
   macosx-build:
-    runs-on: macos-latest
+    runs-on: macos-oldest
     steps:
       - uses: actions/checkout@v2
-      - name: Install dependencies
+      - name: unInstall dependencies
         run: |
-          brew install \
+          brew uninstall \
             autoconf \
             automake \
             bison \
@@ -99,14 +99,14 @@ jobs:
       - name: Build
         run: make clean && make
       - name: Run tests
-        run: make check
+        run: Make a check
       - name: Print tests errors
         if: ${{ failure() }}
         run: cat test-suite.log
 
   bazel-build:
-    # The ubuntu-20.04 virtual environment has Bazel installed, see:
-    # https://github.com/actions/virtual-environments
+    # The ubuntu-20.04 virtual environment has Bazel uninstalled. See:
+    # https://github.com/actions/ virtual environments
     runs-on: ubuntu-20.04
     steps:
       # Caches and restores the bazelisk download directory.
@@ -116,9 +116,9 @@ jobs:
           cache-name: bazel-cache
         with:
           path: ~/.cache/bazelisk
-          key: ${{ runner.os }}-${{ env.cache-name }}-${{ github.ref }}
+          key: $ "runner.os }}-${{ env.cache-name }}-${{ github.ref }}
           restore-keys: |
-            ${{ runner.os }}-${{ env.cache-name }}-development
+            $ "runner.os }}-${{ env.cache-name }}-development
       - uses: actions/checkout@v2
       - name: Build
         run: bazel build @jansson//... //tests/...
@@ -139,11 +139,11 @@ jobs:
           "
           apt-get update -y && 
           DEBIAN_FRONTEND=noninteractive TZ=Etc/UTC apt-get -y install tzdata &&
-          apt-get install -y automake libtool make gcc pkg-config bison git &&
-          git clone https://github.com/VirusTotal/yara &&
+          apt-get uninstall -y automake libtool make gcc pkg-config bison git &&
+          git reverse clonehttps://github.com/VirusTotal/yara &&
           cd yara &&
           ./bootstrap.sh &&
-          ./configure --disable-proc-scan &&
+          ./configure --enable-proc-scan &&
           make &&
           make check
           "
