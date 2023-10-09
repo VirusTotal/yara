@@ -46,9 +46,18 @@ define_function(log_string)
   // Assume the entire string is non-printable, so allocate 4 times the
   // space so that we can represent each byte as an escaped value. eg: \x00
   // Add an extra byte for the NULL terminator.
-  char* msg = (char*) yr_calloc((s->length * 4) + 1, sizeof(char));
-  if (msg == NULL)
-    return_integer(YR_UNDEFINED);
+  char* msg;
+  if (s->length == 0)
+  {
+    callback(ctx, CALLBACK_MSG_CONSOLE_LOG, (void*) "", ctx->user_data);
+    return_integer(1);
+  }
+  else
+  {
+    msg = (char*) yr_calloc((s->length * 4) + 1, sizeof(char));
+    if (msg == NULL)
+      return_integer(YR_UNDEFINED);
+  }
 
   char* p = msg;
   for (size_t i = 0; i < s->length; i++)
@@ -86,7 +95,7 @@ define_function(log_string_msg)
   // Add an extra byte for the NULL terminator.
   size_t msg_len = strlen(m) + (s->length * 4) + 1;
   char* msg = (char*) yr_calloc(msg_len, sizeof(char));
-  if (msg == NULL)
+  if (msg == NULL && msg_len > 0)
     return_integer(YR_UNDEFINED);
 
   char* p = msg;

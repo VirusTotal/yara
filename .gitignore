@@ -90,6 +90,3 @@ windows/*/packages/
 .vscode/
 
 tests/mapper
-
-# Sphinx build
-/docs/_build/*

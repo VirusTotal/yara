@@ -80,7 +80,6 @@ yara_library(
         "time",
         "console",
         "string",
-        "lnk",
     ],
     modules_srcs = [
         "libyara/modules/cuckoo/cuckoo.c",
@@ -97,8 +96,6 @@ yara_library(
         "libyara/modules/time/time.c",
         "libyara/modules/console/console.c",
         "libyara/modules/string/string.c",
-        "libyara/modules/lnk/lnk.c",
-        "libyara/modules/lnk/lnk_utils.c",
     ],
     deps = [
         "@jansson",

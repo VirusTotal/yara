@@ -82,7 +82,7 @@ define_function(telfhash)
   int symbol_count = 0;
   char** clean_names = yr_calloc(list->count, sizeof(*clean_names));
 
-  if (!clean_names)
+  if (clean_names == NULL && list->count > 0)
     return_string(YR_UNDEFINED);
 
   for (ELF_SYMBOL* i = list->symbols; i != NULL; i = i->next)
