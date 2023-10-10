@@ -63,7 +63,7 @@ AC_ARG_ENABLE([proc-scan],
              posix=true
              proc_interface=mach
              jemalloc_prefix=je_ ;;
-    mingw*|cygwin*) CFLAGS="$CFLAGS -DUSE_WINDOWS_PROC"
+    mingw*|msys*|cygwin*) CFLAGS="$CFLAGS -DUSE_WINDOWS_PROC"
             proc_interface=windows
             jemalloc_prefix= ;;
     linux*|netbsd*|dragonfly*|kfreebsd*)
