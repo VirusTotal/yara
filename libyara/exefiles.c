@@ -405,7 +405,7 @@ uint64_t yr_get_entry_point_address(
     elf_header32 = (elf32_header_t*) buffer;
 
     if (elf_header32->type == ELF_ET_EXEC)
-      return elf_header32->entry;
+      return base_address + elf_header32->entry;
 
     break;
 
@@ -413,7 +413,7 @@ uint64_t yr_get_entry_point_address(
     elf_header64 = (elf64_header_t*) buffer;
 
     if (elf_header64->type == ELF_ET_EXEC)
-      return elf_header64->entry;
+      return base_address + elf_header64->entry;
 
     break;
   }
