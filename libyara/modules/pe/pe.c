@@ -3299,6 +3299,18 @@ define_function(language)
   return_integer(0);
 }
 
+define_function(is_exe)
+{
+  int64_t characteristics;
+  YR_OBJECT* module = yr_module();
+
+  if (yr_is_undefined(module, "characteristics"))
+    return_integer(YR_UNDEFINED);
+
+  characteristics = yr_get_integer(module, "characteristics");
+  return_integer(characteristics & IMAGE_FILE_EXECUTABLE_IMAGE);
+}
+
 define_function(is_dll)
 {
   int64_t characteristics;
@@ -3791,6 +3803,7 @@ begin_declarations
   declare_function("delayed_import_rva", "si", "i", delayed_import_rva_ordinal);
   declare_function("locale", "i", "i", locale);
   declare_function("language", "i", "i", language);
+  declare_function("is_exe", "", "i", is_exe);
   declare_function("is_dll", "", "i", is_dll);
   declare_function("is_32bit", "", "i", is_32bit);
   declare_function("is_64bit", "", "i", is_64bit);
