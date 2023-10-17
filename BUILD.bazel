@@ -80,6 +80,7 @@ yara_library(
         "time",
         "console",
         "string",
+        "memory",
     ],
     modules_srcs = [
         "libyara/modules/cuckoo/cuckoo.c",
@@ -96,6 +97,7 @@ yara_library(
         "libyara/modules/time/time.c",
         "libyara/modules/console/console.c",
         "libyara/modules/string/string.c",
+        "libyara/modules/modules/modules.c",
     ],
     deps = [
         "@jansson",

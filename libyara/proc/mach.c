@@ -38,11 +38,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <yara/mem.h>
 #include <yara/proc.h>
 
-typedef struct _YR_PROC_INFO
-{
-  task_t task;
-} YR_PROC_INFO;
-
 int _yr_process_attach(int pid, YR_PROC_ITERATOR_CTX* context)
 {
   YR_PROC_INFO* proc_info = (YR_PROC_INFO*) yr_malloc(sizeof(YR_PROC_INFO));

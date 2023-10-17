@@ -140,6 +140,7 @@ endif
 #
 # MODULES += libyara/modules/yourmodule.c
 #
+MODULES += libyara/modules/memory/memory.c
 
 include_HEADERS = libyara/include/yara.h
 

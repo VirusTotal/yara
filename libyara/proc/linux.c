@@ -46,21 +46,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <yara/proc.h>
 #include <yara/strutils.h>
 
-typedef struct _YR_PROC_INFO
-{
-  int pid;
-  int mem_fd;
-  int pagemap_fd;
-  FILE* maps;
-  uint64_t map_offset;
-  uint64_t next_block_end;
-  int page_size;
-  char map_path[PATH_MAX];
-  uint64_t map_dmaj;
-  uint64_t map_dmin;
-  uint64_t map_ino;
-} YR_PROC_INFO;
-
 static int page_size = -1;
 
 int _yr_process_attach(int pid, YR_PROC_ITERATOR_CTX* context)

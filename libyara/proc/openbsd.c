@@ -47,13 +47,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <yara/mem.h>
 #include <yara/proc.h>
 
-typedef struct _YR_PROC_INFO
-{
-  int pid;
-  uint64_t old_end;
-  struct kinfo_vmentry vm_entry;
-} YR_PROC_INFO;
-
 int _yr_process_attach(int pid, YR_PROC_ITERATOR_CTX* context)
 {
   int status;

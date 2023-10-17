@@ -55,4 +55,68 @@ YR_API YR_MEMORY_BLOCK* yr_process_get_next_memory_block(
 YR_API const uint8_t* yr_process_fetch_memory_block_data(
     YR_MEMORY_BLOCK* block);
 
+
+#if defined(USE_WINDOWS_PROC)
+
+#include <windows.h>
+
+typedef struct _YR_PROC_INFO
+{
+  HANDLE hProcess;
+  SYSTEM_INFO si;
+} YR_PROC_INFO;
+#elif defined(USE_LINUX_PROC)
+
+#include <unistd.h>
+
+typedef struct _YR_PROC_INFO
+{
+  int pid;
+  int mem_fd;
+  int pagemap_fd;
+  FILE* maps;
+  uint64_t map_offset;
+  uint64_t next_block_end;
+  int page_size;
+  char map_path[PATH_MAX];
+  uint64_t map_dmaj;
+  uint64_t map_dmin;
+  uint64_t map_ino;
+} YR_PROC_INFO;
+
+#elif defined(USE_MACH_PROC)
+
+#include <mach/mach.h>
+
+typedef struct _YR_PROC_INFO
+{
+  task_t task;
+} YR_PROC_INFO;
+
+#elif defined(USE_OPENBSD_PROC)
+
+#include <sys/types.h>
+#include <sys/ptrace.h>
+#include <sys/sysctl.h>
+#include <sys/wait.h>
+
+typedef struct _YR_PROC_INFO
+{
+  int pid;
+  uint64_t old_end;
+  struct kinfo_vmentry vm_entry;
+} YR_PROC_INFO;
+
+#elif defined(USE_FREEBSD_PROC)
+
+#include <sys/ptrace.h>
+
+typedef struct _YR_PROC_INFO
+{
+  int pid;
+  struct ptrace_vm_entry vm_entry;
+} YR_PROC_INFO;
+
+#endif
+
 #endif
