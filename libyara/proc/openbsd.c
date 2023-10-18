@@ -154,7 +154,7 @@ YR_API YR_MEMORY_BLOCK* yr_process_get_next_memory_block(
 
   iterator->last_error = ERROR_SUCCESS;
 
-  if (proc_info->old_end <= current_begin)
+  while (proc_info->old_end <= current_begin)
   {
     if (sysctl(mib, 3, &proc_info->vm_entry, &len, NULL, 0) < 0)
       return NULL;
