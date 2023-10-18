@@ -97,7 +97,7 @@ yara_library(
         "libyara/modules/time/time.c",
         "libyara/modules/console/console.c",
         "libyara/modules/string/string.c",
-        "libyara/modules/modules/modules.c",
+        "libyara/modules/memory/memory.c",
     ],
     deps = [
         "@jansson",
