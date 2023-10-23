@@ -1318,6 +1318,10 @@ regexp
 boolean_expression
     : expression
       {
+        // If the value of an expression is ever undefined we have a problem.
+        if (IS_UNDEFINED($1.value.integer))
+          fail_with_error(ERROR_INTERNAL_FATAL_ERROR);
+
         if ($1.type == EXPRESSION_TYPE_STRING)
         {
           if (!YR_ARENA_IS_NULL_REF($1.value.sized_string_ref))
