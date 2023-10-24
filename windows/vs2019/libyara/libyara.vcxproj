@@ -245,6 +245,7 @@
     <ClCompile Include="..\..\..\libyara\modules\hash\hash.c" />
     <ClCompile Include="..\..\..\libyara\modules\math\math.c" />
     <ClCompile Include="..\..\..\libyara\modules\macho\macho.c" />
+    <ClCompile Include="..\..\..\libyara\modules\memory\memory.c" />
     <ClCompile Include="..\..\..\libyara\modules\pe\pe.c" />
     <ClCompile Include="..\..\..\libyara\modules\pe\authenticode-parser\authenticode.c" />
     <ClCompile Include="..\..\..\libyara\modules\pe\authenticode-parser\helper.c" />
