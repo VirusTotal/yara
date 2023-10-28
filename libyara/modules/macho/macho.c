@@ -211,6 +211,7 @@ int macho_offset_to_rva(uint64_t offset, uint64_t* result, YR_OBJECT* object)
 void macho_handle_unixthread(
     const uint8_t* data,
     size_t size,
+    uint64_t base_address,
     YR_OBJECT* object,
     YR_SCAN_CONTEXT* context)
 {
@@ -314,7 +315,7 @@ void macho_handle_unixthread(
 
   if (context->flags & SCAN_FLAGS_PROCESS_MEMORY)
   {
-    yr_set_integer(address, object, "entry_point");
+    yr_set_integer(base_address + address, object, "entry_point");
   }
   else
   {
@@ -544,6 +545,7 @@ void macho_handle_segment_64(
 void macho_parse_file(
     const uint8_t* data,
     const uint64_t size,
+    const uint64_t base_address,
     YR_OBJECT* object,
     YR_SCAN_CONTEXT* context)
 {
@@ -641,7 +643,7 @@ void macho_parse_file(
     switch (command_struct.cmd)
     {
     case LC_UNIXTHREAD:
-      macho_handle_unixthread(command, size - parsed_size, object, context);
+      macho_handle_unixthread(command, size - parsed_size, base_address, object, context);
       break;
     case LC_MAIN:
       macho_handle_main(command, size - parsed_size, object, context);
@@ -690,6 +692,7 @@ void macho_load_fat_arch_header(
 void macho_parse_fat_file(
     const uint8_t* data,
     const uint64_t size,
+    const uint64_t base_address,
     YR_OBJECT* object,
     YR_SCAN_CONTEXT* context)
 {
@@ -739,6 +742,7 @@ void macho_parse_fat_file(
     macho_parse_file(
         data + arch.offset,
         arch.size,
+        base_address,
         yr_get_object(object, "file[%i]", i),
         context);
   }
@@ -1358,14 +1362,16 @@ int module_load(
     // Parse Mach-O binary.
     if (is_macho_file_block((uint32_t*) block_data))
     {
-      macho_parse_file(block_data, block->size, module_object, context);
+      macho_parse_file(
+          block_data, block->size, block->base, module_object, context);
       break;
     }
 
     // Parse fat Mach-O binary.
     if (is_fat_macho_file_block((uint32_t*) block_data))
     {
-      macho_parse_fat_file(block_data, block->size, module_object, context);
+      macho_parse_fat_file(
+          block_data, block->size, block->base, module_object, context);
       break;
     }
   }
