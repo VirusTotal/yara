@@ -194,7 +194,7 @@ int macho_offset_to_rva(uint64_t offset, uint64_t* result, YR_OBJECT* object)
   for (int i = 0; i < segment_count; i++)
   {
     uint64_t start = yr_get_integer(object, "segments[%i].fileoff", i);
-    uint64_t end = start + yr_get_integer(object, "segments[%i].filesize", i);
+    uint64_t end = start + yr_get_integer(object, "segments[%i].fsize", i);
 
     if (offset >= start && offset < end)
     {
