@@ -245,58 +245,67 @@ void macho_handle_unixthread(
   {
   case CPU_TYPE_MC680X0:
   {
-    if (thread_state_size >= sizeof(yr_m68k_thread_state_t))
-      address = ((yr_m68k_thread_state_t*) thread_state)->pc;
+    if (thread_state_size < sizeof(yr_m68k_thread_state_t))
+      return;
+    address = ((yr_m68k_thread_state_t*) thread_state)->pc;
     break;
   }
   case CPU_TYPE_MC88000:
   {
-    if (thread_state_size >= sizeof(yr_m88k_thread_state_t))
-      address = ((yr_m88k_thread_state_t*) thread_state)->xip;
+    if (thread_state_size < sizeof(yr_m88k_thread_state_t))
+      return;
+    address = ((yr_m88k_thread_state_t*) thread_state)->xip;
     break;
   }
   case CPU_TYPE_SPARC:
   {
-    if (thread_state_size >= sizeof(yr_sparc_thread_state_t))
-      address = ((yr_sparc_thread_state_t*) thread_state)->pc;
+    if (thread_state_size < sizeof(yr_sparc_thread_state_t))
+      return;
+    address = ((yr_sparc_thread_state_t*) thread_state)->pc;
     break;
   }
   case CPU_TYPE_POWERPC:
   {
-    if (thread_state_size >= sizeof(yr_ppc_thread_state_t))
-      address = ((yr_ppc_thread_state_t*) thread_state)->srr0;
+    if (thread_state_size < sizeof(yr_ppc_thread_state_t))
+      return;
+    address = ((yr_ppc_thread_state_t*) thread_state)->srr0;
     break;
   }
   case CPU_TYPE_X86:
   {
-    if (thread_state_size >= sizeof(yr_x86_thread_state_t))
-      address = ((yr_x86_thread_state_t*) thread_state)->eip;
+    if (thread_state_size < sizeof(yr_x86_thread_state_t))
+      return;
+    address = ((yr_x86_thread_state_t*) thread_state)->eip;
     break;
   }
   case CPU_TYPE_ARM:
   {
-    if (thread_state_size >= sizeof(yr_arm_thread_state_t))
-      address = ((yr_arm_thread_state_t*) thread_state)->pc;
+    if (thread_state_size < sizeof(yr_arm_thread_state_t))
+      return;
+    address = ((yr_arm_thread_state_t*) thread_state)->pc;
     break;
   }
   case CPU_TYPE_X86_64:
   {
-    if (thread_state_size >= sizeof(yr_x86_thread_state64_t))
-      address = ((yr_x86_thread_state64_t*) thread_state)->rip;
+    if (thread_state_size < sizeof(yr_x86_thread_state64_t))
+      return;
+    address = ((yr_x86_thread_state64_t*) thread_state)->rip;
     is64 = true;
     break;
   }
   case CPU_TYPE_ARM64:
   {
-    if (thread_state_size >= sizeof(yr_arm_thread_state64_t))
-      address = ((yr_arm_thread_state64_t*) thread_state)->pc;
+    if (thread_state_size < sizeof(yr_arm_thread_state64_t))
+      return;
+    address = ((yr_arm_thread_state64_t*) thread_state)->pc;
     is64 = true;
     break;
   }
   case CPU_TYPE_POWERPC64:
   {
-    if (thread_state_size >= sizeof(yr_ppc_thread_state64_t))
-      address = ((yr_ppc_thread_state64_t*) thread_state)->srr0;
+    if (thread_state_size < sizeof(yr_ppc_thread_state64_t))
+      return;
+    address = ((yr_ppc_thread_state64_t*) thread_state)->srr0;
     is64 = true;
     break;
   }
