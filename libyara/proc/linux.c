@@ -161,7 +161,7 @@ YR_API const uint8_t* yr_process_fetch_memory_block_data(YR_MEMORY_BLOCK* block)
 
   // Only try mapping the file if it has a path and belongs to a device
   if (strlen(proc_info->map_path) > 0 &&
-      !(proc_info->map_dmaj == 0 && proc_info->map_dmin == 0))
+      !(proc_info->map_dmaj == 0 && (proc_info->map_dmin == 0 || proc_info->map_dmin == 5)))
   {
     struct stat st;
     fd = open(proc_info->map_path, O_RDONLY);
