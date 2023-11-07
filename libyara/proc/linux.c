@@ -161,19 +161,13 @@ YR_API const uint8_t* yr_process_fetch_memory_block_data(YR_MEMORY_BLOCK* block)
 
   // Only try mapping the file if it has a path and belongs to a device
   if (strlen(proc_info->map_path) > 0 &&
-      !(proc_info->map_dmaj == 0 && (proc_info->map_dmin == 0 || proc_info->map_dmin == 5)))
+      !(proc_info->map_dmaj == 0 && proc_info->map_dmin == 0))
   {
     struct stat st;
-    fd = open(proc_info->map_path, O_RDONLY);
 
-    if (fd < 0)
-    {
-      fd = -1;  // File does not exist.
-    }
-    else if (fstat(fd, &st) < 0)
+    if (stat(proc_info->map_path, &st) < 0)
     {
       // Why should stat fail after file open? Treat like missing.
-      close(fd);
       fd = -1;
     }
     else if (
@@ -182,21 +176,35 @@ YR_API const uint8_t* yr_process_fetch_memory_block_data(YR_MEMORY_BLOCK* block)
         (st.st_ino != proc_info->map_ino))
     {
       // Wrong file, may have been replaced. Treat like missing.
-      close(fd);
       fd = -1;
     }
     else if (st.st_size < proc_info->map_offset + block->size)
     {
       // Mapping extends past end of file. Treat like missing.
-      close(fd);
       fd = -1;
     }
     else if ((st.st_mode & S_IFMT) != S_IFREG)
     {
       // Correct filesystem object, but not a regular file. Treat like
       // uninitialized mapping.
-      close(fd);
       fd = -2;
+    }
+    else
+    {
+      fd = open(proc_info->map_path, O_RDONLY);
+      // Double-check against race conditions
+      struct stat st2;
+      if (fstat(fd, &st2) < 0)
+      {
+        close(fd);
+        fd = -1;
+      }
+      else if ((st.st_dev != st2.st_dev) || (st.st_ino != st2.st_ino))
+      {
+        // File has been changed from under us, so ignore.
+        close(fd);
+        fd = -1;
+      }
     }
   }
 
