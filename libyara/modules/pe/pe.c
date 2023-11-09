@@ -309,9 +309,6 @@ static void pe_parse_debug_directory(PE* pe)
   if (yr_le32toh(data_dir->Size) == 0)
     return;
 
-  if (yr_le32toh(data_dir->Size) % sizeof(IMAGE_DEBUG_DIRECTORY) != 0)
-    return;
-
   if (yr_le32toh(data_dir->VirtualAddress) == 0)
     return;
 
@@ -1656,7 +1653,10 @@ static void pe_parse_exports(PE* pe)
         ordinal_base + i, pe->object, "export_details[%i].ordinal", exp_sz);
 
     yr_set_integer(
-        yr_le32toh(function_addrs[i]), pe->object, "export_details[%i].rva", exp_sz);
+        yr_le32toh(function_addrs[i]),
+        pe->object,
+        "export_details[%i].rva",
+        exp_sz);
 
     // Don't check for a failure here since some packers make this an invalid
     // value.
@@ -1758,8 +1758,8 @@ void _process_authenticode(
     const Authenticode* authenticode = auth_array->signatures[i];
 
     signature_valid |= authenticode->verify_flags == AUTHENTICODE_VFY_VALID
-                          ? true
-                          : false;
+                           ? true
+                           : false;
 
     yr_set_integer(
         signature_valid, pe->object, "signatures[%i].verified", *sig_count);

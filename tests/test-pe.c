@@ -464,6 +464,15 @@ int main(int argc, char** argv)
       }",
       "tests/data/ChipTune.efi");
 
+  assert_true_rule_file(
+      "import \"pe\" \
+      rule test { \
+        condition: \
+          pe.pdb_path == \"2AC71AF3-A338-495C-834E-977A6DD5C6FD\" \
+      }",
+      "tests/data/"
+      "6c2abf4b80a87e63eee2996e5cea8f004d49ec0c1806080fa72e960529cba14c");
+
   assert_false_rule_file(
       "import \"pe\" \
       rule test { \
@@ -646,7 +655,7 @@ int main(int argc, char** argv)
       "tests/data/"
       "079a472d22290a94ebb212aa8015cdc8dd28a968c6b4d3b88acdd58ce2d3b885");
 
- assert_true_rule_file(
+  assert_true_rule_file(
       "import \"pe\" \
       \
       rule import_details_rva_32_v1_catch \
@@ -867,7 +876,9 @@ int main(int argc, char** argv)
         condition: \
           pe.rva_to_offset(4096) == 1024 \
       }",
-      "tests/data/c6f9709feccf42f2d9e22057182fe185f177fb9daaa2649b4669a24f2ee7e3ba_0h_410h");
+      "tests/data/"
+      "c6f9709feccf42f2d9e22057182fe185f177fb9daaa2649b4669a24f2ee7e3ba_0h_"
+      "410h");
 
   assert_true_rule_file(
       "import \"pe\" \
