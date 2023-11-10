@@ -292,12 +292,75 @@ static void pe_parse_rich_signature(PE* pe, uint64_t base_address)
   yr_free(version_data);
 }
 
+static void pe_parse_load_config_directory(PE* pe)
+{
+  PIMAGE_DATA_DIRECTORY data_dir;
+  // Use the 32bit version of this structure as we are only interested in
+  // extracting the timestamp which is at the same offset in both the 32bit and
+  // 64bit structures.
+  PIMAGE_LOAD_CONFIG_DIRECTORY32 load_config;
+  int64_t offset;
+
+  data_dir = pe_get_directory_entry(pe, IMAGE_DIRECTORY_ENTRY_LOAD_CONFIG);
+
+  if (data_dir == NULL)
+    return;
+
+  if (yr_le32toh(data_dir->Size) == 0)
+    return;
+
+  if (yr_le32toh(data_dir->VirtualAddress) == 0)
+    return;
+
+  // Dear Future WXS,
+  //
+  // Can't do a size check here because, and I quote
+  // https://learn.microsoft.com/en-us/windows/win32/debug/pe-format#load-configuration-directory
+  //
+  // <quote>
+  // The data directory entry for a pre-reserved SEH load configuration
+  // structure must specify a particular size of the load configuration
+  // structure because the operating system loader always expects it to be a
+  // certain value. In that regard, the size is really only a version check. For
+  // compatibility with Windows XP and earlier versions of Windows, the size
+  // must be 64 for x86 images.
+  // </quote>
+  //
+  // However, some files declare a size that is 148 bytes but are storing a
+  // structure that is 192 bytes. An example of this is
+  // f36c7873c86331db0fadecd1e9f48839bd42cdd72acf051987aee5f1b097cbbd, which is
+  // a Microsoft generated 64bit PE that declares the "wrong" size in the load
+  // configuration data directory entry.
+  //
+  // Instead of doing it just check if the 32bit structure fits after we follow
+  // the RVA to offset calculation.
+  //
+  // Love,
+  // Past WXS
+  offset = pe_rva_to_offset(pe, yr_le32toh(data_dir->VirtualAddress));
+  if (offset < 0)
+    return;
+
+  load_config = (PIMAGE_LOAD_CONFIG_DIRECTORY32) (pe->data + offset);
+
+  if (!struct_fits_in_pe(pe, load_config, IMAGE_LOAD_CONFIG_DIRECTORY32))
+    return;
+
+  yr_set_integer(
+      yr_le32toh(load_config->TimeDateStamp),
+      pe->object,
+      "load_config_timestamp");
+}
+
 static void pe_parse_debug_directory(PE* pe)
 {
   PIMAGE_DATA_DIRECTORY data_dir;
   PIMAGE_DEBUG_DIRECTORY debug_dir;
   int64_t debug_dir_offset;
   int i, dcount;
+  // Use pdb_done to determine if we have already parsed the first available PDB
+  // path.
+  int parsed_dirs = 0, pdb_done = 0;
   size_t pdb_path_len;
   char* pdb_path = NULL;
 
@@ -328,6 +391,22 @@ static void pe_parse_debug_directory(PE* pe)
 
     if (!struct_fits_in_pe(pe, debug_dir, IMAGE_DEBUG_DIRECTORY))
       break;
+
+    // Intentionally pulling out timestamps and types even if it isn't CODEVIEW
+    // as it is still useful to know.
+    yr_set_integer(
+        yr_le32toh(debug_dir->TimeDateStamp),
+        pe->object,
+        "debug_details[%i].timestamp",
+        i);
+
+    yr_set_integer(
+        yr_le32toh(debug_dir->Type), pe->object, "debug_details[%i].type", i);
+
+    // Increment parsed_dirs here because we have filled in part of the
+    // structure at this index in the array, even if we can only populate other
+    // information from CODEVIEW debug entries.
+    parsed_dirs++;
 
     if (yr_le32toh(debug_dir->Type) != IMAGE_DEBUG_TYPE_CODEVIEW)
       continue;
@@ -384,11 +463,20 @@ static void pe_parse_debug_directory(PE* pe)
 
       if (pdb_path_len > 0 && pdb_path_len < MAX_PATH)
       {
-        yr_set_sized_string(pdb_path, pdb_path_len, pe->object, "pdb_path");
-        break;
+        // Earlier versions of YARA only parsed the first debug entry with a PDB
+        // path. We have to maintain this for backwards compatability reasons.
+        if (!pdb_done)
+        {
+          yr_set_sized_string(pdb_path, pdb_path_len, pe->object, "pdb_path");
+        }
+        // We always parse all PDB paths for debug_details array.
+        yr_set_sized_string(
+            pdb_path, pdb_path_len, pe->object, "debug_details[%i].pdb_path", i);
       }
     }
   }
+
+  yr_set_integer(parsed_dirs, pe->object, "number_of_debug_details");
 }
 
 // Return a pointer to the resource directory string or NULL.
@@ -3795,6 +3883,15 @@ begin_declarations
   declare_function("is_32bit", "", "i", is_32bit);
   declare_function("is_64bit", "", "i", is_64bit);
 
+  declare_integer("number_of_debug_details");
+  begin_struct_array("debug_details")
+    declare_integer("type");
+    declare_integer("timestamp");
+    declare_string("pdb_path");
+  end_struct_array("debug_details");
+
+  declare_integer("load_config_timestamp");
+
   declare_integer("number_of_imports");
   declare_integer("number_of_imported_functions");
   declare_integer("number_of_delayed_imports");
@@ -4345,6 +4442,7 @@ int module_load(
         pe_parse_header(pe, block->base, context->flags);
         pe_parse_rich_signature(pe, block->base);
         pe_parse_debug_directory(pe);
+        pe_parse_load_config_directory(pe);
 
 #if defined(HAVE_LIBCRYPTO) && !defined(BORINGSSL)
         pe_parse_certificates(pe);
