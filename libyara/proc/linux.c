@@ -227,7 +227,7 @@ YR_API const uint8_t* yr_process_fetch_memory_block_data(YR_MEMORY_BLOCK* block)
     context->buffer_size = block->size;
   }
 
-  if (fd == -1)
+  if (fd < 0)
   {
     context->buffer = mmap(
         NULL,
