@@ -230,11 +230,17 @@ YR_API const uint8_t* yr_process_fetch_memory_block_data(YR_MEMORY_BLOCK* block)
         0);
   }
 
-  if (context->buffer != NULL)
+  if (context->buffer == MAP_FAILED)
+  {
+    context->buffer = NULL;
+    context->buffer_size = 0;
+    goto _exit;
+  }
+  else if (context->buffer != NULL)
   {
     context->buffer_size = block->size;
   }
-  else
+  else // Should according to man page never happen
   {
     context->buffer_size = 0;
     goto _exit;
