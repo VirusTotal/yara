@@ -194,7 +194,7 @@ int macho_offset_to_rva(uint64_t offset, uint64_t* result, YR_OBJECT* object)
   for (int i = 0; i < segment_count; i++)
   {
     uint64_t start = yr_get_integer(object, "segments[%i].fileoff", i);
-    uint64_t end = start + yr_get_integer(object, "segments[%i].filesize", i);
+    uint64_t end = start + yr_get_integer(object, "segments[%i].fsize", i);
 
     if (offset >= start && offset < end)
     {
@@ -211,6 +211,7 @@ int macho_offset_to_rva(uint64_t offset, uint64_t* result, YR_OBJECT* object)
 void macho_handle_unixthread(
     const uint8_t* data,
     size_t size,
+    uint64_t base_address,
     YR_OBJECT* object,
     YR_SCAN_CONTEXT* context)
 {
@@ -244,58 +245,67 @@ void macho_handle_unixthread(
   {
   case CPU_TYPE_MC680X0:
   {
-    if (thread_state_size >= sizeof(yr_m68k_thread_state_t))
-      address = ((yr_m68k_thread_state_t*) thread_state)->pc;
+    if (thread_state_size < sizeof(yr_m68k_thread_state_t))
+      return;
+    address = ((yr_m68k_thread_state_t*) thread_state)->pc;
     break;
   }
   case CPU_TYPE_MC88000:
   {
-    if (thread_state_size >= sizeof(yr_m88k_thread_state_t))
-      address = ((yr_m88k_thread_state_t*) thread_state)->xip;
+    if (thread_state_size < sizeof(yr_m88k_thread_state_t))
+      return;
+    address = ((yr_m88k_thread_state_t*) thread_state)->xip;
     break;
   }
   case CPU_TYPE_SPARC:
   {
-    if (thread_state_size >= sizeof(yr_sparc_thread_state_t))
-      address = ((yr_sparc_thread_state_t*) thread_state)->pc;
+    if (thread_state_size < sizeof(yr_sparc_thread_state_t))
+      return;
+    address = ((yr_sparc_thread_state_t*) thread_state)->pc;
     break;
   }
   case CPU_TYPE_POWERPC:
   {
-    if (thread_state_size >= sizeof(yr_ppc_thread_state_t))
-      address = ((yr_ppc_thread_state_t*) thread_state)->srr0;
+    if (thread_state_size < sizeof(yr_ppc_thread_state_t))
+      return;
+    address = ((yr_ppc_thread_state_t*) thread_state)->srr0;
     break;
   }
   case CPU_TYPE_X86:
   {
-    if (thread_state_size >= sizeof(yr_x86_thread_state_t))
-      address = ((yr_x86_thread_state_t*) thread_state)->eip;
+    if (thread_state_size < sizeof(yr_x86_thread_state_t))
+      return;
+    address = ((yr_x86_thread_state_t*) thread_state)->eip;
     break;
   }
   case CPU_TYPE_ARM:
   {
-    if (thread_state_size >= sizeof(yr_arm_thread_state_t))
-      address = ((yr_arm_thread_state_t*) thread_state)->pc;
+    if (thread_state_size < sizeof(yr_arm_thread_state_t))
+      return;
+    address = ((yr_arm_thread_state_t*) thread_state)->pc;
     break;
   }
   case CPU_TYPE_X86_64:
   {
-    if (thread_state_size >= sizeof(yr_x86_thread_state64_t))
-      address = ((yr_x86_thread_state64_t*) thread_state)->rip;
+    if (thread_state_size < sizeof(yr_x86_thread_state64_t))
+      return;
+    address = ((yr_x86_thread_state64_t*) thread_state)->rip;
     is64 = true;
     break;
   }
   case CPU_TYPE_ARM64:
   {
-    if (thread_state_size >= sizeof(yr_arm_thread_state64_t))
-      address = ((yr_arm_thread_state64_t*) thread_state)->pc;
+    if (thread_state_size < sizeof(yr_arm_thread_state64_t))
+      return;
+    address = ((yr_arm_thread_state64_t*) thread_state)->pc;
     is64 = true;
     break;
   }
   case CPU_TYPE_POWERPC64:
   {
-    if (thread_state_size >= sizeof(yr_ppc_thread_state64_t))
-      address = ((yr_ppc_thread_state64_t*) thread_state)->srr0;
+    if (thread_state_size < sizeof(yr_ppc_thread_state64_t))
+      return;
+    address = ((yr_ppc_thread_state64_t*) thread_state)->srr0;
     is64 = true;
     break;
   }
@@ -314,7 +324,7 @@ void macho_handle_unixthread(
 
   if (context->flags & SCAN_FLAGS_PROCESS_MEMORY)
   {
-    yr_set_integer(address, object, "entry_point");
+    yr_set_integer(base_address + address, object, "entry_point");
   }
   else
   {
@@ -544,6 +554,7 @@ void macho_handle_segment_64(
 void macho_parse_file(
     const uint8_t* data,
     const uint64_t size,
+    const uint64_t base_address,
     YR_OBJECT* object,
     YR_SCAN_CONTEXT* context)
 {
@@ -641,7 +652,7 @@ void macho_parse_file(
     switch (command_struct.cmd)
     {
     case LC_UNIXTHREAD:
-      macho_handle_unixthread(command, size - parsed_size, object, context);
+      macho_handle_unixthread(command, size - parsed_size, base_address, object, context);
       break;
     case LC_MAIN:
       macho_handle_main(command, size - parsed_size, object, context);
@@ -690,6 +701,7 @@ void macho_load_fat_arch_header(
 void macho_parse_fat_file(
     const uint8_t* data,
     const uint64_t size,
+    const uint64_t base_address,
     YR_OBJECT* object,
     YR_SCAN_CONTEXT* context)
 {
@@ -739,6 +751,7 @@ void macho_parse_fat_file(
     macho_parse_file(
         data + arch.offset,
         arch.size,
+        base_address,
         yr_get_object(object, "file[%i]", i),
         context);
   }
@@ -1358,14 +1371,16 @@ int module_load(
     // Parse Mach-O binary.
     if (is_macho_file_block((uint32_t*) block_data))
     {
-      macho_parse_file(block_data, block->size, module_object, context);
+      macho_parse_file(
+          block_data, block->size, block->base, module_object, context);
       break;
     }
 
     // Parse fat Mach-O binary.
     if (is_fat_macho_file_block((uint32_t*) block_data))
     {
-      macho_parse_fat_file(block_data, block->size, module_object, context);
+      macho_parse_fat_file(
+          block_data, block->size, block->base, module_object, context);
       break;
     }
   }
