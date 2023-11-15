@@ -218,8 +218,16 @@ YR_API const uint8_t* yr_process_fetch_memory_block_data(YR_MEMORY_BLOCK* block)
         fd,
         proc_info->map_offset);
     close(fd);
+    if (context->buffer == MAP_FAILED)
+    {
+      // Notify the code below that we couldn't read from the file
+      // fallback to pread() from the process
+      fd = -1;
+    }
+    context->buffer_size = block->size;
   }
-  else
+
+  if (fd < 0)
   {
     context->buffer = mmap(
         NULL,
@@ -228,16 +236,13 @@ YR_API const uint8_t* yr_process_fetch_memory_block_data(YR_MEMORY_BLOCK* block)
         MAP_PRIVATE | MAP_ANONYMOUS,
         -1,
         0);
-  }
-
-  if (context->buffer != NULL)
-  {
+    if (context->buffer == MAP_FAILED)
+    {
+      context->buffer = NULL;
+      context->buffer_size = 0;
+      goto _exit;
+    }
     context->buffer_size = block->size;
-  }
-  else
-  {
-    context->buffer_size = 0;
-    goto _exit;
   }
 
   // If mapping can't be accessed through the filesystem, read everything from
