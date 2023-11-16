@@ -2216,7 +2216,11 @@ iterator
         if (loop_ctx->vars_count == 1)
         {
           loop_ctx->vars[0].type = $1.type;
-          loop_ctx->vars[0].value.integer = YR_UNDEFINED;
+
+          if ($1.type == EXPRESSION_TYPE_STRING)
+            loop_ctx->vars[0].value.sized_string_ref = YR_ARENA_NULL_REF;
+          else
+            loop_ctx->vars[0].value.integer = YR_UNDEFINED;
         }
         else
         {
@@ -2252,7 +2256,6 @@ set
         }
 
         $$.type = $2.type;
-
       }
     | range
       {
