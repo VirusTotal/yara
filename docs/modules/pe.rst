@@ -1281,7 +1281,7 @@ Reference
 
     *Example:  pe.imports(pe.IMPORT_DELAYED | pe.IMPORT_STANDARD, "kernel32.dll", "WriteProcessMemory")*
 
-.. c:function:: imports(import_flag, import_flag, dll_name)
+.. c:function:: imports(import_flag, dll_name)
 
     .. versionadded:: 4.2.0
 
