@@ -83,10 +83,11 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define RESOURCE_ITERATOR_FINISHED 0
 #define RESOURCE_ITERATOR_ABORTED  1
 
-#define MAX_PE_IMPORTS         16384
-#define MAX_PE_EXPORTS         16384
-#define MAX_EXPORT_NAME_LENGTH 512
-#define MAX_RESOURCES          65536
+#define MAX_PE_IMPORTS             16384
+#define MAX_PE_EXPORTS             16384
+#define MAX_EXPORT_NAME_LENGTH     512
+#define MAX_IMPORT_DLL_NAME_LENGTH 256
+#define MAX_RESOURCES              65536
 
 #define IS_RESOURCE_SUBDIRECTORY(entry) \
   (yr_le32toh((entry)->OffsetToData) & 0x80000000)
@@ -1160,7 +1161,13 @@ static IMPORTED_DLL* pe_parse_imports(PE* pe)
 
       char* dll_name = (char*) (pe->data + offset);
 
-      if (!pe_valid_dll_name(dll_name, pe->data_size - (size_t) offset))
+      if (!pe_valid_dll_name(
+              dll_name,
+              yr_min(
+                  // DLL names longer than MAX_IMPORT_DLL_NAME_LENGTH
+                  // are considered invalid.
+                  pe->data_size - (size_t) offset,
+                  MAX_IMPORT_DLL_NAME_LENGTH)))
       {
         imports++;
         continue;
