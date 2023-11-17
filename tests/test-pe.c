@@ -276,6 +276,15 @@ int main(int argc, char** argv)
       }",
       "tests/data/tiny_empty_import_name");
 
+  assert_true_rule_file(
+      "import \"pe\" \
+      rule test { \
+        condition: \
+          pe.imphash() == \"d49b7870cb53f29ec3f42b11cc8bea8b\" \
+      }",
+      "tests/data/"
+      "e3d45a2865818756068757d7e319258fef40dad54532ee4355b86bc129f27345");
+
 #endif
 
 #if defined(HAVE_LIBCRYPTO)

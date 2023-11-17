@@ -119,6 +119,7 @@ cc_test(
         "data/ChipTune.efi",
         "data/c6f9709feccf42f2d9e22057182fe185f177fb9daaa2649b4669a24f2ee7e3ba_0h_410h",
         "data/ca21e1c32065352d352be6cde97f89c141d7737ea92434831f998080783d5386",
+        "data/e3d45a2865818756068757d7e319258fef40dad54532ee4355b86bc129f27345",
         "data/mtxex.dll",
         "data/mtxex_modified_rsrc_rva.dll",
         "data/pe_imports",

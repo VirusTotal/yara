@@ -2730,7 +2730,7 @@ define_function(imphash)
 
     // If extension is 'ocx', 'sys' or 'dll', chop it.
 
-    char* ext = strstr(dll->name, ".");
+    char* ext = strrchr(dll->name, '.');
 
     if (ext &&
         (strncasecmp(ext, ".ocx", 4) == 0 || strncasecmp(ext, ".sys", 4) == 0 ||
