@@ -1750,19 +1750,18 @@ void _process_authenticode(
   if (!auth_array || !auth_array->count)
     return;
 
-  /* If any signature will be valid -> file is correctly signed */
   bool signature_valid = false;
 
   for (size_t i = 0; i < auth_array->count; ++i)
   {
     const Authenticode* authenticode = auth_array->signatures[i];
+    bool verified = authenticode->verify_flags == AUTHENTICODE_VFY_VALID;
 
-    signature_valid |= authenticode->verify_flags == AUTHENTICODE_VFY_VALID
-                           ? true
-                           : false;
+    /* If any signature is valid -> file is correctly signed */
+    signature_valid |= verified;
 
     yr_set_integer(
-        signature_valid, pe->object, "signatures[%i].verified", *sig_count);
+        verified, pe->object, "signatures[%i].verified", *sig_count);
 
     yr_set_string(
         authenticode->digest_alg,
