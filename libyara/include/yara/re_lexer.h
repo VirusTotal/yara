@@ -53,7 +53,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define yyget_extra  re_yyget_extra
 #define yyget_lineno re_yyget_lineno
 
-// The default code for unmatched text text is the ECHO macro, which write it to the console.
+// The default code for unmatched text is the ECHO macro, which write it to the console.
 // It's not safe to print random bytes because it may cause the calling program to terminate.
 #define ECHO
 
