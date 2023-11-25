@@ -55,6 +55,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define yyget_extra  yara_yyget_extra
 #define yyget_lineno yara_yyget_lineno
 
+// The default code for unmatched text text is the ECHO macro, which write it to the console.
+// It's not safe to print random bytes because it may cause the calling program to terminate.
+#define ECHO
 
 #ifndef YY_TYPEDEF_YY_SCANNER_T
 #define YY_TYPEDEF_YY_SCANNER_T
@@ -67,7 +70,11 @@ union YYSTYPE;
   int yylex(    \
       union YYSTYPE* yylval_param, yyscan_t yyscanner, YR_COMPILER* compiler)
 
-
+// The default behavior when a fatal error occurs in the parser is calling
+// exit(YY_EXIT_FAILURE) for terminating the process. This is not acceptable
+// for a library, which should return gracefully to the calling program. For
+// this reason we redefine the YY_FATAL_ERROR macro so that it expands to our
+// own function instead of the one provided by default.
 #define YY_FATAL_ERROR(msg) yara_yyfatal(yyscanner, msg)
 
 
