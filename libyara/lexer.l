@@ -138,6 +138,7 @@ static bool is_absolute_path(
 %}
 
 %option reentrant bison-bridge
+%option nodefault
 %option noyywrap
 %option nounistd
 %option noinput

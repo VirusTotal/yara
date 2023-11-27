@@ -72,6 +72,7 @@ with noyywrap then we can remove this pragma.
 %}
 
 %option reentrant bison-bridge
+%option nodefault
 %option noyywrap
 %option nounistd
 %option noinput
@@ -148,7 +149,7 @@ hexdigit      [a-fA-F0-9]
 }
 
 \~  {
-  
+
   yyerror(yyscanner, lex_env, "invalid not operator (~) in hex string");
   yyterminate();
 }

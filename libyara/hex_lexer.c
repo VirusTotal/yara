@@ -1,6 +1,6 @@
-#line 2 "hex_lexer.c"
+#line 1 "libyara/hex_lexer.c"
 
-#line 4 "hex_lexer.c"
+#line 3 "libyara/hex_lexer.c"
 
 #define  YY_INT_ALIGNED short int
 
@@ -690,7 +690,7 @@ static const flex_int32_t yy_rule_can_match_eol[24] =
 #define yymore() yymore_used_but_not_detected
 #define YY_MORE_ADJ 0
 #define YY_RESTORE_YY_MORE_OFFSET
-#line 1 "hex_lexer.l"
+#line 1 "libyara/hex_lexer.l"
 /*
 Copyright (c) 2013. The YARA Authors. All Rights Reserved.
 
@@ -720,7 +720,7 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 /* Lexical analyzer for hex strings */
-#line 33 "hex_lexer.l"
+#line 33 "libyara/hex_lexer.l"
 
 /* Disable warnings for unused functions in this file.
 
@@ -760,11 +760,11 @@ with noyywrap then we can remove this pragma.
       YYABORT; \
     } \
 
-#line 764 "hex_lexer.c"
+#line 763 "libyara/hex_lexer.c"
 #define YY_NO_UNISTD_H 1
 #define YY_NO_INPUT 1
 
-#line 768 "hex_lexer.c"
+#line 767 "libyara/hex_lexer.c"
 
 #define INITIAL 0
 #define comment 1
@@ -1038,11 +1038,11 @@ YY_DECL
 		}
 
 	{
-#line 95 "hex_lexer.l"
+#line 96 "libyara/hex_lexer.l"
 
 
 
-#line 1046 "hex_lexer.c"
+#line 1045 "libyara/hex_lexer.c"
 
 	while ( /*CONSTCOND*/1 )		/* loops until end-of-file is reached */
 		{
@@ -1109,7 +1109,7 @@ do_action:	/* This label is used only to access EOF actions. */
 
 case 1:
 YY_RULE_SETUP
-#line 98 "hex_lexer.l"
+#line 99 "libyara/hex_lexer.l"
 {
 
   yylval->integer = xtoi(yytext);
@@ -1118,7 +1118,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 2:
 YY_RULE_SETUP
-#line 104 "hex_lexer.l"
+#line 105 "libyara/hex_lexer.l"
 {
 
   yytext[1] = '0'; // replace ? by 0
@@ -1128,7 +1128,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 3:
 YY_RULE_SETUP
-#line 111 "hex_lexer.l"
+#line 112 "libyara/hex_lexer.l"
 {
 
   yylval->integer = xtoi(&(yytext[1]));
@@ -1137,7 +1137,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 4:
 YY_RULE_SETUP
-#line 117 "hex_lexer.l"
+#line 118 "libyara/hex_lexer.l"
 {
 
   yytext[0] = '0'; // replace ? by 0
@@ -1147,7 +1147,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 5:
 YY_RULE_SETUP
-#line 124 "hex_lexer.l"
+#line 125 "libyara/hex_lexer.l"
 {
 
   yylval->integer = 0x0000;
@@ -1156,7 +1156,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 6:
 YY_RULE_SETUP
-#line 130 "hex_lexer.l"
+#line 131 "libyara/hex_lexer.l"
 {
 
   yytext[2] = '0'; // replace ? by 0
@@ -1166,7 +1166,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 7:
 YY_RULE_SETUP
-#line 137 "hex_lexer.l"
+#line 138 "libyara/hex_lexer.l"
 {
 
   yytext[1] = '0'; // replace ? by 0
@@ -1176,7 +1176,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
-#line 144 "hex_lexer.l"
+#line 145 "libyara/hex_lexer.l"
 {
 
   yyerror(yyscanner, lex_env, "uneven number of digits in hex string");
@@ -1185,16 +1185,16 @@ YY_RULE_SETUP
 	YY_BREAK
 case 9:
 YY_RULE_SETUP
-#line 150 "hex_lexer.l"
+#line 151 "libyara/hex_lexer.l"
 {
-  
+
   yyerror(yyscanner, lex_env, "invalid not operator (~) in hex string");
   yyterminate();
 }
 	YY_BREAK
 case 10:
 YY_RULE_SETUP
-#line 157 "hex_lexer.l"
+#line 158 "libyara/hex_lexer.l"
 {
 
   BEGIN(range);
@@ -1203,7 +1203,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 11:
 YY_RULE_SETUP
-#line 163 "hex_lexer.l"
+#line 164 "libyara/hex_lexer.l"
 {
 
   BEGIN(comment);
@@ -1211,7 +1211,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 12:
 YY_RULE_SETUP
-#line 168 "hex_lexer.l"
+#line 169 "libyara/hex_lexer.l"
 {
 
   BEGIN(INITIAL);
@@ -1220,17 +1220,17 @@ YY_RULE_SETUP
 case 13:
 /* rule 13 can match eol */
 YY_RULE_SETUP
-#line 173 "hex_lexer.l"
+#line 174 "libyara/hex_lexer.l"
 // skip comments
 	YY_BREAK
 case 14:
 YY_RULE_SETUP
-#line 175 "hex_lexer.l"
+#line 176 "libyara/hex_lexer.l"
 // skip single-line comments
 	YY_BREAK
 case 15:
 YY_RULE_SETUP
-#line 177 "hex_lexer.l"
+#line 178 "libyara/hex_lexer.l"
 {
 
   return yytext[0];
@@ -1238,7 +1238,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 16:
 YY_RULE_SETUP
-#line 182 "hex_lexer.l"
+#line 183 "libyara/hex_lexer.l"
 {
 
   yylval->integer = atoi(yytext);
@@ -1247,7 +1247,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 17:
 YY_RULE_SETUP
-#line 188 "hex_lexer.l"
+#line 189 "libyara/hex_lexer.l"
 {
 
   BEGIN(INITIAL);
@@ -1257,12 +1257,12 @@ YY_RULE_SETUP
 case 18:
 /* rule 18 can match eol */
 YY_RULE_SETUP
-#line 194 "hex_lexer.l"
+#line 195 "libyara/hex_lexer.l"
 // skip whitespaces
 	YY_BREAK
 case 19:
 YY_RULE_SETUP
-#line 196 "hex_lexer.l"
+#line 197 "libyara/hex_lexer.l"
 {
 
   yyerror(yyscanner, lex_env, "invalid character in hex string jump");
@@ -1272,12 +1272,12 @@ YY_RULE_SETUP
 case 20:
 /* rule 20 can match eol */
 YY_RULE_SETUP
-#line 202 "hex_lexer.l"
+#line 203 "libyara/hex_lexer.l"
 // skip whitespaces
 	YY_BREAK
 case 21:
 YY_RULE_SETUP
-#line 204 "hex_lexer.l"
+#line 205 "libyara/hex_lexer.l"
 {        // pass valid characters to the parser
 
   return yytext[0];
@@ -1285,7 +1285,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 22:
 YY_RULE_SETUP
-#line 209 "hex_lexer.l"
+#line 210 "libyara/hex_lexer.l"
 {               // reject all other characters
 
   yyerror(yyscanner, lex_env, "invalid character in hex string");
@@ -1294,10 +1294,10 @@ YY_RULE_SETUP
 	YY_BREAK
 case 23:
 YY_RULE_SETUP
-#line 215 "hex_lexer.l"
-ECHO;
+#line 216 "libyara/hex_lexer.l"
+YY_FATAL_ERROR( "flex scanner jammed" );
 	YY_BREAK
-#line 1301 "hex_lexer.c"
+#line 1300 "libyara/hex_lexer.c"
 case YY_STATE_EOF(INITIAL):
 case YY_STATE_EOF(comment):
 case YY_STATE_EOF(range):
@@ -2450,7 +2450,7 @@ void yyfree (void * ptr , yyscan_t yyscanner)
 
 #define YYTABLES_NAME "yytables"
 
-#line 215 "hex_lexer.l"
+#line 216 "libyara/hex_lexer.l"
 
 
 //
