@@ -40,7 +40,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // is expected to trim the appropriate number of leading and trailing bytes.
 //
 // This is based upon the ideas at:
-// https://www.leeholmes.com/blog/2019/12/10/searching-for-content-in-base-64-strings-2/
+// https://www.leeholmes.com/searching-for-content-in-base-64-strings/
 //
 // The caller is responsible for freeing the returned string.
 //
