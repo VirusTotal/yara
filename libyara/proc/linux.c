@@ -97,7 +97,7 @@ int _yr_process_attach(int pid, YR_PROC_ITERATOR_CTX* context)
   snprintf(buffer, sizeof(buffer), "/proc/%u/pagemap", pid);
   proc_info->pagemap_fd = open(buffer, O_RDONLY);
 
-  if (proc_info->mem_fd == -1)
+  if (proc_info->pagemap_fd == -1)
     goto err;
 
   context->proc_info = proc_info;
