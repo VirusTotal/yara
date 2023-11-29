@@ -111,7 +111,7 @@ void cli_semaphore_destroy(SEMAPHORE* semaphore)
 #elif defined(__APPLE__)
   semaphore_destroy(mach_task_self(), *semaphore);
 #else
-  sem_close(*semaphore);
+  sem_destroy(*semaphore);
   free(*semaphore);
 #endif
 }
