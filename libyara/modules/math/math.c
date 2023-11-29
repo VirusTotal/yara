@@ -64,7 +64,7 @@ uint32_t* get_distribution(int64_t offset, int64_t length, YR_SCAN_CONTEXT* cont
   YR_MEMORY_BLOCK* block = first_memory_block(context);
   YR_MEMORY_BLOCK_ITERATOR* iterator = context->iterator;
 
-  if (offset < 0 || length < 0 || offset < block->base)
+  if (block == NULL || offset < 0 || length < 0 || offset < block->base)
   {
     yr_free(data);
     return NULL;
@@ -132,9 +132,8 @@ uint32_t* get_distribution_global(YR_SCAN_CONTEXT* context) {
   if (data == NULL)
     return NULL;
 
-  YR_MEMORY_BLOCK* block = first_memory_block(context);
+  YR_MEMORY_BLOCK* block;
   YR_MEMORY_BLOCK_ITERATOR* iterator = context->iterator;
-
   foreach_memory_block(iterator, block)
   {
     if (expected_next_offset != block->base)
@@ -323,6 +322,9 @@ define_function(data_serial_correlation)
   YR_MEMORY_BLOCK* block = first_memory_block(context);
   YR_MEMORY_BLOCK_ITERATOR* iterator = context->iterator;
 
+  if (block == NULL)
+    return_float(YR_UNDEFINED);
+
   double sccun = 0;
   double sccfirst = 0;
   double scclast = 0;
@@ -449,6 +451,9 @@ define_function(data_monte_carlo_pi)
   YR_SCAN_CONTEXT* context = yr_scan_context();
   YR_MEMORY_BLOCK* block = first_memory_block(context);
   YR_MEMORY_BLOCK_ITERATOR* iterator = context->iterator;
+
+  if (block == NULL)
+    return_float(YR_UNDEFINED);
 
   if (offset < 0 || length < 0 || offset < block->base)
     return_float(YR_UNDEFINED);
