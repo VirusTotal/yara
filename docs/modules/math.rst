@@ -139,6 +139,8 @@ file and create signatures based on those results.
 
     *Example: math.count(0x4A) >= 10*
 
+    *Example: math.count(0x00, 0, 4) < 2*
+
 .. c:function:: percentage(byte, offset, size)
 
     .. versionadded:: 4.2.0
@@ -165,6 +167,8 @@ file and create signatures based on those results.
     *offset* and *size* are optional; if left empty, the complete file is searched.
 
     *Example: math.mode(0, filesize) == 0xFF*
+
+    *Example: math.mode() == 0x00*
 
 .. c:function:: to_string(int)
 
