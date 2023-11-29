@@ -657,11 +657,14 @@ checks in your code nevertheless). In those cases you can use the
         const uint8_t* block_data;
 
         block = first_memory_block(context);
-        block_data = block->fetch_data(block)
-
-        if (block_data != NULL)
+        if (block != NULL)
         {
-          ..do something with the memory block
+          block_data = block->fetch_data(block)
+
+          if (block_data != NULL)
+          {
+            ..do something with the memory block
+          }
         }
     }
 

@@ -101,6 +101,10 @@ define_function(magic_mime_type)
   if (cache->cached_mime_type == NULL)
   {
     block = first_memory_block(context);
+
+    if (block == NULL)
+      return_string(YR_UNDEFINED);
+
     block_data = block->fetch_data(block);
 
     if (block_data != NULL)
@@ -134,6 +138,10 @@ define_function(magic_type)
   if (cache->cached_type == NULL)
   {
     block = first_memory_block(context);
+
+    if (block == NULL)
+      return_string(YR_UNDEFINED);
+
     block_data = block->fetch_data(block);
 
     if (block_data != NULL)
