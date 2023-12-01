@@ -474,13 +474,13 @@ rule_modifiers
 
 
 rule_modifier_global
-    : /*empty */      
+    : /*empty */                       { $$ = 0;  }
     | _GLOBAL_       { $$ = RULE_FLAGS_GLOBAL; }
     ;
 
 
 rule_modifier_private
-    : /*empty */      
+    : /*empty */                       { $$ = 0;  }
     | _PRIVATE_       { $$ = RULE_FLAGS_PRIVATE; }
     ;     
 
