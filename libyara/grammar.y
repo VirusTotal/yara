@@ -468,14 +468,21 @@ condition
 
 rule_modifiers
     : /* empty */                      { $$ = 0;  }
-    | rule_modifiers rule_modifier     { $$ = $1 | $2; }
+    | rule_modifier_global rule_modifier_private     { $$ = $1 | $2; }
+    | rule_modifier_private rule_modifier_global     { $$ = $1 | $2; }
     ;
 
 
-rule_modifier
-    : _PRIVATE_      { $$ = RULE_FLAGS_PRIVATE; }
+rule_modifier_global
+    : /*empty */      
     | _GLOBAL_       { $$ = RULE_FLAGS_GLOBAL; }
     ;
+
+
+rule_modifier_private
+    : /*empty */      
+    | _PRIVATE_       { $$ = RULE_FLAGS_PRIVATE; }
+    ;     
 
 
 tags
