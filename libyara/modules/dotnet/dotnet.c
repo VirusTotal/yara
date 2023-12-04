@@ -3515,7 +3515,7 @@ int module_load(
   {
     PIMAGE_NT_HEADERS32 pe_header;
 
-    block_data = block->fetch_data(block);
+    block_data = yr_fetch_block_data(block);
 
     if (block_data == NULL)
       continue;

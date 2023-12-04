@@ -706,6 +706,8 @@ struct YR_MEMORY_BLOCK
   YR_MEMORY_BLOCK_FETCH_DATA_FUNC fetch_data;
 };
 
+YR_API const uint8_t* yr_fetch_block_data(YR_MEMORY_BLOCK* self);
+
 ///////////////////////////////////////////////////////////////////////////////
 // YR_MEMORY_BLOCK_ITERATOR represents an iterator that returns a series of
 // memory blocks to be scanned by yr_scanner_scan_mem_blocks. The iterator have

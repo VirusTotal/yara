@@ -1514,7 +1514,7 @@ int module_load(
 
   foreach_memory_block(iterator, block)
   {
-    const uint8_t* block_data = block->fetch_data(block);
+    const uint8_t* block_data = yr_fetch_block_data(block);
 
     if (block_data == NULL)
       continue;

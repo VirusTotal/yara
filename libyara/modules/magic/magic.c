@@ -105,7 +105,7 @@ define_function(magic_mime_type)
     if (block == NULL)
       return_string(YR_UNDEFINED);
 
-    block_data = block->fetch_data(block);
+    block_data = yr_fetch_block_data(block);
 
     if (block_data != NULL)
     {
@@ -142,7 +142,7 @@ define_function(magic_type)
     if (block == NULL)
       return_string(YR_UNDEFINED);
 
-    block_data = block->fetch_data(block);
+    block_data = yr_fetch_block_data(block);
 
     if (block_data != NULL)
     {

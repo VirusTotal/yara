@@ -39,6 +39,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <yara/simple_str.h>
 #include <yara/utils.h>
 #include "../crypto.h"
+#include "../exception.h"
 
 #define MODULE_NAME elf
 
@@ -1113,7 +1114,7 @@ int module_load(
 
   foreach_memory_block(iterator, block)
   {
-    const uint8_t* block_data = block->fetch_data(block);
+    const uint8_t* block_data = yr_fetch_block_data(block);
 
     if (block_data == NULL)
       continue;
