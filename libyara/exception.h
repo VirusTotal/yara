@@ -129,11 +129,12 @@ static LONG CALLBACK exception_handler(PEXCEPTION_POINTERS ExceptionInfo)
 
 #else
 
+#include <pthread.h>
 #include <setjmp.h>
 #include <signal.h>
 #include <yara/globals.h>
 
-static void exception_handler(int sig)
+static void exception_handler(int sig, siginfo_t * info, void *context)
 {
   if (sig == SIGBUS || sig == SIGSEGV)
   {
@@ -152,18 +153,22 @@ typedef struct sigaction sa;
   {                                                                   \
     if (_do_)                                                         \
     {                                                                 \
-      struct sigaction old_sigbus_act;                                \
-      struct sigaction old_sigsegv_act;                               \
-      struct sigaction act;                                           \
+      pthread_mutex_lock(&exception_handler_mutex);                   \
+      if (exception_handler_usecount == 0)                            \
+      {                                                               \
+        struct sigaction act;                                         \
+        /* Set exception handler for SIGSEGV / SIGBUS */              \
+        act.sa_sigaction = exception_handler;                         \
+        act.sa_flags = SA_SIGINFO; /* SA_ONSTACK? */                  \
+        sigfillset(&act.sa_mask);                                     \
+        sigaction(SIGBUS, &act, &old_sigbus_exception_handler);       \
+        sigaction(SIGSEGV, &act, &old_sigsegv_exception_handler);     \
+      }                                                               \
+      exception_handler_usecount++;                                   \
+      pthread_mutex_unlock(&exception_handler_mutex);                 \
       sigjmp_buf jb;                                                  \
       /* Store pointer to sigjmp_buf in TLS */                        \
       yr_thread_storage_set_value(&yr_trycatch_trampoline_tls, &jb);  \
-      /* Set exception handler for SIGBUS and SIGSEGV*/               \
-      act.sa_handler = exception_handler;                             \
-      act.sa_flags = 0; /* SA_ONSTACK? */                             \
-      sigfillset(&act.sa_mask);                                       \
-      sigaction(SIGBUS, &act, &old_sigbus_act);                       \
-      sigaction(SIGSEGV, &act, &old_sigsegv_act);                     \
       if (sigsetjmp(jb, 1) == 0)                                      \
       {                                                               \
         _try_clause_                                                  \
@@ -172,9 +177,15 @@ typedef struct sigaction sa;
       {                                                               \
         _catch_clause_                                                \
       }                                                               \
-      /* Stop capturing SIGBUS and SIGSEGV */                         \
-      sigaction(SIGBUS, &old_sigbus_act, NULL);                       \
-      sigaction(SIGSEGV, &old_sigsegv_act, NULL);                     \
+      pthread_mutex_lock(&exception_handler_mutex);                   \
+      exception_handler_usecount--;                                   \
+      if (exception_handler_usecount == 0)                            \
+      {                                                               \
+        /* Stop capturing SIGBUS and SIGSEGV */                       \
+        sigaction(SIGBUS, &old_sigbus_exception_handler, NULL);       \
+        sigaction(SIGSEGV, &old_sigsegv_exception_handler, NULL);     \
+      }                                                               \
+      pthread_mutex_unlock(&exception_handler_mutex);                 \
       yr_thread_storage_set_value(&yr_trycatch_trampoline_tls, NULL); \
     }                                                                 \
     else                                                              \

@@ -52,6 +52,17 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 YR_THREAD_STORAGE_KEY yr_yyfatal_trampoline_tls;
 YR_THREAD_STORAGE_KEY yr_trycatch_trampoline_tls;
 
+#if !(_WIN32 || __CYGWIN__)
+
+#include <pthread.h>
+#include <signal.h>
+
+struct sigaction old_sigsegv_exception_handler;
+struct sigaction old_sigbus_exception_handler;
+int exception_handler_usecount = 0;
+pthread_mutex_t exception_handler_mutex = PTHREAD_MUTEX_INITIALIZER;
+#endif
+
 static int init_count = 0;
 
 static struct yr_config_var

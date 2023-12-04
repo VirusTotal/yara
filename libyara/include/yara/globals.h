@@ -48,6 +48,13 @@ extern YR_THREAD_STORAGE_KEY yr_yyfatal_trampoline_tls;
 // Thread-local storage (TLS) key used by YR_TRYCATCH.
 extern YR_THREAD_STORAGE_KEY yr_trycatch_trampoline_tls;
 
+#if !(_WIN32 || __CYGWIN__)
+extern struct sigaction old_sigsegv_exception_handler;
+extern struct sigaction old_sigbus_exception_handler;
+extern int exception_handler_usecount;
+extern pthread_mutex_t exception_handler_mutex;
+#endif
+
 // When YARA is built with YR_DEBUG_VERBOSITY defined as larger than 0 it can
 // print debug information to stdout.
 #if 0 == YR_DEBUG_VERBOSITY
