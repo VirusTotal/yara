@@ -142,7 +142,49 @@ static void exception_handler(int sig, siginfo_t * info, void *context)
         (jmp_buf*) yr_thread_storage_get_value(&yr_trycatch_trampoline_tls);
 
     if (jb_ptr != NULL)
+    {
       siglongjmp(*jb_ptr, 1);
+      // The long jump means the following code to invoke the old exception handler is never executed
+    }
+
+    // If we're here, the signal we received didn't originate from YARA.
+    // In this case, we want to invoke the original signal handler, which may handle the signal.
+
+    // Lock the exception handler mutex to prevent simultaneous write access while we read the old signal handler
+    pthread_mutex_lock(&exception_handler_mutex);
+    struct sigaction old_handler;
+    if (sig == SIGBUS)
+      old_handler = old_sigbus_exception_handler;
+    else
+      old_handler = old_sigsegv_exception_handler;
+    pthread_mutex_unlock(&exception_handler_mutex);
+
+    if (old_handler.sa_flags & SA_SIGINFO)
+    {
+      old_handler.sa_sigaction(sig, info, context);
+    }
+    else
+    {
+      if (old_handler.sa_handler == SIG_DFL)
+      {
+        // Old handler is the default action. To do this, set the signal handler back to default and raise the signal.
+        // This is fairly volatile - since this is not an atomic operation, signals from other threads might also
+        // cause the default action while we're doing this. However, the default action will typically cause a
+        // process termination anyway.
+        pthread_mutex_lock(&exception_handler_mutex);
+        struct sigaction current_handler;
+        sigaction(sig, &old_handler, &current_handler);
+        raise(sig);
+        sigaction(sig, &current_handler, NULL);
+        pthread_mutex_unlock(&exception_handler_mutex);
+      }
+      else if (old_handler.sa_handler == SIG_IGN)
+      {
+        // SIG_IGN wants us to ignore the signal
+        return;
+      }
+      old_handler.sa_handler(sig);
+    }
   }
 }
 
@@ -159,7 +201,7 @@ typedef struct sigaction sa;
         struct sigaction act;                                         \
         /* Set exception handler for SIGSEGV / SIGBUS */              \
         act.sa_sigaction = exception_handler;                         \
-        act.sa_flags = SA_SIGINFO; /* SA_ONSTACK? */                  \
+        act.sa_flags = SA_SIGINFO | SA_ONSTACK;                       \
         sigfillset(&act.sa_mask);                                     \
         sigaction(SIGBUS, &act, &old_sigbus_exception_handler);       \
         sigaction(SIGSEGV, &act, &old_sigsegv_exception_handler);     \
