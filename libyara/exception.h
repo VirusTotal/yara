@@ -95,7 +95,6 @@ static LONG CALLBACK exception_handler(PEXCEPTION_POINTERS ExceptionInfo)
   switch (ExceptionInfo->ExceptionRecord->ExceptionCode)
   {
   case EXCEPTION_IN_PAGE_ERROR:
-  case EXCEPTION_ACCESS_VIOLATION:
     jump_info =
         (jumpinfo*) yr_thread_storage_get_value(&yr_trycatch_trampoline_tls);
 
@@ -145,6 +144,20 @@ static LONG CALLBACK exception_handler(PEXCEPTION_POINTERS ExceptionInfo)
 #endif
 
 #else
+
+#if defined(__APPLE__) || defined(__linux__) || defined(_AIX)
+#define CATCH_SIGSEGV 0
+#define CATCH_SIGBUS 1
+#elif defined(BSD)
+// According to #551, older BSD versions use SIGSEGV for invalid mmap access.
+// Newer versions, however, use SIGBUS (tested with FreeBSD 13.2 / OpenBSD 7.4).
+// To be compatible with both, catch SIGBUS and SIGSEGV.
+#define CATCH_SIGSEGV 1
+#define CATCH_SIGBUS 1
+#else // For unknown systems, play it safe by catching both
+#define CATCH_SIGSEGV 1
+#define CATCH_SIGBUS 1
+#endif
 
 #include <pthread.h>
 #include <setjmp.h>
@@ -223,8 +236,10 @@ typedef struct sigaction sa;
         act.sa_sigaction = exception_handler;                         \
         act.sa_flags = SA_SIGINFO | SA_ONSTACK;                       \
         sigfillset(&act.sa_mask);                                     \
-        sigaction(SIGBUS, &act, &old_sigbus_exception_handler);       \
-        sigaction(SIGSEGV, &act, &old_sigsegv_exception_handler);     \
+        if (CATCH_SIGBUS)                                             \
+          sigaction(SIGBUS, &act, &old_sigbus_exception_handler);     \
+        if (CATCH_SIGSEGV)                                            \
+          sigaction(SIGSEGV, &act, &old_sigsegv_exception_handler);   \
       }                                                               \
       exception_handler_usecount++;                                   \
       pthread_mutex_unlock(&exception_handler_mutex);                 \
@@ -247,9 +262,11 @@ typedef struct sigaction sa;
       exception_handler_usecount--;                                   \
       if (exception_handler_usecount == 0)                            \
       {                                                               \
-        /* Stop capturing SIGBUS and SIGSEGV */                       \
-        sigaction(SIGBUS, &old_sigbus_exception_handler, NULL);       \
-        sigaction(SIGSEGV, &old_sigsegv_exception_handler, NULL);     \
+        /* Stop capturing relevant signals */                         \
+        if (CATCH_SIGBUS)                                             \
+          sigaction(SIGBUS, &old_sigbus_exception_handler, NULL);     \
+        if (CATCH_SIGSEGV)                                            \
+          sigaction(SIGSEGV, &old_sigsegv_exception_handler, NULL);   \
       }                                                               \
       pthread_mutex_unlock(&exception_handler_mutex);                 \
       yr_thread_storage_set_value(&yr_trycatch_trampoline_tls, NULL); \
