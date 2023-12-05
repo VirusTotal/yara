@@ -184,26 +184,26 @@ static void exception_handler(int sig, siginfo_t * info, void *context)
   {
     old_handler.sa_sigaction(sig, info, context);
   }
+  else if (old_handler.sa_handler == SIG_DFL)
+  {
+    // Old handler is the default action. To do this, set the signal handler back to default and raise the signal.
+    // This is fairly volatile - since this is not an atomic operation, signals from other threads might also
+    // cause the default action while we're doing this. However, the default action will typically cause a
+    // process termination anyway.
+    pthread_mutex_lock(&exception_handler_mutex);
+    struct sigaction current_handler;
+    sigaction(sig, &old_handler, &current_handler);
+    raise(sig);
+    sigaction(sig, &current_handler, NULL);
+    pthread_mutex_unlock(&exception_handler_mutex);
+  }
+  else if (old_handler.sa_handler == SIG_IGN)
+  {
+    // SIG_IGN wants us to ignore the signal
+    return;
+  }
   else
   {
-    if (old_handler.sa_handler == SIG_DFL)
-    {
-      // Old handler is the default action. To do this, set the signal handler back to default and raise the signal.
-      // This is fairly volatile - since this is not an atomic operation, signals from other threads might also
-      // cause the default action while we're doing this. However, the default action will typically cause a
-      // process termination anyway.
-      pthread_mutex_lock(&exception_handler_mutex);
-      struct sigaction current_handler;
-      sigaction(sig, &old_handler, &current_handler);
-      raise(sig);
-      sigaction(sig, &current_handler, NULL);
-      pthread_mutex_unlock(&exception_handler_mutex);
-    }
-    else if (old_handler.sa_handler == SIG_IGN)
-    {
-      // SIG_IGN wants us to ignore the signal
-      return;
-    }
     old_handler.sa_handler(sig);
   }
 }
