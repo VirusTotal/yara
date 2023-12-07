@@ -33,6 +33,13 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <assert.h>
 #include <yara/globals.h>
 
+typedef struct {
+  void* memfault_from;
+  void* memfault_to;
+  void* jump_back;
+} jumpinfo;
+
+
 #if _WIN32 || __CYGWIN__
 
 #include <windows.h>
@@ -83,65 +90,134 @@ static LONG CALLBACK exception_handler(PEXCEPTION_POINTERS ExceptionInfo)
 
 static LONG CALLBACK exception_handler(PEXCEPTION_POINTERS ExceptionInfo)
 {
-  jmp_buf* jb_ptr;
+  jumpinfo* jump_info;
 
   switch (ExceptionInfo->ExceptionRecord->ExceptionCode)
   {
   case EXCEPTION_IN_PAGE_ERROR:
-  case EXCEPTION_ACCESS_VIOLATION:
-    jb_ptr =
-        (jmp_buf*) yr_thread_storage_get_value(&yr_trycatch_trampoline_tls);
+    jump_info =
+        (jumpinfo*) yr_thread_storage_get_value(&yr_trycatch_trampoline_tls);
 
-    if (jb_ptr != NULL)
-      longjmp(*jb_ptr, 1);
+    if (jump_info != NULL)
+    {
+      void* fault_address = (void*) ExceptionInfo->ExceptionRecord->ExceptionInformation[1];
+      if (jump_info->memfault_from <= fault_address && jump_info->memfault_to > fault_address)
+      {
+        longjmp(*(jmp_buf*)jump_info->jump_back, 1);
+      }
+    }
   }
 
   return EXCEPTION_CONTINUE_SEARCH;
 }
 
-#define YR_TRYCATCH(_do_, _try_clause_, _catch_clause_)               \
-  do                                                                  \
-  {                                                                   \
-    if (_do_)                                                         \
-    {                                                                 \
-      jmp_buf jb;                                                     \
-      /* Store pointer to sigjmp_buf in TLS */                        \
-      yr_thread_storage_set_value(&yr_trycatch_trampoline_tls, &jb);  \
-      HANDLE exh = AddVectoredExceptionHandler(1, exception_handler); \
-      if (setjmp(jb) == 0)                                            \
-      {                                                               \
-        _try_clause_                                                  \
-      }                                                               \
-      else                                                            \
-      {                                                               \
-        _catch_clause_                                                \
-      }                                                               \
-      RemoveVectoredExceptionHandler(exh);                            \
-      yr_thread_storage_set_value(&yr_trycatch_trampoline_tls, NULL); \
-    }                                                                 \
-    else                                                              \
-    {                                                                 \
-      _try_clause_                                                    \
-    }                                                                 \
+#define YR_TRYCATCH(_do_, _try_clause_, _catch_clause_)                      \
+  do                                                                         \
+  {                                                                          \
+    if (_do_)                                                                \
+    {                                                                        \
+      jumpinfo jump_info;                                                    \
+      jump_info.memfault_from = 0;                                           \
+      jump_info.memfault_to = 0;                                             \
+      jmp_buf jb;                                                            \
+      jump_info.jump_back = (void*) &jb;                                     \
+      /* Store pointer to sigjmp_buf in TLS */                               \
+      yr_thread_storage_set_value(&yr_trycatch_trampoline_tls, &jump_info);  \
+      HANDLE exh = AddVectoredExceptionHandler(1, exception_handler);        \
+      if (setjmp(jb) == 0)                                                   \
+      {                                                                      \
+        _try_clause_                                                         \
+      }                                                                      \
+      else                                                                   \
+      {                                                                      \
+        _catch_clause_                                                       \
+      }                                                                      \
+      RemoveVectoredExceptionHandler(exh);                                   \
+      yr_thread_storage_set_value(&yr_trycatch_trampoline_tls, NULL);        \
+    }                                                                        \
+    else                                                                     \
+    {                                                                        \
+      _try_clause_                                                           \
+    }                                                                        \
   } while (0)
 
 #endif
 
 #else
 
+#if defined(__APPLE__) || defined(__linux__) || defined(_AIX)
+#define CATCH_SIGSEGV 0
+#define CATCH_SIGBUS 1
+#elif defined(BSD)
+// According to #551, older BSD versions use SIGSEGV for invalid mmap access.
+// Newer versions, however, use SIGBUS (tested with FreeBSD 13.2 / OpenBSD 7.4).
+// To be compatible with both, catch SIGBUS and SIGSEGV.
+#define CATCH_SIGSEGV 1
+#define CATCH_SIGBUS 1
+#else // For unknown systems, play it safe by catching both
+#define CATCH_SIGSEGV 1
+#define CATCH_SIGBUS 1
+#endif
+
+#include <pthread.h>
 #include <setjmp.h>
 #include <signal.h>
 #include <yara/globals.h>
 
-static void exception_handler(int sig)
+static void exception_handler(int sig, siginfo_t * info, void *context)
 {
-  if (sig == SIGBUS || sig == SIGSEGV)
+  if (sig != SIGBUS && sig != SIGSEGV)
   {
-    jmp_buf* jb_ptr =
-        (jmp_buf*) yr_thread_storage_get_value(&yr_trycatch_trampoline_tls);
+    return;
+  }
+  jumpinfo* jump_info = (jumpinfo*) yr_thread_storage_get_value(&yr_trycatch_trampoline_tls);
 
-    if (jb_ptr != NULL)
-      siglongjmp(*jb_ptr, 1);
+  if (jump_info != NULL)
+  {
+    void* fault_address = (void*) info->si_addr;
+    if (jump_info->memfault_from <= fault_address && jump_info->memfault_to > fault_address)
+    {
+      siglongjmp(*(sigjmp_buf*)jump_info->jump_back, 1);
+    }
+  }
+
+  // If we're here, the signal we received didn't originate from YARA.
+  // In this case, we want to invoke the original signal handler, which may handle the signal.
+
+  // Lock the exception handler mutex to prevent simultaneous write access while we read the old signal handler
+  pthread_mutex_lock(&exception_handler_mutex);
+  struct sigaction old_handler;
+  if (sig == SIGBUS)
+    old_handler = old_sigbus_exception_handler;
+  else
+    old_handler = old_sigsegv_exception_handler;
+  pthread_mutex_unlock(&exception_handler_mutex);
+
+  if (old_handler.sa_flags & SA_SIGINFO)
+  {
+    old_handler.sa_sigaction(sig, info, context);
+  }
+  else if (old_handler.sa_handler == SIG_DFL)
+  {
+    // Old handler is the default action. To do this, set the signal handler back to default and raise the signal.
+    // This is fairly volatile - since this is not an atomic operation, signals from other threads might also
+    // cause the default action while we're doing this. However, the default action will typically cause a
+    // process termination anyway.
+    pthread_mutex_lock(&exception_handler_mutex);
+    struct sigaction current_handler;
+    sigaction(sig, &old_handler, &current_handler);
+    raise(sig);
+    sigaction(sig, &current_handler, NULL);
+    pthread_mutex_unlock(&exception_handler_mutex);
+  }
+  else if (old_handler.sa_handler == SIG_IGN)
+  {
+    // SIG_IGN wants us to ignore the signal
+    return;
+  }
+  else
+  {
+    old_handler.sa_handler(sig);
   }
 }
 
@@ -152,18 +228,28 @@ typedef struct sigaction sa;
   {                                                                   \
     if (_do_)                                                         \
     {                                                                 \
-      struct sigaction old_sigbus_act;                                \
-      struct sigaction old_sigsegv_act;                               \
-      struct sigaction act;                                           \
+      pthread_mutex_lock(&exception_handler_mutex);                   \
+      if (exception_handler_usecount == 0)                            \
+      {                                                               \
+        struct sigaction act;                                         \
+        /* Set exception handler for SIGSEGV / SIGBUS */              \
+        act.sa_sigaction = exception_handler;                         \
+        act.sa_flags = SA_SIGINFO | SA_ONSTACK;                       \
+        sigfillset(&act.sa_mask);                                     \
+        if (CATCH_SIGBUS)                                             \
+          sigaction(SIGBUS, &act, &old_sigbus_exception_handler);     \
+        if (CATCH_SIGSEGV)                                            \
+          sigaction(SIGSEGV, &act, &old_sigsegv_exception_handler);   \
+      }                                                               \
+      exception_handler_usecount++;                                   \
+      pthread_mutex_unlock(&exception_handler_mutex);                 \
+      jumpinfo ji;                                                    \
+      ji.memfault_from = 0;                                           \
+      ji.memfault_to = 0;                                             \
       sigjmp_buf jb;                                                  \
-      /* Store pointer to sigjmp_buf in TLS */                        \
-      yr_thread_storage_set_value(&yr_trycatch_trampoline_tls, &jb);  \
-      /* Set exception handler for SIGBUS and SIGSEGV*/               \
-      act.sa_handler = exception_handler;                             \
-      act.sa_flags = 0; /* SA_ONSTACK? */                             \
-      sigfillset(&act.sa_mask);                                       \
-      sigaction(SIGBUS, &act, &old_sigbus_act);                       \
-      sigaction(SIGSEGV, &act, &old_sigsegv_act);                     \
+      ji.jump_back = (void*) &jb;                                     \
+      /* Store pointer to jumpinfo in TLS */                          \
+      yr_thread_storage_set_value(&yr_trycatch_trampoline_tls, &ji);  \
       if (sigsetjmp(jb, 1) == 0)                                      \
       {                                                               \
         _try_clause_                                                  \
@@ -172,9 +258,17 @@ typedef struct sigaction sa;
       {                                                               \
         _catch_clause_                                                \
       }                                                               \
-      /* Stop capturing SIGBUS and SIGSEGV */                         \
-      sigaction(SIGBUS, &old_sigbus_act, NULL);                       \
-      sigaction(SIGSEGV, &old_sigsegv_act, NULL);                     \
+      pthread_mutex_lock(&exception_handler_mutex);                   \
+      exception_handler_usecount--;                                   \
+      if (exception_handler_usecount == 0)                            \
+      {                                                               \
+        /* Stop capturing relevant signals */                         \
+        if (CATCH_SIGBUS)                                             \
+          sigaction(SIGBUS, &old_sigbus_exception_handler, NULL);     \
+        if (CATCH_SIGSEGV)                                            \
+          sigaction(SIGSEGV, &old_sigsegv_exception_handler, NULL);   \
+      }                                                               \
+      pthread_mutex_unlock(&exception_handler_mutex);                 \
       yr_thread_storage_set_value(&yr_trycatch_trampoline_tls, NULL); \
     }                                                                 \
     else                                                              \

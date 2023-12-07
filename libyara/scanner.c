@@ -518,21 +518,21 @@ YR_API int yr_scanner_scan_mem_blocks(
     block = iterator->first(iterator);
   }
 
-  while (block != NULL)
-  {
-    const uint8_t* data = block->fetch_data(block);
+  YR_TRYCATCH(
+      !(scanner->flags & SCAN_FLAGS_NO_TRYCATCH),
+      {
+        while (block != NULL)
+        {
+          const uint8_t* data = yr_fetch_block_data(block);
 
-    // fetch_data may fail and return NULL.
-    if (data == NULL)
-    {
-      block = iterator->next(iterator);
-      continue;
-    }
+          // fetch_data may fail and return NULL.
+          if (data == NULL)
+          {
+            block = iterator->next(iterator);
+            continue;
+          }
 
-    if (scanner->entry_point == YR_UNDEFINED)
-    {
-      YR_TRYCATCH(
-          !(scanner->flags & SCAN_FLAGS_NO_TRYCATCH),
+          if (scanner->entry_point == YR_UNDEFINED)
           {
             if (scanner->flags & SCAN_FLAGS_PROCESS_MEMORY)
               scanner->entry_point = yr_get_entry_point_address(
@@ -540,20 +540,19 @@ YR_API int yr_scanner_scan_mem_blocks(
             else
               scanner->entry_point = yr_get_entry_point_offset(
                   data, block->size);
-          },
-          {});
-    }
+          }
+          result = _yr_scanner_scan_mem_block(scanner, data, block);
+          if (result != ERROR_SUCCESS)
+          {
+            break;
+          }
+          block = iterator->next(iterator);
+        }
+      },
+      { result = ERROR_COULD_NOT_MAP_FILE; });
 
-    YR_TRYCATCH(
-        !(scanner->flags & SCAN_FLAGS_NO_TRYCATCH),
-        { result = _yr_scanner_scan_mem_block(scanner, data, block); },
-        { result = ERROR_COULD_NOT_MAP_FILE; });
-
-    if (result != ERROR_SUCCESS)
-      goto _exit;
-
-    block = iterator->next(iterator);
-  }
+  if (result != ERROR_SUCCESS)
+    goto _exit;
 
   result = iterator->last_error;
 
@@ -682,6 +681,23 @@ static uint64_t _yr_get_file_size(YR_MEMORY_BLOCK_ITERATOR* iterator)
 static const uint8_t* _yr_fetch_block_data(YR_MEMORY_BLOCK* block)
 {
   return (const uint8_t*) block->context;
+}
+
+YR_API const uint8_t* yr_fetch_block_data(YR_MEMORY_BLOCK* block)
+{
+  const uint8_t* data = block->fetch_data(block);
+  if (data == NULL)
+  {
+    return NULL;
+  }
+  jumpinfo* info = (jumpinfo*) yr_thread_storage_get_value(&yr_trycatch_trampoline_tls);
+  if (info == NULL) // Not called from YR_TRYCATCH
+  {
+    return data;
+  }
+  info->memfault_from = (void*) data;
+  info->memfault_to = (void*) (data + block->size);
+  return data;
 }
 
 YR_API int yr_scanner_scan_mem(

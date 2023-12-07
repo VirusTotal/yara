@@ -87,7 +87,7 @@ void setup_rules()
   yr_initialize();
 
   compile_rule(
-      "rule test { strings: $a = \"aaaa\" condition: all of them }", &rules_a);
+      "import \"console\"\nrule test { strings: $a = \"aaaa\" condition: console.log(0) and all of them }", &rules_a);
 
   compile_rule(
       "rule test { strings: $a = { 00 00 00 00 } condition: all of them }",
@@ -113,7 +113,7 @@ void setup_crasher()
   pthread_create(&t, &attr, &crasher_func, NULL);
 }
 
-/* Simple yr_scan_* callback function that delays execution by 2 seconds */
+/* Simple yr_scan_* callback function that delays execution in CONSOLE_LOG by 2 seconds */
 int delay_callback(
     YR_SCAN_CONTEXT* context,
     int message,
@@ -124,8 +124,12 @@ int delay_callback(
   {
     (*(int*) user_data)++;
   }
-  fputs("callback: delaying execution...\n", stderr);
-  sleep(2);
+  if (message == CALLBACK_MSG_CONSOLE_LOG)
+  {
+    fputs("callback: delaying execution...\n", stderr);
+    sleep(2);
+    fputs("callback: finished delaying execution.\n", stderr);
+  }
   return CALLBACK_CONTINUE;
 }
 

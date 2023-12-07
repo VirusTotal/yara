@@ -78,7 +78,7 @@ uint32_t* get_distribution(int64_t offset, int64_t length, YR_SCAN_CONTEXT* cont
       size_t data_len = (size_t) yr_min(
           length, (size_t)(block->size - data_offset));
 
-      const uint8_t* block_data = block->fetch_data(block);
+      const uint8_t* block_data = yr_fetch_block_data(block);
 
       if (block_data == NULL)
       {
@@ -145,7 +145,7 @@ uint32_t* get_distribution_global(YR_SCAN_CONTEXT* context) {
       yr_free(data);
       return NULL;
     }
-    const uint8_t* block_data = block->fetch_data(block);
+    const uint8_t* block_data = yr_fetch_block_data(block);
 
     if (block_data == NULL)
     {
@@ -344,7 +344,7 @@ define_function(data_serial_correlation)
       size_t data_len = (size_t) yr_min(
           length, (size_t)(block->size - data_offset));
 
-      const uint8_t* block_data = block->fetch_data(block);
+      const uint8_t* block_data = yr_fetch_block_data(block);
 
       if (block_data == NULL)
         return_float(YR_UNDEFINED);
@@ -468,7 +468,7 @@ define_function(data_monte_carlo_pi)
       size_t data_len = (size_t) yr_min(
           length, (size_t)(block->size - data_offset));
 
-      const uint8_t* block_data = block->fetch_data(block);
+      const uint8_t* block_data = yr_fetch_block_data(block);
 
       if (block_data == NULL)
         return_float(YR_UNDEFINED);
