@@ -1124,91 +1124,79 @@ int module_load(
       return ERROR_INSUFFICIENT_MEMORY;
 
     module_object->data = elf;
-    switch (get_elf_class_data(block_data, block->size))
+    int class_data = get_elf_class_data(block_data, block->size);
+
+    if (class_data == CLASS_DATA(ELF_CLASS_32, ELF_DATA_2LSB) &&
+        block->size > sizeof(elf32_header_t))
     {
-    case CLASS_DATA(ELF_CLASS_32, ELF_DATA_2LSB):
+      elf_header32 = (elf32_header_t*) block_data;
 
-      if (block->size > sizeof(elf32_header_t))
+      if (!(context->flags & SCAN_FLAGS_PROCESS_MEMORY) ||
+          yr_le16toh(elf_header32->type) == ELF_ET_EXEC)
       {
-        elf_header32 = (elf32_header_t*) block_data;
-
-        if (!(context->flags & SCAN_FLAGS_PROCESS_MEMORY) ||
-            yr_le16toh(elf_header32->type) == ELF_ET_EXEC)
-        {
-          parse_result = parse_elf_header_32_le(
-              elf,
-              elf_header32,
-              block->base,
-              block->size,
-              context->flags,
-              module_object);
-        }
+        parse_result = parse_elf_header_32_le(
+            elf,
+            elf_header32,
+            block->base,
+            block->size,
+            context->flags,
+            module_object);
+        break;
       }
+    } else if (
+        class_data == CLASS_DATA(ELF_CLASS_32, ELF_DATA_2MSB) &&
+        block->size > sizeof(elf32_header_t))
+    {
+      elf_header32 = (elf32_header_t*) block_data;
 
-      break;
-
-    case CLASS_DATA(ELF_CLASS_32, ELF_DATA_2MSB):
-
-      if (block->size > sizeof(elf32_header_t))
+      if (!(context->flags & SCAN_FLAGS_PROCESS_MEMORY) ||
+          yr_be16toh(elf_header32->type) == ELF_ET_EXEC)
       {
-        elf_header32 = (elf32_header_t*) block_data;
-
-        if (!(context->flags & SCAN_FLAGS_PROCESS_MEMORY) ||
-            yr_be16toh(elf_header32->type) == ELF_ET_EXEC)
-        {
-          parse_result = parse_elf_header_32_be(
-              elf,
-              elf_header32,
-              block->base,
-              block->size,
-              context->flags,
-              module_object);
-        }
+        parse_result = parse_elf_header_32_be(
+            elf,
+            elf_header32,
+            block->base,
+            block->size,
+            context->flags,
+            module_object);
+        break;
       }
+    } else if (
+        class_data == CLASS_DATA(ELF_CLASS_64, ELF_DATA_2LSB) &&
+        block->size > sizeof(elf64_header_t))
+    {
+      elf_header64 = (elf64_header_t*) block_data;
 
-      break;
-
-    case CLASS_DATA(ELF_CLASS_64, ELF_DATA_2LSB):
-
-      if (block->size > sizeof(elf64_header_t))
+      if (!(context->flags & SCAN_FLAGS_PROCESS_MEMORY) ||
+          yr_le16toh(elf_header64->type) == ELF_ET_EXEC)
       {
-        elf_header64 = (elf64_header_t*) block_data;
-
-        if (!(context->flags & SCAN_FLAGS_PROCESS_MEMORY) ||
-            yr_le16toh(elf_header64->type) == ELF_ET_EXEC)
-        {
-          parse_result = parse_elf_header_64_le(
-              elf,
-              elf_header64,
-              block->base,
-              block->size,
-              context->flags,
-              module_object);
-        }
+        parse_result = parse_elf_header_64_le(
+            elf,
+            elf_header64,
+            block->base,
+            block->size,
+            context->flags,
+            module_object);
+        break;
       }
+    } else if (
+        class_data == CLASS_DATA(ELF_CLASS_64, ELF_DATA_2MSB) &&
+        block->size > sizeof(elf64_header_t))
+    {
+      elf_header64 = (elf64_header_t*) block_data;
 
-      break;
-
-    case CLASS_DATA(ELF_CLASS_64, ELF_DATA_2MSB):
-
-      if (block->size > sizeof(elf64_header_t))
+      if (!(context->flags & SCAN_FLAGS_PROCESS_MEMORY) ||
+          yr_be16toh(elf_header64->type) == ELF_ET_EXEC)
       {
-        elf_header64 = (elf64_header_t*) block_data;
-
-        if (!(context->flags & SCAN_FLAGS_PROCESS_MEMORY) ||
-            yr_be16toh(elf_header64->type) == ELF_ET_EXEC)
-        {
-          parse_result = parse_elf_header_64_be(
-              elf,
-              elf_header64,
-              block->base,
-              block->size,
-              context->flags,
-              module_object);
-        }
+        parse_result = parse_elf_header_64_be(
+            elf,
+            elf_header64,
+            block->base,
+            block->size,
+            context->flags,
+            module_object);
+        break;
       }
-
-      break;
     }
   }
 
