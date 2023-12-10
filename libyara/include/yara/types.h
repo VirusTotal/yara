@@ -615,7 +615,7 @@ struct YR_RULES
 
   // A bitmap with one bit per rule, bit N is set when the condition for rule
   // might evaluate to true even without any string matches.
-  YR_BITMASK* rule_evaluate_condition_flags;
+  YR_BITMASK* no_required_strings;
 
   // Total number of rules.
   uint32_t num_rules;
@@ -823,9 +823,9 @@ struct YR_SCAN_CONTEXT
   // until they can be confirmed or discarded.
   YR_MATCHES* unconfirmed_matches;
 
-  // A bitmap with one bit per rule, bit N is unset when the condition for rule
-  // with index N is guaranteed to evaluate to false.
-  YR_BITMASK* rule_evaluate_condition_flags;
+  // A bitmap with one bit per rule, bit N is set if the corresponding rule
+  // must evaluated.
+  YR_BITMASK* required_eval;
 
   // profiling_info is a pointer to an array of YR_PROFILING_INFO structures,
   // one per rule. Entry N has the profiling information for rule with index N.

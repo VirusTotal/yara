@@ -2980,6 +2980,36 @@ static void test_global_rules()
       }",
       NULL);
 
+  assert_false_rule(
+      "global private rule global_rule { \
+        strings: \
+          $a = \"foo\" \
+        condition: \
+          $a \
+      } \
+      rule test { \
+       strings: \
+          $a = \"bar\" \
+        condition: \
+          $a \
+      }",
+      "bar");
+
+  assert_true_rule(
+      "global private rule global_rule { \
+        strings: \
+          $a = \"foo\" \
+        condition: \
+          $a \
+      } \
+      rule test { \
+       strings: \
+          $a = \"bar\" \
+        condition: \
+          $a \
+      }",
+      "foobar");
+
   YR_DEBUG_FPRINTF(1, stderr, "} // %s()\n", __FUNCTION__);
 }
 

@@ -336,9 +336,10 @@ int yr_rules_from_arena(YR_ARENA* arena, YR_RULES** rules)
   if (new_rules == NULL)
     return ERROR_INSUFFICIENT_MEMORY;
 
-  new_rules->rule_evaluate_condition_flags = (YR_BITMASK*) yr_calloc(
+  new_rules->no_required_strings = (YR_BITMASK*) yr_calloc(
       sizeof(YR_BITMASK), YR_BITMASK_SIZE(summary->num_rules));
-  if (new_rules->rule_evaluate_condition_flags == NULL)
+
+  if (new_rules->no_required_strings == NULL)
   {
     yr_free(new_rules);
     return ERROR_INSUFFICIENT_MEMORY;
@@ -378,9 +379,7 @@ int yr_rules_from_arena(YR_ARENA* arena, YR_RULES** rules)
   for (int i = 0; i < new_rules->num_rules; i++)
   {
     if (new_rules->rules_table[i].required_strings == 0)
-    {
-      yr_bitmask_set(new_rules->rule_evaluate_condition_flags, i);
-    }
+      yr_bitmask_set(new_rules->no_required_strings, i);
   }
 
   *rules = new_rules;
@@ -543,8 +542,7 @@ YR_API int yr_rules_destroy(YR_RULES* rules)
     external++;
   }
 
-  yr_free(rules->rule_evaluate_condition_flags);
-
+  yr_free(rules->no_required_strings);
   yr_arena_release(rules->arena);
   yr_free(rules);
 

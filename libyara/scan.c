@@ -558,8 +558,8 @@ static int _yr_scan_verify_chained_string_match(
           _yr_scan_remove_match_from_list(
               match, &context->unconfirmed_matches[string->idx]);
 
-          match->match_length =
-              (int32_t) (match_offset - match->offset + match_length);
+          match->match_length = (int32_t) (match_offset - match->offset +
+                                           match_length);
 
           match->data_length = yr_min(
               match->match_length, (int32_t) max_match_data);
@@ -575,8 +575,9 @@ static int _yr_scan_verify_chained_string_match(
               match_data - match_offset + match->offset,
               match->data_length);
 
-          yr_bitmask_set(
-              context->rule_evaluate_condition_flags, string->rule_idx);
+          // Once a string is found, the rule containing that string is
+          // required to be evaluated.
+          yr_bitmask_set(context->required_eval, string->rule_idx);
 
           FAIL_ON_ERROR(_yr_scan_add_match_to_list(
               match, &context->matches[string->idx], false));
@@ -753,9 +754,7 @@ static int _yr_scan_match_callback(
       new_match->is_private = STRING_IS_PRIVATE(string);
       new_match->xor_key = callback_args->xor_key;
 
-      yr_bitmask_set(
-          callback_args->context->rule_evaluate_condition_flags,
-          string->rule_idx);
+      yr_bitmask_set(callback_args->context->required_eval, string->rule_idx);
 
       FAIL_ON_ERROR(_yr_scan_add_match_to_list(
           new_match,
