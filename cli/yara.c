@@ -688,14 +688,15 @@ static int scan_dir(const char* dir, SCAN_OPTIONS* scan_opts)
         de = readdir(dp);
         continue;
       }
-      // If the directory entry is a symlink, check if it points to . and
-      // skip it in that case.
+      // If the directory entry is a symlink, check if it points to . or .. and
+      // skip it in those cases.
       else if (S_ISLNK(st.st_mode))
       {
         char buf[2];
         int len = readlink(full_path, buf, sizeof(buf));
 
-        if (len == 1 && buf[0] == '.')
+        if ((len == 1 && buf[0] == '.') ||
+            (len == 2 && buf[0] == '.' && buf[1] == '.'))
         {
           de = readdir(dp);
           continue;
