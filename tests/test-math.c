@@ -171,6 +171,14 @@ int main(int argc, char** argv)
       "import \"math\" \
       rule test { \
         condition: \
+          math.mode() == 0x41 \
+      }",
+      "ABAB");
+
+  assert_true_rule_blob(
+      "import \"math\" \
+      rule test { \
+        condition: \
           math.mode(2, 3) == 0x41 \
       }",
       "CCABACC");
