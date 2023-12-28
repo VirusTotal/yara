@@ -658,9 +658,12 @@ define_function(count_global)
 
 define_function(percentage_range)
 {
-  uint8_t byte = (uint8_t) integer_argument(1);
+  int64_t byte = integer_argument(1);
   int64_t offset = integer_argument(2);
   int64_t length = integer_argument(3);
+
+  if (byte < 0 || byte > 255)
+    return_float(YR_UNDEFINED);
 
   YR_SCAN_CONTEXT* context = yr_scan_context();
 
@@ -681,7 +684,10 @@ define_function(percentage_range)
 
 define_function(percentage_global)
 {
-  uint8_t byte = (uint8_t) integer_argument(1);
+  int64_t byte = integer_argument(1);
+
+  if (byte < 0 || byte > 255)
+    return_float(YR_UNDEFINED);
 
   YR_SCAN_CONTEXT* context = yr_scan_context();
 

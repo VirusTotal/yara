@@ -131,6 +131,38 @@ int main(int argc, char** argv)
       "import \"math\" \
       rule test { \
         condition: \
+          not defined math.percentage(0x41, 0, 0) \
+      }",
+      "AABAAB");
+
+  assert_true_rule_blob(
+      "import \"math\" \
+      rule test { \
+        condition: \
+          not defined math.percentage(0x41, 10, 3)  \
+      }",
+      "AABAAB");
+
+  assert_true_rule_blob(
+      "import \"math\" \
+      rule test { \
+        condition: \
+          not defined math.percentage(0x41, 0, -3)  \
+      }",
+      "AABAAB");
+
+  assert_true_rule_blob(
+      "import \"math\" \
+      rule test { \
+        condition: \
+          not defined math.percentage(-1)  \
+      }",
+      "AABAAB");
+
+  assert_true_rule_blob(
+      "import \"math\" \
+      rule test { \
+        condition: \
           math.mode() == 0x41 \
       }",
       "ABABA");
