@@ -75,6 +75,38 @@ int main(int argc, char** argv)
       "import \"math\" \
       rule test { \
         condition: \
+          math.count(0x41, 4, 10) == 1  \
+      }",
+      "AABAAB");
+
+  assert_true_rule_blob(
+      "import \"math\" \
+      rule test { \
+        condition: \
+          not defined math.count(0x41, 10, 3)  \
+      }",
+      "AABAAB");
+
+  assert_true_rule_blob(
+      "import \"math\" \
+      rule test { \
+        condition: \
+          not defined math.count(0x41, 0, -3)  \
+      }",
+      "AABAAB");
+
+  assert_true_rule_blob(
+      "import \"math\" \
+      rule test { \
+        condition: \
+          not defined math.count(-1)  \
+      }",
+      "AABAAB");
+
+  assert_true_rule_blob(
+      "import \"math\" \
+      rule test { \
+        condition: \
           math.count(0x41) == 2 \
       }",
       "ABAB");
@@ -85,7 +117,7 @@ int main(int argc, char** argv)
         condition: \
           math.percentage(0x41) > 0.39 and math.percentage(0x41) < 0.41 \
       }",
-      "ABAB"); // Blob matching includes terminating zero byte
+      "ABAB");  // Blob matching includes terminating zero byte
 
   assert_true_rule_blob(
       "import \"math\" \

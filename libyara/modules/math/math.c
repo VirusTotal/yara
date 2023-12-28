@@ -27,8 +27,8 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include <stdlib.h>
 #include <math.h>
+#include <stdlib.h>
 #include <yara/mem.h>
 #include <yara/modules.h>
 #include <yara/strutils.h>
@@ -50,16 +50,19 @@ static double log2(double n)
 }
 #endif
 
-uint32_t* get_distribution(int64_t offset, int64_t length, YR_SCAN_CONTEXT* context) {
+uint32_t* get_distribution(
+    int64_t offset,
+    int64_t length,
+    YR_SCAN_CONTEXT* context)
+{
   bool past_first_block = false;
 
   size_t i;
 
   uint32_t* data = (uint32_t*) yr_calloc(256, sizeof(uint32_t));
 
-  if (data == NULL) {
+  if (data == NULL)
     return NULL;
-  }
 
   YR_MEMORY_BLOCK* block = first_memory_block(context);
   YR_MEMORY_BLOCK_ITERATOR* iterator = context->iterator;
@@ -74,9 +77,9 @@ uint32_t* get_distribution(int64_t offset, int64_t length, YR_SCAN_CONTEXT* cont
   {
     if (offset >= block->base && offset < block->base + block->size)
     {
-      size_t data_offset = (size_t)(offset - block->base);
+      size_t data_offset = (size_t) (offset - block->base);
       size_t data_len = (size_t) yr_min(
-          length, (size_t)(block->size - data_offset));
+          length, (size_t) (block->size - data_offset));
 
       const uint8_t* block_data = yr_fetch_block_data(block);
 
@@ -121,8 +124,8 @@ uint32_t* get_distribution(int64_t offset, int64_t length, YR_SCAN_CONTEXT* cont
   return data;
 }
 
-uint32_t* get_distribution_global(YR_SCAN_CONTEXT* context) {
-
+uint32_t* get_distribution_global(YR_SCAN_CONTEXT* context)
+{
   size_t i;
 
   int64_t expected_next_offset = 0;
@@ -138,9 +141,9 @@ uint32_t* get_distribution_global(YR_SCAN_CONTEXT* context) {
   {
     if (expected_next_offset != block->base)
     {
-      // If offset is not directly after the current block then 
-      // we are trying to compute the distribution over a range of non 
-      // contiguous blocks. As the range contains gaps of 
+      // If offset is not directly after the current block then
+      // we are trying to compute the distribution over a range of non
+      // contiguous blocks. As the range contains gaps of
       // undefined data the distribution is undefined.
       yr_free(data);
       return NULL;
@@ -155,8 +158,8 @@ uint32_t* get_distribution_global(YR_SCAN_CONTEXT* context) {
 
     for (i = 0; i < block->size; i++)
     {
-        uint8_t c = *(block_data + i);
-        data[c] += 1;
+      uint8_t c = *(block_data + i);
+      data[c] += 1;
     }
     expected_next_offset = block->base + block->size;
   }
@@ -208,6 +211,7 @@ define_function(data_entropy)
   size_t total_len = 0;
 
   uint32_t* data = get_distribution(offset, length, context);
+
   if (data == NULL)
     return_float(YR_UNDEFINED);
 
@@ -257,6 +261,7 @@ define_function(data_deviation)
   YR_SCAN_CONTEXT* context = yr_scan_context();
 
   uint32_t* data = get_distribution(offset, length, context);
+
   if (data == NULL)
     return_float(YR_UNDEFINED);
 
@@ -295,6 +300,7 @@ define_function(data_mean)
   size_t i;
 
   uint32_t* data = get_distribution(offset, length, context);
+
   if (data == NULL)
     return_float(YR_UNDEFINED);
 
@@ -340,9 +346,9 @@ define_function(data_serial_correlation)
   {
     if (offset >= block->base && offset < block->base + block->size)
     {
-      size_t data_offset = (size_t)(offset - block->base);
+      size_t data_offset = (size_t) (offset - block->base);
       size_t data_len = (size_t) yr_min(
-          length, (size_t)(block->size - data_offset));
+          length, (size_t) (block->size - data_offset));
 
       const uint8_t* block_data = yr_fetch_block_data(block);
 
@@ -356,8 +362,9 @@ define_function(data_serial_correlation)
       for (i = 0; i < data_len; i++)
       {
         sccun = (double) *(block_data + data_offset + i);
-        if (i == 0) {
-            sccfirst = sccun;
+        if (i == 0)
+        {
+          sccfirst = sccun;
         }
         scct1 += scclast * sccun;
         scct2 += sccun;
@@ -419,8 +426,9 @@ define_function(string_serial_correlation)
     scclast = sccun;
   }
 
-  if (s->length > 0) {
-      scct1 += scclast * (double) s->c_string[0];
+  if (s->length > 0)
+  {
+    scct1 += scclast * (double) s->c_string[0];
   }
   scct2 *= scct2;
 
@@ -464,9 +472,9 @@ define_function(data_monte_carlo_pi)
     {
       unsigned int monte[6];
 
-      size_t data_offset = (size_t)(offset - block->base);
+      size_t data_offset = (size_t) (offset - block->base);
       size_t data_len = (size_t) yr_min(
-          length, (size_t)(block->size - data_offset));
+          length, (size_t) (block->size - data_offset));
 
       const uint8_t* block_data = yr_fetch_block_data(block);
 
@@ -610,17 +618,20 @@ define_function(yr_math_abs)
 
 define_function(count_range)
 {
-  uint8_t byte = (uint8_t) integer_argument(1);
+  int64_t byte = integer_argument(1);
   int64_t offset = integer_argument(2);
   int64_t length = integer_argument(3);
+
+  if (byte < 0 || byte > 255)
+    return_integer(YR_UNDEFINED);
 
   YR_SCAN_CONTEXT* context = yr_scan_context();
 
   uint32_t* distribution = get_distribution(offset, length, context);
+
   if (distribution == NULL)
-  {
     return_integer(YR_UNDEFINED);
-  }
+
   int64_t count = (int64_t) distribution[byte];
   yr_free(distribution);
   return_integer(count);
@@ -628,15 +639,18 @@ define_function(count_range)
 
 define_function(count_global)
 {
-  uint8_t byte = (uint8_t) integer_argument(1);
+  int64_t byte = integer_argument(1);
+
+  if (byte < 0 || byte > 255)
+    return_integer(YR_UNDEFINED);
 
   YR_SCAN_CONTEXT* context = yr_scan_context();
 
   uint32_t* distribution = get_distribution_global(context);
+
   if (distribution == NULL)
-  {
     return_integer(YR_UNDEFINED);
-  }
+
   int64_t count = (int64_t) distribution[byte];
   yr_free(distribution);
   return_integer(count);
@@ -651,15 +665,16 @@ define_function(percentage_range)
   YR_SCAN_CONTEXT* context = yr_scan_context();
 
   uint32_t* distribution = get_distribution(offset, length, context);
-  if (distribution == NULL) {
+
+  if (distribution == NULL)
     return_float(YR_UNDEFINED);
-  }
+
   int64_t count = (int64_t) distribution[byte];
   int64_t total_count = 0;
   int64_t i;
-  for (i = 0; i < 256; i++) {
-    total_count += distribution[i];
-  }
+
+  for (i = 0; i < 256; i++) total_count += distribution[i];
+
   yr_free(distribution);
   return_float(((float) count) / ((float) total_count));
 }
@@ -671,15 +686,16 @@ define_function(percentage_global)
   YR_SCAN_CONTEXT* context = yr_scan_context();
 
   uint32_t* distribution = get_distribution_global(context);
-  if (distribution == NULL) {
+
+  if (distribution == NULL)
     return_float(YR_UNDEFINED);
-  }
+
   int64_t count = (int64_t) distribution[byte];
   int64_t total_count = 0;
   int64_t i;
-  for (i = 0; i < 256; i++) {
-    total_count += distribution[i];
-  }
+
+  for (i = 0; i < 256; i++) total_count += distribution[i];
+
   yr_free(distribution);
   return_float(((float) count) / ((float) total_count));
 }
@@ -692,19 +708,19 @@ define_function(mode_range)
   YR_SCAN_CONTEXT* context = yr_scan_context();
 
   uint32_t* distribution = get_distribution(offset, length, context);
-  if (distribution == NULL) {
+
+  if (distribution == NULL)
     return_integer(YR_UNDEFINED);
-  }
 
   int64_t most_common = 0;
   size_t i;
+
   for (i = 0; i < 256; i++)
   {
     if (distribution[i] > distribution[most_common])
-    {
       most_common = (int64_t) i;
-    }
   }
+
   yr_free(distribution);
   return_integer(most_common);
 }
@@ -714,19 +730,19 @@ define_function(mode_global)
   YR_SCAN_CONTEXT* context = yr_scan_context();
 
   uint32_t* distribution = get_distribution_global(context);
-  if (distribution == NULL) {
+
+  if (distribution == NULL)
     return_integer(YR_UNDEFINED);
-  }
 
   int64_t most_common = 0;
   size_t i;
+
   for (i = 0; i < 256; i++)
   {
     if (distribution[i] > distribution[most_common])
-    {
       most_common = (int64_t) i;
-    }
   }
+
   yr_free(distribution);
   return_integer(most_common);
 }
@@ -744,7 +760,7 @@ define_function(to_string_base)
   int64_t i = integer_argument(1);
   int64_t base = integer_argument(2);
   char str[INT64_MAX_STRING];
-  char *fmt;
+  char* fmt;
   switch (base)
   {
   case 10:
