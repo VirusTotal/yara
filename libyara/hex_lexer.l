@@ -72,7 +72,6 @@ with noyywrap then we can remove this pragma.
 %}
 
 %option reentrant bison-bridge
-%option nodefault
 %option noyywrap
 %option nounistd
 %option noinput

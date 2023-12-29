@@ -53,6 +53,12 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define yyget_extra  hex_yyget_extra
 #define yyget_lineno hex_yyget_lineno
 
+// Define the ECHO macro as an empty macro in order to avoid the default
+// implementation from being used. The default implementation of ECHO
+// prints to the console any byte that is not matched by the lexer. It's
+// not safe to print random bytes to the console as it may cause the calling
+// program to terminate. See: https://github.com/VirusTotal/yara/issues/2007
+#define ECHO
 
 #ifndef YY_TYPEDEF_YY_SCANNER_T
 #define YY_TYPEDEF_YY_SCANNER_T

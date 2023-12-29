@@ -29,7 +29,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <yara/compiler.h>
 
-
 #undef yyparse
 #undef yylex
 #undef yyerror
@@ -55,6 +54,12 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define yyget_extra  yara_yyget_extra
 #define yyget_lineno yara_yyget_lineno
 
+// Define the ECHO macro as an empty macro in order to avoid the default
+// implementation from being used. The default implementation of ECHO
+// prints to the console any byte that is not matched by the lexer. It's
+// not safe to print random bytes to the console as it may cause the calling
+// program to terminate. See: https://github.com/VirusTotal/yara/issues/2007
+#define ECHO
 
 #ifndef YY_TYPEDEF_YY_SCANNER_T
 #define YY_TYPEDEF_YY_SCANNER_T
@@ -74,10 +79,8 @@ union YYSTYPE;
 // own function instead of the one provided by default.
 #define YY_FATAL_ERROR(msg) yara_yyfatal(yyscanner, msg)
 
-
 #define YY_EXTRA_TYPE YR_COMPILER*
 #define YY_USE_CONST
-
 
 int yyget_lineno(yyscan_t yyscanner);
 
@@ -100,7 +103,10 @@ void yyfatal(yyscan_t yyscanner, const char* error_message);
 
 YY_EXTRA_TYPE yyget_extra(yyscan_t yyscanner);
 
-int yr_lex_parse_rules_bytes(const void* rules_data, size_t rules_size, YR_COMPILER* compiler);
+int yr_lex_parse_rules_bytes(
+    const void* rules_data,
+    size_t rules_size,
+    YR_COMPILER* compiler);
 
 int yr_lex_parse_rules_string(const char* rules_string, YR_COMPILER* compiler);
 

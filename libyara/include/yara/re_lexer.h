@@ -53,6 +53,13 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define yyget_extra  re_yyget_extra
 #define yyget_lineno re_yyget_lineno
 
+// Define the ECHO macro as an empty macro in order to avoid the default
+// implementation from being used. The default implementation of ECHO
+// prints to the console any byte that is not matched by the lexer. It's
+// not safe to print random bytes to the console as it may cause the calling
+// program to terminate. See: https://github.com/VirusTotal/yara/issues/2007
+#define ECHO
+
 #ifndef YY_TYPEDEF_YY_SCANNER_T
 #define YY_TYPEDEF_YY_SCANNER_T
 typedef void* yyscan_t;
@@ -61,8 +68,8 @@ typedef void* yyscan_t;
 #define YY_EXTRA_TYPE RE_AST*
 #define YY_USE_CONST
 
-#define VALID_ESCAPE_SEQUENCE     1
-#define UNKNOWN_ESCAPE_SEQUENCE   2
+#define VALID_ESCAPE_SEQUENCE   1
+#define UNKNOWN_ESCAPE_SEQUENCE 2
 
 typedef struct _RE_LEX_ENVIRONMENT
 {
@@ -109,4 +116,8 @@ void yyfatal(yyscan_t yyscanner, const char* error_message);
 
 int yyparse(void* yyscanner, RE_LEX_ENVIRONMENT* lex_env);
 
-int yr_parse_re_string(const char* re_string, RE_AST** re_ast, RE_ERROR* error, int flags);
+int yr_parse_re_string(
+    const char* re_string,
+    RE_AST** re_ast,
+    RE_ERROR* error,
+    int flags);

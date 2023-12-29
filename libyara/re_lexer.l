@@ -94,7 +94,6 @@ int read_escaped_char(
 %}
 
 %option reentrant bison-bridge
-%option nodefault
 %option noyywrap
 %option nounistd
 %option nounput
