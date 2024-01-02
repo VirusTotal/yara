@@ -32,6 +32,12 @@ write more expressive and targeted rules. Let's see some examples:
             pe.characteristics & pe.DLL
     }
 
+    rule is_pe
+    {
+        condition:
+            pe.is_pe
+    }
+
 Reference
 ---------
 
@@ -63,6 +69,16 @@ Reference
     .. c:type:: MACHINE_SH5
     .. c:type:: MACHINE_THUMB
     .. c:type:: MACHINE_WCEMIPSV2
+    .. c:type:: MACHINE_TARGET_HOST
+    .. c:type:: MACHINE_R3000
+    .. c:type:: MACHINE_R10000
+    .. c:type:: MACHINE_ALPHA
+    .. c:type:: MACHINE_SH3E
+    .. c:type:: MACHINE_ALPHA64
+    .. c:type:: MACHINE_AXP64
+    .. c:type:: MACHINE_TRICORE
+    .. c:type:: MACHINE_CEF
+    .. c:type:: MACHINE_CEE
 
     *Example: pe.machine == pe.MACHINE_AMD64*
 
@@ -95,6 +111,7 @@ Reference
     .. c:type:: SUBSYSTEM_EFI_APPLICATION
     .. c:type:: SUBSYSTEM_EFI_BOOT_SERVICE_DRIVER
     .. c:type:: SUBSYSTEM_EFI_RUNTIME_DRIVER
+    .. c:type:: SUBSYSTEM_EFI_ROM_IMAGE
     .. c:type:: SUBSYSTEM_XBOX
     .. c:type:: SUBSYSTEM_WINDOWS_BOOT_APPLICATION
 
@@ -102,14 +119,9 @@ Reference
 
 .. c:type:: timestamp
 
-    PE timestamp.
+    PE timestamp, as an epoch integer.
 
-.. c:type:: pointer_to_symbol_table
-
-    .. versionadded:: 3.8.0
-
-    Value of IMAGE_FILE_HEADER::PointerToSymbolTable. Used when the PE image has
-    COFF debug info.
+    *Example: pe.timestamp >= 1424563200*
 
 .. c:type:: pointer_to_symbol_table
 
@@ -139,6 +151,13 @@ Reference
 
     Value of IMAGE_OPTIONAL_HEADER::Magic.
 
+    Integer with one of the following values:
+
+        .. c:type:: IMAGE_NT_OPTIONAL_HDR32_MAGIC
+        .. c:type:: IMAGE_NT_OPTIONAL_HDR64_MAGIC
+        .. c:type:: IMAGE_ROM_OPTIONAL_HDR_MAGIC
+
+
 .. c:type:: size_of_code
 
     .. versionadded:: 3.8.0
@@ -158,9 +177,16 @@ Reference
 
 .. c:type:: entry_point
 
-    Entry point raw offset or virtual address depending on whether YARA is
+    Entry point file offset or virtual address depending on whether YARA is
     scanning a file or process memory respectively. This is equivalent to the
     deprecated ``entrypoint`` keyword.
+
+.. c:type:: entry_point_raw
+
+    Entry point raw value from the optional header of the PE. This value is not
+    converted to a file offset or an RVA.
+
+    .. versionadded:: 4.1.0
 
 .. c:type:: base_of_code
 
@@ -223,63 +249,63 @@ Reference
     following constants:
 
     .. c:type:: RELOCS_STRIPPED
-    
+
         Relocation info stripped from file.
-    
+
     .. c:type:: EXECUTABLE_IMAGE
-    
+
         File is executable  (i.e. no unresolved external references).
-    
+
     .. c:type:: LINE_NUMS_STRIPPED
-    
+
         Line numbers stripped from file.
-    
+
     .. c:type:: LOCAL_SYMS_STRIPPED
-    
+
         Local symbols stripped from file.
-    
+
     .. c:type:: AGGRESIVE_WS_TRIM
-    
+
         Aggressively trim working set
-    
+
     .. c:type:: LARGE_ADDRESS_AWARE
-    
+
         App can handle >2gb addresses
-    
+
     .. c:type:: BYTES_REVERSED_LO
-    
+
         Bytes of machine word are reversed.
-    
+
     .. c:type:: MACHINE_32BIT
-    
+
         32 bit word machine.
-    
+
     .. c:type:: DEBUG_STRIPPED
-    
+
         Debugging info stripped from file in .DBG file
-    
+
     .. c:type:: REMOVABLE_RUN_FROM_SWAP
-    
+
         If Image is on removable media, copy and run from the swap file.
-    
+
     .. c:type:: NET_RUN_FROM_SWAP
-    
+
         If Image is on Net, copy and run from the swap file.
-    
+
     .. c:type:: SYSTEM
-    
+
         System File.
-    
+
     .. c:type:: DLL
-    
+
         File is a DLL.
-    
+
     .. c:type:: UP_SYSTEM_ONLY
-    
+
         File should only be run on a UP machine
-    
+
     .. c:type:: BYTES_REVERSED_HI
-    
+
         Bytes of machine word are reversed.
 
     *Example:  pe.characteristics & pe.DLL*
@@ -343,6 +369,10 @@ Reference
     characteristics can be inspected by performing a bitwise AND
     operation with the following constants:
 
+    .. c:type:: HIGH_ENTROPY_VA
+
+        ASLR with 64 bit address space.
+
     .. c:type:: DYNAMIC_BASE
 
         File can be relocated - also marks the file as ASLR compatible
@@ -359,9 +389,17 @@ Reference
         set to use SafeSEH
 
     .. c:type:: NO_BIND
+    .. c:type:: APPCONTAINER
+
+        Image should execute in an AppContainer
+
     .. c:type:: WDM_DRIVER
 
         Marks the file as a Windows Driver Model (WDM) device driver.
+
+    .. c:type:: GUARD_CF
+
+        Image supports Control Flow Guard.
 
     .. c:type:: TERMINAL_SERVER_AWARE
 
@@ -455,6 +493,28 @@ Reference
 
         Data directory for debug information.
 
+        IMAGE_DEBUG_DIRECTORY::Type values:
+
+            .. c:type:: IMAGE_DEBUG_TYPE_UNKNOWN
+            .. c:type:: IMAGE_DEBUG_TYPE_COFF
+            .. c:type:: IMAGE_DEBUG_TYPE_CODEVIEW
+            .. c:type:: IMAGE_DEBUG_TYPE_FPO
+            .. c:type:: IMAGE_DEBUG_TYPE_MISC
+            .. c:type:: IMAGE_DEBUG_TYPE_EXCEPTION
+            .. c:type:: IMAGE_DEBUG_TYPE_FIXUP
+            .. c:type:: IMAGE_DEBUG_TYPE_OMAP_TO_SRC
+            .. c:type:: IMAGE_DEBUG_TYPE_OMAP_FROM_SRC
+            .. c:type:: IMAGE_DEBUG_TYPE_BORLAND
+            .. c:type:: IMAGE_DEBUG_TYPE_RESERVED10
+            .. c:type:: IMAGE_DEBUG_TYPE_CLSID
+            .. c:type:: IMAGE_DEBUG_TYPE_VC_FEATURE
+            .. c:type:: IMAGE_DEBUG_TYPE_POGO
+            .. c:type:: IMAGE_DEBUG_TYPE_ILTCG
+            .. c:type:: IMAGE_DEBUG_TYPE_MPX
+            .. c:type:: IMAGE_DEBUG_TYPE_REPRO
+
+    .. c:type:: IMAGE_DIRECTORY_ENTRY_ARCHITECTURE
+    .. c:type:: IMAGE_DIRECTORY_ENTRY_COPYRIGHT
     .. c:type:: IMAGE_DIRECTORY_ENTRY_TLS
 
         Data directory for image thread local storage.
@@ -475,7 +535,7 @@ Reference
 
         Data directory for Delayed Import Table. Structure of the delayed import table
         is linker-dependent. Microsoft version of delayed imports is described
-        in the souces "delayimp.h" and "delayimp.cpp", which can be found
+        in the sources "delayimp.h" and "delayimp.cpp", which can be found
         in MS Visual Studio 2008 CRT sources.
 
     .. c:type:: IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR
@@ -499,6 +559,16 @@ Reference
     .. c:member:: name
 
         Section name.
+
+    .. c:member:: full_name
+
+        If the name in the section table contains a slash (/) followed by
+        a representation of the decimal number in ASCII format, then this field
+        contains a string from the specified offset in the string table.
+        Otherwise, this field contains the same value as a name field.
+
+        Even though it's not a standard, MinGW and Cygwin compilers use this
+        feature to store section names which are longer than 8 characters.
 
     .. c:member:: characteristics
 
@@ -549,12 +619,37 @@ Reference
     Individual section characteristics can be inspected using a bitwise AND
     operation with the following constants:
 
+    .. c:type:: SECTION_NO_PAD
     .. c:type:: SECTION_CNT_CODE
     .. c:type:: SECTION_CNT_INITIALIZED_DATA
     .. c:type:: SECTION_CNT_UNINITIALIZED_DATA
+    .. c:type:: SECTION_LNK_OTHER
+    .. c:type:: SECTION_LNK_INFO
+    .. c:type:: SECTION_LNK_REMOVE
+    .. c:type:: SECTION_LNK_COMDAT
+    .. c:type:: SECTION_NO_DEFER_SPEC_EXC
     .. c:type:: SECTION_GPREL
+    .. c:type:: SECTION_MEM_FARDATA
+    .. c:type:: SECTION_MEM_PURGEABLE
     .. c:type:: SECTION_MEM_16BIT
     .. c:type:: SECTION_LNK_NRELOC_OVFL
+    .. c:type:: SECTION_MEM_LOCKED
+    .. c:type:: SECTION_MEM_PRELOAD
+    .. c:type:: SECTION_ALIGN_1BYTES
+    .. c:type:: SECTION_ALIGN_2BYTES
+    .. c:type:: SECTION_ALIGN_4BYTES
+    .. c:type:: SECTION_ALIGN_8BYTES
+    .. c:type:: SECTION_ALIGN_16BYTES
+    .. c:type:: SECTION_ALIGN_32BYTES
+    .. c:type:: SECTION_ALIGN_64BYTES
+    .. c:type:: SECTION_ALIGN_128BYTES
+    .. c:type:: SECTION_ALIGN_256BYTES
+    .. c:type:: SECTION_ALIGN_512BYTES
+    .. c:type:: SECTION_ALIGN_1024BYTES
+    .. c:type:: SECTION_ALIGN_2048BYTES
+    .. c:type:: SECTION_ALIGN_4096BYTES
+    .. c:type:: SECTION_ALIGN_8192BYTES
+    .. c:type:: SECTION_ALIGN_MASK
     .. c:type:: SECTION_MEM_DISCARDABLE
     .. c:type:: SECTION_MEM_NOT_CACHED
     .. c:type:: SECTION_MEM_NOT_PAGED
@@ -562,8 +657,9 @@ Reference
     .. c:type:: SECTION_MEM_EXECUTE
     .. c:type:: SECTION_MEM_READ
     .. c:type:: SECTION_MEM_WRITE
+    .. c:type:: SECTION_SCALE_INDEX
 
-    *Example: pe.sections[1].characteristics & SECTION_CNT_CODE*
+    *Example: pe.sections[1].characteristics & pe.SECTION_CNT_CODE*
 
 .. c:type:: overlay
 
@@ -573,13 +669,15 @@ Reference
 
     .. c:member:: offset
 
-        Overlay section offset.
+        Overlay section offset. This is 0 for PE files that don't have overlaid
+        data and undefined for non-PE files.
 
     .. c:member:: size
 
-        Overlay section size.
+        Overlay section size. This is 0 for PE files that don't have overlaid
+        data and undefined for non-PE files.
 
-    *Example: uint8(0x0d) at pe.overlay.offset and pe.overlay.size > 1024*
+    *Example: uint8(pe.overlay.offset) == 0x0d and pe.overlay.size > 1024*
 
 .. c:type:: number_of_resources
 
@@ -609,9 +707,14 @@ Reference
     Individual resources can be accessed by using the [] operator. Each
     resource object has the following attributes:
 
+    .. c:member:: rva
+
+        The RVA of the resource data.
+
     .. c:member:: offset
 
-        Offset for the resource data.
+        Offset for the resource data. This can be undefined if the RVA is
+        invalid.
 
     .. c:member:: length
 
@@ -699,9 +802,29 @@ Reference
 
     *Example:  pe.version_info["CompanyName"] contains "Microsoft"*
 
+.. c:type:: version_info_list
+
+    Array of structures containing information about the PE's version information.
+
+    .. c:member:: key
+
+        Key of version information.
+
+    .. c:member:: value
+
+        Value of version information.
+
+    *Example:  pe.version_info_list[0].value contains "Microsoft"*
+
 .. c:type:: number_of_signatures
 
     Number of authenticode signatures in the PE.
+
+.. c:type:: is_signed
+
+    True if any of the PE signatures is verified. Verified here means, that the signature is formally correct: digests match,
+    signer public key correctly verifies the encrypted digest, etc. But this doesn't mean that the signer (and thus the signature)
+    can be trusted as there are no trust anchors involved in the verification.
 
 .. c:type:: signatures
 
@@ -735,7 +858,26 @@ Reference
 
     .. c:member:: algorithm
 
-        Algorithm used for this signature. Usually "sha1WithRSAEncryption".
+        String representation of the algorithm used for this
+    signature. Usually "sha1WithRSAEncryption". It depends on the
+    X.509 and PKCS#7 implementations and possibly their versions,
+    consider using algorithm_oid instead.
+
+    .. c:member:: algorithm_oid
+
+        Object ID of the algorithm used for this signature, expressed
+        in numeric ASN.1 dot notation. The name contained in
+        algorithm is derived from this value. The object id is
+        expected to be stable across X.509 and PKCS#7 implementations
+        and their versions.
+
+    For example, when using the current OpenSSL-based implementation::
+
+        algorithm_oid == "1.2.840.113549.1.1.11"
+
+    is functionally equivalent to::
+
+            algorithm == "sha1WithRSAEncryption"
 
     .. c:member:: serial
 
@@ -761,6 +903,119 @@ Reference
         Is equivalent to::
 
             timestamp >= pe.signatures[n].not_before and timestamp <= pe.signatures[n].not_after
+
+   .. c:member:: verified
+
+        Boolean, true if signature was sucessfully verified. More details about what the `verified` means is mentioned
+        under the attribute `pe.is_signed`.
+
+    .. c:member:: digest_alg
+
+        Name of the algorithm used for file digest. Usually "sha1" or "sha256"
+
+    .. c:member:: digest
+
+        Digest of the file signed in the signature.
+
+    .. c:member:: file_digest
+
+        Calculated digest using digest_alg of the analysed file.
+
+    .. c:member:: number_of_certificates
+
+        Number of the certificates stored in the signature, including the ones in countersignatures.
+
+    .. c:type:: certificates
+
+        A zero-based array of certificates stored in the signature, including the ones in countersignatures.
+        The members of the certificates are identical to those already explained before, with the same name.
+
+        .. c:member:: thumbprint
+        .. c:member:: issuer
+        .. c:member:: subject
+        .. c:member:: version
+        .. c:member:: algorithm
+        .. c:member:: serial
+        .. c:member:: not_before
+        .. c:member:: not_after
+    
+    .. c:type:: signer_info
+
+        Information about the signature signer.
+
+        .. c:member:: program_name
+
+            Optional program name stored in the signature.
+
+        .. c:member:: digest
+
+            Signed digest of the signature.
+
+        .. c:member:: digest_alg
+
+            Algorithm used for the digest of the signature. Usually "sha1" or "sha256"
+
+        .. c:member:: length_of_chain
+
+            Number of certificates in the signers chain.
+
+        .. c:type:: chain
+
+        A zero-based array of certificates in the signers chain. The members of the certificates are
+        identical to those already explained before, with the same name.
+
+            .. c:member:: thumbprint
+            .. c:member:: issuer
+            .. c:member:: subject
+            .. c:member:: version
+            .. c:member:: algorithm
+            .. c:member:: serial
+            .. c:member:: not_before
+            .. c:member:: not_after
+
+    .. c:member:: number_of_countersignatures
+
+        Number of the countersignatures of the signature.
+
+    .. c:type:: countersignatures
+
+        A zero-based array of the countersignatures of the signature.
+        Almost always it's just single timestamp one.
+
+        .. c:member:: verified
+
+            Boolean, true if countersignature was sucessfully verified. More details about what the `verified` means is mentioned
+            under the attribute `pe.is_signed`.
+
+        .. c:member:: sign_time
+
+            Integer - unix time of the timestamp signing time.
+
+        .. c:member:: digest
+
+            Signed digest of the countersignature.
+
+        .. c:member:: digest_alg
+
+            Algorithm used for the digest of the countersignature. Usually "sha1" or "sha256"
+
+        .. c:member:: length_of_chain
+
+            Number of certificates in the countersigners chain.
+
+        .. c:type:: chain
+
+        A zero-based array of certificates in the countersigners chain. The members of the certificates are
+        identical to those already explained before, with the same name.
+
+            .. c:member:: thumbprint
+            .. c:member:: issuer
+            .. c:member:: subject
+            .. c:member:: version
+            .. c:member:: algorithm
+            .. c:member:: serial
+            .. c:member:: not_before
+            .. c:member:: not_after
 
 .. c:type:: rich_signature
 
@@ -788,29 +1043,51 @@ Reference
 
         Data after being decrypted by XORing it with the key.
 
+    .. c:member:: version_data
+
+        .. versionadded:: 4.3.0
+
+        Version fields after being decrypted by XORing it with the key.
+
     .. c:function:: version(version, [toolid])
 
         .. versionadded:: 3.5.0
 
-        Function returning true if the PE has the specified *version* in the PE's rich
-        signature. Provide the optional *toolid* argument to only match when both match
-        for one entry. More information can be found here:
+        Function returning a sum of count values of all matching *version*
+        records. Provide the optional *toolid* argument to only match when both
+        match for one entry. More information can be found here:
 
         http://www.ntcore.com/files/richsign.htm
 
-        *Example: pe.rich_signature.version(21005)*
+        Note: Prior to version *3.11.0*, this function returns only a boolean
+        value (0 or 1) if the given *version* and optional *toolid* is present
+        in an entry.
+
+        *Example: pe.rich_signature.version(24215, 261) == 61*
 
     .. c:function:: toolid(toolid, [version])
 
         .. versionadded:: 3.5.0
 
-        Function returning true if the PE has the specified *id* in the PE's rich
-        signature. Provide the optional *version* argument to only match when both
-        match for one entry. More information can be found here:
+        Function returning a sum of count values of all matching *toolid*
+        records. Provide the optional *version* argument to only match when
+        both match for one entry. More information can be found here:
 
         http://www.ntcore.com/files/richsign.htm
 
-        *Example: pe.rich_signature.toolid(222)*
+        Note: Prior to version *3.11.0*, this function returns only a boolean
+        value (0 or 1) if the given *toolid* and optional *version* is present
+        in an entry.
+
+        *Example: pe.rich_signature.toolid(170, 40219) >= 99*
+
+.. c:type:: pdb_path
+
+    .. versionadded:: 4.0.0
+
+    Path of the PDB file for this PE if present.
+
+    *Example: pe.pdb_path == "D:\\workspace\\2018_R9_RelBld\\target\\checkout\\custprof\\Release\\custprof.pdb"*
 
 .. c:function:: exports(function_name)
 
@@ -837,17 +1114,99 @@ Reference
 
     *Example:  pe.exports(/^AXS@@/)*
 
+.. c:function:: exports_index(function_name)
+
+    .. versionadded:: 4.0.0
+
+    Function returning the index into the export_details array where the named
+    function is, undefined otherwise.
+
+    *Example:  pe.exports_index("CPlApplet")*
+
+.. c:function:: exports_index(ordinal)
+
+    .. versionadded:: 4.0.0
+
+    Function returning the index into the export_details array where the
+    exported ordinal is, undefined otherwise.
+
+    *Example:  pe.exports_index(72)*
+
+.. c:function:: exports_index(/regular_expression/)
+
+    .. versionadded:: 4.0.0
+
+    Function returning the first index into the export_details array where the
+    regular expression matches the exported name, undefined otherwise.
+
+    *Example:  pe.exports_index(/^ERS@@/)*
+
 .. c:type:: number_of_exports
 
     .. versionadded:: 3.6.0
 
     Number of exports in the PE.
 
+.. c:type:: export_details
+
+    .. versionadded:: 4.0.0
+
+    Array of structures containing information about the PE's exports.
+
+    .. c:member:: offset
+
+        Offset where the exported function starts.
+
+    .. c:member:: name
+
+        Name of the exported function. It will be undefined if the function has
+        no name.
+
+    .. c:member:: forward_name
+
+        The name of the function where this export forwards to. It will be
+        undefined if the export is not a forwarding export.
+
+    .. c:member:: ordinal
+
+        The ordinal of the exported function, after the ordinal base has been
+        applied to it.
+
+.. c:type:: dll_name
+
+    .. versionadded:: 4.0.0
+
+    The name of the DLL, if it exists in the export directory.
+
+.. c:type:: export_timestamp
+
+    .. versionadded:: 4.0.0
+
+    The timestamp the export data was created..
+
 .. c:type:: number_of_imports
 
     .. versionadded:: 3.6.0
 
-    Number of imports in the PE.
+    Number of imported DLLs in the PE.
+
+.. c:type:: number_of_imported_functions
+
+    .. versionadded:: 4.1.0
+
+    Number of imported functions in the PE.
+
+.. c:type:: number_of_delayed_imports
+
+    .. versionadded:: 4.2.0
+
+    Number of delayed imported DLLs in the PE. (Number of IMAGE_DELAYLOAD_DESCRIPTOR parsed from file)
+
+.. c:type:: number_of_delay_imported_functions
+
+    .. versionadded:: 4.2.0
+
+    Number of delayed imported functions in the PE.
 
 .. c:function:: imports(dll_name, function_name)
 
@@ -859,11 +1218,17 @@ Reference
 .. c:function:: imports(dll_name)
 
     .. versionadded:: 3.5.0
+    .. versionchanged:: 4.0.0
 
-    Function returning true if the PE imports anything from *dll_name*,
-    or false otherwise. *dll_name* is case insensitive.
+    Function returning the number of functions from the *dll_name*, in the PE
+    imports. *dll_name* is case insensitive.
 
-    *Example:  pe.imports("kernel32.dll")*
+    Note: Prior to version 4.0.0, this function returned only a boolean value
+    indicating if the given DLL name was found in the PE imports. This change
+    is backward compatible, as any number larger than 0 also evaluates as
+    true.
+
+    *Examples:  pe.imports("kernel32.dll"), pe.imports("kernel32.dll") == 10*
 
 .. c:function:: imports(dll_name, ordinal)
 
@@ -877,13 +1242,178 @@ Reference
 .. c:function:: imports(dll_regexp, function_regexp)
 
     .. versionadded:: 3.8.0
+    .. versionchanged:: 4.0.0
 
-    Function returning true if the PE imports a function name matching
-    *function_regexp* from a DLL matching *dll_regexp*. *dll_regexp* is case
-    sensitive unless you use the "/i" modifier in the regexp, as shown in the
-    example below.
+    Function returning the number of functions from the PE imports where a
+    function name matches *function_regexp* and a DLL name matches
+    *dll_regexp*. Both *dll_regexp* and *function_regexp* are case sensitive
+    unless you use the "/i" modifier in the regexp, as shown in the example
+    below.
 
-    *Example:  pe.imports(/kernel32\.dll/i, /(Read|Write)ProcessMemory/)*
+    Note: Prior to version 4.0.0, this function returned only a boolean value
+    indicating if matching import was found or not. This change is backward
+    compatible, as any number larger than 0 also evaluates as true.
+
+    *Example:  pe.imports(/kernel32\.dll/i, /(Read|Write)ProcessMemory/) == 2*
+
+
+.. c:function:: imports(import_flag, dll_name, function_name)
+
+    .. versionadded:: 4.2.0
+
+    Function returning true if the PE imports *function_name* from *dll_name*,
+    or false otherwise. *dll_name* is case insensitive.
+
+    *import_flag* is flag which specify type of import which should YARA search for.
+    This value can be composed by bitwise OR these values:
+
+        .. c:member:: pe.IMPORT_STANDARD
+
+            Search in standard imports
+
+        .. c:member:: pe.IMPORT_DELAYED
+
+            Search in delayed imports
+
+        .. c:member:: pe.IMPORT_ANY
+
+            Search in all imports
+
+    *Example:  pe.imports(pe.IMPORT_DELAYED | pe.IMPORT_STANDARD, "kernel32.dll", "WriteProcessMemory")*
+
+.. c:function:: imports(import_flag, dll_name)
+
+    .. versionadded:: 4.2.0
+
+    Function returning the number of functions from the *dll_name*, in the PE
+    imports. *dll_name* is case insensitive.
+
+    *Examples:  pe.imports(pe.IMPORT_DELAYED, "kernel32.dll"), pe.imports("kernel32.dll") == 10*
+
+.. c:function:: imports(import_flag, dll_name, ordinal)
+
+    .. versionadded:: 4.2.0
+
+    Function returning true if the PE imports *ordinal* from *dll_name*,
+    or false otherwise. *dll_name* is case insensitive.
+
+    *Example:  pe.imports(pe.IMPORT_DELAYED, "WS2_32.DLL", 3)*
+
+.. c:function:: imports(import_flag, dll_regexp, function_regexp)
+
+    .. versionadded:: 4.2.0
+
+    Function returning the number of functions from the PE imports where a
+    function name matches *function_regexp* and a DLL name matches
+    *dll_regexp*. Both *dll_regexp* and *function_regexp* are case sensitive
+    unless you use the "/i" modifier in the regexp, as shown in the example
+    below.
+
+    *Example:  pe.imports(pe.IMPORT_DELAYED, /kernel32\.dll/i, /(Read|Write)ProcessMemory/) == 2*
+
+.. c:type:: import_details
+
+    .. versionadded:: 4.2.0
+
+    Array of structures containing information about the PE's imports libraries.
+
+    .. c:member:: library_name
+
+        Library name.
+
+    .. c:member:: number_of_functions
+
+        Number of imported function.
+
+    .. c:member:: functions
+
+        Array of structures containing information about the PE's imports functions.
+
+        .. c:member:: name
+
+            Name of imported function
+
+        .. c:member:: ordinal
+
+            Ordinal of imported function. If ordinal does not exist this value is YR_UNDEFINED
+
+        .. c:member:: rva
+
+            .. versionadded:: 4.3.0
+
+            Relative virtual address (RVA) of imported function. If rva not found then this value is YR_UNDEFINED
+
+    *Example: pe.import_details[1].library_name == "library_name"
+
+.. c:type:: delayed_import_details
+
+    .. versionadded:: 4.2.0
+
+    Array of structures containing information about the PE's delayed imports libraries.
+
+    .. c:member:: library_name
+
+        Library name.
+
+    .. c:member:: number_of_functions
+
+        Number of imported function.
+
+    .. c:member:: functions
+
+        Array of structures containing information about the PE's imports functions.
+
+        .. c:member:: name
+
+            Name of imported function
+
+        .. c:member:: ordinal
+
+            Ordinal of imported function. If ordinal does not exist this value is YR_UNDEFINED
+
+        .. c:member:: rva
+
+            .. versionadded:: 4.3.0
+            
+            Relative virtual address (RVA) of imported function. If rva not found then this value is YR_UNDEFINED
+
+    *Example: pe.delayed_import_details[1].name == "library_name"
+
+.. c:function:: import_rva(dll, function)
+
+    .. versionadded:: 4.3.0
+
+    Function returning the RVA of an import that matches the DLL name and
+    function name.
+
+    *Example: pe.import_rva("PtImageRW.dll", "ord4") == 254924
+
+.. c:function:: import_rva(dll, ordinal)
+
+    .. versionadded:: 4.3.0
+
+    Function returning the RVA of an import that matches the DLL name and
+    ordinal number.
+
+    *Example: pe.import_rva("PtPDF417Decode.dll", 4) == 254924
+
+.. c:function:: delayed_import_rva(dll, function)
+
+    .. versionadded:: 4.3.0
+
+    Function returning the RVA of a delayed import that matches the DLL name and
+    function name.
+
+    *Example: pe.delayed_import_rva("QDB.dll", "ord116") == 6110705
+
+.. c:function:: delayed_import_rva(dll, ordinal)
+
+    .. versionadded:: 4.3.0
+
+    Function returning the RVA of a delayed import that matches the DLL name and
+    ordinal number.
+
+    *Example: pe.delayed_import_rva("QDB.dll", 116) == 6110705
 
 .. c:function:: locale(locale_identifier)
 
@@ -912,9 +1442,11 @@ Reference
     .. versionadded:: 3.2.0
 
     Function returning the import hash or imphash for the PE. The imphash is
-    a MD5 hash of the PE's import table after some normalization. The imphash
+    an MD5 hash of the PE's import table after some normalization. The imphash
     for a PE can be also computed with `pefile <http://code.google.com/p/pefile/>`_
-    and you can find more information in `Mandiant's blog <https://www.mandiant.com/blog/tracking-malware-import-hashing/>`_.
+    and you can find more information in `Mandiant's blog
+    <https://www.mandiant.com/resources/blog/tracking-malware-import-hashing/>`_. The returned
+    hash string is always in lowercase.
 
     *Example: pe.imphash() == "b8bb385806b89680e13fc0cf24f4431e"*
 
@@ -933,6 +1465,14 @@ Reference
     *addr*. *addr* can be an offset into the file or a memory address.
 
     *Example: pe.section_index(pe.entry_point)*
+
+.. c:type:: is_pe
+
+    .. versionadded:: 3.8.0
+
+    Return true if the file is a PE.
+
+    *Example: pe.is_pe*
 
 .. c:function:: is_dll()
 

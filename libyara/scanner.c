@@ -28,29 +28,39 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include <stdlib.h>
-
 #include <yara/ahocorasick.h>
 #include <yara/error.h>
 #include <yara/exec.h>
 #include <yara/exefiles.h>
+#include <yara/libyara.h>
 #include <yara/mem.h>
 #include <yara/object.h>
 #include <yara/proc.h>
 #include <yara/scanner.h>
+#include <yara/strutils.h>
 #include <yara/types.h>
-#include <yara/libyara.h>
 
 #include "exception.h"
-
 
 static int _yr_scanner_scan_mem_block(
     YR_SCANNER* scanner,
     const uint8_t* block_data,
     YR_MEMORY_BLOCK* block)
 {
+  YR_DEBUG_FPRINTF(
+      2,
+      stderr,
+      "+ %s(block_data=%p block->base=0x%" PRIx64 " block->size=%zu) {\n",
+      __FUNCTION__,
+      block_data,
+      block->base,
+      block->size);
+
+  int result = ERROR_SUCCESS;
+
   YR_RULES* rules = scanner->rules;
-  YR_AC_TRANSITION_TABLE transition_table = rules->ac_transition_table;
-  YR_AC_MATCH_TABLE match_table = rules->ac_match_table;
+  YR_AC_TRANSITION* transition_table = rules->ac_transition_table;
+  uint32_t* match_table = rules->ac_match_table;
 
   YR_AC_MATCH* match;
   YR_AC_TRANSITION transition;
@@ -58,31 +68,67 @@ static int _yr_scanner_scan_mem_block(
   size_t i = 0;
   uint32_t state = YR_AC_ROOT_STATE;
   uint16_t index;
+  YR_STRING* report_string = NULL;
+  YR_RULE* rule = NULL;
 
   while (i < block->size)
   {
-    match = match_table[state].match;
-
     if (i % 4096 == 0 && scanner->timeout > 0)
     {
-      if (yr_stopwatch_elapsed_us(&scanner->stopwatch) > scanner->timeout)
-        return ERROR_SCAN_TIMEOUT;
+      if (yr_stopwatch_elapsed_ns(&scanner->stopwatch) > scanner->timeout)
+      {
+        result = ERROR_SCAN_TIMEOUT;
+        goto _exit;
+      }
     }
 
-    while (match != NULL)
+#if 2 == YR_DEBUG_VERBOSITY
+    if (0 != state)
+      YR_DEBUG_FPRINTF(
+          2,
+          stderr,
+          "- match_table[state=%u]=%'u i=%'ld "
+          "block_data=%p block->base=0x%" PRIx64 " // %s()\n",
+          state,
+          match_table[state],
+          i,
+          block_data,
+          block->base,
+          __FUNCTION__);
+#endif
+
+    if (match_table[state] != 0)
     {
-      if (match->backtrack <= i)
+      // If the entry corresponding to state N in the match table is zero, it
+      // means that there's no match associated to the state. If it's non-zero,
+      // its value is the 1-based index within ac_match_pool where the first
+      // match resides.
+
+      match = &rules->ac_match_pool[match_table[state] - 1];
+
+      if (scanner->matches->count >= YR_SLOW_STRING_MATCHES)
       {
-        FAIL_ON_ERROR(yr_scan_verify_match(
-            scanner,
-            match,
-            block_data,
-            block->size,
-            block->base,
-            i - match->backtrack));
+        report_string = match->string;
+        rule = report_string
+                   ? &scanner->rules->rules_table[report_string->rule_idx]
+                   : NULL;
       }
 
-      match = match->next;
+      while (match != NULL)
+      {
+        if (match->backtrack <= i)
+        {
+          GOTO_EXIT_ON_ERROR(yr_scan_verify_match(
+              scanner,
+              match,
+              block_data,
+              block->size,
+              block->base,
+              i - match->backtrack));
+        }
+
+        match = match->next;
+      }
     }
 
     index = block_data[i++] + 1;
@@ -105,69 +151,94 @@ static int _yr_scanner_scan_mem_block(
     state = YR_AC_NEXT_STATE(transition);
   }
 
-  match = match_table[state].match;
-
-  while (match != NULL)
+  if (match_table[state] != 0)
   {
-    if (match->backtrack <= i)
+    match = &rules->ac_match_pool[match_table[state] - 1];
+
+    while (match != NULL)
     {
-      FAIL_ON_ERROR(yr_scan_verify_match(
+      if (match->backtrack <= i)
+      {
+        GOTO_EXIT_ON_ERROR(yr_scan_verify_match(
+            scanner,
+            match,
+            block_data,
+            block->size,
+            block->base,
+            i - match->backtrack));
+      }
+
+      match = match->next;
+    }
+  }
+
+  if (rule != NULL && scanner->matches->count >= YR_SLOW_STRING_MATCHES &&
+      scanner->matches->count < YR_MAX_STRING_MATCHES)
+  {
+    if (rule != NULL && report_string != NULL)
+    {
+      result = scanner->callback(
           scanner,
-          match,
-          block_data,
-          block->size,
-          block->base,
-          i - match->backtrack));
-    }
-
-    match = match->next;
-  }
-
-  return ERROR_SUCCESS;
-}
-
-
-static void _yr_scanner_clean_matches(
-    YR_SCANNER* scanner)
-{
-  YR_RULE* rule;
-  YR_STRING** string;
-
-  int tidx = scanner->tidx;
-
-  yr_rules_foreach(scanner->rules, rule)
-  {
-    rule->t_flags[tidx] &= ~RULE_TFLAGS_MATCH;
-    rule->ns->t_flags[tidx] &= ~NAMESPACE_TFLAGS_UNSATISFIED_GLOBAL;
-  }
-
-  if (scanner->matching_strings_arena != NULL)
-  {
-    string = (YR_STRING**) yr_arena_base_address(
-        scanner->matching_strings_arena);
-
-    while (string != NULL)
-    {
-      (*string)->matches[tidx].count = 0;
-      (*string)->matches[tidx].head = NULL;
-      (*string)->matches[tidx].tail = NULL;
-      (*string)->unconfirmed_matches[tidx].count = 0;
-      (*string)->unconfirmed_matches[tidx].head = NULL;
-      (*string)->unconfirmed_matches[tidx].tail = NULL;
-
-      string = (YR_STRING**) yr_arena_next_address(
-          scanner->matching_strings_arena,
-          string,
-          sizeof(YR_STRING*));
+          CALLBACK_MSG_TOO_SLOW_SCANNING,
+          (void*) report_string,
+          scanner->user_data);
+      if (result != CALLBACK_CONTINUE)
+      {
+        result = ERROR_TOO_SLOW_SCANNING;
+        goto _exit;
+      }
     }
   }
+
+_exit:
+
+  YR_DEBUG_FPRINTF(
+      2,
+      stderr,
+      "} = %d AKA %s // %s()\n",
+      result,
+      yr_debug_error_as_string(result),
+      __FUNCTION__);
+
+  return result;
 }
 
-
-YR_API int yr_scanner_create(
-    YR_RULES* rules,
-    YR_SCANNER** scanner)
+static void _yr_scanner_clean_matches(YR_SCANNER* scanner)
 {
+  YR_DEBUG_FPRINTF(2, stderr, "- %s() {} \n", __FUNCTION__);
+
+  memset(
+      scanner->rule_matches_flags,
+      0,
+      sizeof(YR_BITMASK) * YR_BITMASK_SIZE(scanner->rules->num_rules));
+
+  memset(
+      scanner->required_eval,
+      0,
+      sizeof(YR_BITMASK) * YR_BITMASK_SIZE(scanner->rules->num_rules));
+
+  memset(
+      scanner->ns_unsatisfied_flags,
+      0,
+      sizeof(YR_BITMASK) * YR_BITMASK_SIZE(scanner->rules->num_namespaces));
+
+  memset(
+      scanner->strings_temp_disabled,
+      0,
+      sizeof(YR_BITMASK) * YR_BITMASK_SIZE(scanner->rules->num_strings));
+
+  memset(scanner->matches, 0, sizeof(YR_MATCHES) * scanner->rules->num_strings);
+
+  memset(
+      scanner->unconfirmed_matches,
+      0,
+      sizeof(YR_MATCHES) * scanner->rules->num_strings);
+}
+
+YR_API int yr_scanner_create(YR_RULES* rules, YR_SCANNER** scanner)
+{
+  YR_DEBUG_FPRINTF(2, stderr, "- %s() {} \n", __FUNCTION__);
+
   YR_EXTERNAL_VARIABLE* external;
   YR_SCANNER* new_scanner;
 
@@ -178,14 +249,60 @@ YR_API int yr_scanner_create(
 
   FAIL_ON_ERROR_WITH_CLEANUP(
       yr_hash_table_create(64, &new_scanner->objects_table),
-      yr_scanner_destroy(new_scanner));
+      yr_free(new_scanner));
 
   new_scanner->rules = rules;
-  new_scanner->tidx = -1;
-  new_scanner->entry_point = UNDEFINED;
+  new_scanner->entry_point = YR_UNDEFINED;
+  new_scanner->file_size = YR_UNDEFINED;
   new_scanner->canary = rand();
 
-  external = rules->externals_list_head;
+  // By default report both matching and non-matching rules.
+  new_scanner->flags = SCAN_FLAGS_REPORT_RULES_MATCHING |
+                       SCAN_FLAGS_REPORT_RULES_NOT_MATCHING;
+
+  new_scanner->rule_matches_flags = (YR_BITMASK*) yr_calloc(
+      sizeof(YR_BITMASK), YR_BITMASK_SIZE(rules->num_rules));
+
+  new_scanner->required_eval = (YR_BITMASK*) yr_calloc(
+      sizeof(YR_BITMASK), YR_BITMASK_SIZE(rules->num_rules));
+
+  new_scanner->ns_unsatisfied_flags = (YR_BITMASK*) yr_calloc(
+      sizeof(YR_BITMASK), YR_BITMASK_SIZE(rules->num_namespaces));
+
+  new_scanner->strings_temp_disabled = (YR_BITMASK*) yr_calloc(
+      sizeof(YR_BITMASK), YR_BITMASK_SIZE(rules->num_strings));
+
+  new_scanner->matches = (YR_MATCHES*) yr_calloc(
+      rules->num_strings, sizeof(YR_MATCHES));
+
+  new_scanner->unconfirmed_matches = (YR_MATCHES*) yr_calloc(
+      rules->num_strings, sizeof(YR_MATCHES));
+
+  if (new_scanner->rule_matches_flags == NULL ||
+      new_scanner->required_eval == NULL ||
+      new_scanner->ns_unsatisfied_flags == NULL ||
+      new_scanner->strings_temp_disabled == NULL ||
+      (new_scanner->matches == NULL && rules->num_strings > 0) ||
+      (new_scanner->unconfirmed_matches == NULL && rules->num_strings > 0))
+  {
+    yr_scanner_destroy(new_scanner);
+    return ERROR_INSUFFICIENT_MEMORY;
+  }
+
+#ifdef YR_PROFILING_ENABLED
+  new_scanner->profiling_info = yr_calloc(
+      rules->num_rules, sizeof(YR_PROFILING_INFO));
+
+  if (new_scanner->profiling_info == NULL && rules->num_rules > 0)
+  {
+    yr_scanner_destroy(new_scanner);
+    return ERROR_INSUFFICIENT_MEMORY;
+  }
+#else
+  new_scanner->profiling_info = NULL;
+#endif
+
+  external = rules->ext_vars_table;
 
   while (!EXTERNAL_VARIABLE_IS_NULL(external))
   {
@@ -193,15 +310,17 @@ YR_API int yr_scanner_create(
 
     FAIL_ON_ERROR_WITH_CLEANUP(
         yr_object_from_external_variable(external, &object),
+        // cleanup
         yr_scanner_destroy(new_scanner));
 
-    FAIL_ON_ERROR_WITH_CLEANUP(
-        yr_hash_table_add(
-            new_scanner->objects_table,
-            external->identifier,
-            NULL,
-            (void*) object),
-        yr_scanner_destroy(new_scanner));
+    FAIL_ON_ERROR_WITH_CLEANUP(yr_hash_table_add(
+                                   new_scanner->objects_table,
+                                   external->identifier,
+                                   NULL,
+                                   (void*) object),
+                               // cleanup
+                               yr_object_destroy(object);
+                               yr_scanner_destroy(new_scanner));
 
     yr_object_set_canary(object, new_scanner->canary);
     external++;
@@ -212,20 +331,26 @@ YR_API int yr_scanner_create(
   return ERROR_SUCCESS;
 }
 
-
-YR_API void yr_scanner_destroy(
-    YR_SCANNER* scanner)
+YR_API void yr_scanner_destroy(YR_SCANNER* scanner)
 {
-  RE_FIBER* fiber;
-  RE_FIBER* next_fiber;
+  YR_DEBUG_FPRINTF(2, stderr, "- %s() {} \n", __FUNCTION__);
 
-  fiber = scanner->re_fiber_pool.fibers.head;
+  RE_FIBER* fiber = scanner->re_fiber_pool.fibers.head;
 
   while (fiber != NULL)
   {
-    next_fiber = fiber->next;
+    RE_FIBER* next = fiber->next;
     yr_free(fiber);
-    fiber = next_fiber;
+    fiber = next;
+  }
+
+  RE_FAST_EXEC_POSITION* position = scanner->re_fast_exec_position_pool.head;
+
+  while (position != NULL)
+  {
+    RE_FAST_EXEC_POSITION* next = position->next;
+    yr_free(position);
+    position = next;
   }
 
   if (scanner->objects_table != NULL)
@@ -235,9 +360,18 @@ YR_API void yr_scanner_destroy(
         (YR_HASH_TABLE_FREE_VALUE_FUNC) yr_object_destroy);
   }
 
+#ifdef YR_PROFILING_ENABLED
+  yr_free(scanner->profiling_info);
+#endif
+
+  yr_free(scanner->rule_matches_flags);
+  yr_free(scanner->ns_unsatisfied_flags);
+  yr_free(scanner->required_eval);
+  yr_free(scanner->strings_temp_disabled);
+  yr_free(scanner->matches);
+  yr_free(scanner->unconfirmed_matches);
   yr_free(scanner);
 }
-
 
 YR_API void yr_scanner_set_callback(
     YR_SCANNER* scanner,
@@ -248,22 +382,26 @@ YR_API void yr_scanner_set_callback(
   scanner->user_data = user_data;
 }
 
-
-YR_API void yr_scanner_set_timeout(
-    YR_SCANNER* scanner,
-    int timeout)
+YR_API void yr_scanner_set_timeout(YR_SCANNER* scanner, int timeout)
 {
-  scanner->timeout = timeout * 1000000L;  // convert timeout to microseconds.
+  // Convert timeout from seconds to nanoseconds.
+  scanner->timeout = timeout * 1000000000ULL;
 }
 
-
-YR_API void yr_scanner_set_flags(
-    YR_SCANNER* scanner,
-    int flags)
+YR_API void yr_scanner_set_flags(YR_SCANNER* scanner, int flags)
 {
+  // For backward compatibility, if neither SCAN_FLAGS_REPORT_RULES_MATCHING
+  // nor SCAN_FLAGS_REPORT_RULES_NOT_MATCHING are specified, both are assumed.
+
+  if (!(flags & SCAN_FLAGS_REPORT_RULES_MATCHING) &&
+      !(flags & SCAN_FLAGS_REPORT_RULES_NOT_MATCHING))
+  {
+    flags |= SCAN_FLAGS_REPORT_RULES_MATCHING |
+             SCAN_FLAGS_REPORT_RULES_NOT_MATCHING;
+  }
+
   scanner->flags = flags;
 }
-
 
 YR_API int yr_scanner_define_integer_variable(
     YR_SCANNER* scanner,
@@ -271,9 +409,7 @@ YR_API int yr_scanner_define_integer_variable(
     int64_t value)
 {
   YR_OBJECT* obj = (YR_OBJECT*) yr_hash_table_lookup(
-      scanner->objects_table,
-      identifier,
-      NULL);
+      scanner->objects_table, identifier, NULL);
 
   if (obj == NULL)
     return ERROR_INVALID_ARGUMENT;
@@ -284,7 +420,6 @@ YR_API int yr_scanner_define_integer_variable(
   return yr_object_set_integer(value, obj, NULL);
 }
 
-
 YR_API int yr_scanner_define_boolean_variable(
     YR_SCANNER* scanner,
     const char* identifier,
@@ -293,16 +428,13 @@ YR_API int yr_scanner_define_boolean_variable(
   return yr_scanner_define_integer_variable(scanner, identifier, value);
 }
 
-
 YR_API int yr_scanner_define_float_variable(
     YR_SCANNER* scanner,
     const char* identifier,
     double value)
 {
   YR_OBJECT* obj = (YR_OBJECT*) yr_hash_table_lookup(
-      scanner->objects_table,
-      identifier,
-      NULL);
+      scanner->objects_table, identifier, NULL);
 
   if (obj == NULL)
     return ERROR_INVALID_ARGUMENT;
@@ -313,16 +445,13 @@ YR_API int yr_scanner_define_float_variable(
   return yr_object_set_float(value, obj, NULL);
 }
 
-
 YR_API int yr_scanner_define_string_variable(
     YR_SCANNER* scanner,
     const char* identifier,
     const char* value)
 {
   YR_OBJECT* obj = (YR_OBJECT*) yr_hash_table_lookup(
-      scanner->objects_table,
-      identifier,
-      NULL);
+      scanner->objects_table, identifier, NULL);
 
   if (obj == NULL)
     return ERROR_INVALID_ARGUMENT;
@@ -333,221 +462,262 @@ YR_API int yr_scanner_define_string_variable(
   return yr_object_set_string(value, strlen(value), obj, NULL);
 }
 
-
 YR_API int yr_scanner_scan_mem_blocks(
     YR_SCANNER* scanner,
     YR_MEMORY_BLOCK_ITERATOR* iterator)
 {
+  YR_DEBUG_FPRINTF(2, stderr, "+ %s() {\n", __FUNCTION__);
+
   YR_RULES* rules;
   YR_RULE* rule;
   YR_MEMORY_BLOCK* block;
 
-  int tidx = 0;
-  int result = ERROR_SUCCESS;
-
-  uint64_t elapsed_time;
+  int i, result = ERROR_SUCCESS;
 
   if (scanner->callback == NULL)
-    return ERROR_CALLBACK_REQUIRED;
+  {
+    result = ERROR_CALLBACK_REQUIRED;
+    goto _exit;
+  }
 
   scanner->iterator = iterator;
   rules = scanner->rules;
-  block = iterator->first(iterator);
 
-  if (block == NULL)
-    return ERROR_SUCCESS;
-
-  yr_mutex_lock(&rules->mutex);
-
-  while (tidx < YR_MAX_THREADS && YR_BITARRAY_TEST(rules->tidx_mask, tidx))
+  if (iterator->last_error == ERROR_BLOCK_NOT_READY)
   {
-    tidx++;
+    // The caller is invoking yr_scanner_scan_mem_blocks again because the
+    // previous call returned ERROR_BLOCK_NOT_READY.
+    block = iterator->next(iterator);
   }
-
-  if (tidx < YR_MAX_THREADS)
-    YR_BITARRAY_SET(rules->tidx_mask, tidx);
   else
-    result = ERROR_TOO_MANY_SCAN_THREADS;
-
-  yr_mutex_unlock(&rules->mutex);
-
-  if (result != ERROR_SUCCESS)
-    return result;
-
-  scanner->tidx = tidx;
-  scanner->file_size = block->size;
-
-  yr_set_tidx(tidx);
-
-  result = yr_arena_create(1048576, 0, &scanner->matches_arena);
-
-  if (result != ERROR_SUCCESS)
-    goto _exit;
-
-  result = yr_arena_create(4096, 0, &scanner->matching_strings_arena);
-
-  if (result != ERROR_SUCCESS)
-    goto _exit;
-
-  yr_stopwatch_start(&scanner->stopwatch);
-
-  while (block != NULL)
   {
-    const uint8_t* data = block->fetch_data(block);
+    // Create the notebook that will hold the YR_MATCH structures representing
+    // each match found. This notebook will also contain snippets of the
+    // matching data (the "data" field in YR_MATCH points to the snippet
+    // corresponding to the match). Each notebook's page can store up to 1024
+    // matches.
+    uint32_t max_match_data;
 
-    // fetch may fail
-    if (data == NULL)
-    {
-      block = iterator->next(iterator);
-      continue;
-    }
+    FAIL_ON_ERROR(
+        yr_get_configuration_uint32(YR_CONFIG_MAX_MATCH_DATA, &max_match_data));
 
-    if (scanner->entry_point == UNDEFINED)
-    {
-      YR_TRYCATCH(
-        !(scanner->flags & SCAN_FLAGS_NO_TRYCATCH),
-        {
-          if (scanner->flags & SCAN_FLAGS_PROCESS_MEMORY)
-            scanner->entry_point = yr_get_entry_point_address(
-                data,
-                block->size,
-                block->base);
-          else
-            scanner->entry_point = yr_get_entry_point_offset(
-                data,
-                block->size);
-        },{});
-    }
-
-    YR_TRYCATCH(
-      !(scanner->flags & SCAN_FLAGS_NO_TRYCATCH),
-      {
-        result = _yr_scanner_scan_mem_block(
-            scanner,
-            data,
-            block);
-      },{
-        result = ERROR_COULD_NOT_MAP_FILE;
-      });
+    result = yr_notebook_create(
+        1024 * (sizeof(YR_MATCH) + max_match_data), &scanner->matches_notebook);
 
     if (result != ERROR_SUCCESS)
       goto _exit;
 
-    block = iterator->next(iterator);
+    // Every rule that doesn't require a matching string must be evaluated
+    // regardless of whether a string matched or not.
+    memcpy(
+        scanner->required_eval,
+        scanner->rules->no_required_strings,
+        sizeof(YR_BITMASK) * YR_BITMASK_SIZE(rules->num_rules));
+
+    yr_stopwatch_start(&scanner->stopwatch);
+
+    block = iterator->first(iterator);
   }
 
   YR_TRYCATCH(
-    !(scanner->flags & SCAN_FLAGS_NO_TRYCATCH),
-    {
-      result = yr_execute_code(scanner);
-    },{
-      result = ERROR_COULD_NOT_MAP_FILE;
-    });
+      !(scanner->flags & SCAN_FLAGS_NO_TRYCATCH),
+      {
+        while (block != NULL)
+        {
+          const uint8_t* data = yr_fetch_block_data(block);
+
+          // fetch_data may fail and return NULL.
+          if (data == NULL)
+          {
+            block = iterator->next(iterator);
+            continue;
+          }
+
+          if (scanner->entry_point == YR_UNDEFINED)
+          {
+            if (scanner->flags & SCAN_FLAGS_PROCESS_MEMORY)
+              scanner->entry_point = yr_get_entry_point_address(
+                  data, block->size, block->base);
+            else
+              scanner->entry_point = yr_get_entry_point_offset(
+                  data, block->size);
+          }
+          result = _yr_scanner_scan_mem_block(scanner, data, block);
+          if (result != ERROR_SUCCESS)
+          {
+            break;
+          }
+          block = iterator->next(iterator);
+        }
+      },
+      { result = ERROR_COULD_NOT_MAP_FILE; });
 
   if (result != ERROR_SUCCESS)
     goto _exit;
 
-  yr_rules_foreach(rules, rule)
-  {
-    int message;
+  result = iterator->last_error;
 
-    if (rule->t_flags[tidx] & RULE_TFLAGS_MATCH &&
-        !(rule->ns->t_flags[tidx] & NAMESPACE_TFLAGS_UNSATISFIED_GLOBAL))
+  if (result != ERROR_SUCCESS)
+    goto _exit;
+
+  // If the iterator has a file_size function, ask the function for the file's
+  // size, if not file size is undefined.
+  if (iterator->file_size != NULL)
+    scanner->file_size = iterator->file_size(iterator);
+  else
+    scanner->file_size = YR_UNDEFINED;
+
+  YR_TRYCATCH(
+      !(scanner->flags & SCAN_FLAGS_NO_TRYCATCH),
+      { result = yr_execute_code(scanner); },
+      { result = ERROR_COULD_NOT_MAP_FILE; });
+
+  if (result != ERROR_SUCCESS)
+    goto _exit;
+
+  for (i = 0, rule = rules->rules_table; !RULE_IS_NULL(rule); i++, rule++)
+  {
+    int message = 0;
+
+    if (yr_bitmask_is_set(scanner->rule_matches_flags, i) &&
+        yr_bitmask_is_not_set(scanner->ns_unsatisfied_flags, rule->ns->idx))
     {
-      message = CALLBACK_MSG_RULE_MATCHING;
+      if (scanner->flags & SCAN_FLAGS_REPORT_RULES_MATCHING)
+        message = CALLBACK_MSG_RULE_MATCHING;
     }
     else
     {
-      message = CALLBACK_MSG_RULE_NOT_MATCHING;
+      if (scanner->flags & SCAN_FLAGS_REPORT_RULES_NOT_MATCHING)
+        message = CALLBACK_MSG_RULE_NOT_MATCHING;
     }
 
-    if (!RULE_IS_PRIVATE(rule))
+    if (message != 0 && !RULE_IS_PRIVATE(rule))
     {
-      switch (scanner->callback(message, rule, scanner->user_data))
+      switch (scanner->callback(scanner, message, rule, scanner->user_data))
       {
-        case CALLBACK_ABORT:
-          result = ERROR_SUCCESS;
-          goto _exit;
+      case CALLBACK_ABORT:
+        result = ERROR_SUCCESS;
+        goto _exit;
 
-        case CALLBACK_ERROR:
-          result = ERROR_CALLBACK_ERROR;
-          goto _exit;
+      case CALLBACK_ERROR:
+        result = ERROR_CALLBACK_ERROR;
+        goto _exit;
       }
     }
   }
 
-  scanner->callback(CALLBACK_MSG_SCAN_FINISHED, NULL, scanner->user_data);
+  scanner->callback(
+      scanner, CALLBACK_MSG_SCAN_FINISHED, NULL, scanner->user_data);
 
 _exit:
 
-  elapsed_time = yr_stopwatch_elapsed_us(&scanner->stopwatch);
-
-  #ifdef PROFILING_ENABLED
-  yr_rules_foreach(rules, rule)
+  // If error is ERROR_BLOCK_NOT_READY we don't clean the matches and don't
+  // destroy the notebook yet. ERROR_BLOCK_NOT_READY is not a permament error,
+  // the caller can still call this function again for a retry.
+  if (result != ERROR_BLOCK_NOT_READY)
   {
-    #ifdef _WIN32
-    InterlockedAdd64(&rule->time_cost, rule->time_cost_per_thread[tidx]);
-    #else
-    __sync_fetch_and_add(&rule->time_cost, rule->time_cost_per_thread[tidx]);
-    #endif
+    _yr_scanner_clean_matches(scanner);
 
-    rule->time_cost_per_thread[tidx] = 0;
-  }
-  #endif
-
-  _yr_scanner_clean_matches(scanner);
-
-  if (scanner->matches_arena != NULL)
-  {
-    yr_arena_destroy(scanner->matches_arena);
-    scanner->matches_arena = NULL;
+    if (scanner->matches_notebook != NULL)
+    {
+      yr_notebook_destroy(scanner->matches_notebook);
+      scanner->matches_notebook = NULL;
+    }
   }
 
-  if (scanner->matching_strings_arena != NULL)
-  {
-    yr_arena_destroy(scanner->matching_strings_arena);
-    scanner->matching_strings_arena = NULL;
-  }
-
-  yr_mutex_lock(&rules->mutex);
-  YR_BITARRAY_UNSET(rules->tidx_mask, tidx);
-  rules->time_cost += elapsed_time;
-  yr_mutex_unlock(&rules->mutex);
-
-  yr_set_tidx(-1);
+  YR_DEBUG_FPRINTF(
+      2,
+      stderr,
+      "} = %d AKA %s // %s()\n",
+      result,
+      yr_debug_error_as_string(result),
+      __FUNCTION__);
 
   return result;
 }
 
-
-static YR_MEMORY_BLOCK* _yr_get_first_block(
-    YR_MEMORY_BLOCK_ITERATOR* iterator)
+static YR_MEMORY_BLOCK* _yr_get_first_block(YR_MEMORY_BLOCK_ITERATOR* iterator)
 {
-  return (YR_MEMORY_BLOCK*) iterator->context;
+  YR_MEMORY_BLOCK* result = (YR_MEMORY_BLOCK*) iterator->context;
+
+  YR_DEBUG_FPRINTF(
+      2,
+      stderr,
+      "- %s() {} = %p // default iterator; single memory block, blocking\n",
+      __FUNCTION__,
+      result);
+
+  return result;
 }
 
-
-static YR_MEMORY_BLOCK* _yr_get_next_block(
-    YR_MEMORY_BLOCK_ITERATOR* iterator)
+static YR_MEMORY_BLOCK* _yr_get_next_block(YR_MEMORY_BLOCK_ITERATOR* iterator)
 {
-  return NULL;
+  YR_MEMORY_BLOCK* result = NULL;
+
+  YR_DEBUG_FPRINTF(
+      2,
+      stderr,
+      "- %s() {} = %p // default iterator; single memory block, blocking\n",
+      __FUNCTION__,
+      result);
+
+  return result;
 }
 
+static uint64_t _yr_get_file_size(YR_MEMORY_BLOCK_ITERATOR* iterator)
+{
+  uint64_t file_size = ((YR_MEMORY_BLOCK*) iterator->context)->size;
 
-static const uint8_t* _yr_fetch_block_data(
-    YR_MEMORY_BLOCK* block)
+  YR_DEBUG_FPRINTF(
+      2,
+      stderr,
+      "- %s() {} = %" PRIu64
+      "  // default iterator; single memory block, blocking\n",
+      __FUNCTION__,
+      file_size);
+
+  return file_size;
+}
+
+static const uint8_t* _yr_fetch_block_data(YR_MEMORY_BLOCK* block)
 {
   return (const uint8_t*) block->context;
 }
 
+YR_API const uint8_t* yr_fetch_block_data(YR_MEMORY_BLOCK* block)
+{
+  const uint8_t* data = block->fetch_data(block);
+  if (data == NULL)
+  {
+    return NULL;
+  }
+  jumpinfo* info = (jumpinfo*) yr_thread_storage_get_value(
+      &yr_trycatch_trampoline_tls);
+  if (info == NULL)  // Not called from YR_TRYCATCH
+  {
+    return data;
+  }
+  info->memfault_from = (void*) data;
+  info->memfault_to = (void*) (data + block->size);
+  return data;
+}
 
 YR_API int yr_scanner_scan_mem(
     YR_SCANNER* scanner,
     const uint8_t* buffer,
     size_t buffer_size)
 {
+  YR_DEBUG_FPRINTF(
+      2,
+      stderr,
+      "+ %s(buffer=%p buffer_size=%zu) {\n",
+      __FUNCTION__,
+      buffer,
+      buffer_size);
+
   YR_MEMORY_BLOCK block;
   YR_MEMORY_BLOCK_ITERATOR iterator;
+  int result;
 
   block.size = buffer_size;
   block.base = 0;
@@ -557,14 +727,39 @@ YR_API int yr_scanner_scan_mem(
   iterator.context = &block;
   iterator.first = _yr_get_first_block;
   iterator.next = _yr_get_next_block;
+  iterator.file_size = _yr_get_file_size;
+  iterator.last_error = ERROR_SUCCESS;
 
-  return yr_scanner_scan_mem_blocks(scanner, &iterator);
+  // Detect cases where every byte of input is checked for match and input size
+  // is bigger then 0.2 MB
+  if (scanner->rules->ac_match_table[YR_AC_ROOT_STATE] != 0 &&
+      buffer_size > YR_FILE_SIZE_THRESHOLD)
+  {
+    YR_STRING* report_string =
+        scanner->rules->ac_match_pool[YR_AC_ROOT_STATE].string;
+    result = scanner->callback(
+        scanner,
+        CALLBACK_MSG_TOO_SLOW_SCANNING,
+        (void*) report_string,
+        scanner->user_data);
+    if (result != CALLBACK_CONTINUE)
+      return ERROR_TOO_SLOW_SCANNING;
+  }
+
+  result = yr_scanner_scan_mem_blocks(scanner, &iterator);
+
+  YR_DEBUG_FPRINTF(
+      2,
+      stderr,
+      "} = %d AKA %s // %s()\n",
+      result,
+      yr_debug_error_as_string(result),
+      __FUNCTION__);
+
+  return result;
 }
 
-
-YR_API int yr_scanner_scan_file(
-    YR_SCANNER* scanner,
-    const char* filename)
+YR_API int yr_scanner_scan_file(YR_SCANNER* scanner, const char* filename)
 {
   YR_MAPPED_FILE mfile;
 
@@ -579,10 +774,7 @@ YR_API int yr_scanner_scan_file(
   return result;
 }
 
-
-YR_API int yr_scanner_scan_fd(
-    YR_SCANNER* scanner,
-    YR_FILE_DESCRIPTOR fd)
+YR_API int yr_scanner_scan_fd(YR_SCANNER* scanner, YR_FILE_DESCRIPTOR fd)
 {
   YR_MAPPED_FILE mfile;
 
@@ -597,10 +789,7 @@ YR_API int yr_scanner_scan_fd(
   return result;
 }
 
-
-YR_API int yr_scanner_scan_proc(
-    YR_SCANNER* scanner,
-    int pid)
+YR_API int yr_scanner_scan_proc(YR_SCANNER* scanner, int pid)
 {
   YR_MEMORY_BLOCK_ITERATOR iterator;
 
@@ -618,19 +807,112 @@ YR_API int yr_scanner_scan_proc(
   return result;
 }
 
-
-YR_API YR_STRING* yr_scanner_last_error_string(
-    YR_SCANNER* scanner)
+YR_API YR_STRING* yr_scanner_last_error_string(YR_SCANNER* scanner)
 {
   return scanner->last_error_string;
 }
 
-
-YR_API YR_RULE* yr_scanner_last_error_rule(
-    YR_SCANNER* scanner)
+YR_API YR_RULE* yr_scanner_last_error_rule(YR_SCANNER* scanner)
 {
   if (scanner->last_error_string == NULL)
     return NULL;
 
-  return scanner->last_error_string->rule;
+  return &scanner->rules->rules_table[scanner->last_error_string->rule_idx];
+}
+
+static int sort_by_cost_desc(
+    const struct YR_RULE_PROFILING_INFO* r1,
+    const struct YR_RULE_PROFILING_INFO* r2)
+{
+  if (r1->cost < r2->cost)
+    return 1;
+
+  if (r1->cost > r2->cost)
+    return -1;
+
+  return 0;
+}
+
+//
+// yr_scanner_get_profiling_info
+//
+// Returns a pointer to an array of YR_RULE_PROFILING_INFO structures with
+// information about the cost of each rule. The rules are sorted by cost
+// in descending order and the last item in the array has rule == NULL.
+// The caller is responsible for freeing the returned array by calling
+// yr_free. Calling this function only makes sense if YR_PROFILING_ENABLED
+// is defined, if not, the cost for each rule won't be computed, it will be
+// set to 0 for all rules.
+//
+YR_API YR_RULE_PROFILING_INFO* yr_scanner_get_profiling_info(
+    YR_SCANNER* scanner)
+{
+  YR_RULE_PROFILING_INFO* profiling_info = yr_malloc(
+      (scanner->rules->num_rules + 1) * sizeof(YR_RULE_PROFILING_INFO));
+
+  if (profiling_info == NULL)
+    return NULL;
+
+  for (uint32_t i = 0; i < scanner->rules->num_rules; i++)
+  {
+    profiling_info[i].rule = &scanner->rules->rules_table[i];
+#ifdef YR_PROFILING_ENABLED
+    profiling_info[i].cost = scanner->profiling_info[i].exec_time +
+                             (scanner->profiling_info[i].atom_matches *
+                              scanner->profiling_info[i].match_time) /
+                                 YR_MATCH_VERIFICATION_PROFILING_RATE;
+#else
+    memset(&profiling_info[i], 0, sizeof(YR_RULE_PROFILING_INFO));
+#endif
+  }
+
+  qsort(
+      profiling_info,
+      scanner->rules->num_rules,
+      sizeof(YR_RULE_PROFILING_INFO),
+      (int (*)(const void*, const void*)) sort_by_cost_desc);
+
+  profiling_info[scanner->rules->num_rules].rule = NULL;
+  profiling_info[scanner->rules->num_rules].cost = 0;
+
+  return profiling_info;
+}
+
+YR_API void yr_scanner_reset_profiling_info(YR_SCANNER* scanner)
+{
+#ifdef YR_PROFILING_ENABLED
+  memset(
+      scanner->profiling_info,
+      0,
+      scanner->rules->num_rules * sizeof(YR_PROFILING_INFO));
+#endif
+}
+
+YR_API int yr_scanner_print_profiling_info(YR_SCANNER* scanner)
+{
+  printf("\n===== PROFILING INFORMATION =====\n\n");
+
+  YR_RULE_PROFILING_INFO* info = yr_scanner_get_profiling_info(scanner);
+
+  if (info == NULL)
+    return ERROR_INSUFFICIENT_MEMORY;
+
+  YR_RULE_PROFILING_INFO* rpi = info;
+
+  while (rpi->rule != NULL)
+  {
+    printf(
+        "%10" PRIu64 " %s:%s: \n",
+        rpi->cost,
+        rpi->rule->ns->name,
+        rpi->rule->identifier);
+
+    rpi++;
+  }
+
+  printf("\n=================================\n");
+
+  yr_free(info);
+
+  return ERROR_SUCCESS;
 }

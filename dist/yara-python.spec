@@ -17,7 +17,7 @@ BuildRequires: gcc python-devel
 BuildRequires: libyara-devel
 
 %description
-YARA is a tool aimed at (but not limited to) helpingmalware researchers to identify and classify malwaresamples. With YARA you can create descriptions of malware families (or whatever you want to describe)based on textual or binary patterns.
+YARA is a tool aimed at (but not limited to) helping malware researchers to identify and classify malware samples. With YARA you can create descriptions of malware families (or whatever you want to describe) based on textual or binary patterns.
 
 %prep
 %setup -n %{name}-%{unmangled_version}

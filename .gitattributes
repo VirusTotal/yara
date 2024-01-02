@@ -1,0 +1,4 @@
+# https://pete.akeo.ie/2010/12/that-darn-libtoolize-acconfigmacrodirm4.html
+*.sh text eol=lf
+*.ac text eol=lf
+*.am text eol=lf

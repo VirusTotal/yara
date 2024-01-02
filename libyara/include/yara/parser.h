@@ -30,76 +30,74 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef YR_PARSER_H
 #define YR_PARSER_H
 
-
 #include "lexer.h"
-
 
 int yr_parser_emit(
     yyscan_t yyscanner,
     uint8_t instruction,
-    uint8_t** instruction_address);
-
+    YR_ARENA_REF* instruction_ref);
 
 int yr_parser_emit_with_arg(
     yyscan_t yyscanner,
     uint8_t instruction,
     int64_t argument,
-    uint8_t** instruction_address,
-    int64_t** argument_address);
+    YR_ARENA_REF* instruction_ref,
+    YR_ARENA_REF* argument_ref);
 
+int yr_parser_emit_with_arg_int32(
+    yyscan_t yyscanner,
+    uint8_t instruction,
+    int32_t argument,
+    YR_ARENA_REF* instruction_ref,
+    YR_ARENA_REF* argument_ref);
 
 int yr_parser_emit_with_arg_double(
     yyscan_t yyscanner,
     uint8_t instruction,
     double argument,
-    uint8_t** instruction_address,
-    double** argument_address);
-
+    YR_ARENA_REF* instruction_ref,
+    YR_ARENA_REF* argument_ref);
 
 int yr_parser_emit_with_arg_reloc(
     yyscan_t yyscanner,
     uint8_t instruction,
     void* argument,
-    uint8_t** instruction_address,
-    void** argument_address);
+    YR_ARENA_REF* instruction_ref,
+    YR_ARENA_REF* argument_ref);
 
+int yr_parser_emit_push_const(yyscan_t yyscanner, uint64_t argument);
 
 int yr_parser_check_types(
     YR_COMPILER* compiler,
     YR_OBJECT_FUNCTION* function,
     const char* actual_args_fmt);
 
-
 int yr_parser_lookup_string(
     yyscan_t yyscanner,
     const char* identifier,
     YR_STRING** string);
 
-
 int yr_parser_lookup_loop_variable(
     yyscan_t yyscanner,
-    const char* identifier);
-
+    const char* identifier,
+    YR_EXPRESSION*);
 
 int yr_parser_reduce_rule_declaration_phase_1(
     yyscan_t yyscanner,
     int32_t flags,
     const char* identifier,
-    YR_RULE** rule);
-
+    YR_ARENA_REF* rule_ref);
 
 int yr_parser_reduce_rule_declaration_phase_2(
     yyscan_t yyscanner,
-    YR_RULE* rule);
-
+    YR_ARENA_REF* rule_ref);
 
 int yr_parser_reduce_string_declaration(
     yyscan_t yyscanner,
-    int32_t flags,
+    YR_MODIFIER modifier,
     const char* identifier,
     SIZED_STRING* str,
-    YR_STRING** string);
-
+    YR_ARENA_REF* string_ref);
 
 int yr_parser_reduce_meta_declaration(
     yyscan_t yyscanner,
@@ -107,8 +105,7 @@ int yr_parser_reduce_meta_declaration(
     const char* identifier,
     const char* string,
     int64_t integer,
-    YR_META** meta);
-
+    YR_ARENA_REF* meta_ref);
 
 int yr_parser_reduce_string_identifier(
     yyscan_t yyscanner,
@@ -116,27 +113,27 @@ int yr_parser_reduce_string_identifier(
     uint8_t instruction,
     uint64_t at_offset);
 
-
 int yr_parser_emit_pushes_for_strings(
     yyscan_t yyscanner,
-    const char* identifier);
+    const char* identifier,
+    int* count);
 
+int yr_parser_emit_pushes_for_rules(
+    yyscan_t yyscanner,
+    const char* identifier,
+    int *count);
 
 int yr_parser_reduce_external(
     yyscan_t yyscanner,
     const char* identifier,
     uint8_t instruction);
 
-
-int yr_parser_reduce_import(
-    yyscan_t yyscanner,
-    SIZED_STRING* module_name);
-
+int yr_parser_reduce_import(yyscan_t yyscanner, SIZED_STRING* module_name);
 
 int yr_parser_reduce_operation(
     yyscan_t yyscanner,
     const char* operation,
-    EXPRESSION left_operand,
-    EXPRESSION right_operand);
+    YR_EXPRESSION left_operand,
+    YR_EXPRESSION right_operand);
 
 #endif

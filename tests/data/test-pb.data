@@ -1,0 +1,26 @@
+#
+# Data used by test-pb.c.
+#
+# The structure for this data is defined in:
+#   libyara/modules/pb_tests/pb_tests.proto
+#
+# Use the command below for encoding the data in binary form:
+#   protoc -I./libyara/pb -I./libyara/modules/pb_tests --encode=test.RootMessage \
+#     libyara/modules/pb_tests/pb_tests.proto < tests/data/test-pb.data > tests/data/test-pb.data.bin
+#
+
+f_int32: 1111
+f_int64: 2222
+f_string: "foo"
+f_struct_array: [
+    {
+        f_string: "bar"
+        f_enum: 1
+    },
+    {
+        f_string: "baz"
+        f_nested_struct: {
+            f_int32: 3333
+        }
+    }
+]

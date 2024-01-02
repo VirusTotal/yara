@@ -82,6 +82,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 %token <integer> _BYTE_
 %token <integer> _MASKED_BYTE_
+%token <integer> _NOT_BYTE_
+%token <integer> _MASKED_NOT_BYTE_
 %token <integer> _NUMBER_
 
 %type <re_node> tokens
@@ -198,16 +200,29 @@ range
         {
           yyerror(yyscanner, lex_env, "jumps over "
               STR(YR_STRING_CHAINING_THRESHOLD)
-              " now allowed inside alternation (|)");
+              " not allowed inside alternation (|)");
           YYABORT;
         }
 
-        $$ = yr_re_node_create(RE_NODE_RANGE_ANY);
+        // A jump of one is equivalent to ??
+        if ($2 == 1)
+        {
+          $$ = yr_re_node_create(RE_NODE_MASKED_LITERAL);
 
-        fail_if($$ == NULL, ERROR_INSUFFICIENT_MEMORY);
+          fail_if($$ == NULL, ERROR_INSUFFICIENT_MEMORY);
 
-        $$->start = (int) $2;
-        $$->end = (int) $2;
+          $$->value = 0x00;
+          $$->mask = 0x00;
+        }
+        else
+        {
+          $$ = yr_re_node_create(RE_NODE_RANGE_ANY);
+
+          fail_if($$ == NULL, ERROR_INSUFFICIENT_MEMORY);
+
+          $$->start = (int) $2;
+          $$->end = (int) $2;
+        }
       }
     | '[' _NUMBER_ '-' _NUMBER_ ']'
       {
@@ -217,7 +232,7 @@ range
         {
           yyerror(yyscanner, lex_env, "jumps over "
               STR(YR_STRING_CHAINING_THRESHOLD)
-              " now allowed inside alternation (|)");
+              " not allowed inside alternation (|)");
 
           YYABORT;
         }
@@ -313,6 +328,15 @@ byte
         $$->value = (int) $1;
         $$->mask = 0xFF;
       }
+    | _NOT_BYTE_
+      {
+        $$ = yr_re_node_create(RE_NODE_NOT_LITERAL);
+
+        fail_if($$ == NULL, ERROR_INSUFFICIENT_MEMORY);
+
+        $$->value = (int) $1;
+        $$->mask = 0xFF;
+      }
     | _MASKED_BYTE_
       {
         uint8_t mask = (uint8_t) ($1 >> 8);
@@ -335,6 +359,17 @@ byte
           $$->value = $1 & 0xFF;
           $$->mask = mask;
         }
+      }
+    | _MASKED_NOT_BYTE_
+      {
+        uint8_t mask = (uint8_t) ($1 >> 8);
+
+        $$ = yr_re_node_create(RE_NODE_MASKED_NOT_LITERAL);
+
+        fail_if($$ == NULL, ERROR_INSUFFICIENT_MEMORY);
+
+        $$->value = $1 & 0xFF;
+        $$->mask = mask;
       }
     ;
 

@@ -28,51 +28,44 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include <yara/exec.h>
-#include <yara/modules.h>
 #include <yara/libyara.h>
+#include <yara/modules.h>
 
-
-#define MODULE(name) \
-    int name ## __declarations(YR_OBJECT* module); \
-    int name ## __load(YR_SCAN_CONTEXT* context, \
-                       YR_OBJECT* module, \
-                       void* module_data, \
-                       size_t module_data_size); \
-    int name ## __unload(YR_OBJECT* main_structure); \
-    int name ## __initialize(YR_MODULE* module); \
-    int name ## __finalize(YR_MODULE* module);
-
+#define MODULE(name)                             \
+  int name##__declarations(YR_OBJECT* module);   \
+  int name##__load(                              \
+      YR_SCAN_CONTEXT* context,                  \
+      YR_OBJECT* module,                         \
+      void* module_data,                         \
+      size_t module_data_size);                  \
+  int name##__unload(YR_OBJECT* main_structure); \
+  int name##__initialize(YR_MODULE* module);     \
+  int name##__finalize(YR_MODULE* module);
 
 #include <modules/module_list>
 
 #undef MODULE
 
+#define MODULE(name)     \
+  {#name,                \
+   name##__declarations, \
+   name##__load,         \
+   name##__unload,       \
+   name##__initialize,   \
+   name##__finalize},
 
-#define MODULE(name) \
-    { \
-      #name, \
-      name##__declarations, \
-      name##__load, \
-      name##__unload, \
-      name##__initialize, \
-      name##__finalize \
-    },
-
-YR_MODULE yr_modules_table[] =
-{
-  #include <modules/module_list>
-};
+YR_MODULE yr_modules_table[] = {
+#include <modules/module_list>
+    {NULL, NULL, NULL, NULL, NULL, NULL}};
 
 #undef MODULE
 
-
 int yr_modules_initialize()
 {
-  int i;
-
-  for (i = 0; i < sizeof(yr_modules_table) / sizeof(YR_MODULE); i++)
+  for (YR_MODULE* module = yr_modules_table; module->initialize != NULL;
+       module++)
   {
-    int result = yr_modules_table[i].initialize(&yr_modules_table[i]);
+    int result = module->initialize(module);
 
     if (result != ERROR_SUCCESS)
       return result;
@@ -80,15 +73,12 @@ int yr_modules_initialize()
 
   return ERROR_SUCCESS;
 }
-
 
 int yr_modules_finalize()
 {
-  int i;
-
-  for (i = 0; i < sizeof(yr_modules_table) / sizeof(YR_MODULE); i++)
+  for (YR_MODULE* module = yr_modules_table; module->finalize != NULL; module++)
   {
-    int result = yr_modules_table[i].finalize(&yr_modules_table[i]);
+    int result = module->finalize(module);
 
     if (result != ERROR_SUCCESS)
       return result;
@@ -96,36 +86,30 @@ int yr_modules_finalize()
 
   return ERROR_SUCCESS;
 }
-
 
 int yr_modules_do_declarations(
     const char* module_name,
     YR_OBJECT* main_structure)
 {
-  int i;
-
-  for (i = 0; i < sizeof(yr_modules_table) / sizeof(YR_MODULE); i++)
+  for (YR_MODULE* module = yr_modules_table;
+       module->name != NULL && module->declarations != NULL;
+       module++)
   {
-    if (strcmp(yr_modules_table[i].name, module_name) == 0)
-      return yr_modules_table[i].declarations(main_structure);
+    if (strcmp(module->name, module_name) == 0)
+      return module->declarations(main_structure);
   }
 
   return ERROR_UNKNOWN_MODULE;
 }
 
-
-int yr_modules_load(
-    const char* module_name,
-    YR_SCAN_CONTEXT* context)
+int yr_modules_load(const char* module_name, YR_SCAN_CONTEXT* context)
 {
-  int i, result;
+  int result;
 
   YR_MODULE_IMPORT mi;
 
   YR_OBJECT* module_structure = (YR_OBJECT*) yr_hash_table_lookup(
-      context->objects_table,
-      module_name,
-      NULL);
+      context->objects_table, module_name, NULL);
 
   // if module_structure != NULL, the module was already
   // loaded, return successfully without doing nothing.
@@ -136,10 +120,7 @@ int yr_modules_load(
   // not loaded yet
 
   FAIL_ON_ERROR(yr_object_create(
-      OBJECT_TYPE_STRUCTURE,
-      module_name,
-      NULL,
-      &module_structure));
+      OBJECT_TYPE_STRUCTURE, module_name, NULL, &module_structure));
 
   // initialize canary for module's top-level structure, every other object
   // within the module inherits the same canary.
@@ -150,9 +131,7 @@ int yr_modules_load(
   mi.module_data_size = 0;
 
   result = context->callback(
-      CALLBACK_MSG_IMPORT_MODULE,
-      &mi,
-      context->user_data);
+      context, CALLBACK_MSG_IMPORT_MODULE, &mi, context->user_data);
 
   if (result == CALLBACK_ERROR)
   {
@@ -166,21 +145,17 @@ int yr_modules_load(
 
   FAIL_ON_ERROR_WITH_CLEANUP(
       yr_hash_table_add(
-          context->objects_table,
-          module_name,
-          NULL,
-          module_structure),
+          context->objects_table, module_name, NULL, module_structure),
       yr_object_destroy(module_structure));
 
-  for (i = 0; i < sizeof(yr_modules_table) / sizeof(YR_MODULE); i++)
+  for (YR_MODULE* module = yr_modules_table;
+       module->name != NULL && module->load != NULL;
+       module++)
   {
-    if (strcmp(yr_modules_table[i].name, module_name) == 0)
+    if (strcmp(module->name, module_name) == 0)
     {
-      result = yr_modules_table[i].load(
-          context,
-          module_structure,
-          mi.module_data,
-          mi.module_data_size);
+      result = module->load(
+          context, module_structure, mi.module_data, mi.module_data_size);
 
       if (result != ERROR_SUCCESS)
         return result;
@@ -188,6 +163,7 @@ int yr_modules_load(
   }
 
   result = context->callback(
+      context,
       CALLBACK_MSG_MODULE_IMPORTED,
       module_structure,
       context->user_data);
@@ -198,25 +174,26 @@ int yr_modules_load(
   return ERROR_SUCCESS;
 }
 
-
-int yr_modules_unload_all(
-    YR_SCAN_CONTEXT* context)
+int yr_modules_unload_all(YR_SCAN_CONTEXT* context)
 {
-  int i;
-
-  for (i = 0; i < sizeof(yr_modules_table) / sizeof(YR_MODULE); i++)
+  for (YR_MODULE* module = yr_modules_table;
+       module->name != NULL && module->unload != NULL;
+       module++)
   {
     YR_OBJECT* module_structure = (YR_OBJECT*) yr_hash_table_remove(
-        context->objects_table,
-        yr_modules_table[i].name,
-        NULL);
+        context->objects_table, module->name, NULL);
 
     if (module_structure != NULL)
     {
-      yr_modules_table[i].unload(module_structure);
+      module->unload(module_structure);
       yr_object_destroy(module_structure);
     }
   }
 
   return ERROR_SUCCESS;
+}
+
+YR_MODULE* yr_modules_get_table(void)
+{
+  return yr_modules_table;
 }

@@ -56,6 +56,7 @@ with noyywrap then we can remove this pragma.
 #include <yara/re_lexer.h>
 #include <yara/threading.h>
 #include <yara/strutils.h>
+#include <yara/compiler.h>
 
 
 #ifdef _WIN32
@@ -82,11 +83,13 @@ static uint8_t space_chars[] = {
 
 int escaped_char_value(
     char* text,
-    uint8_t* value);
+    uint8_t* value,
+    bool strict_escape);
 
 int read_escaped_char(
     yyscan_t yyscanner,
-    uint8_t* escaped_char);
+    uint8_t* escaped_char,
+    bool strict_escape);
 
 %}
 
@@ -122,11 +125,11 @@ hex_digit     [0-9a-fA-F]
   if (comma - yytext == strlen(yytext) - 2)
     // if comma is followed by the closing curly bracket
     // (example: {2,}) set high bound value to maximum.
-    hi_bound = INT16_MAX;
+    hi_bound = RE_MAX_RANGE;
   else
     hi_bound = atoi(comma + 1);
 
-  if (hi_bound > INT16_MAX)
+  if (hi_bound > RE_MAX_RANGE)
   {
     yyerror(yyscanner, lex_env, "repeat interval too large");
     yyterminate();
@@ -159,7 +162,7 @@ hex_digit     [0-9a-fA-F]
   // atoi can return a negative value if the input string represents a number
   // too large to fit in an integer.
 
-  if (value > INT16_MAX || value < 0)
+  if (value > RE_MAX_RANGE || value < 0)
   {
     yyerror(yyscanner, lex_env, "repeat interval too large");
     yyterminate();
@@ -280,9 +283,17 @@ hex_digit     [0-9a-fA-F]
 \\ {
 
   uint8_t c;
+  int return_code;
 
-  if (read_escaped_char(yyscanner, &c))
+  return_code = read_escaped_char(yyscanner, &c, LEX_ENV->strict_escape);
+  if (return_code == VALID_ESCAPE_SEQUENCE)
   {
+    yylval->integer = c;
+    return _CHAR_;
+  }
+  else if (return_code == UNKNOWN_ESCAPE_SEQUENCE)
+  {
+    yywarning(yyscanner, lex_env, "unknown escape sequence");
     yylval->integer = c;
     return _CHAR_;
   }
@@ -308,11 +319,28 @@ hex_digit     [0-9a-fA-F]
 
 
 
-<char_class>(\\x{hex_digit}{2}|\\.|[^\\])\-[^]] {
+<char_class>(\\x{hex_digit}{2}|\\.|[^]\\])-[^]] {
 
-  // A range inside a character class.
+  // A range inside a character class. The regexp is...
+  //
+  //   ( \x{hex_digit}{2}    Hex digit (i.e: \x01) ...
+  //   | \.                  ...or any escaped character (i.e. \\, \-) ...
+  //   | [^]\]               ...or any character except ] and \ ...
+  //   )
+  //   -                     ... followed by -
+  //   [^]]                  ... followed by any character except ]
+  //
+  // Some examples:
+  //
   //  [abc0-9]
-  //      ^- matching here
+  //      ^-^ matching range 0-9
+  //
+  //  [a-za-]
+  //   ^-^- matching range a-z
+  //
+  //  [\.-a]
+  //   ^--^- matching range \.-a
+  //
 
   uint16_t c;
   uint8_t start = yytext[0];
@@ -320,7 +348,7 @@ hex_digit     [0-9a-fA-F]
 
   if (start == '\\')
   {
-    if (!escaped_char_value(yytext, &start))
+    if (!escaped_char_value(yytext, &start, LEX_ENV->strict_escape))
     {
       yyerror(yyscanner, lex_env, "illegal escape sequence");
       yyterminate();
@@ -334,7 +362,7 @@ hex_digit     [0-9a-fA-F]
 
   if (end == '\\')
   {
-    if (!read_escaped_char(yyscanner, &end))
+    if (!read_escaped_char(yyscanner, &end, LEX_ENV->strict_escape))
     {
       yyerror(yyscanner, lex_env, "illegal escape sequence");
       yyterminate();
@@ -356,54 +384,42 @@ hex_digit     [0-9a-fA-F]
 
 <char_class>\\w {
 
-  int i;
-
-  for (i = 0; i < 32; i++)
+  for (int i = 0; i < 32; i++)
     LEX_ENV->re_class.bitmap[i] |= word_chars[i];
 }
 
 
 <char_class>\\W {
 
-  int i;
-
-  for (i = 0; i < 32; i++)
+  for (int i = 0; i < 32; i++)
     LEX_ENV->re_class.bitmap[i] |= ~word_chars[i];
 }
 
 
 <char_class>\\s {
 
-  int i;
-
-  for (i = 0; i < 32; i++)
+  for (int i = 0; i < 32; i++)
     LEX_ENV->re_class.bitmap[i] |= space_chars[i];
 }
 
 
 <char_class>\\S {
 
-  int i;
-
-  for (i = 0; i < 32; i++)
+  for (int i = 0; i < 32; i++)
     LEX_ENV->re_class.bitmap[i] |= ~space_chars[i];
 }
 
 
 <char_class>\\d {
 
-  char c;
-
-  for (c = '0'; c <= '9'; c++)
+  for (char c = '0'; c <= '9'; c++)
     LEX_ENV->re_class.bitmap[c / 8] |= 1 << c % 8;
 }
 
 
 <char_class>\\D {
 
-  int i;
-
-  for (i = 0; i < 32; i++)
+  for (int i = 0; i < 32; i++)
   {
     // digits 0-7 are in the sixth byte of the vector, let that byte alone
     if (i == 6)
@@ -422,9 +438,16 @@ hex_digit     [0-9a-fA-F]
 <char_class>\\ {
 
   uint8_t c;
+  int return_code;
 
-  if (read_escaped_char(yyscanner, &c))
+  return_code = read_escaped_char(yyscanner, &c, LEX_ENV->strict_escape);
+  if (return_code == VALID_ESCAPE_SEQUENCE)
   {
+    LEX_ENV->re_class.bitmap[c / 8] |= 1 << c % 8;
+  }
+  else if (return_code == UNKNOWN_ESCAPE_SEQUENCE)
+  {
+    yywarning(yyscanner, lex_env, "unknown escape sequence");
     LEX_ENV->re_class.bitmap[c / 8] |= 1 << c % 8;
   }
   else
@@ -484,7 +507,8 @@ hex_digit     [0-9a-fA-F]
 
 int escaped_char_value(
     char* text,
-    uint8_t* value)
+    uint8_t* value,
+    bool strict_escape)
 {
   unsigned int hex_value;
   char hex[3];
@@ -523,11 +547,49 @@ int escaped_char_value(
     *value = '\a';
     break;
 
+  // Support metacharacters in escape sequences
+  case '\\':
+  case '^':
+  case '$':
+  case '.':
+  case '|':
+  case '(':
+  case ')':
+  case '[':
+  case ']':
+
+  // Support other special characters that are used in rules and need to be escaped
+  case '*':
+  case '+':
+  case '?':
+  case '"':
+  case '\'':
+  case '-':
+  case '{':
+  case '}':
+  case '#':
+  case ':':
+  case '_':
+  case '=':
+  case '/':
+  case '!':
+  case ',':
+  case '@':
+  case '<':
+  case '>':
+  case '~':
+  case '&':
+  case '%':
+    *value = text[1];
+    break;
   default:
     *value = text[1];
+    if (strict_escape)
+      return UNKNOWN_ESCAPE_SEQUENCE;
+    return VALID_ESCAPE_SEQUENCE;
   }
 
-  return 1;
+  return VALID_ESCAPE_SEQUENCE;
 }
 
 
@@ -540,7 +602,8 @@ int escaped_char_value(
 
 int read_escaped_char(
     yyscan_t yyscanner,
-    uint8_t* escaped_char)
+    uint8_t* escaped_char,
+    bool strict_escape)
 {
   char text[4] = {0, 0, 0, 0};
 
@@ -563,18 +626,24 @@ int read_escaped_char(
       return 0;
   }
 
-  return escaped_char_value(text, escaped_char);
+  return escaped_char_value(text, escaped_char, strict_escape);
 }
 
 
+//
+// yyfatal (actually named re_yyfatal because of the '%option prefix="re_yy"'
+// directive) is called when a fatal error occurs in the parser. When this
+// happens we are deep inside the parsing logic generated by flex/bison and
+// the only way to exit gracefully from there is using setjmp/longjmp.
+//
 void yyfatal(
     yyscan_t yyscanner,
     const char *error_message)
 {
-  jmp_buf* recovery_state = (jmp_buf*) yr_thread_storage_get_value(
-      &yr_recovery_state_key);
+  jmp_buf* recovery_trampoline = (jmp_buf*) yr_thread_storage_get_value(
+      &yr_yyfatal_trampoline_tls);
 
-  longjmp(*recovery_state, 1);
+  longjmp(*recovery_trampoline, 1);
 }
 
 
@@ -588,7 +657,7 @@ void yyerror(
   // subsequent errors like "syntax error, unexpected $end" caused by
   // early parser termination.
 
-  if (lex_env->last_error == ERROR_SUCCESS)
+  if (lex_env->last_error == ERROR_SUCCESS || lex_env->last_error == ERROR_UNKNOWN_ESCAPE_SEQUENCE)
   {
     lex_env->last_error = ERROR_INVALID_REGULAR_EXPRESSION;
 
@@ -599,27 +668,60 @@ void yyerror(
   }
 }
 
+void yywarning(
+    yyscan_t yyscanner,
+    RE_LEX_ENVIRONMENT* lex_env,
+    const char *error_message)
+{
+  // Do not overwrite Errors
+  // print out warning only if there is not any other error beforehand
+
+  if (lex_env->last_error == ERROR_SUCCESS)
+  {
+    lex_env->last_error = ERROR_UNKNOWN_ESCAPE_SEQUENCE;
+
+    strlcpy(
+        lex_env->last_error_message,
+        error_message,
+        sizeof(lex_env->last_error_message));
+  }
+}
 
 int yr_parse_re_string(
   const char* re_string,
   RE_AST** re_ast,
-  RE_ERROR* error)
+  RE_ERROR* error,
+  int flags)
 {
   yyscan_t yyscanner;
-  jmp_buf recovery_state;
+  jmp_buf recovery_trampoline;
   RE_LEX_ENVIRONMENT lex_env;
 
   lex_env.last_error = ERROR_SUCCESS;
+  if (flags & RE_PARSER_FLAG_ENABLE_STRICT_ESCAPE_SEQUENCES)
+    lex_env.strict_escape = true;
+   else
+    lex_env.strict_escape = false;
   lex_env.last_error_message[0] = '\0';
 
-  yr_thread_storage_set_value(&yr_recovery_state_key, &recovery_state);
+  yr_thread_storage_set_value(
+      &yr_yyfatal_trampoline_tls,
+      &recovery_trampoline);
 
-  if (setjmp(recovery_state) != 0)
+  // setjmp returns a non-zero value only when we are returning to this
+  // point via a call to longjmp to the recovery trampoline.
+  if (setjmp(recovery_trampoline) != 0)
     return ERROR_INTERNAL_FATAL_ERROR;
 
   FAIL_ON_ERROR(yr_re_ast_create(re_ast));
 
-  yylex_init(&yyscanner);
+  if (yylex_init(&yyscanner) != 0)
+  {
+    yr_re_ast_destroy(*re_ast);
+    *re_ast = NULL;
+    return ERROR_INSUFFICIENT_MEMORY;
+  }
+
   yyset_extra(*re_ast, yyscanner);
   yy_scan_string(re_string, yyscanner);
   yyparse(yyscanner, &lex_env);
@@ -627,8 +729,11 @@ int yr_parse_re_string(
 
   if (lex_env.last_error != ERROR_SUCCESS)
   {
-    yr_re_ast_destroy(*re_ast);
-    *re_ast = NULL;
+    if (lex_env.last_error != ERROR_UNKNOWN_ESCAPE_SEQUENCE)
+    {
+      yr_re_ast_destroy(*re_ast);
+      *re_ast = NULL;
+    }
 
     strlcpy(
         error->message,

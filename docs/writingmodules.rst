@@ -61,7 +61,7 @@ as our starting point. The file looks like this:
         void* module_data,
         size_t module_data_size)
     {
-      set_string("Hello World!", module_object, "greeting");
+      yr_set_string("Hello World!", module_object, "greeting");
       return ERROR_SUCCESS;
     }
 
@@ -204,31 +204,32 @@ The second step is modifying the *Makefile.am* to tell the *make* program that
 the source code for your module must be compiled and linked into YARA. At the
 very beginning of *libyara/Makefile.am* you'll find this::
 
-    MODULES =  modules/tests.c
-    MODULES += modules/pe.c
+    MODULES =  libyara/modules/tests/tests.c
+    MODULES += libyara/modules/pe/pe.c
 
     if CUCKOO_MODULE
-    MODULES += modules/cuckoo.c
+    MODULES += libyara/modules/cuckoo/cuckoo.c
     endif
 
 
 Just add a new line for your module::
 
-    MODULES =  modules/tests.c
-    MODULES += modules/pe.c
+    MODULES =  libyara/modules/tests/tests.c
+    MODULES += libyara/modules/pe/pe.c
 
     if CUCKOO_MODULE
-    MODULES += modules/cuckoo.c
+    MODULES += libyara/modules/cuckoo/cuckoo.c
     endif
 
-    MODULES += modules/demo.c
+    MODULES += libyara/modules/demo/demo.c
 
 And that's all! Now you're ready to build YARA with your brand-new module
 included. Just go to the source tree root directory and type as always::
 
+    ./bootstrap.sh
+    ./configure
     make
     sudo make install
-
 
 Now you should be able to create a rule like this:
 
@@ -656,11 +657,14 @@ checks in your code nevertheless). In those cases you can use the
         const uint8_t* block_data;
 
         block = first_memory_block(context);
-        block_data = block->fetch_data(block)
-
-        if (block_data != NULL)
+        if (block != NULL)
         {
-          ..do something with the memory block
+          block_data = block->fetch_data(block)
+
+          if (block_data != NULL)
+          {
+            ..do something with the memory block
+          }
         }
     }
 
@@ -697,13 +701,15 @@ Setting variable's values
 The ``module_load`` function is where you assign values to the variables
 declared in the declarations section, once you've parsed or analyzed the scanned
 data and/or any additional module's data. This is done by using the
-``set_integer`` and ``set_string`` functions:
+``set_float``, ``set_integer``, and ``set_string`` functions:
+
+.. c:function:: void set_float(double value, YR_OBJECT* object, const char* field, ...)
 
 .. c:function:: void set_integer(int64_t value, YR_OBJECT* object, const char* field, ...)
 
 .. c:function:: void set_string(const char* value, YR_OBJECT* object, const char* field, ...)
 
-Both functions receive a value to be assigned to the variable, a pointer to a
+These functions receive a value to be assigned to the variable, a pointer to a
 ``YR_OBJECT`` representing the variable itself or some ancestor of
 that variable, a field descriptor, and additional arguments as defined by the
 field descriptor.
@@ -752,7 +758,7 @@ And the value for ``qux`` like this:
 
 Do you remember that the ``module_object`` argument for ``module_load`` was a
 pointer to a ``YR_OBJECT``? Do you remember that this ``YR_OBJECT`` is a
-structure just like ``bar`` is? Well, you could also set the values for ``bar``
+structure just like ``foo`` is? Well, you could also set the values for ``bar``
 and ``qux`` like this:
 
 .. code-block:: c
@@ -809,16 +815,17 @@ safely leave all your variables undefined instead of assigning them bogus
 values that don't make sense. YARA will handle undefined values in rule
 conditions as described in :ref:`using-modules`.
 
-In addition to ``set_integer`` and ``set_string`` functions you have their
-``get_integer`` and ``get_string`` counterparts. As the names suggest they
-are used for getting the value of a variable, which can be useful in the
-implementation of your functions to retrieve values previously stored by
-``module_load``.
+In addition to the ``set_float``, ``set_integer``, and ``set_string`` functions,
+you have their ``get_float``, ``get_integer``, and ``get_string`` counterparts.
+As the names suggest, they are used for getting the value of a variable, which
+can be useful in the implementation of your functions to retrieve values
+previously stored by ``module_load``.
 
+.. c:function:: double get_float(YR_OBJECT* object, const char* field, ...)
 
 .. c:function:: int64_t get_integer(YR_OBJECT* object, const char* field, ...)
 
-.. c:function:: char* get_string(YR_OBJECT* object, const char* field, ...)
+.. c:function:: SIZED_STRING* get_string(YR_OBJECT* object, const char* field, ...)
 
 There's also a function to get any ``YR_OBJECT`` in the objects tree:
 
@@ -869,7 +876,7 @@ following example:
         void* module_data,
         size_t module_data_size)
     {
-        module->data = yr_malloc(sizeof(MY_DATA));
+        module_object->data = yr_malloc(sizeof(MY_DATA));
         ((MY_DATA*) module_object->data)->some_integer = 0;
 
         return ERROR_SUCCESS;
@@ -948,8 +955,8 @@ depending on the function's return type. In all cases *x* is a constant,
 variable, or expression evaluating to ``char*``, ``int64_t`` or ``double``
 respectively.
 
-You can use ``return_string(UNDEFINED)``, ``return_float(UNDEFINED)`` and
-``return_integer(UNDEFINED)`` to return undefined values from the function.
+You can use ``return_string(YR_UNDEFINED)``, ``return_float(YR_UNDEFINED)`` and
+``return_integer(YR_UNDEFINED)`` to return undefined values from the function.
 This is useful in many situations, for example if the arguments passed to the
 functions don't make sense, or if your module expects a particular file format
 and the scanned file is from another format, or in any other case where your

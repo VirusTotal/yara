@@ -27,20 +27,24 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-
-#include <yara/stack.h>
 #include <yara.h>
-#include "util.h"
+#include <yara/stack.h>
 
+#include "util.h"
 
 int main(int argc, char** argv)
 {
+  int result = 0;
+
+  YR_DEBUG_INITIALIZE();
+  YR_DEBUG_FPRINTF(1, stderr, "+ %s() { // in %s\n", __FUNCTION__, argv[0]);
+
   YR_STACK* stack;
 
   int item;
 
   yr_initialize();
-  yr_stack_create(1, sizeof(item),  &stack);
+  yr_stack_create(1, sizeof(item), &stack);
 
   item = 1;
 
@@ -78,4 +82,10 @@ int main(int argc, char** argv)
     exit(EXIT_FAILURE);
 
   yr_stack_destroy(stack);
+  yr_finalize();
+
+  YR_DEBUG_FPRINTF(
+      1, stderr, "} = %d // %s() in %s\n", result, __FUNCTION__, argv[0]);
+
+  return result;
 }

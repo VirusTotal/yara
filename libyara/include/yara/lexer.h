@@ -29,7 +29,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <yara/compiler.h>
 
-
 #undef yyparse
 #undef yylex
 #undef yyerror
@@ -44,69 +43,44 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #undef YY_FATAL_ERROR
 #undef YY_EXTRA_TYPE
 
-#define yyparse       yara_yyparse
-#define yylex         yara_yylex
-#define yyerror       yara_yyerror
-#define yyfatal       yara_yyfatal
-#define yywarning     yara_yywarning
-#define yychar        yara_yychar
-#define yydebug       yara_yydebug
-#define yynerrs       yara_yynerrs
-#define yyget_extra   yara_yyget_extra
-#define yyget_lineno  yara_yyget_lineno
+#define yyparse      yara_yyparse
+#define yylex        yara_yylex
+#define yyerror      yara_yyerror
+#define yyfatal      yara_yyfatal
+#define yywarning    yara_yywarning
+#define yychar       yara_yychar
+#define yydebug      yara_yydebug
+#define yynerrs      yara_yynerrs
+#define yyget_extra  yara_yyget_extra
+#define yyget_lineno yara_yyget_lineno
 
+// Define the ECHO macro as an empty macro in order to avoid the default
+// implementation from being used. The default implementation of ECHO
+// prints to the console any byte that is not matched by the lexer. It's
+// not safe to print random bytes to the console as it may cause the calling
+// program to terminate. See: https://github.com/VirusTotal/yara/issues/2007
+#define ECHO
 
 #ifndef YY_TYPEDEF_YY_SCANNER_T
 #define YY_TYPEDEF_YY_SCANNER_T
 typedef void* yyscan_t;
 #endif
 
-#ifndef YY_TYPEDEF_EXPRESSION_T
-#define YY_TYPEDEF_EXPRESSION_T
-
-
-// Expression type constants are powers of two because they are used as flags.
-// For example:
-//   CHECK_TYPE(whatever, EXPRESSION_TYPE_INTEGER | EXPRESSION_TYPE_FLOAT)
-// The expression above is used to ensure that the type of "whatever" is either
-// integer or float.
-
-#define EXPRESSION_TYPE_BOOLEAN   1
-#define EXPRESSION_TYPE_INTEGER   2
-#define EXPRESSION_TYPE_STRING    4
-#define EXPRESSION_TYPE_REGEXP    8
-#define EXPRESSION_TYPE_OBJECT    16
-#define EXPRESSION_TYPE_FLOAT     32
-
-typedef struct _EXPRESSION
-{
-  int type;
-
-  union {
-    int64_t integer;
-    YR_OBJECT* object;
-    SIZED_STRING* sized_string;
-  } value;
-
-  const char* identifier;
-
-} EXPRESSION;
-
 union YYSTYPE;
 
-#endif
+#define YY_DECL \
+  int yylex(    \
+      union YYSTYPE* yylval_param, yyscan_t yyscanner, YR_COMPILER* compiler)
 
-
-#define YY_DECL int yylex( \
-    union YYSTYPE* yylval_param, yyscan_t yyscanner, YR_COMPILER* compiler)
-
-
+// The default behavior when a fatal error occurs in the parser is calling
+// exit(YY_EXIT_FAILURE) for terminating the process. This is not acceptable
+// for a library, which should return gracefully to the calling program. For
+// this reason we redefine the YY_FATAL_ERROR macro so that it expands to our
+// own function instead of the one provided by default.
 #define YY_FATAL_ERROR(msg) yara_yyfatal(yyscanner, msg)
-
 
 #define YY_EXTRA_TYPE YR_COMPILER*
 #define YY_USE_CONST
-
 
 int yyget_lineno(yyscan_t yyscanner);
 
@@ -115,35 +89,27 @@ int yylex(
     yyscan_t yyscanner,
     YR_COMPILER* compiler);
 
-int yyparse(
-    void *yyscanner,
-    YR_COMPILER* compiler);
+int yyparse(void* yyscanner, YR_COMPILER* compiler);
 
 void yyerror(
     yyscan_t yyscanner,
     YR_COMPILER* compiler,
-    const char *error_message);
+    const char* error_message);
 
-void yywarning(
-    yyscan_t yyscanner,
-    const char *message_fmt,
-    ...) YR_PRINTF_LIKE(2, 3);
+void yywarning(yyscan_t yyscanner, const char* message_fmt, ...)
+    YR_PRINTF_LIKE(2, 3);
 
-void yyfatal(
-    yyscan_t yyscanner,
-    const char *error_message);
+void yyfatal(yyscan_t yyscanner, const char* error_message);
 
-YY_EXTRA_TYPE yyget_extra(
-    yyscan_t yyscanner);
+YY_EXTRA_TYPE yyget_extra(yyscan_t yyscanner);
 
-int yr_lex_parse_rules_string(
-    const char* rules_string,
+int yr_lex_parse_rules_bytes(
+    const void* rules_data,
+    size_t rules_size,
     YR_COMPILER* compiler);
 
-int yr_lex_parse_rules_file(
-    FILE* rules_file,
-    YR_COMPILER* compiler);
+int yr_lex_parse_rules_string(const char* rules_string, YR_COMPILER* compiler);
 
-int yr_lex_parse_rules_fd(
-    YR_FILE_DESCRIPTOR rules_fd,
-    YR_COMPILER* compiler);
+int yr_lex_parse_rules_file(FILE* rules_file, YR_COMPILER* compiler);
+
+int yr_lex_parse_rules_fd(YR_FILE_DESCRIPTOR rules_fd, YR_COMPILER* compiler);

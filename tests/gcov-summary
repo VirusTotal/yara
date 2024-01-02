@@ -1,0 +1,39 @@
+#!/bin/sh
+
+# pseudo code:
+# - find all .c files in libyara/
+# - run gcov --preserve-paths <each .c file>
+# - fold gcov output into single summary line output
+# - remember files not executed, and percentages
+# - at end: output grand total percentage
+# - at end: output files not executed
+
+cd libyara/
+find . -type f | egrep "\.c$" | perl -lane '
+  if (-e $_) {
+    $cmd = qq[gcov --preserve-paths $_];
+    $out = `$cmd 2>&1`;
+    $out =~ s~(Creating|[^\n]+cannot open notes) [^\n]+\s+~~gs;
+    @out = split(m~\n~, $out);
+    foreach(reverse @out) {
+      if (m~assuming not executed~) {
+        push @assume, $_;
+        next;
+      }
+      if (m~Lines executed:([\d\.]+). of (\d+)~) {
+        $loc_tot += $2;
+        $loc_exe += ($2 * $1 / 100);
+      }
+      printf qq[%-32s%s], $_, m~^Lines~ ? q[] : qq[\n];
+    }
+  }
+  sub END {
+    if ($loc_tot) {
+      printf qq[Lines executed:%.2f%% of %u total lines in all executed code\n\n], $loc_exe / $loc_tot * 100, $loc_tot;
+    }
+    foreach(@assume) {
+      printf qq[%s\n], $_;
+    }
+  }'
+
+exit 0

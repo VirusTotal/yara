@@ -29,11 +29,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <stdio.h>
 #include <string.h>
-
+#include <yara/mem.h>
 #include <yara/strutils.h>
 
-uint64_t xtoi(
-    const char* hexstr)
+uint64_t xtoi(const char* hexstr)
 {
   size_t i;
   size_t l = strlen(hexstr);
@@ -44,36 +43,36 @@ uint64_t xtoi(
   {
     switch (hexstr[i])
     {
-      case '0':
-      case '1':
-      case '2':
-      case '3':
-      case '4':
-      case '5':
-      case '6':
-      case '7':
-      case '8':
-      case '9':
-        r |= ((uint64_t)(hexstr[i] - '0')) << ((l - i - 1) * 4);
-        break;
-      case 'a':
-      case 'b':
-      case 'c':
-      case 'd':
-      case 'e':
-      case 'f':
-        r |= ((uint64_t)(hexstr[i] - 'a' + 10)) << ((l - i - 1) * 4);
-        break;
-      case 'A':
-      case 'B':
-      case 'C':
-      case 'D':
-      case 'E':
-      case 'F':
-        r |= ((uint64_t)(hexstr[i] - 'A' + 10)) << ((l - i - 1) * 4);
-        break;
-      default:
-        i = l;  // force loop exit
+    case '0':
+    case '1':
+    case '2':
+    case '3':
+    case '4':
+    case '5':
+    case '6':
+    case '7':
+    case '8':
+    case '9':
+      r |= ((uint64_t) (hexstr[i] - '0')) << ((l - i - 1) * 4);
+      break;
+    case 'a':
+    case 'b':
+    case 'c':
+    case 'd':
+    case 'e':
+    case 'f':
+      r |= ((uint64_t) (hexstr[i] - 'a' + 10)) << ((l - i - 1) * 4);
+      break;
+    case 'A':
+    case 'B':
+    case 'C':
+    case 'D':
+    case 'E':
+    case 'F':
+      r |= ((uint64_t) (hexstr[i] - 'A' + 10)) << ((l - i - 1) * 4);
+      break;
+    default:
+      i = l;  // force loop exit
     }
   }
 
@@ -88,11 +87,7 @@ the following implementations were taken from OpenBSD.
 */
 
 #if !HAVE_STRLCPY && !defined(strlcpy)
-
-size_t strlcpy(
-    char* dst,
-    const char* src,
-    size_t size)
+size_t strlcpy(char* dst, const char* src, size_t size)
 {
   register char* d = dst;
   register const char* s = src;
@@ -115,23 +110,18 @@ size_t strlcpy(
   if (n == 0)
   {
     if (size != 0)
-      *d = '\0';    // NULL-terminate dst
+      *d = '\0';  // NULL-terminate dst
 
-    while (*s++);
+    while (*s++)
+      ;
   }
 
   return (s - src - 1);  // count does not include NULL
 }
-
 #endif
 
-
 #if !HAVE_STRLCAT && !defined(strlcat)
-
-size_t strlcat(
-    char* dst,
-    const char* src,
-    size_t size)
+size_t strlcat(char* dst, const char* src, size_t size)
 {
   register char* d = dst;
   register const char* s = src;
@@ -146,7 +136,7 @@ size_t strlcat(
   n = size - dlen;
 
   if (n == 0)
-    return(dlen + strlen(s));
+    return (dlen + strlen(s));
 
   while (*s != '\0')
   {
@@ -162,12 +152,9 @@ size_t strlcat(
 
   return (dlen + (s - src));  // count does not include NULL
 }
-
 #endif
 
-
-int strnlen_w(
-    const char* w_str)
+int strnlen_w(const char* w_str)
 {
   int len = 0;
 
@@ -180,10 +167,7 @@ int strnlen_w(
   return len;
 }
 
-
-int strcmp_w(
-    const char* w_str,
-    const char* str)
+int strcmp_w(const char* w_str, const char* str)
 {
   while (*str != 0 && w_str[0] == *str && w_str[1] == 0)
   {
@@ -199,11 +183,7 @@ int strcmp_w(
   return w_str[0] - *str;
 }
 
-
-size_t strlcpy_w(
-    char* dst,
-    const char* w_src,
-    size_t n)
+size_t strlcpy_w(char* dst, const char* w_src, size_t n)
 {
   register char* d = dst;
   register const char* s = w_src;
@@ -223,21 +203,22 @@ size_t strlcpy_w(
   return (s - w_src) / 2;
 }
 
-
 #if !HAVE_MEMMEM && !defined(memmem)
 void* memmem(
-    const void *haystack,
+    const void* haystack,
     size_t haystack_size,
-    const void *needle,
+    const void* needle,
     size_t needle_size)
 {
-  char *sp = (char *) haystack;
-  char *pp = (char *) needle;
-  char *eos = sp + haystack_size - needle_size;
+  char* sp = (char*) haystack;
+  char* pp = (char*) needle;
+  char* eos;
 
-  if (haystack == NULL || haystack_size == 0 ||
-      needle == NULL || needle_size == 0)
+  if (haystack == NULL || haystack_size == 0 || needle == NULL ||
+      needle_size == 0)
     return NULL;
+
+  eos = sp + haystack_size - needle_size;
 
   while (sp <= eos)
   {
@@ -250,3 +231,52 @@ void* memmem(
   return NULL;
 }
 #endif
+
+///////////////////////////////////////////////////////////////////////////////
+// This our own implementation of isalnum(). The library version is locale
+// dependent in some platforms and can consider non-ASCII characters to be
+// alphanumeric.
+//
+int yr_isalnum(const uint8_t* s)
+{
+  return (*s >= 0x30 && *s <= 0x39) || (*s >= 0x41 && *s <= 0x5a) ||
+         (*s >= 0x61 && *s <= 0x7a);
+}
+
+//////////////////////////////////////////////////////////////////////////
+// This our own implementation of vasprintf(), as it is not available on
+// some platforms. It is based on the implementation of vsnprintf but it
+// allocates memory using yr_malloc, and therefore the caller must free
+// the memory using yr_free.
+//
+void yr_vasprintf(char** strp, const char* fmt, va_list ap)
+{
+  va_list ap_copy;
+  va_copy(ap_copy, ap);
+  *strp = NULL;
+
+  int len = vsnprintf(NULL, 0, fmt, ap_copy);
+
+  va_end(ap_copy);
+
+  if (len < 0)
+    return;
+
+  *strp = (char*) yr_malloc(len + 1);
+
+  if (*strp == NULL)
+    return;
+
+  vsnprintf(*strp, len + 1, fmt, ap);
+}
+
+//////////////////////////////////////////////////////////////////////////
+// This our own implementation of asprintf(), see yr_vasprintf() for details.
+//
+void yr_asprintf(char** strp, const char* fmt, ...)
+{
+  va_list ap;
+  va_start(ap, fmt);
+  yr_vasprintf(strp, fmt, ap);
+  va_end(ap);
+}

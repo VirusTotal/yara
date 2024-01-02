@@ -36,7 +36,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "utils.h"
 
-// Maximum lenght of file paths. This is the only limit that doesn't have the
+// Maximum length of file paths. This is the only limit that doesn't have the
 // YR_ prefix. The intention is using the default MAX_PATH if defined.
 #ifndef MAX_PATH
 #define MAX_PATH 1024
@@ -50,17 +50,22 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define YR_MAX_THREADS 32
 #endif
 
+// Maximum number of buffers that an arena can have.
+#ifndef YR_MAX_ARENA_BUFFERS
+#define YR_MAX_ARENA_BUFFERS 16
+#endif
+
 // Capacity of the buffer used for storing compiler error messages. Messages
 // will be truncated at this size.
 #ifndef YR_MAX_COMPILER_ERROR_EXTRA_INFO
-#define YR_MAX_COMPILER_ERROR_EXTRA_INFO  256
+#define YR_MAX_COMPILER_ERROR_EXTRA_INFO 256
 #endif
 
 // Maximum size for the substring (atoms) extracted from strings and regular
 // expressions and put into the Aho-Corasick automaton. The maximum allows size
 // for this constant is 255.
 #ifndef YR_MAX_ATOM_LENGTH
-#define YR_MAX_ATOM_LENGTH  4
+#define YR_MAX_ATOM_LENGTH 4
 #endif
 
 #ifndef YR_MAX_ATOM_QUALITY
@@ -77,12 +82,12 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // must specify the threshold when calling yr_compiler_set_atom_quality_table.
 #ifndef YR_ATOM_QUALITY_WARNING_THRESHOLD
 #define YR_ATOM_QUALITY_WARNING_THRESHOLD \
-    YR_MAX_ATOM_QUALITY - 20 * YR_MAX_ATOM_LENGTH + 38
+  YR_MAX_ATOM_QUALITY - 22 * YR_MAX_ATOM_LENGTH + 38
 #endif
 
 // If a rule generates more than this number of atoms a warning is shown.
 #ifndef YR_ATOMS_PER_RULE_WARNING_THRESHOLD
-#define YR_ATOMS_PER_RULE_WARNING_THRESHOLD  10000
+#define YR_ATOMS_PER_RULE_WARNING_THRESHOLD 12000
 #endif
 
 // Maximum number of nested "for" loops in rule. Rules ith nested loops
@@ -91,8 +96,11 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define YR_MAX_LOOP_NESTING 4
 #endif
 
-#ifndef YR_MAX_ARENA_PAGES
-#define YR_MAX_ARENA_PAGES 32
+// Maximum number of local variables in a "for" loop. This includes the
+// variables defined explicitly defined by the user, not the internal variables
+// required for maintaining the loop's state.
+#ifndef YR_MAX_LOOP_VARS
+#define YR_MAX_LOOP_VARS 2
 #endif
 
 // Maximum number of nested included files.
@@ -101,9 +109,21 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #endif
 
 // Maximum number of matches allowed for a string. If more matches are found
-// the scan will fail with ERROR_TOO_MANY_MATCHES.
+// the scan will have a CALLBACK_MSG_TOO_MANY_MATCHES.
 #ifndef YR_MAX_STRING_MATCHES
 #define YR_MAX_STRING_MATCHES 1000000
+#endif
+
+// The number of matches before detecting slow scanning. If more matches are found
+// the scan will have a CALLBACK_MSG_TOO_SLOW_SCANNING.
+#ifndef YR_SLOW_STRING_MATCHES
+#define YR_SLOW_STRING_MATCHES 600000
+#endif
+
+// If size of the input is bigger then 0.2 MB and 0-length atoms are used
+// the scan will have a CALLBACK_MSG_TOO_SLOW_SCANNING.
+#ifndef YR_FILE_SIZE_THRESHOLD
+#define YR_FILE_SIZE_THRESHOLD 200000
 #endif
 
 // Maximum number of argument that a function in a YARA module can have.
@@ -116,15 +136,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define YR_MAX_OVERLOADED_FUNCTIONS 10
 #endif
 
-// Size of the stack used by yr_re_fast_exec.
-#ifndef YR_MAX_FAST_RE_STACK
-#define YR_MAX_FAST_RE_STACK 300
-#endif
-
-
 // Regular expressions like /foo.{x,y}bar/ are split in two separate ones /foo/
-// and /bar/ if x is larger than YR_STRING_CHAINING_THRESHOLD. This also applies to
-// hex strings like { 01 02 03 [x-y] 004 05 06 }.
+// and /bar/ if x is larger than YR_STRING_CHAINING_THRESHOLD. This also applies
+// to hex strings like { 01 02 03 [x-y] 004 05 06 }.
 #ifndef YR_STRING_CHAINING_THRESHOLD
 #define YR_STRING_CHAINING_THRESHOLD 200
 #endif
@@ -133,6 +147,15 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // paths and regular expressions.
 #ifndef YR_LEX_BUF_SIZE
 #define YR_LEX_BUF_SIZE 8192
+#endif
+
+// Each time an atom is found it means that we have a potential match for some
+// string, and that match must be verified. The time spent in verifying those
+// matches is measured in one out of YR_MATCH_VERIFICATION_PROFILING_RATE
+// matches. The time is not measured for all matches because measuring it is
+// expensive by itself and match verification is a frequent operation.
+#ifndef YR_MATCH_VERIFICATION_PROFILING_RATE
+#define YR_MATCH_VERIFICATION_PROFILING_RATE 1024
 #endif
 
 // Maximum allowed split ID, also limiting the number of split instructions
@@ -147,14 +170,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define RE_MAX_STACK 1024
 #endif
 
-// Maximum code size for a compiled regexp
-#ifndef RE_MAX_CODE_SIZE
-#define RE_MAX_CODE_SIZE 32768
-#endif
-
-// Maximum input size scanned by yr_re_exec
-#ifndef RE_SCAN_LIMIT
-#define RE_SCAN_LIMIT 4096
+// Maximum input size scanned by yr_re_exec and yr_re_fast_exec
+#ifndef YR_RE_SCAN_LIMIT
+#define YR_RE_SCAN_LIMIT 4096
 #endif
 
 // Maximum number of fibers

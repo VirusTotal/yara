@@ -1,9 +1,15 @@
 #include <yara.h>
-#include "util.h"
+
 #include "blob.h"
+#include "util.h"
 
 int main(int argc, char** argv)
 {
+  int result = 0;
+
+  YR_DEBUG_INITIALIZE();
+  YR_DEBUG_FPRINTF(1, stderr, "+ %s() { // in %s\n", __FUNCTION__, argv[0]);
+
   yr_initialize();
 
   assert_true_rule_blob(
@@ -103,5 +109,46 @@ int main(int argc, char** argv)
         }",
       DEX_FILE);
 
+  assert_true_rule_blob(
+      "import \"dex\" rule test { condition: \
+          dex.has_method(\"<init>\") \
+        }",
+      DEX_FILE);
+
+  assert_true_rule_blob(
+      "import \"dex\" rule test { condition: \
+          dex.has_method(\"Lcom/android/tools/ir/server/AppInfo;\", \"<clinit>\") \
+        }",
+      DEX_FILE);
+
+  assert_true_rule_blob(
+      "import \"dex\" rule test { condition: \
+          dex.has_method(/init/) \
+        }",
+      DEX_FILE);
+
+  assert_true_rule_blob(
+      "import \"dex\" rule test { condition: \
+          dex.has_method(/AppInfo/, /init/) \
+        }",
+      DEX_FILE);
+
+  assert_true_rule_blob(
+      "import \"dex\" rule test { condition: \
+          dex.has_class(\"Lcom/android/tools/ir/server/AppInfo;\") \
+        }",
+      DEX_FILE);
+
+  assert_true_rule_blob(
+      "import \"dex\" rule test { condition: \
+          dex.has_class(/AppInfo/) \
+        }",
+      DEX_FILE);
+
   yr_finalize();
+
+  YR_DEBUG_FPRINTF(
+      1, stderr, "} = %d // %s() in %s\n", result, __FUNCTION__, argv[0]);
+
+  return result;
 }

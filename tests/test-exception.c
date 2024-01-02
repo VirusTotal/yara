@@ -27,20 +27,20 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+#include <signal.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
 #include <sys/mman.h>
 #include <sys/wait.h>
-#include <signal.h>
-
+#include <unistd.h>
 #include <yara.h>
+
 #include "util.h"
 
 #define COUNT 128
 char wbuf[1024];
 
-extern char **environ;
+extern char** environ;
 
 int fd;
 uint8_t* mapped_region;
@@ -87,24 +87,24 @@ void setup_rules()
   yr_initialize();
 
   compile_rule(
-      "rule test { strings: $a = \"aaaa\" condition: all of them }",
-      &rules_a);
+      "import \"console\"\nrule test { strings: $a = \"aaaa\" condition: console.log(0) and all of them }", &rules_a);
 
   compile_rule(
       "rule test { strings: $a = { 00 00 00 00 } condition: all of them }",
       &rules_0);
 }
 
-void* crasher_func (void* x)
+void* crasher_func(void* x)
 {
   sleep(1);
-  int *i = 0;
-  puts("crashing process...");
+  int* i = 0;
+  fputs("crashing process...\n", stderr);
   *i = 0;
   return NULL;
 }
 
-/* Set up a thread that will cause a null pointer dereference after one second */
+/* Set up a thread that will cause a null pointer dereference after one second
+ */
 void setup_crasher()
 {
   pthread_t t;
@@ -113,8 +113,10 @@ void setup_crasher()
   pthread_create(&t, &attr, &crasher_func, NULL);
 }
 
-/* Simple yr_scan_* callback function that delays execution by 2 seconds */
-int delay_callback(int message,
+/* Simple yr_scan_* callback function that delays execution in CONSOLE_LOG by 2 seconds */
+int delay_callback(
+    YR_SCAN_CONTEXT* context,
+    int message,
     void* message_data,
     void* user_data)
 {
@@ -122,28 +124,37 @@ int delay_callback(int message,
   {
     (*(int*) user_data)++;
   }
-  puts("callback: delaying execution...");
-  sleep(2);
+  if (message == CALLBACK_MSG_CONSOLE_LOG)
+  {
+    fputs("callback: delaying execution...\n", stderr);
+    sleep(2);
+    fputs("callback: finished delaying execution.\n", stderr);
+  }
   return CALLBACK_CONTINUE;
 }
 
-/* Scan a partially backed memory map, raising an exceptions, usually SIGBUS or SIGSEGV. */
+/* Scan a partially backed memory map, raising an exceptions, usually SIGBUS or
+ * SIGSEGV. */
 int test_crash(int handle_exceptions)
 {
   setup_mmap();
   setup_rules();
 
-  puts("Scanning for \"aaaa\"...");
-  int matches = 0;
+  fputs("Scanning for \"aaaa\"...\n", stderr);
+
+  struct COUNTERS counters;
+
+  counters.rules_not_matching = 0;
+  counters.rules_matching = 0;
 
   int flags = (handle_exceptions ? 0 : SCAN_FLAGS_NO_TRYCATCH);
 
   int rc = yr_rules_scan_mem(
-      rules_a, mapped_region, COUNT * sizeof(wbuf), flags, count_matches, &matches, 0);
+      rules_a, mapped_region, COUNT * sizeof(wbuf), flags, count, &counters, 0);
 
-  printf("err = %d, matches = %d\n", rc, matches);
+  printf("err = %d, matches = %d\n", rc, counters.rules_matching);
 
-  if (rc == ERROR_SUCCESS || matches != 0)
+  if (rc == ERROR_SUCCESS || counters.rules_matching != 0)
     return 1;
 
   return 0;
@@ -163,7 +174,7 @@ int test_crash_other_thread()
   uint8_t mem[4096];
   memset(mem, 'a', sizeof(mem));
 
-  puts("Scanning for \"aaaa\"...");
+  fputs("Scanning for \"aaaa\"...\n", stderr);
   int matches = 0;
 
   int rc = yr_rules_scan_mem(
@@ -181,11 +192,12 @@ int test_crash_other_thread()
   This tests that SIGUSR1 is not delivered when setting up SIGBUS
   signal handling -- or during SIGBUS signal handling
 */
-int test_blocked_signal() {
+int test_blocked_signal()
+{
   setup_mmap();
   setup_rules();
 
-  puts("Sending blocked SIGUSR1 to ourselves...");
+  fputs("Sending blocked SIGUSR1 to ourselves...\n", stderr);
 
   sigset_t set;
   sigemptyset(&set);
@@ -193,26 +205,30 @@ int test_blocked_signal() {
   sigprocmask(SIG_BLOCK, &set, NULL);
   kill(getpid(), SIGUSR1);
 
-  puts("Scanning for {00 00 00 00}...");
-  int matches = 0;
+  fputs("Scanning for {00 00 00 00}...\n", stderr);
+
+  struct COUNTERS counters;
+
+  counters.rules_not_matching = 0;
+  counters.rules_matching = 0;
 
   int rc = yr_rules_scan_mem(
-      rules_0, mapped_region, COUNT * sizeof(wbuf), 0, count_matches, &matches, 0);
+      rules_0, mapped_region, COUNT * sizeof(wbuf), 0, count, &counters, 0);
 
-  printf("err = %d, matches = %d\n", rc, matches);
+  printf("err = %d, matches = %d\n", rc, counters.rules_matching);
 
-  if (rc == ERROR_SUCCESS || matches != 0)
+  if (rc == ERROR_SUCCESS || counters.rules_matching != 0)
     return 1;
 
   return 0;
 }
 
-int reexec(char *program)
+int reexec(char* program)
 {
-  char *argv[] = { program, NULL };
+  char* argv[] = {program, NULL};
   int status;
   int pid = fork();
-  switch(pid)
+  switch (pid)
   {
   case 0:
     return execve(program, argv, environ);
@@ -223,56 +239,88 @@ int reexec(char *program)
   return status;
 }
 
-int main(int argc, char **argv)
+int main(int argc, char** argv)
 {
-  char *op = getenv("TEST_OP");
+  int result = 0;
+
+  YR_DEBUG_INITIALIZE();
+  YR_DEBUG_FPRINTF(1, stderr, "+ %s() { // in %s\n", __FUNCTION__, argv[0]);
+
+  char* op = getenv("TEST_OP");
   if (op == NULL)
   {
     int status;
-    puts("Test: crash");
+    fputs("Test: crash\n", stderr);
     setenv("TEST_OP", "CRASH", 1);
     status = reexec(argv[0]);
     if (status != 0)
-      return 1;
+    {
+      result = 1;
+      goto _exit;
+    }
 
-    puts("Test: crash-no-handle");
+    fputs("Test: crash-no-handle\n", stderr);
     setenv("TEST_OP", "CRASH-NO-HANDLE", 1);
     status = reexec(argv[0]);
     if (!WIFSIGNALED(status))
     {
       fputs("Expected subprocess to be terminated by signal\n", stderr);
-      return 1;
+      result = 1;
+      goto _exit;
     }
 
-    puts("Test: blocked-signal");
+    fputs("Test: blocked-signal\n", stderr);
     setenv("TEST_OP", "BLOCKED-SIGNAL", 1);
     status = reexec(argv[0]);
     if (status != 0)
-      return 1;
+    {
+      result = 1;
+      goto _exit;
+    }
 
-    puts("Test: crash-other-thread");
+    fputs("Test: crash-other-thread\n", stderr);
     setenv("TEST_OP", "CRASH-OTHER-THREAD", 1);
     status = reexec(argv[0]);
     if (!WIFSIGNALED(status))
     {
       fputs("Expected subprocess to be terminated by signal\n", stderr);
-      return 1;
+      result = 1;
+      goto _exit;
     }
 
-    puts("Done.");
+    fputs("Done.\n", stderr);
   }
   else if (!strcmp(op, "CRASH"))
-    return test_crash(1);
+  {
+    result = test_crash(1);
+    goto _exit;
+  }
   else if (!strcmp(op, "CRASH-NO-HANDLE"))
-    return test_crash(0);
+  {
+    result = test_crash(0);
+    goto _exit;
+  }
   else if (!strcmp(op, "BLOCKED-SIGNAL"))
-    return test_blocked_signal();
+  {
+    result = test_blocked_signal();
+    goto _exit;
+  }
   else if (!strcmp(op, "CRASH-OTHER-THREAD"))
-    return test_crash_other_thread();
+  {
+    result = test_crash_other_thread();
+    goto _exit;
+  }
   else
   {
     fprintf(stderr, "wrong op '%s'\n", op);
-    return 77;
+    result = 77;
+    goto _exit;
   }
-  return 0;
+
+_exit:
+
+  YR_DEBUG_FPRINTF(
+      1, stderr, "} = %d // %s() in %s\n", result, __FUNCTION__, argv[0]);
+
+  return result;
 }

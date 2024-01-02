@@ -30,36 +30,122 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef _UTIL_H
 #define _UTIL_H
 
+#include <yara.h>
+#include <yara/globals.h>
+
+
+#define TEXT_0063_BYTES     "[ 987654321 987654321 987654321 987654321 987654321 987654321 ]"
+#define TEXT_0256_BYTES_001 "001" TEXT_0063_BYTES TEXT_0063_BYTES TEXT_0063_BYTES TEXT_0063_BYTES "\n"
+#define TEXT_0256_BYTES_002 "002" TEXT_0063_BYTES TEXT_0063_BYTES TEXT_0063_BYTES TEXT_0063_BYTES "\n"
+#define TEXT_0256_BYTES_003 "003" TEXT_0063_BYTES TEXT_0063_BYTES TEXT_0063_BYTES TEXT_0063_BYTES "\n"
+#define TEXT_0256_BYTES_004 "004" TEXT_0063_BYTES TEXT_0063_BYTES TEXT_0063_BYTES TEXT_0063_BYTES "\n"
+#define TEXT_1024_BYTES     TEXT_0256_BYTES_001 TEXT_0256_BYTES_002 TEXT_0256_BYTES_003 TEXT_0256_BYTES_004
+
+
 extern char compile_error[1024];
 extern int warnings;
+
+// For testing, 1024 means split contiguous memory into max 1024 byte blocks.
+// See https://github.com/VirusTotal/yara/issues/1356
+extern uint64_t yr_test_mem_block_size;
+
+// If yr_test_mem_block_size is non-zero, this specifies the bytes of the
+// previous memory block to include in the current memory block.
+extern uint64_t yr_test_mem_block_size_overlap;
+
+// Counts calls to 'get first / next block' function for testing purposes.
+extern uint64_t yr_test_count_get_block;
+
+
+typedef struct YR_TEST_ITERATOR_CTX YR_TEST_ITERATOR_CTX;
+
+struct YR_TEST_ITERATOR_CTX
+{
+  const uint8_t* buffer;
+  size_t buffer_size;
+
+  YR_MEMORY_BLOCK current_block;
+
+  // Indicates the frequency in which the iterator returns ERROR_BLOCK_NOT_READY
+  // errors. For example, if the frequency is 2, the iterator will return an
+  // ERROR_BLOCK_NOT_READY every two blocks succesfully returned. If the value
+  // is 1, it will return an ERROR_BLOCK_NOT_READY after every block that was
+  // returned succesfully. With a value of 0 the iterator won't ever return
+  // ERROR_BLOCK_NOT_READY.
+  int block_not_ready_frequency;
+
+  // Number of blocks that has been returned successfully so far. When this
+  // reaches block_not_ready_frequency an ERROR_BLOCK_NOT_READY is returned.
+  int blocks_returned_successfully;
+};
+
+extern char* top_srcdir;
+
+extern void init_top_srcdir(void);
+
+extern char* prefix_top_srcdir(char* dir);
+
+struct COUNTERS
+{
+  int rules_matching;
+  int rules_not_matching;
+  int rules_warning;
+};
 
 int compile_rule(
     char* string,
     YR_RULES** rules);
 
+int compile_rule_ex(
+    char* string,
+    YR_RULES** rules,
+    bool strict_escape_flag);
 
-int count_matches(
+typedef struct SCAN_CALLBACK_CTX SCAN_CALLBACK_CTX;
+
+struct SCAN_CALLBACK_CTX {
+  int matches;
+  void* module_data;
+  size_t module_data_size;
+};
+
+
+void init_test_iterator(
+    YR_MEMORY_BLOCK_ITERATOR* iterator,
+    YR_TEST_ITERATOR_CTX* ctx,
+    const uint8_t* buffer,
+    size_t buffer_size);
+
+int _scan_callback(
+    YR_SCAN_CONTEXT* context,
     int message,
     void* message_data,
     void* user_data);
 
+int count(
+    YR_SCAN_CONTEXT* context,
+    int message,
+    void* message_data,
+    void* user_data);
 
 int do_nothing(
+    YR_SCAN_CONTEXT* context,
     int message,
     void* message_data,
     void* user_data);
 
+extern int matches_blob_uses_default_iterator;
 
 int matches_blob(
     char* rule,
     uint8_t* blob,
-    size_t len);
-
+    size_t blob_size,
+    uint8_t* module_data,
+    size_t module_data_size);
 
 int matches_string(
     char* rule,
     char* string);
-
 
 int capture_string(
     char* rule,
@@ -101,6 +187,28 @@ void assert_hex_atoms(
     }                                                                   \
   } while (0);
 
+// Ensure that a particular string is found when scanning. This is useful for
+// making sure that unreferenced strings are searched for properly.
+// Specifically, making sure they have STRING_FLAGS_FIXED_OFFSET unset.
+#define assert_string_capture(rule, string, expected) do {              \
+    if (!capture_string(rule, string, expected)) {                      \
+      fprintf(stderr, "%s:%d: rule does not match\n",                   \
+              __FILE__, __LINE__);                                      \
+      exit(EXIT_FAILURE);                                               \
+    }                                                                   \
+  } while (0);
+
+#define assert_match_count(rule, string, count)                         \
+  do {                                                                  \
+    int result = matches_string(rule, string);                          \
+    if (result != count) {                                              \
+      fprintf(stderr, "%s:%d: rule does not match count: "              \
+              "expected: %d actual: %d\n",                              \
+              __FILE__, __LINE__,                                       \
+              count, result);                                           \
+      exit(EXIT_FAILURE);                                               \
+    }                                                                   \
+  } while (0);
 
 #define assert_true_rule(rule, string)                                  \
   do {                                                                  \
@@ -111,28 +219,31 @@ void assert_hex_atoms(
     }                                                                   \
   } while (0);
 
+
 #define assert_true_rule_blob_size(rule, blob, size)                    \
   do {                                                                  \
-    if (!matches_blob(rule, (uint8_t*) (blob), size)) {                 \
+    if (!matches_blob(rule, (uint8_t*) (blob), size, NULL, 0)) {        \
       fprintf(stderr, "%s:%d: rule does not match (but should)\n",      \
               __FILE__, __LINE__ );                                     \
       exit(EXIT_FAILURE);                                               \
     }                                                                   \
   } while (0);
 
-#define assert_true_rule_blob(rule, blob)               \
+
+#define assert_true_rule_blob(rule, blob)                               \
   assert_true_rule_blob_size(rule, blob, sizeof(blob))
+
 
 #define assert_true_rule_file(rule, filename)                           \
   do {                                                                  \
     char* buf;                                                          \
     size_t sz;                                                          \
-    if ((sz = read_file(filename, &buf)) == -1) {                       \
+    if ((sz = read_file(prefix_top_srcdir(filename), &buf)) == -1) {    \
       fprintf(stderr, "%s:%d: cannot read file '%s'\n",                 \
               __FILE__, __LINE__, filename);                            \
       exit(EXIT_FAILURE);                                               \
     }                                                                   \
-    if (!matches_blob(rule, (uint8_t*) (buf), sz)) {                    \
+    if (!matches_blob(rule, (uint8_t*) (buf), sz, NULL, 0)) {           \
       fprintf(stderr, "%s:%d: rule does not match contents of"          \
               "'%s' (but should)\n",                                    \
               __FILE__, __LINE__, filename);                            \
@@ -140,6 +251,7 @@ void assert_hex_atoms(
     }                                                                   \
     free(buf);                                                          \
   } while (0);
+
 
 #define assert_false_rule(rule, string)                                 \
   do {                                                                  \
@@ -150,28 +262,49 @@ void assert_hex_atoms(
     }                                                                   \
   } while (0);
 
+
 #define assert_false_rule_blob_size(rule, blob, size)                   \
   do {                                                                  \
-    if (matches_blob(rule, (uint8_t*) (blob), size)) {                  \
+    if (matches_blob(rule, (uint8_t*) (blob), size, NULL, 0)) {         \
       fprintf(stderr, "%s:%d: rule matches (but shouldn't)\n",          \
               __FILE__, __LINE__ );                                     \
       exit(EXIT_FAILURE);                                               \
     }                                                                   \
   } while (0);
 
-#define assert_false_rule_blob(rule, blob)              \
+
+#define assert_false_rule_blob(rule, blob)                              \
   assert_false_rule_blob_size(rule, blob, sizeof(blob))
+
+
+#define assert_true_rule_module_data_file(rule, filename)               \
+  do {                                                                  \
+    char* buf;                                                          \
+    size_t sz;                                                          \
+    if ((sz = read_file(prefix_top_srcdir(filename), &buf)) == -1) {    \
+      fprintf(stderr, "%s:%d: cannot read file '%s'\n",                 \
+              __FILE__, __LINE__, filename);                            \
+      exit(EXIT_FAILURE);                                               \
+    }                                                                   \
+    if (!matches_blob(rule, NULL, 0, (uint8_t*) buf, sz)) {             \
+      fprintf(stderr, "%s:%d: rule does not matches (but should)\n",    \
+              __FILE__, __LINE__);                                      \
+      exit(EXIT_FAILURE);                                               \
+    }                                                                   \
+    free(buf);                                                          \
+  } while (0);
+
 
 #define assert_false_rule_file(rule, filename)                          \
   do {                                                                  \
     char* buf;                                                          \
     size_t sz;                                                          \
-    if ((sz = read_file(filename, &buf)) == -1) {                       \
+    if ((sz = read_file(prefix_top_srcdir(filename), &buf)) == -1) {    \
       fprintf(stderr, "%s:%d: cannot read file '%s'\n",                 \
               __FILE__, __LINE__, filename);                            \
       exit(EXIT_FAILURE);                                               \
     }                                                                   \
-    if (matches_blob(rule, (uint8_t*) (buf), sz)) {                     \
+    if (matches_blob(rule, (uint8_t*) (buf), sz, NULL, 0)) {            \
       fprintf(stderr, "%s:%d: rule matches contents of"                 \
               "'%s' (but shouldn't)\n",                                 \
               __FILE__, __LINE__, filename);                            \
@@ -212,6 +345,26 @@ void assert_hex_atoms(
   } while (0);
 
 
+#define assert_warnings_strict_escape(rule, w) do {                     \
+    YR_RULES* rules;                                                    \
+    bool strict_escape = true;                                          \
+    int result = compile_rule_ex(rule, &rules, strict_escape);          \
+    if (result == ERROR_SUCCESS) {                                      \
+      yr_rules_destroy(rules);                                          \
+      if (warnings < w) {                                               \
+        fprintf(stderr, "%s:%d: expecting warning\n",                   \
+                __FILE__, __LINE__);                                    \
+        exit(EXIT_FAILURE);                                             \
+      }                                                                 \
+    }                                                                   \
+    else {                                                              \
+      fprintf(stderr, "%s:%d: failed to compile << %s >>: %s\n",        \
+              __FILE__, __LINE__, rule, compile_error);                 \
+      exit(EXIT_FAILURE);                                               \
+    }                                                                   \
+  } while (0);
+
+
 #define assert_no_warnings(rule) do {                                   \
     YR_RULES* rules;                                                    \
     int result = compile_rule(rule, &rules);                            \
@@ -234,6 +387,10 @@ void assert_hex_atoms(
 #define assert_warning(rule) assert_warnings(rule, 1)
 
 
+#define assert_warning_strict_escape(rule) \
+  assert_warnings_strict_escape(rule, 1)
+
+
 #define assert_true_regexp(regexp,string,expected) do {                 \
     if (!capture_string("rule test { strings: $a = /" regexp            \
                         "/ condition: $a }", string, expected)) {       \
@@ -243,9 +400,11 @@ void assert_hex_atoms(
     }                                                                   \
   } while (0);
 
+
 #define assert_false_regexp(regexp,string)                              \
   assert_false_rule("rule test { strings: $a = /" regexp                \
                     "/ condition: $a }", string)
+
 
 #define assert_regexp_syntax_error(regexp)                              \
   assert_error("rule test { strings: $a = /" regexp "/ condition: $a }",\

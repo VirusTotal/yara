@@ -1,6 +1,6 @@
-#line 1 "hex_lexer.c"
+#line 1 "libyara/hex_lexer.c"
 
-#line 3 "hex_lexer.c"
+#line 3 "libyara/hex_lexer.c"
 
 #define  YY_INT_ALIGNED short int
 
@@ -580,8 +580,8 @@ static void yynoreturn yy_fatal_error ( const char* msg , yyscan_t yyscanner );
 	yyg->yy_hold_char = *yy_cp; \
 	*yy_cp = '\0'; \
 	yyg->yy_c_buf_p = yy_cp;
-#define YY_NUM_RULES 18
-#define YY_END_OF_BUFFER 19
+#define YY_NUM_RULES 23
+#define YY_END_OF_BUFFER 24
 /* This struct is not used in this scanner,
    but its presence is necessary. */
 struct yy_trans_info
@@ -589,12 +589,12 @@ struct yy_trans_info
 	flex_int32_t yy_verify;
 	flex_int32_t yy_nxt;
 	};
-static const flex_int16_t yy_accept[34] =
+static const flex_int16_t yy_accept[40] =
     {   0,
-        0,    0,    0,    0,    0,    0,   19,   17,   15,   15,
-       16,   17,   17,   17,    5,    8,    8,   14,   13,   13,
-       10,   11,   12,    6,    9,    1,    2,    3,    4,    7,
-       11,    9,    0
+        0,    0,    0,    0,    0,    0,   24,   22,   20,   20,
+       21,   22,    8,   22,   10,    9,   13,   13,   19,   18,
+       18,   15,   16,   17,   11,   14,    1,    2,    4,    5,
+        0,    0,   12,   16,   14,    3,    6,    7,    0
     } ;
 
 static const YY_CHAR yy_ec[256] =
@@ -612,7 +612,7 @@ static const YY_CHAR yy_ec[256] =
 
        10,   10,    1,    1,    1,    1,    1,    1,    1,    1,
         1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
-        1,    1,    4,    4,    4,    1,    1,    1,    1,    1,
+        1,    1,    4,    4,    4,   13,    1,    1,    1,    1,
         1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
         1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
         1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
@@ -629,52 +629,59 @@ static const YY_CHAR yy_ec[256] =
         1,    1,    1,    1,    1
     } ;
 
-static const YY_CHAR yy_meta[13] =
+static const YY_CHAR yy_meta[14] =
     {   0,
-        1,    1,    2,    1,    1,    1,    1,    3,    3,    3,
-        1,    1
+        1,    1,    2,    1,    1,    1,    1,    3,    4,    3,
+        1,    1,    1
     } ;
 
-static const flex_int16_t yy_base[38] =
+static const flex_int16_t yy_base[48] =
     {   0,
-        0,    0,   36,   35,   12,    0,   39,   42,   42,   42,
-       42,   20,   29,   28,   42,   42,   29,   42,   42,   42,
-       42,   27,   42,   42,    0,   42,   42,   42,   42,   42,
-       26,    0,   42,   27,   29,   23,   30
+        0,    0,   28,   27,   12,   23,   30,   59,   59,   59,
+       59,   31,   19,   18,   59,   14,   59,   15,   59,   59,
+       59,   59,   13,   59,   59,    0,   59,   59,   59,   59,
+       10,    0,   59,    9,    0,   59,   59,   59,   59,   38,
+       42,   44,   46,   48,   52,   54,   13
     } ;
 
-static const flex_int16_t yy_def[38] =
+static const flex_int16_t yy_def[48] =
     {   0,
-       33,    1,   34,   34,   33,    5,   33,   33,   33,   33,
-       33,   33,   35,   36,   33,   33,   33,   33,   33,   33,
-       33,   33,   33,   33,   37,   33,   33,   33,   33,   33,
-       33,   37,    0,   33,   33,   33,   33
+       39,    1,   40,   40,   41,   41,   39,   39,   39,   39,
+       39,   39,   42,   43,   39,   44,   39,   39,   39,   39,
+       39,   39,   39,   39,   39,   45,   39,   39,   39,   39,
+       46,   47,   39,   39,   45,   39,   39,   39,    0,   39,
+       39,   39,   39,   39,   39,   39,   39
     } ;
 
-static const flex_int16_t yy_nxt[55] =
+static const flex_int16_t yy_nxt[73] =
     {   0,
         8,    9,   10,   11,    8,    8,   12,   13,   14,   13,
-       15,    8,   18,   19,   20,   18,   18,   21,   18,   22,
-       18,   18,   18,   23,   24,   28,   25,   16,   16,   16,
-       32,   26,   32,   31,   31,   30,   29,   27,   33,   17,
-       17,    7,   33,   33,   33,   33,   33,   33,   33,   33,
-       33,   33,   33,   33
+       15,    8,   16,   20,   21,   38,   34,   22,   37,   23,
+       34,   33,   32,   24,   20,   21,   30,   28,   22,   39,
+       23,   18,   18,   39,   24,   25,   39,   26,   17,   17,
+       17,   17,   19,   19,   19,   19,   27,   27,   29,   29,
+       31,   31,   35,   39,   35,   35,   36,   36,    7,   39,
+       39,   39,   39,   39,   39,   39,   39,   39,   39,   39,
+       39,   39
     } ;
 
-static const flex_int16_t yy_chk[55] =
+static const flex_int16_t yy_chk[73] =
     {   0,
         1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
-        1,    1,    5,    5,    5,    5,    5,    5,    5,    5,
-        5,    5,    5,    5,   12,   36,   12,   34,   34,   34,
-       37,   35,   37,   31,   22,   17,   14,   13,    7,    4,
-        3,   33,   33,   33,   33,   33,   33,   33,   33,   33,
-       33,   33,   33,   33
+        1,    1,    1,    5,    5,   47,   34,    5,   31,    5,
+       23,   18,   16,    5,    6,    6,   14,   13,    6,    7,
+        6,    4,    3,    0,    6,   12,    0,   12,   40,   40,
+       40,   40,   41,   41,   41,   41,   42,   42,   43,   43,
+       44,   44,   45,    0,   45,   45,   46,   46,   39,   39,
+       39,   39,   39,   39,   39,   39,   39,   39,   39,   39,
+       39,   39
     } ;
 
 /* Table of booleans, true if rule could match eol. */
-static const flex_int32_t yy_rule_can_match_eol[19] =
+static const flex_int32_t yy_rule_can_match_eol[24] =
     {   0,
-0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0,     };
+0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 
+    1, 0, 0, 0,     };
 
 /* The intent behind this definition is that it'll catch
  * any uses of REJECT which flex missed.
@@ -683,7 +690,7 @@ static const flex_int32_t yy_rule_can_match_eol[19] =
 #define yymore() yymore_used_but_not_detected
 #define YY_MORE_ADJ 0
 #define YY_RESTORE_YY_MORE_OFFSET
-#line 1 "hex_lexer.l"
+#line 1 "libyara/hex_lexer.l"
 /*
 Copyright (c) 2013. The YARA Authors. All Rights Reserved.
 
@@ -713,7 +720,7 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 /* Lexical analyzer for hex strings */
-#line 33 "hex_lexer.l"
+#line 33 "libyara/hex_lexer.l"
 
 /* Disable warnings for unused functions in this file.
 
@@ -753,11 +760,11 @@ with noyywrap then we can remove this pragma.
       YYABORT; \
     } \
 
-#line 756 "hex_lexer.c"
+#line 763 "libyara/hex_lexer.c"
 #define YY_NO_UNISTD_H 1
 #define YY_NO_INPUT 1
 
-#line 760 "hex_lexer.c"
+#line 767 "libyara/hex_lexer.c"
 
 #define INITIAL 0
 #define comment 1
@@ -1031,11 +1038,11 @@ YY_DECL
 		}
 
 	{
-#line 95 "hex_lexer.l"
+#line 95 "libyara/hex_lexer.l"
 
 
 
-#line 1038 "hex_lexer.c"
+#line 1045 "libyara/hex_lexer.c"
 
 	while ( /*CONSTCOND*/1 )		/* loops until end-of-file is reached */
 		{
@@ -1062,13 +1069,13 @@ yy_match:
 			while ( yy_chk[yy_base[yy_current_state] + yy_c] != yy_current_state )
 				{
 				yy_current_state = (int) yy_def[yy_current_state];
-				if ( yy_current_state >= 34 )
+				if ( yy_current_state >= 40 )
 					yy_c = yy_meta[yy_c];
 				}
 			yy_current_state = yy_nxt[yy_base[yy_current_state] + yy_c];
 			++yy_cp;
 			}
-		while ( yy_current_state != 33 );
+		while ( yy_current_state != 39 );
 		yy_cp = yyg->yy_last_accepting_cpos;
 		yy_current_state = yyg->yy_last_accepting_state;
 
@@ -1102,7 +1109,7 @@ do_action:	/* This label is used only to access EOF actions. */
 
 case 1:
 YY_RULE_SETUP
-#line 98 "hex_lexer.l"
+#line 98 "libyara/hex_lexer.l"
 {
 
   yylval->integer = xtoi(yytext);
@@ -1111,7 +1118,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 2:
 YY_RULE_SETUP
-#line 104 "hex_lexer.l"
+#line 104 "libyara/hex_lexer.l"
 {
 
   yytext[1] = '0'; // replace ? by 0
@@ -1121,7 +1128,16 @@ YY_RULE_SETUP
 	YY_BREAK
 case 3:
 YY_RULE_SETUP
-#line 111 "hex_lexer.l"
+#line 111 "libyara/hex_lexer.l"
+{
+
+  yylval->integer = xtoi(&(yytext[1]));
+  return _NOT_BYTE_;
+}
+	YY_BREAK
+case 4:
+YY_RULE_SETUP
+#line 117 "libyara/hex_lexer.l"
 {
 
   yytext[0] = '0'; // replace ? by 0
@@ -1129,121 +1145,159 @@ YY_RULE_SETUP
   return _MASKED_BYTE_;
 }
 	YY_BREAK
-case 4:
+case 5:
 YY_RULE_SETUP
-#line 118 "hex_lexer.l"
+#line 124 "libyara/hex_lexer.l"
 {
 
   yylval->integer = 0x0000;
   return _MASKED_BYTE_;
 }
 	YY_BREAK
-case 5:
+case 6:
 YY_RULE_SETUP
-#line 124 "hex_lexer.l"
+#line 130 "libyara/hex_lexer.l"
+{
+
+  yytext[2] = '0'; // replace ? by 0
+  yylval->integer = xtoi(&(yytext[1])) | 0xF000 ;
+  return _MASKED_NOT_BYTE_;
+}
+	YY_BREAK
+case 7:
+YY_RULE_SETUP
+#line 137 "libyara/hex_lexer.l"
+{
+
+  yytext[1] = '0'; // replace ? by 0
+  yylval->integer = xtoi(&(yytext[1])) | 0x0F00 ;
+  return _MASKED_NOT_BYTE_;
+}
+	YY_BREAK
+case 8:
+YY_RULE_SETUP
+#line 144 "libyara/hex_lexer.l"
+{
+
+  yyerror(yyscanner, lex_env, "uneven number of digits in hex string");
+  yyterminate();
+}
+	YY_BREAK
+case 9:
+YY_RULE_SETUP
+#line 150 "libyara/hex_lexer.l"
+{
+
+  yyerror(yyscanner, lex_env, "invalid not operator (~) in hex string");
+  yyterminate();
+}
+	YY_BREAK
+case 10:
+YY_RULE_SETUP
+#line 157 "libyara/hex_lexer.l"
 {
 
   BEGIN(range);
   return yytext[0];
 }
 	YY_BREAK
-case 6:
+case 11:
 YY_RULE_SETUP
-#line 130 "hex_lexer.l"
+#line 163 "libyara/hex_lexer.l"
 {
 
   BEGIN(comment);
 }
 	YY_BREAK
-case 7:
+case 12:
 YY_RULE_SETUP
-#line 135 "hex_lexer.l"
+#line 168 "libyara/hex_lexer.l"
 {
 
   BEGIN(INITIAL);
 }
 	YY_BREAK
-case 8:
-/* rule 8 can match eol */
+case 13:
+/* rule 13 can match eol */
 YY_RULE_SETUP
-#line 140 "hex_lexer.l"
+#line 173 "libyara/hex_lexer.l"
 // skip comments
 	YY_BREAK
-case 9:
+case 14:
 YY_RULE_SETUP
-#line 142 "hex_lexer.l"
+#line 175 "libyara/hex_lexer.l"
 // skip single-line comments
 	YY_BREAK
-case 10:
+case 15:
 YY_RULE_SETUP
-#line 144 "hex_lexer.l"
+#line 177 "libyara/hex_lexer.l"
 {
 
   return yytext[0];
 }
 	YY_BREAK
-case 11:
+case 16:
 YY_RULE_SETUP
-#line 149 "hex_lexer.l"
+#line 182 "libyara/hex_lexer.l"
 {
 
   yylval->integer = atoi(yytext);
   return _NUMBER_;
 }
 	YY_BREAK
-case 12:
+case 17:
 YY_RULE_SETUP
-#line 155 "hex_lexer.l"
+#line 188 "libyara/hex_lexer.l"
 {
 
   BEGIN(INITIAL);
   return yytext[0];
 }
 	YY_BREAK
-case 13:
-/* rule 13 can match eol */
+case 18:
+/* rule 18 can match eol */
 YY_RULE_SETUP
-#line 161 "hex_lexer.l"
+#line 194 "libyara/hex_lexer.l"
 // skip whitespaces
 	YY_BREAK
-case 14:
+case 19:
 YY_RULE_SETUP
-#line 163 "hex_lexer.l"
+#line 196 "libyara/hex_lexer.l"
 {
 
   yyerror(yyscanner, lex_env, "invalid character in hex string jump");
   yyterminate();
 }
 	YY_BREAK
-case 15:
-/* rule 15 can match eol */
+case 20:
+/* rule 20 can match eol */
 YY_RULE_SETUP
-#line 169 "hex_lexer.l"
+#line 202 "libyara/hex_lexer.l"
 // skip whitespaces
 	YY_BREAK
-case 16:
+case 21:
 YY_RULE_SETUP
-#line 171 "hex_lexer.l"
+#line 204 "libyara/hex_lexer.l"
 {        // pass valid characters to the parser
 
   return yytext[0];
 }
 	YY_BREAK
-case 17:
+case 22:
 YY_RULE_SETUP
-#line 176 "hex_lexer.l"
+#line 209 "libyara/hex_lexer.l"
 {               // reject all other characters
 
   yyerror(yyscanner, lex_env, "invalid character in hex string");
   yyterminate();
 }
 	YY_BREAK
-case 18:
+case 23:
 YY_RULE_SETUP
-#line 182 "hex_lexer.l"
+#line 215 "libyara/hex_lexer.l"
 ECHO;
 	YY_BREAK
-#line 1246 "hex_lexer.c"
+#line 1300 "libyara/hex_lexer.c"
 case YY_STATE_EOF(INITIAL):
 case YY_STATE_EOF(comment):
 case YY_STATE_EOF(range):
@@ -1545,7 +1599,7 @@ static int yy_get_next_buffer (yyscan_t yyscanner)
 		while ( yy_chk[yy_base[yy_current_state] + yy_c] != yy_current_state )
 			{
 			yy_current_state = (int) yy_def[yy_current_state];
-			if ( yy_current_state >= 34 )
+			if ( yy_current_state >= 40 )
 				yy_c = yy_meta[yy_c];
 			}
 		yy_current_state = yy_nxt[yy_base[yy_current_state] + yy_c];
@@ -1574,11 +1628,11 @@ static int yy_get_next_buffer (yyscan_t yyscanner)
 	while ( yy_chk[yy_base[yy_current_state] + yy_c] != yy_current_state )
 		{
 		yy_current_state = (int) yy_def[yy_current_state];
-		if ( yy_current_state >= 34 )
+		if ( yy_current_state >= 40 )
 			yy_c = yy_meta[yy_c];
 		}
 	yy_current_state = yy_nxt[yy_base[yy_current_state] + yy_c];
-	yy_is_jam = (yy_current_state == 33);
+	yy_is_jam = (yy_current_state == 39);
 
 	(void)yyg;
 	return yy_is_jam ? 0 : yy_current_state;
@@ -2396,17 +2450,24 @@ void yyfree (void * ptr , yyscan_t yyscanner)
 
 #define YYTABLES_NAME "yytables"
 
-#line 182 "hex_lexer.l"
+#line 215 "libyara/hex_lexer.l"
 
 
+//
+// yyfatal (actually named hex_yyfatal because of the '%option prefix="hex_yy"'
+// directive) is called when a fatal error occurs in the parser. When this
+// happens we are deep inside the parsing logic generated by flex/bison and
+// the only way to exit gracefully from there is using setjmp/longjmp.
+//
 void yyfatal(
     yyscan_t yyscanner,
     const char *error_message)
 {
-  jmp_buf* recovery_state = (jmp_buf*) yr_thread_storage_get_value(
-      &yr_recovery_state_key);
+  jmp_buf* recovery_trampoline = (jmp_buf*) yr_thread_storage_get_value(
+      &yr_yyfatal_trampoline_tls);
 
-  longjmp(*recovery_state, 1);
+  // Never returns.
+  longjmp(*recovery_trampoline, 1);
 }
 
 void yyerror(
@@ -2437,15 +2498,17 @@ int yr_parse_hex_string(
     RE_ERROR* error)
 {
   yyscan_t yyscanner;
-  jmp_buf recovery_state;
+  jmp_buf recovery_trampoline;
   HEX_LEX_ENVIRONMENT lex_env;
 
   lex_env.last_error = ERROR_SUCCESS;
   lex_env.inside_or = 0;
 
-  yr_thread_storage_set_value(&yr_recovery_state_key, &recovery_state);
+  yr_thread_storage_set_value(
+     &yr_yyfatal_trampoline_tls,
+     &recovery_trampoline);
 
-  if (setjmp(recovery_state) != 0)
+  if (setjmp(recovery_trampoline) != 0)
     return ERROR_INTERNAL_FATAL_ERROR;
 
   FAIL_ON_ERROR(yr_re_ast_create(re_ast));
@@ -2465,7 +2528,13 @@ int yr_parse_hex_string(
 
   (*re_ast)->flags |= RE_FLAGS_DOT_ALL;
 
-  yylex_init(&yyscanner);
+  if (yylex_init(&yyscanner) != 0)
+  {
+    yr_re_ast_destroy(*re_ast);
+    *re_ast = NULL;
+    return ERROR_INSUFFICIENT_MEMORY;
+  }
+
   yyset_extra(*re_ast, yyscanner);
   yy_scan_string(hex_string, yyscanner);
   yyparse(yyscanner, &lex_env);

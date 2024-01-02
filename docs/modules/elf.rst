@@ -60,6 +60,7 @@ Reference
 
     Integer with one of the following values:
 
+    .. c:type:: EM_NONE
     .. c:type:: EM_M32
     .. c:type:: EM_SPARC
     .. c:type:: EM_386
@@ -370,6 +371,17 @@ Reference
 
         The section index which the symbol is associated with.
 
+.. c:function:: telfhash()
+
+    Function returning Telfhash - TLSH hash of the ELF export and import symbols.
+
+     *Example: elf.telfhash() == "t166a00284751084526486df8b5df5b2fccb3f511dbc188c37156f5e714a11bc5d71014d"*
+
+.. c:function:: import_md5()
+
+    Function returning Import Hash - MD5 hash of the ELF imported symbols.
+
+     *Example: elf.import_md5() == "c3eca50cbb03400a6e91b9fe48da0c0c"*
 
 
 

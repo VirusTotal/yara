@@ -3,6 +3,8 @@ MODULE(pe)
 MODULE(elf)
 MODULE(math)
 MODULE(time)
+MODULE(console)
+MODULE(string)
 
 #ifdef DOTNET_MODULE
 MODULE(dotnet)
@@ -26,4 +28,8 @@ MODULE(macho)
 
 #ifdef DEX_MODULE
 MODULE(dex)
+#endif
+
+#ifdef PB_TESTS_MODULE
+MODULE(pb_tests)
 #endif
