@@ -112,7 +112,7 @@ uint32_t* get_distribution(
       return NULL;
     }
 
-    if (block->base + block->size > offset + length)
+    if (block->base + block->size >= offset + length)
       break;
   }
 
@@ -384,7 +384,7 @@ define_function(data_serial_correlation)
       return_float(YR_UNDEFINED);
     }
 
-    if (block->base + block->size > offset + length)
+    if (block->base + block->size >= offset + length)
       break;
   }
 
@@ -519,7 +519,7 @@ define_function(data_monte_carlo_pi)
       return_float(YR_UNDEFINED);
     }
 
-    if (block->base + block->size > offset + length)
+    if (block->base + block->size >= offset + length)
       break;
   }
 

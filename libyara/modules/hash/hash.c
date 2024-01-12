@@ -361,7 +361,7 @@ define_function(data_md5)
       return_string(YR_UNDEFINED);
     }
 
-    if (block->base + block->size > offset + length)
+    if (block->base + block->size >= offset + length)
       break;
   }
 
@@ -490,7 +490,7 @@ define_function(data_sha1)
       return_string(YR_UNDEFINED);
     }
 
-    if (block->base + block->size > offset + length)
+    if (block->base + block->size >= offset + length)
       break;
   }
 
@@ -618,7 +618,7 @@ define_function(data_sha256)
       return_string(YR_UNDEFINED);
     }
 
-    if (block->base + block->size > offset + length)
+    if (block->base + block->size >= offset + length)
       break;
   }
 
@@ -703,7 +703,7 @@ define_function(data_checksum32)
       return_integer(YR_UNDEFINED);
     }
 
-    if (block->base + block->size > offset + length)
+    if (block->base + block->size >= offset + length)
       break;
   }
 
@@ -796,7 +796,7 @@ define_function(data_crc32)
       return_integer(YR_UNDEFINED);
     }
 
-    if (block->base + block->size > offset + length)
+    if (block->base + block->size >= offset + length)
       break;
   }
 
