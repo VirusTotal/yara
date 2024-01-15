@@ -582,8 +582,9 @@ static int capture_matches(
       yr_string_matches_foreach(context, string, match)
       {
         if (strlen(f->expected) == match->data_length &&
-            strncmp(f->expected, (char*) (match->data), match->data_length) ==
-                0)
+            (match->data_length == 0 ||
+             strncmp(f->expected, (char*) (match->data), match->data_length) ==
+                 0))
         {
           f->found++;
         }
