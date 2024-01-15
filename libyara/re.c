@@ -214,7 +214,11 @@ void yr_re_ast_destroy(RE_AST* re_ast)
 // Parses a regexp but don't emit its code. A further call to
 // yr_re_ast_emit_code is required to get the code.
 //
-int yr_re_parse(const char* re_string, RE_AST** re_ast, RE_ERROR* error, int flags)
+int yr_re_parse(
+    const char* re_string,
+    RE_AST** re_ast,
+    RE_ERROR* error,
+    int flags)
 {
   return yr_parse_re_string(re_string, re_ast, error, flags);
 }
@@ -1725,6 +1729,9 @@ int yr_re_exec(
   int kill;
   int action;
 
+  bool prev_is_word_char = false;
+  bool input_is_word_char = false;
+
 #define ACTION_NONE      0
 #define ACTION_CONTINUE  1
 #define ACTION_KILL      2
@@ -1940,26 +1947,29 @@ int yr_re_exec(
 
       case RE_OPCODE_WORD_BOUNDARY:
       case RE_OPCODE_NON_WORD_BOUNDARY:
-
-        if (bytes_matched == 0 && input_backwards_size < character_size)
+        if (input - input_incr + character_size <= input_data + input_forwards_size &&
+            input - input_incr >= input_data - input_backwards_size)
         {
-          match = true;
-        }
-        else if (bytes_matched >= max_bytes_matched)
-        {
-          match = true;
+          prev_is_word_char = _yr_re_is_word_char(
+              input - input_incr, character_size);
         }
         else
         {
-          assert(input < input_data + input_forwards_size);
-          assert(input >= input_data - input_backwards_size);
-
-          assert(input - input_incr < input_data + input_forwards_size);
-          assert(input - input_incr >= input_data - input_backwards_size);
-
-          match = _yr_re_is_word_char(input, character_size) !=
-                  _yr_re_is_word_char(input - input_incr, character_size);
+          prev_is_word_char = false;
         }
+
+        if (input + character_size <= input_data + input_forwards_size &&
+            input >= input_data - input_backwards_size)
+        {
+          input_is_word_char = _yr_re_is_word_char(input, character_size);
+        }
+        else
+        {
+          input_is_word_char = false;
+        }
+
+        match = (prev_is_word_char && !input_is_word_char) ||
+                (!prev_is_word_char && input_is_word_char);
 
         if (*ip == RE_OPCODE_NON_WORD_BOUNDARY)
           match = !match;

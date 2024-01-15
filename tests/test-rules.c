@@ -2435,15 +2435,15 @@ void test_re()
       "rule test { strings: $a = /abc\\b/ wide condition: $a }",
       TEXT_1024_BYTES "a\0b\0c\0b\t");
 
-  assert_false_rule_blob(
+  assert_false_rule(
       "rule test { strings: $a = /\\b/ wide condition: $a }",
       TEXT_1024_BYTES "abc");
 
-  assert_true_rule_blob(
+  assert_true_rule(
       "rule test { condition: \"avb\" matches /a\\vb/ }",
       TEXT_1024_BYTES "rule test { condition: \"avb\" matches /a\\vb/ }");
 
-  assert_false_rule_blob(
+  assert_false_rule(
       "rule test { condition: \"ab\" matches /a\\vb/ }",
       TEXT_1024_BYTES "rule test { condition: \"ab\" matches /a\\vb/ }");
 
@@ -2638,8 +2638,10 @@ void test_re()
   assert_false_regexp("^(ab|cd)e", "abcde");
   assert_true_regexp("(abc|)ef", "abcdef", "ef");
   assert_true_regexp("(abc|)ef", "abcef", "abcef");
+  assert_true_regexp("(abc|)", "foo", "");
   assert_true_regexp("\\babc", "abc", "abc");
   assert_true_regexp("abc\\b", "abc", "abc");
+  assert_true_regexp("\\b", "abc", "");
   assert_false_regexp("\\babc", "1abc");
   assert_false_regexp("abc\\b", "abc1");
   assert_true_regexp("abc\\s\\b", "abc x", "abc ");

@@ -859,7 +859,7 @@ static int _yr_scan_verify_re_match(
           (void*) &callback_args,
           NULL));
     }
-    else if (callback_args.forward_matches > 0)
+    else if (callback_args.forward_matches >= 0)
     {
       FAIL_ON_ERROR(
           _yr_scan_match_callback(data + offset, 0, flags, &callback_args));
@@ -892,7 +892,7 @@ static int _yr_scan_verify_re_match(
           (void*) &callback_args,
           NULL));
     }
-    else if (callback_args.forward_matches > 0)
+    else if (callback_args.forward_matches >= 0)
     {
       FAIL_ON_ERROR(
           _yr_scan_match_callback(data + offset, 0, flags, &callback_args));
