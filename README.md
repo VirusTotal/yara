@@ -89,6 +89,7 @@ awesome list of [YARA-related stuff](https://github.com/InQuest/awesome-yara).
 * [Hornetsecurity](https://www.hornetsecurity.com/en/)
 * [ICS Defense](https://icsdefense.net/)
 * [InQuest](https://www.inquest.net/)
+* [IntelOwl](https://github.com/intelowlproject/IntelOwl)
 * [Joe Security](https://www.joesecurity.org)
 * [Kaspersky Lab](https://www.kaspersky.com)
 * [KnowBe4](https://www.knowbe4.com)
