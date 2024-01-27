@@ -450,15 +450,18 @@ static int _pe_iterate_resources(
 
   // A few sanity checks to avoid corrupt files
 
+  WORD NumberOfNamedEntries = yr_le16toh(resource_dir->NumberOfNamedEntries);
+  WORD NumberOfIdEntries = yr_le16toh(resource_dir->NumberOfIdEntries);
+
   if (yr_le32toh(resource_dir->Characteristics) != 0 ||
-      yr_le16toh(resource_dir->NumberOfNamedEntries) > 32768 ||
-      yr_le16toh(resource_dir->NumberOfIdEntries) > 32768)
+      NumberOfNamedEntries >= 0x8000 ||
+      NumberOfIdEntries >= 0x8000 ||
+      (NumberOfNamedEntries + NumberOfIdEntries) >= 0x8000)
   {
     return result;
   }
 
-  total_entries = yr_le16toh(resource_dir->NumberOfNamedEntries) +
-                  yr_le16toh(resource_dir->NumberOfIdEntries);
+  total_entries = NumberOfNamedEntries + NumberOfIdEntries;
 
   // The first directory entry is just after the resource directory,
   // by incrementing resource_dir we skip sizeof(resource_dir) bytes
