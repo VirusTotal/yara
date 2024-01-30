@@ -106,8 +106,8 @@ typedef struct {
     char* key_alg;            /* Name of the key algorithm */
     char* sig_alg;            /* Name of the signature algorithm */
     char* sig_alg_oid;        /* OID of the signature algorithm */
-    time_t not_before;        /* NotBefore validity */
-    time_t not_after;         /* NotAfter validity */
+    int64_t not_before;       /* NotBefore validity */
+    int64_t not_after;        /* NotAfter validity */
     char* key;                /* PEM encoded public key */
     Attributes issuer_attrs;  /* Parsed X509 Attributes of Issuer */
     Attributes subject_attrs; /* Parsed X509 Attributes of Subject */
@@ -120,7 +120,7 @@ typedef struct {
 
 typedef struct {
     int verify_flags;        /* COUNTERISGNATURE_VFY_ flag */
-    time_t sign_time;        /* Signing time of the timestamp countersignature */
+    int64_t sign_time;       /* Signing time of the timestamp countersignature */
     char* digest_alg;        /* Name of the digest algorithm used */
     ByteArray digest;        /* Stored message digest */
     CertificateArray* chain; /* Certificate chain of the signer */
@@ -190,7 +190,7 @@ AuthenticodeArray* parse_authenticode(const uint8_t* pe_data, uint64_t pe_len);
  * @param len
  * @return AuthenticodeArray*
  */
-AuthenticodeArray* authenticode_new(const uint8_t* data, long len);
+AuthenticodeArray* authenticode_new(const uint8_t* data, int32_t len);
 
 /**
  * @brief Deallocates AuthenticodeArray and all it's allocated members
