@@ -147,7 +147,17 @@ YR_API YR_MEMORY_BLOCK* yr_process_get_next_memory_block(
 
     if (kr == KERN_SUCCESS)
     {
-      size_t chunk_size = size - (size_t) (current_begin - address);
+      size_t chunk_size;
+
+      if (current_begin < address) {
+        // current_begin is outside of any region, and the next region was
+        // returned, so advance to it.
+        current_begin = address;
+        chunk_size = size;
+      } else {
+        // address <= current_begin, compute the size for the current chunk.
+        chunk_size = size - (size_t) (current_begin - address);
+      }
 
       if (((uint64_t) chunk_size) > max_process_memory_chunk)
       {
