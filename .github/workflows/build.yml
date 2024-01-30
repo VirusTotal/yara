@@ -11,8 +11,8 @@ jobs:
     strategy:
       matrix:
         config:
-        - "--enable-debug --enable-cuckoo --enable-magic --enable-macho --enable-pb-tests --enable-address-sanitizer --enable-undefined-behaviour-sanitizer"
-        - "--enable-debug --enable-profiling --enable-cuckoo --enable-magic --enable-macho --enable-pb-tests --enable-address-sanitizer --enable-undefined-behaviour-sanitizer"
+          - "--enable-debug --enable-cuckoo --enable-magic --enable-macho --enable-pb-tests --enable-address-sanitizer --enable-undefined-behaviour-sanitizer"
+          - "--enable-debug --enable-profiling --enable-cuckoo --enable-magic --enable-macho --enable-pb-tests --enable-address-sanitizer --enable-undefined-behaviour-sanitizer"
     steps:
       - uses: actions/checkout@v2
       - name: Install dependencies
@@ -50,8 +50,8 @@ jobs:
     strategy:
       matrix:
         config:
-        - "--host=x86_64-w64-mingw32"
-        - "--host=i686-w64-mingw32"
+          - "--host=x86_64-w64-mingw32"
+          - "--host=i686-w64-mingw32"
     steps:
       - uses: actions/checkout@v2
       - name: Install dependencies
@@ -128,22 +128,22 @@ jobs:
   bigendian:
     runs-on: ubuntu-latest
     steps:
-    - name: Setup multiarch/qemu-user-static
-      run: |
-        docker run --rm --privileged multiarch/qemu-user-static:register --reset
-    - name: ubuntu-core:s390x-focal
-      uses: docker://multiarch/ubuntu-core:s390x-focal
-      with:
-        args: >
-          bash -c
-          "
-          apt-get update -y &&
-          DEBIAN_FRONTEND=noninteractive TZ=Etc/UTC apt-get -y install tzdata &&
-          apt-get install -y automake libtool make gcc pkg-config bison git &&
-          git clone https://github.com/VirusTotal/yara &&
-          cd yara &&
-          ./bootstrap.sh &&
-          ./configure --disable-proc-scan --enable-macho &&
-          make &&
-          make check
-          "
+      - uses: actions/checkout@v2
+      - name: Setup multiarch/qemu-user-static
+        run: |
+          docker run --rm --privileged multiarch/qemu-user-static:register --reset
+      - name: ubuntu-core:s390x-focal
+        uses: docker://multiarch/ubuntu-core:s390x-focal
+        with:
+          args: >
+            bash -c
+            "
+            apt-get update -y &&
+            DEBIAN_FRONTEND=noninteractive TZ=Etc/UTC apt-get -y install tzdata &&
+            apt-get install -y automake libtool make gcc pkg-config bison git &&
+            cd /github/workspace &&
+            ./bootstrap.sh &&
+            ./configure --disable-proc-scan --enable-macho &&
+            make &&
+            make check
+            "
