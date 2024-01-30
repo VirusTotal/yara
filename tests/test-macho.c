@@ -234,6 +234,12 @@ int main(int argc, char** argv)
     macho.file[1].cputype == macho.fat_arch[1].cputype }",
       "tests/data/tiny-universal");
 
+  assert_true_rule_file(
+      "import \"macho\" rule test { condition: \
+    macho.file[0].magic == 0xfeedface and \
+    macho.file[1].magic == 0xfeedfacf }",
+      "tests/data/tiny-universal");
+
   // Entry points for files (LC_MAIN)
 
   assert_true_rule_file(
