@@ -28,8 +28,7 @@ SOFTWARE.
 #include <openssl/x509v3.h>
 
 #ifdef __cplusplus
-extern "C"
-{
+extern "C" {
 #endif
 
 #define NID_spc_info                "1.3.6.1.4.1.311.2.1.12"
@@ -37,85 +36,73 @@ extern "C"
 #define NID_spc_nested_signature    "1.3.6.1.4.1.311.2.4.1"
 #define NID_spc_indirect_data       "1.3.6.1.4.1.311.2.1.4"
 
-  typedef struct
-  {
+typedef struct {
     int type;
-    union
-    {
-      ASN1_BMPSTRING *unicode;
-      ASN1_IA5STRING *ascii;
+    union {
+        ASN1_BMPSTRING *unicode;
+        ASN1_IA5STRING *ascii;
     } value;
-  } SpcString;
+} SpcString;
 
-  typedef struct
-  {
+typedef struct {
     ASN1_OCTET_STRING *classId;
     ASN1_OCTET_STRING *serializedData;
-  } SpcSerializedObject;
+} SpcSerializedObject;
 
-  typedef struct
-  {
+typedef struct {
     int type;
-    union
-    {
-      ASN1_IA5STRING *url;
-      SpcSerializedObject *moniker;
-      SpcString *file;
+    union {
+        ASN1_IA5STRING *url;
+        SpcSerializedObject *moniker;
+        SpcString *file;
     } value;
-  } SpcLink;
+} SpcLink;
 
-  typedef struct
-  {
+typedef struct {
     ASN1_OBJECT *type;
     ASN1_TYPE *value;
-  } SpcAttributeTypeAndOptionalValue;
+} SpcAttributeTypeAndOptionalValue;
 
-  typedef struct
-  {
+typedef struct {
     ASN1_BIT_STRING *flags;
     SpcLink *file;
-  } SpcPeImageData;
+} SpcPeImageData;
 
-  typedef struct
-  {
+typedef struct {
     ASN1_OBJECT *algorithm;
     ASN1_TYPE *parameters;
-  } AlgorithmIdentifier;
+} AlgorithmIdentifier;
 
-  typedef struct
-  {
+typedef struct {
     AlgorithmIdentifier *digestAlgorithm;
     ASN1_OCTET_STRING *digest;
-  } DigestInfo;
+} DigestInfo;
 
-  typedef struct
-  {
+typedef struct {
     SpcAttributeTypeAndOptionalValue *data;
     DigestInfo *messageDigest;
-  } SpcIndirectDataContent;
+} SpcIndirectDataContent;
 
-  typedef struct
-  {
+typedef struct {
     ASN1_OBJECT *contentType;
     SpcIndirectDataContent *content;
-  } SpcContentInfo;
+} SpcContentInfo;
 
-  typedef struct
-  {
+typedef struct {
     SpcString *programName;
     SpcLink *moreInfo;
-  } SpcSpOpusInfo;
+} SpcSpOpusInfo;
 
-  DECLARE_ASN1_FUNCTIONS(SpcString)
-  DECLARE_ASN1_FUNCTIONS(SpcSerializedObject)
-  DECLARE_ASN1_FUNCTIONS(SpcLink)
-  DECLARE_ASN1_FUNCTIONS(SpcAttributeTypeAndOptionalValue)
-  DECLARE_ASN1_FUNCTIONS(SpcPeImageData)
-  DECLARE_ASN1_FUNCTIONS(AlgorithmIdentifier)
-  DECLARE_ASN1_FUNCTIONS(DigestInfo)
-  DECLARE_ASN1_FUNCTIONS(SpcIndirectDataContent)
-  DECLARE_ASN1_FUNCTIONS(SpcSpOpusInfo)
-  DECLARE_ASN1_FUNCTIONS(SpcContentInfo)
+DECLARE_ASN1_FUNCTIONS(SpcString)
+DECLARE_ASN1_FUNCTIONS(SpcSerializedObject)
+DECLARE_ASN1_FUNCTIONS(SpcLink)
+DECLARE_ASN1_FUNCTIONS(SpcAttributeTypeAndOptionalValue)
+DECLARE_ASN1_FUNCTIONS(SpcPeImageData)
+DECLARE_ASN1_FUNCTIONS(AlgorithmIdentifier)
+DECLARE_ASN1_FUNCTIONS(DigestInfo)
+DECLARE_ASN1_FUNCTIONS(SpcIndirectDataContent)
+DECLARE_ASN1_FUNCTIONS(SpcSpOpusInfo)
+DECLARE_ASN1_FUNCTIONS(SpcContentInfo)
 
 #ifdef __cplusplus
 }

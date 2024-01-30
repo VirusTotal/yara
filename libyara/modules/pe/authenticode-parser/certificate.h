@@ -27,23 +27,16 @@ SOFTWARE.
 #include <openssl/x509.h>
 
 #ifdef __cplusplus
-extern "C"
-{
+extern "C" {
 #endif
 
-  Certificate* certificate_new(X509* x509);
+Certificate* certificate_new(X509* x509);
+void certificate_free(Certificate* cert);
 
-  void certificate_free(Certificate* cert);
-
-  CertificateArray* parse_signer_chain(
-      X509* signer_cert,
-      STACK_OF(X509) * certs);
-
-  int certificate_array_move(CertificateArray* dst, CertificateArray* src);
-
-  CertificateArray* certificate_array_new(int certCount);
-
-  void certificate_array_free(CertificateArray* arr);
+CertificateArray* parse_signer_chain(X509* signer_cert, STACK_OF(X509) * certs);
+int certificate_array_move(CertificateArray* dst, CertificateArray* src);
+CertificateArray* certificate_array_new(int certCount);
+void certificate_array_free(CertificateArray* arr);
 
 #ifdef __cplusplus
 }
