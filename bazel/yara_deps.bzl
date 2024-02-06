@@ -61,9 +61,9 @@ def yara_deps():
         # in the bazel/magic.BUILD must be updated acordingly.
         http_archive,
         name = "magic",
-        url = "https://github.com/file/file/archive/FILE5_38.tar.gz",
-        sha256 = "338ebe8cb536a3f86750b4df62be2d382f6da66afdb0087b36a1a3e14ea4baf8",
-        strip_prefix = "file-FILE5_38",
+        url = "https://github.com/file/file/archive/FILE5_45.tar.gz",
+        sha256 = "28c01a5ef1a127ef71758222ca019ba6c6bfa4a8fe20c2b525ce75943ee9da3c",
+        strip_prefix = "file-FILE5_45",
         build_file = "@com_github_virustotal_yara//:bazel/magic.BUILD",
     )
     maybe(

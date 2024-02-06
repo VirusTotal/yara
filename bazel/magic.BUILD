@@ -29,7 +29,7 @@
 
 # Rule for creating magic.h from magic.h.in. The two files are identical, except
 # for magic.h.in not having the actual version number. Instead it has a X.YY
-# placeholder that is replaced with the version number (i.e: 538) during build
+# placeholder that is replaced with the version number (i.e: 545) during build
 # time. When this library is updated the version number in this rule must be
 # updated accordingly.
 genrule(
@@ -37,7 +37,7 @@ genrule(
     srcs = ["src/magic.h.in"],
     outs = ["src/magic.h"],
     cmd = """
-        sed -e 's/X.YY/538/' < $(location src/magic.h.in) > $(location src/magic.h)
+        sed -e 's/X.YY/545/' < $(location src/magic.h.in) > $(location src/magic.h)
     """,
 )
 
@@ -103,6 +103,7 @@ cc_library(
         "src/gmtime_r.c",
         "src/is_csv.c",
         "src/is_json.c",
+        "src/is_simh.c",
         "src/is_tar.c",
         "src/localtime_r.c",
         "src/magic.c",
@@ -113,7 +114,6 @@ cc_library(
         "src/seccomp.c",
         "src/softmagic.c",
         "src/strcasestr.c",
-        "src/teststrchr.c",
         "src/vasprintf.c",
     ] + select({
         "@bazel_tools//src/conditions:darwin": [
