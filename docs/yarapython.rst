@@ -487,7 +487,7 @@ Reference
 
 .. py:class:: StringMatch
 
-  .. versionadded:: 3.4.0
+  .. versionadded:: 4.3.0
 
   Objects which represent string matches.
 
