@@ -197,6 +197,12 @@ static void extract_ms_counter_certs(const uint8_t* data, int len, CertificateAr
     if (!p7)
         return;
 
+    /* We expect SignedData type of PKCS7 */
+    if (!PKCS7_type_is_signed(p7) || !p7->d.sign) {
+        PKCS7_free(p7);
+        return;
+    }
+
     STACK_OF(X509)* certs = p7->d.sign->cert;
     CertificateArray* certArr = certificate_array_new(sk_X509_num(certs));
     if (!certArr) {
