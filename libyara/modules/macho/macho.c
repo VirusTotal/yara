@@ -35,7 +35,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define MODULE_NAME macho
 
 // Check for Mach-O binary magic constant.
-
 int is_macho_file_block(const uint32_t* magic)
 {
   return *magic == MH_MAGIC || *magic == MH_CIGAM || *magic == MH_MAGIC_64 ||
@@ -43,23 +42,12 @@ int is_macho_file_block(const uint32_t* magic)
 }
 
 // Check if file is for 32-bit architecture.
-
-int macho_is_32(const uint8_t* magic)
+int macho_is_32(uint32_t magic)
 {
-  // Magic must be [CE]FAEDFE or FEEDFA[CE].
-  return magic[0] == 0xce || magic[3] == 0xce;
-}
-
-// Check if file is for big-endian architecture.
-
-int macho_is_big(const uint8_t* magic)
-{
-  // Magic must be [FE]EDFACE or [FE]EDFACF.
-  return magic[0] == 0xfe;
+  return magic == MH_MAGIC || magic == MH_CIGAM;
 }
 
 // Check for Mach-O fat binary magic constant.
-
 int is_fat_macho_file_block(const uint32_t* magic)
 {
   return *magic == FAT_MAGIC || *magic == FAT_CIGAM || *magic == FAT_MAGIC_64 ||
@@ -67,17 +55,23 @@ int is_fat_macho_file_block(const uint32_t* magic)
 }
 
 // Check if file is 32-bit fat file.
-
-int macho_fat_is_32(const uint8_t* magic)
+int macho_fat_is_32(const uint32_t* magic)
 {
-  // Magic must be CAFEBA[BE].
-  return magic[3] == 0xbe;
+  return yr_be32toh(*magic) == FAT_MAGIC;
 }
 
 static int should_swap_bytes(const uint32_t magic)
 {
+// In big-endian platforms byte swapping is needed for little-endian files
+// but in little-endian platforms the files that need swapping are the
+// the big-endian ones.
+#if defined(WORDS_BIGENDIAN)
   return magic == MH_CIGAM || magic == MH_CIGAM_64 || magic == FAT_CIGAM ||
          magic == FAT_CIGAM_64;
+#else
+  return magic == MH_MAGIC || magic == MH_MAGIC_64 || magic == FAT_MAGIC ||
+         magic == FAT_MAGIC_64;
+#endif
 }
 
 static void swap_mach_header(yr_mach_header_64_t* mh)
@@ -90,7 +84,7 @@ static void swap_mach_header(yr_mach_header_64_t* mh)
   mh->sizeofcmds = yr_bswap32(mh->sizeofcmds);
   mh->flags = yr_bswap32(mh->flags);
 
-  if (!macho_is_32((const uint8_t*) &mh->magic))
+  if (!macho_is_32(mh->magic))
     mh->reserved = yr_bswap32(mh->reserved);
 }
 
@@ -222,8 +216,8 @@ void macho_handle_unixthread(
     return;
 
   // command_size is the size indicated in yr_thread_command_t structure, but
-  // limited to the data's size because we can't rely on the structure having a
-  // valid size.
+  // limited to the data's size because we can't rely on the structure having
+  // a valid size.
   uint32_t command_size = yr_min(size, ((yr_thread_command_t*) data)->cmdsize);
 
   // command_size should be at least the size of yr_thread_command_t.
@@ -441,13 +435,16 @@ void macho_handle_segment(
 
     yr_set_integer(sec.size, object, "segments[%i].sections[%i].size", i, j);
 
-    yr_set_integer(sec.offset, object, "segments[%i].sections[%i].offset", i, j);
+    yr_set_integer(
+        sec.offset, object, "segments[%i].sections[%i].offset", i, j);
 
     yr_set_integer(sec.align, object, "segments[%i].sections[%i].align", i, j);
 
-    yr_set_integer(sec.reloff, object, "segments[%i].sections[%i].reloff", i, j);
+    yr_set_integer(
+        sec.reloff, object, "segments[%i].sections[%i].reloff", i, j);
 
-    yr_set_integer(sec.nreloc, object, "segments[%i].sections[%i].nreloc", i, j);
+    yr_set_integer(
+        sec.nreloc, object, "segments[%i].sections[%i].nreloc", i, j);
 
     yr_set_integer(sec.flags, object, "segments[%i].sections[%i].flags", i, j);
 
@@ -528,13 +525,16 @@ void macho_handle_segment_64(
 
     yr_set_integer(sec.size, object, "segments[%i].sections[%i].size", i, j);
 
-    yr_set_integer(sec.offset, object, "segments[%i].sections[%i].offset", i, j);
+    yr_set_integer(
+        sec.offset, object, "segments[%i].sections[%i].offset", i, j);
 
     yr_set_integer(sec.align, object, "segments[%i].sections[%i].align", i, j);
 
-    yr_set_integer(sec.reloff, object, "segments[%i].sections[%i].reloff", i, j);
+    yr_set_integer(
+        sec.reloff, object, "segments[%i].sections[%i].reloff", i, j);
 
-    yr_set_integer(sec.nreloc, object, "segments[%i].sections[%i].nreloc", i, j);
+    yr_set_integer(
+        sec.nreloc, object, "segments[%i].sections[%i].nreloc", i, j);
 
     yr_set_integer(sec.flags, object, "segments[%i].sections[%i].flags", i, j);
 
@@ -563,15 +563,20 @@ void macho_parse_file(
   if (size < sizeof(yr_mach_header_64_t))
     return;
 
-  size_t header_size = macho_is_32(data) ? sizeof(yr_mach_header_32_t)
-                                         : sizeof(yr_mach_header_64_t);
-
-  // yr_mach_header_64_t is used for storing the header for both for 32-bits and
-  // 64-bits files. yr_mach_header_64_t is exactly like yr_mach_header_32_t
-  // but with an extra "reserved" field at the end.
+  // yr_mach_header_64_t is used for storing the header for both for 32-bits
+  // and 64-bits files. yr_mach_header_64_t is exactly like
+  // yr_mach_header_32_t but with an extra "reserved" field at the end.
   yr_mach_header_64_t header;
 
-  memcpy(&header, data, header_size);
+  memcpy(&header, data, sizeof(yr_mach_header_64_t));
+
+  // The magic number is always handled as big-endian. If the magic bytes are
+  // CA FE BA BE, then header.magic is 0xCAFEBABE.
+  header.magic = yr_be32toh(header.magic);
+
+  size_t header_size = (header.magic == MH_MAGIC || header.magic == MH_CIGAM)
+                           ? sizeof(yr_mach_header_32_t)
+                           : sizeof(yr_mach_header_64_t);
 
   int should_swap = should_swap_bytes(header.magic);
 
@@ -587,7 +592,7 @@ void macho_parse_file(
   yr_set_integer(header.flags, object, "flags");
 
   // The "reserved" field exists only in 64 bits files.
-  if (!macho_is_32(data))
+  if (!macho_is_32(header.magic))
     yr_set_integer(header.reserved, object, "reserved");
 
   // The first command parsing pass handles only segments.
@@ -652,7 +657,8 @@ void macho_parse_file(
     switch (command_struct.cmd)
     {
     case LC_UNIXTHREAD:
-      macho_handle_unixthread(command, size - parsed_size, base_address, object, context);
+      macho_handle_unixthread(
+          command, size - parsed_size, base_address, object, context);
       break;
     case LC_MAIN:
       macho_handle_main(command, size - parsed_size, object, context);
@@ -672,10 +678,11 @@ void macho_load_fat_arch_header(
     uint32_t num,
     yr_fat_arch_64_t* arch)
 {
-  if (macho_fat_is_32(data))
+  if (macho_fat_is_32((uint32_t*) data))
   {
     yr_fat_arch_32_t* arch32 =
-        (yr_fat_arch_32_t*) (data + sizeof(yr_fat_header_t) + (num * sizeof(yr_fat_arch_32_t)));
+        (yr_fat_arch_32_t*) (data + sizeof(yr_fat_header_t) +
+                             (num * sizeof(yr_fat_arch_32_t)));
 
     arch->cputype = yr_be32toh(arch32->cputype);
     arch->cpusubtype = yr_be32toh(arch32->cpusubtype);
@@ -687,7 +694,8 @@ void macho_load_fat_arch_header(
   else
   {
     yr_fat_arch_64_t* arch64 =
-        (yr_fat_arch_64_t*) (data + sizeof(yr_fat_header_t) + (num * sizeof(yr_fat_arch_64_t)));
+        (yr_fat_arch_64_t*) (data + sizeof(yr_fat_header_t) +
+                             (num * sizeof(yr_fat_arch_64_t)));
 
     arch->cputype = yr_be32toh(arch64->cputype);
     arch->cpusubtype = yr_be32toh(arch64->cpusubtype);
@@ -707,7 +715,7 @@ void macho_parse_fat_file(
 {
   size_t fat_arch_sz = sizeof(yr_fat_arch_64_t);
 
-  if (macho_fat_is_32(data))
+  if (macho_fat_is_32((uint32_t*) data))
     fat_arch_sz = sizeof(yr_fat_arch_32_t);
 
   if (size < sizeof(yr_fat_header_t))
@@ -810,10 +818,12 @@ void macho_set_definitions(YR_OBJECT* object)
   yr_set_integer(CPU_SUBTYPE_PENTII_M3, object, "CPU_SUBTYPE_PENTII_M3");
   yr_set_integer(CPU_SUBTYPE_PENTII_M5, object, "CPU_SUBTYPE_PENTII_M5");
   yr_set_integer(CPU_SUBTYPE_CELERON, object, "CPU_SUBTYPE_CELERON");
-  yr_set_integer(CPU_SUBTYPE_CELERON_MOBILE, object, "CPU_SUBTYPE_CELERON_MOBILE");
+  yr_set_integer(
+      CPU_SUBTYPE_CELERON_MOBILE, object, "CPU_SUBTYPE_CELERON_MOBILE");
   yr_set_integer(CPU_SUBTYPE_PENTIUM_3, object, "CPU_SUBTYPE_PENTIUM_3");
   yr_set_integer(CPU_SUBTYPE_PENTIUM_3_M, object, "CPU_SUBTYPE_PENTIUM_3_M");
-  yr_set_integer(CPU_SUBTYPE_PENTIUM_3_XEON, object, "CPU_SUBTYPE_PENTIUM_3_XEON");
+  yr_set_integer(
+      CPU_SUBTYPE_PENTIUM_3_XEON, object, "CPU_SUBTYPE_PENTIUM_3_XEON");
   yr_set_integer(CPU_SUBTYPE_PENTIUM_M, object, "CPU_SUBTYPE_PENTIUM_M");
   yr_set_integer(CPU_SUBTYPE_PENTIUM_4, object, "CPU_SUBTYPE_PENTIUM_4");
   yr_set_integer(CPU_SUBTYPE_PENTIUM_4_M, object, "CPU_SUBTYPE_PENTIUM_4_M");
@@ -843,7 +853,8 @@ void macho_set_definitions(YR_OBJECT* object)
   yr_set_integer(CPU_SUBTYPE_POWERPC_602, object, "CPU_SUBTYPE_POWERPC_602");
   yr_set_integer(CPU_SUBTYPE_POWERPC_603, object, "CPU_SUBTYPE_POWERPC_603");
   yr_set_integer(CPU_SUBTYPE_POWERPC_603e, object, "CPU_SUBTYPE_POWERPC_603e");
-  yr_set_integer(CPU_SUBTYPE_POWERPC_603ev, object, "CPU_SUBTYPE_POWERPC_603ev");
+  yr_set_integer(
+      CPU_SUBTYPE_POWERPC_603ev, object, "CPU_SUBTYPE_POWERPC_603ev");
   yr_set_integer(CPU_SUBTYPE_POWERPC_604, object, "CPU_SUBTYPE_POWERPC_604");
   yr_set_integer(CPU_SUBTYPE_POWERPC_604e, object, "CPU_SUBTYPE_POWERPC_604e");
   yr_set_integer(CPU_SUBTYPE_POWERPC_620, object, "CPU_SUBTYPE_POWERPC_620");
@@ -881,7 +892,8 @@ void macho_set_definitions(YR_OBJECT* object)
   yr_set_integer(MH_NOFIXPREBINDING, object, "MH_NOFIXPREBINDING");
   yr_set_integer(MH_PREBINDABLE, object, "MH_PREBINDABLE");
   yr_set_integer(MH_ALLMODSBOUND, object, "MH_ALLMODSBOUND");
-  yr_set_integer(MH_SUBSECTIONS_VIA_SYMBOLS, object, "MH_SUBSECTIONS_VIA_SYMBOLS");
+  yr_set_integer(
+      MH_SUBSECTIONS_VIA_SYMBOLS, object, "MH_SUBSECTIONS_VIA_SYMBOLS");
   yr_set_integer(MH_CANONICAL, object, "MH_CANONICAL");
   yr_set_integer(MH_WEAK_DEFINES, object, "MH_WEAK_DEFINES");
   yr_set_integer(MH_BINDS_TO_WEAK, object, "MH_BINDS_TO_WEAK");
@@ -914,7 +926,8 @@ void macho_set_definitions(YR_OBJECT* object)
   yr_set_integer(S_CSTRING_LITERALS, object, "S_CSTRING_LITERALS");
   yr_set_integer(S_4BYTE_LITERALS, object, "S_4BYTE_LITERALS");
   yr_set_integer(S_8BYTE_LITERALS, object, "S_8BYTE_LITERALS");
-  yr_set_integer(S_NON_LAZY_SYMBOL_POINTERS, object, "S_NON_LAZY_SYMBOL_POINTERS");
+  yr_set_integer(
+      S_NON_LAZY_SYMBOL_POINTERS, object, "S_NON_LAZY_SYMBOL_POINTERS");
   yr_set_integer(S_LAZY_SYMBOL_POINTERS, object, "S_LAZY_SYMBOL_POINTERS");
   yr_set_integer(S_LITERAL_POINTERS, object, "S_LITERAL_POINTERS");
   yr_set_integer(S_SYMBOL_STUBS, object, "S_SYMBOL_STUBS");
@@ -946,7 +959,8 @@ void macho_set_definitions(YR_OBJECT* object)
   yr_set_integer(S_ATTR_STRIP_STATIC_SYMS, object, "S_ATTR_STRIP_STATIC_SYMS");
   yr_set_integer(S_ATTR_NO_DEAD_STRIP, object, "S_ATTR_NO_DEAD_STRIP");
   yr_set_integer(S_ATTR_LIVE_SUPPORT, object, "S_ATTR_LIVE_SUPPORT");
-  yr_set_integer(S_ATTR_SELF_MODIFYING_CODE, object, "S_ATTR_SELF_MODIFYING_CODE");
+  yr_set_integer(
+      S_ATTR_SELF_MODIFYING_CODE, object, "S_ATTR_SELF_MODIFYING_CODE");
   yr_set_integer(S_ATTR_DEBUG, object, "S_ATTR_DEBUG");
   yr_set_integer(S_ATTR_SOME_INSTRUCTIONS, object, "S_ATTR_SOME_INSTRUCTIONS");
   yr_set_integer(S_ATTR_EXT_RELOC, object, "S_ATTR_EXT_RELOC");
@@ -1048,9 +1062,12 @@ define_function(ep_for_arch_subtype)
       uint64_t entry_point = yr_get_integer(module, "file[%i].entry_point", i);
       uint64_t file_offset = yr_get_integer(module, "fat_arch[%i].offset", i);
 
-      if (entry_point == YR_UNDEFINED) {
+      if (entry_point == YR_UNDEFINED)
+      {
         return_integer(YR_UNDEFINED);
-      } else {
+      }
+      else
+      {
         return_integer(file_offset + entry_point);
       }
     }

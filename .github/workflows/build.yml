@@ -145,5 +145,6 @@ jobs:
             ./bootstrap.sh &&
             ./configure --disable-proc-scan --enable-macho &&
             make &&
-            make check
+            make check &&
+            cat test-suite.log
             "
