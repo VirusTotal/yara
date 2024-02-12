@@ -678,7 +678,7 @@ void macho_load_fat_arch_header(
     uint32_t num,
     yr_fat_arch_64_t* arch)
 {
-  if (macho_fat_is_32((u_int32_t*) data))
+  if (macho_fat_is_32((uint32_t*) data))
   {
     yr_fat_arch_32_t* arch32 =
         (yr_fat_arch_32_t*) (data + sizeof(yr_fat_header_t) +
