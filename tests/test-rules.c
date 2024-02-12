@@ -2700,6 +2700,8 @@ void test_re()
   assert_false_regexp("(bc+d$|ef*g.|h?i(j|k))", "effg");
   assert_false_regexp("(bc+d$|ef*g.|h?i(j|k))", "bcdd");
   assert_true_regexp("(bc+d$|ef*g.|h?i(j|k))", "reffgz", "effgz");
+  assert_true_regexp("abcx{0,0}", "abcx", "abc");
+  assert_true_regexp("abcx{0}", "abcx", "abc");
 
   // Test case for issue #324
   assert_true_regexp("whatever|   x.   x", "   xy   x", "   xy   x");
@@ -2707,9 +2709,6 @@ void test_re()
   // Test case for issue #503, \x without two following hex-digits
   assert_regexp_syntax_error("\\x0");
   assert_regexp_syntax_error("\\x");
-
-  assert_regexp_syntax_error("x{0,0}");
-  assert_regexp_syntax_error("x{0}");
 
   assert_regexp_syntax_error("\\xxy");
 
