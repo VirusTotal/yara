@@ -566,6 +566,8 @@ void macho_parse_file(
   // CA FE BA BE, then header.magic is 0xCAFEBABE.
   header.magic = yr_be32toh(header.magic);
 
+  printf("%x\n", header.magic);
+
   size_t header_size = (header.magic == MH_MAGIC || header.magic == MH_CIGAM)
                            ? sizeof(yr_mach_header_32_t)
                            : sizeof(yr_mach_header_64_t);
