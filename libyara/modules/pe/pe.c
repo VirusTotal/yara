@@ -1767,8 +1767,7 @@ void _process_authenticode(
     /* If any signature is valid -> file is correctly signed */
     signature_valid |= verified;
 
-    yr_set_integer(
-        verified, pe->object, "signatures[%i].verified", *sig_count);
+    yr_set_integer(verified, pe->object, "signatures[%i].verified", *sig_count);
 
     yr_set_string(
         authenticode->digest_alg,
@@ -1956,6 +1955,8 @@ static void pe_parse_certificates(PE* pe)
 
   // Default to 0 signatures until we know otherwise.
   yr_set_integer(0, pe->object, "number_of_signatures");
+  // Default to not signed until we know otherwise.
+  yr_set_integer(0, pe->object, "is_signed");
 
   PIMAGE_DATA_DIRECTORY directory = pe_get_directory_entry(
       pe, IMAGE_DIRECTORY_ENTRY_SECURITY);

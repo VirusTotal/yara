@@ -393,6 +393,24 @@ int main(int argc, char** argv)
       "import \"pe\" \
       rule test { \
         condition: \
+          not pe.is_signed \
+      }",
+      "tests/data/"
+      "e3d45a2865818756068757d7e319258fef40dad54532ee4355b86bc129f27345");
+
+  assert_true_rule_file(
+      "import \"pe\" \
+      rule test { \
+        condition: \
+          pe.is_signed \
+      }",
+      "tests/data/"
+      "3b8b90159fa9b6048cc5410c5d53f116943564e4d05b04a843f9b3d0540d0c1c");
+
+  assert_true_rule_file(
+      "import \"pe\" \
+      rule test { \
+        condition: \
           pe.number_of_signatures == 2 \
       }",
       "tests/data/"
