@@ -62,8 +62,16 @@ int macho_fat_is_32(const uint32_t* magic)
 
 static int should_swap_bytes(const uint32_t magic)
 {
+// In big-endian platforms byte swapping is needed for little-endian files
+// but in little-endian platforms the files that need swapping are the
+// the big-endian ones.
+#if defined(WORDS_BIGENDIAN)
+  return magic == MH_CIGAM || magic == MH_CIGAM_64 || magic == FAT_CIGAM ||
+         magic == FAT_CIGAM_64;
+#else
   return magic == MH_MAGIC || magic == MH_MAGIC_64 || magic == FAT_MAGIC ||
          magic == FAT_MAGIC_64;
+#endif
 }
 
 static void swap_mach_header(yr_mach_header_64_t* mh)
@@ -566,11 +574,12 @@ void macho_parse_file(
   // CA FE BA BE, then header.magic is 0xCAFEBABE.
   header.magic = yr_be32toh(header.magic);
 
-  printf("%x\n", header.magic);
+  printf("%x\n", header.magic)
 
-  size_t header_size = (header.magic == MH_MAGIC || header.magic == MH_CIGAM)
-                           ? sizeof(yr_mach_header_32_t)
-                           : sizeof(yr_mach_header_64_t);
+      size_t header_size = (header.magic == MH_MAGIC ||
+                            header.magic == MH_CIGAM)
+                               ? sizeof(yr_mach_header_32_t)
+                               : sizeof(yr_mach_header_64_t);
 
   int should_swap = should_swap_bytes(header.magic);
 
