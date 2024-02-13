@@ -741,7 +741,7 @@ the C API.
 Unreferenced strings
 --------------------
 
-YARA 4.4.0 allows for unreferenced strings in the condition. If a string
+YARA 4.5.0 allows for unreferenced strings in the condition. If a string
 identifier starts with an ``_`` then it does not have to be referenced in the
 condition. Any other string must be referenced in the condition. This is useful
 if you want to search for particular strings and handle them in a custom
@@ -1340,7 +1340,7 @@ using the syntax: @a[i], where i is an index indicating which occurrence
 of the string $a you are referring to. (@a[1], @a[2],...).
 
 Sometimes you will need to iterate over some of these offsets and guarantee
-they satisfy a given condition. In such cases you can use the ``for..in`` syntax, 
+they satisfy a given condition. In such cases you can use the ``for..in`` syntax,
 for example:
 
 .. code-block:: yara
@@ -1387,8 +1387,8 @@ applies here:
     for 2 i in (1..#a) : ( @a[i] < 100 )
 
 The ``for..in`` operator is similar to ``for..of``, but the latter iterates over
-a set of strings, while the former iterates over ranges, enumerations, arrays and 
-dictionaries. 
+a set of strings, while the former iterates over ranges, enumerations, arrays and
+dictionaries.
 
 
 Iterators
