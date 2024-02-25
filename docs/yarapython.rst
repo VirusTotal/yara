@@ -145,9 +145,9 @@ example, you can save your rules to a memory buffer with this code:
 
 .. code-block:: python
 
-  import StringIO
+  import io
 
-  buff = StringIO.StringIO()
+  buff = io.BytesIO()
   rules.save(file=buff)
 
 The saved rules can be loaded from the memory buffer:
