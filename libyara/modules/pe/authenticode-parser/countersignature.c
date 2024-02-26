@@ -357,7 +357,6 @@ int IMPL_FUNC_NAME(verify_digest, pkcs7)(
 
     X509_STORE* store = X509_STORE_new();
     TS_VERIFY_CTX* ctx = TS_VERIFY_CTX_new();
-    TS_VERIFY_CTX_init(ctx);
 
     TS_VERIFY_CTX_set_flags(ctx, TS_VFY_VERSION | TS_VFY_IMPRINT);
     TS_VERIFY_CTX_set_store(ctx, store);
