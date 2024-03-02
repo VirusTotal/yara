@@ -31,10 +31,14 @@ extern "C" {
 #endif
 
 Certificate* certificate_new(X509* x509);
+Certificate* certificate_copy(Certificate* cert);
 void certificate_free(Certificate* cert);
+
+void parse_x509_certificates(const STACK_OF(X509) * certs, CertificateArray* result);
 
 CertificateArray* parse_signer_chain(X509* signer_cert, STACK_OF(X509) * certs);
 int certificate_array_move(CertificateArray* dst, CertificateArray* src);
+int certificate_array_append(CertificateArray* dst, CertificateArray* src);
 CertificateArray* certificate_array_new(int certCount);
 void certificate_array_free(CertificateArray* arr);
 

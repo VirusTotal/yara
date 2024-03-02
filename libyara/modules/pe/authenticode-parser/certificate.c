@@ -330,10 +330,82 @@ Certificate* certificate_new(X509* x509)
     return result;
 }
 
+void attributes_copy(Attributes* dst, Attributes* src)
+{
+    byte_array_init(&dst->country, src->country.data, src->country.len);
+    byte_array_init(&dst->organization, src->organization.data, src->organization.len);
+    byte_array_init(
+        &dst->organizationalUnit, src->organizationalUnit.data, src->organizationalUnit.len);
+    byte_array_init(&dst->nameQualifier, src->nameQualifier.data, src->nameQualifier.len);
+    byte_array_init(&dst->state, src->state.data, src->state.len);
+    byte_array_init(&dst->commonName, src->commonName.data, src->commonName.len);
+    byte_array_init(&dst->serialNumber, src->serialNumber.data, src->serialNumber.len);
+    byte_array_init(&dst->locality, src->locality.data, src->locality.len);
+    byte_array_init(&dst->title, src->title.data, src->title.len);
+    byte_array_init(&dst->surname, src->surname.data, src->surname.len);
+    byte_array_init(&dst->givenName, src->givenName.data, src->givenName.len);
+    byte_array_init(&dst->initials, src->initials.data, src->initials.len);
+    byte_array_init(&dst->pseudonym, src->pseudonym.data, src->pseudonym.len);
+    byte_array_init(
+        &dst->generationQualifier, src->generationQualifier.data, src->generationQualifier.len);
+    byte_array_init(&dst->emailAddress, src->emailAddress.data, src->emailAddress.len);
+}
+
+/* Parses X509* certs into internal representation and inserts into CertificateArray
+ * Array is assumed to have enough space to hold all certificates storted in the STACK */
+void parse_x509_certificates(const STACK_OF(X509) * certs, CertificateArray* result)
+{
+    int certCount = sk_X509_num(certs);
+    int i = 0;
+    for (; i < certCount; ++i) {
+        Certificate* cert = certificate_new(sk_X509_value(certs, i));
+        if (!cert)
+            break;
+
+        /* Write to the result */
+        result->certs[i] = cert;
+    }
+    result->count = i;
+}
+
+/* Creates deep copy of a certificate */
+Certificate* certificate_copy(Certificate* cert)
+{
+    if (!cert)
+        return NULL;
+
+    Certificate* result = (Certificate*)calloc(1, sizeof(*result));
+    if (!result)
+        return NULL;
+
+    result->version = cert->version;
+    result->issuer = cert->issuer ? strdup(cert->issuer) : NULL;
+    result->subject = cert->subject ? strdup(cert->subject) : NULL;
+    result->serial = cert->serial ? strdup(cert->serial) : NULL;
+    result->not_after = cert->not_after;
+    result->not_before = cert->not_before;
+    result->sig_alg = cert->sig_alg ? strdup(cert->sig_alg) : NULL;
+    result->sig_alg_oid = cert->sig_alg_oid ? strdup(cert->sig_alg_oid) : NULL;
+    result->key_alg = cert->key_alg ? strdup(cert->key_alg) : NULL;
+    result->key = cert->key ? strdup(cert->key) : NULL;
+    byte_array_init(&result->sha1, cert->sha1.data, cert->sha1.len);
+    byte_array_init(&result->sha256, cert->sha256.data, cert->sha256.len);
+    attributes_copy(&result->issuer_attrs, &cert->issuer_attrs);
+    attributes_copy(&result->subject_attrs, &cert->subject_attrs);
+
+    return result;
+}
+
 /* Moves certificates from src to dst, returns 0 on success,
  * else 1. If error occurs, arguments are unchanged */
 int certificate_array_move(CertificateArray* dst, CertificateArray* src)
 {
+    if (!dst || !src)
+        return 1;
+
+    if (!src->certs || !src->count)
+        return 0;
+
     size_t newCount = dst->count + src->count;
 
     Certificate** tmp = (Certificate**)realloc(dst->certs, newCount * sizeof(Certificate*));
@@ -350,6 +422,32 @@ int certificate_array_move(CertificateArray* dst, CertificateArray* src)
     free(src->certs);
     src->certs = NULL;
     src->count = 0;
+
+    return 0;
+}
+
+/* Copies certificates from src and appends to dst, returns 0 on success,
+ * else 1. If error occurs, arguments are unchanged */
+int certificate_array_append(CertificateArray* dst, CertificateArray* src)
+{
+    if (!dst || !src)
+        return 1;
+
+    if (!src->certs || !src->count)
+        return 0;
+
+    size_t newCount = dst->count + src->count;
+
+    Certificate** tmp = (Certificate**)realloc(dst->certs, newCount * sizeof(Certificate*));
+    if (!tmp)
+        return 1;
+
+    dst->certs = tmp;
+
+    for (size_t i = 0; i < src->count; ++i)
+        dst->certs[i + dst->count] = certificate_copy(src->certs[i]);
+
+    dst->count = newCount;
 
     return 0;
 }

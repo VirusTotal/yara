@@ -114,23 +114,6 @@ static char* parse_program_name(ASN1_TYPE* spcAttr)
     return result;
 }
 
-/* Parses X509* certs into internal representation and inserts into CertificateArray
- * Array is assumed to have enough space to hold all certificates storted in the STACK */
-static void parse_certificates(const STACK_OF(X509) * certs, CertificateArray* result)
-{
-    int certCount = sk_X509_num(certs);
-    int i = 0;
-    for (; i < certCount; ++i) {
-        Certificate* cert = certificate_new(sk_X509_value(certs, i));
-        if (!cert)
-            break;
-
-        /* Write to the result */
-        result->certs[i] = cert;
-    }
-    result->count = i;
-}
-
 static void parse_nested_authenticode(PKCS7_SIGNER_INFO* si, AuthenticodeArray* result)
 {
     STACK_OF(X509_ATTRIBUTE)* attrs = PKCS7_get_attributes(si);
@@ -190,32 +173,6 @@ static void parse_pkcs9_countersig(PKCS7* p7, Authenticode* auth)
     }
 }
 
-/* Extracts X509 certificates from MS countersignature and stores them into result */
-static void extract_ms_counter_certs(const uint8_t* data, int len, CertificateArray* result)
-{
-    PKCS7* p7 = d2i_PKCS7(NULL, &data, len);
-    if (!p7)
-        return;
-
-    /* We expect SignedData type of PKCS7 */
-    if (!PKCS7_type_is_signed(p7) || !p7->d.sign) {
-        PKCS7_free(p7);
-        return;
-    }
-
-    STACK_OF(X509)* certs = p7->d.sign->cert;
-    CertificateArray* certArr = certificate_array_new(sk_X509_num(certs));
-    if (!certArr) {
-        PKCS7_free(p7);
-        return;
-    }
-    parse_certificates(certs, certArr);
-    certificate_array_move(result, certArr);
-    certificate_array_free(certArr);
-
-    PKCS7_free(p7);
-}
-
 static void parse_ms_countersig(PKCS7* p7, Authenticode* auth)
 {
     PKCS7_SIGNER_INFO* si = sk_PKCS7_SIGNER_INFO_value(PKCS7_get_signer_info(p7), 0);
@@ -239,14 +196,14 @@ static void parse_ms_countersig(PKCS7* p7, Authenticode* auth)
         int len = nested->value.sequence->length;
         const uint8_t* data = nested->value.sequence->data;
 
-        Countersignature* sig = ms_countersig_new(data, len, si->enc_digest);
-        if (!sig)
+        Countersignature* csig = ms_countersig_new(data, len, si->enc_digest);
+        if (!csig)
             return;
 
+        countersignature_array_insert(auth->countersigs, csig);
         /* Because MS TimeStamp countersignature has it's own SET of certificates
          * extract it back into parent signature for consistency with PKCS9 */
-        countersignature_array_insert(auth->countersigs, sig);
-        extract_ms_counter_certs(data, len, auth->certs);
+        certificate_array_append(auth->certs, csig->certs);
     }
 }
 
@@ -344,7 +301,7 @@ AuthenticodeArray* authenticode_new(const uint8_t* data, int32_t len)
         auth->verify_flags = AUTHENTICODE_VFY_INTERNAL_ERROR;
         goto end;
     }
-    parse_certificates(certs, auth->certs);
+    parse_x509_certificates(certs, auth->certs);
 
     /* Get Signature content that contains the message digest and it's algorithm */
     SpcIndirectDataContent* dataContent = get_content(p7data->contents);
