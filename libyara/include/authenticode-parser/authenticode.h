@@ -124,6 +124,8 @@ typedef struct {
     char* digest_alg;        /* Name of the digest algorithm used */
     ByteArray digest;        /* Stored message digest */
     CertificateArray* chain; /* Certificate chain of the signer */
+    CertificateArray* certs; /* All certs stored inside Countersignature, this can be superset
+                                of chain in case of non PKCS9 countersignature*/
 } Countersignature;
 
 typedef struct {
