@@ -365,11 +365,12 @@ typedef struct _IMAGE_NT_HEADERS64
 // IMAGE_FIRST_SECTION doesn't need 32/64 versions since the file header is
 // the same either way.
 
-#define IMAGE_FIRST_SECTION(ntheader) \
-  ((PIMAGE_SECTION_HEADER)(                                             \
-      (BYTE*) ntheader + offsetof(IMAGE_NT_HEADERS32, OptionalHeader) + \
-      yr_le16toh(((PIMAGE_NT_HEADERS32)(ntheader))                      \
-                     ->FileHeader.SizeOfOptionalHeader)))
+#define IMAGE_FIRST_SECTION(ntheader)                                      \
+  ((PIMAGE_SECTION_HEADER) ((BYTE*) ntheader +                             \
+                            offsetof(IMAGE_NT_HEADERS32, OptionalHeader) + \
+                            yr_le16toh(                                    \
+                                ((PIMAGE_NT_HEADERS32) (ntheader))         \
+                                    ->FileHeader.SizeOfOptionalHeader)))
 
 // Subsystem Values
 
@@ -727,22 +728,22 @@ typedef struct _IMAGE_SYMBOL_EX
 // MACROS
 
 // Basic Type of  x
-#define BTYPE(x) ((x) &N_BTMASK)
+#define BTYPE(x) ((x) & N_BTMASK)
 
 // Is x a pointer?
 #ifndef ISPTR
-#define ISPTR(x) (((x) &N_TMASK) == (IMAGE_SYM_DTYPE_POINTER << N_BTSHFT))
+#define ISPTR(x) (((x) & N_TMASK) == (IMAGE_SYM_DTYPE_POINTER << N_BTSHFT))
 #endif
 
 // Is x a function?
 #ifndef ISFCN
-#define ISFCN(x) (((x) &N_TMASK) == (IMAGE_SYM_DTYPE_FUNCTION << N_BTSHFT))
+#define ISFCN(x) (((x) & N_TMASK) == (IMAGE_SYM_DTYPE_FUNCTION << N_BTSHFT))
 #endif
 
 // Is x an array?
 
 #ifndef ISARY
-#define ISARY(x) (((x) &N_TMASK) == (IMAGE_SYM_DTYPE_ARRAY << N_BTSHFT))
+#define ISARY(x) (((x) & N_TMASK) == (IMAGE_SYM_DTYPE_ARRAY << N_BTSHFT))
 #endif
 
 // Is x a structure, union, or enumeration TAG?
@@ -755,10 +756,10 @@ typedef struct _IMAGE_SYMBOL_EX
 #ifndef INCREF
 #define INCREF(x)                                                            \
   ((((x) & ~N_BTMASK) << N_TSHIFT) | (IMAGE_SYM_DTYPE_POINTER << N_BTSHFT) | \
-   ((x) &N_BTMASK))
+   ((x) & N_BTMASK))
 #endif
 #ifndef DECREF
-#define DECREF(x) ((((x) >> N_TSHIFT) & ~N_BTMASK) | ((x) &N_BTMASK))
+#define DECREF(x) ((((x) >> N_TSHIFT) & ~N_BTMASK) | ((x) & N_BTMASK))
 #endif
 
 #pragma pack(pop)
@@ -865,9 +866,9 @@ typedef struct _RICH_VERSION_INFO
 typedef struct _RICH_SIGNATURE
 {
   DWORD dans;
-  DWORD key1;
-  DWORD key2;
-  DWORD key3;
+  DWORD padding_1;
+  DWORD padding_2;
+  DWORD padding_3;
   RICH_VERSION_INFO versions[0];
 } RICH_SIGNATURE, *PRICH_SIGNATURE;
 
