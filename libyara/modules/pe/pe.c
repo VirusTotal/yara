@@ -454,10 +454,7 @@ static int _pe_iterate_resources(
   for (i = 0; i < total_entries; i++)
   {
     if (!struct_fits_in_pe(pe, entry, IMAGE_RESOURCE_DIRECTORY_ENTRY))
-    {
-      result = RESOURCE_ITERATOR_ABORTED;
       break;
-    }
 
     switch (rsrc_tree_level)
     {
@@ -496,10 +493,6 @@ static int _pe_iterate_resources(
             callback,
             callback_data);
       }
-      else
-      {
-        result = RESOURCE_ITERATOR_ABORTED;
-      }
     }
     else
     {
@@ -520,10 +513,6 @@ static int _pe_iterate_resources(
         {
           result = RESOURCE_ITERATOR_ABORTED;
         }
-      }
-      else
-      {
-        result = RESOURCE_ITERATOR_ABORTED;
       }
     }
 
