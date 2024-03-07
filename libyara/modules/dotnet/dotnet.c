@@ -3288,19 +3288,6 @@ static bool dotnet_is_dotnet(PE* pe)
         IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR)
       return false;
   }
-  else if (!(pe->header->FileHeader.Characteristics & IMAGE_FILE_DLL))  // 32bit
-  {
-    // Check first 2 bytes of the Entry point are equal to 0xFF 0x25
-    int64_t entry_offset = pe_rva_to_offset(
-        pe, yr_le32toh(pe->header->OptionalHeader.AddressOfEntryPoint));
-
-    if (entry_offset < 0 || !fits_in_pe(pe, pe->data + entry_offset, 2))
-      return false;
-
-    const uint8_t* entry_data = pe->data + entry_offset;
-    if (!(entry_data[0] == 0xFF && entry_data[1] == 0x25))
-      return false;
-  }
 
   return true;
 }
