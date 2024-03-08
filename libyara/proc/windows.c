@@ -36,12 +36,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <yara/mem.h>
 #include <yara/proc.h>
 
-typedef struct _YR_PROC_INFO
-{
-  HANDLE hProcess;
-  SYSTEM_INFO si;
-} YR_PROC_INFO;
-
 int _yr_process_attach(int pid, YR_PROC_ITERATOR_CTX* context)
 {
   TOKEN_PRIVILEGES tokenPriv;
