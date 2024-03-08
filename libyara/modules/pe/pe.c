@@ -451,11 +451,12 @@ static int _pe_iterate_resources(
 
   entry = (PIMAGE_RESOURCE_DIRECTORY_ENTRY) (resource_dir + 1);
 
+  if (!fits_in_pe(
+          pe, entry, total_entries * sizeof(IMAGE_RESOURCE_DIRECTORY_ENTRY)))
+    return result;
+
   for (i = 0; i < total_entries; i++)
   {
-    if (!struct_fits_in_pe(pe, entry, IMAGE_RESOURCE_DIRECTORY_ENTRY))
-      break;
-
     switch (rsrc_tree_level)
     {
     case 0:
