@@ -21,6 +21,8 @@ SOFTWARE.
 
 #include "helper.h"
 
+#include <yara/mem.h>
+
 #include <openssl/bio.h>
 #include <openssl/x509_vfy.h>
 #include <stdint.h>
@@ -64,7 +66,7 @@ int byte_array_init(ByteArray* arr, const uint8_t* data, int len)
         return 0;
     }
 
-    arr->data = (uint8_t*)malloc(len);
+    arr->data = (uint8_t*)yr_malloc(len);
     if (!arr->data)
         return -1;
 

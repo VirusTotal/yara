@@ -22,6 +22,9 @@ SOFTWARE.
 #include "countersignature.h"
 
 #include <assert.h>
+
+#include <yara/mem.h>
+
 #include <openssl/cms.h>
 #include <openssl/evp.h>
 #include <openssl/objects.h>
@@ -109,7 +112,7 @@ typedef struct CountersignatureImplStruct {
 Countersignature* pkcs9_countersig_new(
     const uint8_t* data, long size, STACK_OF(X509) * certs, ASN1_STRING* enc_digest)
 {
-    Countersignature* result = (Countersignature*)calloc(1, sizeof(*result));
+    Countersignature* result = (Countersignature*)yr_calloc(1, sizeof(*result));
     if (!result)
         return NULL;
 
@@ -120,7 +123,7 @@ Countersignature* pkcs9_countersig_new(
     }
 
     int digestnid = OBJ_obj2nid(si->digest_alg->algorithm);
-    result->digest_alg = strdup(OBJ_nid2ln(digestnid));
+    result->digest_alg = yr_strdup(OBJ_nid2ln(digestnid));
 
     const ASN1_TYPE* sign_time = PKCS7_get_signed_attribute(si, NID_pkcs9_signingTime);
     if (!sign_time) {
@@ -180,7 +183,7 @@ Countersignature* pkcs9_countersig_new(
 
     /* TODO try to get rid of hardcoded length bound */
     size_t decLen = 65536;
-    uint8_t* decData = (uint8_t*)malloc(decLen);
+    uint8_t* decData = (uint8_t*)yr_malloc(decLen);
     if (!decData) {
         EVP_PKEY_CTX_free(ctx);
         result->verify_flags = COUNTERSIGNATURE_VFY_INTERNAL_ERROR;
@@ -196,7 +199,7 @@ Countersignature* pkcs9_countersig_new(
     EVP_PKEY_CTX_free(ctx);
 
     if (!isDecrypted) {
-        free(decData);
+        yr_free(decData);
         result->verify_flags = COUNTERSIGNATURE_VFY_CANT_DECRYPT_DIGEST;
         goto end;
     }
@@ -226,7 +229,7 @@ Countersignature* pkcs9_countersig_new(
             isValid = false;
         }
     }
-    free(decData);
+    yr_free(decData);
 
     if (!isValid) {
         result->verify_flags = COUNTERSIGNATURE_VFY_INVALID;
@@ -451,7 +454,7 @@ CountersignatureImpl* ms_countersig_impl_new(const uint8_t* data, long size)
     PKCS7* p7 = d2i_PKCS7(NULL, &d, size);
     if (p7 && PKCS7_type_is_signed(p7) && p7->d.sign) {
         CountersignatureImpl* result =
-            (CountersignatureImpl*)calloc(1, sizeof(CountersignatureImpl));
+            (CountersignatureImpl*)yr_calloc(1, sizeof(CountersignatureImpl));
         result->type = CS_IMPL_PKCS7;
         result->funcs = &FUNC_ARRAY_NAME_FOR_IMPL(pkcs7);
         result->pkcs7 = p7;
@@ -465,7 +468,7 @@ CountersignatureImpl* ms_countersig_impl_new(const uint8_t* data, long size)
     CMS_ContentInfo* cms = d2i_CMS_ContentInfo(NULL, &d, size);
     if (cms) {
         CountersignatureImpl* result =
-            (CountersignatureImpl*)calloc(1, sizeof(CountersignatureImpl));
+            (CountersignatureImpl*)yr_calloc(1, sizeof(CountersignatureImpl));
         result->type = CS_IMPL_CMS;
         result->funcs = &FUNC_ARRAY_NAME_FOR_IMPL(cms);
         result->cms = cms;
@@ -489,12 +492,12 @@ void ms_countersig_impl_free(CountersignatureImpl* impl)
         break;
     }
 
-    free(impl);
+    yr_free(impl);
 }
 
 Countersignature* ms_countersig_new(const uint8_t* data, long size, ASN1_STRING* enc_digest)
 {
-    Countersignature* result = (Countersignature*)calloc(1, sizeof(*result));
+    Countersignature* result = (Countersignature*)yr_calloc(1, sizeof(*result));
     if (!result)
         return NULL;
 
@@ -550,7 +553,7 @@ Countersignature* ms_countersig_new(const uint8_t* data, long size, ASN1_STRING*
 
     X509_ALGOR* digestAlg = TS_MSG_IMPRINT_get_algo(imprint);
     int digestnid = OBJ_obj2nid(digestAlg->algorithm);
-    result->digest_alg = strdup(OBJ_nid2ln(digestnid));
+    result->digest_alg = yr_strdup(OBJ_nid2ln(digestnid));
 
     ASN1_STRING* rawDigest = TS_MSG_IMPRINT_get_msg(imprint);
 
@@ -614,7 +617,7 @@ end:
 int countersignature_array_insert(CountersignatureArray* arr, Countersignature* sig)
 {
     Countersignature** tmp =
-        (Countersignature**)realloc(arr->counters, (arr->count + 1) * sizeof(Countersignature*));
+        (Countersignature**)yr_realloc(arr->counters, (arr->count + 1) * sizeof(Countersignature*));
     if (!tmp)
         return 1;
 
@@ -630,7 +633,7 @@ int countersignature_array_move(CountersignatureArray* dst, CountersignatureArra
     size_t newCount = dst->count + src->count;
 
     Countersignature** tmp =
-        (Countersignature**)realloc(dst->counters, newCount * sizeof(Countersignature*));
+        (Countersignature**)yr_realloc(dst->counters, newCount * sizeof(Countersignature*));
     if (!tmp)
         return 1;
 
@@ -641,7 +644,7 @@ int countersignature_array_move(CountersignatureArray* dst, CountersignatureArra
 
     dst->count = newCount;
 
-    free(src->counters);
+    yr_free(src->counters);
     src->counters = NULL;
     src->count = 0;
 
@@ -651,11 +654,11 @@ int countersignature_array_move(CountersignatureArray* dst, CountersignatureArra
 void countersignature_free(Countersignature* sig)
 {
     if (sig) {
-        free(sig->digest_alg);
-        free(sig->digest.data);
+        yr_free(sig->digest_alg);
+        yr_free(sig->digest.data);
         certificate_array_free(sig->chain);
         certificate_array_free(sig->certs);
-        free(sig);
+        yr_free(sig);
     }
 }
 
@@ -665,7 +668,7 @@ void countersignature_array_free(CountersignatureArray* arr)
         for (size_t i = 0; i < arr->count; ++i) {
             countersignature_free(arr->counters[i]);
         }
-        free(arr->counters);
-        free(arr);
+        yr_free(arr->counters);
+        yr_free(arr);
     }
 }

@@ -21,6 +21,8 @@ SOFTWARE.
 
 #include "certificate.h"
 
+#include <yara/mem.h>
+
 #include <openssl/asn1.h>
 #include <openssl/crypto.h>
 #include <openssl/evp.h>
@@ -99,7 +101,7 @@ static void parse_name_attributes(X509_NAME* raw, Attributes* attr)
         else if (strcmp(key, "emailAddress") == 0 && !attr->emailAddress.data)
             attr->emailAddress = array;
         else
-            free(array.data);
+            yr_free(array.data);
     }
 }
 
@@ -130,11 +132,11 @@ CertificateArray* parse_signer_chain(X509* signCert, STACK_OF(X509) * certs)
 
     int certCount = sk_X509_num(chain);
 
-    CertificateArray* result = (CertificateArray*)calloc(1, sizeof(*result));
+    CertificateArray* result = (CertificateArray*)yr_calloc(1, sizeof(*result));
     if (!result)
         goto error;
 
-    result->certs = (Certificate**)calloc(certCount, sizeof(Certificate*));
+    result->certs = (Certificate**)yr_calloc(certCount, sizeof(Certificate*));
     if (!result->certs)
         goto error;
 
@@ -157,8 +159,8 @@ error: /* In case of error, return nothing */
         for (size_t i = 0; i < result->count; ++i) {
             certificate_free(result->certs[i]);
         }
-        free(result->certs);
-        free(result);
+        yr_free(result->certs);
+        yr_free(result);
     }
     X509_STORE_free(store);
     X509_STORE_CTX_free(storeCtx);
@@ -181,7 +183,7 @@ static char* integer_to_serial(ASN1_INTEGER* serial)
     /* Now that we know the size of the serial number allocate enough
      * space to hold it, and use i2d_ASN1_INTEGER() one last time to
      * hold it in the allocated buffer. */
-    uint8_t* serial_der = (uint8_t*)malloc(bytes);
+    uint8_t* serial_der = (uint8_t*)yr_malloc(bytes);
     if (!serial_der)
         return NULL;
 
@@ -204,7 +206,7 @@ static char* integer_to_serial(ASN1_INTEGER* serial)
      * need three bytes, two for the byte itself and one for colon.
      * The last one doesn't have the colon, but the extra byte is used
      * for the NULL terminator. */
-    res = (char*)malloc(bytes * 3);
+    res = (char*)yr_malloc(bytes * 3);
     if (res) {
         for (int i = 0; i < bytes; i++) {
             /* Don't put the colon on the last one. */
@@ -214,7 +216,7 @@ static char* integer_to_serial(ASN1_INTEGER* serial)
                 snprintf(res + 3 * i, 3, "%02x", serial_bytes[i]);
         }
     }
-    free(serial_der);
+    yr_free(serial_der);
 
     return (char*)res;
 }
@@ -229,7 +231,7 @@ static char* pubkey_to_pem(EVP_PKEY* pubkey)
         return NULL;
 
     /* Approximate the result length (padding, newlines, 4 out bytes for every 3 in) */
-    uint8_t* result = (uint8_t*)malloc(len * 3 / 2);
+    uint8_t* result = (uint8_t*)yr_malloc(len * 3 / 2);
     if (!result) {
         OPENSSL_free(der);
         return NULL;
@@ -239,7 +241,7 @@ static char* pubkey_to_pem(EVP_PKEY* pubkey)
     EVP_ENCODE_CTX* ctx = EVP_ENCODE_CTX_new();
     if (!ctx) {
         OPENSSL_free(der);
-        free(result);
+        yr_free(result);
         return NULL;
     }
 
@@ -266,18 +268,18 @@ static char* pubkey_to_pem(EVP_PKEY* pubkey)
 
 Certificate* certificate_new(X509* x509)
 {
-    Certificate* result = (Certificate*)calloc(1, sizeof(*result));
+    Certificate* result = (Certificate*)yr_calloc(1, sizeof(*result));
     if (!result)
         return NULL;
 
     /* Calculate SHA1 and SHA256 digests of the X509 structure */
-    result->sha1.data = (uint8_t*)malloc(SHA_DIGEST_LENGTH);
+    result->sha1.data = (uint8_t*)yr_malloc(SHA_DIGEST_LENGTH);
     if (result->sha1.data) {
         X509_digest(x509, EVP_sha1(), result->sha1.data, NULL);
         result->sha1.len = SHA_DIGEST_LENGTH;
     }
 
-    result->sha256.data = (uint8_t*)malloc(SHA256_DIGEST_LENGTH);
+    result->sha256.data = (uint8_t*)yr_malloc(SHA256_DIGEST_LENGTH);
     if (result->sha256.data) {
         X509_digest(x509, EVP_sha256(), result->sha256.data, NULL);
         result->sha256.len = SHA256_DIGEST_LENGTH;
@@ -291,7 +293,7 @@ Certificate* certificate_new(X509* x509)
     X509_NAME* issuerName = X509_get_issuer_name(x509);
     X509_NAME_oneline(issuerName, buffer, sizeof(buffer));
 
-    result->issuer = strdup(buffer);
+    result->issuer = yr_strdup(buffer);
     /* This is a little ugly hack for 3.0 compatibility */
 #if OPENSSL_VERSION_NUMBER >= 0x3000000fL
     parse_oneline_string(result->issuer);
@@ -299,7 +301,7 @@ Certificate* certificate_new(X509* x509)
 
     X509_NAME* subjectName = X509_get_subject_name(x509);
     X509_NAME_oneline(subjectName, buffer, sizeof(buffer));
-    result->subject = strdup(buffer);
+    result->subject = yr_strdup(buffer);
 #if OPENSSL_VERSION_NUMBER >= 0x3000000fL
     parse_oneline_string(result->subject);
 #endif
@@ -312,18 +314,18 @@ Certificate* certificate_new(X509* x509)
     result->not_after = ASN1_TIME_to_int64_t(X509_get0_notAfter(x509));
     result->not_before = ASN1_TIME_to_int64_t(X509_get0_notBefore(x509));
     int sig_nid = X509_get_signature_nid(x509);
-    result->sig_alg = strdup(OBJ_nid2ln(sig_nid));
+    result->sig_alg = yr_strdup(OBJ_nid2ln(sig_nid));
 
     OBJ_obj2txt(buffer, sizeof(buffer), OBJ_nid2obj(sig_nid), 1);
-    result->sig_alg_oid = strdup(buffer);
+    result->sig_alg_oid = yr_strdup(buffer);
 
     EVP_PKEY* pkey = X509_get0_pubkey(x509);
     if (pkey) {
         result->key = pubkey_to_pem(pkey);
 #if OPENSSL_VERSION_NUMBER >= 0x3000000fL
-        result->key_alg = strdup(OBJ_nid2sn(EVP_PKEY_get_base_id(pkey)));
+        result->key_alg = yr_strdup(OBJ_nid2sn(EVP_PKEY_get_base_id(pkey)));
 #else
-        result->key_alg = strdup(OBJ_nid2sn(EVP_PKEY_base_id(pkey)));
+        result->key_alg = yr_strdup(OBJ_nid2sn(EVP_PKEY_base_id(pkey)));
 #endif
     }
 
@@ -374,20 +376,20 @@ Certificate* certificate_copy(Certificate* cert)
     if (!cert)
         return NULL;
 
-    Certificate* result = (Certificate*)calloc(1, sizeof(*result));
+    Certificate* result = (Certificate*)yr_calloc(1, sizeof(*result));
     if (!result)
         return NULL;
 
     result->version = cert->version;
-    result->issuer = cert->issuer ? strdup(cert->issuer) : NULL;
-    result->subject = cert->subject ? strdup(cert->subject) : NULL;
-    result->serial = cert->serial ? strdup(cert->serial) : NULL;
+    result->issuer = cert->issuer ? yr_strdup(cert->issuer) : NULL;
+    result->subject = cert->subject ? yr_strdup(cert->subject) : NULL;
+    result->serial = cert->serial ? yr_strdup(cert->serial) : NULL;
     result->not_after = cert->not_after;
     result->not_before = cert->not_before;
-    result->sig_alg = cert->sig_alg ? strdup(cert->sig_alg) : NULL;
-    result->sig_alg_oid = cert->sig_alg_oid ? strdup(cert->sig_alg_oid) : NULL;
-    result->key_alg = cert->key_alg ? strdup(cert->key_alg) : NULL;
-    result->key = cert->key ? strdup(cert->key) : NULL;
+    result->sig_alg = cert->sig_alg ? yr_strdup(cert->sig_alg) : NULL;
+    result->sig_alg_oid = cert->sig_alg_oid ? yr_strdup(cert->sig_alg_oid) : NULL;
+    result->key_alg = cert->key_alg ? yr_strdup(cert->key_alg) : NULL;
+    result->key = cert->key ? yr_strdup(cert->key) : NULL;
     byte_array_init(&result->sha1, cert->sha1.data, cert->sha1.len);
     byte_array_init(&result->sha256, cert->sha256.data, cert->sha256.len);
     attributes_copy(&result->issuer_attrs, &cert->issuer_attrs);
@@ -408,7 +410,7 @@ int certificate_array_move(CertificateArray* dst, CertificateArray* src)
 
     size_t newCount = dst->count + src->count;
 
-    Certificate** tmp = (Certificate**)realloc(dst->certs, newCount * sizeof(Certificate*));
+    Certificate** tmp = (Certificate**)yr_realloc(dst->certs, newCount * sizeof(Certificate*));
     if (!tmp)
         return 1;
 
@@ -419,7 +421,7 @@ int certificate_array_move(CertificateArray* dst, CertificateArray* src)
 
     dst->count = newCount;
 
-    free(src->certs);
+    yr_free(src->certs);
     src->certs = NULL;
     src->count = 0;
 
@@ -438,7 +440,7 @@ int certificate_array_append(CertificateArray* dst, CertificateArray* src)
 
     size_t newCount = dst->count + src->count;
 
-    Certificate** tmp = (Certificate**)realloc(dst->certs, newCount * sizeof(Certificate*));
+    Certificate** tmp = (Certificate**)yr_realloc(dst->certs, newCount * sizeof(Certificate*));
     if (!tmp)
         return 1;
 
@@ -455,13 +457,13 @@ int certificate_array_append(CertificateArray* dst, CertificateArray* src)
 /* Allocates empty certificate array with reserved space for certCount certs */
 CertificateArray* certificate_array_new(int certCount)
 {
-    CertificateArray* arr = (CertificateArray*)malloc(sizeof(*arr));
+    CertificateArray* arr = (CertificateArray*)yr_malloc(sizeof(*arr));
     if (!arr)
         return NULL;
 
-    arr->certs = (Certificate**)malloc(sizeof(Certificate*) * certCount);
+    arr->certs = (Certificate**)yr_malloc(sizeof(Certificate*) * certCount);
     if (!arr->certs) {
-        free(arr);
+        yr_free(arr);
         return NULL;
     }
 
@@ -472,38 +474,38 @@ CertificateArray* certificate_array_new(int certCount)
 
 static void certificate_attributes_free(Attributes attrs)
 {
-    free(attrs.country.data);
-    free(attrs.organization.data);
-    free(attrs.organizationalUnit.data);
-    free(attrs.nameQualifier.data);
-    free(attrs.state.data);
-    free(attrs.commonName.data);
-    free(attrs.serialNumber.data);
-    free(attrs.locality.data);
-    free(attrs.title.data);
-    free(attrs.surname.data);
-    free(attrs.givenName.data);
-    free(attrs.initials.data);
-    free(attrs.pseudonym.data);
-    free(attrs.generationQualifier.data);
-    free(attrs.emailAddress.data);
+    yr_free(attrs.country.data);
+    yr_free(attrs.organization.data);
+    yr_free(attrs.organizationalUnit.data);
+    yr_free(attrs.nameQualifier.data);
+    yr_free(attrs.state.data);
+    yr_free(attrs.commonName.data);
+    yr_free(attrs.serialNumber.data);
+    yr_free(attrs.locality.data);
+    yr_free(attrs.title.data);
+    yr_free(attrs.surname.data);
+    yr_free(attrs.givenName.data);
+    yr_free(attrs.initials.data);
+    yr_free(attrs.pseudonym.data);
+    yr_free(attrs.generationQualifier.data);
+    yr_free(attrs.emailAddress.data);
 }
 
 void certificate_free(Certificate* cert)
 {
     if (cert) {
-        free(cert->issuer);
-        free(cert->subject);
-        free(cert->sig_alg);
-        free(cert->sig_alg_oid);
-        free(cert->key_alg);
-        free(cert->key);
-        free(cert->sha1.data);
-        free(cert->sha256.data);
-        free(cert->serial);
+        yr_free(cert->issuer);
+        yr_free(cert->subject);
+        yr_free(cert->sig_alg);
+        yr_free(cert->sig_alg_oid);
+        yr_free(cert->key_alg);
+        yr_free(cert->key);
+        yr_free(cert->sha1.data);
+        yr_free(cert->sha256.data);
+        yr_free(cert->serial);
         certificate_attributes_free(cert->issuer_attrs);
         certificate_attributes_free(cert->subject_attrs);
-        free(cert);
+        yr_free(cert);
     }
 }
 
@@ -513,7 +515,7 @@ void certificate_array_free(CertificateArray* arr)
         for (size_t i = 0; i < arr->count; ++i) {
             certificate_free(arr->certs[i]);
         }
-        free(arr->certs);
-        free(arr);
+        yr_free(arr->certs);
+        yr_free(arr);
     }
 }

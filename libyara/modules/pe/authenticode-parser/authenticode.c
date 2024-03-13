@@ -33,6 +33,8 @@ SOFTWARE.
 #include <stdlib.h>
 #include <string.h>
 
+#include <yara/mem.h>
+
 #include <authenticode-parser/authenticode.h>
 
 #include "certificate.h"
@@ -48,7 +50,7 @@ static int authenticode_array_move(AuthenticodeArray* dst, AuthenticodeArray* sr
 {
     size_t newCount = dst->count + src->count;
 
-    Authenticode** tmp = (Authenticode**)realloc(dst->signatures, newCount * sizeof(Authenticode*));
+    Authenticode** tmp = (Authenticode**)yr_realloc(dst->signatures, newCount * sizeof(Authenticode*));
     if (!tmp)
         return 1;
 
@@ -59,7 +61,7 @@ static int authenticode_array_move(AuthenticodeArray* dst, AuthenticodeArray* sr
 
     dst->count = newCount;
 
-    free(src->signatures);
+    yr_free(src->signatures);
     src->signatures = NULL;
     src->count = 0;
 
@@ -101,7 +103,7 @@ static char* parse_program_name(ASN1_TYPE* spcAttr)
         /* Should be Windows UTF16..., try to convert it to UTF8 */
         int nameLen = ASN1_STRING_to_UTF8(&data, spcInfo->programName->value.unicode);
         if (nameLen >= 0 && nameLen < spcLen) {
-            result = (char*)malloc(nameLen + 1);
+            result = (char*)yr_malloc(nameLen + 1);
             if (result) {
                 memcpy(result, data, nameLen);
                 result[nameLen] = 0;
@@ -255,20 +257,21 @@ AuthenticodeArray* authenticode_new(const uint8_t* data, int32_t len)
     if (!data || len <= 0)
         return NULL;
 
-    AuthenticodeArray* result = (AuthenticodeArray*)calloc(1, sizeof(*result));
+    AuthenticodeArray* result = (AuthenticodeArray*)yr_calloc(1, sizeof(*result));
     if (!result)
         return NULL;
 
-    result->signatures = (Authenticode**)malloc(sizeof(Authenticode*));
+    result->signatures = (Authenticode**)yr_calloc(sizeof(Authenticode*));
+    result->signatures = (Authenticode**)yr_malloc(sizeof(Authenticode*));
     if (!result->signatures) {
-        free(result);
+        yr_free(result);
         return NULL;
     }
 
-    Authenticode* auth = (Authenticode*)calloc(1, sizeof(*auth));
+    Authenticode* auth = (Authenticode*)yr_calloc(1, sizeof(*auth));
     if (!auth) {
-        free(result->signatures);
-        free(result);
+        yr_free(result->signatures);
+        yr_free(result);
         return NULL;
     }
 
@@ -313,7 +316,7 @@ AuthenticodeArray* authenticode_new(const uint8_t* data, int32_t len)
     DigestInfo* messageDigest = dataContent->messageDigest;
 
     int digestnid = OBJ_obj2nid(messageDigest->digestAlgorithm->algorithm);
-    auth->digest_alg = strdup(OBJ_nid2ln(digestnid));
+    auth->digest_alg = yr_strdup(OBJ_nid2ln(digestnid));
 
     int digestLen = messageDigest->digest->length;
     const uint8_t* digestData = messageDigest->digest->data;
@@ -321,7 +324,7 @@ AuthenticodeArray* authenticode_new(const uint8_t* data, int32_t len)
 
     SpcIndirectDataContent_free(dataContent);
 
-    Signer* signer = (Signer*)calloc(1, sizeof(Signer));
+    Signer* signer = (Signer*)yr_calloc(1, sizeof(Signer));
     if (!signer) {
         auth->verify_flags = AUTHENTICODE_VFY_INTERNAL_ERROR;
         goto end;
@@ -337,7 +340,7 @@ AuthenticodeArray* authenticode_new(const uint8_t* data, int32_t len)
         goto end;
     }
 
-    auth->countersigs = (CountersignatureArray*)calloc(1, sizeof(CountersignatureArray));
+    auth->countersigs = (CountersignatureArray*)yr_calloc(1, sizeof(CountersignatureArray));
     if (!auth->countersigs) {
         auth->verify_flags = AUTHENTICODE_VFY_INTERNAL_ERROR;
         goto end;
@@ -370,7 +373,7 @@ AuthenticodeArray* authenticode_new(const uint8_t* data, int32_t len)
     }
 
     digestnid = OBJ_obj2nid(si->digest_alg->algorithm);
-    signer->digest_alg = strdup(OBJ_nid2ln(digestnid));
+    signer->digest_alg = yr_strdup(OBJ_nid2ln(digestnid));
 
     digestLen = digest->value.asn1_string->length;
     digestData = digest->value.asn1_string->data;
@@ -400,7 +403,7 @@ static int authenticode_digest(
     uint8_t* digest)
 {
     uint32_t buffer_size = 0xFFFF;
-    uint8_t* buffer = (uint8_t*)malloc(buffer_size);
+    uint8_t* buffer = (uint8_t*)yr_malloc(buffer_size);
 
     /* BIO with the file data */
     BIO* bio = BIO_new_mem_buf(pe_data, cert_table_addr);
@@ -478,13 +481,13 @@ static int authenticode_digest(
 
     EVP_MD_CTX_free(mdctx);
     BIO_free_all(bio);
-    free(buffer);
+    yr_free(buffer);
     return 0;
 
 error:
     EVP_MD_CTX_free(mdctx);
     BIO_free_all(bio);
-    free(buffer);
+    yr_free(buffer);
     return 1;
 }
 
@@ -557,7 +560,7 @@ AuthenticodeArray* parse_authenticode(const uint8_t* pe_data, uint64_t pe_len)
         int mdlen = EVP_MD_size(md);
 #endif
         sig->file_digest.len = mdlen;
-        sig->file_digest.data = (uint8_t*)malloc(mdlen);
+        sig->file_digest.data = (uint8_t*)yr_malloc(mdlen);
         if (!sig->file_digest.data)
             continue;
 
@@ -581,24 +584,24 @@ AuthenticodeArray* parse_authenticode(const uint8_t* pe_data, uint64_t pe_len)
 static void signer_free(Signer* si)
 {
     if (si) {
-        free(si->digest.data);
-        free(si->digest_alg);
-        free(si->program_name);
+        yr_free(si->digest.data);
+        yr_free(si->digest_alg);
+        yr_free(si->program_name);
         certificate_array_free(si->chain);
-        free(si);
+        yr_free(si);
     }
 }
 
 static void authenticode_free(Authenticode* auth)
 {
     if (auth) {
-        free(auth->digest.data);
-        free(auth->file_digest.data);
-        free(auth->digest_alg);
+        yr_free(auth->digest.data);
+        yr_free(auth->file_digest.data);
+        yr_free(auth->digest_alg);
         signer_free(auth->signer);
         certificate_array_free(auth->certs);
         countersignature_array_free(auth->countersigs);
-        free(auth);
+        yr_free(auth);
     }
 }
 
@@ -608,7 +611,7 @@ void authenticode_array_free(AuthenticodeArray* arr)
         for (size_t i = 0; i < arr->count; ++i) {
             authenticode_free(arr->signatures[i]);
         }
-        free(arr->signatures);
-        free(arr);
+        yr_free(arr->signatures);
+        yr_free(arr);
     }
 }
