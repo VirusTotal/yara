@@ -155,6 +155,24 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
     }                                         \
   }
 
+#define GOTO_EXIT_ON_NULL(x, error) \
+  {                                 \
+    if ((x) == NULL)                \
+    {                               \
+      result = error;               \
+      goto _exit;                   \
+    }                               \
+  }
+
+#define GOTO_EXIT_ON_FAIL(x) \
+  {                          \
+    if ((x) == FALSE)        \
+    {                        \
+      result = -1;           \
+      goto _exit;            \
+    }                        \
+  }
+
 #ifdef NDEBUG
 #define assertf(expr, msg, ...) ((void) 0)
 #else
