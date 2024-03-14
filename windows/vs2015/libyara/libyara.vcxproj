@@ -116,7 +116,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
-      <PreprocessorDefinitions>USE_WINCRYPT_AUTHENTICODE;_CRT_SECURE_NO_WARNINGS;CUCKOO_MODULE;HASH_MODULE;DOTNET_MODULE;HAVER_WINCRYPT_H;USE_WINDOWS_PROC;YR_BUILDING_STATIC_LIBC;YR_PROFILING_ENABLED;BUCKETS_128;CHECKSUM_1B</PreprocessorDefinitions>
+      <PreprocessorDefinitions>USE_WINCRYPT_AUTHENTICODE;_CRT_SECURE_NO_WARNINGS;CUCKOO_MODULE;HASH_MODULE;DOTNET_MODULE;HAVE_WINCRYPT_H;USE_WINDOWS_PROC;YR_BUILDING_STATIC_LIBC;YR_PROFILING_ENABLED;BUCKETS_128;CHECKSUM_1B</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>..\..\..\libyara;..\..\..\libyara\include;..\..\..;..\packages\YARA.Jansson.x64.1.1.0\include;..\packages\YARA.OpenSSL.x64.1.1.1\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DisableSpecificWarnings>4005;4273;4090</DisableSpecificWarnings>
       <CompileAs>CompileAsC</CompileAs>
