@@ -19,6 +19,11 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
+#ifdef USE_WINCRYPT_AUTHENTICODE
+
+#include <authenticode-parser/windows/tools.h>
+#include <authenticode-parser/windows/authenticode.h>
+#else // USE_WINCRYPT_AUTHENTICODE
 #include <openssl/asn1.h>
 #include <openssl/evp.h>
 #include <openssl/objects.h>
@@ -29,6 +34,8 @@ SOFTWARE.
 #include <openssl/sha.h>
 #include <openssl/x509.h>
 #include <openssl/x509_vfy.h>
+#endif // !USE_WINCRYPT_AUTHENTICODE
+
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
@@ -44,9 +51,7 @@ SOFTWARE.
 
 #define MAX_NESTED_COUNT 16
 
-/* Moves signatures from src to dst, returns 0 on success,
- * else 1. If error occurs, arguments are unchanged */
-static int authenticode_array_move(AuthenticodeArray* dst, AuthenticodeArray* src)
+int authenticode_array_move(AuthenticodeArray* dst, AuthenticodeArray* src)
 {
     size_t newCount = dst->count + src->count;
 
@@ -68,6 +73,7 @@ static int authenticode_array_move(AuthenticodeArray* dst, AuthenticodeArray* sr
     return 0;
 }
 
+#ifndef USE_WINCRYPT_AUTHENTICODE
 static SpcIndirectDataContent* get_content(PKCS7* content)
 {
     if (!content)
@@ -239,15 +245,19 @@ static bool authenticode_verify(PKCS7* p7, PKCS7_SIGNER_INFO* si, X509* signCert
     return isValid;
 }
 
+#endif // !USE_WINCRYPT_AUTHENTICODE
+
 /* Creates all the Authenticode objects so we can parse them with OpenSSL, is not thread-safe, needs
  * to be called once before any multi-threading environmentt -
  * https://github.com/openssl/openssl/issues/13524 */
 void initialize_authenticode_parser()
 {
+#ifndef USE_WINCRYPT_AUTHENTICODE
     OBJ_create("1.3.6.1.4.1.311.2.1.12", "spcSpOpusInfo", "SPC_SP_OPUS_INFO_OBJID");
     OBJ_create("1.3.6.1.4.1.311.3.3.1", "spcMsCountersignature", "SPC_MICROSOFT_COUNTERSIGNATURE");
     OBJ_create("1.3.6.1.4.1.311.2.4.1", "spcNestedSignature", "SPC_NESTED_SIGNATUREs");
     OBJ_create("1.3.6.1.4.1.311.2.1.4", "spcIndirectData", "SPC_INDIRECT_DATA");
+#endif // !USE_WINCRYPT_AUTHENTICODE
 }
 
 /* Return array of Authenticode signatures stored in the data, there can be multiple
@@ -261,7 +271,13 @@ AuthenticodeArray* authenticode_new(const uint8_t* data, int32_t len)
     if (!result)
         return NULL;
 
-    result->signatures = (Authenticode**)yr_calloc(sizeof(Authenticode*));
+#ifdef USE_WINCRYPT_AUTHENTICODE
+    if (parse_authenticode_wincrypt(data, len, result) != ERROR_SUCCESS)
+    {
+      yr_free(result);
+      return NULL;
+    }
+#else // USE_WINCRYPT_AUTHENTICODE
     result->signatures = (Authenticode**)yr_malloc(sizeof(Authenticode*));
     if (!result->signatures) {
         yr_free(result);
@@ -391,9 +407,12 @@ AuthenticodeArray* authenticode_new(const uint8_t* data, int32_t len)
 
 end:
     PKCS7_free(p7);
+#endif // !USE_WINCRYPT_AUTHENTICODE
+
     return result;
 }
 
+#ifndef USE_WINCRYPT_AUTHENTICODE
 static int authenticode_digest(
     const EVP_MD* md,
     const uint8_t* pe_data,
@@ -490,6 +509,7 @@ error:
     yr_free(buffer);
     return 1;
 }
+#endif // !USE_WINCRYPT_AUTHENTICODE
 
 AuthenticodeArray* parse_authenticode(const uint8_t* pe_data, uint64_t pe_len)
 {
@@ -532,6 +552,16 @@ AuthenticodeArray* parse_authenticode(const uint8_t* pe_data, uint64_t pe_len)
     if (cert_len < 8 || pe_len < cert_addr + 8)
         return NULL;
 
+#ifdef USE_WINCRYPT_AUTHENTICODE
+    LPWIN_CERTIFICATE win_cert = (LPWIN_CERTIFICATE)(pe_data + cert_addr);
+
+    // Ensure what we read is indeed authenticode, as no check can be done in authenticode_new (skipping this data with +0x8)
+    if (win_cert->dwLength <= 0 ||
+        win_cert->wCertificateType != WIN_CERT_TYPE_PKCS_SIGNED_DATA ||
+        win_cert->wRevision != WIN_CERT_REVISION_2_0)
+      return NULL;
+#endif // USE_WINCRYPT_AUTHENTICODE
+
     uint32_t dwLength = letoh32(*(uint32_t*)(pe_data + cert_addr));
     if (pe_len < cert_addr + dwLength)
         return NULL;
@@ -545,6 +575,16 @@ AuthenticodeArray* parse_authenticode(const uint8_t* pe_data, uint64_t pe_len)
     for (size_t i = 0; i < auth_array->count; ++i) {
         Authenticode* sig = auth_array->signatures[i];
 
+#ifdef USE_WINCRYPT_AUTHENTICODE
+        if (authenticode_wincrypt_compute_file_digest(sig, pe_data, pe_len, pe_offset, is_64bit, cert_addr))
+        {
+          /* Only register verification error if none is set already */
+          if (sig->verify_flags == AUTHENTICODE_VFY_VALID)
+            sig->verify_flags = AUTHENTICODE_VFY_INTERNAL_ERROR;
+
+          continue;
+        }
+#else // USE_WINCRYPT_AUTHENTICODE
         const EVP_MD* md = EVP_get_digestbyname(sig->digest_alg);
         if (!md || !sig->digest.len || !sig->digest.data) {
             /* If there is an verification error, keep the first error */
@@ -572,9 +612,11 @@ AuthenticodeArray* parse_authenticode(const uint8_t* pe_data, uint64_t pe_len)
                 sig->verify_flags = AUTHENTICODE_VFY_INTERNAL_ERROR;
             break;
         }
+#endif // !USE_WINCRYPT_AUTHENTICODE
 
         /* Complete the verification */
-        if (memcmp(sig->file_digest.data, sig->digest.data, mdlen) != 0)
+        if (sig->file_digest.len != sig->digest.len ||
+            memcmp(sig->file_digest.data, sig->digest.data, sig->digest.len) != 0)
             sig->verify_flags = AUTHENTICODE_VFY_WRONG_FILE_DIGEST;
     }
 

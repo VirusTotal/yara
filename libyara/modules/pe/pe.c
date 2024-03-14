@@ -32,10 +32,13 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <time.h>
 
 #include "../crypto.h"
-#if defined(HAVE_LIBCRYPTO)
+#if defined(HAVE_LIBCRYPTO) || (defined(HAVE_CRYPTO_WINCRYPT) && defined(USE_WINCRYPT_AUTHENTICODE))
 #include <authenticode-parser/authenticode.h>
+#endif // HAVE_LIBCRYPTO || (HAVE_CRYPTO_WINCRYPT && USE_WINCRYPT_AUTHENTICODE)
+
+#if defined(HAVE_LIBCRYPTO)
 #include <openssl/evp.h>
-#endif
+#endif // HAVE_LIBCRYPTO
 
 #include <yara/dotnet.h>
 #include <yara/endian.h>
@@ -1697,7 +1700,7 @@ static void pe_parse_exports(PE* pe)
 // some features used in pe_parse_certificates, if you are using BoringSSL
 // instead of OpenSSL you should define BORINGSSL for YARA to compile properly,
 // but you won't have signature-related features in the PE module.
-#if defined(HAVE_LIBCRYPTO) && !defined(BORINGSSL)
+#if (defined(HAVE_LIBCRYPTO) && !defined(BORINGSSL)) || (defined(HAVE_CRYPTO_WINCRYPT) && defined(USE_WINCRYPT_AUTHENTICODE))
 
 #define write_certificate(cert, pe, fmt, ...)                                  \
   do                                                                           \
@@ -3835,7 +3838,7 @@ begin_declarations
   declare_integer("number_of_resources");
   declare_string("pdb_path");
 
-#if defined(HAVE_LIBCRYPTO) && !defined(BORINGSSL)
+#if (defined(HAVE_LIBCRYPTO) && !defined(BORINGSSL)) || (defined(HAVE_CRYPTO_WINCRYPT) && defined(USE_WINCRYPT_AUTHENTICODE))
   begin_struct_array("signatures")
     declare_string("thumbprint");
     declare_string("issuer");
@@ -3921,7 +3924,7 @@ end_declarations
 
 int module_initialize(YR_MODULE* module)
 {
-#if defined(HAVE_LIBCRYPTO) && !defined(BORINGSSL)
+#if (defined(HAVE_LIBCRYPTO) && !defined(BORINGSSL)) || (defined(HAVE_CRYPTO_WINCRYPT) && defined(USE_WINCRYPT_AUTHENTICODE))
   // Initialize OpenSSL global objects for the auth library before any
   // multithreaded environment as it is not thread-safe. This can
   // only be called once per process.
@@ -4328,7 +4331,7 @@ int module_load(
         pe_parse_rich_signature(pe, block->base);
         pe_parse_debug_directory(pe);
 
-#if defined(HAVE_LIBCRYPTO) && !defined(BORINGSSL)
+#if (defined(HAVE_LIBCRYPTO) && !defined(BORINGSSL)) || (defined(HAVE_CRYPTO_WINCRYPT) && defined(USE_WINCRYPT_AUTHENTICODE))
         pe_parse_certificates(pe);
 #endif
 

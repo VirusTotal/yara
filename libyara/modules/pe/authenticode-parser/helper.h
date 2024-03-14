@@ -27,7 +27,9 @@ SOFTWARE.
 #include <stddef.h>
 #include <stdint.h>
 
+#ifndef USE_WINCRYPT_AUTHENTICODE
 #include <openssl/x509.h>
+#endif // !USE_WINCRYPT_AUTHENTICODE
 
 #ifdef _WIN32
 #define timegm _mkgmtime
@@ -53,13 +55,15 @@ uint32_t bswap32(uint32_t d);
 #define betoh32(x) bswap32(x)
 #endif
 
+/* Copies data of length len into already existing arr */
+int byte_array_init(ByteArray* arr, const uint8_t* data, int len);
+#ifndef USE_WINCRYPT_AUTHENTICODE
 /* Calculates digest md of data, return bytes written to digest or 0 on error
  * Maximum of EVP_MAX_MD_SIZE will be written to digest */
 int calculate_digest(const EVP_MD* md, const uint8_t* data, size_t len, uint8_t* digest);
-/* Copies data of length len into already existing arr */
-int byte_array_init(ByteArray* arr, const uint8_t* data, int len);
 /* Converts ASN1_TIME string time into a unix timestamp */
 int64_t ASN1_TIME_to_int64_t(const ASN1_TIME* time);
+#endif // !USE_WINCRYPT_AUTHENTICODE
 
 #ifdef __cplusplus
 }

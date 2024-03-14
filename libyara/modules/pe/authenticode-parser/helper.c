@@ -23,8 +23,11 @@ SOFTWARE.
 
 #include <yara/mem.h>
 
+#ifndef USE_WINCRYPT_AUTHENTICODE
 #include <openssl/bio.h>
 #include <openssl/x509_vfy.h>
+#endif // !USE_WINCRYPT_AUTHENTICODE
+
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -39,23 +42,6 @@ uint32_t bswap32(uint32_t d)
 {
     return (((d)&0xff000000) >> 24) | (((d)&0x00ff0000) >> 8) | (((d)&0x0000ff00) << 8) |
            (((d)&0x000000ff) << 24);
-}
-
-int calculate_digest(const EVP_MD* md, const uint8_t* data, size_t len, uint8_t* digest)
-{
-    unsigned int outLen = 0;
-
-    EVP_MD_CTX* mdCtx = EVP_MD_CTX_new();
-    if (!mdCtx)
-        goto end;
-
-    if (!EVP_DigestInit_ex(mdCtx, md, NULL) || !EVP_DigestUpdate(mdCtx, data, len) ||
-        !EVP_DigestFinal_ex(mdCtx, digest, &outLen))
-        goto end;
-
-end:
-    EVP_MD_CTX_free(mdCtx);
-    return (int)outLen;
 }
 
 int byte_array_init(ByteArray* arr, const uint8_t* data, int len)
@@ -75,6 +61,24 @@ int byte_array_init(ByteArray* arr, const uint8_t* data, int len)
     return 0;
 }
 
+#ifndef USE_WINCRYPT_AUTHENTICODE
+int calculate_digest(const EVP_MD* md, const uint8_t* data, size_t len, uint8_t* digest)
+{
+    unsigned int outLen = 0;
+
+    EVP_MD_CTX* mdCtx = EVP_MD_CTX_new();
+    if (!mdCtx)
+        goto end;
+
+    if (!EVP_DigestInit_ex(mdCtx, md, NULL) || !EVP_DigestUpdate(mdCtx, data, len) ||
+        !EVP_DigestFinal_ex(mdCtx, digest, &outLen))
+        goto end;
+
+end:
+    EVP_MD_CTX_free(mdCtx);
+    return (int)outLen;
+}
+
 int64_t ASN1_TIME_to_int64_t(const ASN1_TIME* time)
 {
     struct tm t = {0};
@@ -84,3 +88,4 @@ int64_t ASN1_TIME_to_int64_t(const ASN1_TIME* time)
     ASN1_TIME_to_tm(time, &t);
     return timegm(&t);
 }
+#endif // !USE_WINCRYPT_AUTHENTICODE

@@ -86,6 +86,8 @@ typedef EVP_MD_CTX *yr_sha256_ctx;
 
 #include <wincrypt.h>
 
+#define HAVE_CRYPTO_WINCRYPT
+
 extern HCRYPTPROV yr_cryptprov;
 
 typedef HCRYPTHASH yr_md5_ctx;
@@ -143,5 +145,9 @@ typedef CC_SHA256_CTX yr_sha256_ctx;
 #define yr_sha256_final(digest, ctx)     CC_SHA256_Final(digest, ctx)
 
 #endif
+
+#if defined(USE_WINCRYPT_AUTHENTICODE) && !defined(HAVE_CRYPTO_WINCRYPT)
+#error Cannot use wincrypt for authenticode if wincrypt library is not available
+#endif // USE_WINCRYPT_AUTHENTICODE && !HAVE_WINCRYPT_H
 
 #endif

@@ -22,16 +22,17 @@ SOFTWARE.
 #include "certificate.h"
 
 #include <yara/mem.h>
+#include <string.h>
 
+#include "helper.h"
+
+#ifndef USE_WINCRYPT_AUTHENTICODE
 #include <openssl/asn1.h>
 #include <openssl/crypto.h>
 #include <openssl/evp.h>
 #include <openssl/opensslv.h>
 #include <openssl/sha.h>
 #include <openssl/x509.h>
-#include <string.h>
-
-#include "helper.h"
 
 #if OPENSSL_VERSION_NUMBER >= 0x3000000fL
 /* Removes any escaping \/ -> / that is happening with oneline() functions
@@ -332,6 +333,24 @@ Certificate* certificate_new(X509* x509)
     return result;
 }
 
+/* Parses X509* certs into internal representation and inserts into CertificateArray
+ * Array is assumed to have enough space to hold all certificates storted in the STACK */
+void parse_x509_certificates(const STACK_OF(X509) * certs, CertificateArray* result)
+{
+    int certCount = sk_X509_num(certs);
+    int i = 0;
+    for (; i < certCount; ++i) {
+        Certificate* cert = certificate_new(sk_X509_value(certs, i));
+        if (!cert)
+            break;
+
+        /* Write to the result */
+        result->certs[i] = cert;
+    }
+    result->count = i;
+}
+#endif // !USE_WINCRYPT_AUTHENTICODE
+
 void attributes_copy(Attributes* dst, Attributes* src)
 {
     byte_array_init(&dst->country, src->country.data, src->country.len);
@@ -351,23 +370,6 @@ void attributes_copy(Attributes* dst, Attributes* src)
     byte_array_init(
         &dst->generationQualifier, src->generationQualifier.data, src->generationQualifier.len);
     byte_array_init(&dst->emailAddress, src->emailAddress.data, src->emailAddress.len);
-}
-
-/* Parses X509* certs into internal representation and inserts into CertificateArray
- * Array is assumed to have enough space to hold all certificates storted in the STACK */
-void parse_x509_certificates(const STACK_OF(X509) * certs, CertificateArray* result)
-{
-    int certCount = sk_X509_num(certs);
-    int i = 0;
-    for (; i < certCount; ++i) {
-        Certificate* cert = certificate_new(sk_X509_value(certs, i));
-        if (!cert)
-            break;
-
-        /* Write to the result */
-        result->certs[i] = cert;
-    }
-    result->count = i;
 }
 
 /* Creates deep copy of a certificate */

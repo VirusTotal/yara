@@ -28,16 +28,20 @@ SOFTWARE.
 #include <stdbool.h>
 #include <stdint.h>
 
+#ifndef USE_WINCRYPT_AUTHENTICODE
 #include <openssl/safestack.h>
 #include <openssl/x509.h>
+#endif // !USE_WINCRYPT_AUTHENTICODE
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
+#ifndef USE_WINCRYPT_AUTHENTICODE
 Countersignature* pkcs9_countersig_new(
     const uint8_t* data, long size, STACK_OF(X509) * certs, ASN1_STRING* enc_digest);
 Countersignature* ms_countersig_new(const uint8_t* data, long size, ASN1_STRING* enc_digest);
+#endif // !USE_WINCRYPT_AUTHENTICODE
 
 int countersignature_array_insert(CountersignatureArray* arr, Countersignature* sig);
 /* Moves all countersignatures of src and inserts them into dst */

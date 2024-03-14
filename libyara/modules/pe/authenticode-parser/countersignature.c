@@ -25,6 +25,7 @@ SOFTWARE.
 
 #include <yara/mem.h>
 
+#ifndef USE_WINCRYPT_AUTHENTICODE
 #include <openssl/cms.h>
 #include <openssl/evp.h>
 #include <openssl/objects.h>
@@ -34,6 +35,8 @@ SOFTWARE.
 #include <openssl/safestack.h>
 #include <openssl/ts.h>
 #include <openssl/x509.h>
+#endif // !USE_WINCRYPT_AUTHENTICODE
+
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
@@ -41,6 +44,8 @@ SOFTWARE.
 #include "certificate.h"
 #include "helper.h"
 #include "structs.h"
+
+#ifndef USE_WINCRYPT_AUTHENTICODE
 
 struct CountersignatureImplStruct;
 
@@ -613,6 +618,8 @@ end:
     ms_countersig_impl_free(impl);
     return result;
 }
+
+#endif // !USE_WINCRYPT_AUTHENTICODE
 
 int countersignature_array_insert(CountersignatureArray* arr, Countersignature* sig)
 {
