@@ -2574,6 +2574,8 @@ void test_re()
   assert_true_regexp("a[b-]", "a-", "a-");
   assert_true_regexp("a[b-]", "ab", "ab");
   assert_true_regexp("[a-c-e]", "b", "b");
+  assert_true_regexp("[a-c-e]+", "abc", "abc");
+  assert_true_regexp("[*-_]+", "ABC", "ABC");
   assert_true_regexp("[a-c-e]", "-", "-");
   assert_false_regexp("[a-c-e]", "d");
   assert_regexp_syntax_error("[b-a]");
@@ -2792,6 +2794,13 @@ void test_re()
       "rule test { strings: $a = /abc[^F]/ condition: $a }",
       TEXT_1024_BYTES "abcd");
 
+  assert_true_rule(
+      "rule test { strings: $a = /[*-_]+/ nocase condition: !a == 3 }", "abc");
+
+  assert_true_rule(
+      "rule test { strings: $a = /([$&#*-_!().])+/ nocase condition: !a == 6 }",
+      "ABCabc");
+
   // Test case for issue #1006
   assert_false_rule_blob(
       "rule test { strings: $a = \" cmd.exe \" nocase wide condition: $a }",
@@ -2956,6 +2965,8 @@ static void test_matches_operator()
   assert_true_rule("rule test { condition: \"\" matches /foo|/ }", NULL);
 
   assert_true_rule("rule test { condition: \"\" matches /a||b/ }", NULL);
+
+  assert_false_rule("rule test { condition: \"\" matches /foobar/ }", NULL);
 
   YR_DEBUG_FPRINTF(1, stderr, "} // %s()\n", __FUNCTION__);
 }
