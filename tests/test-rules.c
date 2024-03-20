@@ -2953,6 +2953,10 @@ static void test_matches_operator()
   assert_false_rule(
       "rule test { condition: \"foo\\nbar\" matches /foo.*bar/ }", NULL);
 
+  assert_true_rule("rule test { condition: \"\" matches /foo|/ }", NULL);
+
+  assert_true_rule("rule test { condition: \"\" matches /a||b/ }", NULL);
+
   YR_DEBUG_FPRINTF(1, stderr, "} // %s()\n", __FUNCTION__);
 }
 

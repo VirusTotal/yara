@@ -1967,13 +1967,6 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
       ensure_defined(r2);
       ensure_defined(r1);
 
-      if (r1.ss->length == 0)
-      {
-        r1.i = false;
-        push(r1);
-        break;
-      }
-
       result = yr_re_exec(
           context,
           (uint8_t*) r2.re->code,
