@@ -2028,7 +2028,10 @@ static void pe_parse_header(PE* pe, uint64_t base_address, int flags)
   PIMAGE_DATA_DIRECTORY data_dir;
 
   char section_name[IMAGE_SIZEOF_SHORT_NAME + 1];
-  int sect_name_length, scount, ddcount;
+  int sect_name_length;
+
+  uint16_t scount;
+  uint32_t ddcount;
 
   uint64_t highest_sec_siz = 0;
   uint64_t highest_sec_ofs = 0;
