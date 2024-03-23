@@ -123,6 +123,7 @@ awesome list of [YARA-related stuff](https://github.com/InQuest/awesome-yara).
 * [SumoLogic](https://sumologic.com)
 * [Tanium](https://www.tanium.com/)
 * [Tenable Network Security](https://www.tenable.com/)
+* [Tenzir](https://tenzir.com)
 * [The DigiTrust Group](https://www.digitrustgroup.com/)
 * [ThreatConnect](https://www.threatconnect.com/)
 * [ThreatStream, Inc.](https://www.threatstream.com)
