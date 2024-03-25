@@ -195,6 +195,14 @@ int main(int argc, char** argv)
       "import \"math\" \
       rule test { \
         condition: \
+          math.entropy(\"\") == 0.0 \
+      }",
+      NULL);
+
+  assert_true_rule(
+      "import \"math\" \
+      rule test { \
+        condition: \
           math.entropy(\"AABB\") == 1.0 \
       }",
       NULL);
