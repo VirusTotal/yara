@@ -201,6 +201,10 @@ AuthenticodeArray* authenticode_new(const uint8_t* data, int32_t len);
  */
 void authenticode_array_free(AuthenticodeArray* auth);
 
+/* Moves signatures from src to dst, returns 0 on success,
+ * else 1. If error occurs, arguments are unchanged */
+int authenticode_array_move(AuthenticodeArray* dst, AuthenticodeArray* src);
+
 #ifdef __cplusplus
 }
 #endif

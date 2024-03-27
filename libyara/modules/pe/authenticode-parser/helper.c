@@ -21,8 +21,13 @@ SOFTWARE.
 
 #include "helper.h"
 
+#include <yara/mem.h>
+
+#ifndef USE_WINCRYPT_AUTHENTICODE
 #include <openssl/bio.h>
 #include <openssl/x509_vfy.h>
+#endif // !USE_WINCRYPT_AUTHENTICODE
+
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -39,6 +44,24 @@ uint32_t bswap32(uint32_t d)
            (((d)&0x000000ff) << 24);
 }
 
+int byte_array_init(ByteArray* arr, const uint8_t* data, int len)
+{
+    if (len == 0) {
+        arr->data = NULL;
+        arr->len = 0;
+        return 0;
+    }
+
+    arr->data = (uint8_t*)yr_malloc(len);
+    if (!arr->data)
+        return -1;
+
+    arr->len = len;
+    memcpy(arr->data, data, len);
+    return 0;
+}
+
+#ifndef USE_WINCRYPT_AUTHENTICODE
 int calculate_digest(const EVP_MD* md, const uint8_t* data, size_t len, uint8_t* digest)
 {
     unsigned int outLen = 0;
@@ -56,23 +79,6 @@ end:
     return (int)outLen;
 }
 
-int byte_array_init(ByteArray* arr, const uint8_t* data, int len)
-{
-    if (len == 0) {
-        arr->data = NULL;
-        arr->len = 0;
-        return 0;
-    }
-
-    arr->data = (uint8_t*)malloc(len);
-    if (!arr->data)
-        return -1;
-
-    arr->len = len;
-    memcpy(arr->data, data, len);
-    return 0;
-}
-
 int64_t ASN1_TIME_to_int64_t(const ASN1_TIME* time)
 {
     struct tm t = {0};
@@ -82,3 +88,4 @@ int64_t ASN1_TIME_to_int64_t(const ASN1_TIME* time)
     ASN1_TIME_to_tm(time, &t);
     return timegm(&t);
 }
+#endif // !USE_WINCRYPT_AUTHENTICODE

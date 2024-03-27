@@ -88,7 +88,7 @@
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
-      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;CUCKOO_MODULE;HASH_MODULE;DOTNET_MODULE;HAVE_LIBCRYPTO;USE_WINDOWS_PROC;YR_BUILDING_STATIC_LIB;YR_PROFILING_ENABLED;BUCKETS_128;CHECKSUM_1B</PreprocessorDefinitions>
+      <PreprocessorDefinitions>USE_WINCRYPT_AUTHENTICODE;_CRT_SECURE_NO_WARNINGS;CUCKOO_MODULE;HASH_MODULE;DOTNET_MODULE;HAVE_WINCRYPT_H;USE_WINDOWS_PROC;YR_BUILDING_STATIC_LIB;YR_PROFILING_ENABLED;BUCKETS_128;CHECKSUM_1B</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>..\..\..\libyara;..\..\..\libyara\include;..\..\..;..\packages\YARA.Jansson.x86.1.1.0\include;..\packages\YARA.OpenSSL.x86.1.1.1\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DisableSpecificWarnings>4005;4273;4090</DisableSpecificWarnings>
       <CompileAs>CompileAsC</CompileAs>
@@ -115,7 +115,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
-      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;CUCKOO_MODULE;HASH_MODULE;DOTNET_MODULE;HAVE_LIBCRYPTO;USE_WINDOWS_PROC;YR_BUILDING_STATIC_LIBC;YR_PROFILING_ENABLED;BUCKETS_128;CHECKSUM_1B</PreprocessorDefinitions>
+      <PreprocessorDefinitions>USE_WINCRYPT_AUTHENTICODE;_CRT_SECURE_NO_WARNINGS;CUCKOO_MODULE;HASH_MODULE;DOTNET_MODULE;HAVE_WINCRYPT_H;USE_WINDOWS_PROC;YR_BUILDING_STATIC_LIBC;YR_PROFILING_ENABLED;BUCKETS_128;CHECKSUM_1B</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>..\..\..\libyara;..\..\..\libyara\include;..\..\..;..\packages\YARA.Jansson.x64.1.1.0\include;..\packages\YARA.OpenSSL.x64.1.1.1\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DisableSpecificWarnings>4005;4273;4090</DisableSpecificWarnings>
       <CompileAs>CompileAsC</CompileAs>
@@ -142,7 +142,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
-      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;CUCKOO_MODULE;HASH_MODULE;DOTNET_MODULE;HAVE_LIBCRYPTO;USE_WINDOWS_PROC;YR_BUILDING_STATIC_LIB;BUCKETS_128;CHECKSUM_1B</PreprocessorDefinitions>
+      <PreprocessorDefinitions>USE_WINCRYPT_AUTHENTICODE;_CRT_SECURE_NO_WARNINGS;CUCKOO_MODULE;HASH_MODULE;DOTNET_MODULE;HAVE_WINCRYPT_H;USE_WINDOWS_PROC;YR_BUILDING_STATIC_LIB;BUCKETS_128;CHECKSUM_1B</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>..\..\..\libyara;..\..\..\libyara\include;..\..\..;..\packages\YARA.Jansson.x86.1.1.0\include;..\packages\YARA.OpenSSL.x86.1.1.1\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DisableSpecificWarnings>4005;4273;4090</DisableSpecificWarnings>
       <CompileAs>CompileAsC</CompileAs>
@@ -167,7 +167,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
-      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;CUCKOO_MODULE;HASH_MODULE;DOTNET_MODULE;HAVE_LIBCRYPTO;USE_WINDOWS_PROC;YR_BUILDING_STATIC_LIB;BUCKETS_128;CHECKSUM_1B</PreprocessorDefinitions>
+      <PreprocessorDefinitions>USE_WINCRYPT_AUTHENTICODE;_CRT_SECURE_NO_WARNINGS;CUCKOO_MODULE;HASH_MODULE;DOTNET_MODULE;HAVE_WINCRYPT_H;USE_WINDOWS_PROC;YR_BUILDING_STATIC_LIB;BUCKETS_128;CHECKSUM_1B</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>..\..\..\libyara;..\..\..\libyara\include;..\..\..;..\packages\YARA.Jansson.x64.1.1.0\include;..\packages\YARA.OpenSSL.x64.1.1.1\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DisableSpecificWarnings>4005;4273;4090</DisableSpecificWarnings>
       <CompileAs>CompileAsC</CompileAs>
@@ -194,7 +194,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='StaticRelease|x64'">
     <ClCompile>
-      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;CUCKOO_MODULE;HASH_MODULE;DOTNET_MODULE;HAVE_LIBCRYPTO;USE_WINDOWS_PROC;YR_BUILDING_STATIC_LIB;NDEBUG=1;BUCKETS_128;CHECKSUM_1B</PreprocessorDefinitions>
+      <PreprocessorDefinitions>USE_WINCRYPT_AUTHENTICODE;_CRT_SECURE_NO_WARNINGS;CUCKOO_MODULE;HASH_MODULE;DOTNET_MODULE;HAVE_WINCRYPT_H;USE_WINDOWS_PROC;YR_BUILDING_STATIC_LIB;NDEBUG=1;BUCKETS_128;CHECKSUM_1B</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>..\..\..\libyara;..\..\..\libyara\include;..\..\..;..\packages\YARA.Jansson.x64.1.1.0\include;..\packages\YARA.OpenSSL.x64.1.1.1\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DisableSpecificWarnings>4005;4273;4090</DisableSpecificWarnings>
       <CompileAs>CompileAsC</CompileAs>
@@ -251,6 +251,14 @@
     <ClCompile Include="..\..\..\libyara\modules\pe\authenticode-parser\countersignature.c" />
     <ClCompile Include="..\..\..\libyara\modules\pe\authenticode-parser\structs.c" />
     <ClCompile Include="..\..\..\libyara\modules\pe\authenticode-parser\certificate.c" />
+    <ClCompile Include="..\..\..\libyara\modules\pe\authenticode-parser\windows\authenticode.c" />
+    <ClCompile Include="..\..\..\libyara\modules\pe\authenticode-parser\windows\certificate.c" />
+    <ClCompile Include="..\..\..\libyara\modules\pe\authenticode-parser\windows\cleanup.c" />
+    <ClCompile Include="..\..\..\libyara\modules\pe\authenticode-parser\windows\countersignature.c" />
+    <ClCompile Include="..\..\..\libyara\modules\pe\authenticode-parser\windows\extractors.c" />
+    <ClCompile Include="..\..\..\libyara\modules\pe\authenticode-parser\windows\oid.c" />
+    <ClCompile Include="..\..\..\libyara\modules\pe\authenticode-parser\windows\signer.c" />
+    <ClCompile Include="..\..\..\libyara\modules\pe\authenticode-parser\windows\tools.c" />
     <ClCompile Include="..\..\..\libyara\modules\pe\pe_utils.c" />
     <ClCompile Include="..\..\..\libyara\modules\string\string.c" />
     <ClCompile Include="..\..\..\libyara\modules\tests\tests.c" />

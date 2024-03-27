@@ -22,15 +22,18 @@ SOFTWARE.
 #ifndef AUTHENTICODE_PARSER_STRUCTS_H
 #define AUTHENTICODE_PARSER_STRUCTS_H
 
+#ifndef USE_WINCRYPT_AUTHENTICODE
 #include <openssl/asn1.h>
 #include <openssl/asn1t.h>
 #include <openssl/ossl_typ.h>
 #include <openssl/x509v3.h>
+#endif // !USE_WINCRYPT_AUTHENTICODE
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
+#ifndef USE_WINCRYPT_AUTHENTICODE
 #define NID_spc_info                "1.3.6.1.4.1.311.2.1.12"
 #define NID_spc_ms_countersignature "1.3.6.1.4.1.311.3.3.1"
 #define NID_spc_nested_signature    "1.3.6.1.4.1.311.2.4.1"
@@ -103,6 +106,7 @@ DECLARE_ASN1_FUNCTIONS(DigestInfo)
 DECLARE_ASN1_FUNCTIONS(SpcIndirectDataContent)
 DECLARE_ASN1_FUNCTIONS(SpcSpOpusInfo)
 DECLARE_ASN1_FUNCTIONS(SpcContentInfo)
+#endif // !USE_WINCRYPT_AUTHENTICODE
 
 #ifdef __cplusplus
 }

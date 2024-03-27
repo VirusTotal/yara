@@ -21,6 +21,7 @@ SOFTWARE.
 
 #include "structs.h"
 
+#ifndef USE_WINCRYPT_AUTHENTICODE
 ASN1_CHOICE(SpcString) = {
 	ASN1_IMP_OPT(SpcString, value.unicode, ASN1_BMPSTRING, 0),
 	ASN1_IMP_OPT(SpcString, value.ascii, ASN1_IA5STRING, 1)
@@ -76,3 +77,4 @@ IMPLEMENT_ASN1_FUNCTIONS(AlgorithmIdentifier)
 IMPLEMENT_ASN1_FUNCTIONS(DigestInfo)
 IMPLEMENT_ASN1_FUNCTIONS(SpcIndirectDataContent)
 IMPLEMENT_ASN1_FUNCTIONS(SpcSpOpusInfo)
+#endif // !USE_WINCRYPT_AUTHENTICODE

@@ -24,19 +24,23 @@ SOFTWARE.
 
 #include <authenticode-parser/authenticode.h>
 
+#ifndef USE_WINCRYPT_AUTHENTICODE
 #include <openssl/x509.h>
+#endif // !USE_WINCRYPT_AUTHENTICODE
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
+#ifndef USE_WINCRYPT_AUTHENTICODE
 Certificate* certificate_new(X509* x509);
+CertificateArray* parse_signer_chain(X509* signer_cert, STACK_OF(X509) * certs);
+void parse_x509_certificates(const STACK_OF(X509) * certs, CertificateArray* result);
+#endif // !USE_WINCRYPT_AUTHENTICODE
+
 Certificate* certificate_copy(Certificate* cert);
 void certificate_free(Certificate* cert);
 
-void parse_x509_certificates(const STACK_OF(X509) * certs, CertificateArray* result);
-
-CertificateArray* parse_signer_chain(X509* signer_cert, STACK_OF(X509) * certs);
 int certificate_array_move(CertificateArray* dst, CertificateArray* src);
 int certificate_array_append(CertificateArray* dst, CertificateArray* src);
 CertificateArray* certificate_array_new(int certCount);
