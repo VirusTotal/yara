@@ -145,7 +145,7 @@ AC_ARG_ENABLE([profiling],
 AC_ARG_WITH([debug-verbose],
   [AS_HELP_STRING([--with-debug-verbose=[[NUM]]], [Turn on runtime debugging information])],
   [if test $withval -gt 0; then
-    AC_DEFINE_UNQUOTED([YR_DEBUG_VERBOSITY], [$withval])
+    AC_DEFINE_UNQUOTED([YR_DEBUG_VERBOSITY], [$withval], [Define for verbose debugging output])
    else
     AC_MSG_ERROR([debug verbosity must be greater than 0])
   fi])
@@ -379,8 +379,8 @@ AM_CONDITIONAL([USE_OPENBSD_PROC], [test x$proc_interface = xopenbsd ])
 AM_CONDITIONAL([USE_MACH_PROC], [test x$proc_interface = xmach ])
 AM_CONDITIONAL([USE_NO_PROC], [test x$proc_interface = xnone ])
 AS_IF(
-  [test x$proc_interface != xnone],[AC_DEFINE([HAVE_SCAN_PROC_IMPL],[1])],
-  [test x$proc_interface = xnone],[AC_DEFINE([HAVE_SCAN_PROC_IMPL],[0])])
+  [test x$proc_interface != xnone],[AC_DEFINE([HAVE_SCAN_PROC_IMPL],[1],[Define for proc-scan])],
+  [test x$proc_interface = xnone],[AC_DEFINE([HAVE_SCAN_PROC_IMPL],[0],[Define for proc-scan])])
 
 # Configure TLSH function
 CFLAGS="$CFLAGS -DBUCKETS_128=1 -DCHECKSUM_1B=1"
