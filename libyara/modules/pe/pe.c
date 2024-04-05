@@ -2006,15 +2006,19 @@ const char* pe_get_section_full_name(
   // Check string
   for (uint64_t len = 0; fits_in_pe(pe, string, len + 1); len++)
   {
+    // Prevent sign extension to 32-bits on bytes > 0x7F
+    // The result negative integer would cause assert in MSVC debug version of isprint()
+    unsigned int one_char = (unsigned char)(string[len]);
+  
     // Valid string
-    if (string[len] == 0)
+    if (one_char == 0)
     {
       *section_full_name_length = len;
       return string;
     }
 
     // string contain unprintable character
-    if (!isprint(string[len]))
+    if (!isprint(one_char))
       return NULL;
   }
 
