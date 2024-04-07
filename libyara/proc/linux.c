@@ -29,6 +29,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #if defined(USE_LINUX_PROC)
 
+#define _FILE_OFFSET_BITS 64
+
 #include <assert.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -249,7 +251,7 @@ YR_API const uint8_t* yr_process_fetch_memory_block_data(YR_MEMORY_BLOCK* block)
   // target process VM.
   if (fd == -1)
   {
-    if (pread64(
+    if (pread(
             proc_info->mem_fd,
             (void*) context->buffer,
             block->size,
@@ -265,7 +267,7 @@ YR_API const uint8_t* yr_process_fetch_memory_block_data(YR_MEMORY_BLOCK* block)
     {
       goto _exit;
     }
-    if (pread64(
+    if (pread(
             proc_info->pagemap_fd,
             pagemap,
             sizeof(uint64_t) * block->size / page_size,
@@ -284,7 +286,7 @@ YR_API const uint8_t* yr_process_fetch_memory_block_data(YR_MEMORY_BLOCK* block)
       // swap-backed and if it differs from our mapping.
       uint8_t buffer[page_size];
 
-      if (pread64(
+      if (pread(
               proc_info->mem_fd,
               buffer,
               page_size,

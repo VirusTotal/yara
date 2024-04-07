@@ -32,9 +32,6 @@ AC_C_INLINE
 # Defines WORDS_BIGENDIAN if building in a big-endian host.
 AC_C_BIGENDIAN
 
-# Arrange for 64-bit file offsets.
-AC_SYS_LARGEFILE
-
 LT_INIT
 AC_CANONICAL_HOST
 
