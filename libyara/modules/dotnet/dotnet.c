@@ -581,10 +581,10 @@ static int32_t read_blob_signed(const uint8_t** data, uint32_t* len)
   {
     uint16_t tmp1 = yr_be16toh(yr_unaligned_u16(*data));
     // shift and leave top 2 bits clear
-    uint16_t tmp2 = (tmp1 >> 1) & 0x3FFF;
+    int16_t tmp2 = (tmp1 >> 1) & 0x3FFF;
     // sign extension in case of negative number
     if (tmp1 & 0x1)
-      tmp2 |= 0xC000;
+      tmp2 |= 0xE000;
 
     *data += sizeof(uint16_t);
     *len -= sizeof(uint16_t);
@@ -602,10 +602,10 @@ static int32_t read_blob_signed(const uint8_t** data, uint32_t* len)
   {
     uint32_t tmp1 = yr_be32toh(yr_unaligned_u32(*data));
     // shift and leave top 3 bits clear
-    uint32_t tmp2 = (tmp1 >> 1) & 0x1FFFFFFF;
+    int32_t tmp2 = (tmp1 >> 1) & 0x1FFFFFFF;
     // sign extension in case of negative number
     if (tmp1 & 0x1)
-      tmp2 |= 0xE0000000;
+      tmp2 |= 0xF0000000;
 
     *data += sizeof(uint32_t);
     *len -= sizeof(uint32_t);
@@ -892,13 +892,15 @@ static char* parse_signature_type(
 
     // Read number of specified sizes
     uint32_t num_sizes = read_blob_unsigned(data, len);
-    sizes = yr_malloc(sizeof(uint32_t) * num_sizes);
-    if (!sizes || num_sizes > rank)
+    if (num_sizes > rank)
+      goto cleanup;
+    sizes = yr_malloc(sizeof(int64_t) * num_sizes);
+    if (!sizes)
       goto cleanup;
 
     for (uint32_t i = 0; i < num_sizes; ++i)
     {
-      sizes[i] = read_blob_unsigned(data, len);
+      sizes[i] = (int64_t) read_blob_unsigned(data, len);
     }
 
     // Read number of specified lower bounds
@@ -912,8 +914,8 @@ static char* parse_signature_type(
       lo_bounds[i] = read_blob_signed(data, len);
 
       // Adjust higher bound according to lower bound
-      if (num_sizes > i)
-        sizes[i] += lo_bounds[i];
+      if (num_sizes > i && lo_bounds[i] != 0)
+        sizes[i] += lo_bounds[i] - 1;
     }
 
     // Build the resulting array type
@@ -929,7 +931,7 @@ static char* parse_signature_type(
       {
         if (num_lowbounds > i && lo_bounds[i] != 0)
           sstr_appendf(ss, "%d...", lo_bounds[i]);
-        if (num_sizes > i && sizes[i] != 0)
+        if (num_sizes > i)
           sstr_appendf(ss, "%d", sizes[i]);
       }
       if (i + 1 != rank)
