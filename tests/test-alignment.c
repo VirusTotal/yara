@@ -36,8 +36,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "util.h"
 
-int err = 0;
-
 #define CHECK_SIZE(expr, size)                           \
   do                                                     \
   {                                                      \
@@ -49,7 +47,7 @@ int err = 0;
     else                                                 \
     {                                                    \
       printf("expected %d\n", size);                     \
-      err = 1;                                           \
+      return 1;                                          \
     }                                                    \
   } while (0);
 
@@ -66,16 +64,13 @@ int err = 0;
     else                                               \
     {                                                  \
       printf("expected %d\n", offset);                 \
-      err = 1;                                         \
+      return 1;                                        \
     }                                                  \
   } while (0)
 
 int main(int argc, char **argv)
 {
-  int result = err;
-
   YR_DEBUG_INITIALIZE();
-  YR_DEBUG_FPRINTF(1, stderr, "+ %s() { // in %s\n", __FUNCTION__, argv[0]);
 
   CHECK_SIZE(YR_SUMMARY, 12);
   CHECK_OFFSET(YR_SUMMARY, 0, num_rules);
@@ -114,12 +109,15 @@ int main(int argc, char **argv)
   CHECK_OFFSET(YR_STRING, 44, chain_gap_max);
   CHECK_OFFSET(YR_STRING, 48, identifier);
 
-  CHECK_SIZE(YR_RULE, 48);
-  CHECK_OFFSET(YR_RULE, 8, identifier);
-  CHECK_OFFSET(YR_RULE, 16, tags);
-  CHECK_OFFSET(YR_RULE, 24, metas);
-  CHECK_OFFSET(YR_RULE, 32, strings);
-  CHECK_OFFSET(YR_RULE, 40, ns);
+  CHECK_SIZE(YR_RULE, 56);
+  CHECK_OFFSET(YR_RULE, 0, flags);
+  CHECK_OFFSET(YR_RULE, 4, num_atoms);
+  CHECK_OFFSET(YR_RULE, 8, required_strings);
+  CHECK_OFFSET(YR_RULE, 16, identifier);
+  CHECK_OFFSET(YR_RULE, 24, tags);
+  CHECK_OFFSET(YR_RULE, 32, metas);
+  CHECK_OFFSET(YR_RULE, 40, strings);
+  CHECK_OFFSET(YR_RULE, 48, ns);
 
   CHECK_SIZE(YR_EXTERNAL_VARIABLE, 24);
   CHECK_OFFSET(YR_EXTERNAL_VARIABLE, 8, value.i);
@@ -134,8 +132,5 @@ int main(int argc, char **argv)
   CHECK_OFFSET(YR_AC_MATCH, 24, next);
   CHECK_OFFSET(YR_AC_MATCH, 32, backtrack);
 
-  YR_DEBUG_FPRINTF(
-      1, stderr, "} = %d // %s() in %s\n", result, __FUNCTION__, argv[0]);
-
-  return result;
+  return 0;
 }
