@@ -2974,10 +2974,6 @@ void dotnet_parse_tilde_2(
         resource_size = yr_le32toh(
             *(DWORD*) (pe->data + resource_base + resource_offset));
 
-        if (!fits_in_pe(
-                pe, pe->data + resource_base + resource_offset, resource_size))
-          continue;
-
         // Add 4 to skip the size.
         yr_set_integer(
             resource_base + resource_offset + 4,
