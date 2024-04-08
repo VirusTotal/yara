@@ -293,7 +293,12 @@ struct YR_RULE
   // Number of atoms generated for this rule.
   int32_t num_atoms;
 
+  // Number of strings that must match for this rule to have some possibility
+  // to match.
   uint32_t required_strings;
+
+  // Just for padding.
+  uint32_t unused;
 
   DECLARE_REFERENCE(const char*, identifier);
   DECLARE_REFERENCE(const char*, tags);
