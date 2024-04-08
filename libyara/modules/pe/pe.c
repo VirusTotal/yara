@@ -502,17 +502,20 @@ static int _pe_iterate_resources(
 
       if (struct_fits_in_pe(pe, data_entry, IMAGE_RESOURCE_DATA_ENTRY))
       {
-        if (callback(
-                data_entry,
-                *type,
-                *id,
-                *language,
-                type_string,
-                name_string,
-                lang_string,
-                callback_data) == RESOURCE_CALLBACK_ABORT)
+        if (data_entry->Size > 0 && data_entry->Size < pe->data_size)
         {
-          result = RESOURCE_ITERATOR_ABORTED;
+          if (callback(
+                  data_entry,
+                  *type,
+                  *id,
+                  *language,
+                  type_string,
+                  name_string,
+                  lang_string,
+                  callback_data) == RESOURCE_CALLBACK_ABORT)
+          {
+            result = RESOURCE_ITERATOR_ABORTED;
+          }
         }
       }
     }
@@ -716,7 +719,8 @@ static void pe_set_resource_string_or_id(
   }
   else
   {
-    yr_set_integer(rsrc_int, pe->object, int_description, pe->resources);
+    if (rsrc_int != -1)
+      yr_set_integer(rsrc_int, pe->object, int_description, pe->resources);
   }
 }
 
@@ -731,7 +735,7 @@ static int pe_collect_resources(
     PE* pe)
 {
   // Don't collect too many resources.
-  if (pe->resources > MAX_RESOURCES)
+  if (pe->resources >= MAX_RESOURCES)
     return RESOURCE_CALLBACK_CONTINUE;
 
   yr_set_integer(
@@ -2007,9 +2011,10 @@ const char* pe_get_section_full_name(
   for (uint64_t len = 0; fits_in_pe(pe, string, len + 1); len++)
   {
     // Prevent sign extension to 32-bits on bytes > 0x7F
-    // The result negative integer would cause assert in MSVC debug version of isprint()
-    unsigned int one_char = (unsigned char)(string[len]);
-  
+    // The result negative integer would cause assert in MSVC debug version of
+    // isprint()
+    unsigned int one_char = (unsigned char) (string[len]);
+
     // Valid string
     if (one_char == 0)
     {
