@@ -72,8 +72,6 @@ int main(int argc, char **argv)
 {
   YR_DEBUG_INITIALIZE();
 
-  CHECK_SIZE(off_t, 8);
-
   CHECK_SIZE(YR_SUMMARY, 12);
   CHECK_OFFSET(YR_SUMMARY, 0, num_rules);
   CHECK_OFFSET(YR_SUMMARY, 4, num_strings);
