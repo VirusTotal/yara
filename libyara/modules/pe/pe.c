@@ -502,7 +502,8 @@ static int _pe_iterate_resources(
 
       if (struct_fits_in_pe(pe, data_entry, IMAGE_RESOURCE_DATA_ENTRY))
       {
-        if (data_entry->Size > 0 && data_entry->Size < pe->data_size)
+        if (yr_le32toh(data_entry->Size) > 0 &&
+            yr_le32toh(data_entry->Size) < pe->data_size)
         {
           if (callback(
                   data_entry,
