@@ -1947,7 +1947,8 @@ int yr_re_exec(
 
       case RE_OPCODE_WORD_BOUNDARY:
       case RE_OPCODE_NON_WORD_BOUNDARY:
-        if (input - input_incr + character_size <= input_data + input_forwards_size &&
+        if (input - input_incr + character_size <=
+                input_data + input_forwards_size &&
             input - input_incr >= input_data - input_backwards_size)
         {
           prev_is_word_char = _yr_re_is_word_char(
@@ -2336,15 +2337,15 @@ int yr_re_fast_exec(
           // an item that has a pointer lower or equal than next_input, but
           // whose next item have a pointer that is larger.
           while (insertion_point->next != NULL &&
-                 next_input >= insertion_point->next->input)
+                 insertion_point->next->input <= next_input)
           {
             insertion_point = insertion_point->next;
           }
 
-          // If the pointer at the insertion point is equal to next_input we
-          // don't need to insert next_input in the list as this input already
-          // exists.
-          if (next_input == insertion_point->input)
+          // If the input already exists for the next round, we don't need to
+          // insert it.
+          if (insertion_point->round == round + 1 &&
+              insertion_point->input == next_input)
             continue;
 
           // The next opcode is RE_OPCODE_LITERAL, but the literal doesn't

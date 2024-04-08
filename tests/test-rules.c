@@ -1629,6 +1629,19 @@ static void test_hex_strings()
         condition: $a }",
       "1234567890");
 
+  // Test case for https://github.com/VirusTotal/yara/issues/2065
+  uint8_t ISSUE_2065[] = {0x81, 0xEC, 0x38, 0x01, 0x00, 0x00, 0x00, 0x00,
+                          0xB8, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                          0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                          0x00, 0x00, 0x00, 0x00, 0x00, 0xB8, 0x00, 0x00,
+                          0x00, 0x00, 0x44, 0x55, 0x66, 0x77};
+
+  assert_true_rule_blob(
+      "rule test { \
+        strings: $a = { 81 EC 38 01 [4-25] B8 ?? ?? ?? ?? [20-21] 44 55 66 77  } \
+        condition: $a }",
+      ISSUE_2065);
+
   assert_error(
       "rule test { \
         strings: $a = { 01 [0] 02 } \
