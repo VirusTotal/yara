@@ -457,6 +457,9 @@ static int _pe_iterate_resources(
 
   for (i = 0; i < total_entries; i++)
   {
+    if (yr_le32toh(entry->OffsetToData) == 0)
+      continue;
+
     switch (rsrc_tree_level)
     {
     case 0:
