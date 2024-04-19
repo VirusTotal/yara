@@ -1009,9 +1009,9 @@ static IMPORT_FUNCTION* pe_parse_import_descriptor(
 }
 
 //
-// In Windows PE files, any character including 0x20 and above is allowed.
-// The only exceptions are characters that are invalid for file names in
-// Windows, which are "*<>?|. While they still can be present in the import
+// In Windows PE files, any printable character including 0x20 and above is
+// allowed. The only exceptions are characters that are invalid for file names
+// in Windows, which are "*<>?|. While they still can be present in the import
 // directory, such module can never be present in Windows, so we can treat them
 // as invalid.
 //
@@ -1041,8 +1041,8 @@ static int pe_valid_dll_name(const char* dll_name, size_t n)
 
   while (l < n && *c != '\0')
   {
-    if (*c < ' ' || *c == '\"' || *c == '*' || *c == '<' || *c == '>' ||
-        *c == '?' || *c == '|')
+    if (*c < ' ' || *c > 0x7e || *c == '\"' || *c == '*' || *c == '<' ||
+        *c == '>' || *c == '?' || *c == '|')
     {
       return false;
     }
