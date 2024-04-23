@@ -871,11 +871,15 @@ static IMPORT_FUNCTION* pe_parse_import_descriptor(
       }
       else
       {
-        // If imported by ordinal. Lookup the ordinal.
-        name = ord_lookup(dll_name, yr_le64toh(thunks64->u1.Ordinal) & 0xFFFF);
-        // Also store the ordinal.
-        ordinal = yr_le64toh(thunks64->u1.Ordinal) & 0xFFFF;
-        has_ordinal = 1;
+        // The maximum possible value for the ordinal is when the high
+        // bit is set (indicating import by ordinal) and the low bits
+        // are FFFF. The maximum number of ordinal exports is 65536.
+        if (yr_le64toh(thunks64->u1.Ordinal) <= 0x800000000000ffff)
+        {
+          ordinal = yr_le64toh(thunks64->u1.Ordinal) & 0xFFFF;
+          name = ord_lookup(dll_name, ordinal);
+          has_ordinal = 1;
+        }
       }
 
       rva_address = yr_le32toh(import_descriptor->FirstThunk) +
@@ -957,11 +961,15 @@ static IMPORT_FUNCTION* pe_parse_import_descriptor(
       }
       else
       {
-        // If imported by ordinal. Lookup the ordinal.
-        name = ord_lookup(dll_name, yr_le32toh(thunks32->u1.Ordinal) & 0xFFFF);
-        // Also store the ordinal.
-        ordinal = yr_le32toh(thunks32->u1.Ordinal) & 0xFFFF;
-        has_ordinal = 1;
+        // The maximum possible value for the ordinal is when the high
+        // bit is set (indicating import by ordinal) and the low bits
+        // are FFFF. The maximum number of ordinal exports is 65536.
+        if (yr_le32toh(thunks32->u1.Ordinal) <= 0x8000ffff)
+        {
+          ordinal = yr_le32toh(thunks32->u1.Ordinal) & 0xFFFF;
+          name = ord_lookup(dll_name, ordinal);
+          has_ordinal = 1;
+        }
       }
 
       rva_address = yr_le32toh(import_descriptor->FirstThunk) +
