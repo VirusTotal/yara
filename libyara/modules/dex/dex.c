@@ -328,6 +328,8 @@ begin_declarations
     declare_string("class_name");
     declare_string("name");
     declare_string("proto");
+    declare_integer("static");
+    declare_integer("instance");
     declare_integer("field_idx_diff");
     declare_integer("access_flags");
   end_struct_array("field")
@@ -358,11 +360,6 @@ begin_declarations
       declare_integer("debug_info_off");
       declare_integer("insns_size");
       declare_string("insns");
-      declare_integer("padding");
-      begin_struct("tries")
-      end_struct("tries");
-      begin_struct_array("handlers")
-      end_struct_array("handlers");
     end_struct("code_item")
   end_struct_array("method")
 end_declarations
