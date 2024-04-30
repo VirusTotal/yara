@@ -1279,6 +1279,10 @@ uint64_t pe_parse_delay_import_pointer(
     uint64_t rva)
 {
   const int64_t offset = pe_rva_to_offset(pe, rva);
+
+  if (offset < 0)
+    return YR_UNDEFINED;
+
   const uint8_t* data = pe->data + offset;
 
   if (!fits_in_pe(pe, data, pointerSize))
@@ -1419,17 +1423,8 @@ static void* pe_parse_delayed_imports(PE* pe)
       if (nameAddress == 0 || funcAddress == 0)
         break;
 
-      IMPORT_FUNCTION* imported_func = (IMPORT_FUNCTION*) yr_malloc(
-          sizeof(IMPORT_FUNCTION));
-
-      if (imported_func == NULL)
-        continue;
-
-      imported_func->name = NULL;
-      imported_func->has_ordinal = 0;
-      imported_func->ordinal = 0;
-      imported_func->rva = 0;
-      imported_func->next = NULL;
+      char* func_name;
+      uint8_t has_ordinal = 0;
 
       // Check name address. It could be ordinal, VA or RVA
       if (!(nameAddress & ordinal_mask))
@@ -1441,21 +1436,31 @@ static void* pe_parse_delayed_imports(PE* pe)
 
         offset = pe_rva_to_offset(pe, nameAddress + sizeof(uint16_t));
 
-        imported_func->name = (char*) yr_strndup(
+        if (offset < 0)
+          continue;
+
+        func_name = (char*) yr_strndup(
             (char*) (pe->data + offset),
             yr_min(available_space(pe, (char*) (pe->data + offset)), 512));
       }
       else
       {
         // If imported by ordinal. Lookup the ordinal.
-        imported_func->name = ord_lookup(dll_name, nameAddress & 0xFFFF);
-
-        // Also store the ordinal.
-        imported_func->ordinal = nameAddress & 0xFFFF;
-        imported_func->has_ordinal = 1;
+        func_name = ord_lookup(dll_name, nameAddress & 0xFFFF);
+        has_ordinal = 1;
       }
 
+      IMPORT_FUNCTION* imported_func = (IMPORT_FUNCTION*) yr_malloc(
+          sizeof(IMPORT_FUNCTION));
+
+      if (imported_func == NULL)
+        continue;
+
+      imported_func->name = func_name;
       imported_func->rva = func_rva;
+      imported_func->has_ordinal = has_ordinal;
+      imported_func->ordinal = (has_ordinal) ? nameAddress & 0xFFFF : 0;
+      imported_func->next = NULL;
 
       num_function_imports++;
       name_rva += pointer_size;
