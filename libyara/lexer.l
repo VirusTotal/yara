@@ -154,6 +154,7 @@ static bool is_absolute_path(
 %x regexp
 %x include
 %x comment
+%x multiline_str
 
 digit         [0-9]
 letter        [a-zA-Z]
@@ -369,6 +370,42 @@ include[ \t]+\"         {
     yyterminate();
 
   return _END_OF_INCLUDED_FILE_;
+}
+
+
+"\"\"\"" {
+  yylval->sized_string = NULL;
+  yyextra->lex_buf_ptr = yyextra->lex_buf;
+  yyextra->lex_buf_len = 0;
+  BEGIN(multiline_str);
+}
+
+
+<multiline_str>(.|\n) { yytext_to_buffer; }
+
+
+<multiline_str>\\x{hexdigit}{2} {
+
+  int result;
+
+  sscanf(yytext + 2, "%x", &result);
+  lex_check_space_ok("X", yyextra->lex_buf_len, YR_LEX_BUF_SIZE);
+  *yyextra->lex_buf_ptr++ = result;
+  yyextra->lex_buf_len++;
+}
+
+
+<multiline_str>"\"\"\"" {
+  alloc_sized_string(s, yyextra->lex_buf_len);
+
+  *yyextra->lex_buf_ptr = '\0';
+  memcpy(s->c_string, yyextra->lex_buf, yyextra->lex_buf_len + 1);
+
+  yylval->sized_string = s;
+
+  BEGIN(INITIAL);
+
+  return _MULTILINE_STRING_;
 }
 
 

@@ -205,6 +205,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 %token <double_> _DOUBLE_                              "floating point number"
 %token <integer> _INTEGER_FUNCTION_                    "integer function"
 %token <sized_string> _TEXT_STRING_                    "text string"
+%token <sized_string> _MULTILINE_STRING_               "multiline text string"
 %token <sized_string> _HEX_STRING_                     "hex string"
 %token <sized_string> _REGEXP_                         "regular expression"
 %token _ASCII_                                         "<ascii>"
@@ -557,6 +558,23 @@ meta_declarations
 
 meta_declaration
     : _IDENTIFIER_ '=' _TEXT_STRING_
+      {
+        SIZED_STRING* sized_string = $3;
+
+        int result = yr_parser_reduce_meta_declaration(
+            yyscanner,
+            META_TYPE_STRING,
+            $1,
+            sized_string->c_string,
+            0,
+            &$<meta>$);
+
+        yr_free($1);
+        yr_free($3);
+
+        fail_if_error(result);
+      }
+    | _IDENTIFIER_ '=' _MULTILINE_STRING_
       {
         SIZED_STRING* sized_string = $3;
 

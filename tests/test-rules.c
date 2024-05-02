@@ -3817,6 +3817,17 @@ static void test_meta()
       }",
       NULL);
 
+  assert_true_rule(
+      "rule test { \
+         meta: \
+           a = \"\"\"\
+This is a multiline string.\
+Hooray!\
+\"\"\"\
+         condition:\
+           true \
+      }",
+      NULL);
   YR_DEBUG_FPRINTF(1, stderr, "} // %s()\n", __FUNCTION__);
 }
 
