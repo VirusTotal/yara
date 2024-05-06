@@ -1758,6 +1758,22 @@ void _process_authenticode(
   for (size_t i = 0; i < auth_array->count; ++i)
   {
     const Authenticode* authenticode = auth_array->signatures[i];
+
+    if (authenticode->verify_flags & AUTHENTICODE_VFY_CANT_PARSE)
+      continue;
+
+    if (authenticode->verify_flags & AUTHENTICODE_VFY_WRONG_PKCS7_TYPE)
+      continue;
+
+    if (authenticode->verify_flags & AUTHENTICODE_VFY_NO_SIGNER_INFO)
+      continue;
+
+    if (authenticode->verify_flags & AUTHENTICODE_VFY_NO_SIGNER_CERT)
+      continue;
+
+    if (authenticode->verify_flags & AUTHENTICODE_VFY_INTERNAL_ERROR)
+      continue;
+
     bool verified = authenticode->verify_flags == AUTHENTICODE_VFY_VALID;
 
     /* If any signature is valid -> file is correctly signed */
