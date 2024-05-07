@@ -133,6 +133,7 @@ awesome list of [YARA-related stuff](https://github.com/InQuest/awesome-yara).
 * [Trend Micro](https://www.trendmicro.com)
 * [UnpacMe](https://www.unpac.me)
 * [Uptycs Inc](https://www.uptycs.com/)
+* [Verisys Antivirus API](https://www.ionxsolutions.com/products/verisys-virus-api)
 * [VirusTotal Intelligence](https://www.virustotal.com/intelligence/)
 * [VMRay](https://www.vmray.com/)
 * [Volexity](https://www.volexity.com/products-overview/volcano/)
