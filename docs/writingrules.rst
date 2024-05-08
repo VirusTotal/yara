@@ -1610,6 +1610,12 @@ identifier/value pairs like in the following example:
             my_identifier_1 = "Some string data"
             my_identifier_2 = 24
             my_identifier_3 = true
+            my_identifier_4 = """
+    I am a multiline string literal.
+    I will be stored in your rule directly as is. If you have
+    escape sequences like \x41 those will be converted to their
+    raw byte value. When done, just add the closing quotes.
+    """
 
         strings:
             $my_text_string = "text here"
@@ -1625,6 +1631,8 @@ strings (valid UTF8 only), integers, or one of the boolean values true or false.
 Note that identifier/value pairs defined in the metadata section cannot be used
 in the condition section, their only purpose is to store additional information
 about the rule.
+
+NOTE: Multiline string literals are supported starting in YARA 4.6.0.
 
 .. _using-modules:
 
