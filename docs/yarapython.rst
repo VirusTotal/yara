@@ -125,9 +125,9 @@ how to deal with warnings. The first argument of this nature is
 warning is issued during compilation. Such warnings are typically issued when
 your rules contains some construct that could be slowing down the scanning.
 The default value for the ``error_on_warning`` argument is False. The second argument of
-this type is another boolean, ``strict_escape``, when enabled this causes YARA to treat
-mis-escaped characters as errors. The default value for the ``strict_escape`` argument is
-False.
+this type is another boolean, ``strict_escape``, when enabled this causes YARA to produce
+a warning when rules contain mis-escaped characters. The default value for the ``strict_escape`` 
+argument is False.
 
 In all cases ``compile`` returns an instance of the class :py:class:`yara.Rules`
 Rules. This class has a ``save`` method that can be used to save the compiled
