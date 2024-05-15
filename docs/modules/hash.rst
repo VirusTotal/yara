@@ -10,6 +10,14 @@ Hash module
 The Hash module allows you to calculate hashes (MD5, SHA1, SHA256) from portions
 of your file and create signatures based on those hashes.
 
+It also allows you to work with Locality Sensitive Hashes from Trend Micro (TLSH).
+Specifically, you are able to compute the distance between TLSH of the portions of
+your file (min. 50 bytes) and input TLSH string. The distance scores can go up to
+1000 and even above. A low score (of 50 or less) means that files are quite similar,
+while the distance of zero means (very likely) the exact match. Just like MD5 and
+SHA1 schemes, collisions can occur and very different files will have the same hash
+value.
+
 .. important::
     This module depends on the OpenSSL library. Please refer to
     :ref:`compiling-yara` for information about how to build OpenSSL-dependant
@@ -23,6 +31,14 @@ of your file and create signatures based on those hashes.
     ``hash.md5(0, filesize) == "feba6c919e3797e7778e8f2e85fa033d"`` 
     requires the hash string to be given in lowercase, otherwise the match condition 
     will not work. (see https://github.com/VirusTotal/yara/issues/1004)
+
+    The TLSH is not valid in lowercase. Therefore, the input hash must be in uppercase which differ
+    against traditional hash functions. The module accepts TLSH either with or without the first
+    byte "T1" specifying the version of TLSH.
+
+    DISCLAIMER: Computing TLSH is very slow, comparable with SSDEEP hashing which means approx.
+    5.4 times slower than SHA1 function. Adding `tlsh_diff` function into YARA rule can extend
+    its evaluation up to 15%. Be especially careful while scanning files bigger than 5 MB.
 
 .. c:function:: md5(offset, size)
 
@@ -77,4 +93,23 @@ of your file and create signatures based on those hashes.
 .. c:function:: crc32(string)
 
     Returns a crc32 checksum for the given string.
+
+.. c:function:: tlsh_diff(tlsh)
+    Computes the TLSH hash for the whole file (the offset is set to zero and
+    size is set to size of the file). The returned integer is the difference
+    between computed TLSH hash and *tlsh* hash string.
+
+    *Example: hash.tlsh_diff("T1A4315014DC89DDDDFB6246C177B3B52BA818B01142CCF89682EACC07D800F79C64BB52") < 50*
+
+.. c:function:: tlsh_diff(tlsh, offset, size)
+    Computes the TLSH hash for the *size* bytes starting at *offset*. When
+    scanning a running process the *offset* argument should be a virtual address
+    within the process address space. The returned integer is the difference
+    between computed TLSH hash and *tlsh* hash string.
+
+    *Example: hash.tlsh_diff("A4315014DC89DDDDFB6246C177B3B52BA818B01142CCF89682EACC07D800F79C64BB52", 0, filesize) == 0*
+
+.. c:function:: tlsh_diff(tlsh, string)
+    Computes the TLSH hash for the *string* of content. The returned integer
+    is the difference between computed TLSH hash and *tlsh* hash string.
 
