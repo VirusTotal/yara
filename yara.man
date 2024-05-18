@@ -103,6 +103,9 @@ in bytes when scanning a directory.
 Set maximum stack size to the specified number of
 .I slots.
 .TP
+.BI "    --strict-escape"
+Print warnings if rules contain ambiguous escape statements.
+.TP
 .BI \-t " tag" " --tag=" tag
 Print rules tagged as
 .I tag

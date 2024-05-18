@@ -148,6 +148,12 @@ Available options are:
 
   Scan files listed in FILE, one per line.
 
+.. option:: --strict-escape
+
+  Print warnings if a string contains an invalid escape sequence.
+
+  .. versionadded:: 4.5.0
+
 .. option:: -z <size> --skip-larger=<size>
 
   Skip files larger than the given <size> in bytes when scanning a directory.
