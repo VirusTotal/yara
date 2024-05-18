@@ -119,12 +119,15 @@ should pass the ``externals`` parameter to the ``compile`` method. For example:
 The ``externals`` parameter must be a dictionary with the names of the variables
 as keys and an associated value of either string, integer or boolean type.
 
-The ``compile`` method also accepts the optional boolean argument
+The ``compile`` method also accepts the optional boolean arguments telling yara-python
+how to deal with warnings. The first argument of this nature is
 ``error_on_warning``. This arguments tells YARA to raise an exception when a
 warning is issued during compilation. Such warnings are typically issued when
 your rules contains some construct that could be slowing down the scanning.
-The default value for the ``error_on_warning`` argument is False.
-
+The default value for the ``error_on_warning`` argument is False. The second argument of
+this type is another boolean, ``strict_escape``, when enabled this causes YARA to produce
+a warning when rules contain mis-escaped characters. The default value for the ``strict_escape`` 
+argument is False.
 
 In all cases ``compile`` returns an instance of the class :py:class:`yara.Rules`
 Rules. This class has a ``save`` method that can be used to save the compiled
