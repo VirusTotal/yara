@@ -714,7 +714,6 @@ int yr_parse_re_string(
 
   yyset_extra(*re_ast, yyscanner);
   yy_scan_string(re_string, yyscanner);
-  printf("parse: %s\n", re_string);
 
   yyparse(yyscanner, &lex_env);
   yylex_destroy(yyscanner);
