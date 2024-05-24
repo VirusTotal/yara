@@ -1437,7 +1437,11 @@ static void* pe_parse_delayed_imports(PE* pe)
         offset = pe_rva_to_offset(pe, nameAddress + sizeof(uint16_t));
 
         if (offset < 0)
+        {
+          name_rva += pointer_size;
+          func_rva += pointer_size;
           continue;
+        }
 
         func_name = (char*) yr_strndup(
             (char*) (pe->data + offset),
@@ -1454,7 +1458,7 @@ static void* pe_parse_delayed_imports(PE* pe)
           sizeof(IMPORT_FUNCTION));
 
       if (imported_func == NULL)
-        continue;
+        break;
 
       imported_func->name = func_name;
       imported_func->rva = func_rva;
