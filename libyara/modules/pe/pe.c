@@ -380,7 +380,6 @@ static void pe_parse_debug_directory(PE* pe)
 // Return a pointer to the resource directory string or NULL.
 // The callback function will parse this and call yr_set_sized_string().
 // The pointer is guaranteed to have enough space to contain the entire string.
-
 static const PIMAGE_RESOURCE_DIR_STRING_U parse_resource_name(
     PE* pe,
     const uint8_t* rsrc_data,
@@ -397,8 +396,11 @@ static const PIMAGE_RESOURCE_DIR_STRING_U parse_resource_name(
 
     // A resource directory string is 2 bytes for the length and then a variable
     // length Unicode string. Make sure we have at least 2 bytes.
-
     if (!fits_in_pe(pe, pNameString, 2))
+      return NULL;
+
+    // Sanity check for strings that are excesively large.
+    if (pNameString->Length > 1000)
       return NULL;
 
     // Move past the length and make sure we have enough bytes for the string.
