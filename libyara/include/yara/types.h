@@ -172,6 +172,7 @@ typedef struct YR_AC_MATCH YR_AC_MATCH;
 typedef struct YR_NAMESPACE YR_NAMESPACE;
 typedef struct YR_META YR_META;
 typedef struct YR_MATCHES YR_MATCHES;
+typedef struct YR_MATCHLIST YR_MATCHLIST;
 typedef struct YR_STRING YR_STRING;
 typedef struct YR_RULE YR_RULE;
 typedef struct YR_RULES YR_RULES;
@@ -479,6 +480,28 @@ struct YR_MATCHES
   YR_MATCH* tail;
 
   int32_t count;
+
+  // If true, this YR_MATCHES instance contained a YR_MATCH at some point
+  // of the scan and will need to be zeroed at the end of the scan.
+  bool dirty;
+};
+
+struct YR_MATCHLIST
+{
+  // Array with pointers to lists of matches. Item N in the array has the
+  // list of matches for string with index N.
+  // Total size is equal to length.
+  YR_MATCHES* entries;
+
+  // Array with indices of "dirty" matches, that is, elements in entry that
+  // must be cleaned before this match list can be reused.
+  // Total size is equal to length, but only the first dirty_count elements
+  // are actually valid; all further elements must be ignored.
+  int32_t* dirty_entries;
+  int32_t dirty_count;
+
+  // Size of this match list
+  int32_t length;
 };
 
 struct YR_MATCH
@@ -816,9 +839,8 @@ struct YR_SCAN_CONTEXT
   // N has too many matches.
   YR_BITMASK* strings_temp_disabled;
 
-  // Array with pointers to lists of matches. Item N in the array has the
-  // list of matches for string with index N.
-  YR_MATCHES* matches;
+  // A match list containing the matches per string.
+  YR_MATCHLIST matches;
 
   // "unconfirmed_matches" is like "matches" but for strings that are part of
   // a chain. Let's suppose that the string S is split in two chained strings
@@ -826,7 +848,7 @@ struct YR_SCAN_CONTEXT
   // until a match for S2 is found (within the range defined by chain_gap_min
   // and chain_gap_max), so the matches for S1 are put in "unconfirmed_matches"
   // until they can be confirmed or discarded.
-  YR_MATCHES* unconfirmed_matches;
+  YR_MATCHLIST unconfirmed_matches;
 
   // A bitmap with one bit per rule, bit N is set if the corresponding rule
   // must evaluated.

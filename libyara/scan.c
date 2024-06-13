@@ -270,7 +270,7 @@ static void _yr_scan_update_match_chain_length(
   if (string->chained_to == NULL)
     return;
 
-  match = context->unconfirmed_matches[string->chained_to->idx].head;
+  match = context->unconfirmed_matches.entries[string->chained_to->idx].head;
 
   while (match != NULL)
   {
@@ -289,9 +289,23 @@ static void _yr_scan_update_match_chain_length(
 
 static int _yr_scan_add_match_to_list(
     YR_MATCH* match,
-    YR_MATCHES* matches_list,
+    YR_MATCHLIST* matchlist,
+    int string_index,
     int replace_if_exists)
 {
+  YR_MATCHES* matches_list = &matchlist->entries[string_index];
+
+  // Mark entry as dirty if it is't marked as such yet
+  if (!matches_list->dirty)
+  {
+    matches_list->dirty = true;
+    // Since dirty_entries has sufficient size for all strings, and
+    // this one is not marked as dirty and thus not part of dirty_entries yet,
+    // we can safely add it to dirty_entries without exceeding its maximum size.
+    matchlist->dirty_entries[matchlist->dirty_count] = string_index;
+    matchlist->dirty_count++;
+  }
+
   int result = ERROR_SUCCESS;
 
 #if YR_DEBUG_VERBOSITY > 0
@@ -369,8 +383,11 @@ _exit:;
 
 static void _yr_scan_remove_match_from_list(
     YR_MATCH* match,
-    YR_MATCHES* matches_list)
+    YR_MATCHLIST* matchlist,
+    int string_index)
 {
+  YR_MATCHES* matches_list = &matchlist->entries[string_index];
+
   if (match->prev != NULL)
     match->prev->next = match->next;
 
@@ -386,6 +403,10 @@ static void _yr_scan_remove_match_from_list(
   matches_list->count--;
   match->next = NULL;
   match->prev = NULL;
+
+  // If matches_list->count == 0 now, we could mark this matchlist entry as no longer dirty.
+  // However, finding and removing the entry from the dirty list takes more time than leaving
+  // it dirty and (unnecessarily) cleaning it later on, so we don't bother.
 }
 
 //
@@ -449,7 +470,7 @@ static int _yr_scan_verify_chained_string_match(
     // list of unconfirmed matches. Unconfirmed matches are sorted in ascending
     // offset order. If no unconfirmed match exists, the lowest possible offset
     // is the offset of the current match.
-    match = context->unconfirmed_matches[matching_string->idx].head;
+    match = context->unconfirmed_matches.entries[matching_string->idx].head;
 
     if (match != NULL)
       lowest_offset = match->offset;
@@ -460,7 +481,7 @@ static int _yr_scan_verify_chained_string_match(
     // precedes the currently matching string. If we have a string chain like:
     // S1 <- S2 <- S3, and we just found a match for S2, we are iterating the
     // list of unconfirmed matches of S1.
-    match = context->unconfirmed_matches[matching_string->chained_to->idx].head;
+    match = context->unconfirmed_matches.entries[matching_string->chained_to->idx].head;
 
     while (match != NULL)
     {
@@ -481,7 +502,8 @@ static int _yr_scan_verify_chained_string_match(
         // match can't be an actual match)
         _yr_scan_remove_match_from_list(
             match,
-            &context->unconfirmed_matches[matching_string->chained_to->idx]);
+            &context->unconfirmed_matches,
+            matching_string->chained_to->idx);
       }
       else if (
           ending_offset + matching_string->chain_gap_max >= match_offset &&
@@ -517,7 +539,7 @@ static int _yr_scan_verify_chained_string_match(
       // every unconfirmed match in all the strings in the chain up to the head
       // of the chain.
       match =
-          context->unconfirmed_matches[matching_string->chained_to->idx].head;
+          context->unconfirmed_matches.entries[matching_string->chained_to->idx].head;
 
       while (match != NULL)
       {
@@ -543,7 +565,7 @@ static int _yr_scan_verify_chained_string_match(
       }
 
       // "string" points now to the head of the strings chain.
-      match = context->unconfirmed_matches[string->idx].head;
+      match = context->unconfirmed_matches.entries[string->idx].head;
 
       // Iterate over the list of unconfirmed matches of the head of the chain,
       // and move to the list of confirmed matches those with a chain_length
@@ -556,7 +578,9 @@ static int _yr_scan_verify_chained_string_match(
         if (match->chain_length == full_chain_length)
         {
           _yr_scan_remove_match_from_list(
-              match, &context->unconfirmed_matches[string->idx]);
+              match,
+              &context->unconfirmed_matches,
+              string->idx);
 
           match->match_length = (int32_t) (match_offset - match->offset +
                                            match_length);
@@ -580,7 +604,7 @@ static int _yr_scan_verify_chained_string_match(
           yr_bitmask_set(context->required_eval, string->rule_idx);
 
           FAIL_ON_ERROR(_yr_scan_add_match_to_list(
-              match, &context->matches[string->idx], false));
+              match, &context->matches, string->idx, false));
         }
 
         match = next_match;
@@ -627,7 +651,8 @@ static int _yr_scan_verify_chained_string_match(
       // an actual match until finding the remaining parts of the chain.
       FAIL_ON_ERROR(_yr_scan_add_match_to_list(
           new_match,
-          &context->unconfirmed_matches[matching_string->idx],
+          &context->unconfirmed_matches,
+          matching_string->idx,
           false));
     }
   }
@@ -758,7 +783,8 @@ static int _yr_scan_match_callback(
 
       FAIL_ON_ERROR(_yr_scan_add_match_to_list(
           new_match,
-          &callback_args->context->matches[string->idx],
+          &callback_args->context->matches,
+          string->idx,
           STRING_IS_GREEDY_REGEXP(string)));
     }
   }
@@ -1059,7 +1085,7 @@ int yr_scan_verify_match(
     return ERROR_SUCCESS;
 
   if (context->flags & SCAN_FLAGS_FAST_MODE && STRING_IS_SINGLE_MATCH(string) &&
-      context->matches[string->idx].head != NULL)
+      context->matches.entries[string->idx].head != NULL)
     return ERROR_SUCCESS;
 
   if (STRING_IS_FIXED_OFFSET(string) &&

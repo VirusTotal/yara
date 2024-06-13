@@ -61,7 +61,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
        string = STRING_IS_LAST_IN_RULE(string) ? NULL : string + 1)
 
 #define yr_string_matches_foreach(context, string, match)         \
-  for (match = context->matches[string->idx].head; match != NULL; \
+  for (match = context->matches.entries[string->idx].head; match != NULL; \
        match = match->next)                                       \
     /* private matches are skipped */                             \
     if (match->is_private)                                        \

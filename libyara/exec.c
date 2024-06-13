@@ -1438,7 +1438,7 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
 
     case OP_FOUND:
       pop(r1);
-      r2.i = context->matches[r1.s->idx].tail != NULL ? 1 : 0;
+      r2.i = context->matches.entries[r1.s->idx].tail != NULL ? 1 : 0;
       YR_DEBUG_FPRINTF(
           2,
           stderr,
@@ -1460,7 +1460,7 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
       ensure_within_rules_arena(r2.p);
 #endif
 
-      match = context->matches[r2.s->idx].head;
+      match = context->matches.entries[r2.s->idx].head;
       r3.i = false;
 
       while (match != NULL)
@@ -1494,7 +1494,7 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
       ensure_within_rules_arena(r3.p);
 #endif
 
-      match = context->matches[r3.s->idx].head;
+      match = context->matches.entries[r3.s->idx].head;
       r4.i = false;
 
       while (match != NULL && !r4.i)
@@ -1522,7 +1522,7 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
       ensure_within_rules_arena(r1.p);
 #endif
 
-      r2.i = context->matches[r1.s->idx].count;
+      r2.i = context->matches.entries[r1.s->idx].count;
       push(r2);
       break;
 
@@ -1540,7 +1540,7 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
       ensure_within_rules_arena(r3.p);
 #endif
 
-      match = context->matches[r3.s->idx].head;
+      match = context->matches.entries[r3.s->idx].head;
       r4.i = 0;
 
       while (match != NULL)
@@ -1571,7 +1571,7 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
       ensure_within_rules_arena(r2.p);
 #endif
 
-      match = context->matches[r2.s->idx].head;
+      match = context->matches.entries[r2.s->idx].head;
 
       i = 1;
       r3.i = YR_UNDEFINED;
@@ -1599,7 +1599,7 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
       ensure_within_rules_arena(r2.p);
 #endif
 
-      match = context->matches[r2.s->idx].head;
+      match = context->matches.entries[r2.s->idx].head;
 
       i = 1;
       r3.i = YR_UNDEFINED;
@@ -1629,7 +1629,7 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
       {
         if (r2.i == OF_STRING_SET)
         {
-          if (context->matches[r1.s->idx].tail != NULL)
+          if (context->matches.entries[r1.s->idx].tail != NULL)
           {
             found++;
           }
@@ -1714,7 +1714,7 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
 #if YR_PARANOID_EXEC
         ensure_within_rules_arena(r3.p);
 #endif
-        match = context->matches[r3.s->idx].head;
+        match = context->matches.entries[r3.s->idx].head;
 
         while (match != NULL)
         {
@@ -1790,7 +1790,7 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
 #if YR_PARANOID_EXEC
         ensure_within_rules_arena(r1.p);
 #endif
-        match = context->matches[r1.s->idx].head;
+        match = context->matches.entries[r1.s->idx].head;
 
         while (match != NULL)
         {
