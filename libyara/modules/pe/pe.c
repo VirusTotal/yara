@@ -369,7 +369,7 @@ static void pe_parse_debug_directory(PE* pe)
       pdb_path_len = strnlen(
           pdb_path, yr_min(available_space(pe, pdb_path), YR_MAX_PATH));
 
-      if (pdb_path_len >= 0 && pdb_path_len < YR_PATH_MAX)
+      if (pdb_path_len >= 0 && pdb_path_len < YR_MAX_PATH)
       {
         yr_set_sized_string(pdb_path, pdb_path_len, pe->object, "pdb_path");
         break;
