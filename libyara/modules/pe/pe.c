@@ -39,6 +39,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <yara/dotnet.h>
 #include <yara/endian.h>
+#include <yara/limits.h>
 #include <yara/mem.h>
 #include <yara/modules.h>
 #include <yara/pe.h>
