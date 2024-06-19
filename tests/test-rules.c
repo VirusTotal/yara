@@ -2517,6 +2517,8 @@ void test_re()
   assert_true_regexp("a{0,1}?bc", "abc", "abc");
   assert_true_regexp("a{0,1}bc", "bbc", "bc");
   assert_true_regexp("a{0,1}?bc", "abc", "bc");
+  assert_true_regexp("a{,0}", "a", "");
+  assert_true_regexp("a{,0}", "x", "");
   assert_true_regexp("aa{0,1}?bc", "abc", "abc");
   assert_true_regexp("aa{0,1}?bc", "abc", "abc");
   assert_true_regexp("aa{0,1}bc", "abc", "abc");
