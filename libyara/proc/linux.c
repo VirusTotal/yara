@@ -57,7 +57,7 @@ typedef struct _YR_PROC_INFO
   uint64_t map_offset;
   uint64_t next_block_end;
   int page_size;
-  char map_path[PATH_MAX];
+  char map_path[YR_MAX_PATH];
   uint64_t map_dmaj;
   uint64_t map_dmin;
   uint64_t map_ino;
@@ -327,7 +327,7 @@ YR_API YR_MEMORY_BLOCK* yr_process_get_next_memory_block(
   YR_PROC_ITERATOR_CTX* context = (YR_PROC_ITERATOR_CTX*) iterator->context;
   YR_PROC_INFO* proc_info = (YR_PROC_INFO*) context->proc_info;
 
-  char buffer[PATH_MAX];
+  char buffer[YR_MAX_PATH];
   char perm[5];
 
   uint64_t begin, end;

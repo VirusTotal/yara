@@ -93,9 +93,10 @@ typedef struct _YR_EXPRESSION
     YR_ARENA_REF sized_string_ref;
   } value;
 
-  // Boolean expressions can hold a string count. If not empty, this indicates that the condition
-  // can only be fulfilled if at least so many strings match.
-  struct {
+  // Boolean expressions can hold a string count. If not empty, this indicates
+  // that the condition can only be fulfilled if at least so many strings match.
+  struct
+  {
     int count;
   } required_strings;
 
@@ -288,7 +289,7 @@ typedef struct _YR_COMPILER
   char* lex_buf_ptr;
   unsigned short lex_buf_len;
 
-  char include_base_dir[MAX_PATH];
+  char include_base_dir[YR_MAX_PATH];
   void* user_data;
   void* incl_clbk_user_data;
   void* re_ast_clbk_user_data;
