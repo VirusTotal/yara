@@ -65,6 +65,7 @@ awesome list of [YARA-related stuff](https://github.com/InQuest/awesome-yara).
 * [Binalyze](https://www.binalyze.com/)
 * [BinaryAlert](https://github.com/airbnb/binaryalert)
 * [Blueliv](https://www.blueliv.com)
+* [Cado Security](https://docs.cadosecurity.com/cado-response/investigate/detections#setting-up-detections)
 * [Cisco Talos Intelligence Group](https://talosintelligence.com/)
 * [Cloudina Security](https://cloudina.co.uk)
 * [Cofense](https://cofense.com)
