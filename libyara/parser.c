@@ -476,6 +476,11 @@ static int _yr_parser_write_string(
   FAIL_ON_ERROR(_yr_compiler_store_string(compiler, identifier, &ref));
 
   string->identifier = (const char*) yr_arena_ref_to_ptr(compiler->arena, &ref);
+  string->rule_idx = compiler->current_rule_idx;
+  string->idx = compiler->current_string_idx;
+  string->fixed_offset = YR_UNDEFINED;
+
+  compiler->current_string_idx++;
 
   if (modifier.flags & STRING_FLAGS_HEXADECIMAL ||
       modifier.flags & STRING_FLAGS_REGEXP ||
@@ -507,6 +512,14 @@ static int _yr_parser_write_string(
 
     string->length = (uint32_t) literal_string->length;
     string->string = (uint8_t*) yr_arena_ref_to_ptr(compiler->arena, &ref);
+
+    if (modifier.flags & STRING_FLAGS_WIDE)
+      max_string_len = string->length * 2;
+    else
+      max_string_len = string->length;
+
+    if (max_string_len <= YR_MAX_ATOM_LENGTH)
+      modifier.flags |= STRING_FLAGS_FITS_IN_ATOM;
 
     result = yr_atoms_extract_from_string(
         &compiler->atoms_config,
@@ -579,31 +592,13 @@ static int _yr_parser_write_string(
   }
 
   string->flags = modifier.flags;
-  string->rule_idx = compiler->current_rule_idx;
-  string->idx = compiler->current_string_idx;
-  string->fixed_offset = YR_UNDEFINED;
 
   // Add the string to Aho-Corasick automaton.
   result = yr_ac_add_string(
-      compiler->automaton,
-      string,
-      compiler->current_string_idx,
-      atom_list,
-      compiler->arena);
+      compiler->automaton, string, string->idx, atom_list, compiler->arena);
 
   if (result != ERROR_SUCCESS)
     goto cleanup;
-
-  if (modifier.flags & STRING_FLAGS_LITERAL)
-  {
-    if (modifier.flags & STRING_FLAGS_WIDE)
-      max_string_len = string->length * 2;
-    else
-      max_string_len = string->length;
-
-    if (max_string_len <= YR_MAX_ATOM_LENGTH)
-      string->flags |= STRING_FLAGS_FITS_IN_ATOM;
-  }
 
   atom = atom_list;
   c = 0;
@@ -615,8 +610,6 @@ static int _yr_parser_write_string(
   }
 
   (*num_atom) += c;
-
-  compiler->current_string_idx++;
 
 cleanup:
   if (free_literal)
