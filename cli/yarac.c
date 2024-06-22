@@ -49,10 +49,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "args.h"
 #include "common.h"
 
-#ifndef MAX_PATH
-#define MAX_PATH 256
-#endif
-
 #define MAX_ARGS_EXT_VAR 32
 
 #define exit_with_code(code) \

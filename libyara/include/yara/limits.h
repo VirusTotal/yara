@@ -36,10 +36,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "utils.h"
 
-// Maximum length of file paths. This is the only limit that doesn't have the
-// YR_ prefix. The intention is using the default MAX_PATH if defined.
-#ifndef MAX_PATH
-#define MAX_PATH 1024
+// Maximum length of file paths.
+#ifndef YR_MAX_PATH
+#define YR_MAX_PATH 4096
 #endif
 
 // Maximum number of threads that can use a YR_RULES structure simultaneously.

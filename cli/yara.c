@@ -63,10 +63,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define ERROR_COULD_NOT_CREATE_THREAD 100
 
-#ifndef MAX_PATH
-#define MAX_PATH 256
-#endif
-
 #ifndef min
 #define min(x, y) ((x < y) ? (x) : (y))
 #endif
@@ -491,9 +487,9 @@ static bool is_directory(const char_t* path)
 static int scan_dir(const char_t* dir, SCAN_OPTIONS* scan_opts)
 {
   int result = ERROR_SUCCESS;
-  char_t path[MAX_PATH];
+  char_t path[YR_MAX_PATH];
 
-  _sntprintf(path, MAX_PATH, _T("%s\\*"), dir);
+  _sntprintf(path, YR_MAX_PATH, _T("%s\\*"), dir);
 
   WIN32_FIND_DATA FindFileData;
   HANDLE hFind = FindFirstFile(path, &FindFileData);
@@ -502,7 +498,7 @@ static int scan_dir(const char_t* dir, SCAN_OPTIONS* scan_opts)
   {
     do
     {
-      _sntprintf(path, MAX_PATH, _T("%s\\%s"), dir, FindFileData.cFileName);
+      _sntprintf(path, YR_MAX_PATH, _T("%s\\%s"), dir, FindFileData.cFileName);
 
       if (!(FindFileData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
       {
@@ -673,7 +669,7 @@ static int scan_dir(const char* dir, SCAN_OPTIONS* scan_opts)
 
     while (de && result != ERROR_SCAN_TIMEOUT)
     {
-      char full_path[MAX_PATH];
+      char full_path[YR_MAX_PATH];
       struct stat st;
 
       snprintf(full_path, sizeof(full_path), "%s/%s", dir, de->d_name);
