@@ -106,7 +106,7 @@ static int _yr_scanner_scan_mem_block(
 
       match = &rules->ac_match_pool[match_table[state] - 1];
 
-      if (scanner->matches->count >= YR_SLOW_STRING_MATCHES)
+      if (scanner->matches.entries->count >= YR_SLOW_STRING_MATCHES)
       {
         report_string = match->string;
         rule = report_string
@@ -172,8 +172,8 @@ static int _yr_scanner_scan_mem_block(
     }
   }
 
-  if (rule != NULL && scanner->matches->count >= YR_SLOW_STRING_MATCHES &&
-      scanner->matches->count < YR_MAX_STRING_MATCHES)
+  if (rule != NULL && scanner->matches.entries->count >= YR_SLOW_STRING_MATCHES &&
+      scanner->matches.entries->count < YR_MAX_STRING_MATCHES)
   {
     if (rule != NULL && report_string != NULL)
     {
@@ -203,6 +203,46 @@ _exit:
   return result;
 }
 
+static int _yr_matchlist_create(YR_MATCHLIST* list, int32_t capacity)
+{
+  YR_DEBUG_FPRINTF(2, stderr, "- %s() {} \n", __FUNCTION__);
+
+   YR_MATCHLIST new_list;
+
+  new_list.dirty_entries = (int32_t*) yr_calloc(capacity, sizeof(int32_t));
+  if (new_list.dirty_entries == NULL && capacity > 0)
+  {
+    return ERROR_INSUFFICIENT_MEMORY;
+  }
+
+  new_list.entries = (YR_MATCHES*) yr_calloc(capacity, sizeof(YR_MATCHES));
+  if (new_list.entries == NULL && capacity > 0)
+  {
+    yr_free(new_list.dirty_entries);
+    return ERROR_INSUFFICIENT_MEMORY;
+  }
+  new_list.dirty_count = 0;
+  new_list.length = capacity;
+  *list = new_list;
+  return ERROR_SUCCESS;
+}
+
+static void _yr_matchlist_destroy(YR_MATCHLIST list)
+{
+  yr_free(list.entries);
+  yr_free(list.dirty_entries);
+}
+
+static void _yr_matchlist_clear(YR_MATCHLIST list)
+{
+  for (int i = 0; i < list.dirty_count; i++)
+  {
+    int32_t dirty_entry = list.dirty_entries[i];
+    memset(&list.entries[dirty_entry], 0, sizeof(YR_MATCHES));
+  }
+  list.dirty_count = 0;
+}
+
 static void _yr_scanner_clean_matches(YR_SCANNER* scanner)
 {
   YR_DEBUG_FPRINTF(2, stderr, "- %s() {} \n", __FUNCTION__);
@@ -227,12 +267,8 @@ static void _yr_scanner_clean_matches(YR_SCANNER* scanner)
       0,
       sizeof(YR_BITMASK) * YR_BITMASK_SIZE(scanner->rules->num_strings));
 
-  memset(scanner->matches, 0, sizeof(YR_MATCHES) * scanner->rules->num_strings);
-
-  memset(
-      scanner->unconfirmed_matches,
-      0,
-      sizeof(YR_MATCHES) * scanner->rules->num_strings);
+  _yr_matchlist_clear(scanner->matches);
+  _yr_matchlist_clear(scanner->unconfirmed_matches);
 }
 
 YR_API int yr_scanner_create(YR_RULES* rules, YR_SCANNER** scanner)
@@ -272,21 +308,28 @@ YR_API int yr_scanner_create(YR_RULES* rules, YR_SCANNER** scanner)
   new_scanner->strings_temp_disabled = (YR_BITMASK*) yr_calloc(
       sizeof(YR_BITMASK), YR_BITMASK_SIZE(rules->num_strings));
 
-  new_scanner->matches = (YR_MATCHES*) yr_calloc(
-      rules->num_strings, sizeof(YR_MATCHES));
-
-  new_scanner->unconfirmed_matches = (YR_MATCHES*) yr_calloc(
-      rules->num_strings, sizeof(YR_MATCHES));
-
   if (new_scanner->rule_matches_flags == NULL ||
       new_scanner->required_eval == NULL ||
       new_scanner->ns_unsatisfied_flags == NULL ||
-      new_scanner->strings_temp_disabled == NULL ||
-      (new_scanner->matches == NULL && rules->num_strings > 0) ||
-      (new_scanner->unconfirmed_matches == NULL && rules->num_strings > 0))
+      new_scanner->strings_temp_disabled == NULL)
   {
     yr_scanner_destroy(new_scanner);
     return ERROR_INSUFFICIENT_MEMORY;
+  }
+
+  int err = _yr_matchlist_create(&new_scanner->matches, rules->num_strings);
+  if (err != ERROR_SUCCESS)
+  {
+    yr_scanner_destroy(new_scanner);
+    return err;
+  }
+
+  err = _yr_matchlist_create(&new_scanner->unconfirmed_matches, rules->num_strings);
+  if (err != ERROR_SUCCESS)
+  {
+    _yr_matchlist_destroy(new_scanner->matches);
+    yr_scanner_destroy(new_scanner);
+    return err;
   }
 
 #ifdef YR_PROFILING_ENABLED
@@ -368,8 +411,8 @@ YR_API void yr_scanner_destroy(YR_SCANNER* scanner)
   yr_free(scanner->ns_unsatisfied_flags);
   yr_free(scanner->required_eval);
   yr_free(scanner->strings_temp_disabled);
-  yr_free(scanner->matches);
-  yr_free(scanner->unconfirmed_matches);
+  _yr_matchlist_destroy(scanner->matches);
+  _yr_matchlist_destroy(scanner->unconfirmed_matches);
   yr_free(scanner);
 }
 
