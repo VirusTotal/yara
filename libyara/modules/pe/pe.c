@@ -3391,17 +3391,22 @@ static uint64_t _rich_version(
   rich_length = yr_get_integer(module, "rich_signature.length");
   rich_string = yr_get_string(module, "rich_signature.clear_data");
 
-  // If the clear_data was not set, return YR_UNDEFINED
+  // If clear_data was not set, return YR_UNDEFINED
   if (rich_string == NULL)
     return YR_UNDEFINED;
 
+  // File e77b007c9a964411c5e33afeec18be32c86963b78f3c3e906b28fcf1382f46c3
+  // has a Rich header of length 8, which is smaller than RICH_SIGNATURE and
+  // causes a crash.
+  if (rich_length < sizeof(RICH_SIGNATURE))
+    return YR_UNDEFINED;
+
   if (version == YR_UNDEFINED && toolid == YR_UNDEFINED)
-    return false;
+    return 0;
 
   clear_rich_signature = (PRICH_SIGNATURE) rich_string->c_string;
 
   // Loop over the versions in the rich signature
-
   rich_count = (rich_length - sizeof(RICH_SIGNATURE)) /
                sizeof(RICH_VERSION_INFO);
 
