@@ -3371,7 +3371,7 @@ define_function(is_64bit)
 // Returns the number of rich signatures that match the specified version and
 // toolid numbers.
 //
-static uint64_t _rich_version(
+static int64_t _rich_version(
     YR_OBJECT* module,
     uint64_t version,
     uint64_t toolid)
@@ -3382,7 +3382,7 @@ static uint64_t _rich_version(
   PRICH_SIGNATURE clear_rich_signature;
   SIZED_STRING* rich_string;
 
-  uint64_t result = 0;
+  int64_t result = 0;
 
   // Check if the required fields are set
   if (yr_is_undefined(module, "rich_signature.length"))
