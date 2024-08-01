@@ -39,6 +39,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <yara/dotnet.h>
 #include <yara/endian.h>
+#include <yara/limits.h>
 #include <yara/mem.h>
 #include <yara/modules.h>
 #include <yara/pe.h>
@@ -366,9 +367,9 @@ static void pe_parse_debug_directory(PE* pe)
     if (pdb_path != NULL)
     {
       pdb_path_len = strnlen(
-          pdb_path, yr_min(available_space(pe, pdb_path), MAX_PATH));
+          pdb_path, yr_min(available_space(pe, pdb_path), YR_MAX_PATH));
 
-      if (pdb_path_len >= 0 && pdb_path_len < MAX_PATH)
+      if (pdb_path_len >= 0 && pdb_path_len < YR_MAX_PATH)
       {
         yr_set_sized_string(pdb_path, pdb_path_len, pe->object, "pdb_path");
         break;
