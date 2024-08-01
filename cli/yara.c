@@ -667,12 +667,14 @@ static int scan_dir(const char* dir, SCAN_OPTIONS* scan_opts)
   {
     struct dirent* de = readdir(dp);
 
+    char* full_path = calloc(YR_MAX_PATH, sizeof(char));
+    const size_t full_path_size = YR_MAX_PATH * sizeof(char);
+
     while (de && result != ERROR_SCAN_TIMEOUT)
     {
-      char full_path[YR_MAX_PATH];
       struct stat st;
 
-      snprintf(full_path, sizeof(full_path), "%s/%s", dir, de->d_name);
+      snprintf(full_path, full_path_size, "%s/%s", dir, de->d_name);
 
       int err = lstat(full_path, &st);
 
@@ -731,6 +733,7 @@ static int scan_dir(const char* dir, SCAN_OPTIONS* scan_opts)
       de = readdir(dp);
     }
 
+    free(full_path);
     closedir(dp);
   }
 
