@@ -465,7 +465,7 @@ equivalent:
             any of them
     }
 
-Since YARA 3.11, if you want more control over the range of bytes used with the ``xor`` modifier use:
+Since YARA 3.11, if you want more control over the range of bytes used with the ``xor`` modifier, use:
 
 .. code-block:: yara
 
