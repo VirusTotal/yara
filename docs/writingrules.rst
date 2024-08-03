@@ -425,7 +425,7 @@ The above rule is logically equivalent to:
             any of them
     }
 
-You can also combine the ``xor`` modifier with ``wide`` and ``ascii``
+You can also combine the ``xor`` modifier with ``fullword``, ``wide``, and ``ascii``
 modifiers. For example, to search for the ``wide`` and ``ascii`` versions of a
 string after every single byte XOR has been applied you would use:
 
