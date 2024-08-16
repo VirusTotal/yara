@@ -974,9 +974,9 @@ to the module's variables, or additional data stored in the ``data`` field of
 ``YR_OBJECT`` structures as discussed earlier in
 :ref:`storing-data-for-later-use`. But for that we need a way to get access to
 the corresponding ``YR_OBJECT`` first. There are two functions to do that:
-``module()`` and ``parent()``. The ``module()`` function returns a pointer to
+``yr_module()`` and ``yr_parent()``. The ``yr_module()`` function returns a pointer to
 the top-level ``YR_OBJECT`` corresponding to the module, the same one passed
-to the ``module_load`` function. The ``parent()`` function returns a pointer to
+to the ``module_load`` function. The ``yr_parent()`` function returns a pointer to
 the ``YR_OBJECT`` corresponding to the structure where the function is
 contained. For example, consider the following code snippet:
 
@@ -984,16 +984,16 @@ contained. For example, consider the following code snippet:
 
     define_function(f1)
     {
-        YR_OBJECT* module = module();
-        YR_OBJECT* parent = parent();
+        YR_OBJECT* module = yr_module();
+        YR_OBJECT* parent = yr_parent();
 
         // parent == module;
     }
 
     define_function(f2)
     {
-        YR_OBJECT* module = module();
-        YR_OBJECT* parent = parent();
+        YR_OBJECT* module = yr_module();
+        YR_OBJECT* parent = yr_parent();
 
         // parent != module;
     }
@@ -1026,4 +1026,4 @@ you get a pointer to the ``YR_SCAN_CONTEXT`` structure:
 
 .. code-block:: c
 
-    YR_SCAN_CONTEXT* context = scan_context();
+    YR_SCAN_CONTEXT* context = yr_scan_context();
