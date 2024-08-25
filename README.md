@@ -1,8 +1,14 @@
 [![Join the chat at https://gitter.im/VirusTotal/yara](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/VirusTotal/yara?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 [![AppVeyor build status](https://ci.appveyor.com/api/projects/status/7glqg19w4oolm7pr?svg=true)](https://ci.appveyor.com/project/plusvic/yara)
 [![Coverity status](https://scan.coverity.com/projects/9057/badge.svg?flat=1)](https://scan.coverity.com/projects/plusvic-yara)
-
-
+https://developer.android.com/training/app-links/verify-site-associations
+https://developer.android.com/training/app-links/verify-site-associations
+https://support.google.com/android/search?q=open+by+default
+https://developer.android.com/training/app-links/verify-site-associations
+https://developer.android.com/training/app-links/verify-site-associations
+https://developer.android.com/training/app-links/verify-site-associations
+https://developer.android.com/training/app-links/verify-site-associations
+https://developer.android.com/training/app-links/verify-site-associations
 
 ## YARA in a nutshell
 
