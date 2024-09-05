@@ -159,7 +159,12 @@ YR_API int yr_filemap_map_fd(
 
 #ifdef __linux__
 #include <sys/vfs.h>
-#include <linux/magic.h>
+// This constant can be found in linux/magic.h and the statfs(2) manpage.
+// 
+// We don't want to include linux/magic.h here because it may not be
+// available in cross-build environments, see
+// https://github.com/Hugal31/yara-rust/issues/115
+#define PROC_SUPER_MAGIC 0x9fa0
 #endif
 
 #define MAP_EXTRA_FLAGS 0
