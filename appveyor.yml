@@ -77,7 +77,7 @@ for:
     release: YARA $(APPVEYOR_REPO_TAG_NAME)
     provider: GitHub
     auth_token:
-      secure: d3qqX7bmrBiKJI38yFPc5vHrGGfS3LxLC7FaG6ewI2ghPPE22Pk6QtyrEFFb73PL
+      secure: k+4xp4M/IEqXhKKYwo3DY2ko6VenOfSBEij3AasSiz1i8vsCwfcGxhuae0kj7Gj2
     artifact: yara-$(APPVEYOR_BUILD_VERSION)-$(ARTIFACT_POSTFIX)
     draft: true
     on:
