@@ -509,7 +509,11 @@ static int _pe_iterate_resources(
       if (struct_fits_in_pe(pe, data_entry, IMAGE_RESOURCE_DATA_ENTRY))
       {
         if (yr_le32toh(data_entry->Size) > 0 &&
-            yr_le32toh(data_entry->Size) < pe->data_size)
+            // We could use the PE's size as an upper bound for the entry size,
+            // but there are some truncated files where the PE size is lower.
+            // Use a reasonably large value as the upper bound and avoid some
+            // completely corrupt entries with random values.
+            yr_le32toh(data_entry->Size) <= 0x3FFFFFFF)
         {
           if (callback(
                   data_entry,
