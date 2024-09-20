@@ -121,7 +121,7 @@ awesome list of [YARA-related stuff](https://github.com/InQuest/awesome-yara).
 * [SpamStopsHere](https://www.spamstopshere.com)
 * [Spyre](https://github.com/spyre-project/spyre)
 * [stoQ](https://stoq.punchcyber.com)
-* [Sublime Security](https://sublime.security)
+* [Sublime Security](https://sublime.security/)
 * [SumoLogic](https://sumologic.com)
 * [Tanium](https://www.tanium.com/)
 * [Tenable Network Security](https://www.tenable.com/)
