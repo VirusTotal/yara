@@ -60,11 +60,26 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define YR_MAX_COMPILER_ERROR_EXTRA_INFO 256
 #endif
 
-// Maximum size for the substring (atoms) extracted from strings and regular
+// Maximum size for the substring (atoms) extracted from regular
 // expressions and put into the Aho-Corasick automaton. The maximum allows size
 // for this constant is 255.
+#ifndef YR_MAX_ATOM_RE_LENGTH
+#define YR_MAX_ATOM_RE_LENGTH 8
+#endif
+
+// Maximum size for the substring (atoms) extracted from strings
+// and put into the Aho-Corasick automaton. The maximum allows size
+// for this constant is 255.
 #ifndef YR_MAX_ATOM_LENGTH
-#define YR_MAX_ATOM_LENGTH 4
+#define YR_MAX_ATOM_LENGTH 8
+#endif
+
+// Minimum size for the substring(atoms) extracted from regular
+// expressions and put into the Aho-Corasick automaton. The minimum 
+// is advised to set based on real rules. If the minimum is too large,
+// the atom may be extracted failed, and if the minimum is too small, the quality of atom may be a little low.
+#ifndef YR_MIN_VALID_ATOM_LENGTH
+#define YR_MIN_VALID_ATOM_LENGTH 4
 #endif
 
 #ifndef YR_MAX_ATOM_QUALITY
