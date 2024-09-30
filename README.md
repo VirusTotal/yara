@@ -122,6 +122,7 @@ awesome list of [YARA-related stuff](https://github.com/InQuest/awesome-yara).
 * [Spyre](https://github.com/spyre-project/spyre)
 * [stoQ](https://stoq.punchcyber.com)
 * [Sublime Security](https://sublime.security)
+* [Subreption](https://www.subreption.com) ([GhidraYara](https://github.com/subreption/ghidra_yara) and [yara-java](https://github.com/subreption/yara-java))
 * [SumoLogic](https://sumologic.com)
 * [Tanium](https://www.tanium.com/)
 * [Tenable Network Security](https://www.tenable.com/)
