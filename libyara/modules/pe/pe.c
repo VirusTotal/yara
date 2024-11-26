@@ -939,7 +939,7 @@ static IMPORT_FUNCTION* pe_parse_import_descriptor(
 
     while (struct_fits_in_pe(pe, thunks32, IMAGE_THUNK_DATA32) &&
            yr_le32toh(thunks32->u1.Ordinal) != 0 &&
-           *num_function_imports < MAX_PE_IMPORTS)
+           parsed_imports < MAX_PE_IMPORTS)
     {
       char* name = NULL;
       uint16_t ordinal = 0;
