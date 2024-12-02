@@ -48,7 +48,6 @@ The following modules are not compiled into YARA by default:
 
 * cuckoo
 * magic
-* dotnet
 
 If you plan to use them you must pass the corresponding ``--enable-<module
 name>`` arguments to the ``configure`` script.
@@ -57,8 +56,7 @@ For example::
 
     ./configure --enable-cuckoo
     ./configure --enable-magic
-    ./configure --enable-dotnet
-    ./configure --enable-cuckoo --enable-magic --enable-dotnet
+    ./configure --enable-cuckoo --enable-magic
 
 Modules usually depend on external libraries, depending on the modules you
 choose to install you'll need the following libraries:
