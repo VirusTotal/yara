@@ -110,15 +110,15 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
       # Caches and restores the bazelisk download directory.
-      - name: Cache bazelisk download
-        uses: actions/cache@v4
-        env:
-          cache-name: bazel-cache
-        with:
-          path: ~/.cache/bazelisk
-          key: ${{ runner.os }}-${{ env.cache-name }}-${{ github.ref }}
-          restore-keys: |
-            ${{ runner.os }}-${{ env.cache-name }}
+      # - name: Cache bazelisk download
+      #   uses: actions/cache@v4
+      #   env:
+      #     cache-name: bazel-cache
+      #   with:
+      #     path: ~/.cache/bazelisk
+      #     key: ${{ runner.os }}-${{ env.cache-name }}-${{ github.ref }}
+      #     restore-keys: |
+      #       ${{ runner.os }}-${{ env.cache-name }}
       - uses: actions/checkout@v2
       - name: Build
         run: bazel build @jansson//... //tests/...
