@@ -118,7 +118,7 @@ jobs:
           path: ~/.cache/bazelisk
           key: ${{ runner.os }}-${{ env.cache-name }}-${{ github.ref }}
           restore-keys: |
-            ${{ runner.os }}-${{ env.cache-name }}-development
+            ${{ runner.os }}-${{ env.cache-name }}
       - uses: actions/checkout@v2
       - name: Build
         run: bazel build @jansson//... //tests/...
