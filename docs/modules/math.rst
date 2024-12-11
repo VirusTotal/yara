@@ -97,7 +97,7 @@ file and create signatures based on those results.
     Returns true if the *test* value is between *lower* and *upper* values. The
     comparisons are inclusive.
 
-    *Example: math.in_range(math.deviation(0, filesize, math.MEAN_BYTES), 63.9, 64,1)*
+    *Example: math.in_range(math.deviation(0, filesize, math.MEAN_BYTES), 63.9, 64.1)*
 
 .. c:function:: max(int, int)
 
@@ -151,9 +151,9 @@ file and create signatures based on those results.
     the process address space. The returned value is a float between 0 and 1.
     *offset* and *size* are optional; if left empty, the complete file is searched.
 
-    
+
     *Example: math.percentage(0xFF, filesize-1024, filesize) >= 0.9*
-    
+
     *Example: math.percentage(0x4A) >= 0.4*
 
 .. c:function:: mode(offset, size)
