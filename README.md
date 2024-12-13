@@ -70,6 +70,7 @@ awesome list of [YARA-related stuff](https://github.com/InQuest/awesome-yara).
 * [Cloudina Security](https://cloudina.co.uk)
 * [Cofense](https://cofense.com)
 * [Conix](https://www.conix.fr)
+* [Corelight](https://corelight.com/products/yara)
 * [CounterCraft](https://www.countercraft.eu)
 * [Cuckoo Sandbox](https://github.com/cuckoosandbox/cuckoo)
 * [Cyber Triage](https://www.cybertriage.com)
