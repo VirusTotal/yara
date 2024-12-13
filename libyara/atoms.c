@@ -420,6 +420,22 @@ void yr_atoms_list_destroy(YR_ATOM_LIST_ITEM* list_head)
 }
 
 ////////////////////////////////////////////////////////////////////////////////
+// Destroys an atom_node list.
+//
+void yr_atom_node_list_destroy(YR_ATOM_NODE_LIST* list_head)
+{
+    YR_ATOM_NODE_LIST* item = list_head;
+    YR_ATOM_NODE_LIST* next;
+
+    while (item != NULL)
+    {
+        next = item->next;
+        yr_free(item);
+        item = next;
+    }
+}
+
+////////////////////////////////////////////////////////////////////////////////
 // Concats two atoms lists.
 //
 static YR_ATOM_LIST_ITEM* _yr_atoms_list_concat(
@@ -460,6 +476,7 @@ int _yr_atoms_trim(YR_ATOM* atom)
   int mask_ff = 0;
 
   int trim_left = 0;
+  int origin_atom_length = atom->length;
 
   while (trim_left < atom->length && atom->mask[trim_left] == 0) trim_left++;
 
@@ -501,13 +518,193 @@ int _yr_atoms_trim(YR_ATOM* atom)
 
   // Shift bytes and mask trim_left positions to the left.
 
-  for (int i = 0; i < YR_MAX_ATOM_LENGTH - trim_left; i++)
+  for (int i = 0; i < origin_atom_length - trim_left; i++)
   {
     atom->bytes[i] = atom->bytes[trim_left + i];
     atom->mask[i] = atom->mask[trim_left + i];
   }
 
   return trim_left;
+}
+
+// find best child atom in every length, the range of length is [1, YR_MAX_ATOM_RE_LENGTH].
+// The best atom contains at most one wildcard.
+// e.g. if atom is {01 02 03 ?? 04 05}, all best child atoms are {01}, {01 02}, {01 02 03}, {01 02 03 ?? 04}, {01 02 03 ?? 04 05}
+// e.g. if atom is {01 02 03 ?? ?? 04 05}, all best child atoms are {01}, {01 02}, {01 02 03}
+void _yr_atoms_inner_extract(
+    YR_ATOMS_CONFIG* config,
+    YR_ATOM* atom,
+    RE_NODE** re_nodes,
+    int current_atom_length,
+    YR_ATOM_NODE_LIST** chosen_atoms)
+{
+
+    // if cannot find atom, just return first byte as atom
+    if (current_atom_length < 1) {
+        return;
+    }
+
+    int mask_len = 0, shift_mask = 0, shift = 0;
+    int quality = -1;
+    int best_quality = -1;
+    int flag = 0; // when find valid atom, flag = 1
+    YR_ATOM current_atom;
+    YR_ATOM best_atom;
+    RE_NODE* best_atom_re_nodes[YR_MAX_ATOM_RE_LENGTH];
+    RE_NODE* recent_re_nodes[YR_MAX_ATOM_RE_LENGTH];
+    YR_ATOM_NODE_LIST* item = NULL;
+
+    best_atom.length = 0;
+    memset(best_atom.bytes, 0, sizeof(best_atom.bytes));
+    memset(best_atom.mask, 0, sizeof(best_atom.mask));
+    memset(best_atom_re_nodes, 0, sizeof(best_atom_re_nodes));
+
+
+    for (int i = 0; i <= atom->length - current_atom_length; i++) {
+
+        current_atom.length = current_atom_length;
+        mask_len = 0;
+        for (int j = i, k = 0; k < current_atom_length; j++, k++) {
+            current_atom.bytes[k] = atom->bytes[j];
+            current_atom.mask[k] = atom->mask[j];
+            recent_re_nodes[k] = re_nodes[j];
+            if (current_atom.mask[k] == 0x00 || current_atom.mask[k] == 0x0f || current_atom.mask[k] == 0xf0)
+                mask_len++;
+        }
+
+        shift = _yr_atoms_trim(&current_atom);
+        quality = config->get_atom_quality(config, &current_atom);
+        // update re_node after trim
+        if (shift > 0)
+        {
+            for (int j = 0; j < current_atom_length - shift; j++)
+                recent_re_nodes[j] = recent_re_nodes[j + shift];
+        }
+
+        // update mask_len after trim
+        if (current_atom.length == 1)
+            mask_len = 0;
+        else
+        {
+            shift_mask = mask_len - (current_atom_length - current_atom.length);
+            mask_len = shift_mask >= 0 ? shift_mask : 0;
+        }
+
+        if (quality > best_quality)
+        {
+            if (mask_len <= 1) {
+                for (int m = 0; m < current_atom.length; m++)
+                {
+                    best_atom.bytes[m] = current_atom.bytes[m];
+                    best_atom.mask[m] = current_atom.mask[m];
+                    best_atom_re_nodes[m] = recent_re_nodes[m];
+                }
+                best_atom.length = current_atom.length;
+                best_quality = quality;
+
+                flag = 1;
+            }
+        }
+    }
+
+    // add best_atom to atom_node_list
+    if (flag == 1 && best_atom.length > 0) {
+        item = (YR_ATOM_NODE_LIST*)yr_malloc(sizeof(YR_ATOM_NODE_LIST));
+        if (item != NULL)
+        {
+            memcpy(&item->atom, &best_atom, sizeof(YR_ATOM));
+            item->next = *chosen_atoms;
+            *chosen_atoms = item;
+            memcpy(&item->re_nodes, &best_atom_re_nodes, sizeof(best_atom_re_nodes));
+        }
+
+    }
+
+    // recursion extract
+    _yr_atoms_inner_extract(config, atom, re_nodes, current_atom_length - 1, chosen_atoms);
+
+}
+
+// find the final best atom from all candidate child atoms based on quality and the number of wildcards.
+// e.g. {01}, {01 02}, {01 02 03}, {01 02 03 ?? 04}, {01 02 03 ?? 04 05}, the final best atom is {01 02 03 ?? 04 05}.
+// e.g. {01}, {01 02}, {01 02 03}, the final best atom is {01 02 03}.
+void _yr_atoms_inner_choose(
+    YR_ATOMS_CONFIG* config,
+    YR_ATOM* atom,
+    RE_NODE** re_nodes,
+    YR_ATOM_NODE_LIST* chosen_atoms)
+{
+    YR_ATOM_NODE_LIST* item = chosen_atoms;
+    int best_quality[3] = { 0 };
+    YR_ATOM best_atom[3];
+    RE_NODE* best_atom_re_nodes[3][YR_MAX_ATOM_RE_LENGTH];
+    int i = 0, mask_index = 0;
+    int quality = 0;
+    int max_length = 0, best_atom_index = 0;
+
+
+    while (item != NULL)
+    {
+        mask_index = 0;
+        for (i = 0; i < item->atom.length; i++)
+        {
+            if (item->atom.mask[i] == 0x00)
+                mask_index = 2;
+            if (item->atom.mask[i] == 0x0f || item->atom.mask[i] == 0xf0)
+                mask_index = 1;
+        }
+        quality = config->get_atom_quality(config, &item->atom);
+
+        if (quality > best_quality[mask_index])
+        {
+            memcpy(&best_atom[mask_index], &item->atom, sizeof(item->atom));
+            memcpy(&best_atom_re_nodes[mask_index], &item->re_nodes, sizeof(item->re_nodes));
+            best_quality[mask_index] = quality;
+
+        }
+
+        item = item->next;
+    }
+
+    // first choose no-wildcard atom
+    if (best_quality[0] != 0 && best_atom[0].length >= YR_MIN_VALID_ATOM_LENGTH)
+    {
+        best_atom_index = 0;
+    }
+
+    // if not no-wildcard atom, then choose half-wildcard atom
+    else if (best_quality[1] != 0 && best_atom[1].length >= YR_MIN_VALID_ATOM_LENGTH + 1)
+    {
+        best_atom_index = 1;
+    }
+    // else, just choose max_len best atom
+    else
+    {
+        for (i = 0; i < 3; i++)
+        {
+            if (best_quality[i] != 0)
+            {
+                if (best_atom[i].length > max_length)
+                {
+                    max_length = best_atom[i].length;
+                    best_atom_index = i;
+                }
+            }
+        }
+    }
+
+    // copy atom and re_node to leaf
+    memset(atom->bytes, 0, sizeof(atom->bytes));
+    memset(atom->mask, 0, sizeof(atom->mask));
+    atom->length = best_atom[best_atom_index].length;
+    for (i = 0; i < best_atom[best_atom_index].length; i++)
+    {
+        atom->bytes[i] = best_atom[best_atom_index].bytes[i];
+        atom->mask[i] = best_atom[best_atom_index].mask[i];
+        re_nodes[i] = best_atom_re_nodes[best_atom_index][i];
+    }
+
+    return;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -888,19 +1085,23 @@ static int _yr_atoms_extract_from_re(
   int quality;
   int best_quality = -1;
   int n = 0;
+  int mask_len = 0; // the number of wildcard 
 
   YR_ATOM_TREE_NODE* and_node;
   YR_ATOM_TREE_NODE* left_node;
   YR_ATOM_TREE_NODE* right_node;
 
+  // A list of child atoms extracted from the best atom
+  YR_ATOM_NODE_LIST* choose_atoms = NULL;
+
   // The RE_NODEs most recently visited that can conform an atom (ie:
   // RE_NODE_LITERAL, RE_NODE_MASKED_LITERAL and RE_NODE_ANY). The number of
   // items in this array is n.
-  RE_NODE* recent_re_nodes[YR_MAX_ATOM_LENGTH];
+  RE_NODE* recent_re_nodes[YR_MAX_ATOM_RE_LENGTH];
 
   // The RE_NODEs corresponding to the best atom found so far for the current
   // appending node.
-  RE_NODE* best_atom_re_nodes[YR_MAX_ATOM_LENGTH];
+  RE_NODE* best_atom_re_nodes[YR_MAX_ATOM_RE_LENGTH];
 
   // This holds the ATOM_TREE_OR node where leaves (ATOM_TREE_LEAF) are
   // currently being appended.
@@ -962,12 +1163,30 @@ static int _yr_atoms_extract_from_re(
               &leaf->re_nodes, &best_atom_re_nodes, sizeof(best_atom_re_nodes));
         }
 
+        // count the number of wildcard in leaf->atom, include half-wildcard.
+        // e.g. {01 ?2 03} has half-wildcard, its max_len is 1.
+        // e.g. {01 ?? ?2 03} has one wildcard and one half-wildcard, its max_len is 2.
+        for (int j = 0; j < leaf->atom.length; j++)
+        {
+            if (leaf->atom.mask[j] == 0x00 || leaf->atom.mask[j] == 0x0f || leaf->atom.mask[j] == 0xf0)
+                mask_len++;
+        }
+
+        // when too many wildcards (above one wildcard) in leaf->atom, the Aho-Corasick automaton will be larger, and need to extract shorter child atoms and further choose
+        if (mask_len >= 1) {
+            _yr_atoms_inner_extract(config, &leaf->atom, (RE_NODE**)&leaf->re_nodes, YR_MAX_ATOM_RE_LENGTH, &choose_atoms);  
+            _yr_atoms_inner_choose(config, &leaf->atom, (RE_NODE**)&leaf->re_nodes, choose_atoms);
+            yr_atom_node_list_destroy(choose_atoms);
+            choose_atoms = NULL;
+        }
+
         _yr_atoms_tree_node_append(current_appending_node, leaf);
         n = 0;
       }
 
       current_appending_node = si.new_appending_node;
       best_quality = -1;
+      mask_len = 0;
     }
 
     if (si.re_node != NULL)
@@ -978,7 +1197,7 @@ static int _yr_atoms_extract_from_re(
       case RE_NODE_MASKED_LITERAL:
       case RE_NODE_ANY:
 
-        if (n < YR_MAX_ATOM_LENGTH)
+        if (n < YR_MAX_ATOM_RE_LENGTH)
         {
           recent_re_nodes[n] = si.re_node;
           best_atom_re_nodes[n] = si.re_node;
@@ -1005,10 +1224,10 @@ static int _yr_atoms_extract_from_re(
             best_quality = quality;
           }
 
-          for (i = 1; i < YR_MAX_ATOM_LENGTH; i++)
+          for (i = 1; i < YR_MAX_ATOM_RE_LENGTH; i++)
             recent_re_nodes[i - 1] = recent_re_nodes[i];
 
-          recent_re_nodes[YR_MAX_ATOM_LENGTH - 1] = si.re_node;
+          recent_re_nodes[YR_MAX_ATOM_RE_LENGTH - 1] = si.re_node;
         }
 
         break;
@@ -1120,7 +1339,7 @@ static int _yr_atoms_extract_from_re(
         // will append one 'a' to the atom, so YR_MAX_ATOM_LENGTH iterations
         // are enough.
 
-        for (i = 0; i < yr_min(re_node->start, YR_MAX_ATOM_LENGTH); i++)
+        for (i = 0; i < yr_min(re_node->start, YR_MAX_ATOM_RE_LENGTH); i++)
         {
           FAIL_ON_ERROR_WITH_CLEANUP(
               yr_stack_push(stack, &si), yr_stack_destroy(stack));
