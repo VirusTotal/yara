@@ -791,20 +791,24 @@ static const char* str_table_entry(
                                                                                           \
         if (yr_##bo##32toh(segment->type) == ELF_PT_DYNAMIC)                              \
         {                                                                                 \
-          elf##bits##_dyn_t* dyn =                                                        \
-              (elf##bits##_dyn_t*) (elf_raw + yr_##bo##bits##toh(segment->offset));       \
-                                                                                          \
-          for (j = 0; IS_VALID_PTR(elf, elf_size, dyn); dyn++, j++)                       \
+          j = 0;                                                                          \
+          if (yr_##bo##bits##toh(segment->offset) < elf_size)                             \
           {                                                                               \
-            yr_set_integer(                                                               \
-                yr_##bo##bits##toh(dyn->tag), elf_obj, "dynamic[%i].type", j);            \
-            yr_set_integer(                                                               \
-                yr_##bo##bits##toh(dyn->val), elf_obj, "dynamic[%i].val", j);             \
+            elf##bits##_dyn_t* dyn =                                                      \
+                (elf##bits##_dyn_t*) (elf_raw + yr_##bo##bits##toh(segment->offset));     \
                                                                                           \
-            if (dyn->tag == ELF_DT_NULL)                                                  \
+            for (j = 0; IS_VALID_PTR(elf, elf_size, dyn); dyn++, j++)                     \
             {                                                                             \
-              j++;                                                                        \
-              break;                                                                      \
+              yr_set_integer(                                                             \
+                  yr_##bo##bits##toh(dyn->tag), elf_obj, "dynamic[%i].type", j);          \
+              yr_set_integer(                                                             \
+                  yr_##bo##bits##toh(dyn->val), elf_obj, "dynamic[%i].val", j);           \
+                                                                                          \
+              if (dyn->tag == ELF_DT_NULL)                                                \
+              {                                                                           \
+                j++;                                                                      \
+                break;                                                                    \
+              }                                                                           \
             }                                                                             \
           }                                                                               \
           yr_set_integer(j, elf_obj, "dynamic_section_entries");                          \
