@@ -412,7 +412,7 @@ YR_API YR_MEMORY_BLOCK* yr_process_get_next_memory_block(
     }
     else
     {
-      YR_DEBUG_FPRINTF(2, stderr, "+ %s() = NULL\n", __FUNCTION__);
+      YR_DEBUG_FPRINTF(2, stderr, "- %s() = NULL\n", __FUNCTION__);
       return NULL;
     }
   }
