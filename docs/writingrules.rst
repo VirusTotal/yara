@@ -324,7 +324,7 @@ encoding format used by your text editor. This never meant to be a feature, the
 original intention always was that YARA strings should be ASCII-only and YARA
 4.1.0 started to raise warnings about non-ASCII characters in strings. This
 limitation does not apply to strings in the metadata section or comments. See
-more details [here](https://github.com/VirusTotal/yara/wiki/Unicode-characters-in-YARA)
+more details `here <https://github.com/VirusTotal/yara/wiki/Unicode-characters-in-YARA>`_.
 
 
 Case-insensitive strings
