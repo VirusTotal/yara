@@ -202,7 +202,7 @@ In our case the resulting *module_list* is::
 
 The second step is modifying the *Makefile.am* to tell the *make* program that
 the source code for your module must be compiled and linked into YARA. At the
-very beginning of *libyara/Makefile.am* you'll find this::
+very beginning of *Makefile.am* you'll find this::
 
     MODULES =  libyara/modules/tests/tests.c
     MODULES += libyara/modules/pe/pe.c
