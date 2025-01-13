@@ -3921,6 +3921,8 @@ void test_defined()
 
 static void test_pass(int pass)
 {
+  YR_DEBUG_FPRINTF(1, stderr, "+ %s() { \n", __FUNCTION__);
+
   switch (pass)
   {
   case 1:
