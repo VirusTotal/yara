@@ -221,6 +221,17 @@ static void exception_handler(int sig, siginfo_t * info, void *context)
   }
 }
 
+// Keep debug output indentation level consistent
+#if 0 == YR_DEBUG_VERBOSITY
+#define YR_DEBUG_INDENT_RESET_INIT
+#define YR_DEBUG_INDENT_RESET_RESTORE
+#else
+extern YR_TLS int yr_debug_indent;
+// Ugly, but unfortunately cannot use ifdef macros inside a macro
+#define YR_DEBUG_INDENT_RESET_INIT    int yr_debug_indent_before_jump = yr_debug_indent;
+#define YR_DEBUG_INDENT_RESET_RESTORE yr_debug_indent = yr_debug_indent_before_jump;
+#endif
+
 typedef struct sigaction sa;
 
 #define YR_TRYCATCH(_do_, _try_clause_, _catch_clause_)               \
@@ -243,6 +254,8 @@ typedef struct sigaction sa;
       }                                                               \
       exception_handler_usecount++;                                   \
       pthread_mutex_unlock(&exception_handler_mutex);                 \
+      /* Save the current debug indentation level before the jump. */ \
+      YR_DEBUG_INDENT_RESET_INIT                                      \
       jumpinfo ji;                                                    \
       ji.memfault_from = 0;                                           \
       ji.memfault_to = 0;                                             \
@@ -256,6 +269,9 @@ typedef struct sigaction sa;
       }                                                               \
       else                                                            \
       {                                                               \
+        /* Restore debug output indentation in case of failure */     \
+        YR_DEBUG_INDENT_RESET_RESTORE                                 \
+                                                                      \
         _catch_clause_                                                \
       }                                                               \
       pthread_mutex_lock(&exception_handler_mutex);                   \
