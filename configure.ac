@@ -255,6 +255,23 @@ AC_ARG_WITH([tcmalloc],
     PC_REQUIRES_PRIVATE="$PC_REQUIRES_PRIVATE tcmalloc"
   fi])
 
+AC_ARG_WITH([mimalloc],
+  [AS_HELP_STRING([--with-mimalloc],
+    [use mimalloc as the default heap allocator])],
+  [if test x$withval = xyes; then
+    if test "x$with_jemalloc" = "xyes"; then
+      AC_MSG_ERROR([Cannot compile with both mimalloc and jemalloc])
+    fi
+    if test "x$with_tcmalloc" = "xyes"; then
+      AC_MSG_ERROR([Cannot compile with both mimalloc and tcmalloc])
+    fi
+    mi_malloc=mi_malloc
+    AC_CHECK_LIB(mimalloc, $mi_malloc,,
+      AC_MSG_ERROR([please install https://github.com/microsoft/mimalloc]))
+    CFLAGS="$CFLAGS -DMIMALLOC $no_std_allocator"
+    PC_REQUIRES_PRIVATE="$PC_REQUIRES_PRIVATE mimalloc"
+  fi])
+
 AC_ARG_WITH([cpu-profiler],
   [AS_HELP_STRING([--with-cpu-profiler],
     [compile with CPU profiling support])],

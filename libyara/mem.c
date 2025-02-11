@@ -112,6 +112,10 @@ YR_API void yr_free(void* ptr)
 #include <stdlib.h>
 #include <string.h>
 
+#if defined(MIMALLOC)
+#include <mimalloc-override.h>
+#endif
+
 int yr_heap_alloc(void)
 {
   return ERROR_SUCCESS;
