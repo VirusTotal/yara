@@ -75,6 +75,7 @@ awesome list of [YARA-related stuff](https://github.com/InQuest/awesome-yara).
 * [Cuckoo Sandbox](https://github.com/cuckoosandbox/cuckoo)
 * [Cyber Triage](https://www.cybertriage.com)
 * [Cybereason](https://www.cybereason.com)
+* [defended.](https://defended.net)
 * [Digita Security](https://digitasecurity.com/product/uxprotect)
 * [Dragos Platform](https://dragos.com/platform/)
 * [Dtex Systems](https://dtexsystems.com)
