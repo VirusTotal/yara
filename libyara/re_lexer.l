@@ -113,21 +113,23 @@ hex_digit     [0-9a-fA-F]
 
 %%
 
-\{{digit}*,{digit}*\} {
+\{{digit}*[ ]*,[ ]*{digit}*\} {
 
-  // Examples: {3,8} {0,5} {,5} {7,}
+  // Examples: {3,8} {3, 8}, {3 ,8} {3 , 8} {0,5} {,5} {7,}
 
   int hi_bound;
   int lo_bound = atoi(yytext + 1);
 
   char* comma = strchr(yytext, ',');
+  char* hi_bound_ptr = comma + 1;
 
-  if (comma - yytext == strlen(yytext) - 2)
-    // if comma is followed by the closing curly bracket
-    // (example: {2,}) set high bound value to maximum.
+  // Skip spaces after the comma, if any.
+  while (*hi_bound_ptr == ' ') hi_bound_ptr++;
+
+  if (*hi_bound_ptr == '}')
     hi_bound = RE_MAX_RANGE;
   else
-    hi_bound = atoi(comma + 1);
+    hi_bound = atoi(hi_bound_ptr);
 
   if (hi_bound > RE_MAX_RANGE)
   {
@@ -712,6 +714,7 @@ int yr_parse_re_string(
 
   yyset_extra(*re_ast, yyscanner);
   yy_scan_string(re_string, yyscanner);
+
   yyparse(yyscanner, &lex_env);
   yylex_destroy(yyscanner);
 

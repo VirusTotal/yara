@@ -581,10 +581,10 @@ static int32_t read_blob_signed(const uint8_t** data, uint32_t* len)
   {
     uint16_t tmp1 = yr_be16toh(yr_unaligned_u16(*data));
     // shift and leave top 2 bits clear
-    uint16_t tmp2 = (tmp1 >> 1) & 0x3FFF;
+    int16_t tmp2 = (tmp1 >> 1) & 0x3FFF;
     // sign extension in case of negative number
     if (tmp1 & 0x1)
-      tmp2 |= 0xC000;
+      tmp2 |= 0xE000;
 
     *data += sizeof(uint16_t);
     *len -= sizeof(uint16_t);
@@ -602,10 +602,10 @@ static int32_t read_blob_signed(const uint8_t** data, uint32_t* len)
   {
     uint32_t tmp1 = yr_be32toh(yr_unaligned_u32(*data));
     // shift and leave top 3 bits clear
-    uint32_t tmp2 = (tmp1 >> 1) & 0x1FFFFFFF;
+    int32_t tmp2 = (tmp1 >> 1) & 0x1FFFFFFF;
     // sign extension in case of negative number
     if (tmp1 & 0x1)
-      tmp2 |= 0xE0000000;
+      tmp2 |= 0xF0000000;
 
     *data += sizeof(uint32_t);
     *len -= sizeof(uint32_t);
@@ -892,13 +892,15 @@ static char* parse_signature_type(
 
     // Read number of specified sizes
     uint32_t num_sizes = read_blob_unsigned(data, len);
-    sizes = yr_malloc(sizeof(uint32_t) * num_sizes);
-    if (!sizes || num_sizes > rank)
+    if (num_sizes > rank)
+      goto cleanup;
+    sizes = yr_malloc(sizeof(int64_t) * num_sizes);
+    if (!sizes)
       goto cleanup;
 
     for (uint32_t i = 0; i < num_sizes; ++i)
     {
-      sizes[i] = read_blob_unsigned(data, len);
+      sizes[i] = (int64_t) read_blob_unsigned(data, len);
     }
 
     // Read number of specified lower bounds
@@ -912,8 +914,8 @@ static char* parse_signature_type(
       lo_bounds[i] = read_blob_signed(data, len);
 
       // Adjust higher bound according to lower bound
-      if (num_sizes > i)
-        sizes[i] += lo_bounds[i];
+      if (num_sizes > i && lo_bounds[i] != 0)
+        sizes[i] += lo_bounds[i] - 1;
     }
 
     // Build the resulting array type
@@ -929,7 +931,7 @@ static char* parse_signature_type(
       {
         if (num_lowbounds > i && lo_bounds[i] != 0)
           sstr_appendf(ss, "%d...", lo_bounds[i]);
-        if (num_sizes > i && sizes[i] != 0)
+        if (num_sizes > i)
           sstr_appendf(ss, "%d", sizes[i]);
       }
       if (i + 1 != rank)
@@ -1998,7 +2000,7 @@ void dotnet_parse_tilde_2(
     // Make sure that num_rows has a reasonable value. For example
     // edc05e49dd3810be67942b983455fd43 sets a large value for number of
     // rows for the BIT_MODULE section.
-    if (num_rows > 10000)
+    if (num_rows > 15000)
       return;
 
     // Those tables which exist, but that we don't care about must be
@@ -2932,10 +2934,6 @@ void dotnet_parse_tilde_2(
         index_size = 2;
 
       row_size = (4 + 4 + index_sizes.string + index_size);
-
-      // Using 'i' is insufficent since we may skip certain resources and
-      // it would give an inaccurate count in that case.
-      counter = 0;
       row_ptr = table_offset;
 
       // First DWORD is the offset.
@@ -2945,11 +2943,7 @@ void dotnet_parse_tilde_2(
           break;
 
         manifestresource_table = (PMANIFESTRESOURCE_TABLE) row_ptr;
-        resource_offset = yr_le32toh(manifestresource_table->Offset);
 
-        // Only set offset if it is in this file (implementation != 0).
-        // Can't use manifestresource_table here because the Name and
-        // Implementation fields are variable size.
         if (index_size == 4)
           implementation = yr_le32toh(
               *(DWORD*) (row_ptr + 4 + 4 + index_sizes.string));
@@ -2957,38 +2951,7 @@ void dotnet_parse_tilde_2(
           implementation = yr_le16toh(
               *(WORD*) (row_ptr + 4 + 4 + index_sizes.string));
 
-        if (implementation != 0)
-        {
-          row_ptr += row_size;
-          continue;
-        }
-
-        if (!fits_in_pe(
-                pe, pe->data + resource_base + resource_offset, sizeof(DWORD)))
-        {
-          row_ptr += row_size;
-          continue;
-        }
-
-        resource_size = yr_le32toh(
-            *(DWORD*) (pe->data + resource_base + resource_offset));
-
-        if (!fits_in_pe(
-                pe, pe->data + resource_base + resource_offset, resource_size))
-        {
-          row_ptr += row_size;
-          continue;
-        }
-
-        // Add 4 to skip the size.
-        yr_set_integer(
-            resource_base + resource_offset + 4,
-            pe->object,
-            "resources[%i].offset",
-            counter);
-
-        yr_set_integer(
-            resource_size, pe->object, "resources[%i].length", counter);
+        row_ptr += row_size;
 
         name = pe_get_dotnet_string(
             pe,
@@ -2997,13 +2960,33 @@ void dotnet_parse_tilde_2(
             DOTNET_STRING_INDEX(manifestresource_table->Name));
 
         if (name != NULL)
-          yr_set_string(name, pe->object, "resources[%i].name", counter);
+          yr_set_string(name, pe->object, "resources[%i].name", i);
 
-        row_ptr += row_size;
-        counter++;
+        // Only set offset and length if it is in this file, otherwise continue
+        // with the next resource.
+        if (implementation != 0)
+          continue;
+
+        resource_offset = yr_le32toh(manifestresource_table->Offset);
+
+        if (!fits_in_pe(
+                pe, pe->data + resource_base + resource_offset, sizeof(DWORD)))
+          continue;
+
+        resource_size = yr_le32toh(
+            *(DWORD*) (pe->data + resource_base + resource_offset));
+
+        // Add 4 to skip the size.
+        yr_set_integer(
+            resource_base + resource_offset + 4,
+            pe->object,
+            "resources[%i].offset",
+            i);
+
+        yr_set_integer(resource_size, pe->object, "resources[%i].length", i);
       }
 
-      yr_set_integer(counter, pe->object, "number_of_resources");
+      yr_set_integer(i, pe->object, "number_of_resources");
 
       table_offset += row_size * num_rows;
       break;

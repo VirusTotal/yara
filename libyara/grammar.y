@@ -369,6 +369,10 @@ rules
       {
         _yr_compiler_pop_file_name(compiler);
       }
+    | rules error _END_OF_INCLUDED_FILE_
+      {
+        _yr_compiler_pop_file_name(compiler);
+      }
     ;
 
 

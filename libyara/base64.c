@@ -375,7 +375,7 @@ int _yr_base64_create_regexp(
 // a result of the base64 encoding.
 //
 // This uses ideas from:
-// https://www.leeholmes.com/blog/2019/12/10/searching-for-content-in-base-64-strings-2/
+// https://www.leeholmes.com/searching-for-content-in-base-64-strings/
 //
 // This does not emit the code for the RE. A further call to yr_re_ast_emit_code
 // is required to get the code.

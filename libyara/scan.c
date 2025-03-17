@@ -139,7 +139,7 @@ static int _yr_scan_xor_wcompare(
   return result;
 }
 
-static int _yr_scan_compare(
+int _yr_scan_compare(
     const uint8_t* data,
     size_t data_size,
     uint8_t* string,

@@ -659,7 +659,7 @@ checks in your code nevertheless). In those cases you can use the
         block = first_memory_block(context);
         if (block != NULL)
         {
-          block_data = block->fetch_data(block)
+          block_data = yr_fetch_block_data(block)
 
           if (block_data != NULL)
           {
@@ -668,15 +668,15 @@ checks in your code nevertheless). In those cases you can use the
         }
     }
 
-In the previous example you can also see how to use the ``fetch_data`` function.
-This function, which is a member of the ``YR_MEMORY_BLOCK`` structure, receives
-a pointer to the same block (as a ``self`` or ``this`` pointer) and returns a
-pointer to the block's data. Your module doesn't own the memory pointed to by
-this pointer, freeing that memory is not your responsibility. However keep in
-mind that the pointer is valid only until you ask for the next memory block. As
-long as you use the pointer within the scope of a ``foreach_memory_block`` you
-are on the safe side. Also take into account that ``fetch_data`` can return a
-NULL pointer, your code must be prepared for that case.
+In the previous example you can also see how to use the ``yr_fetch_block_data``
+function. This function receives a pointer to the same block (as a ``self`` or
+``this`` pointer) and returns a pointer to the block's data. Your module
+doesn't own the memory pointed to by this pointer, freeing that memory is not
+your responsibility. However keep in mind that the pointer is valid only until
+you ask for the next memory block. As long as you use the pointer within the
+scope of a ``foreach_memory_block`` you are on the safe side. Also take into
+account that ``yr_fetch_block_data`` can return a NULL pointer, your code must
+be prepared for that case.
 
 .. code-block:: c
 
@@ -684,7 +684,7 @@ NULL pointer, your code must be prepared for that case.
 
     foreach_memory_block(context, block)
     {
-      block_data = block->fetch_data(block);
+      block_data = yr_fetch_block_data(block);
 
       if (block_data != NULL)
       {
@@ -974,9 +974,9 @@ to the module's variables, or additional data stored in the ``data`` field of
 ``YR_OBJECT`` structures as discussed earlier in
 :ref:`storing-data-for-later-use`. But for that we need a way to get access to
 the corresponding ``YR_OBJECT`` first. There are two functions to do that:
-``module()`` and ``parent()``. The ``module()`` function returns a pointer to
+``yr_module()`` and ``yr_parent()``. The ``yr_module()`` function returns a pointer to
 the top-level ``YR_OBJECT`` corresponding to the module, the same one passed
-to the ``module_load`` function. The ``parent()`` function returns a pointer to
+to the ``module_load`` function. The ``yr_parent()`` function returns a pointer to
 the ``YR_OBJECT`` corresponding to the structure where the function is
 contained. For example, consider the following code snippet:
 
@@ -984,16 +984,16 @@ contained. For example, consider the following code snippet:
 
     define_function(f1)
     {
-        YR_OBJECT* module = module();
-        YR_OBJECT* parent = parent();
+        YR_OBJECT* module = yr_module();
+        YR_OBJECT* parent = yr_parent();
 
         // parent == module;
     }
 
     define_function(f2)
     {
-        YR_OBJECT* module = module();
-        YR_OBJECT* parent = parent();
+        YR_OBJECT* module = yr_module();
+        YR_OBJECT* parent = yr_parent();
 
         // parent != module;
     }
@@ -1026,4 +1026,4 @@ you get a pointer to the ``YR_SCAN_CONTEXT`` structure:
 
 .. code-block:: c
 
-    YR_SCAN_CONTEXT* context = scan_context();
+    YR_SCAN_CONTEXT* context = yr_scan_context();

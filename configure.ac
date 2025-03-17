@@ -1,4 +1,4 @@
-AC_INIT([yara], [4.5.0], [vmalvarez@virustotal.com])
+AC_INIT([yara], [4.5.2], [vmalvarez@virustotal.com])
 
 AM_SILENT_RULES([yes])
 AC_CONFIG_SRCDIR([cli/yara.c])
@@ -7,6 +7,7 @@ AC_CONFIG_AUX_DIR([build-aux])
 
 AM_INIT_AUTOMAKE([-Wall -Werror foreign subdir-objects])
 
+m4_pattern_allow([AC_MSG_ERROR])
 AC_CONFIG_MACRO_DIR([m4])
 
 # AC_PROG_CC sets CFLAGS to "-g -O2" if it wasn't previously set. Let's set
@@ -32,15 +33,35 @@ AC_C_INLINE
 # Defines WORDS_BIGENDIAN if building in a big-endian host.
 AC_C_BIGENDIAN
 
-# Arrange for 64-bit file offsets.
-AC_SYS_LARGEFILE
-
 LT_INIT
 AC_CANONICAL_HOST
 
 case $host_alias in
      i?86-*-mingw*) CFLAGS="$CFLAGS -D__MINGW_USE_VC2005_COMPAT" ;;
 esac
+
+
+#integration part for partial matching
+
+  # Add an option to enable partial matching
+AC_ARG_ENABLE([partial-matching],
+  [AS_HELP_STRING([--enable-partial-matching], [enable partial matching feature])],
+  [if test x$enableval = xyes; then
+    AC_DEFINE([ENABLE_PARTIAL_MATCHING], [1], [Enable partial matching feature])
+    enable_partial_matching=true
+  else
+    enable_partial_matching=false
+  fi]
+)
+
+# Add conditional for partial matching
+AM_CONDITIONAL([ENABLE_PARTIAL_MATCHING], [test x$enable_partial_matching = xtrue])
+
+  # end of the integration
+
+
+
+
 
 AC_ARG_ENABLE([proc-scan],
   [AS_HELP_STRING([--disable-proc-scan], [disable process scanning])],

@@ -43,4 +43,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "yara/strutils.h"
 #include "yara/utils.h"
 
+extern int PARTIAL_MATCH_THRESHOLD;
+
 #endif

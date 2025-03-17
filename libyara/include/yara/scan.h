@@ -49,4 +49,10 @@ int yr_scan_verify_match(
     uint64_t data_base,
     size_t offset);
 
+int _yr_scan_compare(
+    const uint8_t* data,
+    size_t data_size,
+    uint8_t* string,
+    size_t string_length);
+
 #endif

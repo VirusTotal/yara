@@ -27,8 +27,11 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+#include <yara/types.h>
 #include <stdlib.h>
+#include <yara.h>
 #include <yara/ahocorasick.h>
+#include <yara/modules.h>
 #include <yara/error.h>
 #include <yara/exec.h>
 #include <yara/exefiles.h>
@@ -38,9 +41,16 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <yara/proc.h>
 #include <yara/scanner.h>
 #include <yara/strutils.h>
-#include <yara/types.h>
+#include <yara/fuzz.h>
+#include <yara/StringMatcher.h>
+#include <yara/utils_partial.h>
+#include <yara/levenshtein.h>
+#include <yara/string_processing.h>
+#include <yara/process.h>
 
 #include "exception.h"
+
+// #define PARTIAL_MATCH_THRESHOLD 70
 
 static int _yr_scanner_scan_mem_block(
     YR_SCANNER* scanner,
@@ -262,6 +272,12 @@ YR_API int yr_scanner_create(YR_RULES* rules, YR_SCANNER** scanner)
 
   new_scanner->rule_matches_flags = (YR_BITMASK*) yr_calloc(
       sizeof(YR_BITMASK), YR_BITMASK_SIZE(rules->num_rules));
+
+//integration part
+      new_scanner->partial_rule_matches_flags = (YR_BITMASK*) yr_calloc(
+        sizeof(YR_BITMASK), YR_BITMASK_SIZE(rules->num_rules));
+
+  //end of integration part
 
   new_scanner->required_eval = (YR_BITMASK*) yr_calloc(
       sizeof(YR_BITMASK), YR_BITMASK_SIZE(rules->num_rules));
@@ -591,6 +607,55 @@ YR_API int yr_scanner_scan_mem_blocks(
         message = CALLBACK_MSG_RULE_NOT_MATCHING;
     }
 
+
+//integration part
+    YR_STRING* string = rule->strings;
+    if (string !=NULL){
+
+      // Get current memory block data using proper YARA APIs
+    YR_MEMORY_BLOCK* block = first_memory_block(scanner);
+    const uint8_t* block_data = block ? yr_fetch_block_data(block) : NULL;
+
+    if (block_data != NULL) {
+
+      int similarity = partial_ratio((const char*)string->string, (const char*)block_data);
+
+      if (similarity >= PARTIAL_MATCH_THRESHOLD) {
+        if (message == CALLBACK_MSG_RULE_MATCHING || message == CALLBACK_MSG_RULE_NOT_MATCHING) {
+            scanner->callback(scanner, message, rule, scanner->user_data);
+        }
+        PARTIAL_MATCH* match = (PARTIAL_MATCH*) yr_malloc(sizeof(PARTIAL_MATCH));
+        if (match != NULL) {
+            match->text = string->string;
+            match->score = similarity;
+            match->next = scanner->partial_matches;
+            scanner->partial_matches = match;
+            scanner->partial_match_count++;
+
+            if (yr_execute_code(scanner) == ERROR_SUCCESS) {
+              yr_bitmask_set(scanner->partial_rule_matches_flags, i);
+          }
+        } 
+        else {
+          message = CALLBACK_MSG_RULE_NOT_MATCHING;
+        } 
+      }
+    }
+    }
+
+     // Check for partial matches
+     if (yr_bitmask_is_set(scanner->partial_rule_matches_flags, i)){
+         message = CALLBACK_MSG_PARTIAL_MATCH;
+       //  scanner->callback(scanner, message, rule, scanner->user_data);
+     }
+
+    // Only set not matching if we have neither exact nor partial match
+    if (message == 0 && (scanner->flags & SCAN_FLAGS_REPORT_RULES_NOT_MATCHING)){
+    message = CALLBACK_MSG_RULE_NOT_MATCHING;
+    }
+
+    //end of integration part
+    
     if (message != 0 && !RULE_IS_PRIVATE(rule))
     {
       switch (scanner->callback(scanner, message, rule, scanner->user_data))
@@ -606,8 +671,7 @@ YR_API int yr_scanner_scan_mem_blocks(
     }
   }
 
-  scanner->callback(
-      scanner, CALLBACK_MSG_SCAN_FINISHED, NULL, scanner->user_data);
+ scanner->callback(scanner, CALLBACK_MSG_SCAN_FINISHED, NULL, scanner->user_data);
 
 _exit:
 
@@ -702,6 +766,41 @@ YR_API const uint8_t* yr_fetch_block_data(YR_MEMORY_BLOCK* block)
   return data;
 }
 
+
+/*
+// integration part
+static void _yr_report_partial_match(
+    YR_SCAN_CONTEXT* context,
+    const char* text,
+    int text_length)
+{
+  YR_STRING* string;
+  int score;
+
+  yr_rule_strings_foreach(context->current_rule, string){
+    if(strcmp(string->identifier, text)==0){
+      PARTIAL_MATCH* match = (PARTIAL_MATCH*) yr_malloc(sizeof(PARTIAL_MATCH));
+            match->text = text;
+            match->score = 100; // Exact match score
+            match->next = context->partial_matches;
+            context->partial_matches = match;
+    }
+    else {
+    int score = partial_ratio(string->identifier, text);
+    if (score > 60) {
+        PARTIAL_MATCH* match = (PARTIAL_MATCH*) yr_malloc(sizeof(PARTIAL_MATCH));
+        match->text = text;
+        match->score = score;
+        match->next = context->partial_matches;
+        context->partial_matches = match;
+    }
+    }
+}
+}
+//end of theintegration part
+*/
+
+
 YR_API int yr_scanner_scan_mem(
     YR_SCANNER* scanner,
     const uint8_t* buffer,
@@ -756,6 +855,11 @@ YR_API int yr_scanner_scan_mem(
       yr_debug_error_as_string(result),
       __FUNCTION__);
 
+//integration part
+  /*if (enable_partial_matching){
+    _yr_report_partial_match(scanner, (const char*) buffer, buffer_size);
+  }*/
+//end of integrationpart
   return result;
 }
 

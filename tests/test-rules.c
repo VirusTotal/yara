@@ -1629,6 +1629,19 @@ static void test_hex_strings()
         condition: $a }",
       "1234567890");
 
+  // Test case for https://github.com/VirusTotal/yara/issues/2065
+  uint8_t ISSUE_2065[] = {0x81, 0xEC, 0x38, 0x01, 0x00, 0x00, 0x00, 0x00,
+                          0xB8, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                          0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                          0x00, 0x00, 0x00, 0x00, 0x00, 0xB8, 0x00, 0x00,
+                          0x00, 0x00, 0x44, 0x55, 0x66, 0x77};
+
+  assert_true_rule_blob(
+      "rule test { \
+        strings: $a = { 81 EC 38 01 [4-25] B8 ?? ?? ?? ?? [20-21] 44 55 66 77  } \
+        condition: $a }",
+      ISSUE_2065);
+
   assert_error(
       "rule test { \
         strings: $a = { 01 [0] 02 } \
@@ -2497,10 +2510,15 @@ void test_re()
   assert_true_regexp("a.b{2,3}cccc", "aabbbcccc", "aabbbcccc");
   assert_true_regexp("ab{2,3}c", "abbbc", "abbbc");
   assert_true_regexp("ab{2,3}?c", "abbbc", "abbbc");
+  assert_true_regexp("ab{2, 3}c", "abbbc", "abbbc");
+  assert_true_regexp("ab{2 ,3}c", "abbbc", "abbbc");
+  assert_true_regexp("ab{2  ,  3}c", "abbbc", "abbbc");
   assert_true_regexp("ab{0,1}?c", "abc", "abc");
   assert_true_regexp("a{0,1}?bc", "abc", "abc");
   assert_true_regexp("a{0,1}bc", "bbc", "bc");
   assert_true_regexp("a{0,1}?bc", "abc", "bc");
+  assert_true_regexp("a{,0}", "a", "");
+  assert_true_regexp("a{,0}", "x", "");
   assert_true_regexp("aa{0,1}?bc", "abc", "abc");
   assert_true_regexp("aa{0,1}?bc", "abc", "abc");
   assert_true_regexp("aa{0,1}bc", "abc", "abc");
@@ -2574,6 +2592,8 @@ void test_re()
   assert_true_regexp("a[b-]", "a-", "a-");
   assert_true_regexp("a[b-]", "ab", "ab");
   assert_true_regexp("[a-c-e]", "b", "b");
+  assert_true_regexp("[a-c-e]+", "abc", "abc");
+  assert_true_regexp("[*-_]+", "ABC", "ABC");
   assert_true_regexp("[a-c-e]", "-", "-");
   assert_false_regexp("[a-c-e]", "d");
   assert_regexp_syntax_error("[b-a]");
@@ -2792,6 +2812,13 @@ void test_re()
       "rule test { strings: $a = /abc[^F]/ condition: $a }",
       TEXT_1024_BYTES "abcd");
 
+  assert_true_rule(
+      "rule test { strings: $a = /[*-_]+/ nocase condition: !a == 3 }", "abc");
+
+  assert_true_rule(
+      "rule test { strings: $a = /([$&#*-_!().])+/ nocase condition: !a == 6 }",
+      "ABCabc");
+
   // Test case for issue #1006
   assert_false_rule_blob(
       "rule test { strings: $a = \" cmd.exe \" nocase wide condition: $a }",
@@ -2952,6 +2979,12 @@ static void test_matches_operator()
 
   assert_false_rule(
       "rule test { condition: \"foo\\nbar\" matches /foo.*bar/ }", NULL);
+
+  assert_true_rule("rule test { condition: \"\" matches /foo|/ }", NULL);
+
+  assert_true_rule("rule test { condition: \"\" matches /a||b/ }", NULL);
+
+  assert_false_rule("rule test { condition: \"\" matches /foobar/ }", NULL);
 
   YR_DEBUG_FPRINTF(1, stderr, "} // %s()\n", __FUNCTION__);
 }

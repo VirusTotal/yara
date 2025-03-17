@@ -30,6 +30,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <assert.h>
 #include <ctype.h>
 #include <string.h>
+#include <yara/exec.h>
 #include <yara/compiler.h>
 #include <yara/error.h>
 #include <yara/filemap.h>
@@ -40,6 +41,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <yara/scan.h>
 #include <yara/scanner.h>
 #include <yara/utils.h>
+
 
 YR_API int yr_rules_define_integer_variable(
     YR_RULES* rules,
@@ -169,6 +171,7 @@ YR_API int yr_rules_define_string_variable(
   return ERROR_INVALID_ARGUMENT;
 }
 
+
 YR_API int yr_rules_scan_mem_blocks(
     YR_RULES* rules,
     YR_MEMORY_BLOCK_ITERATOR* iterator,
@@ -192,6 +195,69 @@ YR_API int yr_rules_scan_mem_blocks(
 
   return result;
 }
+
+
+/*
+#define PARTIAL_MATCH_THRESHOLD 70 // Hardcoded threshold for partial matching
+
+// Modify rule evaluation logic
+YR_API int yr_rules_scan_mem_blocks(
+    YR_RULES* rules,
+    const YR_MEMORY_BLOCK_ITERATOR* iterator,
+    int flags,
+    YR_CALLBACK_FUNC callback,
+    void* user_data,
+    int timeout)
+{
+    YR_SCAN_CONTEXT context;
+    // Initialize counters for exact and partial matches
+    int exact_match_count = 0;
+    int partial_match_count = 0;
+
+YR_MEMORY_BLOCK* block = iterator->first(iterator);
+
+while (block!= NULL){
+    const uint8_t* target_content = yr_fetch_block_data(block);
+    size_t target_length = 0;
+
+    YR_RULE* rule;
+    yr_rules_foreach(rules, rule)
+    {
+        YR_STRING* string;
+        yr_rule_strings_foreach(rule, string)
+        {
+          //exact match logic 
+            if (_yr_scan_compare(target_content,
+                    strlen((const char*)target_content),
+                    string->string,
+                    string->length)) {
+                exact_match_count++;
+            } 
+            
+            //partial match logic
+            int similarity = partial_ratio((const char*)string->identifier, (const char*)target_content);
+            if(similarity >= PARTIAL_MATCH_THRESHOLD) {
+                partial_match_count++;   
+            }
+        }
+    }
+
+            if (yr_execute_code(&context) == ERROR_SUCCESS) {
+                if (exact_match_count > 0) {
+                    callback(&context, CALLBACK_MSG_RULE_MATCHING, rule, user_data);
+                }
+
+                if (partial_match_count > 0) {
+                    callback(&context, CALLBACK_MSG_PARTIAL_MATCH, rule, user_data);
+                }
+            }
+
+             block = iterator->next(iterator);
+}
+    //yr_scan_context_destroy(&context);
+    return ERROR_SUCCESS;
+}
+*/
 
 YR_API int yr_rules_scan_mem(
     YR_RULES* rules,
@@ -307,7 +373,8 @@ YR_API int yr_rules_scan_proc(
         flags | SCAN_FLAGS_PROCESS_MEMORY,
         callback,
         user_data,
-        timeout);
+        timeout
+        );
 
     yr_process_close_iterator(&iterator);
   }

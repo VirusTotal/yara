@@ -30,6 +30,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef YR_TYPES_H
 #define YR_TYPES_H
 
+//#include <yara/scanner.h>
 #include <yara/arena.h>
 #include <yara/bitmask.h>
 #include <yara/hash.h>
@@ -38,8 +39,26 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <yara/stopwatch.h>
 #include <yara/threading.h>
 #include <yara/utils.h>
-
+#include <yara/fuzz.h>
+#include <yara/StringMatcher.h>
+#include <yara/utils_partial.h>
+#include <yara/levenshtein.h>
+#include <yara/string_processing.h>
+#include <yara/process.h>
 #include "notebook.h"
+
+
+//integration of partial matching part
+extern bool enable_partial_matching;
+
+typedef struct _PARTIAL_MATCH {
+    const char* text;
+    int score;
+    struct _PARTIAL_MATCH* next;
+} PARTIAL_MATCH;
+
+// End of integration part
+
 
 #define DECLARE_REFERENCE(type, name) \
   union                               \
@@ -293,7 +312,12 @@ struct YR_RULE
   // Number of atoms generated for this rule.
   int32_t num_atoms;
 
+  // Number of strings that must match for this rule to have some possibility
+  // to match.
   uint32_t required_strings;
+
+  // Just for padding.
+  uint32_t unused;
 
   DECLARE_REFERENCE(const char*, identifier);
   DECLARE_REFERENCE(const char*, tags);
@@ -803,6 +827,8 @@ struct YR_SCAN_CONTEXT
   // has matched.
   YR_BITMASK* rule_matches_flags;
 
+  YR_BITMASK* partial_rule_matches_flags; //integration part
+
   // A bitmap with one bit per namespace, bit N is set if the namespace with
   // index N has some global rule that is not satisfied.
   YR_BITMASK* ns_unsatisfied_flags;
@@ -830,6 +856,14 @@ struct YR_SCAN_CONTEXT
   // profiling_info is a pointer to an array of YR_PROFILING_INFO structures,
   // one per rule. Entry N has the profiling information for rule with index N.
   YR_PROFILING_INFO* profiling_info;
+
+  //integration part
+  YR_RULE* current_rule;
+  PARTIAL_MATCH* partial_matches;
+  int exact_match_count;  // Add exact_match_count
+  int partial_match_count;
+  //end of the part
+
 };
 
 union YR_VALUE

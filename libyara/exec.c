@@ -47,6 +47,15 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <yara/strutils.h>
 #include <yara/unaligned.h>
 #include <yara/utils.h>
+#include <yara/scanner.h>
+#include <yara/types.h>
+
+#include <yara/fuzz.h>
+#include <yara/StringMatcher.h>
+#include <yara/utils_partial.h>
+#include <yara/levenshtein.h>
+#include <yara/string_processing.h>
+#include <yara/process.h>
 
 #define MEM_SIZE YR_MAX_LOOP_NESTING*(YR_MAX_LOOP_VARS + YR_INTERNAL_LOOP_VARS)
 
@@ -415,6 +424,15 @@ static YR_ITERATOR_NEXT_FUNC iter_next_func_table[] = {
 #define ITER_NEXT_STRING_SET      4
 #define ITER_NEXT_TEXT_STRING_SET 5
 
+
+typedef int (*YR_CALLBACK_FUNC)(
+    YR_SCAN_CONTEXT* context,
+    int message,
+    void* message_data,
+    void* user_data);
+
+
+
 int yr_execute_code(YR_SCAN_CONTEXT* context)
 {
   YR_DEBUG_FPRINTF(2, stderr, "+ %s() {\n", __FUNCTION__);
@@ -431,6 +449,10 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
   YR_VALUE_STACK stack;
 
   uint64_t elapsed_time;
+
+
+// PARTIAL_MATCH* partial_match = context->partial_matches; //integration part
+
 
 #ifdef YR_PROFILING_ENABLED
   uint64_t start_time;
@@ -1165,6 +1187,7 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
       assert(current_rule_idx < context->rules->num_rules);
 
       current_rule = &context->rules->rules_table[current_rule_idx];
+      context->current_rule = current_rule; // integration code line
 
       // If the rule is disabled, let's skip its code.
       bool skip_rule = RULE_IS_DISABLED(current_rule);
@@ -1218,6 +1241,31 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
 
       assert(stack.sp == 0);  // at this point the stack should be empty.
       break;
+
+
+if (yr_bitmask_is_set(context->rule_matches_flags, current_rule_idx)) {
+    context->callback(context, CALLBACK_MSG_RULE_MATCHING, rule, context->user_data);
+} 
+
+/*
+if (yr_bitmask_is_set(context->partial_rule_matches_flags, current_rule_idx)) {
+    context->callback(context, CALLBACK_MSG_PARTIAL_MATCH, rule, context->user_data);
+} */
+
+// Partial Match Evaluation
+
+/* if (context->partial_matches != NULL) {
+    context->callback(context, CALLBACK_MSG_PARTIAL_MATCH, rule, context->user_data);
+} */
+
+// No Match
+else {
+    context->callback(context, CALLBACK_MSG_RULE_NOT_MATCHING, rule, context->user_data);
+}
+
+//end of code part
+
+
 
     case OP_OBJ_LOAD:
       YR_DEBUG_FPRINTF(
@@ -1967,13 +2015,7 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
       ensure_defined(r2);
       ensure_defined(r1);
 
-      if (r1.ss->length == 0)
-      {
-        r1.i = false;
-        push(r1);
-        break;
-      }
-
+//checks for exact matches
       result = yr_re_exec(
           context,
           (uint8_t*) r2.re->code,
@@ -1987,6 +2029,35 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
 
       if (result != ERROR_SUCCESS)
         stop = true;
+
+if (found >= 0) {
+    yr_bitmask_set(context->rule_matches_flags, current_rule_idx);
+}
+
+if(context->partial_matches != NULL) {
+    yr_bitmask_set(context->partial_rule_matches_flags, current_rule_idx);
+}
+
+   /*     int similarity = partial_ratio(
+            (const char*)r1.ss->c_string,
+            (const char*)r2.re->code);
+
+        if (similarity >= 50) {
+            // Store partial match info
+            PARTIAL_MATCH* match = (PARTIAL_MATCH*) yr_malloc(sizeof(PARTIAL_MATCH));
+            if (match != NULL) {
+                match->text = r1.ss->c_string;
+                match->score = similarity;
+                match->next = context->partial_matches;
+                context->partial_matches = match;
+                context->partial_match_count++;
+                found = 1;  // Consider it a match
+
+                // Set the partial match flag
+            yr_bitmask_set(context->partial_rule_matches_flags, current_rule_idx);
+            }
+        } */ 
+  
 
       r1.i = found >= 0;
       push(r1);
@@ -2379,6 +2450,12 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
       cycle = 0;
     }
   }
+
+
+//integration
+// Send the CALLBACK_MSG_SCAN_FINISHED message
+ //   context->callback(context, CALLBACK_MSG_SCAN_FINISHED, NULL, context->user_data);
+//end
 
   obj_ptr = yr_arena_get_ptr(obj_arena, 0, 0);
 

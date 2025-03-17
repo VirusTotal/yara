@@ -29,6 +29,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #if defined(USE_LINUX_PROC)
 
+#define _FILE_OFFSET_BITS 64
+
 #include <assert.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -55,7 +57,7 @@ typedef struct _YR_PROC_INFO
   uint64_t map_offset;
   uint64_t next_block_end;
   int page_size;
-  char map_path[PATH_MAX];
+  char map_path[YR_MAX_PATH];
   uint64_t map_dmaj;
   uint64_t map_dmin;
   uint64_t map_ino;
@@ -249,7 +251,7 @@ YR_API const uint8_t* yr_process_fetch_memory_block_data(YR_MEMORY_BLOCK* block)
   // target process VM.
   if (fd == -1)
   {
-    if (pread64(
+    if (pread(
             proc_info->mem_fd,
             (void*) context->buffer,
             block->size,
@@ -265,7 +267,7 @@ YR_API const uint8_t* yr_process_fetch_memory_block_data(YR_MEMORY_BLOCK* block)
     {
       goto _exit;
     }
-    if (pread64(
+    if (pread(
             proc_info->pagemap_fd,
             pagemap,
             sizeof(uint64_t) * block->size / page_size,
@@ -284,7 +286,7 @@ YR_API const uint8_t* yr_process_fetch_memory_block_data(YR_MEMORY_BLOCK* block)
       // swap-backed and if it differs from our mapping.
       uint8_t buffer[page_size];
 
-      if (pread64(
+      if (pread(
               proc_info->mem_fd,
               buffer,
               page_size,
@@ -325,7 +327,7 @@ YR_API YR_MEMORY_BLOCK* yr_process_get_next_memory_block(
   YR_PROC_ITERATOR_CTX* context = (YR_PROC_ITERATOR_CTX*) iterator->context;
   YR_PROC_INFO* proc_info = (YR_PROC_INFO*) context->proc_info;
 
-  char buffer[PATH_MAX];
+  char buffer[YR_MAX_PATH];
   char perm[5];
 
   uint64_t begin, end;

@@ -83,25 +83,15 @@ PIMAGE_NT_HEADERS32 pe_get_header(const uint8_t* data, size_t data_size)
 
 PIMAGE_DATA_DIRECTORY pe_get_directory_entry(PE* pe, int entry)
 {
-  // Explanation
-  // https://github.com/VirusTotal/yara/issues/1525
-
-  // In Windows, any access to data directories is controlled by the
-  // RtlImageDirectoryEntryToData function. This is one of the first checks
-  // whether the desired directory entry is smaller than NumberOfRvaAndSizes.
-  // If it's not, it means that the requested directory entry is not there.
-  //
-  //  1. Must NOT check whether NumberOfRvaAndSizes > 0x10
-  //
-  //  2. Must check for NumberOfRvaAndSizes < DataDirectory except for
-  //     IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR for 32-bit binary
-  //
-  //  3. The function must NOT check for SizeOfOptionalHeader
-
-  if ((entry != IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR || IS_64BITS_PE(pe)) &&
-      OptionalHeader(pe, NumberOfRvaAndSizes) < entry)
-    return NULL;
-
+  // In theory, `entry` should be lower than NumberOfRvaAndSizes, however,
+  // we don't enforce it because some PE files have a NumberOfRvaAndSizes
+  // values lower than the actual number of directory entries. For example,
+  // file 0aa527fd26c8e7fa7f3476b6d7eb8f22c071ff4c0fd3ed3797fa90ceb80f24ce
+  // has NumberOfRvaAndSizes set to 0, but it actually has directory
+  // entries. If we are overly strict here, and only parse entries which are
+  // less than NumberOfRvaAndSizes, we run the risk of missing otherwise
+  // perfectly valid files (valid in the sense that they can be parsed, even
+  // if they are not valid for the Windows loader).
   PIMAGE_DATA_DIRECTORY result = &OptionalHeader(pe, DataDirectory)[entry];
 
   // Check that directory is in file

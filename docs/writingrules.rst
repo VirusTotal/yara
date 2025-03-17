@@ -425,7 +425,7 @@ The above rule is logically equivalent to:
             any of them
     }
 
-You can also combine the ``xor`` modifier with ``wide`` and ``ascii``
+You can also combine the ``xor`` modifier with ``fullword``, ``wide``, and ``ascii``
 modifiers. For example, to search for the ``wide`` and ``ascii`` versions of a
 string after every single byte XOR has been applied you would use:
 
@@ -465,7 +465,7 @@ equivalent:
             any of them
     }
 
-Since YARA 3.11, if you want more control over the range of bytes used with the ``xor`` modifier use:
+Since YARA 3.11, if you want more control over the range of bytes used with the ``xor`` modifier, use:
 
 .. code-block:: yara
 
@@ -598,8 +598,8 @@ new-line characters. For example:
     }
 
 Notice that ``/foo/i`` is equivalent to ``/foo/ nocase``, but we recommend the
-latter when defining strings. The ``/foo/i`` syntax is useful when writting
-case-insentive regular expressions for the ``matches`` operator.
+latter when defining strings. The ``/foo/i`` syntax is useful when writing
+case-insensitive regular expressions for the ``matches`` operator.
 
 In previous versions of YARA, external libraries like PCRE and RE2 were used
 to perform regular expression matching, but starting with version 2.0 YARA uses
@@ -1357,7 +1357,7 @@ for example:
 
 The previous rule says that the first occurrence of $b should be 10 bytes
 after the first occurrence of $a, and the same should happen with the second
-and third ocurrences of the two strings.
+and third occurrences of the two strings.
 
 The same condition could be written also as:
 

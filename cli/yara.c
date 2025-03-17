@@ -34,15 +34,25 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <dirent.h>
 #include <fcntl.h>
+
+#ifndef _O_U8TEXT
+#define _O_U8TEXT 0x40000
+#endif
 #include <inttypes.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <fcntl.h>
 
 #else
 
 #include <fcntl.h>
 #include <io.h>
 #include <windows.h>
+#include <fcntl.h>
+
+#ifndef _O_U8TEXT
+#define _O_U8TEXT 0x40000
+#endif
 
 #define PRIx64 "I64x"
 #define PRId64 "I64d"
@@ -55,6 +65,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <string.h>
 #include <time.h>
 #include <yara.h>
+#include <yara/types.h>
 
 #include "args.h"
 #include "common.h"
@@ -62,10 +73,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "unicode.h"
 
 #define ERROR_COULD_NOT_CREATE_THREAD 100
-
-#ifndef MAX_PATH
-#define MAX_PATH 256
-#endif
 
 #ifndef min
 #define min(x, y) ((x < y) ? (x) : (y))
@@ -106,6 +113,10 @@ typedef struct _THREAD_ARGS
   int current_count;
 
 } THREAD_ARGS;
+
+
+bool enable_partial_matching = false; //integration part
+
 
 typedef struct _QUEUED_FILE
 {
@@ -170,10 +181,20 @@ static long max_strings_per_rule = DEFAULT_MAX_STRINGS_PER_RULE;
 static long max_process_memory_chunk = DEFAULT_MAX_PROCESS_MEMORY_CHUNK;
 static long long skip_larger = 0;
 
+int PARTIAL_MATCH_THRESHOLD __attribute__((visibility("default"))) = 70; //integration part
+
 #define USAGE_STRING \
   "Usage: yara [OPTION]... [NAMESPACE:]RULES_FILE... FILE | DIR | PID"
 
 args_option_t options[] = {
+
+  OPT_LONG(
+    'p',
+    _T("partial-match threshold"),
+    &PARTIAL_MATCH_THRESHOLD,
+    _T("set the threshold for partial matches (default=70)"),
+    _T("NUMBER")),
+
     OPT_STRING(
         0,
         _T("atom-quality-table"),
@@ -383,6 +404,24 @@ args_option_t options[] = {
     OPT_END(),
 };
 
+
+
+static int partial_match_callback(
+    YR_SCAN_CONTEXT* context,
+    int message,
+    void* message_data,
+    void* user_data)
+{
+    if (message == CALLBACK_MSG_PARTIAL_MATCH) {
+        PARTIAL_MATCH* match = (PARTIAL_MATCH*) message_data;
+        printf("Partial match found: %s (score: %d)\n", match->text, match->score);
+    }
+    return CALLBACK_CONTINUE;
+}
+//end 
+
+
+
 // file_queue is size-limited queue stored as a circular array, files are
 // removed from queue_head position and new files are added at queue_tail
 // position. The array has room for one extra element to avoid queue_head
@@ -491,9 +530,9 @@ static bool is_directory(const char_t* path)
 static int scan_dir(const char_t* dir, SCAN_OPTIONS* scan_opts)
 {
   int result = ERROR_SUCCESS;
-  char_t path[MAX_PATH];
+  char_t path[YR_MAX_PATH];
 
-  _sntprintf(path, MAX_PATH, _T("%s\\*"), dir);
+  _sntprintf(path, YR_MAX_PATH, _T("%s\\*"), dir);
 
   WIN32_FIND_DATA FindFileData;
   HANDLE hFind = FindFirstFile(path, &FindFileData);
@@ -502,7 +541,7 @@ static int scan_dir(const char_t* dir, SCAN_OPTIONS* scan_opts)
   {
     do
     {
-      _sntprintf(path, MAX_PATH, _T("%s\\%s"), dir, FindFileData.cFileName);
+      _sntprintf(path, YR_MAX_PATH, _T("%s\\%s"), dir, FindFileData.cFileName);
 
       if (!(FindFileData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
       {
@@ -671,12 +710,14 @@ static int scan_dir(const char* dir, SCAN_OPTIONS* scan_opts)
   {
     struct dirent* de = readdir(dp);
 
+    char* full_path = calloc(YR_MAX_PATH, sizeof(char));
+    const size_t full_path_size = YR_MAX_PATH * sizeof(char);
+
     while (de && result != ERROR_SCAN_TIMEOUT)
     {
-      char full_path[MAX_PATH];
       struct stat st;
 
-      snprintf(full_path, sizeof(full_path), "%s/%s", dir, de->d_name);
+      snprintf(full_path, full_path_size, "%s/%s", dir, de->d_name);
 
       int err = lstat(full_path, &st);
 
@@ -735,6 +776,7 @@ static int scan_dir(const char* dir, SCAN_OPTIONS* scan_opts)
       de = readdir(dp);
     }
 
+    free(full_path);
     closedir(dp);
   }
 
@@ -1170,6 +1212,9 @@ static int handle_message(
   return CALLBACK_CONTINUE;
 }
 
+int f1=0;
+int f2=0;
+
 static int callback(
     YR_SCAN_CONTEXT* context,
     int message,
@@ -1182,11 +1227,29 @@ static int callback(
   YR_OBJECT* object;
   MODULE_DATA* module_data;
 
+  static bool exact_match = false;
+  static bool partial_match = false;
+
   switch (message)
   {
   case CALLBACK_MSG_RULE_MATCHING:
+  rule = (YR_RULE*) message_data;
+//printf("Exact match found: %s\n", rule->identifier);
+        exact_match = true;
+        f1++;
+        break;
+  
+  case CALLBACK_MSG_PARTIAL_MATCH:
+        rule = (YR_RULE*) message_data;
+  // printf("Partial match found: %s\n", rule->identifier);
+        partial_match = true;
+        f2++;
+        break;
+
   case CALLBACK_MSG_RULE_NOT_MATCHING:
-    return handle_message(context, message, (YR_RULE*) message_data, user_data);
+  	rule = (YR_RULE*) message_data;
+        break;
+    //return handle_message(context, message, (YR_RULE*) message_data, user_data);
 
   case CALLBACK_MSG_IMPORT_MODULE:
 
@@ -1285,8 +1348,34 @@ static int callback(
     if (!disable_console_logs)
       _tprintf(_T("%" PF_S "\n"), (char*) message_data);
     return CALLBACK_CONTINUE;
+    
+    case CALLBACK_MSG_SCAN_FINISHED:
+    printf("Scanning finished\n");
+    if(f1>0 && f2>0){
+   // printf("%d %d",f1,f2);
+    printf("\nExact Matching Condition: Satisfied");
+    printf("\nPartial Matching Conditon: Satisfied");
+    	printf("\nClassification: MALWARE");
+    }
+    else if(f1==0 && f2>0){
+    printf("\nExact Matching Condition: Not Satisfied");
+    printf("\nPartial Matching Conditon: Satisfied");
+    	printf("\nClassification: LIKELY MALWARE");
+    }
+    else if(f1>0 && f2==0){
+    printf("\nExact Matching Condition: Satisfied");
+    printf("\nPartial Matching Conditon: Satisfied");
+    	printf("\nClassification: MALWARE");
+    } 
+    else{
+    printf("\nExact Matching Condition: Not Satisfied");
+    printf("\nPartial Matching Conditon: Not Satisfied");
+    	printf("\n\nClassification: NOT A MALWARE");
+    }
+    return CALLBACK_CONTINUE;
   }
 
+    return CALLBACK_CONTINUE;
   return CALLBACK_ERROR;
 }
 
@@ -1691,6 +1780,8 @@ int _tmain(int argc, const char_t** argv)
     yr_scanner_set_callback(scanner, callback, &user_data);
     yr_scanner_set_flags(scanner, flags);
     yr_scanner_set_timeout(scanner, timeout);
+
+    //printf("enable_partial_matching: %s\n", enable_partial_matching ? "true" : "false"); // integration part
 
     // Assume the last argument is a file first. This assures we try to process
     // files that start with numbers first.

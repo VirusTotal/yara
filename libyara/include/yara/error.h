@@ -69,6 +69,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define ERROR_WRONG_TYPE                     24
 #define ERROR_EXEC_STACK_OVERFLOW            25
 #define ERROR_SCAN_TIMEOUT                   26
+// Unused. Keep here for compatibility with legacy code that may be using
+// this constant.
 #define ERROR_TOO_MANY_SCAN_THREADS          27
 #define ERROR_CALLBACK_ERROR                 28
 #define ERROR_INVALID_ARGUMENT               29

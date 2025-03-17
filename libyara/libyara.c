@@ -165,7 +165,6 @@ char *yr_debug_error_as_string(int error)
   case ERROR_WRONG_TYPE                    : s = "ERROR_WRONG_TYPE"                    ; break;
   case ERROR_EXEC_STACK_OVERFLOW           : s = "ERROR_EXEC_STACK_OVERFLOW"           ; break;
   case ERROR_SCAN_TIMEOUT                  : s = "ERROR_SCAN_TIMEOUT"                  ; break;
-  case ERROR_TOO_MANY_SCAN_THREADS         : s = "ERROR_TOO_MANY_SCAN_THREADS"         ; break;
   case ERROR_CALLBACK_ERROR                : s = "ERROR_CALLBACK_ERROR"                ; break;
   case ERROR_INVALID_ARGUMENT              : s = "ERROR_INVALID_ARGUMENT"              ; break;
   case ERROR_TOO_MANY_MATCHES              : s = "ERROR_TOO_MANY_MATCHES"              ; break;

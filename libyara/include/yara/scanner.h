@@ -30,9 +30,18 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef YR_SCANNER_H
 #define YR_SCANNER_H
 
-#include <yara/filemap.h>
 #include <yara/types.h>
+#include <yara/scan.h>
+#include <yara/compiler.h>
+#include <yara/mem.h>
+#include <yara/filemap.h>
 #include <yara/utils.h>
+#include <yara/fuzz.h>
+#include <yara/StringMatcher.h>
+#include <yara/utils_partial.h>
+#include <yara/levenshtein.h>
+#include <yara/string_processing.h>
+#include <yara/process.h>
 
 typedef YR_SCAN_CONTEXT YR_SCANNER;
 

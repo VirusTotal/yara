@@ -30,10 +30,11 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef YR_RULES_H
 #define YR_RULES_H
 
+#include <yara/types.h>
 #include <yara/filemap.h>
 #include <yara/scanner.h>
-#include <yara/types.h>
 #include <yara/utils.h>
+#include <yara/scan.h>
 
 #define CALLBACK_MSG_RULE_MATCHING     1
 #define CALLBACK_MSG_RULE_NOT_MATCHING 2
@@ -43,6 +44,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define CALLBACK_MSG_TOO_MANY_MATCHES  6
 #define CALLBACK_MSG_CONSOLE_LOG       7
 #define CALLBACK_MSG_TOO_SLOW_SCANNING 8
+
+#define CALLBACK_MSG_PARTIAL_MATCH 9
 
 #define CALLBACK_CONTINUE 0
 #define CALLBACK_ABORT    1
@@ -73,13 +76,17 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define yr_rules_foreach(rules, rule) \
   for (rule = rules->rules_table; !RULE_IS_NULL(rule); rule++)
 
+
+extern const uint8_t* target_content;
+
 YR_API int yr_rules_scan_mem_blocks(
     YR_RULES* rules,
     YR_MEMORY_BLOCK_ITERATOR* iterator,
     int flags,
     YR_CALLBACK_FUNC callback,
     void* user_data,
-    int timeout);
+    int timeout
+    );
 
 YR_API int yr_rules_scan_mem(
     YR_RULES* rules,
