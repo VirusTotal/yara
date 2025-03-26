@@ -107,7 +107,7 @@ jobs:
   bazel-build:
     # The ubuntu-20.04 virtual environment has Bazel installed, see:
     # https://github.com/actions/virtual-environments
-    runs-on: ubuntu-20.04
+    runs-on: 'ubuntu-24.04'
     steps:
       # Caches and restores the bazelisk download directory.
       # - name: Cache bazelisk download
