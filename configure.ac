@@ -20,8 +20,6 @@ no_std_allocator="-fno-builtin-malloc -fno-builtin-calloc -fno-builtin-realloc -
 m4_ifdef([AM_PROG_AR], [AM_PROG_AR])
 
 AC_PROG_CC
-AC_PROG_CC_C99
-AM_PROG_CC_C_O
 AM_PROG_LEX
 AC_PROG_YACC
 

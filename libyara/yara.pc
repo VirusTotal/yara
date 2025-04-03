@@ -1,0 +1,13 @@
+prefix=/usr/local
+exec_prefix=${prefix}
+includedir=${prefix}/include
+libdir=${exec_prefix}/lib
+
+Name: yara
+Description: YARA library
+URL: https://virustotal.github.io/yara/
+Version: 4.2.2
+Requires.private:  libcrypto
+Cflags: -I${includedir}
+Libs: -L${libdir} -lyara
+Libs.private:  -lm 

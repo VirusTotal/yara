@@ -104,27 +104,6 @@ jobs:
         if: ${{ failure() }}
         run: cat test-suite.log
 
-  bazel-build:
-    # The ubuntu-20.04 virtual environment has Bazel installed, see:
-    # https://github.com/actions/virtual-environments
-    runs-on: ubuntu-20.04
-    steps:
-      # Caches and restores the bazelisk download directory.
-      # - name: Cache bazelisk download
-      #   uses: actions/cache@v4
-      #   env:
-      #     cache-name: bazel-cache
-      #   with:
-      #     path: ~/.cache/bazelisk
-      #     key: ${{ runner.os }}-${{ env.cache-name }}-${{ github.ref }}
-      #     restore-keys: |
-      #       ${{ runner.os }}-${{ env.cache-name }}
-      - uses: actions/checkout@v2
-      - name: Build
-        run: bazel build @jansson//... //tests/...
-      - name: Run tests
-        run: bazel test --test_output=errors //tests/...
-
   bigendian:
     runs-on: ubuntu-latest
     steps:

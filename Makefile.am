@@ -290,6 +290,7 @@ yara_SOURCES = \
   cli/yara.c
 
 yara_LDADD = libyara.la
+yara_LDFLAGS = -static
 
 yarac_SOURCES = \
    cli/args.c \
