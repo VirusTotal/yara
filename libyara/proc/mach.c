@@ -132,49 +132,48 @@ YR_API YR_MEMORY_BLOCK* yr_process_get_next_memory_block(
 
   iterator->last_error = ERROR_SUCCESS;
 
-  do
+  info_count = VM_REGION_BASIC_INFO_COUNT_64;
+
+  kr = vm_region_64(
+      proc_info->task,
+      &address,
+      &size,
+      VM_REGION_BASIC_INFO,
+      (vm_region_info_t) &info,
+      &info_count,
+      &object);
+
+  if (kr == KERN_INVALID_ADDRESS)
   {
-    info_count = VM_REGION_BASIC_INFO_COUNT_64;
+    // The end of the address space has been reached.
+    return NULL;
+  }
+  if (kr != KERN_SUCCESS)
+  {
+    iterator->last_error = ERROR_COULD_NOT_READ_PROCESS_MEMORY;
+    return NULL;
+  }
 
-    kr = vm_region_64(
-        proc_info->task,
-        &address,
-        &size,
-        VM_REGION_BASIC_INFO,
-        (vm_region_info_t) &info,
-        &info_count,
-        &object);
+  size_t chunk_size;
 
-    if (kr == KERN_SUCCESS)
-    {
-      size_t chunk_size;
-
-      if (current_begin < address) {
-        // current_begin is outside of any region, and the next region was
-        // returned, so advance to it.
-        current_begin = address;
-        chunk_size = size;
-      } else {
-        // address <= current_begin, compute the size for the current chunk.
-        chunk_size = size - (size_t) (current_begin - address);
-      }
-
-      if (((uint64_t) chunk_size) > max_process_memory_chunk)
-      {
-        chunk_size = (size_t) max_process_memory_chunk;
-      }
-
-      context->current_block.base = (size_t) current_begin;
-      context->current_block.size = chunk_size;
-
-      return &context->current_block;
-    }
-
+  if (current_begin < address) {
+    // current_begin is outside of any region, and the next region was
+    // returned, so advance to it.
     current_begin = address;
+    chunk_size = size;
+  } else {
+    // address <= current_begin, compute the size for the current chunk.
+    chunk_size = size - (size_t) (current_begin - address);
+  }
 
-  } while (kr != KERN_INVALID_ADDRESS);
+  if (((uint64_t) chunk_size) > max_process_memory_chunk)
+  {
+    chunk_size = (size_t) max_process_memory_chunk;
+  }
 
-  return NULL;
+  context->current_block.base = (size_t) current_begin;
+  context->current_block.size = chunk_size;
+  return &context->current_block;
 }
 
 YR_API YR_MEMORY_BLOCK* yr_process_get_first_memory_block(
