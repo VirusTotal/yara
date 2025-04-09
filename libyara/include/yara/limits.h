@@ -113,8 +113,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define YR_MAX_STRING_MATCHES 1000000
 #endif
 
-// The number of matches before detecting slow scanning. If more matches are found
-// the scan will have a CALLBACK_MSG_TOO_SLOW_SCANNING.
+// The number of matches before detecting slow scanning. If more matches are
+// found the scan will have a CALLBACK_MSG_TOO_SLOW_SCANNING.
 #ifndef YR_SLOW_STRING_MATCHES
 #define YR_SLOW_STRING_MATCHES 600000
 #endif
@@ -171,7 +171,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 // Maximum input size scanned by yr_re_exec and yr_re_fast_exec
 #ifndef YR_RE_SCAN_LIMIT
-#define YR_RE_SCAN_LIMIT 4096
+#define YR_RE_SCAN_LIMIT 1024
 #endif
 
 // Maximum number of fibers

@@ -1,2 +1,0 @@
-# Build in C++17 mode without a custom CROSSTOOL
-build --cxxopt=-std=c++17
