@@ -207,15 +207,15 @@ static int _yr_base64_create_nodes(
 {
   SIZED_STRING* encoded_str;
   SIZED_STRING* final_str;
+  SIZED_STRING* pre_str;
+  SIZED_STRING* post_str;
   BASE64_NODE* node;
+  char *alphabet_str = alphabet->c_string;
 
   int pad;
 
   for (int i = 0; i <= 2; i++)
   {
-    if (i == 1 && str->length == 1)
-      continue;
-
     node = (BASE64_NODE*) yr_malloc(sizeof(BASE64_NODE));
     if (node == NULL)
       return ERROR_INSUFFICIENT_MEMORY;
@@ -232,6 +232,82 @@ static int _yr_base64_create_nodes(
           yr_free(encoded_str);
           yr_free(node);
         });
+
+    // Calculate the pre-pattern
+    switch(i) {
+      case 0:
+        break;
+
+      case 1:
+        FAIL_ON_NULL_WITH_CLEANUP(
+          pre_str = (SIZED_STRING*) yr_malloc(sizeof(SIZED_STRING) + 4),
+          {
+            yr_free(encoded_str);
+            yr_free(node);
+          });
+
+          for (char i = 0; i < 4; i++)
+          {
+            pre_str->c_string[(int)i] = alphabet_str[((i & 0b00000011) << 4) + ((str->c_string[0] & 0b11110000) >> 4)];
+          }
+          pre_str->length = 4;
+          node->pre = pre_str;
+        break;
+
+      case 2:
+        FAIL_ON_NULL_WITH_CLEANUP(
+          pre_str = (SIZED_STRING*) yr_malloc(sizeof(SIZED_STRING) + 16),
+          {
+            yr_free(encoded_str);
+            yr_free(node);
+          });
+
+        for (char i = 0; i < 16; i++)
+        {
+          pre_str->c_string[(int)i] = alphabet_str[((i & 0b00001111) << 2) + ((str->c_string[0] & 0b11110000) >> 6)];
+        }
+        pre_str->length = 16;
+        node->pre = pre_str;
+        break;
+    }
+
+    // Calculate the post-pattern
+    switch(pad) {
+      case 0:
+        break;
+
+      case 1:
+        FAIL_ON_NULL_WITH_CLEANUP(
+          post_str = (SIZED_STRING*) yr_malloc(sizeof(SIZED_STRING) + 4),
+          {
+            yr_free(encoded_str);
+            yr_free(node);
+          });
+
+          for (char i = 0; i < 4; i++)
+          {
+            post_str->c_string[(int)i] = alphabet_str[i + ((str->c_string[str->length - 1] & 0b00001111) << 2)];
+          }
+          post_str->length = 4;
+          node->post = post_str;
+        break;
+
+      case 2:
+        FAIL_ON_NULL_WITH_CLEANUP(
+          post_str = (SIZED_STRING*) yr_malloc(sizeof(SIZED_STRING) + 16),
+          {
+            yr_free(encoded_str);
+            yr_free(node);
+          });
+
+        for (char i = 0; i < 16; i++)
+        {
+          post_str->c_string[(int)i] = alphabet_str[i + ((str->c_string[str->length - 1] & 0b000011) << 4)];
+        }
+        post_str->length = 16;
+        node->post = post_str;
+        break;
+    }
 
     yr_free(encoded_str);
 
@@ -289,6 +365,8 @@ static void _yr_base64_destroy_nodes(BASE64_NODE* head)
   while (p != NULL)
   {
     yr_free(p->str);
+    yr_free(p->pre);
+    yr_free(p->post);
     next = p->next;
     yr_free(p);
     p = next;
@@ -315,6 +393,14 @@ int _yr_base64_create_regexp(
   while (p != NULL)
   {
     length += (p->str->length + p->escaped);
+
+    // if there's a pre or post pattern, add the length of those as well
+    // include room for the square brackets.
+    if (p->pre)
+      length += p->pre->length + 2;
+    if (p->post)
+      length += p->post->length + 2;
+
     c++;
     p = p->next;
   }
@@ -330,9 +416,22 @@ int _yr_base64_create_regexp(
 
   s = re_str;
   p = head;
+
   *s++ = '(';
   while (p != NULL)
   {
+
+    // generate pre-pattern
+    if (p->pre != NULL)
+    {
+      *s++ = '[';
+      for (uint32_t i = 0; i < p->pre->length; i++)
+      {
+        *s++ = p->pre->c_string[i];
+      }
+      *s++ = ']';
+    }
+
     for (uint32_t i = 0; i < p->str->length; i++)
     {
       if (IS_METACHAR(p->str->c_string[i]))
@@ -348,6 +447,18 @@ int _yr_base64_create_regexp(
       else
         *s++ = p->str->c_string[i];
     }
+
+    // generate post-pattern
+    if (p->post != NULL)
+    {
+      *s++ = '[';
+      for (uint32_t i = 0; i < p->post->length; i++)
+      {
+        *s++ = p->post->c_string[i];
+      }
+      *s++ = ']';
+    }
+
 
     if (p->next != NULL)
       *s++ = '|';
