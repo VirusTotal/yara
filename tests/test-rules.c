@@ -1091,19 +1091,13 @@ static void test_strings()
         strings:\n\
           $a = \"This program cannot\" base64\n\
         condition:\n\
-          #a == 6 and\n\
+          #a == 3 and\n\
           @a[1] == 0x53 and\n\
-          !a[1] == 25 and\n\
-          @a[2] == 0x70 and\n\
-          !a[2] == 25 and\n\
-          @a[3] == 0xa2 and\n\
-          !a[3] == 24 and\n\
-          @a[4] == 0xbd and\n\
-          !a[4] == 24 and\n\
-          @a[5] == 0xef and\n\
-          !a[5] == 25 and\n\
-          @a[6] == 0x109 and\n\
-          !a[6] == 25\n\
+          !a[1] == 26 and\n\
+          @a[2] == 0xa1 and\n\
+          !a[2] == 26 and\n\
+          @a[3] == 0xee and\n\
+          !a[3] == 26\n\
       }",
       "tests/data/base64");
 
@@ -1114,19 +1108,13 @@ static void test_strings()
         strings:\n\
           $a = \"This program cannot\" base64 ascii\n\
         condition:\n\
-          #a == 6 and\n\
+          #a == 3 and\n\
           @a[1] == 0x53 and\n\
-          !a[1] == 25 and\n\
-          @a[2] == 0x70 and\n\
-          !a[2] == 25 and\n\
-          @a[3] == 0xa2 and\n\
-          !a[3] == 24 and\n\
-          @a[4] == 0xbd and\n\
-          !a[4] == 24 and\n\
-          @a[5] == 0xef and\n\
-          !a[5] == 25 and\n\
-          @a[6] == 0x109 and\n\
-          !a[6] == 25\n\
+          !a[1] == 26 and\n\
+          @a[2] == 0xa1 and\n\
+          !a[2] == 26 and\n\
+          @a[3] == 0xee and\n\
+          !a[3] == 26\n\
       }",
       "tests/data/base64");
 
@@ -1137,19 +1125,13 @@ static void test_strings()
         strings:\n\
           $a = \"This program cannot\" base64 wide\n\
         condition:\n\
-          #a == 6 and\n\
+          #a == 3 and\n\
           @a[1] == 0x1b5 and\n\
-          !a[1] == 50 and\n\
-          @a[2] == 0x1ea and\n\
-          !a[2] == 50 and\n\
-          @a[3] == 0x248 and\n\
-          !a[3] == 50 and\n\
-          @a[4] == 0x27b and\n\
-          !a[4] == 50 and\n\
-          @a[5] == 0x2db and\n\
-          !a[5] == 50 and\n\
-          @a[6] == 0x311 and\n\
-          !a[6] == 50\n\
+          !a[1] == 51 and\n\
+          @a[2] == 0x247 and\n\
+          !a[2] == 51 and\n\
+          @a[3] == 0x2da and\n\
+          !a[3] == 52\n\
       }",
       "tests/data/base64");
 
@@ -1160,7 +1142,7 @@ static void test_strings()
         strings:\n\
           $a = \"This program cannot\" base64 wide ascii\n\
         condition:\n\
-          #a == 12\n\
+          #a == 6\n\
       }",
       "tests/data/base64");
 
@@ -1179,16 +1161,14 @@ static void test_strings()
       }",
       "tests/data/base64");
 
-  // In the future, assert false if character classes are generated instead
-  // of stripping the leading and trailing characters
-  assert_true_rule_file(
+  // Check that the old behaviour of stripping characters doesn't work
+  assert_false_rule_file(
       "rule test {\n\
         strings:\n\
-          $a = \"Dhis program cannow\" base64\n\
+          $a = \"Dhis program cannot\" base64\n\
+          $b = \"This program cannow\" base64\n\
         condition:\n\
-          #a == 2 and\n\
-          @a[1] == 0xa2 and\n\
-          @a[2] == 0xbd\n\
+          any of them\n\
       }",
       "tests/data/base64");
 
