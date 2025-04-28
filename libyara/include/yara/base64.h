@@ -42,6 +42,7 @@ struct BASE64_NODE
   SIZED_STRING* post;
   SIZED_STRING* str;
   int escaped;
+  int wide;
   BASE64_NODE* next;
 };
 

@@ -1154,10 +1154,12 @@ static void test_strings()
           $a = \"a\" base64\n\
           $b = \"a\" base64wide\n\
         condition:\n\
-          @a[58] == 0x6ac and\n\
-          @a[59] == 0x6b9 and\n\
-          @b[15] == 0x6f7 and\n\
-          @b[16] == 0x711\n\
+          $a at 0x690 and\n\
+          $a at 0x696 and\n\
+          $a at 0x69c and\n\
+          $b at 0x6cb and\n\
+          $b at 0x6d7 and\n\
+          $b at 0x6e3\n\
       }",
       "tests/data/base64");
 
@@ -1180,11 +1182,11 @@ static void test_strings()
         condition:\n\
           #a == 3 and\n\
           @a[1] == 0x379 and\n\
-          !a[1] == 50 and\n\
-          @a[2] == 0x3b6 and\n\
-          !a[2] == 48 and\n\
-          @a[3] == 0x3f1 and\n\
-          !a[3] == 50\n\
+          !a[1] == 52 and\n\
+          @a[2] == 0x3b4 and\n\
+          !a[2] == 52 and\n\
+          @a[3] == 0x3ef and\n\
+          !a[3] == 52\n\
       }",
       "tests/data/base64");
 
@@ -1196,12 +1198,12 @@ static void test_strings()
           $a = \"This program cannot\" base64wide ascii\n\
         condition:\n\
           #a == 3 and\n\
-          @a[1] == 0x379 and\n\
-          !a[1] == 50 and\n\
-          @a[2] == 0x3b6 and\n\
-          !a[2] == 48 and\n\
-          @a[3] == 0x3f1 and\n\
-          !a[3] == 50\n\
+        @a[1] == 0x379 and\n\
+        !a[1] == 52 and\n\
+        @a[2] == 0x3b4 and\n\
+        !a[2] == 52 and\n\
+        @a[3] == 0x3ef and\n\
+        !a[3] == 52\n\
       }",
       "tests/data/base64");
 
@@ -1213,11 +1215,11 @@ static void test_strings()
         condition:\n\
           #a == 3 and\n\
           @a[1] == 0x458 and\n\
-          !a[1] == 100 and\n\
-          @a[2] == 0x4c5 and\n\
-          !a[2] == 100 and\n\
-          @a[3] == 0x530 and\n\
-          !a[3] == 100\n\
+          !a[1] == 102 and\n\
+          @a[2] == 0x4c3 and\n\
+          !a[2] == 102 and\n\
+          @a[3] == 0x52e and\n\
+          !a[3] == 104\n\
       }",
       "tests/data/base64");
 
@@ -1229,17 +1231,17 @@ static void test_strings()
         condition:\n\
           #a == 6 and\n\
           @a[1] == 0x379 and\n\
-          !a[1] == 50 and\n\
-          @a[2] == 0x3b6 and\n\
-          !a[2] == 48 and\n\
-          @a[3] == 0x3f1 and\n\
-          !a[3] == 50 and\n\
+          !a[1] == 52 and\n\
+          @a[2] == 0x3b4 and\n\
+          !a[2] == 52 and\n\
+          @a[3] == 0x3ef and\n\
+          !a[3] == 52 and\n\
           @a[4] == 0x458 and\n\
-          !a[4] == 100 and\n\
-          @a[5] == 0x4c5 and\n\
-          !a[5] == 100 and\n\
-          @a[6] == 0x530 and\n\
-          !a[6] == 100\n\
+          !a[4] == 102 and\n\
+          @a[5] == 0x4c3 and\n\
+          !a[5] == 102 and\n\
+          @a[6] == 0x52e and\n\
+          !a[6] == 104\n\
       }",
       "tests/data/base64");
 
@@ -1249,25 +1251,19 @@ static void test_strings()
         strings:\n\
           $a = \"This program cannot\" base64 base64wide\n\
         condition:\n\
-          #a == 9 and\n\
+          #a == 6 and\n\
           @a[1] == 0x53 and\n\
-          !a[1] == 25 and\n\
-          @a[2] == 0x70 and\n\
-          !a[2] == 25 and\n\
-          @a[3] == 0xa2 and\n\
-          !a[3] == 24 and\n\
-          @a[4] == 0xbd and\n\
-          !a[4] == 24 and\n\
-          @a[5] == 0xef and\n\
-          !a[5] == 25 and\n\
-          @a[6] == 0x109 and\n\
-          !a[6] == 25 and\n\
-          @a[7] == 0x379 and\n\
-          !a[7] == 50 and\n\
-          @a[8] == 0x3b6 and\n\
-          !a[8] == 48 and\n\
-          @a[9] == 0x3f1 and\n\
-          !a[9] == 50\n\
+          !a[1] == 26 and\n\
+          @a[2] == 0xa1 and\n\
+          !a[2] == 26 and\n\
+          @a[3] == 0xee and\n\
+          !a[3] == 26 and\n\
+          @a[4] == 0x379 and\n\
+          !a[4] == 52 and\n\
+          @a[5] == 0x3b4 and\n\
+          !a[5] == 52 and\n\
+          @a[6] == 0x3ef and\n\
+          !a[6] == 52\n\
       }",
       "tests/data/base64");
 
@@ -1278,7 +1274,7 @@ static void test_strings()
         strings:\n\
           $a = \"This program cannot\" base64 base64wide ascii\n\
         condition:\n\
-          #a == 9\n\
+          #a == 6\n\
       }",
       "tests/data/base64");
 
@@ -1288,7 +1284,7 @@ static void test_strings()
         strings:\n\
           $a = \"This program cannot\" base64 base64wide wide\n\
         condition:\n\
-          #a == 9\n\
+          #a == 6\n\
       }",
       "tests/data/base64");
 
@@ -1299,14 +1295,13 @@ static void test_strings()
         condition:\n\
           #a == 3 and\n\
           @a[1] == 0x619 and\n\
-          !a[1] == 25 and\n\
-          @a[2] == 0x638 and\n\
-          !a[2] == 24 and\n\
-          @a[3] == 0x656 and\n\
-          !a[3] == 25\n\
+          !a[1] == 26 and\n\
+          @a[2] == 0x637 and\n\
+          !a[2] == 26 and\n\
+          @a[3] == 0x655 and\n\
+          !a[3] == 26\n\
       }",
       "tests/data/base64");
-
   YR_DEBUG_FPRINTF(1, stderr, "} // %s()\n", __FUNCTION__);
 }
 
