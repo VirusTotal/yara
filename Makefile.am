@@ -89,6 +89,8 @@ MODULES += libyara/modules/elf/elf.c
 
 MODULES += libyara/modules/math/math.c
 
+MODULES += libyara/modules/ieee754/ieee754.c
+
 MODULES += libyara/modules/time/time.c
 
 MODULES += libyara/modules/pe/pe.c
@@ -337,6 +339,9 @@ test_bitmask_LDFLAGS = -static
 test_math_SOURCES = tests/test-math.c tests/util.c
 test_math_LDADD = libyara.la
 test_math_LDFLAGS = -static
+test_ieee754_SOURCES = tests/test-ieee754.c tests/util.c
+test_ieee754_LDADD = libyara.la
+test_ieee754_LDFLAGS = -static
 test_string_SOURCES = tests/test-string.c tests/util.c
 test_string_LDADD = libyara.la
 test_string_LDFLAGS = -static
@@ -364,6 +369,7 @@ check_PROGRAMS = \
   test-version \
   test-bitmask \
   test-math \
+  test-ieee754 \
   test-stack \
   test-re-split \
   test-async \
