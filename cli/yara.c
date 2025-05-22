@@ -810,7 +810,7 @@ static char cescapes[] = {
     0, 0, 0, 0, 0, 0, 0, 0,   0,   0,   0,   0,   0,   0,   0, 0,
 };
 
-static void print_escaped(const uint8_t* data, size_t length)
+static void print_escaped_data(const uint8_t* data, size_t length)
 {
   for (size_t i = 0; i < length; i++)
   {
@@ -833,6 +833,20 @@ static void print_escaped(const uint8_t* data, size_t length)
         _tprintf(_T("\\%03o"), data[i]);
     }
   }
+}
+
+void print_escaped_file_path(const char_t* str) {
+    for (size_t i = 0; str[i] != '\0'; ++i) {
+        if (str[i] == _T('\n')) {
+            _tprintf(_T("\\n"));
+        } else if (str[i] == _T('\r')) {
+            _tprintf(_T("\\r"));
+        }
+        else {
+            _tprintf(_T("%c"), str[i]);
+        }
+    }
+    _tprintf(_T("\n"));
 }
 
 static void print_hex_string(const uint8_t* data, int length)
@@ -1098,7 +1112,7 @@ static int handle_message(
         else
         {
           _tprintf(_T("%" PF_S "=\""), meta->identifier);
-          print_escaped((uint8_t*) (meta->string), strlen(meta->string));
+          print_escaped_data((uint8_t*) (meta->string), strlen(meta->string));
           _tprintf(_T("\""));
         }
       }
@@ -1106,7 +1120,7 @@ static int handle_message(
       _tprintf(_T("] "));
     }
 
-    _tprintf(_T("%s\n"), ((CALLBACK_ARGS*) data)->file_path);
+    print_escaped_file_path(((CALLBACK_ARGS*) data)->file_path);
 
     // Show matched strings.
 
