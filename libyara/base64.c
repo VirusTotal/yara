@@ -183,6 +183,10 @@ static int _yr_base64_count_escaped(SIZED_STRING* str)
 {
   int c = 0;
 
+  // Return zero for a nullptr
+  if (str == NULL)
+    return c;
+
   for (uint32_t i = 0; i < str->length; i++)
   {
     // We must be careful to escape null bytes because they break the RE lexer.
@@ -207,18 +211,21 @@ static int _yr_base64_create_nodes(
 {
   SIZED_STRING* encoded_str;
   SIZED_STRING* final_str;
+  SIZED_STRING* pre_str;
+  SIZED_STRING* post_str;
   BASE64_NODE* node;
+  char *alphabet_str = alphabet->c_string;
 
   int pad;
 
   for (int i = 0; i <= 2; i++)
   {
-    if (i == 1 && str->length == 1)
-      continue;
-
     node = (BASE64_NODE*) yr_malloc(sizeof(BASE64_NODE));
     if (node == NULL)
       return ERROR_INSUFFICIENT_MEMORY;
+
+    // We need to save the value of wide for generating the regex
+    node->wide = wide ? 1 : 0;
 
     FAIL_ON_NULL_WITH_CLEANUP(
         encoded_str = _yr_modified_base64_encode(str, alphabet, i, &pad),
@@ -233,9 +240,86 @@ static int _yr_base64_create_nodes(
           yr_free(node);
         });
 
+    // Calculate the possible encoded characters for leading character(s)
+    switch(i) {
+      case 0:
+        break;
+
+      case 1:
+        FAIL_ON_NULL_WITH_CLEANUP(
+          pre_str = (SIZED_STRING*) yr_malloc(sizeof(SIZED_STRING) + 4),
+          {
+            yr_free(encoded_str);
+            yr_free(node);
+          });
+
+          for (char i = 0; i < 4; i++)
+          {
+            pre_str->c_string[(int)i] = alphabet_str[((i & 0b00000011) << 4) + ((str->c_string[0] & 0b11110000) >> 4)];
+          }
+          pre_str->length = 4;
+          node->pre = pre_str;
+        break;
+
+      case 2:
+        FAIL_ON_NULL_WITH_CLEANUP(
+          pre_str = (SIZED_STRING*) yr_malloc(sizeof(SIZED_STRING) + 16),
+          {
+            yr_free(encoded_str);
+            yr_free(node);
+          });
+
+        for (char i = 0; i < 16; i++)
+        {
+          pre_str->c_string[(int)i] = alphabet_str[((i & 0b00001111) << 2) + ((str->c_string[0] & 0b11110000) >> 6)];
+        }
+        pre_str->length = 16;
+        node->pre = pre_str;
+        break;
+    }
+
+    // Calculate the possible encoded characters for trailing character(s)
+    switch(pad) {
+      case 0:
+        break;
+
+      case 1:
+        FAIL_ON_NULL_WITH_CLEANUP(
+          post_str = (SIZED_STRING*) yr_malloc(sizeof(SIZED_STRING) + 4),
+          {
+            yr_free(encoded_str);
+            yr_free(node);
+          });
+
+          for (char i = 0; i < 4; i++)
+          {
+            post_str->c_string[(int)i] = alphabet_str[i + ((str->c_string[str->length - 1] & 0b00001111) << 2)];
+          }
+          post_str->length = 4;
+          node->post = post_str;
+        break;
+
+      case 2:
+        FAIL_ON_NULL_WITH_CLEANUP(
+          post_str = (SIZED_STRING*) yr_malloc(sizeof(SIZED_STRING) + 16),
+          {
+            yr_free(encoded_str);
+            yr_free(node);
+          });
+
+        for (char i = 0; i < 16; i++)
+        {
+          post_str->c_string[(int)i] = alphabet_str[i + ((str->c_string[str->length - 1] & 0b000011) << 4)];
+        }
+        post_str->length = 16;
+        node->post = post_str;
+        break;
+    }
+
     yr_free(encoded_str);
 
     node->str = final_str;
+
     node->escaped = _yr_base64_count_escaped(node->str);
     node->next = NULL;
 
@@ -289,6 +373,8 @@ static void _yr_base64_destroy_nodes(BASE64_NODE* head)
   while (p != NULL)
   {
     yr_free(p->str);
+    yr_free(p->pre);
+    yr_free(p->post);
     next = p->next;
     yr_free(p);
     p = next;
@@ -315,6 +401,16 @@ int _yr_base64_create_regexp(
   while (p != NULL)
   {
     length += (p->str->length + p->escaped);
+
+    // If there's multiple potential characters at the start or end of
+    // the string, include room for the entire character class, including
+    // the pair of square brackets, and the escaped null-byte if it's a
+    // wide string.
+    if (p->pre)
+      length += p->pre->length + 2 + (p->wide * 4);
+    if (p->post)
+      length += p->post->length + 2 + (p->wide * 4);
+
     c++;
     p = p->next;
   }
@@ -330,9 +426,41 @@ int _yr_base64_create_regexp(
 
   s = re_str;
   p = head;
+
   *s++ = '(';
   while (p != NULL)
   {
+
+    // generate character class for leading character(s)
+    if (p->pre != NULL)
+    {
+      *s++ = '[';
+      for (uint32_t i = 0; i < p->pre->length; i++)
+      {
+        if (IS_METACHAR(p->pre->c_string[i]))
+          *s++ = '\\';
+
+        if (p->pre->c_string[i] == '\x00')
+        {
+          *s++ = '\\';
+          *s++ = 'x';
+          *s++ = '0';
+          *s++ = '0';
+        }
+        else
+          *s++ = p->pre->c_string[i];
+      }
+      *s++ = ']';
+
+      if (p->wide)
+      {
+        *s++ = '\\';
+        *s++ = 'x';
+        *s++ = '0';
+        *s++ = '0';
+      }
+    }
+
     for (uint32_t i = 0; i < p->str->length; i++)
     {
       if (IS_METACHAR(p->str->c_string[i]))
@@ -348,6 +476,37 @@ int _yr_base64_create_regexp(
       else
         *s++ = p->str->c_string[i];
     }
+
+    // generate character class for trailing character(s)
+    if (p->post != NULL)
+    {
+      *s++ = '[';
+      for (uint32_t i = 0; i < p->post->length; i++)
+      {
+        if (IS_METACHAR(p->post->c_string[i]))
+          *s++ = '\\';
+
+        if (p->post->c_string[i] == '\x00')
+        {
+          *s++ = '\\';
+          *s++ = 'x';
+          *s++ = '0';
+          *s++ = '0';
+        }
+        else
+          *s++ = p->post->c_string[i];
+      }
+      *s++ = ']';
+
+      if (p->wide)
+      {
+        *s++ = '\\';
+        *s++ = 'x';
+        *s++ = '0';
+        *s++ = '0';
+      }
+    }
+
 
     if (p->next != NULL)
       *s++ = '|';
