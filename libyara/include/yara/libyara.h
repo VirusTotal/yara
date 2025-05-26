@@ -34,7 +34,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define YR_MAJOR_VERSION 4
 #define YR_MINOR_VERSION 5
-#define YR_MICRO_VERSION 2
+#define YR_MICRO_VERSION 3
 
 #define version_str(s)  _version_str(s)
 #define _version_str(s) #s
