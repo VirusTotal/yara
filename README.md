@@ -2,6 +2,8 @@
 [![AppVeyor build status](https://ci.appveyor.com/api/projects/status/7glqg19w4oolm7pr?svg=true)](https://ci.appveyor.com/project/plusvic/yara)
 [![Coverity status](https://scan.coverity.com/projects/9057/badge.svg?flat=1)](https://scan.coverity.com/projects/plusvic-yara)
 
+> [!IMPORTANT]
+> This project is in maintenance mode. More info: https://virustotal.github.io/yara-x/blog/yara-x-is-stable/
 
 
 ## YARA in a nutshell
