@@ -148,5 +148,6 @@ awesome list of [YARA-related stuff](https://github.com/InQuest/awesome-yara).
 * [We Watch Your Website](https://www.wewatchyourwebsite.com/)
 * [x64dbg](https://x64dbg.com)
 * [YALIH](https://github.com/Masood-M/YALIH)
+* [Roblox](https://roblox.com)
 
 Are you using it? Want to see your site listed here?
