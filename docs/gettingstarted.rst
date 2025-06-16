@@ -119,6 +119,65 @@ If you plan to use YARA from your Python scripts you need to install the
 ``yara-python`` extension. Please refer to https://github.com/VirusTotal/yara-python
 for instructions on how to install it.
 
+<<<<<<< HEAD
+Building on OpenHarmony
+-----------------------
+
+Prerequisites : Preparing OpenHarmony SDK
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+OpenHarmony provides SDKs for Linux, Windows, and macOS platforms, enabling cross-compilation across these systems. This guide focuses on Linux-based cross-compilation.
+
+1. Download the SDK for your target platform from the `official release channel <https://gitcode.com/openharmony/docs/blob/master/en/release-notes/OpenHarmony-v5.0.1-release.md#acquiring-source-code-from-mirrors>`_.
+2. Extract the SDK package::
+
+   owner@ubuntu:$WORKSPACE_DIR$ tar -zxvf ohos-sdk-windows_linux-public.tar.tar.gz
+
+3. Navigate to the SDK's Linux directory and extract all toolchain packages::
+
+   owner@ubuntu:$WORKSPACE_DIR$ cd ohos_sdk/linux
+   owner@ubuntu:$WORKSPACE_DIR/ohos-sdk/linux$ for i in *.zip;do unzip ${i};done
+   owner@ubuntu:$WORKSPACE_DIR/ohos-sdk/linux$ ls
+   total 1228400
+   85988 -rw-r--r-- 1 wshi wshi  88050148 Nov 20  2024 ets-linux-x64-5.0.1.111-Release.zip          # ArkTS compiler tools
+   56396 -rw-r--r-- 1 wshi wshi  57747481 Nov 20  2024 js-linux-x64-5.0.1.111-Release.zip           # JS compiler tools
+   888916 -rw-r--r-- 1 wshi wshi 910243125 Nov 20  2024 native-linux-x64-5.0.1.111-Release.zip      # C/C++ cross-compilation tools
+   175084 -rw-r--r-- 1 wshi wshi 179281763 Nov 20  2024 previewer-linux-x64-5.0.1.111-Release.zip   # App preview tools
+   22008 -rw-r--r-- 1 wshi wshi  22533501 Nov 20  2024 toolchains-linux-x64-5.0.1.111-Release.zip   # Utilities (e.g., signing tool, device connector)
+
+Compiling configure-Based Projects
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+1. Review configuration options::
+
+   owner@ubuntu:$WORKSPACE_DIR/yara$ ./configure --help       # {yara} is Source code to be compiled
+
+2. Set cross-compilation environment variables (for 64-bit ARM)::
+
+   export OHOS_SDK=${your sdk path}/ohos-sdk/linux/   # Configure the SDK path, which should be set to the directory of your own unzipped SDK here.
+   export AS=${OHOS_SDK}/native/llvm/bin/llvm-as
+   export CC="${OHOS_SDK}/native/llvm/bin/clang --target=aarch64-linux-ohos"
+   export CXX="${OHOS_SDK}/native/llvm/bin/clang++ --target=aarch64-linux-ohos"
+   export LD=${OHOS_SDK}/native/llvm/bin/ld.lld
+   export STRIP=${OHOS_SDK}/native/llvm/bin/llvm-strip
+   export RANLIB=${OHOS_SDK}/native/llvm/bin/llvm-ranlib
+   export OBJDUMP=${OHOS_SDK}/native/llvm/bin/llvm-objdump
+   export OBJCOPY=${OHOS_SDK}/native/llvm/bin/llvm-objcopy
+   export NM=${OHOS_SDK}/native/llvm/bin/llvm-nm
+   export AR=${OHOS_SDK}/native/llvm/bin/llvm-ar
+   export CFLAGS="-fPIC -D__MUSL__=1"      # For 32-bit: add "-march=armv7a"
+   export CXXFLAGS="-fPIC -D__MUSL__=1"    # For 32-bit: add "-march=armv7a"
+
+3. Run configure with cross-compilation parameters::
+
+   owner@ubuntu:~/workspace/{SRC}$ ./configure --prefix=/home/owner/workspace/{SRC} --host=aarch64-linux
+
+4. Compile and install::
+
+   owner@ubuntu:~/workspace/{SRC}$ make
+   owner@ubuntu:~/workspace/{SRC}$ make install
+=======
+>>>>>>> 802aa3c8e49895b7abe27486f3594afaed580dfc
 
 Running YARA for the first time
 ===============================
