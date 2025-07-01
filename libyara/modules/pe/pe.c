@@ -484,7 +484,11 @@ static int _pe_iterate_resources(
       PIMAGE_RESOURCE_DIRECTORY directory =
           (PIMAGE_RESOURCE_DIRECTORY) (rsrc_data + RESOURCE_OFFSET(entry));
 
-      if (struct_fits_in_pe(pe, directory, IMAGE_RESOURCE_DIRECTORY))
+      // Don't allow descending into a directory that is already being processed.
+      // While this does not prevent potential cyclical infinite loops, it is good
+      // enough to handle all known problematic cases.
+      if (directory != resource_dir &&
+          struct_fits_in_pe(pe, directory, IMAGE_RESOURCE_DIRECTORY))
       {
         result = _pe_iterate_resources(
             pe,
