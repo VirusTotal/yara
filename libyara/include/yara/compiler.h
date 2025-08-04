@@ -81,6 +81,20 @@ typedef struct _YR_ENUMERATION
   int count;
 } YR_ENUMERATION;
 
+typedef struct _YR_STRING_SET_ELEMENT
+{
+  YR_ARENA_REF element;
+  struct _YR_STRING_SET_ELEMENT* next;
+} YR_STRING_SET_ELEMENT;
+
+typedef struct _YR_STRING_SET
+{
+  int64_t count;
+  YR_STRING_SET_ELEMENT* head;
+} YR_STRING_SET;
+
+YR_API int yr_string_set_destroy(YR_STRING_SET string_set);
+
 typedef struct _YR_EXPRESSION
 {
   int type;

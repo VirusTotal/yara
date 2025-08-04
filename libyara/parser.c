@@ -43,6 +43,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <yara/re.h>
 #include <yara/strutils.h>
 #include <yara/utils.h>
+#include "yara/compiler.h"
+#include "yara/types.h"
 
 #define todigit(x)                                        \
   ((x) >= 'A' && (x) <= 'F') ? ((uint8_t) (x - 'A' + 10)) \
@@ -178,7 +180,7 @@ int yr_parser_emit_with_arg_reloc(
 int yr_parser_emit_pushes_for_strings(
     yyscan_t yyscanner,
     const char* identifier,
-    int* count)
+    YR_STRING_SET* strings)
 {
   YR_COMPILER* compiler = yyget_extra(yyscanner);
 
@@ -190,7 +192,9 @@ int yr_parser_emit_pushes_for_strings(
   const char* string_identifier;
   const char* target_identifier;
 
-  int matching = 0;
+  strings->count = 0;
+  strings->head = NULL;
+  YR_STRING_SET_ELEMENT** tail_ptr = &strings->head;
 
   yr_rule_strings_foreach(current_rule, string)
   {
@@ -216,18 +220,17 @@ int yr_parser_emit_pushes_for_strings(
 
         string->flags |= STRING_FLAGS_REFERENCED;
         string->flags &= ~STRING_FLAGS_FIXED_OFFSET;
-        string->flags &= ~STRING_FLAGS_SINGLE_MATCH;
-        matching++;
+        strings->count++;
+
+        *tail_ptr = yr_malloc(sizeof(YR_STRING_SET_ELEMENT));
+        yr_arena_ptr_to_ref(compiler->arena, string, &((*tail_ptr)->element));
+        (*tail_ptr)->next = NULL;
+        tail_ptr = &(*tail_ptr)->next;
       }
     }
   }
 
-  if (count != NULL)
-  {
-    *count = matching;
-  }
-
-  if (matching == 0)
+  if (strings->count == 0)
   {
     yr_compiler_set_error_extra_info(
         compiler, identifier) return ERROR_UNDEFINED_STRING;
@@ -1502,5 +1505,20 @@ int yr_parser_reduce_operation(
     return ERROR_WRONG_TYPE;
   }
 
+  return ERROR_SUCCESS;
+}
+
+int yr_parser_mark_nonfast(
+   yyscan_t yyscanner,
+   YR_STRING_SET string_set
+) {
+ YR_COMPILER* compiler = yyget_extra(yyscanner);
+
+ YR_STRING_SET_ELEMENT* head = string_set.head;
+  while (head != NULL) {
+    YR_STRING* string_ptr = yr_arena_ref_to_ptr(compiler->arena, &head->element);
+    string_ptr->flags &= ~STRING_FLAGS_SINGLE_MATCH;
+    head = head->next;
+  }
   return ERROR_SUCCESS;
 }
