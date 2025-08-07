@@ -289,9 +289,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 %type <enumeration> enumeration
 %type <integer> rule_modifier
 %type <integer> rule_modifiers
-%type <integer> string_enumeration
-%type <integer> string_enumeration_item
-%type <integer> string_set
+%type <string_set> string_enumeration
+%type <string_set> string_enumeration_item
+%type <string_set> string_set
 %type <integer> for_iteration
 %type <integer> rule_enumeration
 %type <integer> rule_enumeration_item
@@ -320,6 +320,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 %destructor { yr_free($$); $$ = NULL; } _HEX_STRING_
 %destructor { yr_free($$); $$ = NULL; } _REGEXP_
 
+%destructor { yr_string_set_destroy($$); $$.head = NULL; } string_enumeration
+%destructor { yr_string_set_destroy($$); $$.head = NULL; } string_enumeration_item
+%destructor { yr_string_set_destroy($$); $$.head = NULL; } string_set
 %destructor { yr_free($$); $$ = NULL; } arguments
 %destructor { yr_free($$); $$ = NULL; } arguments_list
 
@@ -348,6 +351,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
   double          double_;
   YR_MODIFIER     modifier;
   YR_ENUMERATION  enumeration;
+  YR_STRING_SET   string_set;
 
   YR_ARENA_REF tag;
   YR_ARENA_REF rule;
@@ -1742,10 +1746,10 @@ expression
       }
     | for_expression _OF_ string_set
       {
-        if ($1.type == EXPRESSION_TYPE_INTEGER && $1.value.integer > $3)
+        if ($1.type == EXPRESSION_TYPE_INTEGER && $1.value.integer > $3.count)
         {
           yywarning(yyscanner,
-            "expression always false - requesting %" PRId64 " of %" PRId64 ".", $1.value.integer, $3);
+            "expression always false - requesting %" PRId64 " of %" PRId64 ".", $1.value.integer, $3.count);
         }
 
         if (($1.type == EXPRESSION_TYPE_INTEGER && $1.value.integer > 0) ||
@@ -1761,6 +1765,7 @@ expression
 
         yr_parser_emit_with_arg(yyscanner, OP_OF, OF_STRING_SET, NULL, NULL);
 
+        yr_string_set_destroy($3);
         $$.type = EXPRESSION_TYPE_BOOLEAN;
       }
     | for_expression _OF_ rule_set
@@ -1777,7 +1782,7 @@ expression
       }
     | primary_expression '%' _OF_ string_set
       {
-        check_type($1, EXPRESSION_TYPE_INTEGER, "%");
+        check_type_with_cleanup($1, EXPRESSION_TYPE_INTEGER, "%", yr_string_set_destroy($4));
 
         // The value of primary_expression can be undefined because
         // it could be a variable for which don't know the value during
@@ -1789,6 +1794,7 @@ expression
           yr_compiler_set_error_extra_info(
               compiler, "percentage must be between 1 and 100 (inclusive)");
 
+          yr_string_set_destroy($4);
           fail_with_error(ERROR_INVALID_PERCENTAGE);
         }
 
@@ -1801,6 +1807,7 @@ expression
           $$.required_strings.count = 0;
         }
 
+        yr_string_set_destroy($4);
         yr_parser_emit_with_arg(yyscanner, OP_OF_PERCENT, OF_STRING_SET, NULL, NULL);
       }
     | primary_expression '%' _OF_ rule_set
@@ -1824,10 +1831,10 @@ expression
       }
     | for_expression _OF_ string_set _IN_ range
       {
-        if ($1.type == EXPRESSION_TYPE_INTEGER && $1.value.integer > $3)
+        if ($1.type == EXPRESSION_TYPE_INTEGER && $1.value.integer > $3.count)
         {
           yywarning(yyscanner,
-            "expression always false - requesting %" PRId64 " of %" PRId64 ".", $1.value.integer, $3);
+            "expression always false - requesting %" PRId64 " of %" PRId64 ".", $1.value.integer, $3.count);
         }
 
         if (($1.type == EXPRESSION_TYPE_INTEGER && $1.value.integer > 0) ||
@@ -1843,6 +1850,10 @@ expression
 
         yr_parser_emit(yyscanner, OP_OF_FOUND_IN, NULL);
 
+        // Mark strings as non-fast strings (since we need to check all matches whether they are in range)
+        yr_parser_mark_nonfast(yyscanner, $3);
+
+        yr_string_set_destroy($3);
         $$.type = EXPRESSION_TYPE_BOOLEAN;
       }
     | for_expression _OF_ string_set _AT_ primary_expression
@@ -1852,13 +1863,14 @@ expression
           yr_compiler_set_error_extra_info(compiler,
               "at expression must be an integer");
 
+          yr_string_set_destroy($3);
           fail_with_error(ERROR_INVALID_VALUE);
         }
 
-        if ($1.type == EXPRESSION_TYPE_INTEGER && $1.value.integer > $3)
+        if ($1.type == EXPRESSION_TYPE_INTEGER && $1.value.integer > $3.count)
         {
           yywarning(yyscanner,
-            "expression always false - requesting %" PRId64 " of %" PRId64 ".", $1.value.integer, $3);
+            "expression always false - requesting %" PRId64 " of %" PRId64 ".", $1.value.integer, $3.count);
         }
 
         // Both of these are warnings:
@@ -1872,7 +1884,7 @@ expression
         if (($1.type == EXPRESSION_TYPE_INTEGER &&
               !IS_UNDEFINED($1.value.integer) && $1.value.integer > 1) ||
               ($1.type == EXPRESSION_TYPE_QUANTIFIER &&
-              $1.value.integer == FOR_EXPRESSION_ALL && $3 > 1))
+              $1.value.integer == FOR_EXPRESSION_ALL && $3.count > 1))
         {
           yywarning(yyscanner,
             "multiple strings at an offset is usually false.");
@@ -1891,6 +1903,10 @@ expression
 
         yr_parser_emit(yyscanner, OP_OF_FOUND_AT, NULL);
 
+        // Mark strings as non-fast strings (since we need to check all matches whether they are at location)
+        yr_parser_mark_nonfast(yyscanner, $3);
+
+        yr_string_set_destroy($3);
         $$.type = EXPRESSION_TYPE_BOOLEAN;
       }
     | _NOT_ boolean_expression
@@ -2353,9 +2369,10 @@ enumeration
 string_iterator
     : string_set
       {
-        fail_if_error(yr_parser_emit_push_const(yyscanner, $1));
+        fail_if_error(yr_parser_emit_push_const(yyscanner, $1.count));
         fail_if_error(yr_parser_emit(yyscanner, OP_ITER_START_STRING_SET,
             NULL));
+        fail_if_error(yr_string_set_destroy($1));
       }
     ;
 
@@ -2373,41 +2390,51 @@ string_set
       {
         fail_if_error(yr_parser_emit_push_const(yyscanner, YR_UNDEFINED));
 
-        int count = 0;
+        YR_STRING_SET strings;
         fail_if_error(yr_parser_emit_pushes_for_strings(
-            yyscanner, "$*", &count));
+            yyscanner, "$*", &strings));
 
-        $$ = count;
+        $$ = strings;
       }
     ;
 
 
 string_enumeration
     : string_enumeration_item { $$ = $1; }
-    | string_enumeration ',' string_enumeration_item { $$ = $1 + $3; }
+    | string_enumeration ',' string_enumeration_item
+    {
+      YR_STRING_SET_ELEMENT* tail = $1.head;
+      while (tail->next != NULL) {
+        tail = tail->next;
+      }
+      // Combine the linked lists by linking the tail of $1 to the head of $3
+      tail->next = $3.head;
+      $1.count += $3.count;
+      $$ = $1;
+    }
     ;
 
 
 string_enumeration_item
     : _STRING_IDENTIFIER_
       {
-        int count = 0;
-        int result = yr_parser_emit_pushes_for_strings(yyscanner, $1, &count);
+        YR_STRING_SET strings;
+        int result = yr_parser_emit_pushes_for_strings(yyscanner, $1, &strings);
         yr_free($1);
 
         fail_if_error(result);
 
-        $$ = count;
+        $$ = strings;
       }
     | _STRING_IDENTIFIER_WITH_WILDCARD_
       {
-        int count = 0;
-        int result = yr_parser_emit_pushes_for_strings(yyscanner, $1, &count);
+        YR_STRING_SET strings;
+        int result = yr_parser_emit_pushes_for_strings(yyscanner, $1, &strings);
         yr_free($1);
 
         fail_if_error(result);
 
-        $$ = count;
+        $$ = strings;
       }
     ;
 

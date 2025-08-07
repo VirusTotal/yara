@@ -1078,3 +1078,14 @@ YR_API char* yr_compiler_get_error_message(
 
   return buffer;
 }
+
+YR_API int yr_string_set_destroy(YR_STRING_SET string_set)
+{
+  YR_STRING_SET_ELEMENT* head = string_set.head;
+  while (head != NULL) {
+    YR_STRING_SET_ELEMENT* next_head = head->next;
+    yr_free(head);
+    head = next_head;
+  }
+  return ERROR_SUCCESS;
+}

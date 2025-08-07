@@ -31,6 +31,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define YR_PARSER_H
 
 #include "lexer.h"
+#include "yara/compiler.h"
 
 int yr_parser_emit(
     yyscan_t yyscanner,
@@ -116,7 +117,7 @@ int yr_parser_reduce_string_identifier(
 int yr_parser_emit_pushes_for_strings(
     yyscan_t yyscanner,
     const char* identifier,
-    int* count);
+    YR_STRING_SET* strings);
 
 int yr_parser_emit_pushes_for_rules(
     yyscan_t yyscanner,
@@ -136,4 +137,8 @@ int yr_parser_reduce_operation(
     YR_EXPRESSION left_operand,
     YR_EXPRESSION right_operand);
 
+int yr_parser_mark_nonfast(
+   yyscan_t yyscanner,
+   YR_STRING_SET string_set
+);
 #endif
