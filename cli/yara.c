@@ -503,7 +503,7 @@ static int scan_dir(const char_t* dir, SCAN_OPTIONS* scan_opts)
       // If symbolic links must not be followed, and this entry is a symbolic
       // link, ignore it and continue with the next one.
       if (!scan_opts->follow_symlinks && 
-          FindFileData.dwFileAttribute & FILE_ATTRIBUTE_REPARSE_POINT) 
+          FindFileData.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT) 
       {
         continue;
       }
