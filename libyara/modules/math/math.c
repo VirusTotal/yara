@@ -785,6 +785,78 @@ define_function(to_string_base)
   return_string(&str);
 }
 
+define_function(data_index_of_coincidence)
+{ 
+  size_t i;
+  size_t frequency;
+  size_t total = 0;
+  double ioc = 0.0;
+  
+  int64_t offset = integer_argument(1);
+  int64_t length = integer_argument(2);
+
+  YR_SCAN_CONTEXT* context = yr_scan_context();
+  
+  uint32_t* data = get_distribution(offset, length, context);
+  
+  if (data == NULL)
+    return_float(YR_UNDEFINED);
+
+  for (i = 'a'; i <= 'z'; i++) 
+  {
+    // get frequencies of both upper and lower case
+    frequency = data[i] + data[i - 32];
+
+    total += frequency;
+    ioc += frequency * (frequency - 1);
+  }
+  
+  if (total < 2) total = 2;
+  
+  ioc /= total * (total - 1);
+
+  yr_free(data);
+  return_float(ioc);
+}
+
+define_function(string_index_of_coincidence)
+{
+  size_t i;
+  size_t frequencies[26] = {0};
+  size_t total = 0;
+  double ioc = 0.0;
+  
+  SIZED_STRING* s = sized_string_argument(1);
+  
+  for (i = 0; i < s->length; i++)
+  {
+    uint8_t c = s->c_string[i];
+    
+    if (c >= 'A' && c <= 'Z')
+    {
+      frequencies[c - 'A']++;
+      total++;
+    }
+    
+    else if (c >= 'a' && c <= 'z')
+    {
+      frequencies[c - 'a']++;
+      total++;
+    }
+  }
+  
+  for (i = 0; i < 26; i++) 
+  {
+    ioc += frequencies[i] * (frequencies[i] - 1);
+  }
+  
+  if (total < 2) total = 2;
+  
+  ioc /= total * (total - 1);
+
+  return_float(ioc);
+}
+
 begin_declarations
   declare_float("MEAN_BYTES");
   declare_function("in_range", "fff", "i", in_range);
@@ -810,6 +882,8 @@ begin_declarations
   declare_function("mode", "", "i", mode_global);
   declare_function("to_string", "i", "s", to_string);
   declare_function("to_string", "ii", "s", to_string_base);
+  declare_function("index_of_coincidence", "ii", "f", data_index_of_coincidence);
+  declare_function("index_of_coincidence", "s", "f", string_index_of_coincidence);
 end_declarations
 
 int module_initialize(YR_MODULE* module)
