@@ -3320,6 +3320,30 @@ static void test_hash_module()
       }",
       blob);
 
+  uint8_t blob_tlsh[] = {
+      0x54, 0x68, 0x69, 0x73, 0x20, 0x73, 0x74, 0x72, 0x69 ,0x6e,
+      0x67, 0x20, 0x69, 0x73, 0x20, 0x6c, 0x6f, 0x6f, 0x6f ,0x6f,
+      0x6f, 0x6f, 0x6f, 0x6f, 0x6f, 0x6f, 0x6f, 0x6f, 0x6f ,0x6e,
+      0x67, 0x65, 0x72, 0x20, 0x74, 0x68, 0x61, 0x6e, 0x20 ,0x66,
+      0x69, 0x66, 0x74, 0x79, 0x20, 0x62, 0x79, 0x74, 0x65 ,0x73, 0x2e};  // 51 bytes string without trailing zero
+
+  assert_true_rule_blob(
+      "import \"hash\" \
+       rule test { \
+        condition: \
+          hash.tlsh_diff( \
+            \"T1B79004053DF4C050473C01735755410FF75CC0D3171151FC44413010745113D01743D1\") == 0 \
+            and \
+          hash.tlsh_diff( \
+            \"T1B79004053DF4C050473C01735755410FF75CC0D3171151FC44413010745113D01743D1\", \
+            0, filesize) == 0 \
+            and \
+          hash.tlsh_diff( \
+            \"T1B79004053DF4C050473C01735755410FF75CC0D3171151FC44413010745113D01743D1\", \
+            1, filesize) != 0 \
+      }",
+      blob_tlsh);
+
   assert_true_rule(
       "import \"hash\" \
        rule test { \
@@ -3336,6 +3360,10 @@ static void test_hash_module()
           hash.crc32(\"TEST STRING\") == 0x51f9be31 \
             and \
           hash.checksum32(\"TEST STRING\") == 0x337 \
+            and \
+          hash.tlsh_diff( \
+            \"T1B79004053DF4C050473C01735755410FF75CC0D3171151FC44413010745113D01743D1\", \
+            \"This string is looooooooooooonger than fifty bytes.\") == 0 \
       }",
       NULL);
 
@@ -3358,6 +3386,27 @@ static void test_hash_module()
             \"e02cfbe5502b64aa5ae9f2d0d69eaa8d\" \
       }",
       blob);
+
+  assert_true_rule_blob(
+      "import \"hash\" \
+       rule test { \
+        condition: \
+          hash.tlsh_diff( \
+            \"T1B79004053DF4C050473C01735755410FF75CC0D3171151FC44413010745113D01743D1\", \
+            0, filesize) == 0 \
+            and \
+          hash.tlsh_diff( \
+            \"T1B79004053DF4C050473C01735755410FF75CC0D3171151FC44413010745113D01743D1\", \
+            1, filesize) != 0 \
+            and \
+          hash.tlsh_diff( \
+            \"B79004053DF4C050473C01735755410FF75CC0D3171151FC44413010745113D01743D1\") == 0 \
+            and \
+          hash.tlsh_diff( \
+            \"B79004053DF4C050473C01735755410FF75CC0D3171151FC44413010745113D01743D1\", \
+            1, filesize) != 0 \
+      }",
+      blob_tlsh);
 
   uint8_t multi_block_blob[] = TEXT_1024_BYTES TEXT_1024_BYTES;
 
@@ -3404,6 +3453,14 @@ static void test_hash_module()
           hash.crc32(0, filesize) == 0x2b11af72 \
             and \
           hash.crc32(\"TEST STRING\") == 0x51f9be31 \
+            and \
+          hash.tlsh_diff( \
+            \"3741038C22D20C6FEE451103DF0C22DBC343C404F8A2880F10C22060300DE0357238F7\", \
+            0, filesize) == 0 \
+            and \
+          hash.tlsh_diff( \
+            \"3741038C22D20C6FEE451103DF0C22DBC343C404F8A2880F10C22060300DE0357238F7\", \
+            1, filesize) != 0 \
       }",
       multi_block_blob);
 
