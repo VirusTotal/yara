@@ -171,7 +171,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 // Maximum input size scanned by yr_re_exec and yr_re_fast_exec
 #ifndef YR_RE_SCAN_LIMIT
-#define YR_RE_SCAN_LIMIT 1024
+#define YR_RE_SCAN_LIMIT 4096
 #endif
 
 // Maximum number of fibers
