@@ -41,6 +41,7 @@ typedef struct YR_ATOM YR_ATOM;
 typedef struct YR_ATOM_TREE_NODE YR_ATOM_TREE_NODE;
 typedef struct YR_ATOM_TREE YR_ATOM_TREE;
 
+typedef struct YR_ATOM_NODE_LIST YR_ATOM_NODE_LIST;
 typedef struct YR_ATOM_LIST_ITEM YR_ATOM_LIST_ITEM;
 
 typedef struct YR_ATOM_QUALITY_TABLE_ENTRY YR_ATOM_QUALITY_TABLE_ENTRY;
@@ -70,6 +71,13 @@ struct YR_ATOM_TREE_NODE
 struct YR_ATOM_TREE
 {
   YR_ATOM_TREE_NODE* root_node;
+};
+
+struct YR_ATOM_NODE_LIST
+{
+    YR_ATOM atom;
+    RE_NODE* re_nodes[YR_MAX_ATOM_RE_LENGTH];
+    YR_ATOM_NODE_LIST* next;
 };
 
 struct YR_ATOM_LIST_ITEM
