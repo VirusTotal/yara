@@ -93,7 +93,7 @@ typedef struct _YR_STRING_SET
   YR_STRING_SET_ELEMENT* head;
 } YR_STRING_SET;
 
-YR_API int yr_string_set_destroy(YR_STRING_SET string_set);
+int yr_string_set_destroy(YR_STRING_SET string_set);
 
 typedef struct _YR_EXPRESSION
 {

@@ -1079,7 +1079,7 @@ YR_API char* yr_compiler_get_error_message(
   return buffer;
 }
 
-YR_API int yr_string_set_destroy(YR_STRING_SET string_set)
+int yr_string_set_destroy(YR_STRING_SET string_set)
 {
   YR_STRING_SET_ELEMENT* head = string_set.head;
   while (head != NULL) {
