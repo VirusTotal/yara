@@ -248,6 +248,15 @@ static void pe_parse_rich_signature(PE* pe, uint64_t base_address)
   yr_set_sized_string(
       (char*) clear_data, rich_len, pe->object, "rich_signature.clear_data");
 
+  // A Rich header shorter than RICH_SIGNATURE makes the unsigned subtraction
+  // below wrap around, producing a bogus rich_count. _rich_version guards the
+  // same computation, do it here too.
+  if (rich_len < sizeof(RICH_SIGNATURE))
+  {
+    yr_free(clear_data);
+    return;
+  }
+
   // Allocate space for just the version data. This is a series of every other
   // dword from the clear data. This is useful to be able to hash alone.
   // We need to skip the first 3 DWORDs of the RICH_SIGNATURE, which are DanS

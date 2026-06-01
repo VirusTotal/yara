@@ -635,6 +635,17 @@ int main(int argc, char** argv)
       }",
       "tests/data/weird_rich");
 
+  // The DanS marker sits one dword before Rich, so the header is shorter than
+  // RICH_SIGNATURE. This used to underflow the rich_count computation; now it
+  // is rejected and the file still parses as a PE.
+  assert_true_rule_file(
+      "import \"pe\" \
+      rule test { \
+        condition: \
+          pe.is_pe and pe.rich_signature.length == 4 \
+      }",
+      "tests/data/undersized_rich");
+
   assert_true_rule_file(
       "import \"pe\" \
       rule test { \
