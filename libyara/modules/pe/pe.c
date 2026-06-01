@@ -760,7 +760,7 @@ static int pe_collect_resources(
 {
   // Don't collect too many resources.
   if (pe->resources >= MAX_RESOURCES)
-    return RESOURCE_CALLBACK_CONTINUE;
+    return RESOURCE_CALLBACK_ABORT;
 
   yr_set_integer(
       yr_le32toh(rsrc_data->OffsetToData),
