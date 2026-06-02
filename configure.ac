@@ -51,6 +51,7 @@ AC_ARG_ENABLE([proc-scan],
   fi],
   [case $host_os in
     darwin*) CFLAGS="$CFLAGS -I/opt/local/include"
+             CFLAGS="$CFLAGS -I/opt/homebrew/Cellar/jansson/2.15/include"
              # Starting with Mac OS X 10.11 (El Capitan) the OpenSSL headers
              # are in /usr/local/opt/openssl/include
              CFLAGS="$CFLAGS -DUSE_MACH_PROC -I/usr/local/opt/openssl/include"
