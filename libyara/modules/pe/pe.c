@@ -1355,7 +1355,8 @@ static void* pe_parse_delayed_imports(PE* pe)
 
   import_descriptor = (PIMAGE_DELAYLOAD_DESCRIPTOR) (pe->data + offset);
 
-  for (; struct_fits_in_pe(pe, import_descriptor, IMAGE_DELAYLOAD_DESCRIPTOR);
+  for (; struct_fits_in_pe(pe, import_descriptor, IMAGE_DELAYLOAD_DESCRIPTOR) &&
+           num_imports < MAX_PE_IMPORTS;
        import_descriptor++)
   {
     // Check for the termination entry
@@ -1429,7 +1430,7 @@ static void* pe_parse_delayed_imports(PE* pe)
     uint64_t name_rva = ImportNameTableRVA;
     uint64_t func_rva = ImportAddressTableRVA;
 
-    for (;;)
+    for (;num_function_imports < MAX_PE_IMPORTS;)
     {
       uint64_t nameAddress = pe_parse_delay_import_pointer(
           pe, pointer_size, name_rva);

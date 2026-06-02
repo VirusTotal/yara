@@ -703,7 +703,7 @@ static char* get_type_def_or_ref_fullname(
 
     TYPESPEC_ROW spec_row;
     bool result = read_typespec(ctx, data, &spec_row);
-    if (result)
+    if (result && spec_row.Signature < ctx->blob_size)
     {
       const uint8_t* sig_data = ctx->blob_heap + spec_row.Signature;
 
@@ -1374,6 +1374,9 @@ static void parse_methods(
     parse_generic_params(ctx, true, methodlist + idx, &method_gen_params);
 
     // Read the blob entry with signature data
+    if (row.Signature >= ctx->blob_size)
+      continue;
+
     const uint8_t* sig_data = ctx->blob_heap + row.Signature;
 
     BLOB_PARSE_RESULT blob_res = dotnet_parse_blob_entry(ctx->pe, sig_data);
