@@ -24,14 +24,14 @@ int main(int argc, char** argv)
   assert_true_rule_blob(
       "import \"magic\" rule test { condition: \
       ( magic.type() contains \"MS-DOS\" or \
-        magic.type() contains \"PE32\" }",
+        magic.type() contains \"PE32\" ) }",
       PE32_FILE);
 
   assert_true_rule_blob(
       "import \"magic\" rule test { condition: \
       ( magic.type() contains \"MS-DOS executable\" or \
         magic.type() contains \"PE32+ executable\" or \
-        magic.type() contains \"PE32 executable\") }",
+        magic.type() contains \"PE32 executable\" ) }",
       PE32_FILE);
 
   assert_true_rule_blob(
