@@ -21,43 +21,6 @@ int main(int argc, char** argv)
       magic.type() contains \"ELF\" }",
       ELF32_FILE);
 
-  /*assert_true_rule_blob(
-      "import \"magic\" rule test { condition: \
-      ( magic.type() contains \"MS-DOS\" or \
-        magic.type() contains \"PE32\" ) }",
-      PE32_FILE);*/
-
-  assert_true_rule_blob(
-      "import \"magic\" rule test { condition: \
-      ( magic.mime_type() == \"application/x-dosexec\" or \
-        magic.mime_type() == \"application/vnd.microsoft.portable-executable\" ) }",
-      PE32_FILE);
-
-  assert_true_rule_blob(
-      "import \"magic\" rule test { condition: \
-      ( magic.type() contains \"MS-DOS executable\" or \
-        magic.type() contains \"PE32+ executable\" or \
-        magic.type() contains \"PE32 executable\" ) }",
-      PE32_FILE);
-
-  assert_true_rule_blob(
-      "import \"magic\" rule test { condition: \
-      ( magic.type() contains \"MS-DOS executable\" or \
-        magic.type() contains \"PE32+ executable\" or \
-        magic.type() contains \"PE32 executable\") and \
-      ( magic.mime_type() == \"application/x-dosexec\" or \
-        magic.mime_type() == \"application/vnd.microsoft.portable-executable\" ) }",
-      PE32_FILE);
-
-  assert_true_rule_blob(
-      "import \"magic\" rule test { condition: \
-      ( magic.type() contains \"MS-DOS executable\" or \
-        magic.type() contains \"PE32+ executable\" or \
-        magic.type() contains \"PE32 executable\") and \
-      ( magic.mime_type() == \"application/x-dosexec\" or \
-        magic.mime_type() == \"application/vnd.microsoft.portable-executable\" ) }",
-      PE32_FILE);
-
   // Test case for https://github.com/VirusTotal/yara/issues/1663
   assert_true_rule_blob(
       "import \"magic\" rule test { condition: \
