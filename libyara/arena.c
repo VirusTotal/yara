@@ -595,12 +595,17 @@ int yr_arena_load_stream(YR_STREAM* stream, YR_ARENA** arena)
 
   while (yr_stream_read(&reloc_ref, sizeof(reloc_ref), 1, stream) == 1)
   {
+    if (reloc_ref.buffer_id >= new_arena->num_buffers)
+    {
+      yr_arena_release(new_arena);
+      return ERROR_CORRUPT_FILE;
+    }
+
     YR_ARENA_BUFFER* b = &new_arena->buffers[reloc_ref.buffer_id];
 
-    if (b->data == NULL || 
+    if (b->data == NULL ||
         b->used < sizeof(void*) ||
         b->used > b->size ||
-        reloc_ref.buffer_id >= new_arena->num_buffers ||
         reloc_ref.offset > b->used - sizeof(void*))
     {
       yr_arena_release(new_arena);
