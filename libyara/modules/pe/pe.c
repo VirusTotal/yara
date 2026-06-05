@@ -2060,7 +2060,9 @@ const char* pe_get_section_full_name(
   uint64_t string_index = 0;
 
   // Calculate string index/offset in string table
-  for (int i = 1; i < IMAGE_SIZEOF_SHORT_NAME && isdigit(section_name[i]); i++)
+  for (int i = 1;
+       i < IMAGE_SIZEOF_SHORT_NAME && isdigit((unsigned char) section_name[i]);
+       i++)
     string_index = (string_index * 10) + (section_name[i] - '0');
 
   // Calculate string pointer
@@ -2819,7 +2821,7 @@ define_function(imphash)
       // Lowercase the whole thing.
 
       for (i = 0; i < final_name_len; i++)
-        final_name[i] = tolower(final_name[i]);
+        final_name[i] = tolower((unsigned char) final_name[i]);
 
       yr_md5_update(&ctx, final_name, final_name_len);
 

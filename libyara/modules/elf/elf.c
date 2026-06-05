@@ -132,7 +132,8 @@ define_function(telfhash)
 
     /* Convert it to lowercase */
     int j;
-    for (j = 0; name[j]; j++) clean_names[symbol_count][j] = tolower(name[j]);
+    for (j = 0; name[j]; j++)
+      clean_names[symbol_count][j] = tolower((unsigned char) name[j]);
 
     clean_names[symbol_count][j] = '\0';
 
@@ -227,7 +228,8 @@ define_function(import_md5)
 
     /* Convert it to lowercase */
     int j;
-    for (j = 0; name[j]; j++) clean_names[symbol_count][j] = tolower(name[j]);
+    for (j = 0; name[j]; j++)
+      clean_names[symbol_count][j] = tolower((unsigned char) name[j]);
 
     clean_names[symbol_count][j] = '\0';
 
