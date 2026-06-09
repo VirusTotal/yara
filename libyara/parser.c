@@ -1152,8 +1152,7 @@ int yr_parser_reduce_rule_declaration_phase_2(
 
   fixup = compiler->fixup_stack_head;
 
-  int32_t* jmp_offset_addr = (int32_t*) yr_arena_ref_to_ptr(
-      compiler->arena, &fixup->ref);
+  void* jmp_offset_addr = yr_arena_ref_to_ptr(compiler->arena, &fixup->ref);
 
   int32_t jmp_offset = yr_arena_get_current_offset(
                            compiler->arena, YR_CODE_SECTION) -

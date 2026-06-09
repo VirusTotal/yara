@@ -3701,8 +3701,8 @@ yyreduce:
 
         // The fixup entry has a reference to the jump offset that need
         // to be fixed, convert the address into a pointer.
-        int32_t* jmp_offset_addr = (int32_t*) yr_arena_ref_to_ptr(
-            compiler->arena, &fixup->ref);
+        void* jmp_offset_addr =
+            yr_arena_ref_to_ptr(compiler->arena, &fixup->ref);
 
         // The reference in the fixup entry points to the jump's offset
         // but the jump instruction is one byte before, that's why we add
@@ -3981,8 +3981,8 @@ yyreduce:
 
         fixup = compiler->fixup_stack_head;
 
-        int32_t* jmp_offset_addr = (int32_t*) yr_arena_ref_to_ptr(
-            compiler->arena, &fixup->ref);
+        void* jmp_offset_addr =
+            yr_arena_ref_to_ptr(compiler->arena, &fixup->ref);
 
         int32_t jmp_offset = \
             yr_arena_get_current_offset(compiler->arena, YR_CODE_SECTION) -
@@ -4038,8 +4038,8 @@ yyreduce:
             yr_arena_get_current_offset(compiler->arena, YR_CODE_SECTION) -
             fixup->ref.offset + 1;
 
-        int32_t* jmp_offset_addr = (int32_t*) yr_arena_ref_to_ptr(
-            compiler->arena, &fixup->ref);
+        void* jmp_offset_addr =
+            yr_arena_ref_to_ptr(compiler->arena, &fixup->ref);
 
         memcpy(jmp_offset_addr, &jmp_offset, sizeof(jmp_offset));
 
