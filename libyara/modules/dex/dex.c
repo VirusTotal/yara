@@ -963,6 +963,9 @@ void dex_parse(DEX* dex, uint64_t base_address)
     string_id_item_t* string_id_item =
         (string_id_item_t*) (dex->data + yr_le32toh(dex_header->string_ids_offset) + i * sizeof(string_id_item_t));
 
+    if (!struct_fits_in_dex(dex, string_id_item, string_id_item_t))
+      break;
+
 #ifdef DEBUG_DEX_MODULE
     printf(
         "[DEX] STRING ID item data_offset:0x%x\n",
@@ -1025,6 +1028,9 @@ void dex_parse(DEX* dex, uint64_t base_address)
     type_id_item_t* type_id_item =
         (type_id_item_t*) (dex->data + yr_le32toh(dex_header->type_ids_offset) + i * sizeof(type_id_item_t));
 
+    if (!struct_fits_in_dex(dex, type_id_item, type_id_item_t))
+      break;
+
     yr_set_integer(
         yr_le32toh(type_id_item->descriptor_idx),
         dex->object,
@@ -1047,6 +1053,9 @@ void dex_parse(DEX* dex, uint64_t base_address)
   {
     proto_id_item_t* proto_id_item =
         (proto_id_item_t*) (dex->data + yr_le32toh(dex_header->proto_ids_offset) + i * sizeof(proto_id_item_t));
+
+    if (!struct_fits_in_dex(dex, proto_id_item, proto_id_item_t))
+      break;
 
     yr_set_integer(
         yr_le32toh(proto_id_item->shorty_idx),
@@ -1081,6 +1090,9 @@ void dex_parse(DEX* dex, uint64_t base_address)
     field_id_item_t* field_id_item =
         (field_id_item_t*) (dex->data + yr_le32toh(dex_header->field_ids_offset) + i * sizeof(field_id_item_t));
 
+    if (!struct_fits_in_dex(dex, field_id_item, field_id_item_t))
+      break;
+
     yr_set_integer(
         yr_le16toh(field_id_item->class_idx),
         dex->object,
@@ -1113,6 +1125,9 @@ void dex_parse(DEX* dex, uint64_t base_address)
   {
     method_id_item_t* method_id_item =
         (method_id_item_t*) (dex->data + yr_le32toh(dex_header->method_ids_offset) + i * sizeof(method_id_item_t));
+
+    if (!struct_fits_in_dex(dex, method_id_item, method_id_item_t))
+      break;
 
     yr_set_integer(
         yr_le16toh(method_id_item->class_idx),
@@ -1199,6 +1214,9 @@ void dex_parse(DEX* dex, uint64_t base_address)
   {
     class_id_item_t* class_id_item =
         (class_id_item_t*) (dex->data + yr_le32toh(dex_header->class_defs_offset) + i * sizeof(class_id_item_t));
+
+    if (!struct_fits_in_dex(dex, class_id_item, class_id_item_t))
+      break;
 
 #ifdef DEBUG_DEX_MODULE
     printf(
