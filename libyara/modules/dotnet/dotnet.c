@@ -1362,6 +1362,9 @@ static void parse_methods(
     if (!result)
       continue;
 
+    if (row.Signature >= ctx->blob_size)
+      continue;  
+
     const char* name = pe_get_dotnet_string(
         ctx->pe, str_heap, str_size, row.Name);
 
@@ -1374,9 +1377,6 @@ static void parse_methods(
     parse_generic_params(ctx, true, methodlist + idx, &method_gen_params);
 
     // Read the blob entry with signature data
-    if (row.Signature >= ctx->blob_size)
-      continue;
-
     const uint8_t* sig_data = ctx->blob_heap + row.Signature;
 
     BLOB_PARSE_RESULT blob_res = dotnet_parse_blob_entry(ctx->pe, sig_data);
