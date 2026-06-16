@@ -39,6 +39,7 @@ order to avoid confusion with operating system threads.
 
 #include <assert.h>
 #include <string.h>
+#include <yara/arena.h>
 #include <yara/compiler.h>
 #include <yara/error.h>
 #include <yara/globals.h>
@@ -717,8 +718,8 @@ static int _yr_re_emit(
 
   RE_NODE* child;
 
-  int16_t* split_offset_addr = NULL;
-  int16_t* jmp_offset_addr = NULL;
+  void* split_offset_addr = NULL;
+  void* jmp_offset_addr = NULL;
 
   YR_ARENA_REF instruction_ref = YR_ARENA_NULL_REF;
   YR_ARENA_REF split_offset_ref;
@@ -918,8 +919,8 @@ static int _yr_re_emit(
     jmp_offset = (int16_t) (bookmark_1 - instruction_ref.offset);
 
     // Update split offset.
-    split_offset_addr = (int16_t*) yr_arena_ref_to_ptr(
-        emit_context->arena, &split_offset_ref);
+    split_offset_addr =
+        yr_arena_ref_to_ptr(emit_context->arena, &split_offset_ref);
 
     memcpy(split_offset_addr, &jmp_offset, sizeof(jmp_offset));
     break;
@@ -965,8 +966,8 @@ static int _yr_re_emit(
     jmp_offset = (int16_t) (bookmark_1 - instruction_ref.offset);
 
     // Update split offset.
-    split_offset_addr = (int16_t*) yr_arena_ref_to_ptr(
-        emit_context->arena, &split_offset_ref);
+    split_offset_addr =
+        yr_arena_ref_to_ptr(emit_context->arena, &split_offset_ref);
 
     memcpy(split_offset_addr, &jmp_offset, sizeof(jmp_offset));
 
@@ -982,8 +983,7 @@ static int _yr_re_emit(
     jmp_offset = (int16_t) (bookmark_1 - jmp_instruction_ref.offset);
 
     // Update offset for jmp instruction.
-    jmp_offset_addr = (int16_t*) yr_arena_ref_to_ptr(
-        emit_context->arena, &jmp_offset_ref);
+    jmp_offset_addr = yr_arena_ref_to_ptr(emit_context->arena, &jmp_offset_ref);
 
     memcpy(jmp_offset_addr, &jmp_offset, sizeof(jmp_offset));
     break;
@@ -1166,8 +1166,8 @@ static int _yr_re_emit(
       if (bookmark_2 - bookmark_1 > INT16_MAX)
         return ERROR_REGULAR_EXPRESSION_TOO_LARGE;
 
-      split_offset_addr = (int16_t*) yr_arena_ref_to_ptr(
-          emit_context->arena, &split_offset_ref);
+      split_offset_addr =
+          yr_arena_ref_to_ptr(emit_context->arena, &split_offset_ref);
 
       jmp_offset = (int16_t) (bookmark_2 - bookmark_1);
 
