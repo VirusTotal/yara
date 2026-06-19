@@ -1642,7 +1642,7 @@ static void pe_parse_exports(PE* pe)
     return;
 
   number_of_names = yr_min(
-      yr_le32toh(yr_le32toh(exports->NumberOfNames)), number_of_exports);
+      yr_le32toh(exports->NumberOfNames), number_of_exports);
 
   // Mapping out the exports is a bit janky. We start with the export address
   // array. The index from that array plus the ordinal base is the ordinal for
