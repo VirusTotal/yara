@@ -44,6 +44,7 @@ order to avoid confusion with operating system threads.
 #include <yara/error.h>
 #include <yara/globals.h>
 #include <yara/hex_lexer.h>
+#include <yara/libyara.h>
 #include <yara/limits.h>
 #include <yara/mem.h>
 #include <yara/re.h>
@@ -1524,7 +1525,7 @@ static int _yr_re_fiber_sync(
 
         branch_b->ip += jmp_len;
 
-#ifdef YR_PARANOID_MODE
+#if YR_PARANOID_EXEC
         // In normal conditions this should never happen. But with compiled
         // rules that has been hand-crafted by a malicious actor this could
         // happen.

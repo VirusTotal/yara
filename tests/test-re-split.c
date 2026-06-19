@@ -28,9 +28,69 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include <stdio.h>
+#include <string.h>
 #include <yara.h>
 
 #include "util.h"
+
+static int re_match_callback(
+    const uint8_t* match,
+    int match_length,
+    int flags,
+    void* args)
+{
+  return 0;
+}
+
+// A compiled rule hand-crafted by a malicious actor can carry a regexp whose
+// SPLIT instructions reference more distinct split ids than the compiler would
+// ever emit (it caps them at RE_MAX_SPLIT_ID). _yr_re_fiber_sync tracks the
+// executed split ids in an on-stack array of RE_MAX_SPLIT_ID entries, so such a
+// stream must be rejected instead of writing past that array.
+static void test_split_id_overflow(void)
+{
+  int count = RE_MAX_SPLIT_ID + 64;
+  uint8_t code[(RE_MAX_SPLIT_ID + 64) * 4 + 1];
+
+  // A run of SPLIT_A instructions, each with a distinct split id and a branch
+  // that jumps to the trailing MATCH.
+  for (int i = 0; i < count; i++)
+  {
+    int16_t offset = (int16_t) ((count - i) * 4);
+    code[i * 4 + 0] = RE_OPCODE_SPLIT_A;
+    code[i * 4 + 1] = (uint8_t) i;
+    memcpy(code + i * 4 + 2, &offset, sizeof(offset));
+  }
+  code[count * 4] = RE_OPCODE_MATCH;
+
+  YR_SCAN_CONTEXT context;
+  memset(&context, 0, sizeof(context));
+
+  uint8_t input[1] = {0};
+  int matches = 0;
+
+  int result = yr_re_exec(
+      &context,
+      code,
+      input,
+      sizeof(input),
+      0,
+      RE_FLAGS_SCAN,
+      re_match_callback,
+      NULL,
+      &matches);
+
+  assert(result == ERROR_INTERNAL_FATAL_ERROR);
+
+  RE_FIBER* fiber = context.re_fiber_pool.fibers.head;
+
+  while (fiber != NULL)
+  {
+    RE_FIBER* next = fiber->next;
+    yr_free(fiber);
+    fiber = next;
+  }
+}
 
 int main(int argc, char** argv)
 {
@@ -81,6 +141,9 @@ int main(int argc, char** argv)
   assert(re_ast_remain == NULL);
 
   yr_re_ast_destroy(re_ast);
+
+  test_split_id_overflow();
+
   yr_finalize();
 
   YR_DEBUG_FPRINTF(
