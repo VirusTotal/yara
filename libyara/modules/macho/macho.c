@@ -729,7 +729,7 @@ void macho_parse_fat_file(
   uint32_t count = yr_be32toh(header->nfat_arch);
   yr_set_integer(count, object, "nfat_arch");
 
-  if (size < sizeof(yr_fat_header_t) + count * fat_arch_sz)
+  if (count > (size - sizeof(yr_fat_header_t)) / fat_arch_sz)
     return;
 
   yr_fat_arch_64_t arch;
