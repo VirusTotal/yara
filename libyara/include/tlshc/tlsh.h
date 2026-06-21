@@ -55,6 +55,8 @@ void tlsh_free(Tlsh* tlsh);
 void tlsh_reset(Tlsh* tlsh);
 int tlsh_update(Tlsh* tlsh, const unsigned char* data, unsigned int len);
 int tlsh_final(Tlsh* tlsh, const unsigned char* data, unsigned int len, int tlsh_option);
+int tlsh_total_diff(Tlsh* tlsh, Tlsh* other, bool len_diff);
+int tlsh_from_tlsh_str(Tlsh* tlsh, const char* str);
 const char* tlsh_get_hash(Tlsh* tlsh, bool showvers);
 
 #ifdef __cplusplus
