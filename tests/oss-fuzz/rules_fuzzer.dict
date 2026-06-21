@@ -98,6 +98,7 @@
 "pe.language"
 "pe.imphash"
 "pe.section_index"
+"pe.is_exe()"
 "pe.is_dll()"
 "pe.is_32bit()"
 "pe.is_64bit()"
