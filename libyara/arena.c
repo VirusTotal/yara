@@ -604,9 +604,9 @@ int yr_arena_load_stream(YR_STREAM* stream, YR_ARENA** arena)
     YR_ARENA_BUFFER* b = &new_arena->buffers[reloc_ref.buffer_id];
 
     if (b->data == NULL ||
-        b->used < sizeof(void*) ||
+        b->used < sizeof(YR_ARENA_REF) ||
         b->used > b->size ||
-        reloc_ref.offset > b->used - sizeof(void*))
+        reloc_ref.offset > b->used - sizeof(YR_ARENA_REF))
     {
       yr_arena_release(new_arena);
       return ERROR_CORRUPT_FILE;
