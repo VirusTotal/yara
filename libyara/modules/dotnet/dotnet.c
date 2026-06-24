@@ -703,7 +703,7 @@ static char* get_type_def_or_ref_fullname(
 
     TYPESPEC_ROW spec_row;
     bool result = read_typespec(ctx, data, &spec_row);
-    if (result)
+    if (result && spec_row.Signature < ctx->blob_size)
     {
       const uint8_t* sig_data = ctx->blob_heap + spec_row.Signature;
 
@@ -1361,6 +1361,9 @@ static void parse_methods(
     bool result = read_methoddef(ctx, data, &row);
     if (!result)
       continue;
+
+    if (row.Signature >= ctx->blob_size)
+      continue;  
 
     const char* name = pe_get_dotnet_string(
         ctx->pe, str_heap, str_size, row.Name);
