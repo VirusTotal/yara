@@ -141,6 +141,17 @@ int main(int argc, char** argv)
       "tests/data/"
       "bad_dotnet_pe");
 
+  // #GUID stream offset is not 4-byte aligned, the guid is read through the
+  // unaligned helpers so this must parse cleanly (traps under -fsanitize=
+  // alignment otherwise).
+  assert_true_rule_file(
+      "import \"dotnet\" \
+      rule test { \
+        condition: \
+          dotnet.is_dotnet \
+      }",
+      "tests/data/dotnet_misaligned_guid");
+
   yr_finalize();
 
   YR_DEBUG_FPRINTF(

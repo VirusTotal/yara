@@ -45,6 +45,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <yara/pe.h>
 #include <yara/pe_utils.h>
 #include <yara/strutils.h>
+#include <yara/unaligned.h>
 #include <yara/utils.h>
 
 #define MODULE_NAME pe
@@ -1311,9 +1312,9 @@ uint64_t pe_parse_delay_import_pointer(
     return YR_UNDEFINED;
 
   if (IS_64BITS_PE(pe))
-    return yr_le64toh(*(uint64_t*) data);
+    return yr_le64toh(yr_unaligned_u64(data));
   else
-    return yr_le32toh(*(uint32_t*) data);
+    return yr_le32toh(yr_unaligned_u32(data));
 }
 
 static void* pe_parse_delayed_imports(PE* pe)
