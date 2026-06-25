@@ -616,6 +616,18 @@ int yr_arena_load_stream(YR_STREAM* stream, YR_ARENA** arena)
 
     memcpy(&ref, b->data + reloc_ref.offset, sizeof(ref));
 
+    // ref is the relocation target read from the loaded buffer, so its
+    // buffer_id and offset come straight from the stream. yr_arena_get_ptr
+    // only guards them with assert, which is a no-op under NDEBUG and would
+    // index past the buffers array, so reject an out-of-range target here.
+    if (!YR_ARENA_IS_NULL_REF(ref) &&
+        (ref.buffer_id >= new_arena->num_buffers ||
+         ref.offset > new_arena->buffers[ref.buffer_id].used))
+    {
+      yr_arena_release(new_arena);
+      return ERROR_CORRUPT_FILE;
+    }
+
     void* reloc_ptr = yr_arena_ref_to_ptr(new_arena, &ref);
 
     memcpy(b->data + reloc_ref.offset, &reloc_ptr, sizeof(reloc_ptr));
