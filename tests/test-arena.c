@@ -221,6 +221,61 @@ static void corrupt_stream_tests()
   yr_finalize();
 }
 
+// Each relocation entry occupies an 8-byte YR_ARENA_REF in the buffer, so the
+// loader reads sizeof(YR_ARENA_REF) bytes at the entry offset. The bound check
+// must reserve that many bytes; reserving only sizeof(void*) (4 bytes on 32-bit
+// builds) lets an offset in the last 8 bytes of a fully used buffer through and
+// the 8-byte read then runs past the allocation.
+static void corrupt_reloc_offset_tests()
+{
+  yr_initialize();
+
+  // Matches the initial buffer size used by yr_arena_load_stream so the loaded
+  // buffer's used size equals its allocated size, leaving no slack after it.
+  const uint32_t buffer_size = 10485;
+
+  uint8_t data[6 + 12 + 10485 + 8];
+  size_t n = 0;
+
+  // YR_ARENA_FILE_HEADER: magic, version, num_buffers.
+  memcpy(data + n, "YARA", 4); n += 4;
+  data[n++] = YR_ARENA_FILE_VERSION;
+  data[n++] = 1;
+
+  // One YR_ARENA_FILE_BUFFER: offset (8) and size (4).
+  uint64_t offset = 0; memcpy(data + n, &offset, 8); n += 8;
+  memcpy(data + n, &buffer_size, 4); n += 4;
+
+  // Buffer 0 contents.
+  memset(data + n, 0, buffer_size); n += buffer_size;
+
+  // A relocation entry pointing 4 bytes before the end of the buffer. The
+  // 8-byte YR_ARENA_REF read at this offset reaches 4 bytes past the buffer,
+  // which the old sizeof(void*) bound failed to reject on 32-bit builds.
+  uint32_t buffer_id = 0;
+  uint32_t reloc_offset = buffer_size - 4;
+  memcpy(data + n, &buffer_id, 4); n += 4;
+  memcpy(data + n, &reloc_offset, 4); n += 4;
+
+  FILE* fh = fopen("test-arena-corrupt-reloc", "w+b");
+  assert_true_expr(fh != NULL);
+  fwrite(data, 1, n, fh);
+  fflush(fh);
+  fseek(fh, 0, SEEK_SET);
+
+  YR_STREAM stream;
+  stream.user_data = fh;
+  stream.read = (YR_STREAM_READ_FUNC) fread;
+  stream.write = (YR_STREAM_WRITE_FUNC) fwrite;
+
+  YR_ARENA* arena = NULL;
+  assert_true_expr(
+      yr_arena_load_stream(&stream, &arena) == ERROR_CORRUPT_FILE);
+
+  fclose(fh);
+  yr_finalize();
+}
+
 int main(int argc, char** argv)
 {
   int result = 0;
@@ -231,6 +286,7 @@ int main(int argc, char** argv)
   basic_tests();
   advanced_tests();
   corrupt_stream_tests();
+  corrupt_reloc_offset_tests();
 
   YR_DEBUG_FPRINTF(
       1, stderr, "} = %d // %s() in %s\n", result, __FUNCTION__, argv[0]);
