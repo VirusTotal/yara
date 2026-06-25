@@ -171,6 +171,18 @@ int main(int argc, char** argv)
       }",
       ELF32_MIPS_FILE);
 
+  // A big-endian symtab whose sh_link is past the real section count must not
+  // be parsed against an out-of-range section header. Before the e_shnum byte
+  // swap fix a little-endian host accepted the bogus link and reported a
+  // phantom symbol named "ABCD".
+  assert_false_rule_blob(
+      "import \"elf\" \
+      rule test { \
+        condition: \
+          elf.symtab_entries == 1 and elf.symtab[0].name == \"ABCD\" \
+      }",
+      ELF32_BE_BAD_SYMTAB_LINK);
+
   assert_true_rule_blob(
       "import \"elf\" \
       rule test { \

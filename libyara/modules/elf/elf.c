@@ -559,7 +559,8 @@ static const char* str_table_entry(
         }                                                                                 \
                                                                                           \
         if (yr_##bo##32toh(section->type) == ELF_SHT_SYMTAB &&                            \
-            yr_##bo##32toh(section->link) < elf->sh_entry_count)                          \
+            yr_##bo##32toh(section->link) <                                               \
+                yr_##bo##16toh(elf->sh_entry_count))                                      \
         {                                                                                 \
           elf##bits##_section_header_t* string_section = section_table +                  \
                                                          yr_##bo##32toh(                  \
@@ -577,7 +578,8 @@ static const char* str_table_entry(
         }                                                                                 \
                                                                                           \
         if (yr_##bo##32toh(section->type) == ELF_SHT_DYNSYM &&                            \
-            yr_##bo##32toh(section->link) < elf->sh_entry_count)                          \
+            yr_##bo##32toh(section->link) <                                               \
+                yr_##bo##16toh(elf->sh_entry_count))                                      \
         {                                                                                 \
           elf##bits##_section_header_t* dynstr_section = section_table +                  \
                                                          yr_##bo##32toh(                  \
