@@ -342,6 +342,14 @@ static void test_arithmetic_operators()
       "rule test { condition: -4611686018427387904 * -2 }",
       ERROR_INTEGER_OVERFLOW);
 
+  assert_error(  // INT64_MIN * INT64_MAX overflows
+      "rule test { condition: ~9223372036854775807 * 9223372036854775807 }",
+      ERROR_INTEGER_OVERFLOW);
+
+  assert_error(  // INT64_MIN \ -1 overflows
+      "rule test { condition: ~9223372036854775807 \\ -1 }",
+      ERROR_INTEGER_OVERFLOW);
+
   YR_DEBUG_FPRINTF(1, stderr, "} // %s()\n", __FUNCTION__);
 }
 
