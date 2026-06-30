@@ -959,7 +959,7 @@ static const yytype_int16 yyrline[] =
     2419,  2429,  2444,  2443,  2456,  2457,  2462,  2495,  2520,  2576,
     2583,  2589,  2595,  2605,  2609,  2617,  2629,  2643,  2650,  2657,
     2682,  2694,  2706,  2718,  2733,  2745,  2760,  2803,  2824,  2859,
-    2894,  2928,  2953,  2970,  2980,  2990,  3000,  3010,  3030,  3050
+    2894,  2929,  2964,  2981,  2991,  3001,  3011,  3021,  3041,  3061
 };
 #endif
 
@@ -3701,8 +3701,8 @@ yyreduce:
 
         // The fixup entry has a reference to the jump offset that need
         // to be fixed, convert the address into a pointer.
-        void* jmp_offset_addr =
-            yr_arena_ref_to_ptr(compiler->arena, &fixup->ref);
+        void* jmp_offset_addr = yr_arena_ref_to_ptr(
+            compiler->arena, &fixup->ref);
 
         // The reference in the fixup entry points to the jump's offset
         // but the jump instruction is one byte before, that's why we add
@@ -3981,8 +3981,8 @@ yyreduce:
 
         fixup = compiler->fixup_stack_head;
 
-        void* jmp_offset_addr =
-            yr_arena_ref_to_ptr(compiler->arena, &fixup->ref);
+        void* jmp_offset_addr = yr_arena_ref_to_ptr(
+            compiler->arena, &fixup->ref);
 
         int32_t jmp_offset = \
             yr_arena_get_current_offset(compiler->arena, YR_CODE_SECTION) -
@@ -4038,8 +4038,8 @@ yyreduce:
             yr_arena_get_current_offset(compiler->arena, YR_CODE_SECTION) -
             fixup->ref.offset + 1;
 
-        void* jmp_offset_addr =
-            yr_arena_ref_to_ptr(compiler->arena, &fixup->ref);
+        void* jmp_offset_addr = yr_arena_ref_to_ptr(
+            compiler->arena, &fixup->ref);
 
         memcpy(jmp_offset_addr, &jmp_offset, sizeof(jmp_offset));
 
@@ -5002,7 +5002,7 @@ yyreduce:
         {
           (yyval.expression).type = EXPRESSION_TYPE_INTEGER;
           (yyval.expression).value.integer = ((yyvsp[0].expression).value.integer == YR_UNDEFINED) ?
-              YR_UNDEFINED : -((yyvsp[0].expression).value.integer);
+              YR_UNDEFINED : (int64_t) (0 - (uint64_t) (yyvsp[0].expression).value.integer);
           result = yr_parser_emit(yyscanner, OP_INT_MINUS, NULL);
         }
         else if ((yyvsp[0].expression).type == EXPRESSION_TYPE_FLOAT)
@@ -5106,10 +5106,11 @@ yyreduce:
           int64_t i1 = (yyvsp[-2].expression).value.integer;
           int64_t i2 = (yyvsp[0].expression).value.integer;
 
+          uint64_t m1 = (i1 < 0) ? 0 - (uint64_t) i1 : (uint64_t) i1;
+          uint64_t m2 = (i2 < 0) ? 0 - (uint64_t) i2 : (uint64_t) i2;
+
           if (!IS_UNDEFINED(i1) && !IS_UNDEFINED(i2) &&
-              (
-                i2 != 0 && llabs(i1) > INT64_MAX / llabs(i2)
-              ))
+              i2 != 0 && m1 > (uint64_t) INT64_MAX / m2)
           {
             yr_compiler_set_error_extra_info_fmt(
                 compiler, "%" PRId64 " * %" PRId64, i1, i2);
@@ -5129,11 +5130,11 @@ yyreduce:
 
         fail_if_error(result);
       }
-#line 5133 "libyara/grammar.c"
+#line 5134 "libyara/grammar.c"
     break;
 
   case 161: /* primary_expression: primary_expression '\\' primary_expression  */
-#line 2929 "libyara/grammar.y"
+#line 2930 "libyara/grammar.y"
       {
         int result = yr_parser_reduce_operation(
             yyscanner, "\\", (yyvsp[-2].expression), (yyvsp[0].expression));
@@ -5141,14 +5142,24 @@ yyreduce:
         if ((yyvsp[-2].expression).type == EXPRESSION_TYPE_INTEGER &&
             (yyvsp[0].expression).type == EXPRESSION_TYPE_INTEGER)
         {
-          if ((yyvsp[0].expression).value.integer != 0)
+          int64_t i1 = (yyvsp[-2].expression).value.integer;
+          int64_t i2 = (yyvsp[0].expression).value.integer;
+
+          if (i2 == 0)
           {
-            (yyval.expression).value.integer = OPERATION(/, (yyvsp[-2].expression).value.integer, (yyvsp[0].expression).value.integer);
-            (yyval.expression).type = EXPRESSION_TYPE_INTEGER;
+            result = ERROR_DIVISION_BY_ZERO;
+          }
+          else if (i1 == INT64_MIN && i2 == -1)
+          {
+            yr_compiler_set_error_extra_info_fmt(
+                compiler, "%" PRId64 " \\ %" PRId64, i1, i2);
+
+            result = ERROR_INTEGER_OVERFLOW;
           }
           else
           {
-            result = ERROR_DIVISION_BY_ZERO;
+            (yyval.expression).value.integer = OPERATION(/, i1, i2);
+            (yyval.expression).type = EXPRESSION_TYPE_INTEGER;
           }
         }
         else
@@ -5158,11 +5169,11 @@ yyreduce:
 
         fail_if_error(result);
       }
-#line 5162 "libyara/grammar.c"
+#line 5173 "libyara/grammar.c"
     break;
 
   case 162: /* primary_expression: primary_expression '%' primary_expression  */
-#line 2954 "libyara/grammar.y"
+#line 2965 "libyara/grammar.y"
       {
         check_type((yyvsp[-2].expression), EXPRESSION_TYPE_INTEGER, "%");
         check_type((yyvsp[0].expression), EXPRESSION_TYPE_INTEGER, "%");
@@ -5179,11 +5190,11 @@ yyreduce:
           fail_if_error(ERROR_DIVISION_BY_ZERO);
         }
       }
-#line 5183 "libyara/grammar.c"
+#line 5194 "libyara/grammar.c"
     break;
 
   case 163: /* primary_expression: primary_expression '^' primary_expression  */
-#line 2971 "libyara/grammar.y"
+#line 2982 "libyara/grammar.y"
       {
         check_type((yyvsp[-2].expression), EXPRESSION_TYPE_INTEGER, "^");
         check_type((yyvsp[0].expression), EXPRESSION_TYPE_INTEGER, "^");
@@ -5193,11 +5204,11 @@ yyreduce:
         (yyval.expression).type = EXPRESSION_TYPE_INTEGER;
         (yyval.expression).value.integer = OPERATION(^, (yyvsp[-2].expression).value.integer, (yyvsp[0].expression).value.integer);
       }
-#line 5197 "libyara/grammar.c"
+#line 5208 "libyara/grammar.c"
     break;
 
   case 164: /* primary_expression: primary_expression '&' primary_expression  */
-#line 2981 "libyara/grammar.y"
+#line 2992 "libyara/grammar.y"
       {
         check_type((yyvsp[-2].expression), EXPRESSION_TYPE_INTEGER, "^");
         check_type((yyvsp[0].expression), EXPRESSION_TYPE_INTEGER, "^");
@@ -5207,11 +5218,11 @@ yyreduce:
         (yyval.expression).type = EXPRESSION_TYPE_INTEGER;
         (yyval.expression).value.integer = OPERATION(&, (yyvsp[-2].expression).value.integer, (yyvsp[0].expression).value.integer);
       }
-#line 5211 "libyara/grammar.c"
+#line 5222 "libyara/grammar.c"
     break;
 
   case 165: /* primary_expression: primary_expression '|' primary_expression  */
-#line 2991 "libyara/grammar.y"
+#line 3002 "libyara/grammar.y"
       {
         check_type((yyvsp[-2].expression), EXPRESSION_TYPE_INTEGER, "|");
         check_type((yyvsp[0].expression), EXPRESSION_TYPE_INTEGER, "|");
@@ -5221,11 +5232,11 @@ yyreduce:
         (yyval.expression).type = EXPRESSION_TYPE_INTEGER;
         (yyval.expression).value.integer = OPERATION(|, (yyvsp[-2].expression).value.integer, (yyvsp[0].expression).value.integer);
       }
-#line 5225 "libyara/grammar.c"
+#line 5236 "libyara/grammar.c"
     break;
 
   case 166: /* primary_expression: '~' primary_expression  */
-#line 3001 "libyara/grammar.y"
+#line 3012 "libyara/grammar.y"
       {
         check_type((yyvsp[0].expression), EXPRESSION_TYPE_INTEGER, "~");
 
@@ -5235,11 +5246,11 @@ yyreduce:
         (yyval.expression).value.integer = ((yyvsp[0].expression).value.integer == YR_UNDEFINED) ?
             YR_UNDEFINED : ~((yyvsp[0].expression).value.integer);
       }
-#line 5239 "libyara/grammar.c"
+#line 5250 "libyara/grammar.c"
     break;
 
   case 167: /* primary_expression: primary_expression "<<" primary_expression  */
-#line 3011 "libyara/grammar.y"
+#line 3022 "libyara/grammar.y"
       {
         int result;
 
@@ -5259,11 +5270,11 @@ yyreduce:
 
         fail_if_error(result);
       }
-#line 5263 "libyara/grammar.c"
+#line 5274 "libyara/grammar.c"
     break;
 
   case 168: /* primary_expression: primary_expression ">>" primary_expression  */
-#line 3031 "libyara/grammar.y"
+#line 3042 "libyara/grammar.y"
       {
         int result;
 
@@ -5283,19 +5294,19 @@ yyreduce:
 
         fail_if_error(result);
       }
-#line 5287 "libyara/grammar.c"
+#line 5298 "libyara/grammar.c"
     break;
 
   case 169: /* primary_expression: regexp  */
-#line 3051 "libyara/grammar.y"
+#line 3062 "libyara/grammar.y"
       {
         (yyval.expression) = (yyvsp[0].expression);
       }
-#line 5295 "libyara/grammar.c"
+#line 5306 "libyara/grammar.c"
     break;
 
 
-#line 5299 "libyara/grammar.c"
+#line 5310 "libyara/grammar.c"
 
       default: break;
     }
@@ -5519,5 +5530,5 @@ yyreturnlab:
   return yyresult;
 }
 
-#line 3056 "libyara/grammar.y"
+#line 3067 "libyara/grammar.y"
 

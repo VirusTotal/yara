@@ -2810,7 +2810,7 @@ primary_expression
         {
           $$.type = EXPRESSION_TYPE_INTEGER;
           $$.value.integer = ($2.value.integer == YR_UNDEFINED) ?
-              YR_UNDEFINED : -($2.value.integer);
+              YR_UNDEFINED : (int64_t) (0 - (uint64_t) $2.value.integer);
           result = yr_parser_emit(yyscanner, OP_INT_MINUS, NULL);
         }
         else if ($2.type == EXPRESSION_TYPE_FLOAT)
@@ -2902,10 +2902,11 @@ primary_expression
           int64_t i1 = $1.value.integer;
           int64_t i2 = $3.value.integer;
 
+          uint64_t m1 = (i1 < 0) ? 0 - (uint64_t) i1 : (uint64_t) i1;
+          uint64_t m2 = (i2 < 0) ? 0 - (uint64_t) i2 : (uint64_t) i2;
+
           if (!IS_UNDEFINED(i1) && !IS_UNDEFINED(i2) &&
-              (
-                i2 != 0 && llabs(i1) > INT64_MAX / llabs(i2)
-              ))
+              i2 != 0 && m1 > (uint64_t) INT64_MAX / m2)
           {
             yr_compiler_set_error_extra_info_fmt(
                 compiler, "%" PRId64 " * %" PRId64, i1, i2);
@@ -2933,14 +2934,24 @@ primary_expression
         if ($1.type == EXPRESSION_TYPE_INTEGER &&
             $3.type == EXPRESSION_TYPE_INTEGER)
         {
-          if ($3.value.integer != 0)
+          int64_t i1 = $1.value.integer;
+          int64_t i2 = $3.value.integer;
+
+          if (i2 == 0)
           {
-            $$.value.integer = OPERATION(/, $1.value.integer, $3.value.integer);
-            $$.type = EXPRESSION_TYPE_INTEGER;
+            result = ERROR_DIVISION_BY_ZERO;
+          }
+          else if (i1 == INT64_MIN && i2 == -1)
+          {
+            yr_compiler_set_error_extra_info_fmt(
+                compiler, "%" PRId64 " \\ %" PRId64, i1, i2);
+
+            result = ERROR_INTEGER_OVERFLOW;
           }
           else
           {
-            result = ERROR_DIVISION_BY_ZERO;
+            $$.value.integer = OPERATION(/, i1, i2);
+            $$.type = EXPRESSION_TYPE_INTEGER;
           }
         }
         else
