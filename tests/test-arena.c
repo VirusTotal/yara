@@ -276,6 +276,60 @@ static void corrupt_reloc_offset_tests()
   yr_finalize();
 }
 
+// The 8 bytes a relocation entry points at hold a YR_ARENA_REF that the loader
+// converts back into a pointer with yr_arena_ref_to_ptr. That target buffer_id
+// and offset also come from the stream, but yr_arena_get_ptr only guards them
+// with assert (a no-op under NDEBUG), so an out-of-range target indexes past
+// the buffers array. The loader must reject it as corrupt instead.
+static void corrupt_reloc_target_tests()
+{
+  yr_initialize();
+
+  uint8_t data[64];
+  size_t n = 0;
+
+  // YR_ARENA_FILE_HEADER: magic, version, num_buffers.
+  memcpy(data + n, "YARA", 4); n += 4;
+  data[n++] = YR_ARENA_FILE_VERSION;
+  data[n++] = 1;
+
+  // One YR_ARENA_FILE_BUFFER: offset (8) and size (4).
+  uint64_t offset = 0; memcpy(data + n, &offset, 8); n += 8;
+  uint32_t size = 8; memcpy(data + n, &size, 4); n += 4;
+
+  // Buffer 0 contents: a YR_ARENA_REF whose buffer_id is well beyond
+  // num_buffers. This is the relocation target read back during loading.
+  uint32_t target_buffer_id = 0x41414141;
+  uint32_t target_offset = 0;
+  memcpy(data + n, &target_buffer_id, 4); n += 4;
+  memcpy(data + n, &target_offset, 4); n += 4;
+
+  // A valid relocation entry pointing at the start of buffer 0, so the loader
+  // reaches the bad target ref stored in the buffer.
+  uint32_t buffer_id = 0;
+  uint32_t reloc_offset = 0;
+  memcpy(data + n, &buffer_id, 4); n += 4;
+  memcpy(data + n, &reloc_offset, 4); n += 4;
+
+  FILE* fh = fopen("test-arena-corrupt-reloc-target", "w+b");
+  assert_true_expr(fh != NULL);
+  fwrite(data, 1, n, fh);
+  fflush(fh);
+  fseek(fh, 0, SEEK_SET);
+
+  YR_STREAM stream;
+  stream.user_data = fh;
+  stream.read = (YR_STREAM_READ_FUNC) fread;
+  stream.write = (YR_STREAM_WRITE_FUNC) fwrite;
+
+  YR_ARENA* arena = NULL;
+  assert_true_expr(
+      yr_arena_load_stream(&stream, &arena) == ERROR_CORRUPT_FILE);
+
+  fclose(fh);
+  yr_finalize();
+}
+
 int main(int argc, char** argv)
 {
   int result = 0;
@@ -287,6 +341,7 @@ int main(int argc, char** argv)
   advanced_tests();
   corrupt_stream_tests();
   corrupt_reloc_offset_tests();
+  corrupt_reloc_target_tests();
 
   YR_DEBUG_FPRINTF(
       1, stderr, "} = %d // %s() in %s\n", result, __FUNCTION__, argv[0]);
