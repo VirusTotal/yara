@@ -30,6 +30,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <assert.h>
 #include <stdarg.h>
 #include <stddef.h>
+#include <string.h>
 #include <yara/arena.h>
 #include <yara/error.h>
 #include <yara/mem.h>
@@ -184,19 +185,17 @@ static int _yr_arena_allocate_memory(
                             ? new_data
                             : arena->buffers[reloc->buffer_id].data;
 
-        // reloc_address holds the address inside the buffer where the pointer
-        // to be relocated resides.
-        void** reloc_address = (void**) (base + reloc->offset);
-
         // reloc_target is the value of the relocatable pointer.
-        void* reloc_target = *reloc_address;
+        void* reloc_target;
+        memcpy(&reloc_target, base + reloc->offset, sizeof(reloc_target));
 
         if ((uint8_t*) reloc_target >= b->data &&
             (uint8_t*) reloc_target < b->data + b->used)
         {
           // reloc_target points to some data inside the buffer being moved, so
           // the pointer needs to be adjusted.
-          *reloc_address = (uint8_t*) reloc_target - b->data + new_data;
+          void* new_target = (uint8_t*) reloc_target - b->data + new_data;
+          memcpy(base + reloc->offset, &new_target, sizeof(new_target));
         }
 
         reloc = reloc->next;
