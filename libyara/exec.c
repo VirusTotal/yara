@@ -577,6 +577,17 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
       // items in reverse order.
       pop(r1);
 
+      // The count comes from the compiled rules and a hand-crafted file can
+      // set it to a value that overflows the allocation size below or makes
+      // the loop pop past the stack. It can't be larger than the number of
+      // items currently on the stack.
+      if (r1.i < 0 || (uint64_t) r1.i > stack.sp)
+      {
+        result = ERROR_INTERNAL_FATAL_ERROR;
+        stop = true;
+        break;
+      }
+
       r3.p = yr_notebook_alloc(
           it_notebook, sizeof(YR_ITERATOR) + sizeof(uint64_t) * (size_t) r1.i);
 
@@ -610,6 +621,17 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
           __FUNCTION__);
 
       pop(r1);
+
+      // One extra value (the undefined string) is popped below, so the count
+      // must be strictly smaller than the number of items on the stack. A
+      // hand-crafted count would otherwise overflow the allocation or pop past
+      // the stack.
+      if (r1.i < 0 || (uint64_t) r1.i >= stack.sp)
+      {
+        result = ERROR_INTERNAL_FATAL_ERROR;
+        stop = true;
+        break;
+      }
 
       r3.p = yr_notebook_alloc(
           it_notebook,
@@ -647,6 +669,16 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
           __FUNCTION__);
 
       pop(r1);
+
+      // The count comes from the compiled rules and can't be larger than the
+      // number of items on the stack, otherwise the allocation below overflows
+      // or the loop pops past the stack.
+      if (r1.i < 0 || (uint64_t) r1.i > stack.sp)
+      {
+        result = ERROR_INTERNAL_FATAL_ERROR;
+        stop = true;
+        break;
+      }
 
       r3.p = yr_notebook_alloc(
           it_notebook,
