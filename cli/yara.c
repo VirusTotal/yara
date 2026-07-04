@@ -519,7 +519,7 @@ static int scan_dir(const char_t* dir, SCAN_OPTIONS* scan_opts)
         {
           result = file_queue_put(path, scan_opts->deadline);
         }
-        else
+        else if (!ignore_warnings)
         {
           _ftprintf(
               stderr,
@@ -719,7 +719,7 @@ static int scan_dir(const char* dir, SCAN_OPTIONS* scan_opts)
           {
             result = file_queue_put(full_path, scan_opts->deadline);
           }
-          else
+          else if (!ignore_warnings)
           {
             fprintf(
                 stderr,
