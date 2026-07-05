@@ -257,9 +257,6 @@ int args_parse(args_option_t* options, int argc, const char_t** argv)
     i++;
   }
 
-  // Initialize to NULL the value pointers for all options.
-  for (; options->type != ARGS_OPT_END; options++) options->value = NULL;
-
   return o;
 }
 
@@ -298,11 +295,21 @@ void args_print_usage(args_option_t* options, int help_alignment)
 
 void args_free(args_option_t* options)
 {
+#ifdef _UNICODE
+  // On Windows the string values stored by args_parse_option are ANSI
+  // copies allocated by unicode_to_ansi(), so they must be released here.
+  // On non-Windows builds the string values point directly into argv,
+  // there's nothing to free.
   for (; options->type != ARGS_OPT_END; options++)
   {
-    if (options->type == ARGS_OPT_STRING && options->value != NULL)
-    {
-      free(options->value);
-    }
+    if (options->type != ARGS_OPT_STRING || options->value == NULL)
+      continue;
+
+    char** strings = (char**) options->value;
+
+    for (int i = 0; i < options->count; i++) free(strings[i]);
   }
+#else
+  (void) options;
+#endif
 }
