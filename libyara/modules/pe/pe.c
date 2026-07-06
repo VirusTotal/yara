@@ -1754,6 +1754,7 @@ static void pe_parse_exports(PE* pe)
     char thumbprint_ascii[YR_SHA1_LEN * 2 + 1];                                \
     for (int j = 0; j < cert->sha1.len; ++j)                                   \
       sprintf(thumbprint_ascii + (j * 2), "%02x", cert->sha1.data[j]);         \
+    thumbprint_ascii[cert->sha1.len * 2] = '\0';                               \
                                                                                \
     yr_set_string(                                                             \
         (char*) thumbprint_ascii, pe->object, fmt ".thumbprint", __VA_ARGS__); \
@@ -1820,6 +1821,7 @@ void _process_authenticode(
       char* digest_ascii = yr_malloc(authenticode->digest.len * 2 + 1);
       for (int j = 0; j < authenticode->digest.len; ++j)
         sprintf(digest_ascii + (j * 2), "%02x", authenticode->digest.data[j]);
+      digest_ascii[authenticode->digest.len * 2] = '\0';
 
       yr_set_string(
           digest_ascii, pe->object, "signatures[%i].digest", *sig_count);
@@ -1832,6 +1834,7 @@ void _process_authenticode(
       for (int j = 0; j < authenticode->file_digest.len; ++j)
         sprintf(
             digest_ascii + (j * 2), "%02x", authenticode->file_digest.data[j]);
+      digest_ascii[authenticode->file_digest.len * 2] = '\0';
 
       yr_set_string(
           digest_ascii, pe->object, "signatures[%i].file_digest", *sig_count);
@@ -1884,6 +1887,7 @@ void _process_authenticode(
         char* digest_ascii = yr_malloc(signer->digest.len * 2 + 1);
         for (int j = 0; j < signer->digest.len; ++j)
           sprintf(digest_ascii + (j * 2), "%02x", signer->digest.data[j]);
+        digest_ascii[signer->digest.len * 2] = '\0';
 
         yr_set_string(
             digest_ascii,
@@ -1950,6 +1954,7 @@ void _process_authenticode(
           char* digest_ascii = yr_malloc(counter->digest.len * 2 + 1);
           for (int j = 0; j < counter->digest.len; ++j)
             sprintf(digest_ascii + (j * 2), "%02x", counter->digest.data[j]);
+          digest_ascii[counter->digest.len * 2] = '\0';
 
           yr_set_string(
               digest_ascii,
