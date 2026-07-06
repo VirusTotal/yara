@@ -338,10 +338,13 @@ static const char* str_table_entry(
   if (index < 0)
     return NULL;
 
-  str_entry = str_table_base + index;
-
-  if (str_entry >= str_table_limit)
+  // Bound the index against the table size before forming the pointer. On
+  // 32-bit builds str_table_base + index can wrap past str_table_limit for a
+  // large index and pass the check below, letting strnlen read out of bounds.
+  if ((size_t) index >= (size_t) (str_table_limit - str_table_base))
     return NULL;
+
+  str_entry = str_table_base + index;
 
   len = strnlen(str_entry, str_table_limit - str_entry);
 
