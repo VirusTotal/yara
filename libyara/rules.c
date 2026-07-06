@@ -331,6 +331,20 @@ int yr_rules_from_arena(YR_ARENA* arena, YR_RULES** rules)
   if (summary == NULL)
     return ERROR_CORRUPT_FILE;
 
+  // The rule, string and namespace counts are taken verbatim from the loaded
+  // summary. Reject any count that doesn't fit the table it indexes, otherwise
+  // the rules_table walk below (and the string/namespace tables the scanner
+  // indexes with these counts) run past the end of the loaded buffers.
+  if ((uint64_t) summary->num_rules * sizeof(YR_RULE) >
+          yr_arena_get_current_offset(arena, YR_RULES_TABLE) ||
+      (uint64_t) summary->num_strings * sizeof(YR_STRING) >
+          yr_arena_get_current_offset(arena, YR_STRINGS_TABLE) ||
+      (uint64_t) summary->num_namespaces * sizeof(YR_NAMESPACE) >
+          yr_arena_get_current_offset(arena, YR_NAMESPACES_TABLE))
+  {
+    return ERROR_CORRUPT_FILE;
+  }
+
   YR_RULES* new_rules = (YR_RULES*) yr_malloc(sizeof(YR_RULES));
 
   if (new_rules == NULL)

@@ -28,8 +28,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 #include <yara.h>
+#include <yara/compiler.h>
 
 #include "util.h"
 
@@ -641,6 +643,80 @@ void test_save_load_rules()
   }
 
   yr_rules_destroy(rules);
+  yr_finalize();
+}
+
+// A compiled rules file carries a YR_SUMMARY with the rule/string/namespace
+// counts. Loading trusts those counts to walk the corresponding tables, so a
+// crafted file that inflates num_rules must be rejected instead of reading past
+// the loaded YR_RULES_TABLE.
+void test_load_rules_corrupt_summary()
+{
+  YR_COMPILER* compiler = NULL;
+  YR_RULES* rules = NULL;
+
+  yr_initialize();
+
+  if (yr_compiler_create(&compiler) != ERROR_SUCCESS)
+    exit(EXIT_FAILURE);
+
+  if (yr_compiler_add_string(
+          compiler,
+          "rule a { strings: $a = \"aaa\" condition: $a } "
+          "rule b { condition: true }",
+          NULL) != 0)
+    exit(EXIT_FAILURE);
+
+  if (yr_compiler_get_rules(compiler, &rules) != ERROR_SUCCESS)
+    exit(EXIT_FAILURE);
+
+  yr_compiler_destroy(compiler);
+
+  if (yr_rules_save(rules, "test-corrupt-summary.yarc") != ERROR_SUCCESS)
+    exit(EXIT_FAILURE);
+
+  yr_rules_destroy(rules);
+
+  FILE* fh = fopen("test-corrupt-summary.yarc", "rb");
+  assert_true_expr(fh != NULL);
+  fseek(fh, 0, SEEK_END);
+  long size = ftell(fh);
+  fseek(fh, 0, SEEK_SET);
+
+  uint8_t* data = (uint8_t*) malloc(size);
+  assert_true_expr(data != NULL);
+  assert_true_expr(fread(data, 1, size, fh) == (size_t) size);
+  fclose(fh);
+
+  // Arena file layout (see yr_arena_save_stream): a 6-byte header
+  // (magic[4], version, num_buffers) followed by a table of packed 12-byte
+  // {offset(8), size(4)} entries, then the buffer contents. Follow the
+  // YR_SUMMARY_SECTION entry to its content and inflate num_rules, the first
+  // uint32 of YR_SUMMARY.
+  uint64_t summary_offset;
+  memcpy(&summary_offset, data + 6 + 12 * YR_SUMMARY_SECTION, sizeof(uint64_t));
+
+  uint32_t bad_num_rules = 200000;
+  memcpy(data + summary_offset, &bad_num_rules, sizeof(bad_num_rules));
+
+  fh = fopen("test-corrupt-summary.yarc", "wb");
+  assert_true_expr(fh != NULL);
+  assert_true_expr(fwrite(data, 1, size, fh) == (size_t) size);
+  fclose(fh);
+  free(data);
+
+  int result = yr_rules_load("test-corrupt-summary.yarc", &rules);
+
+  if (result != ERROR_CORRUPT_FILE)
+  {
+    fprintf(
+        stderr,
+        "test_load_rules_corrupt_summary: expecting ERROR_CORRUPT_FILE, got "
+        "%d\n",
+        result);
+    exit(EXIT_FAILURE);
+  }
+
   yr_finalize();
 }
 
@@ -1276,6 +1352,7 @@ int main(int argc, char** argv)
   test_too_slow_scanning_slow_string_matches();
   test_include_callback();
   test_save_load_rules();
+  test_load_rules_corrupt_summary();
   test_scanner();
   test_xor_key_string_in_atom();
   test_ast_callback();
