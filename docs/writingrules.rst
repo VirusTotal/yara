@@ -717,6 +717,16 @@ Starting with version 3.3.0 these zero-width assertions are also recognized:
    * - ``\B``
      - Match except at a word boundary
 
+.. warning:: The regular expression engine scans a limited amount of data
+    while evaluating a match. This limit is 4096 bytes by default and is
+    controlled by the ``YR_RE_SCAN_LIMIT`` constant defined in
+    *libyara/include/yara/limits.h*. A match that would require scanning
+    beyond this limit is not reported and no error is raised, which usually
+    shows up with wildcards or large repetitions: a regular expression like
+    ``/foo.*bar/`` won't match if *foo* and *bar* are separated by more than
+    4096 bytes. If you need a larger limit you can define
+    ``YR_RE_SCAN_LIMIT`` at compile time.
+
 
 Private strings
 ---------------
