@@ -1616,8 +1616,8 @@ static void pe_parse_exports(PE* pe)
     if (offset < 0)
       return;
 
-    if (yr_le32toh(exports->NumberOfNames) * sizeof(DWORD) >
-        pe->data_size - offset)
+    if (yr_le32toh(exports->NumberOfNames) >
+        (pe->data_size - offset) / sizeof(DWORD))
       return;
 
     names = (DWORD*) (pe->data + offset);
