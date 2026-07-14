@@ -53,7 +53,7 @@ PIMAGE_NT_HEADERS32 pe_get_header(const uint8_t* data, size_t data_size)
   if (yr_le16toh(mz_header->e_magic) != IMAGE_DOS_SIGNATURE)
     return NULL;
 
-  if (yr_le32toh(mz_header->e_lfanew) < 0)
+  if ((int32_t) yr_le32toh(mz_header->e_lfanew) < 0)
     return NULL;
 
   headers_size = yr_le32toh(mz_header->e_lfanew) +
