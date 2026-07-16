@@ -92,6 +92,63 @@ static void test_split_id_overflow(void)
   }
 }
 
+// A compiled rule hand-crafted by a malicious actor can carry a regexp whose
+// REPEAT_START instructions nest deeper than the fiber's repeat stack (which
+// holds RE_MAX_STACK entries). _yr_re_fiber_sync pushes one entry per
+// REPEAT_START onto that on-fiber stack, so such a stream must be rejected
+// instead of writing past the stack.
+static void test_repeat_stack_overflow(void)
+{
+  // Each REPEAT_START is the opcode byte followed by RE_REPEAT_ARGS, which is a
+  // packed { uint16 min; uint16 max; int32 offset } (8 bytes).
+  int instr_size = 1 + 8;
+  int count = RE_MAX_STACK + 64;
+  uint8_t code[(RE_MAX_STACK + 64) * (1 + 8) + 1];
+
+  // A run of REPEAT_START instructions, each with a non-zero min so the split
+  // branch is skipped and only the stack push is executed.
+  for (int i = 0; i < count; i++)
+  {
+    uint8_t* p = code + i * instr_size;
+    uint16_t min = 1;
+    uint16_t max = 2;
+    int32_t offset = 0;
+    p[0] = RE_OPCODE_REPEAT_START_GREEDY;
+    memcpy(p + 1, &min, sizeof(min));
+    memcpy(p + 3, &max, sizeof(max));
+    memcpy(p + 5, &offset, sizeof(offset));
+  }
+  code[count * instr_size] = RE_OPCODE_MATCH;
+
+  YR_SCAN_CONTEXT context;
+  memset(&context, 0, sizeof(context));
+
+  uint8_t input[1] = {0};
+  int matches = 0;
+
+  int result = yr_re_exec(
+      &context,
+      code,
+      input,
+      sizeof(input),
+      0,
+      RE_FLAGS_SCAN,
+      re_match_callback,
+      NULL,
+      &matches);
+
+  assert(result == ERROR_INTERNAL_FATAL_ERROR);
+
+  RE_FIBER* fiber = context.re_fiber_pool.fibers.head;
+
+  while (fiber != NULL)
+  {
+    RE_FIBER* next = fiber->next;
+    yr_free(fiber);
+    fiber = next;
+  }
+}
+
 int main(int argc, char** argv)
 {
   int result = 0;
@@ -143,6 +200,7 @@ int main(int argc, char** argv)
   yr_re_ast_destroy(re_ast);
 
   test_split_id_overflow();
+  test_repeat_stack_overflow();
 
   yr_finalize();
 
