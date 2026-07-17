@@ -1170,6 +1170,10 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
 
       rule = &context->rules->rules_table[r1.i];
 
+#if YR_PARANOID_EXEC
+      ensure_within_rules_arena(rule);
+#endif
+
       if (RULE_IS_DISABLED(rule))
       {
         r2.i = YR_UNDEFINED;
@@ -1197,6 +1201,10 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
       assert(current_rule_idx < context->rules->num_rules);
 
       current_rule = &context->rules->rules_table[current_rule_idx];
+
+#if YR_PARANOID_EXEC
+      ensure_within_rules_arena(current_rule);
+#endif
 
       // If the rule is disabled, let's skip its code.
       bool skip_rule = RULE_IS_DISABLED(current_rule);
