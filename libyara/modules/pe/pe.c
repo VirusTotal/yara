@@ -411,7 +411,7 @@ static const PIMAGE_RESOURCE_DIR_STRING_U parse_resource_name(
       return NULL;
 
     // Sanity check for strings that are excesively large.
-    if (pNameString->Length > 1000)
+    if (yr_le16toh(pNameString->Length) > 1000)
       return NULL;
 
     // Move past the length and make sure we have enough bytes for the string.
@@ -1616,8 +1616,8 @@ static void pe_parse_exports(PE* pe)
     if (offset < 0)
       return;
 
-    if (yr_le32toh(exports->NumberOfNames) * sizeof(DWORD) >
-        pe->data_size - offset)
+    if (yr_le32toh(exports->NumberOfNames) >
+        (pe->data_size - offset) / sizeof(DWORD))
       return;
 
     names = (DWORD*) (pe->data + offset);
