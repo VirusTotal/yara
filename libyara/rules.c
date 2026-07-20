@@ -410,13 +410,13 @@ YR_API int yr_rules_load_stream(YR_STREAM* stream, YR_RULES** rules)
 
   // Create the YR_RULES object from the arena, this makes YR_RULES owner
   // of the arena too.
-  FAIL_ON_ERROR(yr_rules_from_arena(arena, rules));
+  int result = yr_rules_from_arena(arena, rules);
 
   // Release our ownership so that YR_RULES is the single owner. This way the
   // arena is destroyed when YR_RULES is destroyed.
   yr_arena_release(arena);
-
-  return ERROR_SUCCESS;
+  
+  return result;
 }
 
 YR_API int yr_rules_load(const char* filename, YR_RULES** rules)

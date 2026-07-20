@@ -411,7 +411,7 @@ static const PIMAGE_RESOURCE_DIR_STRING_U parse_resource_name(
       return NULL;
 
     // Sanity check for strings that are excesively large.
-    if (pNameString->Length > 1000)
+    if (yr_le16toh(pNameString->Length) > 1000)
       return NULL;
 
     // Move past the length and make sure we have enough bytes for the string.
