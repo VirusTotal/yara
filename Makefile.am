@@ -352,6 +352,9 @@ test_async_LDFLAGS = -static
 test_iterators_SOURCES = tests/test-iterators.c tests/util.c
 test_iterators_LDADD = libyara.la
 test_iterators_LDFLAGS = -static
+test_exec_SOURCES = tests/test-exec.c tests/util.c
+test_exec_LDADD = libyara.la
+test_exec_LDFLAGS = -static
 
 TESTS = $(check_PROGRAMS)
 TESTS_ENVIRONMENT = TOP_SRCDIR=$(top_srcdir) TOP_BUILDDIR=$(top_builddir)
@@ -371,6 +374,7 @@ check_PROGRAMS = \
   test-re-split \
   test-async \
   test-iterators \
+  test-exec \
   test-string
 
 EXTRA_PROGRAMS = tests/mapper
