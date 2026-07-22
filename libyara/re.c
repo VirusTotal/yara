@@ -1557,6 +1557,14 @@ static int _yr_re_fiber_sync(
         branch_b->ip += repeat_args->offset;
       }
 
+#if YR_PARANOID_EXEC
+      // In normal conditions this should never happen. But with compiled
+      // rules that has been hand-crafted by a malicious actor this could
+      // happen.
+      if (branch_a->sp >= RE_MAX_STACK - 1)
+        return ERROR_INTERNAL_FATAL_ERROR;
+#endif
+
       branch_a->stack[++branch_a->sp] = 0;
       branch_a->ip += (1 + sizeof(RE_REPEAT_ARGS));
       break;
