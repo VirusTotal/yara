@@ -1917,6 +1917,10 @@ void dotnet_parse_tilde_2(
   const uint8_t* string_offset;
   const uint8_t* blob_offset;
 
+  const uint8_t* tilde_stream_end = pe->data + metadata_root +
+                                    yr_le32toh(streams->tilde->Offset) +
+                                    yr_le32toh(streams->tilde->Size);
+
   uint32_t num_rows = 0;
   uint32_t valid_rows = 0;
   uint32_t* row_offset = NULL;
@@ -1992,7 +1996,8 @@ void dotnet_parse_tilde_2(
     if (!((yr_le64toh(tilde_header->Valid) >> bit_check) & 0x01))
       continue;
 
-    if (!fits_in_pe(pe, row_offset + matched_bits, sizeof(uint32_t)))
+    if (!fits_in_pe(pe, row_offset + matched_bits, sizeof(uint32_t)) ||
+        (uint8_t*) (row_offset + matched_bits + 1) > tilde_stream_end)
       return;
 
     num_rows = yr_le32toh(*(row_offset + matched_bits));
