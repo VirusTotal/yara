@@ -147,7 +147,7 @@ Countersignature* pkcs9_countersig_new(
         goto end;
     }
 
-    size_t digestLen = messageDigest->value.octet_string->length;
+    size_t digestLen = ASN1_STRING_length(messageDigest->value.octet_string);
 
     if (!digestLen) {
         result->verify_flags = COUNTERSIGNATURE_VFY_DIGEST_MISSING;
@@ -160,7 +160,7 @@ Countersignature* pkcs9_countersig_new(
         goto end;
     }
 
-    const uint8_t* digestData = messageDigest->value.octet_string->data;
+    const uint8_t* digestData = ASN1_STRING_get0_data(messageDigest->value.octet_string);
     byte_array_init(&result->digest, digestData, digestLen);
 
     /* By this point we all necessary things for verification
@@ -187,8 +187,8 @@ Countersignature* pkcs9_countersig_new(
         goto end;
     }
 
-    uint8_t* encData = si->enc_digest->data;
-    size_t encLen = si->enc_digest->length;
+    uint8_t* encData = (uint8_t*) ASN1_STRING_get0_data(si->enc_digest);
+    size_t encLen = ASN1_STRING_length(si->enc_digest);
 
     /* Decrypt the encrypted digest */
     EVP_PKEY_verify_recover_init(ctx);
@@ -204,7 +204,7 @@ Countersignature* pkcs9_countersig_new(
     /* compare the encrypted digest and calculated digest */
     bool isValid = false;
 
-#if OPENSSL_VERSION_NUMBER >= 0x3000000fL
+#if OPENSSL_VERSION_NUMBER >= 0x30000000L
     size_t mdLen = EVP_MD_get_size(md);
 #else
     size_t mdLen = EVP_MD_size(md);
@@ -220,7 +220,7 @@ Countersignature* pkcs9_countersig_new(
         const uint8_t* data_ptr = decData;
         DigestInfo* digest_info = d2i_DigestInfo(NULL, &data_ptr, decLen);
         if (digest_info) {
-            isValid = !memcmp(digest_info->digest->data, calc_digest, mdLen);
+            isValid = !memcmp(ASN1_STRING_get0_data(digest_info->digest), calc_digest, mdLen);
             DigestInfo_free(digest_info);
         } else {
             isValid = false;
@@ -235,7 +235,7 @@ Countersignature* pkcs9_countersig_new(
 
     /* Now check the countersignature message-digest that should correspond
      * to Signatures encrypted digest it countersigns */
-    calculate_digest(md, enc_digest->data, enc_digest->length, calc_digest);
+    calculate_digest(md, ASN1_STRING_get0_data(enc_digest), ASN1_STRING_length(enc_digest), calc_digest);
 
     /* Check if calculated one matches the stored one */
     if (digestLen != mdLen || memcmp(calc_digest, digestData, mdLen) != 0) {
@@ -269,8 +269,8 @@ TS_TST_INFO* IMPL_FUNC_NAME(get_ts_tst_info, cms)(CountersignatureImpl* impl)
         return NULL;
     }
 
-    const uint8_t* data = (*content)->data;
-    TS_TST_INFO* ts_tst_info = d2i_TS_TST_INFO(NULL, &data, (*content)->length);
+    const uint8_t* data = ASN1_STRING_get0_data(*content);
+    TS_TST_INFO* ts_tst_info = d2i_TS_TST_INFO(NULL, &data, ASN1_STRING_length(*content));
     if (!ts_tst_info) {
         return NULL;
     }
@@ -360,7 +360,7 @@ int IMPL_FUNC_NAME(verify_digest, pkcs7)(
 
     TS_VERIFY_CTX_set_flags(ctx, TS_VFY_VERSION | TS_VFY_IMPRINT);
     TS_VERIFY_CTX_set_store(ctx, store);
-#if OPENSSL_VERSION_NUMBER >= 0x3000000fL
+#if OPENSSL_VERSION_NUMBER >= 0x30000000L
     TS_VERIFY_CTX_set_certs(ctx, impl->funcs->get_certs(impl));
 #else
     TS_VERIFY_CTS_set_certs(ctx, impl->funcs->get_certs(impl));
@@ -400,8 +400,8 @@ int IMPL_FUNC_NAME(verify_digest, cms)(
         return 0;
     }
 
-    if (ts_imprint_digest->length != (int)digest_size ||
-        memcmp(ts_imprint_digest->data, digest, digest_size) != 0) {
+    if (ASN1_STRING_length(ts_imprint_digest) != (int)digest_size ||
+        memcmp(ASN1_STRING_get0_data(ts_imprint_digest), digest, digest_size) != 0) {
         TS_TST_INFO_free(ts_tst_info);
         return 0;
     }
@@ -554,8 +554,8 @@ Countersignature* ms_countersig_new(const uint8_t* data, long size, ASN1_STRING*
 
     ASN1_STRING* rawDigest = TS_MSG_IMPRINT_get_msg(imprint);
 
-    int digestLen = rawDigest->length;
-    uint8_t* digestData = rawDigest->data;
+    int digestLen = ASN1_STRING_length(rawDigest);
+    uint8_t* digestData = (uint8_t*) ASN1_STRING_get0_data(rawDigest);
 
     byte_array_init(&result->digest, digestData, digestLen);
 
@@ -571,9 +571,9 @@ Countersignature* ms_countersig_new(const uint8_t* data, long size, ASN1_STRING*
     }
 
     uint8_t calc_digest[EVP_MAX_MD_SIZE];
-    calculate_digest(md, enc_digest->data, enc_digest->length, calc_digest);
+    calculate_digest(md, ASN1_STRING_get0_data(enc_digest), ASN1_STRING_length(enc_digest), calc_digest);
 
-#if OPENSSL_VERSION_NUMBER >= 0x3000000fL
+#if OPENSSL_VERSION_NUMBER >= 0x30000000L
     int mdLen = EVP_MD_get_size(md);
 #else
     int mdLen = EVP_MD_size(md);

@@ -31,7 +31,7 @@ SOFTWARE.
 
 #include "helper.h"
 
-#if OPENSSL_VERSION_NUMBER >= 0x3000000fL
+#if OPENSSL_VERSION_NUMBER >= 0x30000000L
 /* Removes any escaping \/ -> / that is happening with oneline() functions
     from OpenSSL 3.0 */
 static void parse_oneline_string(char* string)
@@ -65,7 +65,7 @@ static void parse_name_attributes(X509_NAME* raw, Attributes* attr)
         const char* key = OBJ_nid2sn(OBJ_obj2nid(X509_NAME_ENTRY_get_object(entryName)));
 
         ByteArray array = {0};
-        if (byte_array_init(&array, asn1String->data, asn1String->length) == -1)
+        if (byte_array_init(&array, ASN1_STRING_get0_data(asn1String), ASN1_STRING_length(asn1String)) == -1)
             break;
 
         if (strcmp(key, "C") == 0 && !attr->country.data)
@@ -293,14 +293,14 @@ Certificate* certificate_new(X509* x509)
 
     result->issuer = strdup(buffer);
     /* This is a little ugly hack for 3.0 compatibility */
-#if OPENSSL_VERSION_NUMBER >= 0x3000000fL
+#if OPENSSL_VERSION_NUMBER >= 0x30000000L
     parse_oneline_string(result->issuer);
 #endif
 
     X509_NAME* subjectName = X509_get_subject_name(x509);
     X509_NAME_oneline(subjectName, buffer, sizeof(buffer));
     result->subject = strdup(buffer);
-#if OPENSSL_VERSION_NUMBER >= 0x3000000fL
+#if OPENSSL_VERSION_NUMBER >= 0x30000000L
     parse_oneline_string(result->subject);
 #endif
 
@@ -320,7 +320,7 @@ Certificate* certificate_new(X509* x509)
     EVP_PKEY* pkey = X509_get0_pubkey(x509);
     if (pkey) {
         result->key = pubkey_to_pem(pkey);
-#if OPENSSL_VERSION_NUMBER >= 0x3000000fL
+#if OPENSSL_VERSION_NUMBER >= 0x30000000L
         result->key_alg = strdup(OBJ_nid2sn(EVP_PKEY_get_base_id(pkey)));
 #else
         result->key_alg = strdup(OBJ_nid2sn(EVP_PKEY_base_id(pkey)));
