@@ -416,6 +416,19 @@ int main(int argc, char** argv)
       "tests/data/"
       "3b8b90159fa9b6048cc5410c5d53f116943564e4d05b04a843f9b3d0540d0c1c");
 
+  // The messageDigest in SpcIndirectDataContent names sha256 but carries a
+  // single digest byte, so the stored digest is shorter than the algorithm's
+  // output size.
+  assert_true_rule_file(
+      "import \"pe\" \
+      rule test { \
+        condition: \
+          pe.number_of_signatures == 1 and \
+          pe.signatures[0].digest_alg == \"sha256\" and \
+          not pe.signatures[0].verified \
+      }",
+      "tests/data/authenticode_short_digest");
+
 #endif
 
   assert_true_rule_file(
