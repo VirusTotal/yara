@@ -220,7 +220,8 @@ Countersignature* pkcs9_countersig_new(
         const uint8_t* data_ptr = decData;
         DigestInfo* digest_info = d2i_DigestInfo(NULL, &data_ptr, decLen);
         if (digest_info) {
-            isValid = !memcmp(ASN1_STRING_get0_data(digest_info->digest), calc_digest, mdLen);
+            isValid = ASN1_STRING_length(digest_info->digest) == (int)mdLen &&
+                      !memcmp(ASN1_STRING_get0_data(digest_info->digest), calc_digest, mdLen);
             DigestInfo_free(digest_info);
         } else {
             isValid = false;
