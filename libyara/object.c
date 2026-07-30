@@ -85,6 +85,7 @@ int yr_object_create(
     break;
   default:
     assert(false);
+    return ERROR_INVALID_ARGUMENT;
   }
 
   obj = (YR_OBJECT*) yr_malloc(object_size);
@@ -275,7 +276,9 @@ int yr_object_from_external_variable(
     break;
 
   default:
-    assert(false);
+    // The type comes from the compiled rules file, a corrupt or hand-crafted
+    // one can carry a value that is not any of the EXTERNAL_VARIABLE_TYPE_X.
+    return ERROR_CORRUPT_FILE;
   }
 
   result = yr_object_create(obj_type, external->identifier, NULL, &obj);

@@ -720,6 +720,89 @@ void test_load_rules_corrupt_summary()
   yr_finalize();
 }
 
+// Each external variable in a compiled rules file carries a type field that
+// yr_scanner_create turns into a YR_OBJECT. A crafted file can hold a value
+// that is none of the EXTERNAL_VARIABLE_TYPE_X, which must be rejected instead
+// of reaching yr_object_create with an unknown object type.
+void test_load_rules_bad_external_type()
+{
+  YR_COMPILER* compiler = NULL;
+  YR_RULES* rules = NULL;
+  YR_SCANNER* scanner = NULL;
+
+  yr_initialize();
+
+  if (yr_compiler_create(&compiler) != ERROR_SUCCESS)
+    exit(EXIT_FAILURE);
+
+  if (yr_compiler_define_integer_variable(compiler, "ext_var", 0) !=
+      ERROR_SUCCESS)
+    exit(EXIT_FAILURE);
+
+  if (yr_compiler_add_string(
+          compiler, "rule a { condition: ext_var == 0 }", NULL) != 0)
+    exit(EXIT_FAILURE);
+
+  if (yr_compiler_get_rules(compiler, &rules) != ERROR_SUCCESS)
+    exit(EXIT_FAILURE);
+
+  yr_compiler_destroy(compiler);
+
+  if (yr_rules_save(rules, "test-bad-external-type.yarc") != ERROR_SUCCESS)
+    exit(EXIT_FAILURE);
+
+  yr_rules_destroy(rules);
+
+  FILE* fh = fopen("test-bad-external-type.yarc", "rb");
+  assert_true_expr(fh != NULL);
+  fseek(fh, 0, SEEK_END);
+  long size = ftell(fh);
+  fseek(fh, 0, SEEK_SET);
+
+  uint8_t* data = (uint8_t*) malloc(size);
+  assert_true_expr(data != NULL);
+  assert_true_expr(fread(data, 1, size, fh) == (size_t) size);
+  fclose(fh);
+
+  // Arena file layout (see yr_arena_save_stream): a 6-byte header
+  // (magic[4], version, num_buffers) followed by a table of packed 12-byte
+  // {offset(8), size(4)} entries, then the buffer contents. Follow the
+  // YR_EXTERNAL_VARIABLES_TABLE entry to its content and replace the type of
+  // the first YR_EXTERNAL_VARIABLE, which is its first int32.
+  uint64_t ext_vars_offset;
+  memcpy(
+      &ext_vars_offset,
+      data + 6 + 12 * YR_EXTERNAL_VARIABLES_TABLE,
+      sizeof(uint64_t));
+
+  int32_t bad_type = EXTERNAL_VARIABLE_TYPE_MALLOC_STRING + 1;
+  memcpy(data + ext_vars_offset, &bad_type, sizeof(bad_type));
+
+  fh = fopen("test-bad-external-type.yarc", "wb");
+  assert_true_expr(fh != NULL);
+  assert_true_expr(fwrite(data, 1, size, fh) == (size_t) size);
+  fclose(fh);
+  free(data);
+
+  if (yr_rules_load("test-bad-external-type.yarc", &rules) != ERROR_SUCCESS)
+    exit(EXIT_FAILURE);
+
+  int result = yr_scanner_create(rules, &scanner);
+
+  if (result != ERROR_CORRUPT_FILE)
+  {
+    fprintf(
+        stderr,
+        "test_load_rules_bad_external_type: expecting ERROR_CORRUPT_FILE, got "
+        "%d\n",
+        result);
+    exit(EXIT_FAILURE);
+  }
+
+  yr_rules_destroy(rules);
+  yr_finalize();
+}
+
 void test_scanner()
 {
   const char* buf = "dummy";
@@ -1353,6 +1436,7 @@ int main(int argc, char** argv)
   test_include_callback();
   test_save_load_rules();
   test_load_rules_corrupt_summary();
+  test_load_rules_bad_external_type();
   test_scanner();
   test_xor_key_string_in_atom();
   test_ast_callback();
