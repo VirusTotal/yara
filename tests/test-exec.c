@@ -164,6 +164,79 @@ static void test_push_rule_index_overflow(void)
   free(buffer.data);
 }
 
+// The conditional jump opcodes carry a 4-byte offset taken straight from the
+// compiled-rules bytecode. jmp_if added that offset to the instruction pointer
+// without checking that the result stays inside the code section, and the
+// dispatch loop then read the next opcode from the resulting address. A
+// compiled rule hand-crafted so that a taken jump points far outside the code
+// buffer makes the scan read out of bounds. The jump target must be rejected.
+static void test_jump_offset_overflow(void)
+{
+  YR_COMPILER* compiler = NULL;
+  YR_RULES* rules = NULL;
+  YR_RULES* loaded = NULL;
+
+  if (yr_compiler_create(&compiler) != ERROR_SUCCESS)
+    exit(EXIT_FAILURE);
+
+  // "false and true" is emitted as OP_PUSH_8 0 (0x3F 0x00) followed by an
+  // OP_JFALSE (0x2F) whose 4-byte offset skips over the second operand. The
+  // pushed value is false, so the jump is always taken.
+  if (yr_compiler_add_string(
+          compiler, "rule x { condition: false and true }", NULL) != 0)
+    exit(EXIT_FAILURE);
+
+  if (yr_compiler_get_rules(compiler, &rules) != ERROR_SUCCESS)
+    exit(EXIT_FAILURE);
+
+  MEM_STREAM buffer = {0};
+  YR_STREAM out = {.user_data = &buffer, .read = mem_read, .write = mem_write};
+
+  if (yr_rules_save_stream(rules, &out) != ERROR_SUCCESS)
+    exit(EXIT_FAILURE);
+
+  // Find the OP_PUSH_8 0 / OP_JFALSE pair and bump the jump offset to a value
+  // that lands well past the end of the code buffer.
+  int tampered = 0;
+
+  for (size_t i = 0; i + 6 < buffer.size; i++)
+  {
+    if (buffer.data[i] == 0x3F && buffer.data[i + 1] == 0x00 &&
+        buffer.data[i + 2] == 0x2F)
+    {
+      buffer.data[i + 3] = 0x00;
+      buffer.data[i + 4] = 0x00;
+      buffer.data[i + 5] = 0x01;
+      buffer.data[i + 6] = 0x00;
+      tampered = 1;
+      break;
+    }
+  }
+
+  assert(tampered);
+
+  yr_rules_destroy(rules);
+  yr_compiler_destroy(compiler);
+
+  buffer.pos = 0;
+  YR_STREAM in = {.user_data = &buffer, .read = mem_read, .write = mem_write};
+
+  if (yr_rules_load_stream(&in, &loaded) != ERROR_SUCCESS)
+    exit(EXIT_FAILURE);
+
+  uint8_t data[16] = {0};
+
+  // Without the bounds check this scan follows the jump out of the code buffer
+  // and reads the next opcode out of bounds. The jump must be detected instead.
+  int result = yr_rules_scan_mem(
+      loaded, data, sizeof(data), 0, scan_callback, NULL, 0);
+
+  assert(result == ERROR_INTERNAL_FATAL_ERROR);
+
+  yr_rules_destroy(loaded);
+  free(buffer.data);
+}
+
 int main(int argc, char** argv)
 {
   YR_DEBUG_INITIALIZE();
@@ -172,6 +245,7 @@ int main(int argc, char** argv)
   yr_initialize();
 
   test_push_rule_index_overflow();
+  test_jump_offset_overflow();
 
   yr_finalize();
 
