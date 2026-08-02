@@ -44,6 +44,7 @@ with noyywrap then we can remove this pragma.
 #pragma GCC diagnostic ignored "-Wunused-function"
 #endif
 
+#include <limits.h>
 #include <setjmp.h>
 
 #include <yara/globals.h>
@@ -59,6 +60,7 @@ with noyywrap then we can remove this pragma.
 
 #ifdef _WIN32
 #define snprintf _snprintf
+#define strtoll  _strtoi64
 #endif
 
 #define ERROR_IF(x, error) \
@@ -181,7 +183,21 @@ hexdigit      [a-fA-F0-9]
 
 <range>{digit}+ {
 
-  yylval->integer = atoi(yytext);
+  // strtoll is used instead of atoi because atoi has undefined behaviour for
+  // numbers that don't fit in an int. Numbers too large for a long long are
+  // clamped to LLONG_MAX by strtoll, which is still caught by the check below.
+
+  yylval->integer = strtoll(yytext, NULL, 10);
+
+  // Jump lengths end up stored in the int fields of a RE_NODE, anything above
+  // INT_MAX can't be represented.
+
+  if (yylval->integer > INT_MAX)
+  {
+    yyerror(yyscanner, lex_env, "jump length too large");
+    yyterminate();
+  }
+
   return _NUMBER_;
 }
 

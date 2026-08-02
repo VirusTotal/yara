@@ -61,6 +61,7 @@ with noyywrap then we can remove this pragma.
 
 #ifdef _WIN32
 #define snprintf _snprintf
+#define strtoll  _strtoi64
 #endif
 
 // Bitmap with 1 bit for each of the 256 characters in the ASCII table. The bit
@@ -117,8 +118,13 @@ hex_digit     [0-9a-fA-F]
 
   // Examples: {3,8} {3, 8}, {3 ,8} {3 , 8} {0,5} {,5} {7,}
 
-  int hi_bound;
-  int lo_bound = atoi(yytext + 1);
+  // strtoll is used instead of atoi because atoi has undefined behaviour for
+  // numbers that don't fit in an int. Numbers too large for a long long are
+  // clamped to LLONG_MAX by strtoll, which is still caught by the RE_MAX_RANGE
+  // check below.
+
+  long long hi_bound;
+  long long lo_bound = strtoll(yytext + 1, NULL, 10);
 
   char* comma = strchr(yytext, ',');
   char* hi_bound_ptr = comma + 1;
@@ -129,7 +135,7 @@ hex_digit     [0-9a-fA-F]
   if (*hi_bound_ptr == '}')
     hi_bound = RE_MAX_RANGE;
   else
-    hi_bound = atoi(hi_bound_ptr);
+    hi_bound = strtoll(hi_bound_ptr, NULL, 10);
 
   if (hi_bound > RE_MAX_RANGE)
   {
@@ -137,13 +143,13 @@ hex_digit     [0-9a-fA-F]
     yyterminate();
   }
 
-  if (hi_bound < lo_bound || hi_bound < 0 || lo_bound < 0)
+  if (hi_bound < lo_bound)
   {
     yyerror(yyscanner, lex_env, "bad repeat interval");
     yyterminate();
   }
 
-  yylval->range = (hi_bound << 16) | lo_bound;
+  yylval->range = (uint32_t) ((hi_bound << 16) | lo_bound);
 
   return _RANGE_;
 }
@@ -153,18 +159,15 @@ hex_digit     [0-9a-fA-F]
 
   // Example: {10}
 
-  int value = atoi(yytext + 1);
+  long long value = strtoll(yytext + 1, NULL, 10);
 
-  // atoi can return a negative value if the input string represents a number
-  // too large to fit in an integer.
-
-  if (value > RE_MAX_RANGE || value < 0)
+  if (value > RE_MAX_RANGE)
   {
     yyerror(yyscanner, lex_env, "repeat interval too large");
     yyterminate();
   }
 
-  yylval->range = (value << 16) | value;
+  yylval->range = (uint32_t) ((value << 16) | value);
 
   return _RANGE_;
 }
