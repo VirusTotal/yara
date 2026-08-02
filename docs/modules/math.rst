@@ -188,3 +188,19 @@ file and create signatures based on those results.
 
     *Example: math.to_string(32, 16) == "20"*
     *Example: math.to_string(-1, 16) == "ffffffffffffffff"*
+
+.. c:function:: index_of_coincidence(offset, size)
+
+    Returns the index of coincidence for *size* bytes starting at *offset*. When scanning a
+    running process the *offset* argument should be a virtual address within
+    the process address space. The returned value is a float.
+    
+    Note: English text has an index of coincidence around 0.068.
+
+    *Example: math.index_of_coincidence(0, filesize) >= 0.05*
+
+.. c:function:: index_of_coincidence(string)
+
+    Returns the index of coincidence for the given string.
+
+    *math.index_of_coincidence("dummy") >= 0.05*
