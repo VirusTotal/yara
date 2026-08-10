@@ -1573,6 +1573,16 @@ static int _yr_re_fiber_sync(
     case RE_OPCODE_REPEAT_END_UNGREEDY:
 
       repeat_args = (RE_REPEAT_ARGS*) (fiber->ip + 1);
+
+#if YR_PARANOID_EXEC
+      // A REPEAT_END with no matching REPEAT_START leaves sp at -1 and the
+      // access below would read and write before the stack. In normal
+      // conditions this never happens, but it can with compiled rules that
+      // have been hand-crafted by a malicious actor.
+      if (fiber->sp < 0)
+        return ERROR_INTERNAL_FATAL_ERROR;
+#endif
+
       fiber->stack[fiber->sp]++;
 
       if (fiber->stack[fiber->sp] < repeat_args->min)
