@@ -803,6 +803,89 @@ void test_load_rules_bad_external_type()
   yr_finalize();
 }
 
+// The Aho-Corasick transition table in a compiled rules file stores, for every
+// slot, the index of the next state. The scanner follows those indexes on every
+// scanned byte, so a crafted file whose transition points to a state past the
+// end of the table drives an out-of-bounds read while scanning. Loading must
+// reject such a file.
+void test_load_rules_corrupt_ac_transition()
+{
+  YR_COMPILER* compiler = NULL;
+  YR_RULES* rules = NULL;
+
+  yr_initialize();
+
+  if (yr_compiler_create(&compiler) != ERROR_SUCCESS)
+    exit(EXIT_FAILURE);
+
+  if (yr_compiler_add_string(
+          compiler,
+          "rule a { strings: $a = \"maliciousmarker\" condition: $a }",
+          NULL) != 0)
+    exit(EXIT_FAILURE);
+
+  if (yr_compiler_get_rules(compiler, &rules) != ERROR_SUCCESS)
+    exit(EXIT_FAILURE);
+
+  yr_compiler_destroy(compiler);
+
+  if (yr_rules_save(rules, "test-corrupt-ac.yarc") != ERROR_SUCCESS)
+    exit(EXIT_FAILURE);
+
+  yr_rules_destroy(rules);
+
+  FILE* fh = fopen("test-corrupt-ac.yarc", "rb");
+  assert_true_expr(fh != NULL);
+  fseek(fh, 0, SEEK_END);
+  long size = ftell(fh);
+  fseek(fh, 0, SEEK_SET);
+
+  uint8_t* data = (uint8_t*) malloc(size);
+  assert_true_expr(data != NULL);
+  assert_true_expr(fread(data, 1, size, fh) == (size_t) size);
+  fclose(fh);
+
+  // Arena file layout (see yr_arena_save_stream): a 6-byte header
+  // (magic[4], version, num_buffers) followed by a table of packed 12-byte
+  // {offset(8), size(4)} entries, then the buffer contents. Follow the
+  // YR_AC_TRANSITION_TABLE entry to its content and point the root's first real
+  // child transition to a state far past the end of the table, keeping its
+  // owner offset so the scanner follows it.
+  uint64_t tt_offset;
+  memcpy(&tt_offset, data + 6 + 12 * YR_AC_TRANSITION_TABLE, sizeof(uint64_t));
+
+  uint32_t* transition_table = (uint32_t*) (data + tt_offset);
+
+  for (uint32_t i = 1; i <= 256; i++)
+  {
+    if (YR_AC_NEXT_STATE(transition_table[i]) != 0)
+    {
+      transition_table[i] = YR_AC_MAKE_TRANSITION(0x7FFFFF, i);
+      break;
+    }
+  }
+
+  fh = fopen("test-corrupt-ac.yarc", "wb");
+  assert_true_expr(fh != NULL);
+  assert_true_expr(fwrite(data, 1, size, fh) == (size_t) size);
+  fclose(fh);
+  free(data);
+
+  int result = yr_rules_load("test-corrupt-ac.yarc", &rules);
+
+  if (result != ERROR_CORRUPT_FILE)
+  {
+    fprintf(
+        stderr,
+        "test_load_rules_corrupt_ac_transition: expecting ERROR_CORRUPT_FILE, "
+        "got %d\n",
+        result);
+    exit(EXIT_FAILURE);
+  }
+
+  yr_finalize();
+}
+
 void test_scanner()
 {
   const char* buf = "dummy";
@@ -1437,6 +1520,7 @@ int main(int argc, char** argv)
   test_save_load_rules();
   test_load_rules_corrupt_summary();
   test_load_rules_bad_external_type();
+  test_load_rules_corrupt_ac_transition();
   test_scanner();
   test_xor_key_string_in_atom();
   test_ast_callback();
