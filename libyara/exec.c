@@ -33,6 +33,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <string.h>
 #include <yara.h>
 #include <yara/arena.h>
+#include <yara/compiler.h>
 #include <yara/endian.h>
 #include <yara/error.h>
 #include <yara/exec.h>
@@ -96,6 +97,18 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
       result = ERROR_INTERNAL_FATAL_ERROR;                        \
       break;                                                      \
     }                                                             \
+  }
+
+// Make sure that the instruction pointer stays within the code section. A
+// crafted compiled-rules file can carry a jump whose offset moves ip outside
+// the code buffer, and the dispatch loop would then read the opcode out of
+// bounds.
+#define ensure_within_code(x)              \
+  if ((x) < code_start || (x) >= code_end) \
+  {                                        \
+    stop = true;                           \
+    result = ERROR_INTERNAL_FATAL_ERROR;   \
+    break;                                 \
   }
 
 #define check_object_canary(o)           \
@@ -419,7 +432,16 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
 {
   YR_DEBUG_FPRINTF(2, stderr, "+ %s() {\n", __FUNCTION__);
 
-  const uint8_t* ip = context->rules->code_start;
+  const uint8_t* code_start = context->rules->code_start;
+  const uint8_t* ip = code_start;
+
+#if YR_PARANOID_EXEC
+  // One byte past the last instruction of the code section, used by
+  // ensure_within_code to reject a jump that leaves the code buffer.
+  const uint8_t* code_end = code_start +
+                            yr_arena_get_current_offset(
+                                context->rules->arena, YR_CODE_SECTION);
+#endif
 
   YR_VALUE mem[MEM_SIZE];
   YR_VALUE args[YR_MAX_FUNCTION_ARGS];
@@ -485,6 +507,10 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
 
   while (!stop)
   {
+#if YR_PARANOID_EXEC
+    ensure_within_code(ip);
+#endif
+
     // Read the opcode from the address indicated by the instruction pointer.
     opcode = *ip;
 
