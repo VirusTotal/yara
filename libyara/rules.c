@@ -345,6 +345,44 @@ int yr_rules_from_arena(YR_ARENA* arena, YR_RULES** rules)
     return ERROR_CORRUPT_FILE;
   }
 
+  // The Aho-Corasick transition and match tables are read verbatim from the
+  // loaded file and drive the per-byte scan loop in _yr_scanner_scan_mem_block,
+  // which reads transition_table[state + b] (b is a scanned byte, so the offset
+  // is 1..256), match_table[state] and ac_match_pool[match_table[state] - 1]
+  // with state taken from the tables themselves. Reject a file whose tables are
+  // too small or whose next-state / match-pool indexes fall outside them,
+  // otherwise those reads run out of bounds while scanning.
+  YR_AC_TRANSITION* transition_table = yr_arena_get_ptr(
+      arena, YR_AC_TRANSITION_TABLE, 0);
+
+  uint32_t* match_table = yr_arena_get_ptr(arena, YR_AC_STATE_MATCHES_TABLE, 0);
+
+  uint32_t transition_table_size = yr_arena_get_current_offset(
+                                       arena, YR_AC_TRANSITION_TABLE) /
+                                   sizeof(YR_AC_TRANSITION);
+
+  uint32_t match_table_size = yr_arena_get_current_offset(
+                                  arena, YR_AC_STATE_MATCHES_TABLE) /
+                              sizeof(uint32_t);
+
+  uint32_t match_pool_size = yr_arena_get_current_offset(
+                                 arena, YR_AC_STATE_MATCHES_POOL) /
+                             sizeof(YR_AC_MATCH);
+
+  // Every state leaves room for the 256 input offsets read after it, so a valid
+  // table always has at least 257 slots and the match table is never shorter.
+  if (transition_table_size < 257 || match_table_size < transition_table_size)
+    return ERROR_CORRUPT_FILE;
+
+  for (uint32_t i = 0; i < transition_table_size; i++)
+  {
+    if (YR_AC_NEXT_STATE(transition_table[i]) + 256 >= transition_table_size)
+      return ERROR_CORRUPT_FILE;
+
+    if (match_table[i] > match_pool_size)
+      return ERROR_CORRUPT_FILE;
+  }
+
   YR_RULES* new_rules = (YR_RULES*) yr_malloc(sizeof(YR_RULES));
 
   if (new_rules == NULL)
