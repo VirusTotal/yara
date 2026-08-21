@@ -1703,6 +1703,20 @@ static void test_hex_strings()
         condition: $a ",
       ERROR_INVALID_HEX_STRING);
 
+  // Jump lengths that don't fit in an int must be rejected. 4294967297 used to
+  // wrap around to 1, so this compiled as { 61 [0-1] 62 }.
+  assert_error(
+      "rule test { \
+        strings: $a = { 61 [0-4294967297] 62 } \
+        condition: $a }",
+      ERROR_INVALID_HEX_STRING);
+
+  assert_error(
+      "rule test { \
+        strings: $a = { 61 [0-2147483648] 62 } \
+        condition: $a }",
+      ERROR_INVALID_HEX_STRING);
+
   /* TODO: tests.py:551 ff. */
 
   YR_DEBUG_FPRINTF(1, stderr, "} // %s()\n", __FUNCTION__);
@@ -2766,6 +2780,12 @@ void test_re()
 
   // Test for integer overflow in repeat interval
   assert_regexp_syntax_error("a{2977952116}");
+
+  // Values that wrap around to a small positive number when truncated to an
+  // int must be rejected too, not silently turned into a{0} and b{1,1}.
+  assert_regexp_syntax_error("a{4294967296}");
+  assert_regexp_syntax_error("b{1,4294967297}");
+  assert_regexp_syntax_error("c{99999999999999999999}");
 
   assert_error(
       "rule test { strings: $a = /a\\/ condition: $a }", ERROR_SYNTAX_ERROR);
