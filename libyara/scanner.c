@@ -233,6 +233,8 @@ static void _yr_scanner_clean_matches(YR_SCANNER* scanner)
       scanner->unconfirmed_matches,
       0,
       sizeof(YR_MATCHES) * scanner->rules->num_strings);
+
+  scanner->entry_point = YR_UNDEFINED;
 }
 
 YR_API int yr_scanner_create(YR_RULES* rules, YR_SCANNER** scanner)
