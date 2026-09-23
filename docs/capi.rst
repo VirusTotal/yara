@@ -521,7 +521,7 @@ Functions
   Any argument may be ``NULL`` if you do not need that component. Unlike the
   rest of the API, this may be called before :c:func:`yr_initialize`.
 
-  .. versionadded:: 4.5.9
+  .. versionadded:: 4.6.0
 
 .. c:function:: int yr_compiler_create(YR_COMPILER** compiler)
 
