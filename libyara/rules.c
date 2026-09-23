@@ -348,6 +348,66 @@ int yr_rules_from_arena(YR_ARENA* arena, YR_RULES** rules)
     return ERROR_CORRUPT_FILE;
   }
 
+  size_t ext_vars_size = yr_arena_get_current_offset(
+      arena, YR_EXTERNAL_VARIABLES_TABLE);
+
+  if (ext_vars_size == 0 ||
+      ext_vars_size % sizeof(YR_EXTERNAL_VARIABLE) != 0)
+  {
+    return ERROR_CORRUPT_FILE;
+  }
+
+  YR_EXTERNAL_VARIABLE* ext_vars = yr_arena_get_ptr(
+      arena, YR_EXTERNAL_VARIABLES_TABLE, 0);
+
+  bool found_null_external = false;
+
+  for (size_t i = 0; i < ext_vars_size / sizeof(YR_EXTERNAL_VARIABLE); i++)
+  {
+    YR_EXTERNAL_VARIABLE* external = &ext_vars[i];
+
+    if (EXTERNAL_VARIABLE_IS_NULL(external))
+    {
+      found_null_external = true;
+      break;
+    }
+
+    if (external->type != EXTERNAL_VARIABLE_TYPE_FLOAT &&
+        external->type != EXTERNAL_VARIABLE_TYPE_INTEGER &&
+        external->type != EXTERNAL_VARIABLE_TYPE_BOOLEAN &&
+        external->type != EXTERNAL_VARIABLE_TYPE_STRING)
+    {
+      return ERROR_CORRUPT_FILE;
+    }
+
+    YR_ARENA_REF ref;
+    if (external->identifier == NULL ||
+        !yr_arena_ptr_to_ref(arena, external->identifier, &ref) ||
+        memchr(
+            external->identifier,
+            '\0',
+            yr_arena_get_current_offset(arena, ref.buffer_id) - ref.offset) ==
+            NULL)
+    {
+      return ERROR_CORRUPT_FILE;
+    }
+
+    if (external->type == EXTERNAL_VARIABLE_TYPE_STRING &&
+        (external->value.s == NULL ||
+         !yr_arena_ptr_to_ref(arena, external->value.s, &ref) ||
+         memchr(
+             external->value.s,
+             '\0',
+             yr_arena_get_current_offset(arena, ref.buffer_id) - ref.offset) ==
+             NULL))
+    {
+      return ERROR_CORRUPT_FILE;
+    }
+  }
+
+  if (!found_null_external)
+    return ERROR_CORRUPT_FILE;
+
   // The Aho-Corasick transition and match tables are read verbatim from the
   // loaded file and drive the per-byte scan loop in _yr_scanner_scan_mem_block,
   // which reads transition_table[state + b] (b is a scanned byte, so the offset

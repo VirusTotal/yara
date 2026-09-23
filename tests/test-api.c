@@ -720,16 +720,13 @@ void test_load_rules_corrupt_summary()
   yr_finalize();
 }
 
-// Each external variable in a compiled rules file carries a type field that
-// yr_scanner_create turns into a YR_OBJECT. A crafted file can hold a value
-// that is none of the EXTERNAL_VARIABLE_TYPE_X, which must be rejected instead
-// of reaching yr_object_create with an unknown object type.
+// Each external variable in a compiled rules file carries a type field. A
+// crafted file can hold a value that is none of the serialized
+// EXTERNAL_VARIABLE_TYPE_X values, which the loader must reject.
 void test_load_rules_bad_external_type()
 {
   YR_COMPILER* compiler = NULL;
   YR_RULES* rules = NULL;
-  YR_SCANNER* scanner = NULL;
-
   yr_initialize();
 
   if (yr_compiler_create(&compiler) != ERROR_SUCCESS)
@@ -784,20 +781,56 @@ void test_load_rules_bad_external_type()
   fclose(fh);
   free(data);
 
-  if (yr_rules_load("test-bad-external-type.yarc", &rules) != ERROR_SUCCESS)
-    exit(EXIT_FAILURE);
-
-  int result = yr_scanner_create(rules, &scanner);
-
+  int result = yr_rules_load("test-bad-external-type.yarc", &rules);
   if (result != ERROR_CORRUPT_FILE)
   {
     fprintf(
         stderr,
-        "test_load_rules_bad_external_type: expecting ERROR_CORRUPT_FILE, got "
+        "test_load_rules_bad_external_type: expecting load to return "
+        "ERROR_CORRUPT_FILE, got "
         "%d\n",
         result);
     exit(EXIT_FAILURE);
   }
+
+  yr_finalize();
+}
+
+void test_rules_from_arena_bad_external_pointers()
+{
+  YR_COMPILER* compiler = NULL;
+  YR_RULES* rules = NULL;
+  YR_RULES* duplicate = NULL;
+
+  yr_initialize();
+  assert_true_expr(yr_compiler_create(&compiler) == ERROR_SUCCESS);
+  assert_true_expr(
+      yr_compiler_define_string_variable(compiler, "ext_var", "value") ==
+      ERROR_SUCCESS);
+  assert_true_expr(
+      yr_compiler_add_string(
+          compiler, "rule a { condition: ext_var == \"value\" }", NULL) == 0);
+  assert_true_expr(yr_compiler_get_rules(compiler, &rules) == ERROR_SUCCESS);
+  yr_compiler_destroy(compiler);
+
+  YR_EXTERNAL_VARIABLE* external = rules->ext_vars_table;
+  const char* identifier = external->identifier;
+  char* value = external->value.s;
+
+  external->identifier = (const char*) (uintptr_t) 0x6f;
+  assert_true_expr(
+      yr_rules_from_arena(rules->arena, &duplicate) == ERROR_CORRUPT_FILE);
+  external->identifier = identifier;
+
+  external->value.s = (char*) (uintptr_t) 0x6f;
+  assert_true_expr(
+      yr_rules_from_arena(rules->arena, &duplicate) == ERROR_CORRUPT_FILE);
+  external->value.s = value;
+
+  external->type = EXTERNAL_VARIABLE_TYPE_MALLOC_STRING;
+  assert_true_expr(
+      yr_rules_from_arena(rules->arena, &duplicate) == ERROR_CORRUPT_FILE);
+  external->type = EXTERNAL_VARIABLE_TYPE_STRING;
 
   yr_rules_destroy(rules);
   yr_finalize();
@@ -1569,6 +1602,7 @@ int main(int argc, char** argv)
   test_save_load_rules();
   test_load_rules_corrupt_summary();
   test_load_rules_bad_external_type();
+  test_rules_from_arena_bad_external_pointers();
   test_load_rules_corrupt_ac_transition();
   test_load_rules_corrupt_num_buffers();
   test_scanner();
