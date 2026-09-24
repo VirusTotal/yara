@@ -27,6 +27,7 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+#include <tlshc/tlsh.h>
 #include <yara/globals.h>
 #include <yara/mem.h>
 #include <yara/modules.h>
@@ -160,6 +161,174 @@ static int add_to_cache(
       result);
 
   return result;
+}
+
+static Tlsh* get_tlsh_pivot(SIZED_STRING* ss_tlsh)
+{
+  // validation of input TLSH string
+  if (ss_tlsh->length != TLSH_STRING_LEN_REQ && ss_tlsh->length != TLSH_STRING_LEN_REQ-2)
+    return NULL;
+
+  Tlsh* tlsh = tlsh_new();
+  if (tlsh == NULL)
+  {
+    tlsh_free(tlsh);
+
+    return NULL;
+  }
+
+  if (tlsh_from_tlsh_str(tlsh, ss_string(ss_tlsh)) != 0)
+  {
+    tlsh_free(tlsh);
+
+    return NULL;
+  }
+
+  return tlsh;
+}
+
+static bool validate_tlsh_data(const int tlsh_option, const int64_t data_len)
+{
+  // validation of input data
+  if ((tlsh_option & TLSH_OPTION_CONSERVATIVE) == 0)
+  {
+    if (data_len < MIN_DATA_LENGTH)
+      return false;
+  }
+  else
+  {
+    if (data_len < MIN_CONSERVATIVE_DATA_LENGTH)
+      return false;
+  }
+
+  return true;
+}
+
+static const char* get_tlsh_ascii(Tlsh* tlsh, const int showvers)
+{
+  const char* digest_ascii = tlsh_get_hash(tlsh, showvers);
+  if (digest_ascii && !digest_ascii[0])
+    return NULL;
+
+  return digest_ascii;
+}
+
+static bool check_mem_block(const YR_MEMORY_BLOCK* block, const uint64_t offset, const uint64_t length, const char* func_name)
+{
+  if (block == NULL)
+  {
+    YR_DEBUG_FPRINTF(
+        2, stderr, "} // %s() = YR_UNDEFINED // block == NULL\n", func_name);
+
+    return false;
+  }
+
+  if (offset < 0 || length < 0 || offset < block->base)
+  {
+    YR_DEBUG_FPRINTF(
+        2,
+        stderr,
+        "} // %s() = YR_UNDEFINED // bad offset / length\n",
+        func_name);
+
+    return false;
+  }
+
+  return true;
+}
+
+static bool get_tlsh_digest(
+    Tlsh* tlsh, const int tlsh_option,
+    YR_MEMORY_BLOCK* block, YR_MEMORY_BLOCK_ITERATOR* iterator,
+    int64_t offset, int64_t length,
+    YR_OBJECT* module, const char* func_name)
+{
+  char* cached_ascii_digest = get_from_cache(
+      module, "tlsh_diff", offset, length);
+
+  if (cached_ascii_digest != NULL)
+  {
+    YR_DEBUG_FPRINTF(
+        2,
+        stderr,
+        "} // %s() = %s (cached)\n",
+        func_name,
+        cached_ascii_digest);
+
+    if (tlsh_from_tlsh_str(tlsh, cached_ascii_digest) != 0)
+    {
+
+      return false;
+    }
+  }
+  else
+  {
+    int past_first_block = false;
+
+    foreach_memory_block(iterator, block)
+    {
+      // if desired block within current block
+      if (offset >= block->base && offset < block->base + block->size)
+      {
+        const uint8_t* block_data = block->fetch_data(block);
+
+        if (block_data != NULL)
+        {
+          size_t data_offset = (size_t) (offset - block->base);
+          size_t data_len = (size_t) yr_min(length, block->size - data_offset);
+
+          offset += data_len;
+          length -= data_len;
+
+          if (tlsh_update(tlsh, block_data + data_offset, data_len) != 0)
+          {
+
+            return false;
+          }
+        }
+
+        past_first_block = true;
+      }
+      else if (past_first_block)
+      {
+        // If offset is not within current block and we already
+        // past the first block then the we are trying to compute
+        // the checksum over a range of non contiguous blocks. As
+        // range contains gaps of undefined data the checksum is
+        // undefined.
+
+        YR_DEBUG_FPRINTF(
+            2,
+            stderr,
+            "} // %s() = YR_UNDEFINED // past_first_block\n",
+            func_name);
+
+        tlsh_final(tlsh, NULL, 0, tlsh_option);
+
+        return false;
+      }
+
+      if (block->base + block->size > offset + length)
+        break;
+    }
+
+    tlsh_final(tlsh, NULL, 0, tlsh_option);
+
+    if (!past_first_block)
+    {
+      YR_DEBUG_FPRINTF(
+          2,
+          stderr,
+          "} // %s() = YR_UNDEFINED // !past_first_block\n",
+          func_name);
+
+      tlsh_final(tlsh, NULL, 0, tlsh_option);
+
+      return false;
+    }
+  }
+
+  return true;
 }
 
 define_function(string_md5)
@@ -808,6 +977,224 @@ define_function(data_crc32)
   return_integer(checksum ^ 0xFFFFFFFF);
 }
 
+define_function(file_tlsh_diff)
+{
+  int tlsh_option = 0;  // default option
+  int showvers = 1;     // default is to show hash string with the version byte
+  bool len_diff = true; // default is to include length of the file into diff calculation
+
+  SIZED_STRING* s = sized_string_argument(1); // TLSH hash string in hexa format we want to compute diff from
+
+  Tlsh* tlsh_pivot = get_tlsh_pivot(s);
+  if (tlsh_pivot == NULL)
+    return_integer(YR_UNDEFINED);
+
+  Tlsh* tlsh = tlsh_new();
+  FAIL_ON_NULL_WITH_CLEANUP(
+      tlsh,
+      tlsh_free(tlsh_pivot); tlsh_free(tlsh));
+
+  YR_SCAN_CONTEXT* context = yr_scan_context();
+  YR_MEMORY_BLOCK* block = first_memory_block(context);
+  YR_MEMORY_BLOCK_ITERATOR* iterator = context->iterator;
+  int64_t offset = 0;
+  int64_t length = block->size;
+
+  YR_DEBUG_FPRINTF(
+      2,
+      stderr,
+      "+ %s(offset=%" PRIi64 " length=%" PRIi64 " hash=%s) {\n",
+      func_name,
+      offset,
+      length,
+      ss_string(s));
+
+  if (!validate_tlsh_data(tlsh_option, length))
+  {
+    tlsh_free(tlsh_pivot);
+    tlsh_free(tlsh);
+
+    return_integer(YR_UNDEFINED);
+  }
+
+  if (!check_mem_block(block, offset, length, __FUNCTION__))
+  {
+    tlsh_free(tlsh_pivot);
+    tlsh_free(tlsh);
+
+    return_integer(YR_UNDEFINED);
+  }
+
+  if (!get_tlsh_digest(tlsh, tlsh_option, block, iterator, offset, length, yr_module(), __FUNCTION__))
+  {
+    tlsh_free(tlsh_pivot);
+    tlsh_free(tlsh);
+
+    return_integer(YR_UNDEFINED);
+  }
+
+  const char* digest_ascii = get_tlsh_ascii(tlsh, showvers);
+  FAIL_ON_NULL_WITH_CLEANUP(
+      digest_ascii,
+      tlsh_free(tlsh_pivot); tlsh_free(tlsh));
+
+  FAIL_ON_ERROR(
+      add_to_cache(yr_module(), "tlsh_diff", offset, length, digest_ascii));
+
+  YR_DEBUG_FPRINTF(2, stderr, "} // %s() = 0x%s\n", __FUNCTION__, digest_ascii);
+
+  int diff = tlsh_total_diff(tlsh_pivot, tlsh, len_diff);
+  if (diff < 0)
+  {
+    tlsh_free(tlsh_pivot);
+    tlsh_free(tlsh);
+
+    return_integer(YR_UNDEFINED);
+  }
+
+  tlsh_free(tlsh_pivot);
+  tlsh_free(tlsh);
+
+  return_integer(diff);
+}
+
+define_function(data_tlsh_diff)
+{
+  int tlsh_option = 0;  // default option
+  int showvers = 1;     // default is to show hash string with the version byte
+  bool len_diff = true; // default is to include length of the file into diff calculation
+
+  SIZED_STRING* s = sized_string_argument(1); // TLSH hash string in hexa format we want to compute diff from
+  int64_t arg_offset = integer_argument(2);   // offset where to start
+  int64_t arg_length = integer_argument(3);   // length of bytes we want hash on
+
+  int64_t offset = arg_offset;
+  int64_t length = arg_length;
+
+  Tlsh* tlsh_pivot = get_tlsh_pivot(s);
+  if (tlsh_pivot == NULL)
+    return_integer(YR_UNDEFINED);
+
+  Tlsh* tlsh = tlsh_new();
+  FAIL_ON_NULL_WITH_CLEANUP(
+      tlsh,
+      tlsh_free(tlsh_pivot); tlsh_free(tlsh));
+
+  YR_SCAN_CONTEXT* context = yr_scan_context();
+  YR_MEMORY_BLOCK* block = first_memory_block(context);
+  YR_MEMORY_BLOCK_ITERATOR* iterator = context->iterator;
+
+  YR_DEBUG_FPRINTF(
+      2,
+      stderr,
+      "+ %s(offset=%" PRIi64 " length=%" PRIi64 " hash=%s) {\n",
+      func_name,
+      offset,
+      length,
+      ss_string(s));
+
+  if (!validate_tlsh_data(tlsh_option, length))
+  {
+    tlsh_free(tlsh_pivot);
+    tlsh_free(tlsh);
+
+    return_integer(YR_UNDEFINED);
+  }
+
+  if (!check_mem_block(block, offset, length, __FUNCTION__))
+  {
+    tlsh_free(tlsh_pivot);
+    tlsh_free(tlsh);
+
+    return_integer(YR_UNDEFINED);
+  }
+
+  if (!get_tlsh_digest(tlsh, tlsh_option, block, iterator, offset, length, yr_module(), __FUNCTION__))
+  {
+    tlsh_free(tlsh_pivot);
+    tlsh_free(tlsh);
+
+    return_integer(YR_UNDEFINED);
+  }
+
+  const char* digest_ascii = get_tlsh_ascii(tlsh, showvers);
+  FAIL_ON_NULL_WITH_CLEANUP(
+      digest_ascii,
+      tlsh_free(tlsh_pivot); tlsh_free(tlsh));
+
+  FAIL_ON_ERROR(
+      add_to_cache(yr_module(), "tlsh_diff", arg_offset, arg_length, digest_ascii));
+
+  YR_DEBUG_FPRINTF(2, stderr, "} // %s() = 0x%s\n", __FUNCTION__, digest_ascii);
+
+  int diff = tlsh_total_diff(tlsh_pivot, tlsh, len_diff);
+  if (diff < 0)
+  {
+    tlsh_free(tlsh_pivot);
+    tlsh_free(tlsh);
+
+    return_integer(YR_UNDEFINED);
+  }
+
+  tlsh_free(tlsh_pivot);
+  tlsh_free(tlsh);
+
+  return_integer(diff);
+}
+
+define_function(string_tlsh_diff)
+{
+  int tlsh_option = 0;  // default option
+  int showvers = 1;     // default is to show hash string with the version byte
+  bool len_diff = true; // default is to include length of the file into diff calculation
+
+  SIZED_STRING* s1 = sized_string_argument(1); // TLSH hash string in hexa format we want to compute diff from
+  SIZED_STRING* s2 = sized_string_argument(2); // content string we want to compute TLSH diff from
+
+  if (!validate_tlsh_data(tlsh_option, s2->length))
+    return_integer(YR_UNDEFINED);
+
+  Tlsh* tlsh_pivot = get_tlsh_pivot(s1);
+  if (tlsh_pivot == NULL)
+    return_integer(YR_UNDEFINED);
+
+  Tlsh* tlsh = tlsh_new();
+  FAIL_ON_NULL_WITH_CLEANUP(
+      tlsh,
+      tlsh_free(tlsh_pivot); tlsh_free(tlsh));
+
+  FAIL_ON_ERROR_WITH_CLEANUP(
+      tlsh_final(tlsh, (const unsigned char*) ss_string(s2), s2->length, tlsh_option),
+      tlsh_free(tlsh_pivot); tlsh_free(tlsh));
+
+  const char* digest_ascii = get_tlsh_ascii(tlsh, showvers);
+  FAIL_ON_NULL_WITH_CLEANUP(
+      digest_ascii,
+      tlsh_free(tlsh_pivot); tlsh_free(tlsh));
+
+  YR_DEBUG_FPRINTF(
+      2,
+      stderr,
+      "- %s() {} = 0x%s // s2->length=%u\n",
+      __FUNCTION__,
+      digest_ascii,
+      s2->length);
+
+  int diff = tlsh_total_diff(tlsh_pivot, tlsh, len_diff);
+  if (diff < 0)
+  {
+    tlsh_free(tlsh_pivot);
+    tlsh_free(tlsh);
+
+    return_integer(YR_UNDEFINED);
+  }
+
+  tlsh_free(tlsh_pivot);
+  tlsh_free(tlsh);
+
+  return_integer(diff);
+}
+
 begin_declarations
   declare_function("md5", "ii", "s", data_md5);
   declare_function("md5", "s", "s", string_md5);
@@ -823,6 +1210,10 @@ begin_declarations
 
   declare_function("crc32", "ii", "i", data_crc32);
   declare_function("crc32", "s", "i", string_crc32);
+
+  declare_function("tlsh_diff", "s", "i", file_tlsh_diff);
+  declare_function("tlsh_diff", "sii", "i", data_tlsh_diff);
+  declare_function("tlsh_diff", "ss", "i", string_tlsh_diff);
 end_declarations
 
 int module_initialize(YR_MODULE* module)
