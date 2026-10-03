@@ -1157,18 +1157,27 @@ void dex_parse(DEX* dex, uint64_t base_address)
           dex->data + yr_le32toh(dex_header->map_offset),
           sizeof(uint32_t)))
   {
-    uint32_t* map_list_size =
-        (uint32_t*) (dex->data + yr_le32toh(dex_header->map_offset));
+    uint32_t map_list_size;
 
-    yr_set_integer(yr_le32toh(*map_list_size), dex->object, "map_list.size");
+    // map_offset comes from the DEX file and is not necessarily 4-byte
+    // aligned. Read it through memcpy so the load is defined regardless of
+    // the offset's alignment instead of dereferencing a uint32_t* that UBSan
+    // rejects on misaligned input.
+    memcpy(
+        &map_list_size,
+        dex->data + yr_le32toh(dex_header->map_offset),
+        sizeof(uint32_t));
+    map_list_size = yr_le32toh(map_list_size);
+
+    yr_set_integer(map_list_size, dex->object, "map_list.size");
 
     if (!fits_in_dex(
             dex,
             dex->data + yr_le32toh(dex_header->map_offset),
-            sizeof(uint32_t) + yr_le32toh(*map_list_size) * sizeof(map_item_t)))
+            sizeof(uint32_t) + (size_t) map_list_size * sizeof(map_item_t)))
       return;
 
-    for (i = 0; i < yr_le32toh(*map_list_size); i++)
+    for (i = 0; i < map_list_size; i++)
     {
       map_item_t* map_item =
           (map_item_t*) (dex->data + yr_le32toh(dex_header->map_offset) + sizeof(uint32_t) + i * sizeof(map_item_t));
