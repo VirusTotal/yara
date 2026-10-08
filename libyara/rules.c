@@ -417,6 +417,66 @@ int yr_rules_from_arena(YR_ARENA* arena, YR_RULES** rules)
   new_rules->ext_vars_table = yr_arena_get_ptr(
       arena, YR_EXTERNAL_VARIABLES_TABLE, 0);
 
+  // The external variables table is read verbatim from the loaded file.
+  // Validate it: each entry must lie within the buffer, carry a known type,
+  // and the table must be NULL-terminated. Otherwise a crafted file can
+  // make yr_rules_destroy() call yr_free() on an attacker-controlled pointer
+  // (CVE-2026-88340) or make the table walk run out of bounds.
+  {
+    yr_arena_off_t ext_vars_size = yr_arena_get_current_offset(
+        arena, YR_EXTERNAL_VARIABLES_TABLE);
+
+    YR_EXTERNAL_VARIABLE* ext = new_rules->ext_vars_table;
+    YR_EXTERNAL_VARIABLE* ext_end = (YR_EXTERNAL_VARIABLE*)
+        ((uint8_t*) ext + ext_vars_size);
+
+    int found_null = 0;
+
+    while (ext < ext_end)
+    {
+      if (ext->type > EXTERNAL_VARIABLE_TYPE_MALLOC_STRING)
+        return ERROR_CORRUPT_FILE;
+
+      if (ext->type == EXTERNAL_VARIABLE_TYPE_NULL)
+      {
+        found_null = 1;
+        break;
+      }
+
+      // String pointers stored in the table must point inside the arena;
+      // a freshly loaded file never carries live heap pointers here.
+      if ((ext->type == EXTERNAL_VARIABLE_TYPE_STRING ||
+           ext->type == EXTERNAL_VARIABLE_TYPE_MALLOC_STRING) &&
+          ext->value.s != NULL)
+      {
+        int in_arena = 0;
+
+        for (uint32_t b = 0; b < YR_NUM_SECTIONS; b++)
+        {
+          uint8_t* base = (uint8_t*) yr_arena_get_ptr(arena, b, 0);
+          yr_arena_off_t size = yr_arena_get_current_offset(arena, b);
+
+          if (base != NULL &&
+              (uint8_t*) ext->value.s >= base &&
+              (uint8_t*) ext->value.s < base + size)
+          {
+            in_arena = 1;
+            break;
+          }
+        }
+
+        if (!in_arena)
+          return ERROR_CORRUPT_FILE;
+      }
+
+      ext++;
+    }
+
+    if (!found_null)
+      return ERROR_CORRUPT_FILE;
+  }
+
+
   new_rules->ac_transition_table = yr_arena_get_ptr(
       arena, YR_AC_TRANSITION_TABLE, 0);
 
