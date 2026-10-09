@@ -42,11 +42,38 @@ typedef EVP_MD_CTX *yr_md5_ctx;
 typedef EVP_MD_CTX *yr_sha1_ctx;
 typedef EVP_MD_CTX *yr_sha256_ctx;
 
-#define yr_md5_init(ctx)             \
-  {                                  \
-    *ctx = EVP_MD_CTX_create();      \
-    EVP_DigestInit(*ctx, EVP_md5()); \
+// Returns non-zero on success. MD5 is used here to identify data (hash.md5,
+// imphash), not for security, so under OpenSSL 3 it is requested with the
+// "-fips" property query: a FIPS-only configuration doesn't offer MD5 to
+// callers that don't say so. If MD5 isn't available at all, this fails and
+// the caller must not use the context.
+static inline int yr_md5_init(yr_md5_ctx* ctx)
+{
+#if OPENSSL_VERSION_NUMBER >= 0x30000000L
+  EVP_MD* md = EVP_MD_fetch(NULL, "MD5", "-fips");
+#else
+  const EVP_MD* md = EVP_md5();
+#endif
+
+  *ctx = NULL;
+
+  if (md == NULL)
+    return 0;
+
+  *ctx = EVP_MD_CTX_create();
+
+  if (*ctx != NULL && EVP_DigestInit_ex(*ctx, md, NULL) != 1)
+  {
+    EVP_MD_CTX_destroy(*ctx);
+    *ctx = NULL;
   }
+
+#if OPENSSL_VERSION_NUMBER >= 0x30000000L
+  EVP_MD_free(md);
+#endif
+
+  return *ctx != NULL;
+}
 #define yr_md5_update(ctx, data, len) EVP_DigestUpdate(*ctx, data, len)
 #define yr_md5_final(digest, ctx)        \
   {                                      \
