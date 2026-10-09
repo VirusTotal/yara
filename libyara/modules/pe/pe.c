@@ -2773,7 +2773,8 @@ define_function(imphash)
   if (digest_ascii != NULL)
     return_string(digest_ascii);
 
-  yr_md5_init(&ctx);
+  if (!yr_md5_init(&ctx))
+    return_string(YR_UNDEFINED);
 
   dll = pe->imported_dlls;
 

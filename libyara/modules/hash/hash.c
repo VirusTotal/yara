@@ -170,7 +170,9 @@ define_function(string_md5)
   yr_md5_ctx md5_context;
   SIZED_STRING* s = sized_string_argument(1);
 
-  yr_md5_init(&md5_context);
+  if (!yr_md5_init(&md5_context))
+    return_string(YR_UNDEFINED);
+
   yr_md5_update(&md5_context, s->c_string, s->length);
   yr_md5_final(digest, &md5_context);
 
@@ -318,7 +320,13 @@ define_function(data_md5)
     return_string(cached_ascii_digest);
   }
 
-  yr_md5_init(&md5_context);
+  if (!yr_md5_init(&md5_context))
+  {
+    YR_DEBUG_FPRINTF(
+        2, stderr, "} // %s() = YR_UNDEFINED // MD5 unavailable\n", __FUNCTION__);
+
+    return_string(YR_UNDEFINED);
+  }
 
   foreach_memory_block(iterator, block)
   {
