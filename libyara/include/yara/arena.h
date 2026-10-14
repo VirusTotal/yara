@@ -50,6 +50,14 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 typedef uint32_t yr_arena_off_t;
 
+// The largest size an arena buffer is allowed to reach. Offsets into a buffer
+// are stored as 32-bit integers in YR_ARENA_REF, so UINT32_MAX is the largest
+// offset that can be represented. Bounding the buffer size by that same value
+// also keeps the offset one past the last allocated byte representable, which
+// matters because that offset is what gets stored in a reference when a new
+// region starts at the end of the buffer.
+#define YR_ARENA_MAX_BUFFER_SIZE ((size_t) UINT32_MAX)
+
 typedef struct YR_ARENA YR_ARENA;
 typedef struct YR_ARENA_BUFFER YR_ARENA_BUFFER;
 typedef struct YR_ARENA_REF YR_ARENA_REF;
@@ -81,8 +89,8 @@ struct YR_ARENA_BUFFER
   uint8_t* data;
 
   // Total buffer size, including the used and unused areas. The maximum size
-  // allowed for a buffer is 4GB because offsets in YR_ARENA_REF are 32-bit
-  // integers.
+  // allowed for a buffer is YR_ARENA_MAX_BUFFER_SIZE, because offsets in
+  // YR_ARENA_REF are 32-bit integers.
   size_t size;
 
   // Number of bytes that are actually used (equal to or lower than size).
@@ -185,6 +193,10 @@ int yr_arena_release(YR_ARENA* arena);
 // yr_arena_allocate_xxx and yr_arena_write_xxx. These functions can cause
 // the buffer to be moved to different memory location and the pointer won't
 // valid any longer.
+// A reference whose buffer number or offset is out of range yields NULL
+// instead of a pointer outside the arena. References restored from a file
+// loaded with yr_arena_load_stream are not trustworthy on their own, so
+// callers must not assume that a non-NULL reference is always resolvable.
 void* yr_arena_ref_to_ptr(YR_ARENA* arena, YR_ARENA_REF* ref);
 
 // Given a pointer into the arena, it returns a reference to it. The reference
@@ -199,11 +211,17 @@ int yr_arena_ptr_to_ref(
 // Given a buffer number and an offset within the buffer, returns a pointer
 // to that offset. The same limitations explained for yr_arena_ref_to_ptr
 // applies for the pointers returned by this function.
+// NULL is returned if the buffer number is not valid for this arena, if the
+// buffer has not been allocated, or if the offset lies past the end of the
+// data written to the buffer. These bounds are enforced regardless of whether
+// assertions are enabled.
 void* yr_arena_get_ptr(
     YR_ARENA* arena,
     uint32_t buffer_id,
     yr_arena_off_t offset);
 
+// Returns the offset one past the last byte written to the given buffer, or 0
+// if the buffer number is not valid for this arena.
 yr_arena_off_t yr_arena_get_current_offset(YR_ARENA* arena, uint32_t buffer_id);
 
 int yr_arena_allocate_memory(

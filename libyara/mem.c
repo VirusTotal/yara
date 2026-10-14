@@ -57,6 +57,14 @@ int yr_heap_free(void)
 
 void* yr_calloc(size_t count, size_t size)
 {
+  // HeapAlloc, unlike the calloc that the C runtime provides on the platforms
+  // below, does not detect a count * size overflow and would silently hand out
+  // a buffer smaller than the caller asked for. Callers of yr_calloc rely on
+  // it behaving like the standard calloc, so perform the check here to keep
+  // both implementations equivalent.
+  if (size != 0 && count > (~(size_t) 0) / size)
+    return NULL;
+
   return (void*) HeapAlloc(hHeap, HEAP_ZERO_MEMORY, count * size);
 }
 

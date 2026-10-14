@@ -377,6 +377,107 @@ static void corrupt_num_buffers_tests()
   yr_finalize();
 }
 
+// yr_arena_get_ptr, yr_arena_get_current_offset and yr_arena_ref_to_ptr used to
+// enforce their bounds with assert only, which makes the checks disappear when
+// NDEBUG is defined. Every reference reaching them can originate from a
+// compiled rules file read by yr_arena_load_stream, so an out-of-range
+// reference has to resolve to NULL instead of to a pointer outside the arena.
+static void out_of_range_reference_tests()
+{
+  YR_ARENA* arena;
+
+  yr_initialize();
+
+  assert_true_expr(yr_arena_create(2, 10, &arena) == ERROR_SUCCESS);
+
+  YR_ARENA_REF ref;
+
+  assert_true_expr(
+      yr_arena_allocate_memory(arena, 0, 5, &ref) == ERROR_SUCCESS);
+
+  // In-range accesses keep working, including the offset one past the last
+  // allocated byte, which is where the next allocation in the buffer starts.
+  assert_true_expr(yr_arena_get_ptr(arena, 0, 0) != NULL);
+  assert_true_expr(yr_arena_get_ptr(arena, 0, ref.offset) != NULL);
+  assert_true_expr(yr_arena_get_ptr(arena, 0, 5) != NULL);
+  assert_true_expr(yr_arena_get_current_offset(arena, 0) == 5);
+
+  // A buffer that has not been allocated yet still yields NULL.
+  assert_true_expr(yr_arena_get_ptr(arena, 1, 0) == NULL);
+
+  // A buffer number the arena does not have must not index past the end of
+  // the buffers array, whether it is just out of range or far out of range.
+  assert_true_expr(yr_arena_get_ptr(arena, 2, 0) == NULL);
+  assert_true_expr(yr_arena_get_ptr(arena, YR_MAX_ARENA_BUFFERS, 0) == NULL);
+  assert_true_expr(yr_arena_get_ptr(arena, UINT32_MAX, 0) == NULL);
+  assert_true_expr(yr_arena_get_current_offset(arena, 2) == 0);
+  assert_true_expr(yr_arena_get_current_offset(arena, YR_MAX_ARENA_BUFFERS) == 0);
+
+  // An offset past the end of the data written to the buffer must not produce
+  // a pointer past the end of the buffer.
+  assert_true_expr(yr_arena_get_ptr(arena, 0, 6) == NULL);
+  assert_true_expr(yr_arena_get_ptr(arena, 0, UINT32_MAX) == NULL);
+
+  // The same holds when the reference is resolved through
+  // yr_arena_ref_to_ptr, which is how a reference stored inside a loaded arena
+  // is turned back into a pointer.
+  YR_ARENA_REF bad_ref;
+
+  bad_ref.buffer_id = 0x41414141;
+  bad_ref.offset = 0;
+  assert_true_expr(yr_arena_ref_to_ptr(arena, &bad_ref) == NULL);
+
+  bad_ref.buffer_id = 0;
+  bad_ref.offset = 6;
+  assert_true_expr(yr_arena_ref_to_ptr(arena, &bad_ref) == NULL);
+
+  bad_ref.offset = 5;
+  assert_true_expr(yr_arena_ref_to_ptr(arena, &bad_ref) != NULL);
+
+  yr_arena_release(arena);
+  yr_finalize();
+}
+
+// An allocation whose size overflows the sum with the bytes already used in the
+// buffer must be rejected. It used to wrap around, leave the buffer smaller
+// than the caller asked for and corrupt the running offset.
+static void oversized_allocation_tests()
+{
+  const size_t size_max = (size_t) -1;
+
+  YR_ARENA* arena;
+
+  yr_initialize();
+
+  assert_true_expr(yr_arena_create(1, 10, &arena) == ERROR_SUCCESS);
+
+  YR_ARENA_REF ref;
+
+  assert_true_expr(
+      yr_arena_allocate_memory(arena, 0, 5, &ref) == ERROR_SUCCESS);
+
+  // size_max on its own wraps the growth loop, and size_max - 4 is the first
+  // size that overflows 5 + size, so both have to be refused.
+  assert_true_expr(
+      yr_arena_allocate_memory(arena, 0, size_max, &ref) ==
+      ERROR_INSUFFICIENT_MEMORY);
+  assert_true_expr(
+      yr_arena_allocate_memory(arena, 0, size_max - 4, &ref) ==
+      ERROR_INSUFFICIENT_MEMORY);
+
+  // The rejected allocations must not have disturbed the buffer.
+  assert_true_expr(yr_arena_get_current_offset(arena, 0) == 5);
+
+  // A reasonable allocation still succeeds afterwards.
+  assert_true_expr(
+      yr_arena_allocate_memory(arena, 0, 5, &ref) == ERROR_SUCCESS);
+  assert_true_expr(ref.offset == 5);
+  assert_true_expr(yr_arena_get_current_offset(arena, 0) == 10);
+
+  yr_arena_release(arena);
+  yr_finalize();
+}
+
 int main(int argc, char** argv)
 {
   int result = 0;
@@ -390,6 +491,8 @@ int main(int argc, char** argv)
   corrupt_reloc_offset_tests();
   corrupt_reloc_target_tests();
   corrupt_num_buffers_tests();
+  out_of_range_reference_tests();
+  oversized_allocation_tests();
 
   YR_DEBUG_FPRINTF(
       1, stderr, "} = %d // %s() in %s\n", result, __FUNCTION__, argv[0]);

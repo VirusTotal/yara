@@ -142,19 +142,46 @@ static int _yr_arena_allocate_memory(
 
   YR_ARENA_BUFFER* b = &arena->buffers[buffer_id];
 
+  // Reject any allocation that would push the buffer past the largest offset
+  // that a YR_ARENA_REF can hold. Writing the test as a subtraction from the
+  // limit avoids the unsigned wrap that a plain b->used + size is subject to.
+  // b->used is always <= YR_ARENA_MAX_BUFFER_SIZE, because it starts at zero
+  // and is only ever increased at the end of this function, after the same
+  // bound has been enforced.
+  if (size > YR_ARENA_MAX_BUFFER_SIZE - b->used)
+    return ERROR_INSUFFICIENT_MEMORY;
+
+  size_t needed = b->used + size;
+
   // If the new data doesn't fit in the remaining space the buffer must be
   // re-sized. This implies moving the buffer to a different memory location
   // and adjusting the pointers listed in the relocation list.
 
-  if (b->size - b->used < size)
+  if (needed > b->size)
   {
-    size_t new_size = (b->size == 0) ? arena->initial_buffer_size : b->size * 2;
+    // Start from the current size, or from the arena's initial size for a
+    // buffer that has not been used yet, and double it until it is large
+    // enough. Every step is clamped to YR_ARENA_MAX_BUFFER_SIZE so that the
+    // doubling cannot wrap around. The previous version doubled with no upper
+    // bound and compared against a sum that could wrap, so a large enough
+    // size made it loop forever where size_t is 32 bits wide.
+    size_t new_size = (b->size == 0) ? arena->initial_buffer_size : b->size;
 
-    while (new_size < b->used + size) new_size *= 2;
+    if (new_size == 0)
+      new_size = 1;
+    else if (new_size > YR_ARENA_MAX_BUFFER_SIZE)
+      new_size = YR_ARENA_MAX_BUFFER_SIZE;
 
-    // Make sure that buffer size if not larger than 4GB.
-    if (new_size > 1ULL << 32)
-      return ERROR_INSUFFICIENT_MEMORY;
+    while (new_size < needed)
+    {
+      if (new_size > YR_ARENA_MAX_BUFFER_SIZE / 2)
+      {
+        new_size = YR_ARENA_MAX_BUFFER_SIZE;
+        break;
+      }
+
+      new_size *= 2;
+    }
 
     uint8_t* new_data = yr_realloc(b->data, new_size);
 
@@ -416,19 +443,33 @@ void* yr_arena_get_ptr(
     uint32_t buffer_id,
     yr_arena_off_t offset)
 {
-  assert(buffer_id < arena->num_buffers);
-  assert(offset <= arena->buffers[buffer_id].used);
-
-  if (arena->buffers[buffer_id].data == NULL)
+  // These bounds used to be checked with assert only, which makes them vanish
+  // when NDEBUG is defined, as it is for the released Windows binaries. That
+  // is not a safe default here: buffer_id and offset both come from a
+  // YR_ARENA_REF, and references restored by yr_arena_load_stream are read
+  // straight out of a file that may be attacker controlled. An out-of-range
+  // buffer_id indexed past the end of the buffers array and an out-of-range
+  // offset produced a pointer outside the buffer, so a crafted compiled rules
+  // file turned into a pointer that could be read from and written through.
+  // Returning NULL keeps the documented failure mode and fails closed.
+  if (buffer_id >= arena->num_buffers)
     return NULL;
 
-  return arena->buffers[buffer_id].data + offset;
+  YR_ARENA_BUFFER* b = &arena->buffers[buffer_id];
+
+  if (b->data == NULL || offset > b->used)
+    return NULL;
+
+  return b->data + offset;
 }
 
 yr_arena_off_t yr_arena_get_current_offset(YR_ARENA* arena, uint32_t buffer_id)
 {
-  assert(buffer_id < arena->num_buffers);
+  if (buffer_id >= arena->num_buffers)
+    return 0;
 
+  // b->used never exceeds YR_ARENA_MAX_BUFFER_SIZE, so this conversion is
+  // always exact and can never truncate to a smaller offset.
   return (yr_arena_off_t) arena->buffers[buffer_id].used;
 }
 
