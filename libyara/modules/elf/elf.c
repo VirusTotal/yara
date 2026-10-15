@@ -256,7 +256,9 @@ define_function(import_md5)
   unsigned char hash[YR_MD5_LEN];
 
   yr_md5_ctx ctx;
-  yr_md5_init(&ctx);
+  if (!yr_md5_init(&ctx))
+    goto cleanup;
+
   yr_md5_update(&ctx, sstr->str, sstr->len);
   yr_md5_final(hash, &ctx);
 
