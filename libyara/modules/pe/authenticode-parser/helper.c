@@ -82,3 +82,15 @@ int64_t ASN1_TIME_to_int64_t(const ASN1_TIME* time)
     ASN1_TIME_to_tm(time, &t);
     return timegm(&t);
 }
+
+const ASN1_STRING* asn1_type_get0_string(const ASN1_TYPE* any, int type)
+{
+    /* These types are not stored as an ASN1_STRING */
+    if (type == V_ASN1_BOOLEAN || type == V_ASN1_OBJECT || type == V_ASN1_NULL)
+        return NULL;
+
+    if (!any || any->type != type)
+        return NULL;
+
+    return any->value.asn1_string;
+}
