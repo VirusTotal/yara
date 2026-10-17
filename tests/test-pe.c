@@ -5,6 +5,79 @@
 
 #include "util.h"
 
+#if defined(HAVE_LIBCRYPTO) && !defined(BORINGSSL)
+
+#include <openssl/asn1.h>
+#include <openssl/objects.h>
+
+#include "../libyara/modules/pe/authenticode-parser/helper.h"
+
+static void test_asn1_type_get0_string()
+{
+  ASN1_TYPE* boolean = ASN1_TYPE_new();
+  ASN1_TYPE_set(boolean, V_ASN1_BOOLEAN, (void*) 0xff);
+  assert_true_expr(asn1_type_get0_string(boolean, V_ASN1_SEQUENCE) == NULL);
+  assert_true_expr(asn1_type_get0_string(boolean, V_ASN1_OCTET_STRING) == NULL);
+  assert_true_expr(asn1_type_get0_string(boolean, V_ASN1_UTCTIME) == NULL);
+  assert_true_expr(asn1_type_get0_string(boolean, V_ASN1_BOOLEAN) == NULL);
+  ASN1_TYPE_free(boolean);
+
+  ASN1_TYPE* object = ASN1_TYPE_new();
+  ASN1_TYPE_set(object, V_ASN1_OBJECT, OBJ_nid2obj(NID_pkcs9_messageDigest));
+  assert_true_expr(asn1_type_get0_string(object, V_ASN1_SEQUENCE) == NULL);
+  assert_true_expr(asn1_type_get0_string(object, V_ASN1_OCTET_STRING) == NULL);
+  assert_true_expr(asn1_type_get0_string(object, V_ASN1_OBJECT) == NULL);
+  ASN1_TYPE_free(object);
+
+  ASN1_TYPE* null = ASN1_TYPE_new();
+  ASN1_TYPE_set(null, V_ASN1_NULL, NULL);
+  assert_true_expr(asn1_type_get0_string(null, V_ASN1_SEQUENCE) == NULL);
+  assert_true_expr(asn1_type_get0_string(null, V_ASN1_NULL) == NULL);
+  ASN1_TYPE_free(null);
+
+  ASN1_STRING* sequence = ASN1_STRING_type_new(V_ASN1_SEQUENCE);
+  ASN1_STRING_set(sequence, "\x30\x00", 2);
+  ASN1_TYPE* sequence_type = ASN1_TYPE_new();
+  ASN1_TYPE_set(sequence_type, V_ASN1_SEQUENCE, sequence);
+  assert_true_expr(
+      asn1_type_get0_string(sequence_type, V_ASN1_SEQUENCE) == sequence);
+  assert_true_expr(
+      asn1_type_get0_string(sequence_type, V_ASN1_OCTET_STRING) == NULL);
+  ASN1_TYPE_free(sequence_type);
+
+  ASN1_OCTET_STRING* digest = ASN1_OCTET_STRING_new();
+  ASN1_OCTET_STRING_set(digest, (const unsigned char*) "\x01\x02\x03", 3);
+  ASN1_TYPE* octet_string = ASN1_TYPE_new();
+  ASN1_TYPE_set(octet_string, V_ASN1_OCTET_STRING, digest);
+  assert_true_expr(
+      asn1_type_get0_string(octet_string, V_ASN1_OCTET_STRING) == digest);
+  assert_true_expr(
+      asn1_type_get0_string(octet_string, V_ASN1_SEQUENCE) == NULL);
+  ASN1_TYPE_free(octet_string);
+
+  ASN1_UTCTIME* utc = ASN1_UTCTIME_set(NULL, 0);
+  ASN1_TYPE* utc_type = ASN1_TYPE_new();
+  ASN1_TYPE_set(utc_type, V_ASN1_UTCTIME, utc);
+  assert_true_expr(asn1_type_get0_string(utc_type, V_ASN1_UTCTIME) == utc);
+  assert_true_expr(
+      asn1_type_get0_string(utc_type, V_ASN1_GENERALIZEDTIME) == NULL);
+  ASN1_TYPE_free(utc_type);
+
+  ASN1_GENERALIZEDTIME* generalized = ASN1_GENERALIZEDTIME_set(NULL, 0);
+  ASN1_TYPE* generalized_type = ASN1_TYPE_new();
+  ASN1_TYPE_set(generalized_type, V_ASN1_GENERALIZEDTIME, generalized);
+  assert_true_expr(
+      asn1_type_get0_string(generalized_type, V_ASN1_GENERALIZEDTIME) ==
+      generalized);
+  assert_true_expr(
+      asn1_type_get0_string(generalized_type, V_ASN1_UTCTIME) == NULL);
+  ASN1_TYPE_free(generalized_type);
+
+  assert_true_expr(asn1_type_get0_string(NULL, V_ASN1_SEQUENCE) == NULL);
+}
+
+#endif
+
 int main(int argc, char** argv)
 {
   int result = 0;
@@ -284,6 +357,12 @@ int main(int argc, char** argv)
       }",
       "tests/data/"
       "e3d45a2865818756068757d7e319258fef40dad54532ee4355b86bc129f27345");
+
+#endif
+
+#if defined(HAVE_LIBCRYPTO) && !defined(BORINGSSL)
+
+  test_asn1_type_get0_string();
 
 #endif
 

@@ -122,13 +122,16 @@ Countersignature* pkcs9_countersig_new(
     int digestnid = OBJ_obj2nid(si->digest_alg->algorithm);
     result->digest_alg = strdup(OBJ_nid2ln(digestnid));
 
-    const ASN1_TYPE* sign_time = PKCS7_get_signed_attribute(si, NID_pkcs9_signingTime);
-    if (!sign_time || !sign_time->value.utctime) {
+    const ASN1_TYPE* sign_time_attr = PKCS7_get_signed_attribute(si, NID_pkcs9_signingTime);
+    const ASN1_TIME* sign_time = asn1_type_get0_string(sign_time_attr, V_ASN1_UTCTIME);
+    if (!sign_time)
+        sign_time = asn1_type_get0_string(sign_time_attr, V_ASN1_GENERALIZEDTIME);
+    if (!sign_time) {
         result->verify_flags = COUNTERSIGNATURE_VFY_TIME_MISSING;
         goto end;
     }
 
-    result->sign_time = ASN1_TIME_to_int64_t(sign_time->value.utctime);
+    result->sign_time = ASN1_TIME_to_int64_t(sign_time);
 
     X509* signCert = X509_find_by_issuer_and_serial(
         certs, si->issuer_and_serial->issuer, si->issuer_and_serial->serial);
@@ -141,13 +144,14 @@ Countersignature* pkcs9_countersig_new(
     result->chain = parse_signer_chain(signCert, certs);
 
     /* Get digest that corresponds to decrypted encrypted digest in signature */
-    ASN1_TYPE* messageDigest = PKCS7_get_signed_attribute(si, NID_pkcs9_messageDigest);
-    if (!messageDigest || !messageDigest->value.octet_string) {
+    const ASN1_STRING* messageDigest = asn1_type_get0_string(
+        PKCS7_get_signed_attribute(si, NID_pkcs9_messageDigest), V_ASN1_OCTET_STRING);
+    if (!messageDigest) {
         result->verify_flags = COUNTERSIGNATURE_VFY_DIGEST_MISSING;
         goto end;
     }
 
-    size_t digestLen = ASN1_STRING_length(messageDigest->value.octet_string);
+    size_t digestLen = ASN1_STRING_length(messageDigest);
 
     if (!digestLen) {
         result->verify_flags = COUNTERSIGNATURE_VFY_DIGEST_MISSING;
@@ -160,7 +164,7 @@ Countersignature* pkcs9_countersig_new(
         goto end;
     }
 
-    const uint8_t* digestData = ASN1_STRING_get0_data(messageDigest->value.octet_string);
+    const uint8_t* digestData = ASN1_STRING_get0_data(messageDigest);
     byte_array_init(&result->digest, digestData, digestLen);
 
     /* By this point we all necessary things for verification

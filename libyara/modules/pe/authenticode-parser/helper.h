@@ -60,6 +60,9 @@ int calculate_digest(const EVP_MD* md, const uint8_t* data, size_t len, uint8_t*
 int byte_array_init(ByteArray* arr, const uint8_t* data, int len);
 /* Converts ASN1_TIME string time into a unix timestamp */
 int64_t ASN1_TIME_to_int64_t(const ASN1_TIME* time);
+/* Returns the string value of any if it holds the ASN.1 type type (V_ASN1_*), NULL otherwise.
+ * NULL is also returned for types that are not stored as an ASN1_STRING */
+const ASN1_STRING* asn1_type_get0_string(const ASN1_TYPE* any, int type);
 
 #ifdef __cplusplus
 }
