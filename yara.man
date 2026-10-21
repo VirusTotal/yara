@@ -83,13 +83,16 @@ Print strings found in the file.
 Print length of strings found in the file.
 .TP
 .B \-X " --print-xor-key"
-Print xor key of matched strings.
+Print xor key and plaintext of matched strings.
 .TP
 .B \-g " --print-tags"
 Print the tags associated to the rule.
 .TP
 .B \-r " --recursive"
 Scan files in directories recursively. It follows symlinks.
+.TP
+.B \-N " --no-follow-symlinks"
+Do not follow symlinks when scanning.
 .TP
 .BI "    --scan-list"
 Scan files listed in FILE, one per line.
@@ -103,8 +106,11 @@ in bytes when scanning a directory.
 Set maximum stack size to the specified number of
 .I slots.
 .TP
-.BI "    --strict-escape"
+.BI \-E " --strict-escape"
 Print warnings if rules contain ambiguous escape statements.
+.TP
+.B \-q " --disable-console-logs"
+Disable printing console log messages.
 .TP
 .BI \-t " tag" " --tag=" tag
 Print rules tagged as
@@ -123,6 +129,9 @@ has elapsed.
 .TP
 .B \-v " --version"
 Show version information.
+.TP
+.B \-h " --help"
+Show this help and exit.
 .SH EXAMPLES
 $ yara /foo/bar/rules .
 .RS
