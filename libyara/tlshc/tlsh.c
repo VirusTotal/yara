@@ -1,3 +1,4 @@
+#include <errno.h>
 #include <stdlib.h>
 #include <tlshc/tlsh.h>
 #include "tlsh_impl.h"
@@ -69,6 +70,27 @@ int tlsh_final(
   }
 
   return 0;
+}
+
+
+int tlsh_total_diff(Tlsh* tlsh, Tlsh* other, bool len_diff)
+{
+  if (!tlsh->impl || !other || !other->impl)
+    return -(EINVAL);
+  else if (tlsh == other || tlsh_impl_compare(tlsh->impl, other->impl) == 0)
+    return 0;
+  else
+    return tlsh_impl_total_diff(tlsh->impl, other->impl, len_diff);
+}
+
+int tlsh_from_tlsh_str(Tlsh* tlsh, const char* str)
+{
+  if (!tlsh->impl)
+    return -(ENOMEM);
+  else if (!str)
+    return -(EINVAL);
+  else
+    return tlsh_impl_from_tlsh_str(tlsh->impl, str);
 }
 
 const char* tlsh_get_hash(Tlsh* tlsh, bool showvers)
