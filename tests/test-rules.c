@@ -2905,6 +2905,74 @@ void test_re()
       "b",
       "b");
 
+  assert_true_rule(
+      "rule test { strings: $a = /password(\\s|$)+/ condition: $a }",
+      "EVIL password here");
+
+  assert_true_rule(
+      "rule test { strings: $a = /password(\\s|$)+/ condition: $a }",
+      "EVIL password");
+
+  assert_true_rule(
+      "rule test { strings: $a = /password(\\s|$)+?=/ condition: $a }",
+      "EVIL password = 1");
+
+  assert_false_rule(
+      "rule test { strings: $a = /password(\\s|$)+?=/ condition: $a }",
+      "EVIL password");
+
+  assert_true_rule(
+      "rule test { strings: $a = /(\\s|^)+?password/ condition: #a == 1 }",
+      "EVIL password");
+
+  assert_true_rule(
+      "rule test { strings: $a = /(\\s|^)+?password/ condition: #a == 1 }",
+      "password EVIL");
+
+  assert_true_rule(
+      "rule test { strings: $a = /(\\s|^)+password/ condition: #a == 1 }",
+      "password EVIL");
+
+  assert_true_rule(
+      "rule test { strings: $a = /password(\\s|\\b)+/ condition: $a }",
+      "EVIL password");
+
+  assert_false_rule(
+      "rule test { strings: $a = /password(\\s|\\b)+?=/ condition: $a }",
+      "EVIL password");
+
+  assert_true_rule(
+      "rule test { strings: $a = /(\\s|\\b)+?password/ condition: #a == 1 }",
+      "password EVIL");
+
+  assert_false_rule(
+      "rule test { strings: $a = /password(\\s|\\B)+?=/ condition: $a }",
+      "EVIL passwordx");
+
+  assert_true_rule(
+      "rule test { strings: $a = /(\\s|\\B)+?password/ condition: #a == 1 }",
+      "xpassword EVIL");
+
+  assert_false_rule(
+      "rule test { strings: $a = /=(\\s|\\B)+?password/ condition: $a }",
+      "xpassword EVIL");
+
+  assert_false_rule(
+      "rule test { strings: $a = /a(\\w|\\b)+c/ condition: $a }",
+      "abbbbbbbbbbbbbbbbbbbb");
+
+  assert_false_rule(
+      "rule test { strings: $a = /a(\\w|\\B)+c/ condition: $a }",
+      "abbbbbbbbbbbbbbbbbbbb");
+
+  assert_true_rule(
+      "rule test { condition: \" foo \" matches /\\bfoo\\b/ }",
+      NULL);
+
+  assert_true_rule(
+      "rule test { condition: \"foo\" matches /^(\\b)+foo($)+/ }",
+      NULL);
+
   YR_DEBUG_FPRINTF(1, stderr, "} // %s()\n", __FUNCTION__);
 }
 

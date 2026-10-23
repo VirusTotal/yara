@@ -201,6 +201,43 @@ static void test_repeat_stack_underflow(void)
   }
 }
 
+static void test_re_exec_timeout(void)
+{
+  uint8_t code[2] = {RE_OPCODE_ANY, RE_OPCODE_MATCH};
+
+  YR_SCAN_CONTEXT context;
+  memset(&context, 0, sizeof(context));
+
+  context.timeout = 1ULL;
+  yr_stopwatch_start(&context.stopwatch);
+
+  uint8_t input[256];
+  memset(input, 'a', sizeof(input));
+  int matches = 0;
+
+  int result = yr_re_exec(
+      &context,
+      code,
+      input,
+      sizeof(input),
+      0,
+      RE_FLAGS_SCAN | RE_FLAGS_EXHAUSTIVE,
+      re_match_callback,
+      NULL,
+      &matches);
+
+  assert(result == ERROR_SCAN_TIMEOUT);
+
+  RE_FIBER* fiber = context.re_fiber_pool.fibers.head;
+
+  while (fiber != NULL)
+  {
+    RE_FIBER* next = fiber->next;
+    yr_free(fiber);
+    fiber = next;
+  }
+}
+
 int main(int argc, char** argv)
 {
   int result = 0;
@@ -254,6 +291,7 @@ int main(int argc, char** argv)
   test_split_id_overflow();
   test_repeat_stack_overflow();
   test_repeat_stack_underflow();
+  test_re_exec_timeout();
 
   yr_finalize();
 

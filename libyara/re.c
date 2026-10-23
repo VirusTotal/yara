@@ -1466,7 +1466,12 @@ static void _yr_re_fiber_kill_all(
 static int _yr_re_fiber_sync(
     RE_FIBER_LIST* fiber_list,
     RE_FIBER_POOL* fiber_pool,
-    RE_FIBER* fiber_to_sync)
+    RE_FIBER* fiber_to_sync,
+    const uint8_t* input_data,
+    size_t input_forwards_size,
+    size_t input_backwards_size,
+    int bytes_matched,
+    int flags)
 {
   // A array for keeping track of which split instructions has been already
   // executed. Each split instruction within a regexp has an associated ID
@@ -1478,6 +1483,15 @@ static int _yr_re_fiber_sync(
   RE_SPLIT_ID_TYPE split_id, splits_executed_idx;
 
   int split_already_executed;
+  int match;
+  int kill;
+  int input_incr;
+
+  uint8_t character_size;
+  const uint8_t* input;
+
+  bool prev_is_word_char = false;
+  bool input_is_word_char = false;
 
   RE_REPEAT_ARGS* repeat_args;
   RE_REPEAT_ANY_ARGS* repeat_any_args;
@@ -1487,6 +1501,24 @@ static int _yr_re_fiber_sync(
   RE_FIBER* next;
   RE_FIBER* branch_a;
   RE_FIBER* branch_b;
+
+  if (flags & RE_FLAGS_WIDE)
+    character_size = 2;
+  else
+    character_size = 1;
+
+  input = input_data;
+  input_incr = character_size;
+
+  if (flags & RE_FLAGS_BACKWARDS)
+  {
+    input -= character_size + bytes_matched;
+    input_incr = -input_incr;
+  }
+  else
+  {
+    input += bytes_matched;
+  }
 
   fiber = fiber_to_sync;
   last = fiber_to_sync->next;
@@ -1666,7 +1698,15 @@ static int _yr_re_fiber_sync(
         branch_b->ip += (1 + sizeof(RE_REPEAT_ANY_ARGS));
         branch_b->rc = -1;
 
-        FAIL_ON_ERROR(_yr_re_fiber_sync(fiber_list, fiber_pool, branch_b));
+        FAIL_ON_ERROR(_yr_re_fiber_sync(
+            fiber_list,
+            fiber_pool,
+            branch_b,
+            input_data,
+            input_forwards_size,
+            input_backwards_size,
+            bytes_matched,
+            flags));
 
         fiber = next;
       }
@@ -1686,6 +1726,68 @@ static int _yr_re_fiber_sync(
     case RE_OPCODE_JUMP:
       jmp_len = yr_unaligned_i16(fiber->ip + 1);
       fiber->ip += jmp_len;
+      break;
+
+    case RE_OPCODE_WORD_BOUNDARY:
+    case RE_OPCODE_NON_WORD_BOUNDARY:
+
+      if (input - input_incr + character_size <=
+              input_data + input_forwards_size &&
+          input - input_incr >= input_data - input_backwards_size)
+      {
+        prev_is_word_char = _yr_re_is_word_char(
+            input - input_incr, character_size);
+      }
+      else
+      {
+        prev_is_word_char = false;
+      }
+
+      if (input + character_size <= input_data + input_forwards_size &&
+          input >= input_data - input_backwards_size)
+      {
+        input_is_word_char = _yr_re_is_word_char(input, character_size);
+      }
+      else
+      {
+        input_is_word_char = false;
+      }
+
+      match = (prev_is_word_char && !input_is_word_char) ||
+              (!prev_is_word_char && input_is_word_char);
+
+      if (opcode == RE_OPCODE_NON_WORD_BOUNDARY)
+        match = !match;
+
+      if (match)
+        fiber->ip += 1;
+      else
+        fiber = _yr_re_fiber_kill(fiber_list, fiber_pool, fiber);
+
+      break;
+
+    case RE_OPCODE_MATCH_AT_START:
+      if (flags & RE_FLAGS_BACKWARDS)
+        kill = input_backwards_size > (size_t) bytes_matched;
+      else
+        kill = input_backwards_size > 0 || (bytes_matched != 0);
+
+      if (kill)
+        fiber = _yr_re_fiber_kill(fiber_list, fiber_pool, fiber);
+      else
+        fiber->ip += 1;
+
+      break;
+
+    case RE_OPCODE_MATCH_AT_END:
+      kill = flags & RE_FLAGS_BACKWARDS ||
+             input_forwards_size > (size_t) bytes_matched;
+
+      if (kill)
+        fiber = _yr_re_fiber_kill(fiber_list, fiber_pool, fiber);
+      else
+        fiber->ip += 1;
+
       break;
 
     default:
@@ -1761,16 +1863,12 @@ int yr_re_exec(
 
   int match;
   int input_incr;
-  int kill;
   int action;
-
-  bool prev_is_word_char = false;
-  bool input_is_word_char = false;
+  int cycle = 0;
 
 #define ACTION_NONE      0
-#define ACTION_CONTINUE  1
-#define ACTION_KILL      2
-#define ACTION_KILL_TAIL 3
+#define ACTION_KILL      1
+#define ACTION_KILL_TAIL 2
 
 #define prolog                                      \
   {                                                 \
@@ -1820,10 +1918,19 @@ int yr_re_exec(
   fibers.tail = fiber;
 
   FAIL_ON_ERROR_WITH_CLEANUP(
-      _yr_re_fiber_sync(&fibers, &context->re_fiber_pool, fiber),
+      _yr_re_fiber_sync(
+          &fibers,
+          &context->re_fiber_pool,
+          fiber,
+          input_data,
+          input_forwards_size,
+          input_backwards_size,
+          bytes_matched,
+          flags),
       _yr_re_fiber_kill_all(&fibers, &context->re_fiber_pool));
 
-  while (fibers.head != NULL)
+  while (fibers.head != NULL ||
+         (flags & RE_FLAGS_SCAN && bytes_matched < max_bytes_matched))
   {
     fiber = fibers.head;
 
@@ -1980,56 +2087,6 @@ int yr_re_exec(
         fiber->ip += 1;
         break;
 
-      case RE_OPCODE_WORD_BOUNDARY:
-      case RE_OPCODE_NON_WORD_BOUNDARY:
-        if (input - input_incr + character_size <=
-                input_data + input_forwards_size &&
-            input - input_incr >= input_data - input_backwards_size)
-        {
-          prev_is_word_char = _yr_re_is_word_char(
-              input - input_incr, character_size);
-        }
-        else
-        {
-          prev_is_word_char = false;
-        }
-
-        if (input + character_size <= input_data + input_forwards_size &&
-            input >= input_data - input_backwards_size)
-        {
-          input_is_word_char = _yr_re_is_word_char(input, character_size);
-        }
-        else
-        {
-          input_is_word_char = false;
-        }
-
-        match = (prev_is_word_char && !input_is_word_char) ||
-                (!prev_is_word_char && input_is_word_char);
-
-        if (*ip == RE_OPCODE_NON_WORD_BOUNDARY)
-          match = !match;
-
-        action = match ? ACTION_CONTINUE : ACTION_KILL;
-        fiber->ip += 1;
-        break;
-
-      case RE_OPCODE_MATCH_AT_START:
-        if (flags & RE_FLAGS_BACKWARDS)
-          kill = input_backwards_size > (size_t) bytes_matched;
-        else
-          kill = input_backwards_size > 0 || (bytes_matched != 0);
-        action = kill ? ACTION_KILL : ACTION_CONTINUE;
-        fiber->ip += 1;
-        break;
-
-      case RE_OPCODE_MATCH_AT_END:
-        kill = flags & RE_FLAGS_BACKWARDS ||
-               input_forwards_size > (size_t) bytes_matched;
-        action = kill ? ACTION_KILL : ACTION_CONTINUE;
-        fiber->ip += 1;
-        break;
-
       case RE_OPCODE_MATCH:
 
         if (matches != NULL)
@@ -2082,18 +2139,31 @@ int yr_re_exec(
         fiber = NULL;
         break;
 
-      case ACTION_CONTINUE:
-        FAIL_ON_ERROR_WITH_CLEANUP(
-            _yr_re_fiber_sync(&fibers, &context->re_fiber_pool, fiber),
-            _yr_re_fiber_kill_all(&fibers, &context->re_fiber_pool));
-        break;
-
       default:
         next_fiber = fiber->next;
         FAIL_ON_ERROR_WITH_CLEANUP(
-            _yr_re_fiber_sync(&fibers, &context->re_fiber_pool, fiber),
+            _yr_re_fiber_sync(
+                &fibers,
+                &context->re_fiber_pool,
+                fiber,
+                input_data,
+                input_forwards_size,
+                input_backwards_size,
+                bytes_matched + character_size,
+                flags),
             _yr_re_fiber_kill_all(&fibers, &context->re_fiber_pool));
         fiber = next_fiber;
+      }
+
+      if (context->timeout > 0ULL && ++cycle == 100)
+      {
+        if (yr_stopwatch_elapsed_ns(&context->stopwatch) > context->timeout)
+        {
+          _yr_re_fiber_kill_all(&fibers, &context->re_fiber_pool);
+          return ERROR_SCAN_TIMEOUT;
+        }
+
+        cycle = 0;
       }
     }
 
@@ -2110,7 +2180,15 @@ int yr_re_exec(
       _yr_re_fiber_append(&fibers, fiber);
 
       FAIL_ON_ERROR_WITH_CLEANUP(
-          _yr_re_fiber_sync(&fibers, &context->re_fiber_pool, fiber),
+          _yr_re_fiber_sync(
+              &fibers,
+              &context->re_fiber_pool,
+              fiber,
+              input_data,
+              input_forwards_size,
+              input_backwards_size,
+              bytes_matched,
+              flags),
           _yr_re_fiber_kill_all(&fibers, &context->re_fiber_pool));
     }
   }
