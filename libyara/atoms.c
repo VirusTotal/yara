@@ -884,10 +884,11 @@ static int _yr_atoms_extract_from_re(
 
   struct STACK_ITEM si;
 
-  int i, shift;
+  int i, max_iters, shift;
   int quality;
   int best_quality = -1;
   int n = 0;
+  int remaining_range_unrolls = RE_MAX_RANGE_UNROLL;
 
   YR_ATOM_TREE_NODE* and_node;
   YR_ATOM_TREE_NODE* left_node;
@@ -1118,9 +1119,34 @@ static int _yr_atoms_extract_from_re(
         // that YR_MAX_ATOM_LENGTH = 4) because the 'a' character must appear
         // at least 10 times in the matching string. Each call in the loop
         // will append one 'a' to the atom, so YR_MAX_ATOM_LENGTH iterations
-        // are enough.
+        // are enough. However, if the child node itself appends a pending leaf
+        // on exit (e.g. another RE_NODE_RANGE in /((a){4}){4}/), each
+        // repetition after that leaf is appended starts with n = 0 and produces
+        // identical atoms, so at most 1 iteration (if n == 0) or 2 iterations
+        // (if n > 0) are needed.
+        max_iters = yr_min(re_node->start, YR_MAX_ATOM_LENGTH);
 
-        for (i = 0; i < yr_min(re_node->start, YR_MAX_ATOM_LENGTH); i++)
+        re_node = re_node->children_head;
+
+        while (re_node != NULL && re_node->type == RE_NODE_CONCAT)
+          re_node = re_node->children_tail;
+
+        if (re_node != NULL &&
+            re_node->type != RE_NODE_LITERAL &&
+            re_node->type != RE_NODE_MASKED_LITERAL &&
+            re_node->type != RE_NODE_ANY)
+        {
+          max_iters = yr_min(max_iters, n > 0 ? 2 : 1);
+        }
+
+        if (max_iters > 1)
+        {
+          int extra_iters = yr_min(max_iters - 1, remaining_range_unrolls);
+          remaining_range_unrolls -= extra_iters;
+          max_iters = 1 + extra_iters;
+        }
+
+        for (i = 0; i < max_iters; i++)
         {
           FAIL_ON_ERROR_WITH_CLEANUP(
               yr_stack_push(stack, &si), yr_stack_destroy(stack));

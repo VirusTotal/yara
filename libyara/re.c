@@ -92,6 +92,7 @@ typedef struct _RE_EMIT_CONTEXT
 {
   YR_ARENA* arena;
   RE_SPLIT_ID_TYPE next_split_id;
+  yr_arena_off_t start_offset;
 
 } RE_EMIT_CONTEXT;
 
@@ -728,6 +729,14 @@ static int _yr_re_emit(
   YR_ARENA_REF jmp_offset_ref;
   YR_ARENA_REF repeat_start_args_ref;
 
+  if (yr_arena_get_current_offset(
+          emit_context->arena, YR_RE_CODE_SECTION) -
+          emit_context->start_offset >
+      RE_MAX_CODE_SIZE)
+  {
+    return ERROR_REGULAR_EXPRESSION_TOO_LARGE;
+  }
+
   switch (re_node->type)
   {
   case RE_NODE_LITERAL:
@@ -1062,6 +1071,11 @@ static int _yr_re_emit(
     {
       FAIL_ON_ERROR(_yr_re_emit(
           emit_context, re_node->children_head, flags, &instruction_ref));
+
+      // If the child node emitted no code at all (e.g. "(k{0}){2}"), there is
+      // nothing to repeat, so don't emit the repeat, split or epilog sections.
+      if (YR_ARENA_IS_NULL_REF(instruction_ref))
+        break;
     }
 
     if (emit_repeat)
@@ -1208,6 +1222,8 @@ int yr_re_ast_emit_code(RE_AST* re_ast, YR_ARENA* arena, int backwards_code)
   // Emit code for matching the regular expressions forwards.
   emit_context.arena = arena;
   emit_context.next_split_id = 0;
+  emit_context.start_offset = yr_arena_get_current_offset(
+      arena, YR_RE_CODE_SECTION);
 
   FAIL_ON_ERROR(_yr_re_emit(
       &emit_context,

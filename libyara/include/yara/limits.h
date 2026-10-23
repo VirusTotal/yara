@@ -179,4 +179,15 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define RE_MAX_FIBERS 1024
 #endif
 
+// Maximum code size (in bytes) emitted for a regular expression.
+#ifndef RE_MAX_CODE_SIZE
+#define RE_MAX_CODE_SIZE 32768
+#endif
+
+// Maximum number of extra range unroll iterations during atom extraction from
+// a regular expression.
+#ifndef RE_MAX_RANGE_UNROLL
+#define RE_MAX_RANGE_UNROLL 1024
+#endif
+
 #endif

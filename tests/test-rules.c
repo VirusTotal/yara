@@ -2875,6 +2875,36 @@ void test_re()
   assert_true_rule_blob(
       "rule test { strings: $a = /a.{1}1/ ascii wide condition: $a }", "ab1\0");
 
+  assert_true_regexp(
+      "((a){4}){4}", "aaaaaaaaaaaaaaaa", "aaaaaaaaaaaaaaaa");
+  assert_false_regexp("((a){4}){4}", "aaaaaaaaaaaaaaa");
+
+  assert_error(
+      "rule test { strings: $a = /((((((((a){4}){4}){4}){4}){4}){4}){4}){4}/ condition: $a }",
+      ERROR_REGULAR_EXPRESSION_TOO_LARGE);
+
+  assert_error(
+      "rule test { strings: $a = /((((((((((((((a){4}){4}){4}){4}){4}){4}){4}){4}){4}){4}){4}){4}){4}){4}/ condition: $a }",
+      ERROR_REGULAR_EXPRESSION_TOO_LARGE);
+
+  assert_error(
+      "rule test { condition: \"a\" matches /((((((((a){4}){4}){4}){4}){4}){4}){4}){4}/ }",
+      ERROR_REGULAR_EXPRESSION_TOO_LARGE);
+
+  assert_error(
+      "rule test { strings: $a = /(((((((((((((((a){2}){2}){2}){2}){2}){2}){2}){2}){2}){2}){2}){2}){2}){2}){2}/ condition: $a }",
+      ERROR_REGULAR_EXPRESSION_TOO_LARGE);
+
+  assert_true_regexp(
+      "((((((((((((((((((((a{0}){2}){2}){2}){2}){2}){2}){2}){2}){2}){2}){2}){2}){2}){2}){2}){2}){2}){2}){2}){2}b",
+      "b",
+      "b");
+
+  assert_true_regexp(
+      "((((((((((((((((((((a{0}){4}){4}){4}){4}){4}){4}){4}){4}){4}){4}){4}){4}){4}){4}){4}){4}){4}){4}){4}){4}b",
+      "b",
+      "b");
+
   YR_DEBUG_FPRINTF(1, stderr, "} // %s()\n", __FUNCTION__);
 }
 
