@@ -2744,6 +2744,15 @@ void test_re()
   assert_true_regexp("(bc+d$|ef*g.|h?i(j|k))", "reffgz", "effgz");
   assert_true_regexp("abcx{0,0}", "abcx", "abc");
   assert_true_regexp("abcx{0}", "abcx", "abc");
+  assert_true_regexp("hel(k{0}l)+o", "hello", "hello");
+  assert_true_regexp("hel(k{0}l)+o", "helllo", "helllo");
+  assert_false_regexp("hel(k{0}l)+o", "helo");
+  assert_true_regexp("h(lk{0})+hello", "hllhello", "hllhello");
+  assert_true_regexp("hel(k{0})+o", "helo", "helo");
+  assert_true_regexp("(k{0})+", "abc", "");
+  assert_true_regexp("hel((k{0})?l)+o", "hello", "hello");
+  assert_true_regexp("(a?b)+", "abb", "abb");
+  assert_true_regexp("(a?b)+", "bb", "bb");
 
   // Test case for issue #324
   assert_true_regexp("whatever|   x.   x", "   xy   x", "   xy   x");

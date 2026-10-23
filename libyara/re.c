@@ -833,21 +833,16 @@ static int _yr_re_emit(
     break;
 
   case RE_NODE_CONCAT:
-    FAIL_ON_ERROR(_yr_re_emit(
-        emit_context,
-        (flags & EMIT_BACKWARDS) ? re_node->children_tail
-                                 : re_node->children_head,
-        flags,
-        &instruction_ref));
-
-    if (flags & EMIT_BACKWARDS)
-      child = re_node->children_tail->prev_sibling;
-    else
-      child = re_node->children_head->next_sibling;
+    child = (flags & EMIT_BACKWARDS) ? re_node->children_tail
+                                     : re_node->children_head;
 
     while (child != NULL)
     {
-      FAIL_ON_ERROR(_yr_re_emit(emit_context, child, flags, NULL));
+      FAIL_ON_ERROR(_yr_re_emit(
+          emit_context,
+          child,
+          flags,
+          YR_ARENA_IS_NULL_REF(instruction_ref) ? &instruction_ref : NULL));
 
       child = (flags & EMIT_BACKWARDS) ? child->prev_sibling
                                        : child->next_sibling;
@@ -863,6 +858,11 @@ static int _yr_re_emit(
     //
     FAIL_ON_ERROR(_yr_re_emit(
         emit_context, re_node->children_head, flags, &instruction_ref));
+
+    // If the child node emitted no code at all (e.g. "(k{0})+"), there is
+    // nothing to loop over, so don't emit the split instruction.
+    if (YR_ARENA_IS_NULL_REF(instruction_ref))
+      break;
 
     bookmark_1 = yr_arena_get_current_offset(
         emit_context->arena, YR_RE_CODE_SECTION);
@@ -1096,7 +1096,7 @@ static int _yr_re_emit(
                           : RE_OPCODE_REPEAT_START_UNGREEDY,
           &repeat_args,
           sizeof(repeat_args),
-          emit_prolog ? NULL : &instruction_ref,
+          YR_ARENA_IS_NULL_REF(instruction_ref) ? &instruction_ref : NULL,
           &repeat_start_args_ref));
 
       bookmark_2 = yr_arena_get_current_offset(
@@ -1146,7 +1146,7 @@ static int _yr_re_emit(
           emit_context,
           re_node->greedy ? RE_OPCODE_SPLIT_A : RE_OPCODE_SPLIT_B,
           0,
-          NULL,
+          YR_ARENA_IS_NULL_REF(instruction_ref) ? &instruction_ref : NULL,
           &split_offset_ref));
     }
 
@@ -1156,7 +1156,7 @@ static int _yr_re_emit(
           emit_context,
           re_node->children_head,
           emit_prolog ? flags | EMIT_DONT_SET_FORWARDS_CODE : flags,
-          emit_prolog || emit_repeat ? NULL : &instruction_ref));
+          YR_ARENA_IS_NULL_REF(instruction_ref) ? &instruction_ref : NULL));
     }
 
     if (emit_split)
@@ -2052,6 +2052,7 @@ int yr_re_exec(
 
       default:
         assert(false);
+        action = ACTION_KILL;
       }
 
       switch (action)
