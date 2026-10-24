@@ -32,12 +32,16 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <unistd.h>
 #include <yara.h>
 #include <yara/compiler.h>
+#include <yara/exec.h>
+#include <yara/notebook.h>
+#include <yara/scan.h>
 
 #include "util.h"
 
 #if defined(_WIN32) || defined(__CYGWIN__)
 #include <fileapi.h>
 #else
+#include <sys/mman.h>
 #include <unistd.h>
 #endif
 #include <fcntl.h>
@@ -250,7 +254,7 @@ int test_max_match_data_callback(
 
       yr_string_matches_foreach(context, s, m)
       {
-        if (m->data_length > 0)
+        if (m->data_length > 0 || m->data != NULL)
           return CALLBACK_ERROR;
       }
     }
@@ -266,7 +270,8 @@ void test_max_match_data()
   uint32_t new_max_match_data = 0;
   uint32_t old_max_match_data;
 
-  char* rules_str = "rule t { strings: $a = \"foobar\" condition: $a }";
+  char* rules_str =
+      "rule t { strings: $a = \"foobar\" $b = { 66 6f [-] 61 72 } condition: all of them }";
 
   yr_initialize();
 
@@ -294,6 +299,7 @@ void test_max_match_data()
     exit(EXIT_FAILURE);
   }
 
+  yr_set_configuration_uint32(YR_CONFIG_MAX_MATCH_DATA, old_max_match_data);
   yr_rules_destroy(rules);
   yr_finalize();
 }
@@ -1582,6 +1588,147 @@ void test_runtime_warnings()
   yr_finalize();
 }
 
+void test_notebook_alloc_overflow()
+{
+  YR_NOTEBOOK* notebook = NULL;
+
+  yr_initialize();
+
+  assert_true_expr(yr_notebook_create(1024, &notebook) == ERROR_SUCCESS);
+
+  // Sizes that would wrap around when rounded up by (size + 7) & ~0x7.
+  assert_true_expr(yr_notebook_alloc(notebook, SIZE_MAX) == NULL);
+  assert_true_expr(yr_notebook_alloc(notebook, SIZE_MAX - 6) == NULL);
+
+  // Size that does not wrap in (size + 7) & ~0x7, but wraps in
+  // (size / min_size) * min_size + min_size.
+  assert_true_expr(yr_notebook_alloc(notebook, SIZE_MAX - 7) == NULL);
+
+  yr_notebook_destroy(notebook);
+
+  // With min_page_size = 16, SIZE_MAX - 23 rounds to SIZE_MAX - 23, and
+  // page_size = (size / 16) * 16 + 16 = SIZE_MAX - 15 does not wrap, but
+  // sizeof(YR_NOTEBOOK_PAGE) + page_size would wrap without the upper bound
+  // check on page_size.
+  assert_true_expr(yr_notebook_create(16, &notebook) == ERROR_SUCCESS);
+  assert_true_expr(yr_notebook_alloc(notebook, SIZE_MAX - 23) == NULL);
+
+  yr_notebook_destroy(notebook);
+  yr_finalize();
+}
+
+void test_chained_string_match_length_overflow()
+{
+#if !defined(_WIN32) && !defined(__CYGWIN__)
+  if (sizeof(size_t) < 8)
+    return;
+
+#ifndef MAP_ANONYMOUS
+#define MAP_ANONYMOUS MAP_ANON
+#endif
+
+  // Map a 4 GiB anonymous region; only the three pages touched below are
+  // faulted in, so physical memory usage is a few kilobytes.
+  size_t data_size = (size_t) 0x100000000ULL;
+  uint8_t* data = (uint8_t*) mmap(
+      NULL,
+      data_size,
+      PROT_READ | PROT_WRITE,
+      MAP_PRIVATE | MAP_ANONYMOUS,
+      -1,
+      0);
+
+  if (data == MAP_FAILED)
+    return;
+
+  const char* rules_str =
+      "rule t { "
+      "  strings: "
+      "    $a = { 51 77 65 72 [-] 5A 78 63 76 [-] 4D 6E 62 70 } "
+      "  condition: "
+      "    $a and !a[1] == 0x7fffffff "
+      "}";
+
+  YR_RULES* rules = NULL;
+  YR_SCANNER* scanner = NULL;
+
+  yr_initialize();
+
+  assert_true_expr(compile_rule((char*) rules_str, &rules) == ERROR_SUCCESS);
+  assert_true_expr(yr_scanner_create(rules, &scanner) == ERROR_SUCCESS);
+
+  uint32_t max_match_data;
+  assert_true_expr(
+      yr_get_configuration_uint32(YR_CONFIG_MAX_MATCH_DATA, &max_match_data) ==
+      ERROR_SUCCESS);
+
+  assert_true_expr(
+      yr_notebook_create(
+          1024 * (sizeof(YR_MATCH) + max_match_data),
+          &scanner->matches_notebook) == ERROR_SUCCESS);
+
+  // Place the three 4-byte pieces so that the full chained match spans
+  // 0xffffffff bytes (which truncates to -1 if cast directly to int32_t).
+  size_t off0 = 0;
+  size_t off1 = (size_t) 0x7fffffffULL;
+  size_t off2 = (size_t) 0xfffffffbULL;
+
+  memcpy(data + off0, "\x51\x77\x65\x72", 4);
+  memcpy(data + off1, "\x5A\x78\x63\x76", 4);
+  memcpy(data + off2, "\x4D\x6E\x62\x70", 4);
+
+  // Locate the Aho-Corasick match entries for the three pieces of the chain:
+  // head (chained_to == NULL), middle, and tail (STRING_IS_CHAIN_TAIL).
+  YR_AC_MATCH* ac_head = NULL;
+  YR_AC_MATCH* ac_mid = NULL;
+  YR_AC_MATCH* ac_tail = NULL;
+
+  for (uint32_t i = 0; i < rules->num_strings; i++)
+  {
+    YR_AC_MATCH* m = &rules->ac_match_pool[i];
+    if (m->string == NULL)
+      continue;
+    if (m->string->chained_to == NULL)
+      ac_head = m;
+    else if (STRING_IS_CHAIN_TAIL(m->string))
+      ac_tail = m;
+    else
+      ac_mid = m;
+  }
+
+  assert_true_expr(ac_head != NULL && ac_mid != NULL && ac_tail != NULL);
+
+  assert_true_expr(
+      yr_scan_verify_match(scanner, ac_head, data, data_size, 0, off0) ==
+      ERROR_SUCCESS);
+  assert_true_expr(
+      yr_scan_verify_match(scanner, ac_mid, data, data_size, 0, off1) ==
+      ERROR_SUCCESS);
+  assert_true_expr(
+      yr_scan_verify_match(scanner, ac_tail, data, data_size, 0, off2) ==
+      ERROR_SUCCESS);
+
+  YR_MATCH* match = scanner->matches[ac_head->string->idx].head;
+  assert_true_expr(match != NULL);
+  assert_true_expr(match->offset == 0);
+  assert_true_expr(match->match_length == INT32_MAX);
+  assert_true_expr(match->data_length == (int32_t) max_match_data);
+  assert_true_expr(match->data != NULL);
+  assert_true_expr(memcmp(match->data, "\x51\x77\x65\x72", 4) == 0);
+
+  assert_true_expr(yr_execute_code(scanner) == ERROR_SUCCESS);
+  assert_true_expr(yr_bitmask_is_set(scanner->rule_matches_flags, 0));
+
+  yr_notebook_destroy(scanner->matches_notebook);
+  scanner->matches_notebook = NULL;
+  yr_scanner_destroy(scanner);
+  yr_rules_destroy(rules);
+  yr_finalize();
+
+  munmap(data, data_size);
+#endif
+}
+
 int main(int argc, char** argv)
 {
   int result = 0;
@@ -1612,6 +1759,8 @@ int main(int argc, char** argv)
   test_issue_834();
   test_issue_920();
   test_runtime_warnings();
+  test_notebook_alloc_overflow();
+  test_chained_string_match_length_overflow();
 
   YR_DEBUG_FPRINTF(
       1, stderr, "} = %d // %s() in %s\n", result, __FUNCTION__, argv[0]);

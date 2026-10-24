@@ -558,22 +558,32 @@ static int _yr_scan_verify_chained_string_match(
           _yr_scan_remove_match_from_list(
               match, &context->unconfirmed_matches[string->idx]);
 
-          match->match_length = (int32_t) (match_offset - match->offset +
-                                           match_length);
+          uint64_t full_match_length =
+              match_offset - match->offset + match_length;
+
+          match->match_length = (int32_t) yr_min(
+              full_match_length, (uint64_t) INT32_MAX);
 
           match->data_length = yr_min(
               match->match_length, (int32_t) max_match_data);
 
-          match->data = yr_notebook_alloc(
-              context->matches_notebook, match->data_length);
+          if (match->data_length > 0)
+          {
+            match->data = yr_notebook_alloc(
+                context->matches_notebook, match->data_length);
 
-          if (match->data == NULL)
-            return ERROR_INSUFFICIENT_MEMORY;
+            if (match->data == NULL)
+              return ERROR_INSUFFICIENT_MEMORY;
 
-          memcpy(
-              (void*) match->data,
-              match_data - match_offset + match->offset,
-              match->data_length);
+            memcpy(
+                (void*) match->data,
+                match_data - match_offset + match->offset,
+                match->data_length);
+          }
+          else
+          {
+            match->data = NULL;
+          }
 
           // Once a string is found, the rule containing that string is
           // required to be evaluated.

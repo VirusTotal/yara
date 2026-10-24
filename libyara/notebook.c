@@ -147,6 +147,11 @@ int yr_notebook_destroy(YR_NOTEBOOK* notebook)
 //
 void* yr_notebook_alloc(YR_NOTEBOOK* notebook, size_t size)
 {
+  // Reject sizes that would overflow size_t when rounded up to a multiple of 8
+  // by (size + 7) & ~0x7 below, which would wrap size around to 0.
+  if (size > SIZE_MAX - 7)
+    return NULL;
+
   // Round up the size to a multiple of 8, which also implies that the returned
   // pointers are aligned to 8 bytes. The 8-byte alignment is required by some
   // platforms (e.g. ARM and Sparc) that have strict alignment requirements when
@@ -165,6 +170,11 @@ void* yr_notebook_alloc(YR_NOTEBOOK* notebook, size_t size)
     // multiple of notebook->min_page_size that is larger or equal than than
     // size.
     size_t page_size = (size / min_size) * min_size + min_size;
+
+    // Reject sizes where the page_size calculation or the addition of
+    // sizeof(YR_NOTEBOOK_PAGE) wraps around size_t.
+    if (page_size < size || page_size > SIZE_MAX - sizeof(YR_NOTEBOOK_PAGE))
+      return NULL;
 
     YR_NOTEBOOK_PAGE* new_page = yr_malloc(
         sizeof(YR_NOTEBOOK_PAGE) + page_size);
