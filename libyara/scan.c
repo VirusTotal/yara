@@ -658,6 +658,9 @@ static int _yr_scan_match_callback(
 
   int result = ERROR_SUCCESS;
 
+  if (match_data < callback_args->data)
+    return ERROR_INTERNAL_FATAL_ERROR;
+
   size_t match_offset = match_data - callback_args->data;
 
   YR_DEBUG_FPRINTF(
@@ -681,7 +684,12 @@ static int _yr_scan_match_callback(
   match_length += callback_args->forward_matches;
 
   // make sure that match fits into the data.
-  assert(match_offset + match_length <= callback_args->data_size);
+  if (match_length < 0 ||
+      match_offset > callback_args->data_size ||
+      (size_t) match_length > callback_args->data_size - match_offset)
+  {
+    return ERROR_INTERNAL_FATAL_ERROR;
+  }
 
   if (callback_args->full_word)
   {

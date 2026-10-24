@@ -1479,10 +1479,12 @@ static int _yr_re_fiber_sync(
   // required to avoid infinite loops in regexps like (a*)* or (a|)*
 
   RE_SPLIT_ID_TYPE splits_executed[RE_MAX_SPLIT_ID];
+  const uint8_t* splits_executed_ip[RE_MAX_SPLIT_ID];
   RE_SPLIT_ID_TYPE splits_executed_count = 0;
   RE_SPLIT_ID_TYPE split_id, splits_executed_idx;
 
   int split_already_executed;
+  int repeat_jumps = 0;
   int match;
   int kill;
   int input_incr;
@@ -1552,6 +1554,7 @@ static int _yr_re_fiber_sync(
       }
       else
       {
+        const uint8_t* split_ip = fiber->ip;
         branch_a = fiber;
 
         FAIL_ON_ERROR(
@@ -1582,6 +1585,7 @@ static int _yr_re_fiber_sync(
 #endif
 
         splits_executed[splits_executed_count] = split_id;
+        splits_executed_ip[splits_executed_count] = split_ip;
         splits_executed_count++;
       }
 
@@ -1635,8 +1639,31 @@ static int _yr_re_fiber_sync(
 
       if (fiber->stack[fiber->sp] < repeat_args->min)
       {
-        fiber->ip += repeat_args->offset;
-        break;
+        if (++repeat_jumps <= RE_MAX_FIBERS)
+        {
+          const uint8_t* next_ip = fiber->ip + repeat_args->offset;
+          RE_SPLIT_ID_TYPE write_idx = 0;
+
+          for (splits_executed_idx = 0;
+               splits_executed_idx < splits_executed_count;
+               splits_executed_idx++)
+          {
+            if (splits_executed_ip[splits_executed_idx] < next_ip ||
+                splits_executed_ip[splits_executed_idx] >= fiber->ip)
+            {
+              splits_executed[write_idx] = splits_executed[splits_executed_idx];
+              splits_executed_ip[write_idx] =
+                  splits_executed_ip[splits_executed_idx];
+              write_idx++;
+            }
+          }
+
+          splits_executed_count = write_idx;
+          fiber->ip = next_ip;
+          break;
+        }
+
+        fiber->stack[fiber->sp] = repeat_args->min;
       }
 
       branch_a = fiber;
@@ -1768,7 +1795,7 @@ static int _yr_re_fiber_sync(
 
     case RE_OPCODE_MATCH_AT_START:
       if (flags & RE_FLAGS_BACKWARDS)
-        kill = input_backwards_size > (size_t) bytes_matched;
+        kill = input_backwards_size != (size_t) bytes_matched;
       else
         kill = input_backwards_size > 0 || (bytes_matched != 0);
 
@@ -1781,7 +1808,7 @@ static int _yr_re_fiber_sync(
 
     case RE_OPCODE_MATCH_AT_END:
       kill = flags & RE_FLAGS_BACKWARDS ||
-             input_forwards_size > (size_t) bytes_matched;
+             input_forwards_size != (size_t) bytes_matched;
 
       if (kill)
         fiber = _yr_re_fiber_kill(fiber_list, fiber_pool, fiber);

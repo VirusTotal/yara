@@ -2973,6 +2973,24 @@ void test_re()
       "rule test { condition: \"foo\" matches /^(\\b)+foo($)+/ }",
       NULL);
 
+  assert_true_regexp("((k{0}|m)(k{0})*^){4}qrst", "qrst", "qrst");
+
+  assert_true_rule(
+      "rule test { strings: $a = /((k{0}|m)(k{0})*^){4}qrst/ condition: $a and @a == 0 and !a == 4 }",
+      "qrst");
+
+  assert_true_rule(
+      "rule test { strings: $a = /((k{0}|m)(k{0})*^){508}qrst/ condition: $a and @a == 0 and !a == 4 }",
+      "qrst");
+
+  assert_true_regexp("qrst((k{0}|m)(k{0})*$){4}", "qrst", "qrst");
+
+  assert_true_rule(
+      "rule test { strings: $a = /qrst((k{0}|m)(k{0})*$){4}/ condition: $a and @a == 0 and !a == 4 }",
+      "qrst");
+
+  assert_true_regexp("qrst\\b(k?" "?){4}?-z", "..qrst-z..", "qrst-z");
+
   YR_DEBUG_FPRINTF(1, stderr, "} // %s()\n", __FUNCTION__);
 }
 
