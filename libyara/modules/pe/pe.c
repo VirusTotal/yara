@@ -1774,6 +1774,24 @@ static void pe_parse_exports(PE* pe)
         cert->not_after, pe->object, fmt ".not_after", __VA_ARGS__);           \
   } while (0)
 
+static char* digest_to_ascii(const ByteArray* digest)
+{
+  if (digest == NULL || digest->data == NULL || digest->len <= 0 ||
+      digest->len > EVP_MAX_MD_SIZE)
+    return NULL;
+
+  size_t digest_len = (size_t) digest->len;
+  char* digest_ascii = (char*) yr_malloc(digest_len * 2 + 1);
+  if (digest_ascii == NULL)
+    return NULL;
+
+  for (size_t i = 0; i < digest_len; i++)
+    snprintf(digest_ascii + (i * 2), 3, "%02x", digest->data[i]);
+
+  digest_ascii[digest_len * 2] = '\0';
+  return digest_ascii;
+}
+
 void _process_authenticode(
     PE* pe,
     AuthenticodeArray* auth_array,
@@ -1816,26 +1834,17 @@ void _process_authenticode(
         "signatures[%i].digest_alg",
         *sig_count);
 
-    if (authenticode->digest.data)
+    char* digest_ascii = digest_to_ascii(&authenticode->digest);
+    if (digest_ascii != NULL)
     {
-      char* digest_ascii = yr_malloc(authenticode->digest.len * 2 + 1);
-      for (int j = 0; j < authenticode->digest.len; ++j)
-        sprintf(digest_ascii + (j * 2), "%02x", authenticode->digest.data[j]);
-      digest_ascii[authenticode->digest.len * 2] = '\0';
-
       yr_set_string(
           digest_ascii, pe->object, "signatures[%i].digest", *sig_count);
       yr_free(digest_ascii);
     }
 
-    if (authenticode->file_digest.data)
+    digest_ascii = digest_to_ascii(&authenticode->file_digest);
+    if (digest_ascii != NULL)
     {
-      char* digest_ascii = yr_malloc(authenticode->file_digest.len * 2 + 1);
-      for (int j = 0; j < authenticode->file_digest.len; ++j)
-        sprintf(
-            digest_ascii + (j * 2), "%02x", authenticode->file_digest.data[j]);
-      digest_ascii[authenticode->file_digest.len * 2] = '\0';
-
       yr_set_string(
           digest_ascii, pe->object, "signatures[%i].file_digest", *sig_count);
       yr_free(digest_ascii);
@@ -1882,13 +1891,9 @@ void _process_authenticode(
           "signatures[%i].signer_info.digest_alg",
           *sig_count);
 
-      if (signer->digest.data)
+      digest_ascii = digest_to_ascii(&signer->digest);
+      if (digest_ascii != NULL)
       {
-        char* digest_ascii = yr_malloc(signer->digest.len * 2 + 1);
-        for (int j = 0; j < signer->digest.len; ++j)
-          sprintf(digest_ascii + (j * 2), "%02x", signer->digest.data[j]);
-        digest_ascii[signer->digest.len * 2] = '\0';
-
         yr_set_string(
             digest_ascii,
             pe->object,
@@ -1949,13 +1954,9 @@ void _process_authenticode(
             *sig_count,
             j);
 
-        if (counter->digest.data)
+        digest_ascii = digest_to_ascii(&counter->digest);
+        if (digest_ascii != NULL)
         {
-          char* digest_ascii = yr_malloc(counter->digest.len * 2 + 1);
-          for (int j = 0; j < counter->digest.len; ++j)
-            sprintf(digest_ascii + (j * 2), "%02x", counter->digest.data[j]);
-          digest_ascii[counter->digest.len * 2] = '\0';
-
           yr_set_string(
               digest_ascii,
               pe->object,
