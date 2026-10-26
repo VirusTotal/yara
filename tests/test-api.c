@@ -1791,6 +1791,71 @@ void test_chained_string_match_length_overflow()
 #endif
 }
 
+void test_stack_size()
+{
+  YR_RULES* rules;
+  uint32_t old_stack_size;
+  uint8_t buf[] = "foo";
+
+  char* rules_str = "rule t { condition: 1 + 1 == 2 }";
+
+  yr_initialize();
+
+  assert_true_expr(
+      yr_get_configuration_uint32(YR_CONFIG_STACK_SIZE, &old_stack_size) ==
+      ERROR_SUCCESS);
+
+  assert_true_expr(compile_rule(rules_str, &rules) == ERROR_SUCCESS);
+
+  // Evaluating "1 + 1 == 2" requires two slots on the VM stack. With a
+  // capacity of 1 slot the scan must fail with ERROR_EXEC_STACK_OVERFLOW.
+  assert_true_expr(
+      yr_set_configuration_uint32(YR_CONFIG_STACK_SIZE, 1) == ERROR_SUCCESS);
+
+  assert_true_expr(
+      yr_rules_scan_mem(rules, buf, sizeof(buf), 0, do_nothing, NULL, 0) ==
+      ERROR_EXEC_STACK_OVERFLOW);
+
+  assert_true_expr(
+      yr_set_configuration_uint32(YR_CONFIG_STACK_SIZE, 2) == ERROR_SUCCESS);
+
+  assert_true_expr(
+      yr_rules_scan_mem(rules, buf, sizeof(buf), 0, do_nothing, NULL, 0) ==
+      ERROR_SUCCESS);
+
+  // On 32-bit platforms, a stack capacity >= 2^29 wraps around when multiplied
+  // by sizeof(YR_VALUE) (8 bytes) in size_t arithmetic. Verify that such
+  // capacities are rejected with ERROR_INSUFFICIENT_MEMORY instead of
+  // allocating a tiny buffer and overflowing it during execution.
+  if (sizeof(size_t) == 4)
+  {
+    uint32_t wrapping_stack_size = (uint32_t) (SIZE_MAX / sizeof(YR_VALUE)) + 1;
+
+    assert_true_expr(
+        yr_set_configuration_uint32(
+            YR_CONFIG_STACK_SIZE, wrapping_stack_size) == ERROR_SUCCESS);
+
+    assert_true_expr(
+        yr_rules_scan_mem(rules, buf, sizeof(buf), 0, do_nothing, NULL, 0) ==
+        ERROR_INSUFFICIENT_MEMORY);
+
+    assert_true_expr(
+        yr_set_configuration_uint32(
+            YR_CONFIG_STACK_SIZE, wrapping_stack_size + 1) == ERROR_SUCCESS);
+
+    assert_true_expr(
+        yr_rules_scan_mem(rules, buf, sizeof(buf), 0, do_nothing, NULL, 0) ==
+        ERROR_INSUFFICIENT_MEMORY);
+  }
+
+  assert_true_expr(
+      yr_set_configuration_uint32(YR_CONFIG_STACK_SIZE, old_stack_size) ==
+      ERROR_SUCCESS);
+
+  yr_rules_destroy(rules);
+  yr_finalize();
+}
+
 int main(int argc, char** argv)
 {
   int result = 0;
@@ -1823,6 +1888,7 @@ int main(int argc, char** argv)
   test_runtime_warnings();
   test_notebook_alloc_overflow();
   test_chained_string_match_length_overflow();
+  test_stack_size();
 
   YR_DEBUG_FPRINTF(
       1, stderr, "} = %d // %s() in %s\n", result, __FUNCTION__, argv[0]);

@@ -30,6 +30,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <assert.h>
 #include <float.h>
 #include <math.h>
+#include <stdint.h>
 #include <string.h>
 #include <yara.h>
 #include <yara/arena.h>
@@ -479,6 +480,9 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
   uint8_t opcode;
 
   yr_get_configuration_uint32(YR_CONFIG_STACK_SIZE, &stack.capacity);
+
+  if ((size_t) stack.capacity > SIZE_MAX / sizeof(YR_VALUE))
+    return ERROR_INSUFFICIENT_MEMORY;
 
   stack.sp = 0;
   stack.items = (YR_VALUE*) yr_malloc(stack.capacity * sizeof(YR_VALUE));
