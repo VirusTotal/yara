@@ -29,7 +29,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <assert.h>
 #include <fcntl.h>
+#include <limits.h>
 #include <stddef.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <string.h>
 #include <sys/stat.h>
@@ -107,6 +109,22 @@ const char* _yr_compiler_default_include_callback(
   }
   file_size = stbuf.st_size;
 #endif
+
+  // Reject negative sizes and files too large to fit in memory with a null
+  // terminator or to be passed to flex's yy_scan_string() / yy_scan_bytes(),
+  // which take a signed int length. On 32-bit builds with 64-bit off_t, a size
+  // of 2^32 - 1 would otherwise wrap (size_t) file_size + 1 around to 0.
+  if (file_size < 0 || (uintmax_t) file_size >= INT_MAX ||
+      (uintmax_t) file_size >= SIZE_MAX)
+  {
+#ifdef _MSC_VER
+    _close(fd);
+#else
+    close(fd);
+#endif
+
+    return NULL;
+  }
 
   file_buffer = (char*) yr_malloc((size_t) file_size + 1);
 

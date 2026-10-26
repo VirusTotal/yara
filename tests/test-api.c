@@ -153,6 +153,48 @@ void test_include_callback()
   }
 
   yr_compiler_destroy(compiler);
+
+#if !defined(_WIN32) && !defined(__CYGWIN__)
+  if (sizeof(off_t) >= 8)
+  {
+    char include_path[] = "yara-test-include.XXXXXX";
+    int fd = mkstemp(include_path);
+    assert_true_expr(fd != -1);
+
+    const char* rule_body = "rule included_rule { condition: true }\n";
+    assert_true_expr(
+        write(fd, rule_body, strlen(rule_body)) == (ssize_t) strlen(rule_body));
+
+    // Grow the file into a sparse 2^32 - 1 byte file. On 32-bit builds with
+    // 64-bit off_t, (size_t) file_size + 1 would wrap around to 0 and overflow
+    // the heap buffer in _yr_compiler_default_include_callback().
+    if (ftruncate(fd, (off_t) UINT32_MAX) == 0)
+    {
+      close(fd);
+      fd = -1;
+
+      assert_true_expr(yr_compiler_create(&compiler) == ERROR_SUCCESS);
+
+      char include_stmt[128];
+      snprintf(
+          include_stmt,
+          sizeof(include_stmt),
+          "include \"%s\"",
+          include_path);
+
+      assert_true_expr(
+          yr_compiler_add_string(compiler, include_stmt, NULL) == 1);
+
+      yr_compiler_destroy(compiler);
+    }
+
+    if (fd != -1)
+      close(fd);
+
+    unlink(include_path);
+  }
+#endif
+
   yr_finalize();
 }
 
