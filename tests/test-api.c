@@ -52,10 +52,30 @@ void test_disabled_rules()
   YR_RULE* rule;
 
   char* buf = "foo bar";
-  char* rules_str = " \
-    rule disabled_rule {condition: true} \
-    rule false_rule {condition: true and disabled_rule} \
-    rule true_rule {condition: true or disabled_rule}";
+  char* rules_str =
+      "import \"math\" \
+      rule disabled_rule {condition: true} \
+      rule false_rule_1 {condition: true and disabled_rule} \
+      rule false_rule_2 {condition: not disabled_rule} \
+      rule false_rule_3 {condition: defined disabled_rule} \
+      rule true_rule_1 {condition: true or disabled_rule} \
+      rule true_rule_2 {condition: any of (disabled_rule, true_rule_1)} \
+      rule true_rule_3 {condition: 1 of (disabled_rule, true_rule_1)} \
+      rule true_rule_4 {condition: 50% of (disabled_rule, true_rule_1)} \
+      rule false_rule_4 {condition: all of (disabled_rule, true_rule_1)} \
+      rule false_rule_5 {condition: 2 of (disabled_rule, true_rule_1)} \
+      rule false_rule_6 {condition: 100% of (disabled_rule, true_rule_1)} \
+      rule false_rule_7 {condition: 1 of (disabled_*)} \
+      rule false_rule_8 { \
+        condition: \
+          for all i in (1..2) : ( \
+            0x414141414141 of (disabled_rule, true_rule_1) \
+          ) \
+      } \
+      rule false_rule_9 { \
+        condition: \
+          math.to_number(0x414141414141 of (disabled_rule, true_rule_1)) == 1 \
+      }";
 
   struct COUNTERS counters;
 
@@ -71,7 +91,7 @@ void test_disabled_rules()
     exit(EXIT_FAILURE);
   }
 
-  // diable any rule containing disable in its identifier
+  // disable any rule containing disable in its identifier
   yr_rules_foreach(rules, rule)
   {
     if (strstr(rule->identifier, "disabled"))
@@ -82,8 +102,8 @@ void test_disabled_rules()
 
   yr_rules_destroy(rules);
 
-  // matches should be exactly one.
-  if (counters.rules_matching != 1)
+  // matches should be exactly 4 (true_rule_1..4).
+  if (counters.rules_matching != 4)
   {
     fprintf(stderr, "test_disabled_rules failed\n");
     exit(EXIT_FAILURE);

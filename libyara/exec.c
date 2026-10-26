@@ -435,13 +435,11 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
   const uint8_t* code_start = context->rules->code_start;
   const uint8_t* ip = code_start;
 
-#if YR_PARANOID_EXEC
   // One byte past the last instruction of the code section, used by
   // ensure_within_code to reject a jump that leaves the code buffer.
   const uint8_t* code_end = code_start +
                             yr_arena_get_current_offset(
                                 context->rules->arena, YR_CODE_SECTION);
-#endif
 
   YR_VALUE mem[MEM_SIZE];
   YR_VALUE args[YR_MAX_FUNCTION_ARGS];
@@ -1202,7 +1200,19 @@ int yr_execute_code(YR_SCAN_CONTEXT* context)
 
       if (RULE_IS_DISABLED(rule))
       {
-        r2.i = YR_UNDEFINED;
+        // Inside a rule set, as in "N of (a, b, c)", YR_UNDEFINED is the
+        // end-of-set marker, so there a disabled rule must be pushed as "not
+        // matched". The members of a set are consecutive OP_PUSH_RULE
+        // instructions followed by OP_OF or OP_OF_PERCENT.
+        const uint8_t* next = ip;
+
+        while (next < code_end && *next == OP_PUSH_RULE)
+          next += 1 + sizeof(uint64_t);
+
+        if (next < code_end && (*next == OP_OF || *next == OP_OF_PERCENT))
+          r2.i = 0;
+        else
+          r2.i = YR_UNDEFINED;
       }
       else
       {
