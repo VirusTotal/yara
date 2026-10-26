@@ -27,7 +27,9 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+#include <limits.h>
 #include <stdarg.h>
+#include <stdint.h>
 #include <string.h>
 #include <yara/mem.h>
 #include <yara/simple_str.h>
@@ -46,9 +48,17 @@ static bool sstr_vappendf(SIMPLE_STR* ss, const char* fmt, va_list va)
   if (size < 0)
     return false;
 
-  if (ss->cap < ss->len + size + 1)
+  uint64_t needed = (uint64_t) ss->len + (uint64_t) size + 1;
+
+  if (needed > INT32_MAX || needed > SIZE_MAX)
+    return false;
+
+  if (ss->cap < needed)
   {
-    uint32_t new_size = (ss->len + size) * 2 + 64;
+    uint64_t doubled = ((uint64_t) ss->len + (uint64_t) size) * 2 + 64;
+    uint32_t new_size = (doubled > INT32_MAX || doubled > SIZE_MAX)
+                            ? (uint32_t) needed
+                            : (uint32_t) doubled;
     char* tmp = yr_realloc(ss->str, new_size);
 
     if (!tmp)
@@ -58,7 +68,12 @@ static bool sstr_vappendf(SIMPLE_STR* ss, const char* fmt, va_list va)
     ss->cap = new_size;
   }
 
-  ss->len += vsnprintf(ss->str + ss->len, ss->cap, fmt, va);
+  int written = vsnprintf(ss->str + ss->len, ss->cap - ss->len, fmt, va);
+
+  if (written < 0)
+    return false;
+
+  ss->len += (uint32_t) written;
 
   return true;
 }
@@ -71,15 +86,20 @@ SIMPLE_STR* sstr_new(const char* s)
 
   if (s)
   {
-    uint32_t slen = strlen(s);
+    size_t slen = strlen(s);
+    if (slen >= INT32_MAX)
+    {
+      yr_free(ss);
+      return NULL;
+    }
     ss->str = yr_malloc(slen + 1);
     if (!ss->str)
     {
       yr_free(ss);
       return NULL;
     }
-    ss->len = slen;
-    ss->cap = slen;
+    ss->len = (uint32_t) slen;
+    ss->cap = (uint32_t) slen + 1;
     memcpy(ss->str, s, slen + 1);
   }
 

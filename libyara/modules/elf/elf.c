@@ -125,14 +125,14 @@ define_function(telfhash)
     if (is_excluded)
       continue;
 
-    clean_names[symbol_count] = yr_malloc(strlen(name) + 1);
+    clean_names[symbol_count] = yr_malloc(namelen + 1);
 
     if (!clean_names[symbol_count])
       goto cleanup;
 
     /* Convert it to lowercase */
-    int j;
-    for (j = 0; name[j]; j++)
+    size_t j;
+    for (j = 0; j < namelen; j++)
       clean_names[symbol_count][j] = tolower((unsigned char) name[j]);
 
     clean_names[symbol_count][j] = '\0';
@@ -204,8 +204,8 @@ define_function(import_md5)
   SIMPLE_STR* sstr = NULL;
 
   int symbol_count = 0;
-  char** clean_names = yr_malloc(list->count * sizeof(*clean_names));
-  if (!clean_names)
+  char** clean_names = yr_calloc(list->count, sizeof(*clean_names));
+  if (clean_names == NULL && list->count > 0)
     return_string(YR_UNDEFINED);
 
   for (ELF_SYMBOL* i = list->symbols; i != NULL; i = i->next)
@@ -218,17 +218,19 @@ define_function(import_md5)
     if (i->shndx != ELF_SHN_UNDEF)
       continue;
 
+    size_t namelen = strlen(name);
+
     // skip empty names
-    if (strlen(i->name) == 0)
+    if (namelen == 0)
       continue;
 
-    clean_names[symbol_count] = yr_malloc(strlen(name) + 1);
+    clean_names[symbol_count] = yr_malloc(namelen + 1);
     if (!clean_names[symbol_count])
       goto cleanup;
 
     /* Convert it to lowercase */
-    int j;
-    for (j = 0; name[j]; j++)
+    size_t j;
+    for (j = 0; j < namelen; j++)
       clean_names[symbol_count][j] = tolower((unsigned char) name[j]);
 
     clean_names[symbol_count][j] = '\0';
