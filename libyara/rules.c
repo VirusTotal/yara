@@ -348,6 +348,39 @@ int yr_rules_from_arena(YR_ARENA* arena, YR_RULES** rules)
     return ERROR_CORRUPT_FILE;
   }
 
+  YR_RULE* rules_table = yr_arena_get_ptr(arena, YR_RULES_TABLE, 0);
+  YR_STRING* strings_table = yr_arena_get_ptr(arena, YR_STRINGS_TABLE, 0);
+  YR_NAMESPACE* namespaces_table = yr_arena_get_ptr(
+      arena, YR_NAMESPACES_TABLE, 0);
+
+  for (uint32_t i = 0; i < summary->num_namespaces; i++)
+  {
+    if (namespaces_table[i].idx >= summary->num_namespaces)
+      return ERROR_CORRUPT_FILE;
+  }
+
+  for (uint32_t i = 0; i < summary->num_strings; i++)
+  {
+    if (strings_table[i].idx >= summary->num_strings ||
+        strings_table[i].rule_idx >= summary->num_rules)
+    {
+      return ERROR_CORRUPT_FILE;
+    }
+  }
+
+  for (uint32_t i = 0; i < summary->num_rules; i++)
+  {
+    if (namespaces_table == NULL ||
+        rules_table[i].ns < namespaces_table ||
+        rules_table[i].ns >= namespaces_table + summary->num_namespaces ||
+        ((uintptr_t) rules_table[i].ns - (uintptr_t) namespaces_table) %
+                sizeof(YR_NAMESPACE) !=
+            0)
+    {
+      return ERROR_CORRUPT_FILE;
+    }
+  }
+
   size_t ext_vars_size = yr_arena_get_current_offset(
       arena, YR_EXTERNAL_VARIABLES_TABLE);
 
@@ -470,9 +503,8 @@ int yr_rules_from_arena(YR_ARENA* arena, YR_RULES** rules)
   new_rules->num_strings = summary->num_strings;
   new_rules->num_namespaces = summary->num_namespaces;
 
-  new_rules->rules_table = yr_arena_get_ptr(arena, YR_RULES_TABLE, 0);
-
-  new_rules->strings_table = yr_arena_get_ptr(arena, YR_STRINGS_TABLE, 0);
+  new_rules->rules_table = rules_table;
+  new_rules->strings_table = strings_table;
 
   new_rules->ext_vars_table = yr_arena_get_ptr(
       arena, YR_EXTERNAL_VARIABLES_TABLE, 0);

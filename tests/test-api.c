@@ -1036,6 +1036,73 @@ void test_load_rules_corrupt_num_buffers()
   yr_finalize();
 }
 
+void test_load_rules_corrupt_table_indices()
+{
+  YR_COMPILER* compiler = NULL;
+  YR_RULES* rules = NULL;
+  YR_RULES* duplicate = NULL;
+
+  yr_initialize();
+
+  assert_true_expr(yr_compiler_create(&compiler) == ERROR_SUCCESS);
+  assert_true_expr(
+      yr_compiler_add_string(
+          compiler,
+          "rule a { strings: $s1 = \"abc\" condition: all of them }",
+          NULL) == 0);
+  assert_true_expr(yr_compiler_get_rules(compiler, &rules) == ERROR_SUCCESS);
+  yr_compiler_destroy(compiler);
+
+  YR_STRING* string = &rules->strings_table[0];
+  YR_RULE* rule = &rules->rules_table[0];
+  YR_NAMESPACE* ns = rule->ns;
+
+  // Out-of-bounds YR_STRING.idx
+  uint32_t orig_string_idx = string->idx;
+  string->idx = rules->num_strings;
+  assert_true_expr(
+      yr_rules_from_arena(rules->arena, &duplicate) == ERROR_CORRUPT_FILE);
+  string->idx = 0xFFFFFF00;
+  assert_true_expr(
+      yr_rules_from_arena(rules->arena, &duplicate) == ERROR_CORRUPT_FILE);
+  string->idx = orig_string_idx;
+
+  // Out-of-bounds YR_STRING.rule_idx
+  uint32_t orig_rule_idx = string->rule_idx;
+  string->rule_idx = rules->num_rules;
+  assert_true_expr(
+      yr_rules_from_arena(rules->arena, &duplicate) == ERROR_CORRUPT_FILE);
+  string->rule_idx = 0xFFFFFF00;
+  assert_true_expr(
+      yr_rules_from_arena(rules->arena, &duplicate) == ERROR_CORRUPT_FILE);
+  string->rule_idx = orig_rule_idx;
+
+  // Out-of-bounds YR_NAMESPACE.idx
+  uint32_t orig_ns_idx = ns->idx;
+  ns->idx = rules->num_namespaces;
+  assert_true_expr(
+      yr_rules_from_arena(rules->arena, &duplicate) == ERROR_CORRUPT_FILE);
+  ns->idx = 0xFFFFFF00;
+  assert_true_expr(
+      yr_rules_from_arena(rules->arena, &duplicate) == ERROR_CORRUPT_FILE);
+  ns->idx = orig_ns_idx;
+
+  // Invalid YR_RULE.ns pointer (NULL, out of range, or misaligned)
+  rule->ns = NULL;
+  assert_true_expr(
+      yr_rules_from_arena(rules->arena, &duplicate) == ERROR_CORRUPT_FILE);
+  rule->ns = ns + rules->num_namespaces;
+  assert_true_expr(
+      yr_rules_from_arena(rules->arena, &duplicate) == ERROR_CORRUPT_FILE);
+  rule->ns = (YR_NAMESPACE*) ((uint8_t*) ns + 1);
+  assert_true_expr(
+      yr_rules_from_arena(rules->arena, &duplicate) == ERROR_CORRUPT_FILE);
+  rule->ns = ns;
+
+  yr_rules_destroy(rules);
+  yr_finalize();
+}
+
 void test_scanner()
 {
   const char* buf = "dummy";
@@ -1879,6 +1946,7 @@ int main(int argc, char** argv)
   test_rules_from_arena_bad_external_pointers();
   test_load_rules_corrupt_ac_transition();
   test_load_rules_corrupt_num_buffers();
+  test_load_rules_corrupt_table_indices();
   test_scanner();
   test_xor_key_string_in_atom();
   test_ast_callback();
