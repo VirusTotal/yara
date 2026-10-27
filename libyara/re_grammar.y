@@ -48,6 +48,13 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define mark_as_not_fast_regexp() \
     ((RE_AST*) yyget_extra(yyscanner))->flags &= ~RE_FLAGS_FAST_REGEXP
 
+#define fail_if_too_many_ast_levels(cleanup_code) \
+    if (((RE_AST*) yyget_extra(yyscanner))->levels++ > RE_MAX_AST_LEVELS) \
+    { \
+      { cleanup_code } \
+      fail_if(true, ERROR_REGULAR_EXPRESSION_TOO_COMPLEX); \
+    }
+
 #define fail_if(x, error) \
     if (x) \
     { \
@@ -120,6 +127,11 @@ alternative
       {
         mark_as_not_fast_regexp();
 
+        fail_if_too_many_ast_levels({
+          yr_re_node_destroy($1);
+          yr_re_node_destroy($3);
+        });
+
         $$ = yr_re_node_create(RE_NODE_ALT);
 
         destroy_node_if($$ == NULL, $1);
@@ -135,6 +147,10 @@ alternative
         RE_NODE* node;
 
         mark_as_not_fast_regexp();
+
+        fail_if_too_many_ast_levels({
+          yr_re_node_destroy($1);
+        });
 
         node = yr_re_node_create(RE_NODE_EMPTY);
 
@@ -365,6 +381,10 @@ repeat
 single
     : '(' alternative ')'
       {
+        fail_if_too_many_ast_levels({
+          yr_re_node_destroy($2);
+        });
+
         $$ = $2;
       }
     | '.'

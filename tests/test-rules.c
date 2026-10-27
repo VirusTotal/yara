@@ -1790,6 +1790,79 @@ static void test_in()
         condition: $a in (entrypoint .. entrypoint + 1) }",
       PE32_FILE);
 
+  // Test large number of alternatives in a hex string (previously caused
+  // uncontrolled recursion / C-stack overflow in yr_re_node_destroy).
+  {
+    const size_t num_alts = 500000;
+    const char* prefix = "rule test { strings: $a = { (01";
+    const char* suffix = ") } condition: $a }";
+    size_t prefix_len = strlen(prefix);
+    size_t suffix_len = strlen(suffix);
+    char* rule = malloc(prefix_len + num_alts * 3 + suffix_len + 1);
+    assert(rule != NULL);
+
+    memcpy(rule, prefix, prefix_len);
+    char* p = rule + prefix_len;
+    for (size_t i = 0; i < num_alts; i++)
+    {
+      memcpy(p, "|01", 3);
+      p += 3;
+    }
+    memcpy(p, suffix, suffix_len + 1);
+
+    assert_error(rule, ERROR_REGULAR_EXPRESSION_TOO_COMPLEX);
+    free(rule);
+  }
+
+  // Test deeply nested parentheses in a hex string exceeding RE_MAX_AST_LEVELS.
+  {
+    const size_t depth = 3000;
+    const char* prefix = "rule test { strings: $a = { ";
+    const char* middle = "01";
+    const char* suffix = " } condition: $a }";
+    size_t prefix_len = strlen(prefix);
+    size_t middle_len = strlen(middle);
+    size_t suffix_len = strlen(suffix);
+    char* rule = malloc(
+        prefix_len + depth * 2 + middle_len + suffix_len + 1);
+    assert(rule != NULL);
+
+    memcpy(rule, prefix, prefix_len);
+    memset(rule + prefix_len, '(', depth);
+    memcpy(rule + prefix_len + depth, middle, middle_len);
+    memset(rule + prefix_len + depth + middle_len, ')', depth);
+    memcpy(
+        rule + prefix_len + depth * 2 + middle_len, suffix, suffix_len + 1);
+
+    assert_error(rule, ERROR_REGULAR_EXPRESSION_TOO_COMPLEX);
+    free(rule);
+  }
+
+  // Ensure a flat sequence of literal hex bytes longer than RE_MAX_AST_LEVELS
+  // is not rejected by the AST nesting limit.
+  {
+    const size_t num_bytes = 2500;
+    const char* prefix = "rule test { strings: $a = { ";
+    const char* suffix = " } condition: true or $a }";
+    size_t prefix_len = strlen(prefix);
+    size_t suffix_len = strlen(suffix);
+    char* rule = malloc(prefix_len + num_bytes * 3 + suffix_len + 1);
+    assert(rule != NULL);
+
+    memcpy(rule, prefix, prefix_len);
+    char* p = rule + prefix_len;
+    for (size_t i = 0; i < num_bytes; i++)
+    {
+      memcpy(p, "41 ", 3);
+      p += 3;
+    }
+    memcpy(p, suffix, suffix_len + 1);
+
+    assert_true_rule(rule, NULL);
+
+    free(rule);
+  }
+
   YR_DEBUG_FPRINTF(1, stderr, "} // %s()\n", __FUNCTION__);
 }
 
@@ -2990,6 +3063,54 @@ void test_re()
       "qrst");
 
   assert_true_regexp("qrst\\b(k?" "?){4}?-z", "..qrst-z..", "qrst-z");
+
+  // Test large number of alternatives in a regular expression.
+  {
+    const size_t num_alts = 2500;
+    const char* prefix = "rule test { strings: $a = /a";
+    const char* suffix = "/ condition: $a }";
+    size_t prefix_len = strlen(prefix);
+    size_t suffix_len = strlen(suffix);
+    char* rule = malloc(prefix_len + num_alts * 2 + suffix_len + 1);
+    assert(rule != NULL);
+
+    memcpy(rule, prefix, prefix_len);
+    char* p = rule + prefix_len;
+    for (size_t i = 0; i < num_alts; i++)
+    {
+      memcpy(p, "|a", 2);
+      p += 2;
+    }
+    memcpy(p, suffix, suffix_len + 1);
+
+    assert_error(rule, ERROR_REGULAR_EXPRESSION_TOO_COMPLEX);
+    free(rule);
+  }
+
+  // Test deeply nested parentheses in a regular expression exceeding
+  // RE_MAX_AST_LEVELS.
+  {
+    const size_t depth = 2500;
+    const char* prefix = "rule test { strings: $a = /";
+    const char* middle = "a";
+    const char* suffix = "/ condition: $a }";
+    size_t prefix_len = strlen(prefix);
+    size_t middle_len = strlen(middle);
+    size_t suffix_len = strlen(suffix);
+    char* rule = malloc(
+        prefix_len + depth * 2 + middle_len + suffix_len + 1);
+    assert(rule != NULL);
+
+    memcpy(rule, prefix, prefix_len);
+    memset(rule + prefix_len, '(', depth);
+    memcpy(rule + prefix_len + depth, middle, middle_len);
+    memset(rule + prefix_len + depth + middle_len, ')', depth);
+    memcpy(
+        rule + prefix_len + depth * 2 + middle_len, suffix, suffix_len + 1);
+
+    assert_error(rule, ERROR_REGULAR_EXPRESSION_TOO_COMPLEX);
+    free(rule);
+  }
 
   YR_DEBUG_FPRINTF(1, stderr, "} // %s()\n", __FUNCTION__);
 }

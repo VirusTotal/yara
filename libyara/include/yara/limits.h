@@ -190,4 +190,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define RE_MAX_RANGE_UNROLL 1024
 #endif
 
+// Maximum number of levels in regexp's AST.
+#ifndef RE_MAX_AST_LEVELS
+#define RE_MAX_AST_LEVELS 2000
+#endif
+
 #endif

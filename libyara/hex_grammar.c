@@ -110,8 +110,16 @@
       yr_re_node_destroy(node); \
     } \
 
+#define fail_if_too_many_ast_levels(cleanup_code) \
+    if (((RE_AST*) yyget_extra(yyscanner))->levels++ > RE_MAX_AST_LEVELS) \
+    { \
+      { cleanup_code } \
+      lex_env->last_error = ERROR_REGULAR_EXPRESSION_TOO_COMPLEX; \
+      YYABORT; \
+    }
 
-#line 115 "hex_grammar.c"
+
+#line 123 "hex_grammar.c"
 
 # ifndef YY_CAST
 #  ifdef __cplusplus
@@ -1350,12 +1358,16 @@ yyreduce:
     break;
 
   case 12: /* token: '(' $@1 alternatives ')'  */
-#line 183 "hex_grammar.y"
+#line 191 "hex_grammar.y"
       {
+        fail_if_too_many_ast_levels({
+          yr_re_node_destroy((yyvsp[-1].re_node));
+        });
+
         (yyval.re_node) = (yyvsp[-1].re_node);
         lex_env->inside_or--;
       }
-#line 1359 "hex_grammar.c"
+#line 1371 "hex_grammar.c"
     break;
 
   case 13: /* range: '[' _NUMBER_ ']'  */
@@ -1489,9 +1501,14 @@ yyreduce:
     break;
 
   case 18: /* alternatives: alternatives '|' tokens  */
-#line 306 "hex_grammar.y"
+#line 318 "hex_grammar.y"
       {
         mark_as_not_fast_regexp();
+
+        fail_if_too_many_ast_levels({
+          yr_re_node_destroy((yyvsp[-2].re_node));
+          yr_re_node_destroy((yyvsp[0].re_node));
+        });
 
         (yyval.re_node) = yr_re_node_create(RE_NODE_ALT);
 
@@ -1503,7 +1520,7 @@ yyreduce:
         yr_re_node_append_child((yyval.re_node), (yyvsp[-2].re_node));
         yr_re_node_append_child((yyval.re_node), (yyvsp[0].re_node));
       }
-#line 1507 "hex_grammar.c"
+#line 1524 "hex_grammar.c"
     break;
 
   case 19: /* byte: _BYTE_  */

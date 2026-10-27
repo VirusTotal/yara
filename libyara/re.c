@@ -143,22 +143,48 @@ RE_NODE* yr_re_node_create(int type)
   return result;
 }
 
+////////////////////////////////////////////////////////////////////////////////
+// Destroys a regular expression AST node and all its descendants iteratively.
+//
+// Instead of recursing (which can overflow the C call stack on deeply nested
+// ASTs), this flattens the subtree in-place into a FIFO queue linked through
+// `next_sibling`, where `current` is the queue head and `tail` is the queue
+// tail.
+//
 void yr_re_node_destroy(RE_NODE* node)
 {
-  RE_NODE* child = node->children_head;
-  RE_NODE* next_child;
+  RE_NODE* current = node;
+  RE_NODE* tail = node;
+  RE_NODE* next;
 
-  while (child != NULL)
+  if (node == NULL)
+    return;
+
+  // Initialize the queue with `node` as its only element. Clearing
+  // `node->next_sibling` ensures we only destroy the subtree rooted at `node`
+  // (and not any siblings `node` might have). If `node` has children, the
+  // first iteration below will overwrite `node->next_sibling` (via `tail`) to
+  // point to `node->children_head` before `current->next_sibling` is read.
+  node->next_sibling = NULL;
+
+  while (current != NULL)
   {
-    next_child = child->next_sibling;
-    yr_re_node_destroy(child);
-    child = next_child;
+    // If the current node has children, append its entire child list
+    // (`children_head` .. `children_tail`) to the end of the queue.
+    if (current->children_head != NULL)
+    {
+      tail->next_sibling = current->children_head;
+      tail = current->children_tail;
+    }
+
+    next = current->next_sibling;
+
+    if (current->type == RE_NODE_CLASS)
+      yr_free(current->re_class);
+
+    yr_free(current);
+    current = next;
   }
-
-  if (node->type == RE_NODE_CLASS)
-    yr_free(node->re_class);
-
-  yr_free(node);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -200,6 +226,7 @@ int yr_re_ast_create(RE_AST** re_ast)
     return ERROR_INSUFFICIENT_MEMORY;
 
   (*re_ast)->flags = 0;
+  (*re_ast)->levels = 0;
   (*re_ast)->root_node = NULL;
 
   return ERROR_SUCCESS;

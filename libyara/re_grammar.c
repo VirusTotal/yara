@@ -105,8 +105,16 @@
       yr_re_node_destroy(node); \
     } \
 
+#define fail_if_too_many_ast_levels(cleanup_code) \
+    if (((RE_AST*) yyget_extra(yyscanner))->levels++ > RE_MAX_AST_LEVELS) \
+    { \
+      { cleanup_code } \
+      lex_env->last_error = ERROR_REGULAR_EXPRESSION_TOO_COMPLEX; \
+      YYABORT; \
+    }
 
-#line 110 "re_grammar.c"
+
+#line 118 "re_grammar.c"
 
 # ifndef YY_CAST
 #  ifdef __cplusplus
@@ -1277,9 +1285,14 @@ yyreduce:
     break;
 
   case 5: /* alternative: alternative '|' concatenation  */
-#line 120 "re_grammar.y"
+#line 128 "re_grammar.y"
       {
         mark_as_not_fast_regexp();
+
+        fail_if_too_many_ast_levels({
+          yr_re_node_destroy((yyvsp[-2].re_node));
+          yr_re_node_destroy((yyvsp[0].re_node));
+        });
 
         (yyval.re_node) = yr_re_node_create(RE_NODE_ALT);
 
@@ -1291,15 +1304,19 @@ yyreduce:
         yr_re_node_append_child((yyval.re_node), (yyvsp[-2].re_node));
         yr_re_node_append_child((yyval.re_node), (yyvsp[0].re_node));
       }
-#line 1295 "re_grammar.c"
+#line 1308 "re_grammar.c"
     break;
 
   case 6: /* alternative: alternative '|'  */
-#line 134 "re_grammar.y"
+#line 147 "re_grammar.y"
       {
         RE_NODE* node;
 
         mark_as_not_fast_regexp();
+
+        fail_if_too_many_ast_levels({
+          yr_re_node_destroy((yyvsp[-1].re_node));
+        });
 
         node = yr_re_node_create(RE_NODE_EMPTY);
 
@@ -1316,7 +1333,7 @@ yyreduce:
         yr_re_node_append_child((yyval.re_node), (yyvsp[-1].re_node));
         yr_re_node_append_child((yyval.re_node), node);
       }
-#line 1320 "re_grammar.c"
+#line 1337 "re_grammar.c"
     break;
 
   case 7: /* concatenation: repeat  */
@@ -1583,11 +1600,15 @@ yyreduce:
     break;
 
   case 22: /* single: '(' alternative ')'  */
-#line 367 "re_grammar.y"
+#line 384 "re_grammar.y"
       {
+        fail_if_too_many_ast_levels({
+          yr_re_node_destroy((yyvsp[-1].re_node));
+        });
+
         (yyval.re_node) = (yyvsp[-1].re_node);
       }
-#line 1591 "re_grammar.c"
+#line 1612 "re_grammar.c"
     break;
 
   case 23: /* single: '.'  */

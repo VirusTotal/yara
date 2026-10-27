@@ -280,6 +280,7 @@ int yr_parse_hex_string(
 
   lex_env.last_error = ERROR_SUCCESS;
   lex_env.inside_or = 0;
+  lex_env.last_error_message[0] = '\0';
 
   yr_thread_storage_set_value(
      &yr_yyfatal_trampoline_tls,
@@ -319,6 +320,9 @@ int yr_parse_hex_string(
 
   if (lex_env.last_error != ERROR_SUCCESS)
   {
+    yr_re_ast_destroy(*re_ast);
+    *re_ast = NULL;
+
     strlcpy(error->message, lex_env.last_error_message, sizeof(error->message));
     return lex_env.last_error;
   }

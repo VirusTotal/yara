@@ -353,29 +353,43 @@ static YR_ATOM_TREE_NODE* _yr_atoms_tree_node_create(uint8_t type)
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-// Destroys a node from an atoms tree.
+// Destroys a node from an atoms tree and all its descendants iteratively.
+//
+// Instead of recursing, this flattens the subtree in-place into a FIFO queue
+// linked through `next_sibling`, where `current` is the queue head and `tail`
+// is the queue tail.
 //
 static void _yr_atoms_tree_node_destroy(YR_ATOM_TREE_NODE* node)
 {
-  YR_ATOM_TREE_NODE* child;
-  YR_ATOM_TREE_NODE* next_child;
+  YR_ATOM_TREE_NODE* current = node;
+  YR_ATOM_TREE_NODE* tail = node;
+  YR_ATOM_TREE_NODE* next;
 
   if (node == NULL)
     return;
 
-  if (node->type == ATOM_TREE_OR || node->type == ATOM_TREE_AND)
+  // Initialize the queue with `node` as its only element. Clearing
+  // `node->next_sibling` ensures we only destroy the subtree rooted at `node`
+  // (and not any siblings `node` might have). If `node` has children, the
+  // first iteration below will overwrite `node->next_sibling` (via `tail`) to
+  // point to `node->children_head` before `current->next_sibling` is read.
+  node->next_sibling = NULL;
+
+  while (current != NULL)
   {
-    child = node->children_head;
-
-    while (child != NULL)
+    // If the current node has children, append its entire child list
+    // (`children_head` .. `children_tail`) to the end of the queue.
+    if ((current->type == ATOM_TREE_OR || current->type == ATOM_TREE_AND) &&
+        current->children_head != NULL)
     {
-      next_child = child->next_sibling;
-      _yr_atoms_tree_node_destroy(child);
-      child = next_child;
+      tail->next_sibling = current->children_head;
+      tail = current->children_tail;
     }
-  }
 
-  yr_free(node);
+    next = current->next_sibling;
+    yr_free(current);
+    current = next;
+  }
 }
 
 ////////////////////////////////////////////////////////////////////////////////
