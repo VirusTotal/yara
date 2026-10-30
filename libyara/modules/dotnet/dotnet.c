@@ -1726,6 +1726,13 @@ void dotnet_parse_guid(
 
     yr_set_string(guid, pe->object, "guids[%i]", i);
 
+    // The first GUID in the #GUID stream is the module version identifier
+    // (MVID, ECMA-335 Partition II, II.22.30), already exposed as guids[0].
+    // Expose it under its proper name to avoid confusion with the typelib
+    // GUID, which comes from the GuidAttribute custom attribute.
+    if (i == 0)
+      yr_set_string(guid, pe->object, "mvid");
+
     i++;
     guid_size -= 16;
     guid_offset += 16;
@@ -3397,6 +3404,7 @@ begin_declarations
 
   declare_string_array("guids");
   declare_integer("number_of_guids");
+  declare_string("mvid");
 
   begin_struct_array("resources")
     declare_integer("offset");
