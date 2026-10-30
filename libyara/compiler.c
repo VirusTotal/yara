@@ -428,21 +428,45 @@ YR_API int yr_compiler_load_atom_quality_table(
   long file_size;
   int entries;
   void* table;
+#ifndef _MSC_VER
+  struct stat stbuf;
+#endif
 
   FILE* fh = fopen(filename, "rb");
 
   if (fh == NULL)
     return ERROR_COULD_NOT_OPEN_FILE;
 
-  fseek(fh, 0L, SEEK_END);
-  file_size = ftell(fh);
-  fseek(fh, 0L, SEEK_SET);
+  // Determine the size of the file, rejecting anything that is not a
+  // regular file (directories, pipes, devices, etc.). For such files
+  // fseek()/ftell() can return meaningless values (e.g. huge sizes on
+  // some filesystems), which used to be passed unchecked to yr_malloc(),
+  // resulting in an attempted allocation of up to 0x7fffffffffffffff
+  // bytes (see issue #1895). This mirrors what
+  // _yr_compiler_default_include_callback() does for include files.
+#if defined(_MSC_VER)
+  file_size = _filelength(_fileno(fh));
 
-  if (file_size == -1L)
+  if (file_size < 0 || file_size > INT_MAX)
   {
     fclose(fh);
     return ERROR_COULD_NOT_READ_FILE;
   }
+#else
+  if (fstat(fileno(fh), &stbuf) != 0 || !S_ISREG(stbuf.st_mode))
+  {
+    fclose(fh);
+    return ERROR_COULD_NOT_READ_FILE;
+  }
+
+  if (stbuf.st_size < 0 || stbuf.st_size > INT_MAX)
+  {
+    fclose(fh);
+    return ERROR_COULD_NOT_READ_FILE;
+  }
+
+  file_size = (long) stbuf.st_size;
+#endif
 
   table = yr_malloc(file_size);
 
