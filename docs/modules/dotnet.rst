@@ -73,9 +73,22 @@ Reference
 .. c:type:: guids
 
     A zero-based array of strings, one for each GUID. Individual guids can be
-    accessed by using the [] operator.
+    accessed by using the [] operator. The first GUID in the array is the
+    module version identifier (MVID), also exposed as the ``mvid`` field.
 
     *Example: dotnet.guids[0] == "99c08ffd-f378-a891-10ab-c02fe11be6ef"*
+
+.. c:type:: mvid
+
+    .. versionadded:: 4.7.0
+
+    The module version identifier (MVID) of the .NET module, a GUID that
+    uniquely identifies this instance of the module (ECMA-335 Partition II).
+    This is the first GUID in the ``guids`` array and should not be confused
+    with the typelib GUID exposed by the ``typelib`` field, which comes from
+    the ``GuidAttribute`` custom attribute.
+
+    *Example: dotnet.mvid == "99c08ffd-f378-a891-10ab-c02fe11be6ef"*
 
 .. c:type:: number_of_classes
     The number of classes in the file.
