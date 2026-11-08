@@ -943,6 +943,28 @@ int main(int argc, char** argv)
       "tests/data/"
       "05cd06e6a202e12be22a02700ed6f1604e803ca8867277d852e8971efded0650");
 
+  // When SectionAlignment is smaller than the page size, the Windows loader
+  // ignores the section table and maps the file at ImageBase, so an RVA is
+  // also a file offset even when it falls outside every section.
+  assert_true_rule_file(
+      "import \"pe\" \
+      rule rva_to_offset_section_alignment_0x100 { \
+        condition: \
+          pe.rva_to_offset(0x14c0) == 0x14c0 and \
+          pe.entry_point == 0x14c0 \
+      }",
+      "tests/data/pe_section_alignment_0x100");
+
+  assert_true_rule_file(
+      "import \"pe\" \
+      rule entry_point_section_alignment_0x100 { \
+        strings: \
+          $first_bytes = {83 ec 0c c7 05 94 53 40 00 00 00} \
+        condition: \
+          $first_bytes at pe.entry_point \
+      }",
+      "tests/data/pe_section_alignment_0x100");
+
   yr_finalize();
 
   YR_DEBUG_FPRINTF(
