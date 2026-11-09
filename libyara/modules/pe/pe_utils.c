@@ -103,6 +103,17 @@ PIMAGE_DATA_DIRECTORY pe_get_directory_entry(PE* pe, int entry)
 
 int64_t pe_rva_to_offset(PE* pe, uint64_t rva)
 {
+  // When SectionAlignment is smaller than a page, the Windows loader ignores
+  // the section table and maps the file at ImageBase. In that case an RVA is
+  // also a file offset.
+  if (yr_le32toh(OptionalHeader(pe, SectionAlignment)) < PE_PAGE_SIZE)
+  {
+    if (rva >= pe->data_size)
+      return -1;
+
+    return (int64_t) rva;
+  }
+
   PIMAGE_SECTION_HEADER section = IMAGE_FIRST_SECTION(pe->header);
 
   DWORD lowest_section_rva = 0xffffffff;
