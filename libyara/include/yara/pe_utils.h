@@ -53,6 +53,10 @@ typedef struct _PE
   const uint8_t* data;
   size_t data_size;
 
+  // Copy of the block that data points into, NULL if data points directly
+  // into the scanned block. Freed on module unload.
+  uint8_t* owned_data;
+
   union
   {
     PIMAGE_NT_HEADERS32 header;

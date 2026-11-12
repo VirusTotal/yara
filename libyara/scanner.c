@@ -748,7 +748,10 @@ YR_API int yr_scanner_scan_mem(
       return ERROR_TOO_SLOW_SCANNING;
   }
 
+  int prev_flags = scanner->flags;
+  scanner->flags |= SCAN_FLAGS_SINGLE_BLOCK;
   result = yr_scanner_scan_mem_blocks(scanner, &iterator);
+  scanner->flags = prev_flags;
 
   YR_DEBUG_FPRINTF(
       2,
