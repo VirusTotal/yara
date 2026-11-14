@@ -65,7 +65,12 @@ for:
     verbosity: minimal
 
   after_build:
-  - cmd: 7z a yara-%APPVEYOR_BUILD_VERSION%-%ARTIFACT_POSTFIX%.zip %APPVEYOR_BUILD_FOLDER%\windows\%TARGET%\%CONFIGURATION%\yara*.exe
+  - cmd: if not exist yara-release\include mkdir yara-release\include
+  - cmd: copy /Y %APPVEYOR_BUILD_FOLDER%\windows\%TARGET%\%CONFIGURATION%\yara*.exe yara-release\
+  - cmd: copy /Y %APPVEYOR_BUILD_FOLDER%\windows\%TARGET%\%CONFIGURATION%\libyara*.lib yara-release\
+  - cmd: copy /Y %APPVEYOR_BUILD_FOLDER%\libyara\include\yara.h yara-release\include\
+  - cmd: xcopy /E /I /Q %APPVEYOR_BUILD_FOLDER%\libyara\include\yara yara-release\include\yara\
+  - cmd: cd yara-release && 7z a ..\yara-%APPVEYOR_BUILD_VERSION%-%ARTIFACT_POSTFIX%.zip *
 
   artifacts:
   - path: yara-$(APPVEYOR_BUILD_VERSION)-$(ARTIFACT_POSTFIX).zip
