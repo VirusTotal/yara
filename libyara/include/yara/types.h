@@ -41,12 +41,16 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "notebook.h"
 
+// The alignment must be specified before the union. MSVC ignores a trailing
+// __declspec(align(n)) on a member declaration, which made structures with an
+// odd number of 32-bit fields before a reference have different layouts in
+// 32-bit and 64-bit builds.
 #define DECLARE_REFERENCE(type, name) \
-  union                               \
+  YR_ALIGN(8) union                   \
   {                                   \
     type name;                        \
     YR_ARENA_REF name##_;             \
-  } YR_ALIGN(8)
+  }
 
 // Flags for YR_RULE
 #define RULE_FLAGS_PRIVATE  0x01

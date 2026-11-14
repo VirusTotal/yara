@@ -36,6 +36,17 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "util.h"
 
+// Regression test for #2070. A structure stored in an arena may have an odd
+// number of 32-bit fields before a reference, and the reference must still be
+// aligned to 8 bytes in both 32-bit and 64-bit builds.
+typedef struct YR_TEST_ALIGNMENT
+{
+  int32_t a;
+  int32_t b;
+  int32_t c;
+  DECLARE_REFERENCE(const char*, identifier);
+} YR_TEST_ALIGNMENT;
+
 #define CHECK_SIZE(expr, size)                           \
   do                                                     \
   {                                                      \
@@ -118,6 +129,9 @@ int main(int argc, char **argv)
   CHECK_OFFSET(YR_RULE, 32, metas);
   CHECK_OFFSET(YR_RULE, 40, strings);
   CHECK_OFFSET(YR_RULE, 48, ns);
+
+  CHECK_SIZE(YR_TEST_ALIGNMENT, 24);
+  CHECK_OFFSET(YR_TEST_ALIGNMENT, 16, identifier);
 
   CHECK_SIZE(YR_EXTERNAL_VARIABLE, 24);
   CHECK_OFFSET(YR_EXTERNAL_VARIABLE, 8, value.i);
