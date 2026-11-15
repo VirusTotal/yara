@@ -906,7 +906,7 @@ Reference
 
    .. c:member:: verified
 
-        Boolean, true if signature was sucessfully verified. More details about what the `verified` means is mentioned
+        Boolean, true if signature was successfully verified. More details about what the `verified` means is mentioned
         under the attribute `pe.is_signed`.
 
     .. c:member:: digest_alg
@@ -984,7 +984,7 @@ Reference
 
         .. c:member:: verified
 
-            Boolean, true if countersignature was sucessfully verified. More details about what the `verified` means is mentioned
+            Boolean, true if countersignature was successfully verified. More details about what the `verified` means is mentioned
             under the attribute `pe.is_signed`.
 
         .. c:member:: sign_time
