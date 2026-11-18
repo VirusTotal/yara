@@ -1,9 +1,98 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 #include <yara.h>
 
 #include "util.h"
+
+// Memory block iterator that copies each block into the same buffer before
+// returning it, like iterators that read data on demand. Data returned by
+// fetch_data is only valid until the next block is fetched.
+#define REUSED_BUFFER_BLOCK_SIZE 4096
+
+typedef struct
+{
+  const uint8_t* data;
+  size_t data_size;
+  uint8_t buffer[REUSED_BUFFER_BLOCK_SIZE];
+  YR_MEMORY_BLOCK block;
+} REUSED_BUFFER_CTX;
+
+static const uint8_t* reused_buffer_fetch_data(YR_MEMORY_BLOCK* block)
+{
+  REUSED_BUFFER_CTX* ctx = (REUSED_BUFFER_CTX*) block->context;
+  memcpy(ctx->buffer, ctx->data + block->base, block->size);
+  return ctx->buffer;
+}
+
+static YR_MEMORY_BLOCK* reused_buffer_next(YR_MEMORY_BLOCK_ITERATOR* iterator)
+{
+  REUSED_BUFFER_CTX* ctx = (REUSED_BUFFER_CTX*) iterator->context;
+  ctx->block.base += ctx->block.size;
+
+  if (ctx->block.base >= ctx->data_size)
+    return NULL;
+
+  ctx->block.size = ctx->data_size - ctx->block.base;
+
+  if (ctx->block.size > REUSED_BUFFER_BLOCK_SIZE)
+    ctx->block.size = REUSED_BUFFER_BLOCK_SIZE;
+
+  return &ctx->block;
+}
+
+static YR_MEMORY_BLOCK* reused_buffer_first(YR_MEMORY_BLOCK_ITERATOR* iterator)
+{
+  REUSED_BUFFER_CTX* ctx = (REUSED_BUFFER_CTX*) iterator->context;
+  ctx->block.base = 0;
+  ctx->block.size = 0;
+  return reused_buffer_next(iterator);
+}
+
+static uint64_t reused_buffer_file_size(YR_MEMORY_BLOCK_ITERATOR* iterator)
+{
+  return ((REUSED_BUFFER_CTX*) iterator->context)->data_size;
+}
+
+// Scans a file in blocks with a reused buffer and returns the number of
+// matching rules.
+static int matches_file_reused_buffer(char* rule, char* filename)
+{
+  YR_RULES* rules;
+  YR_SCANNER* scanner;
+  YR_MEMORY_BLOCK_ITERATOR iterator;
+  REUSED_BUFFER_CTX ctx;
+  struct COUNTERS counters = {0};
+  char* buf;
+  int sz = read_file(prefix_top_srcdir(filename), &buf);
+
+  assert_true_expr(sz > REUSED_BUFFER_BLOCK_SIZE);
+  assert_true_expr(compile_rule(rule, &rules) == ERROR_SUCCESS);
+  assert_true_expr(yr_scanner_create(rules, &scanner) == ERROR_SUCCESS);
+
+  ctx.data = (const uint8_t*) buf;
+  ctx.data_size = sz;
+  ctx.block.context = &ctx;
+  ctx.block.fetch_data = reused_buffer_fetch_data;
+
+  iterator.context = &ctx;
+  iterator.first = reused_buffer_first;
+  iterator.next = reused_buffer_next;
+  iterator.file_size = reused_buffer_file_size;
+  iterator.last_error = ERROR_SUCCESS;
+
+  yr_scanner_set_callback(scanner, count, &counters);
+  yr_scanner_set_flags(scanner, SCAN_FLAGS_NO_TRYCATCH);
+  assert_true_expr(
+      yr_scanner_scan_mem_blocks(scanner, &iterator) == ERROR_SUCCESS);
+
+  yr_scanner_destroy(scanner);
+  yr_rules_destroy(rules);
+  free(buf);
+
+  return counters.rules_matching;
+}
 
 int main(int argc, char** argv)
 {
@@ -942,6 +1031,20 @@ int main(int argc, char** argv)
       }",
       "tests/data/"
       "05cd06e6a202e12be22a02700ed6f1604e803ca8867277d852e8971efded0650");
+
+  // The PE module must not keep pointers to block data after other blocks
+  // were fetched (here by the math module).
+  assert_true_expr(
+      matches_file_reused_buffer(
+          "import \"pe\" \
+          import \"math\" \
+          rule test { \
+            condition: \
+              math.entropy(0, filesize) > 0 and pe.is_64bit() \
+          }",
+          "tests/data/"
+          "3b8b90159fa9b6048cc5410c5d53f116943564e4d05b04a843f9b3d0540d0c1c") ==
+      1);
 
   yr_finalize();
 

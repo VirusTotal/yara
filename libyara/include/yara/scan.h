@@ -41,6 +41,11 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define SCAN_FLAGS_REPORT_RULES_MATCHING     8
 #define SCAN_FLAGS_REPORT_RULES_NOT_MATCHING 16
 
+// Internal, set by yr_scanner_scan_mem while scanning its single-block
+// iterator. Modules may then keep pointers to block data for the whole
+// scan; otherwise block data is only valid until the next block is fetched.
+#define SCAN_FLAGS_SINGLE_BLOCK              32
+
 int yr_scan_verify_match(
     YR_SCAN_CONTEXT* context,
     YR_AC_MATCH* ac_match,

@@ -4394,14 +4394,42 @@ int module_load(
       if (!(context->flags & SCAN_FLAGS_PROCESS_MEMORY) ||
           !(yr_le16toh(pe_header->FileHeader.Characteristics) & IMAGE_FILE_DLL))
       {
+        uint8_t* owned_data = NULL;
+
+        // Block data is only valid until the next block is fetched, which
+        // other modules or functions like math.entropy() do after this
+        // module was loaded. Functions like pe.is_64bit() would then read
+        // freed, unmapped or overwritten memory, so keep a private copy
+        // unless the data is known to stay valid for the whole scan.
+        if (!(context->flags & SCAN_FLAGS_SINGLE_BLOCK))
+        {
+          owned_data = (uint8_t*) yr_malloc(block->size);
+
+          if (owned_data == NULL)
+            return ERROR_INSUFFICIENT_MEMORY;
+
+          memcpy(owned_data, block_data, block->size);
+          pe_header = (PIMAGE_NT_HEADERS32) (
+              owned_data + ((const uint8_t*) pe_header - block_data));
+          block_data = owned_data;
+        }
+
         pe = (PE*) yr_malloc(sizeof(PE));
 
         if (pe == NULL)
+        {
+          yr_free(owned_data);
           return ERROR_INSUFFICIENT_MEMORY;
+        }
 
         FAIL_ON_ERROR_WITH_CLEANUP(
-            yr_hash_table_create(17, &pe->hash_table), yr_free(pe));
+            yr_hash_table_create(17, &pe->hash_table),
+            {
+              yr_free(owned_data);
+              yr_free(pe);
+            });
 
+        pe->owned_data = owned_data;
         pe->data = block_data;
         pe->data_size = block->size;
         pe->header = pe_header;
@@ -4474,6 +4502,7 @@ int module_unload(YR_OBJECT* module_object)
   free_dlls(pe->imported_dlls);
   free_dlls(pe->delay_imported_dlls);
 
+  yr_free(pe->owned_data);
   yr_free(pe);
 
   return ERROR_SUCCESS;
