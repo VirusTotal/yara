@@ -1,9 +1,159 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 #include <yara.h>
 
 #include "util.h"
+
+// Memory block iterator that allocates a fresh buffer on every fetch_data call
+// and poisons + frees the previous block's buffer. Any module retaining
+// pointers into fetched block data across fetches will read poisoned/freed
+// memory.
+#define TRANSIENT_BLOCK_SIZE 4096
+
+typedef struct
+{
+  uint64_t base;
+  const uint8_t* data;
+  size_t size;
+} TRANSIENT_BLOCK_SPEC;
+
+typedef struct
+{
+  const TRANSIENT_BLOCK_SPEC* specs;
+  size_t num_specs;
+  size_t index;
+  uint64_t total_size;
+  uint8_t* current_buf;
+  size_t current_buf_size;
+  YR_MEMORY_BLOCK block;
+} TRANSIENT_BLOCKS_CTX;
+
+static void transient_blocks_release(TRANSIENT_BLOCKS_CTX* ctx)
+{
+  if (ctx->current_buf != NULL)
+  {
+    memset(ctx->current_buf, 0xAA, ctx->current_buf_size);
+    free(ctx->current_buf);
+    ctx->current_buf = NULL;
+    ctx->current_buf_size = 0;
+  }
+}
+
+static const uint8_t* transient_blocks_fetch_data(YR_MEMORY_BLOCK* block)
+{
+  TRANSIENT_BLOCKS_CTX* ctx = (TRANSIENT_BLOCKS_CTX*) block->context;
+  const TRANSIENT_BLOCK_SPEC* spec = &ctx->specs[ctx->index - 1];
+
+  transient_blocks_release(ctx);
+
+  ctx->current_buf = (uint8_t*) malloc(spec->size);
+  assert_true_expr(ctx->current_buf != NULL);
+  memcpy(ctx->current_buf, spec->data, spec->size);
+  ctx->current_buf_size = spec->size;
+
+  return ctx->current_buf;
+}
+
+static YR_MEMORY_BLOCK* transient_blocks_next(
+    YR_MEMORY_BLOCK_ITERATOR* iterator)
+{
+  TRANSIENT_BLOCKS_CTX* ctx = (TRANSIENT_BLOCKS_CTX*) iterator->context;
+
+  if (ctx->index >= ctx->num_specs)
+    return NULL;
+
+  const TRANSIENT_BLOCK_SPEC* spec = &ctx->specs[ctx->index++];
+  ctx->block.base = spec->base;
+  ctx->block.size = spec->size;
+
+  return &ctx->block;
+}
+
+static YR_MEMORY_BLOCK* transient_blocks_first(
+    YR_MEMORY_BLOCK_ITERATOR* iterator)
+{
+  TRANSIENT_BLOCKS_CTX* ctx = (TRANSIENT_BLOCKS_CTX*) iterator->context;
+  ctx->index = 0;
+  return transient_blocks_next(iterator);
+}
+
+static uint64_t transient_blocks_file_size(YR_MEMORY_BLOCK_ITERATOR* iterator)
+{
+  return ((TRANSIENT_BLOCKS_CTX*) iterator->context)->total_size;
+}
+
+static int matches_transient_blocks(
+    char* rule,
+    const TRANSIENT_BLOCK_SPEC* specs,
+    size_t num_specs,
+    uint64_t total_size,
+    int flags)
+{
+  YR_RULES* rules;
+  YR_SCANNER* scanner;
+  YR_MEMORY_BLOCK_ITERATOR iterator;
+  TRANSIENT_BLOCKS_CTX ctx = {0};
+  struct COUNTERS counters = {0};
+
+  assert_true_expr(compile_rule(rule, &rules) == ERROR_SUCCESS);
+  assert_true_expr(yr_scanner_create(rules, &scanner) == ERROR_SUCCESS);
+
+  ctx.specs = specs;
+  ctx.num_specs = num_specs;
+  ctx.total_size = total_size;
+  ctx.block.context = &ctx;
+  ctx.block.fetch_data = transient_blocks_fetch_data;
+
+  iterator.context = &ctx;
+  iterator.first = transient_blocks_first;
+  iterator.next = transient_blocks_next;
+  iterator.file_size = total_size > 0 ? transient_blocks_file_size : NULL;
+  iterator.last_error = ERROR_SUCCESS;
+
+  yr_scanner_set_callback(scanner, count, &counters);
+  yr_scanner_set_flags(scanner, flags | SCAN_FLAGS_NO_TRYCATCH);
+  assert_true_expr(
+      yr_scanner_scan_mem_blocks(scanner, &iterator) == ERROR_SUCCESS);
+
+  transient_blocks_release(&ctx);
+  yr_scanner_destroy(scanner);
+  yr_rules_destroy(rules);
+
+  return counters.rules_matching;
+}
+
+static int matches_file_transient_chunks(char* rule, char* filename)
+{
+  char* buf;
+  int sz = read_file(prefix_top_srcdir(filename), &buf);
+
+  assert_true_expr(sz > TRANSIENT_BLOCK_SIZE);
+
+  size_t num_blocks = ((size_t) sz + TRANSIENT_BLOCK_SIZE - 1) /
+                      TRANSIENT_BLOCK_SIZE;
+  TRANSIENT_BLOCK_SPEC* specs = (TRANSIENT_BLOCK_SPEC*) malloc(
+      num_blocks * sizeof(TRANSIENT_BLOCK_SPEC));
+  assert_true_expr(specs != NULL);
+
+  for (size_t i = 0; i < num_blocks; i++)
+  {
+    size_t offset = i * TRANSIENT_BLOCK_SIZE;
+    size_t remaining = (size_t) sz - offset;
+    specs[i].base = offset;
+    specs[i].data = (const uint8_t*) buf + offset;
+    specs[i].size = remaining > TRANSIENT_BLOCK_SIZE ? TRANSIENT_BLOCK_SIZE
+                                                     : remaining;
+  }
+
+  int matches = matches_transient_blocks(rule, specs, num_blocks, sz, 0);
+
+  free(specs);
+  free(buf);
+
+  return matches;
+}
 
 int main(int argc, char** argv)
 {
@@ -942,6 +1092,79 @@ int main(int argc, char** argv)
       }",
       "tests/data/"
       "05cd06e6a202e12be22a02700ed6f1604e803ca8867277d852e8971efded0650");
+
+  // The PE module must not retain pointers to fetched block data beyond
+  // module_load (subsequent block fetches by other modules or functions like
+  // math.entropy() invalidate previous blocks).
+  assert_true_expr(
+      matches_file_transient_chunks(
+          "import \"pe\" \
+          import \"math\" \
+          rule test { \
+            condition: \
+              math.entropy(0, filesize) > 0 and \
+              pe.is_64bit() and \
+              not pe.is_32bit() and \
+              pe.rva_to_offset(pe.sections[0].virtual_address) == \
+                  pe.sections[0].raw_data_offset \
+          }",
+          "tests/data/"
+          "3b8b90159fa9b6048cc5410c5d53f116943564e4d05b04a843f9b3d0540d0c1c") ==
+      1);
+
+  // Process-like scan with a PE at a non-zero base surrounded by other blocks.
+  // Loading elf and calling math.entropy() fetch other blocks and free/poison
+  // the PE block before condition evaluation runs is_32bit/is_64bit,
+  // rva_to_offset, and calculate_checksum (called twice to test caching).
+  {
+    char* pe_buf;
+    int pe_sz = read_file(prefix_top_srcdir("tests/data/tiny"), &pe_buf);
+    assert_true_expr(pe_sz > 0);
+
+    uint8_t pad_before[TRANSIENT_BLOCK_SIZE];
+    uint8_t pad_after[TRANSIENT_BLOCK_SIZE];
+    memset(pad_before, 'A', sizeof(pad_before));
+    memset(pad_after, 'B', sizeof(pad_after));
+
+    TRANSIENT_BLOCK_SPEC specs[3] = {
+        {0x1000, pad_before, sizeof(pad_before)},
+        {0x10000, (const uint8_t*) pe_buf, (size_t) pe_sz},
+        {0x20000, pad_after, sizeof(pad_after)},
+    };
+
+    assert_true_expr(
+        matches_transient_blocks(
+            "import \"pe\" \
+            import \"elf\" \
+            import \"math\" \
+            rule test { \
+              condition: \
+                math.entropy(0x20000, 4096) >= 0 and \
+                pe.is_32bit() and \
+                not pe.is_64bit() and \
+                pe.rva_to_offset(pe.sections[0].virtual_address) == \
+                    pe.sections[0].raw_data_offset and \
+                pe.calculate_checksum() == pe.checksum and \
+                pe.calculate_checksum() == 0xA8DC \
+            }",
+            specs,
+            3,
+            0,
+            SCAN_FLAGS_PROCESS_MEMORY) == 1);
+
+    // Truncating mid-section-table must still make pe.rva_to_offset() return
+    // undefined even after pe->header has been cleared.
+    assert_true_rule_blob_size(
+        "import \"pe\" \
+        rule test { \
+          condition: \
+            pe.is_pe and pe.is_32bit() and not defined pe.rva_to_offset(0) \
+        }",
+        pe_buf,
+        0x200);
+
+    free(pe_buf);
+  }
 
   yr_finalize();
 

@@ -67,6 +67,11 @@ typedef struct _PE
   uint32_t resources;
   uint32_t version_infos;
 
+  uint64_t block_base;
+  size_t csum_offset;
+  bool has_calculated_checksum;
+  int64_t calculated_checksum;
+
 } PE;
 
 #define fits_in_pe(pe, pointer, size)                                     \

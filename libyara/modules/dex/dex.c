@@ -1559,6 +1559,10 @@ int module_load(
       module_object->data = dex;
 
       dex_parse(dex, block->base);
+
+      dex->data = NULL;
+      dex->header = NULL;
+
       break;
     }
   }

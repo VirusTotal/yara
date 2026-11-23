@@ -31,8 +31,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <string.h>
 #include <yara/dotnet.h>
 #include <yara/endian.h>
+#include <yara/exec.h>
 #include <yara/integers.h>
 #include <yara/mem.h>
+#include <yara/object.h>
 #include <yara/pe.h>
 #include <yara/pe_utils.h>
 #include <yara/strutils.h>
@@ -103,7 +105,7 @@ PIMAGE_DATA_DIRECTORY pe_get_directory_entry(PE* pe, int entry)
 
 int64_t pe_rva_to_offset(PE* pe, uint64_t rva)
 {
-  PIMAGE_SECTION_HEADER section = IMAGE_FIRST_SECTION(pe->header);
+  PIMAGE_SECTION_HEADER section = NULL;
 
   DWORD lowest_section_rva = 0xffffffff;
   DWORD section_rva = 0;
@@ -111,77 +113,129 @@ int64_t pe_rva_to_offset(PE* pe, uint64_t rva)
   DWORD section_raw_size = 0;
 
   int64_t result;
+  int64_t num_sections;
+  uint32_t file_alignment;
+  uint32_t section_alignment;
 
   int i = 0;
 
-  int alignment = 0;
-  int rest = 0;
+  uint32_t alignment = 0;
+  uint32_t rest = 0;
 
-  while (i < yr_min(
-                 yr_le16toh(pe->header->FileHeader.NumberOfSections),
-                 MAX_PE_SECTIONS))
+  if (pe->header != NULL)
   {
-    if (struct_fits_in_pe(pe, section, IMAGE_SECTION_HEADER))
+    section = IMAGE_FIRST_SECTION(pe->header);
+    num_sections = yr_min(
+        yr_le16toh(pe->header->FileHeader.NumberOfSections), MAX_PE_SECTIONS);
+    file_alignment = yr_le32toh(OptionalHeader(pe, FileAlignment));
+    section_alignment = yr_le32toh(OptionalHeader(pe, SectionAlignment));
+  }
+  else
+  {
+    if (pe->object == NULL)
+      return -1;
+
+    int64_t n = yr_object_get_integer(pe->object, "number_of_sections");
+    int64_t fa = yr_object_get_integer(pe->object, "file_alignment");
+    int64_t sa = yr_object_get_integer(pe->object, "section_alignment");
+
+    if (n == YR_UNDEFINED || fa == YR_UNDEFINED || sa == YR_UNDEFINED)
+      return -1;
+
+    num_sections = yr_min(n, MAX_PE_SECTIONS);
+    file_alignment = (uint32_t) fa;
+    section_alignment = (uint32_t) sa;
+  }
+
+  while (i < num_sections)
+  {
+    uint32_t sect_virtual_address;
+    uint32_t sect_virtual_size;
+    uint32_t sect_raw_data_size;
+    uint32_t sect_raw_data_offset;
+
+    if (pe->header != NULL)
     {
-      if (lowest_section_rva > yr_le32toh(section->VirtualAddress))
-      {
-        lowest_section_rva = yr_le32toh(section->VirtualAddress);
-      }
+      if (!struct_fits_in_pe(pe, section, IMAGE_SECTION_HEADER))
+        return -1;
 
-      // In theory, we should use the section's virtual size while
-      // checking if some RVA is within the section. In most cases
-      // the virtual size is greater than the raw data size, but that's
-      // not always the case. So we use the larger of the two values.
-      //
-      // Example:
-      // db6a9934570fa98a93a979e7e0e218e0c9710e5a787b18c6948f2eedd9338984
-      uint32_t virtualSize = yr_max(
-          yr_le32toh(section->Misc.VirtualSize),
-          yr_le32toh(section->SizeOfRawData));
-
-      if (rva >= yr_le32toh(section->VirtualAddress) &&
-          rva - yr_le32toh(section->VirtualAddress) < virtualSize &&
-          section_rva <= yr_le32toh(section->VirtualAddress))
-      {
-        // Round section_offset
-        //
-        // Rounding everything less than 0x200 to 0 as discussed in
-        // https://code.google.com/archive/p/corkami/wikis/PE.wiki#PointerToRawData
-        // does not work for PE32_FILE from the test suite and for
-        // some tinype samples where File Alignment = 4
-        // (http://www.phreedom.org/research/tinype/).
-        //
-        // If FileAlignment is >= 0x200, it is apparently ignored (see
-        // Ero Carreras's pefile.py, PE.adjust_FileAlignment).
-
-        alignment = yr_min(
-            yr_le32toh(OptionalHeader(pe, FileAlignment)), 0x200);
-
-        section_rva = yr_le32toh(section->VirtualAddress);
-        section_offset = yr_le32toh(section->PointerToRawData);
-        section_raw_size = yr_le32toh(section->SizeOfRawData);
-
-        if (alignment)
-        {
-          rest = section_offset % alignment;
-
-          if (rest)
-            section_offset -= rest;
-        }
-
-        // For multi-section images, real pointer to raw data is aligned down to
-        // sector size
-        if (yr_le32toh(OptionalHeader(pe, SectionAlignment)) >= PE_PAGE_SIZE)
-          section_offset = section_offset & ~(PE_SECTOR_SIZE - 1);
-      }
-
+      sect_virtual_address = yr_le32toh(section->VirtualAddress);
+      sect_virtual_size = yr_le32toh(section->Misc.VirtualSize);
+      sect_raw_data_size = yr_le32toh(section->SizeOfRawData);
+      sect_raw_data_offset = yr_le32toh(section->PointerToRawData);
       section++;
-      i++;
     }
     else
     {
-      return -1;
+      int64_t va = yr_object_get_integer(
+          pe->object, "sections[%i].virtual_address", i);
+      int64_t vs = yr_object_get_integer(
+          pe->object, "sections[%i].virtual_size", i);
+      int64_t raw_size = yr_object_get_integer(
+          pe->object, "sections[%i].raw_data_size", i);
+      int64_t raw_offset = yr_object_get_integer(
+          pe->object, "sections[%i].raw_data_offset", i);
+
+      if (va == YR_UNDEFINED || vs == YR_UNDEFINED ||
+          raw_size == YR_UNDEFINED || raw_offset == YR_UNDEFINED)
+        return -1;
+
+      sect_virtual_address = (uint32_t) va;
+      sect_virtual_size = (uint32_t) vs;
+      sect_raw_data_size = (uint32_t) raw_size;
+      sect_raw_data_offset = (uint32_t) raw_offset;
     }
+
+    if (lowest_section_rva > sect_virtual_address)
+    {
+      lowest_section_rva = sect_virtual_address;
+    }
+
+    // In theory, we should use the section's virtual size while
+    // checking if some RVA is within the section. In most cases
+    // the virtual size is greater than the raw data size, but that's
+    // not always the case. So we use the larger of the two values.
+    //
+    // Example:
+    // db6a9934570fa98a93a979e7e0e218e0c9710e5a787b18c6948f2eedd9338984
+    uint32_t virtualSize = yr_max(sect_virtual_size, sect_raw_data_size);
+
+    if (rva >= sect_virtual_address &&
+        rva - sect_virtual_address < virtualSize &&
+        section_rva <= sect_virtual_address)
+    {
+      // Round section_offset
+      //
+      // Rounding everything less than 0x200 to 0 as discussed in
+      // https://code.google.com/archive/p/corkami/wikis/PE.wiki#PointerToRawData
+      // does not work for PE32_FILE from the test suite and for
+      // some tinype samples where File Alignment = 4
+      // (http://www.phreedom.org/research/tinype/).
+      //
+      // If FileAlignment is >= 0x200, it is apparently ignored (see
+      // Ero Carreras's pefile.py, PE.adjust_FileAlignment).
+
+      alignment = yr_min(file_alignment, 0x200u);
+
+      section_rva = sect_virtual_address;
+      section_offset = sect_raw_data_offset;
+      section_raw_size = sect_raw_data_size;
+
+      if (alignment)
+      {
+        rest = section_offset % alignment;
+
+        if (rest)
+          section_offset -= rest;
+      }
+
+      // For multi-section images, real pointer to raw data is aligned down to
+      // sector size
+      if (section_alignment >= PE_PAGE_SIZE)
+        section_offset = section_offset & ~(PE_SECTOR_SIZE - 1);
+    }
+
+    i++;
   }
 
   // Everything before the first section seems to get mapped straight

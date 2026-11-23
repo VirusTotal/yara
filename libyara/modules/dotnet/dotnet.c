@@ -3535,6 +3535,9 @@ int module_load(
 
         dotnet_parse_com(pe);
 
+        pe->data = NULL;
+        pe->header = NULL;
+
         break;
       }
     }

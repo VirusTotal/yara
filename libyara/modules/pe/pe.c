@@ -3378,23 +3378,27 @@ define_function(is_dll)
 define_function(is_32bit)
 {
   YR_OBJECT* module = yr_module();
-  PE* pe = (PE*) module->data;
 
-  if (pe == NULL)
+  if (yr_is_undefined(module, "opthdr_magic"))
     return_integer(YR_UNDEFINED);
 
-  return_integer(IS_64BITS_PE(pe) ? 0 : 1);
+  return_integer(
+      yr_get_integer(module, "opthdr_magic") == IMAGE_NT_OPTIONAL_HDR64_MAGIC
+          ? 0
+          : 1);
 }
 
 define_function(is_64bit)
 {
   YR_OBJECT* module = yr_module();
-  PE* pe = (PE*) module->data;
 
-  if (pe == NULL)
+  if (yr_is_undefined(module, "opthdr_magic"))
     return_integer(YR_UNDEFINED);
 
-  return_integer(IS_64BITS_PE(pe) ? 1 : 0);
+  return_integer(
+      yr_get_integer(module, "opthdr_magic") == IMAGE_NT_OPTIONAL_HDR64_MAGIC
+          ? 1
+          : 0);
 }
 
 // _rich_version
@@ -3485,35 +3489,57 @@ define_function(calculate_checksum)
   YR_OBJECT* module = yr_module();
   PE* pe = (PE*) module->data;
 
-  uint64_t csum = 0;
-  size_t csum_offset;
-
   if (pe == NULL)
     return_integer(YR_UNDEFINED);
 
-  csum_offset = ((uint8_t*) &(pe->header->OptionalHeader) +
-                 offsetof(IMAGE_OPTIONAL_HEADER32, CheckSum)) -
-                pe->data;
+  if (pe->has_calculated_checksum)
+    return_integer(pe->calculated_checksum);
 
-  for (size_t i = 0; i <= pe->data_size / 4; i++)
+  YR_SCAN_CONTEXT* context = yr_scan_context();
+  YR_MEMORY_BLOCK* block;
+  YR_MEMORY_BLOCK_ITERATOR* iterator = context->iterator;
+  const uint8_t* block_data = NULL;
+  size_t data_size = 0;
+
+  foreach_memory_block(iterator, block)
+  {
+    if (block->base == pe->block_base)
+    {
+      block_data = yr_fetch_block_data(block);
+      data_size = block->size;
+      break;
+    }
+  }
+
+  if (block_data == NULL)
+  {
+    pe->has_calculated_checksum = true;
+    pe->calculated_checksum = YR_UNDEFINED;
+    return_integer(YR_UNDEFINED);
+  }
+
+  uint64_t csum = 0;
+
+  for (size_t i = 0; i <= data_size / 4; i++)
   {
     // Treat the CheckSum field as 0 -- the offset is the same for
     // PE32 and PE64.
 
-    if (4 * i == csum_offset)
+    if (4 * i == pe->csum_offset)
       continue;
 
-    if (4 * i + 4 <= pe->data_size)
+    if (4 * i + 4 <= data_size)
     {
       csum +=
-          ((uint64_t) pe->data[4 * i] + ((uint64_t) pe->data[4 * i + 1] << 8) +
-           ((uint64_t) pe->data[4 * i + 2] << 16) +
-           ((uint64_t) pe->data[4 * i + 3] << 24));
+          ((uint64_t) block_data[4 * i] +
+           ((uint64_t) block_data[4 * i + 1] << 8) +
+           ((uint64_t) block_data[4 * i + 2] << 16) +
+           ((uint64_t) block_data[4 * i + 3] << 24));
     }
     else
     {
-      for (size_t j = 0; j < pe->data_size % 4; j++)
-        csum += (uint64_t) pe->data[4 * i + j] << (8 * j);
+      for (size_t j = 0; j < data_size % 4; j++)
+        csum += (uint64_t) block_data[4 * i + j] << (8 * j);
     }
 
     if (csum > 0xffffffff)
@@ -3523,9 +3549,12 @@ define_function(calculate_checksum)
   csum = (csum & 0xffff) + (csum >> 16);
   csum += (csum >> 16);
   csum &= 0xffff;
-  csum += pe->data_size;
+  csum += data_size;
 
-  return_integer(csum);
+  pe->has_calculated_checksum = true;
+  pe->calculated_checksum = (int64_t) csum;
+
+  return_integer(pe->calculated_checksum);
 }
 
 define_function(rva_to_offset)
@@ -4408,6 +4437,12 @@ int module_load(
         pe->object = module_object;
         pe->resources = 0;
         pe->version_infos = 0;
+        pe->block_base = block->base;
+        pe->csum_offset = ((const uint8_t*) &(pe_header->OptionalHeader) +
+                           offsetof(IMAGE_OPTIONAL_HEADER32, CheckSum)) -
+                          block_data;
+        pe->has_calculated_checksum = false;
+        pe->calculated_checksum = YR_UNDEFINED;
 
         module_object->data = pe;
 
@@ -4422,6 +4457,12 @@ int module_load(
         pe->imported_dlls = pe_parse_imports(pe);
         pe->delay_imported_dlls = pe_parse_delayed_imports(pe);
         pe_parse_exports(pe);
+
+        // Block data returned by yr_fetch_block_data is only valid until the
+        // next block is fetched, so do not retain pointers into it beyond
+        // module_load.
+        pe->data = NULL;
+        pe->header = NULL;
 
         break;
       }
