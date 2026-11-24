@@ -1156,11 +1156,15 @@ int module_load(
     if (block_data == NULL)
       continue;
 
-    ELF* elf = (ELF*) yr_calloc(1, sizeof(ELF));
+    ELF* elf = (ELF*) module_object->data;
     if (elf == NULL)
-      return ERROR_INSUFFICIENT_MEMORY;
+    {
+      elf = (ELF*) yr_calloc(1, sizeof(ELF));
+      if (elf == NULL)
+        return ERROR_INSUFFICIENT_MEMORY;
 
-    module_object->data = elf;
+      module_object->data = elf;
+    }
     int class_data = get_elf_class_data(block_data, block->size);
 
     if (class_data == CLASS_DATA(ELF_CLASS_32, ELF_DATA_2LSB) &&
