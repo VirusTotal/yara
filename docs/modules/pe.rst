@@ -1474,6 +1474,14 @@ Reference
 
     *Example: pe.is_pe*
 
+.. c:function:: is_exe()
+
+    .. versionadded:: 4.3.3
+
+    Function returning true if the PE is a EXE.
+
+    *Example: pe.is_exe()*
+
 .. c:function:: is_dll()
 
     .. versionadded:: 3.5.0
