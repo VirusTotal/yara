@@ -53,6 +53,7 @@ int main(int argc, char** argv)
         condition: \
           dotnet.is_dotnet and \
           dotnet.number_of_guids == 1 and \
+          dotnet.mvid == \"3764d539-e21a-4366-bc7c-b56fa67efbb0\" and \
           dotnet.guids[0] == \"3764d539-e21a-4366-bc7c-b56fa67efbb0\" \
       }",
       "tests/data/"
